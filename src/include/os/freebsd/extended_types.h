@@ -29,4 +29,4 @@
 
 #include <sys/types.h>
 
-#endif				/* _EXTENDED_TYPES_FREEBSD_H */
+#endif /* _EXTENDED_TYPES_FREEBSD_H */

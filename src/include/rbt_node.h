@@ -150,7 +150,7 @@ typedef struct rbt_node {
 /*
  * flags for rbt_node
  */
-#define RBT_RED 01	/* red node */
+#define RBT_RED 01 /* red node */
 
 #endif /* RBT_NODE_H */
 

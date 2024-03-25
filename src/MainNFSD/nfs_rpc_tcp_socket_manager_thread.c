@@ -39,7 +39,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/select.h>
 #include "hashtable.h"
 #include "log.h"

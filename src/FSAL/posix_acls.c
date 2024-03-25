@@ -49,13 +49,11 @@ bool is_ace_valid_for_effective_acl_entry(fsal_ace_t *ace)
 /* Checks whether ACE belongs to inherited acl (DEFAULT TYPE) */
 bool is_ace_valid_for_inherited_acl_entry(fsal_ace_t *ace)
 {
-
-	if (IS_FSAL_ACE_APPLICABLE_FOR_BOTH_ACL(*ace)
-	    || IS_FSAL_ACE_APPLICABLE_ONLY_FOR_INHERITED_ACL(*ace))
-		return  true;
+	if (IS_FSAL_ACE_APPLICABLE_FOR_BOTH_ACL(*ace) ||
+	    IS_FSAL_ACE_APPLICABLE_ONLY_FOR_INHERITED_ACL(*ace))
+		return true;
 	else
 		return false;
-
 }
 
 /*
@@ -64,7 +62,6 @@ bool is_ace_valid_for_inherited_acl_entry(fsal_ace_t *ace)
  */
 bool isallow(fsal_ace_t *ace, acl_permset_t everyone, acl_perm_t perm)
 {
-
 	bool ret = acl_get_perm(everyone, perm);
 
 	switch (perm) {
@@ -88,7 +85,6 @@ bool isallow(fsal_ace_t *ace, acl_permset_t everyone, acl_perm_t perm)
  */
 bool isdeny(acl_permset_t deny, acl_permset_t everyone, acl_perm_t perm)
 {
-
 	return acl_get_perm(deny, perm) || acl_get_perm(everyone, perm);
 }
 
@@ -110,7 +106,7 @@ int ace_count(acl_t acl)
  *
  * On success , it returns acl entry otherwise it returns NULL
  */
-acl_entry_t find_entry(acl_t acl, acl_tag_t tag,  unsigned int id)
+acl_entry_t find_entry(acl_t acl, acl_tag_t tag, unsigned int id)
 {
 	acl_entry_t entry;
 	acl_tag_t entryTag;
@@ -119,11 +115,11 @@ acl_entry_t find_entry(acl_t acl, acl_tag_t tag,  unsigned int id)
 	if (!acl)
 		return NULL;
 
-	for (ent = ACL_FIRST_ENTRY; ; ent = ACL_NEXT_ENTRY) {
+	for (ent = ACL_FIRST_ENTRY;; ent = ACL_NEXT_ENTRY) {
 		ret = acl_get_entry(acl, ent, &entry);
 		if (ret == -1) {
 			LogWarn(COMPONENT_FSAL, "acl_get entry failed errno %d",
-					errno);
+				errno);
 		}
 		if (ret == 0 || ret == -1)
 			return NULL;
@@ -216,7 +212,7 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		ret = acl_get_permset(mask, &p_permset);
 		if (ret)
 			LogWarn(COMPONENT_FSAL,
-			"Cannot retrieve permission set for the Mask Entry");
+				"Cannot retrieve permission set for the Mask Entry");
 		if (acl_get_perm(p_permset, ACL_READ) == 0)
 			readmask = false;
 		if (acl_get_perm(p_permset, ACL_WRITE) == 0)
@@ -230,7 +226,7 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		ret = acl_get_permset(other, &p_permset);
 		if (ret)
 			LogWarn(COMPONENT_FSAL,
-			"Cannot retrieve permission set for the Mask Entry");
+				"Cannot retrieve permission set for the Mask Entry");
 		if (acl_get_perm(p_permset, ACL_READ) == 1)
 			readother = true;
 		if (acl_get_perm(p_permset, ACL_WRITE) == 1)
@@ -251,12 +247,11 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 	 * correspondingly. Then at the end unnecessary DENY entries are removed
 	 * from the list.
 	 */
-	for (ent = ACL_FIRST_ENTRY; ; ent = ACL_NEXT_ENTRY) {
-
+	for (ent = ACL_FIRST_ENTRY;; ent = ACL_NEXT_ENTRY) {
 		ret = acl_get_entry(p_posixacl, ent, &entry);
 		if (ret == 0 || ret == -1) {
 			LogDebug(COMPONENT_FSAL,
-					"No more ACL entries remaining");
+				 "No more ACL entries remaining");
 			break;
 		}
 		if (acl_get_tag_type(entry, &tag) == -1) {
@@ -283,39 +278,39 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 
 		/* Finding uid for the fsal_acl entry */
 		switch (tag) {
-		case  ACL_USER_OBJ:
+		case ACL_USER_OBJ:
 			pace_allow->who.uid = pace_deny->who.uid =
-						FSAL_ACE_SPECIAL_OWNER;
+				FSAL_ACE_SPECIAL_OWNER;
 			pace_allow->iflag = pace_deny->iflag =
-						FSAL_ACE_IFLAG_SPECIAL_ID;
+				FSAL_ACE_IFLAG_SPECIAL_ID;
 			break;
-		case  ACL_GROUP_OBJ:
+		case ACL_GROUP_OBJ:
 			pace_allow->who.uid = pace_deny->who.uid =
-						FSAL_ACE_SPECIAL_GROUP;
+				FSAL_ACE_SPECIAL_GROUP;
 			pace_allow->iflag = pace_deny->iflag =
-						FSAL_ACE_IFLAG_SPECIAL_ID;
+				FSAL_ACE_IFLAG_SPECIAL_ID;
 			break;
-		case  ACL_OTHER:
+		case ACL_OTHER:
 			pace_allow->who.uid = pace_deny->who.uid =
-						FSAL_ACE_SPECIAL_EVERYONE;
+				FSAL_ACE_SPECIAL_EVERYONE;
 			pace_allow->iflag = pace_deny->iflag =
-						FSAL_ACE_IFLAG_SPECIAL_ID;
+				FSAL_ACE_IFLAG_SPECIAL_ID;
 			break;
-		case  ACL_USER:
+		case ACL_USER:
 			pace_allow->who.uid = pace_deny->who.uid =
-					posix_acl_get_uid(entry);
+				posix_acl_get_uid(entry);
 			break;
-		case  ACL_GROUP:
+		case ACL_GROUP:
 			pace_allow->who.gid = pace_deny->who.gid =
-					posix_acl_get_gid(entry);
+				posix_acl_get_gid(entry);
 			pace_allow->flag = pace_deny->flag |=
-						FSAL_ACE_FLAG_GROUP_ID;
+				FSAL_ACE_FLAG_GROUP_ID;
 			break;
-		case  ACL_MASK:
+		case ACL_MASK:
 			pace_allow->who.uid = pace_deny->who.uid =
-						FSAL_ACE_SPECIAL_MASK;
+				FSAL_ACE_SPECIAL_MASK;
 			pace_allow->iflag = pace_deny->iflag =
-						FSAL_ACE_IFLAG_SPECIAL_ID;
+				FSAL_ACE_IFLAG_SPECIAL_ID;
 			break;
 		default:
 			LogWarn(COMPONENT_FSAL, "Invalid tag for the acl");
@@ -338,7 +333,7 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 		ret = acl_get_permset(entry, &p_permset);
 		if (ret) {
 			LogWarn(COMPONENT_FSAL,
-			"Cannot retrieve permission set for the ACL Entry");
+				"Cannot retrieve permission set for the ACL Entry");
 			continue;
 		}
 		/* *
@@ -349,25 +344,26 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER || readmask)
 				pace_allow->perm |= FSAL_ACE_PERM_READ_DATA;
 			if ((tag == ACL_USER || tag == ACL_GROUP ||
-					tag == ACL_GROUP_OBJ) && (!readmask))
+			     tag == ACL_GROUP_OBJ) &&
+			    (!readmask))
 				pace_allow->iflag |=
-						FSAL_ACE_FLAG_MASK_READ_DENY;
+					FSAL_ACE_FLAG_MASK_READ_DENY;
 		} else
 			readcurrent = false;
 
 		if (acl_get_perm(p_permset, ACL_WRITE)) {
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER ||
-						writemask)
+			    writemask)
 				pace_allow->perm |=
 					FSAL_ACE_PERM_SET_DEFAULT_WRITE;
 			if (tag == ACL_USER_OBJ)
 				pace_allow->perm |=
 					FSAL_ACE_PERM_SET_OWNER_WRITE;
 			if (is_dir)
-				pace_allow->perm |=
-					FSAL_ACE_PERM_DELETE_CHILD;
+				pace_allow->perm |= FSAL_ACE_PERM_DELETE_CHILD;
 			if ((tag == ACL_USER || tag == ACL_GROUP ||
-					tag == ACL_GROUP_OBJ) && (!writemask))
+			     tag == ACL_GROUP_OBJ) &&
+			    (!writemask))
 				pace_allow->iflag |=
 					FSAL_ACE_FLAG_MASK_WRITE_DENY;
 		} else
@@ -375,10 +371,11 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 
 		if (acl_get_perm(p_permset, ACL_EXECUTE)) {
 			if (tag == ACL_USER_OBJ || tag == ACL_OTHER ||
-						executemask)
+			    executemask)
 				pace_allow->perm |= FSAL_ACE_PERM_EXECUTE;
 			if ((tag == ACL_USER || tag == ACL_GROUP ||
-					tag == ACL_GROUP_OBJ) && (!executemask))
+			     tag == ACL_GROUP_OBJ) &&
+			    (!executemask))
 				pace_allow->iflag |=
 					FSAL_ACE_FLAG_MASK_EXECUTE_DENY;
 		} else
@@ -407,47 +404,49 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			if (tag == ACL_USER_OBJ) {
 				d_entry = find_entry(dup_acl, ACL_USER_OBJ, 0);
 				ret = acl_get_entry(dup_acl, ACL_NEXT_ENTRY,
-						&d_entry);
+						    &d_entry);
 				if (ret == 0 || ret == -1) {
-					LogDebug(COMPONENT_FSAL,
-					"No more ACL entries remaining");
+					LogDebug(
+						COMPONENT_FSAL,
+						"No more ACL entries remaining");
 					acl_free(dup_acl);
 					break;
 				}
 			} else
 				d_entry = find_entry(dup_acl, ACL_GROUP_OBJ, 0);
 
-			for (d_ent = ACL_NEXT_ENTRY; ; d_ent = ACL_NEXT_ENTRY) {
+			for (d_ent = ACL_NEXT_ENTRY;; d_ent = ACL_NEXT_ENTRY) {
 				ret = acl_get_permset(d_entry, &p_permset);
 				if (ret) {
 					LogWarn(COMPONENT_FSAL,
-					"Cannot retrieve permission set");
+						"Cannot retrieve permission set");
 					continue;
 				}
 
 				if (!readcurrent &&
-					acl_get_perm(p_permset, ACL_READ))
+				    acl_get_perm(p_permset, ACL_READ))
 					pace_deny->perm |=
 						FSAL_ACE_PERM_READ_DATA;
 				if (!writecurrent &&
-					acl_get_perm(p_permset, ACL_WRITE)) {
+				    acl_get_perm(p_permset, ACL_WRITE)) {
 					pace_deny->perm |=
 						FSAL_ACE_PERM_SET_DEFAULT_WRITE;
 					if (tag == ACL_USER_OBJ)
 						pace_deny->perm |=
-						FSAL_ACE_PERM_SET_OWNER_WRITE;
+							FSAL_ACE_PERM_SET_OWNER_WRITE;
 					if (is_dir)
 						pace_deny->perm |=
-						FSAL_ACE_PERM_DELETE_CHILD;
+							FSAL_ACE_PERM_DELETE_CHILD;
 				}
 				if (!executecurrent &&
-					acl_get_perm(p_permset, ACL_EXECUTE))
+				    acl_get_perm(p_permset, ACL_EXECUTE))
 					pace_deny->perm |=
 						FSAL_ACE_PERM_EXECUTE;
 				ret = acl_get_entry(dup_acl, d_ent, &d_entry);
 				if (ret == 0 || ret == -1) {
-					LogDebug(COMPONENT_FSAL,
-					"No more ACL entries remaining");
+					LogDebug(
+						COMPONENT_FSAL,
+						"No more ACL entries remaining");
 					break;
 				}
 			}
@@ -480,11 +479,9 @@ int posix_acl_2_fsal_acl(acl_t p_posixacl, bool is_dir, bool is_inherit,
 			pace_deny += 2;
 			pace_allow += 2;
 		}
-
-
 	}
 
-	*ace = pace_allow - 1;/* Returns last entry in the list */
+	*ace = pace_allow - 1; /* Returns last entry in the list */
 	return total; /* Returning no of entries in the list */
 }
 
@@ -508,7 +505,6 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	bool mask = false, mask_set = false;
 	bool deny_e_r = false, deny_e_w = false, deny_e_x = false;
 
-
 	if (p_fsalacl == NULL)
 		return NULL;
 
@@ -518,7 +514,7 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	 * */
 	if (type == ACL_TYPE_DEFAULT) {
 		for (f_ace = p_fsalacl->aces;
-			f_ace < p_fsalacl->aces + p_fsalacl->naces; f_ace++) {
+		     f_ace < p_fsalacl->aces + p_fsalacl->naces; f_ace++) {
 			if (is_ace_valid_for_inherited_acl_entry(f_ace))
 				ret++;
 		}
@@ -545,8 +541,7 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 
 	ret = acl_get_permset(a_entry, &e_a_permset);
 	if (ret) {
-		LogWarn(COMPONENT_FSAL,
-			"Cannot retrieve permission set");
+		LogWarn(COMPONENT_FSAL, "Cannot retrieve permission set");
 	}
 
 	/*
@@ -564,17 +559,16 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 
 	ret = acl_get_permset(d_entry, &e_d_permset);
 	if (ret) {
-		LogWarn(COMPONENT_FSAL,
-			"Cannot retrieve permission set");
+		LogWarn(COMPONENT_FSAL, "Cannot retrieve permission set");
 	}
 
 	for (f_ace = p_fsalacl->aces;
-		f_ace < p_fsalacl->aces + p_fsalacl->naces; f_ace++) {
+	     f_ace < p_fsalacl->aces + p_fsalacl->naces; f_ace++) {
 		if (IS_FSAL_ACE_SPECIAL_EVERYONE(*f_ace)) {
 			if ((type == ACL_TYPE_ACCESS &&
-			!is_ace_valid_for_effective_acl_entry(f_ace))
-			|| (type == ACL_TYPE_DEFAULT &&
-			!is_ace_valid_for_inherited_acl_entry(f_ace)))
+			     !is_ace_valid_for_effective_acl_entry(f_ace)) ||
+			    (type == ACL_TYPE_DEFAULT &&
+			     !is_ace_valid_for_inherited_acl_entry(f_ace)))
 				continue;
 
 			if (IS_FSAL_ACE_DENY(*f_ace)) {
@@ -633,12 +627,11 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 	 * At last allow_acl is returned and deny_acl is ignored.
 	 */
 	for (f_ace = p_fsalacl->aces;
-	     f_ace < p_fsalacl->aces + p_fsalacl->naces;
-	     f_ace++) {
+	     f_ace < p_fsalacl->aces + p_fsalacl->naces; f_ace++) {
 		if ((type == ACL_TYPE_ACCESS &&
-		    !is_ace_valid_for_effective_acl_entry(f_ace))
-		    || (type == ACL_TYPE_DEFAULT &&
-		    !is_ace_valid_for_inherited_acl_entry(f_ace)))
+		     !is_ace_valid_for_effective_acl_entry(f_ace)) ||
+		    (type == ACL_TYPE_DEFAULT &&
+		     !is_ace_valid_for_inherited_acl_entry(f_ace)))
 			continue;
 		if (IS_FSAL_ACE_SPECIAL_ID(*f_ace)) {
 			id = 0;
@@ -697,38 +690,37 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 
 		if (IS_FSAL_ACE_SPECIAL_MASK(*f_ace)) {
 			if (IS_FSAL_ACE_ALLOW(*f_ace)) {
-				if IS_FSAL_ACE_READ_DATA(*f_ace)
+				if IS_FSAL_ACE_READ_DATA (*f_ace)
 					acl_add_perm(a_permset, ACL_READ);
-				if IS_FSAL_ACE_WRITE_DATA(*f_ace)
+				if IS_FSAL_ACE_WRITE_DATA (*f_ace)
 					acl_add_perm(a_permset, ACL_WRITE);
-				if IS_FSAL_ACE_EXECUTE(*f_ace)
+				if IS_FSAL_ACE_EXECUTE (*f_ace)
 					acl_add_perm(a_permset, ACL_EXECUTE);
 			}
 			mask_set = true;
 			continue;
 		}
 
-		if ((isallow(f_ace, e_a_permset, ACL_READ)
-		    && !isdeny(d_permset, e_d_permset, ACL_READ))
-		    || IS_FSAL_ACE_IFLAG(*f_ace, FSAL_ACE_FLAG_MASK_READ_DENY))
+		if ((isallow(f_ace, e_a_permset, ACL_READ) &&
+		     !isdeny(d_permset, e_d_permset, ACL_READ)) ||
+		    IS_FSAL_ACE_IFLAG(*f_ace, FSAL_ACE_FLAG_MASK_READ_DENY))
 			acl_add_perm(a_permset, ACL_READ);
 
-		if ((isallow(f_ace, e_a_permset, ACL_WRITE)
-		    && !isdeny(d_permset, e_d_permset, ACL_WRITE))
-		    || IS_FSAL_ACE_IFLAG(*f_ace, FSAL_ACE_FLAG_MASK_WRITE_DENY))
+		if ((isallow(f_ace, e_a_permset, ACL_WRITE) &&
+		     !isdeny(d_permset, e_d_permset, ACL_WRITE)) ||
+		    IS_FSAL_ACE_IFLAG(*f_ace, FSAL_ACE_FLAG_MASK_WRITE_DENY))
 			acl_add_perm(a_permset, ACL_WRITE);
 
-		if ((isallow(f_ace, e_a_permset, ACL_EXECUTE)
-		    && !isdeny(d_permset, e_d_permset, ACL_EXECUTE))
-		    || IS_FSAL_ACE_IFLAG(*f_ace,
-				FSAL_ACE_FLAG_MASK_EXECUTE_DENY))
+		if ((isallow(f_ace, e_a_permset, ACL_EXECUTE) &&
+		     !isdeny(d_permset, e_d_permset, ACL_EXECUTE)) ||
+		    IS_FSAL_ACE_IFLAG(*f_ace, FSAL_ACE_FLAG_MASK_EXECUTE_DENY))
 			acl_add_perm(a_permset, ACL_EXECUTE);
 	}
 	if (!mask_set && mask) {
 		ret = acl_calc_mask(&allow_acl);
 		if (ret)
 			LogWarn(COMPONENT_FSAL,
-			"Cannot calculate mask for posix");
+				"Cannot calculate mask for posix");
 	}
 
 	/* A valid acl_t should have only one entry for ACL_USER_OBJ,
@@ -742,14 +734,13 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 				"Error converting ACL: %s at entry no %d",
 				acl_error(ret), i);
 		}
-
 	}
 
 	if (isDebug(COMPONENT_FSAL)) {
 		char *acl_str;
 
 		acl_str = acl_to_any_text(allow_acl, NULL, ',',
-				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
+					  TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
 		LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
 		acl_free(acl_str);
 	}
@@ -771,7 +762,7 @@ acl_t fsal_acl_2_posix_acl(fsal_acl_t *p_fsalacl, acl_type_t type)
 size_t posix_acl_xattr_size(int count)
 {
 	return sizeof(struct acl_ea_header) +
-	    count * sizeof(struct acl_ea_entry);
+	       count * sizeof(struct acl_ea_entry);
 }
 
 /*
@@ -816,8 +807,8 @@ acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
 
 	count = posix_acl_entries_count(size);
 	if (count < 0) {
-		LogMajor(COMPONENT_FSAL,
-			"Invalid parameter: size = %d", (int)size);
+		LogMajor(COMPONENT_FSAL, "Invalid parameter: size = %d",
+			 (int)size);
 		return NULL;
 	}
 
@@ -831,8 +822,8 @@ acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
 
 	acl = acl_init(count);
 	if (!acl) {
-		LogMajor(COMPONENT_FSAL,
-			"Failed to ACL INIT: count = %d", count);
+		LogMajor(COMPONENT_FSAL, "Failed to ACL INIT: count = %d",
+			 count);
 		return NULL;
 	}
 
@@ -898,7 +889,7 @@ acl_t xattr_2_posix_acl(const struct acl_ea_header *ea_header, size_t size)
 		char *acl_str;
 
 		acl_str = acl_to_any_text(acl, NULL, ',',
-				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
+					  TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
 		LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
 		acl_free(acl_str);
 	}
@@ -937,7 +928,7 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 		char *acl_str;
 
 		acl_str = acl_to_any_text(acl, NULL, ',',
-				TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
+					  TEXT_ABBREVIATE | TEXT_NUMERIC_IDS);
 		LogDebug(COMPONENT_FSAL, "posix acl = %s ", acl_str);
 		acl_free(acl_str);
 	}
@@ -953,12 +944,12 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 	ea_entry = (void *)(ea_header + 1);
 	ea_header->a_version = htole32(ACL_EA_VERSION);
 
-	for (entry_id = ACL_FIRST_ENTRY; ; entry_id = ACL_NEXT_ENTRY,
-	     ea_entry++) {
+	for (entry_id = ACL_FIRST_ENTRY;;
+	     entry_id = ACL_NEXT_ENTRY, ea_entry++) {
 		ret = acl_get_entry(acl, entry_id, &acl_entry);
 		if (ret == 0 || ret == -1) {
 			LogDebug(COMPONENT_FSAL,
-				"No more ACL entries remaining");
+				 "No more ACL entries remaining");
 			break;
 		}
 		if (acl_get_tag_type(acl_entry, &tag) == -1) {
@@ -969,7 +960,7 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 		ret = acl_get_permset(acl_entry, &permset);
 		if (ret) {
 			LogWarn(COMPONENT_FSAL,
-			"Cannot retrieve permission set for the ACL Entry");
+				"Cannot retrieve permission set for the ACL Entry");
 			continue;
 		}
 
@@ -984,12 +975,10 @@ int posix_acl_2_xattr(acl_t acl, void *buf, size_t size)
 
 		switch (tag) {
 		case ACL_USER:
-			ea_entry->e_id =
-				htole32(posix_acl_get_uid(acl_entry));
+			ea_entry->e_id = htole32(posix_acl_get_uid(acl_entry));
 			break;
 		case ACL_GROUP:
-			ea_entry->e_id =
-				htole32(posix_acl_get_gid(acl_entry));
+			ea_entry->e_id = htole32(posix_acl_get_gid(acl_entry));
 			break;
 		default:
 			ea_entry->e_id = htole32(ACL_UNDEFINED_ID);

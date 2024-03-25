@@ -79,51 +79,42 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling %s svid=%d off=%llx len=%llx cookie=%s reclaim=%s",
-		 proc_name, (int)arg->alock.svid,
-		 (unsigned long long)arg->alock.l_offset,
-		 (unsigned long long)arg->alock.l_len, buffer,
-		 arg->reclaim ? "yes" : "no");
+	LogDebug(
+		COMPONENT_NLM,
+		"REQUEST PROCESSING: Calling %s svid=%d off=%llx len=%llx cookie=%s reclaim=%s",
+		proc_name, (int)arg->alock.svid,
+		(unsigned long long)arg->alock.l_offset,
+		(unsigned long long)arg->alock.l_len, buffer,
+		arg->reclaim ? "yes" : "no");
 
 	copy_netobj(&res->res_nlm4.cookie, &arg->cookie);
 
 	grace_ref = !op_ctx->fsal_export->exp_ops.fs_supports(
-					op_ctx->fsal_export, fso_grace_method);
+		op_ctx->fsal_export, fso_grace_method);
 	if (grace_ref) {
 		if (!nfs_get_grace_status(arg->reclaim)) {
 			grace_ref = false;
 			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
 			LogDebug(COMPONENT_NLM,
 				 "REQUEST RESULT:%s in grace %s %s",
-				 arg->reclaim ? " NOT" : "",
-				 proc_name,
+				 arg->reclaim ? " NOT" : "", proc_name,
 				 lock_result_str(res->res_nlm4.stat.stat));
 			return NFS_REQ_OK;
 		}
 	}
 
-	rc = nlm_process_parameters(req,
-				    arg->exclusive,
-				    &arg->alock,
-				    &lock,
-				    &obj,
-				    care,
-				    &nsm_client,
-				    &nlm_client,
+	rc = nlm_process_parameters(req, arg->exclusive, &arg->alock, &lock,
+				    &obj, care, &nsm_client, &nlm_client,
 				    &nlm_owner,
 				    arg->block ? &pblock_data : NULL,
-				    arg->state,
-				    &nlm_state);
+				    arg->state, &nlm_state);
 
 	lock.lock_reclaim = arg->reclaim;
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
-		res->res_nlm4.stat.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: %s %s",
-			 proc_name,
+		res->res_nlm4.stat.stat = (nlm4_stats)rc;
+		LogDebug(COMPONENT_NLM, "REQUEST RESULT: %s %s", proc_name,
 			 lock_result_str(res->res_nlm4.stat.stat));
 		rc = NFS_REQ_OK;
 		goto out;
@@ -136,7 +127,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		rc = NFS_REQ_DROP;
 		goto out_dec;
 	} else {
-		(void) atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
+		(void)atomic_inc_uint32_t(&obj->state_hdl->file.anon_ops);
 	}
 
 	/* Cast the state number into a state pointer to protect
@@ -144,27 +135,22 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * that will release old locks
 	 */
 	STATELOCK_lock(obj);
-	state_status = state_lock(obj,
-				  nlm_owner,
-				  nlm_state,
-				  arg->block ? STATE_BLOCKING :
-					       STATE_NON_BLOCKING,
-				  LOCK_NLM,
-				  arg->block ? &pblock_data : NULL,
-				  &lock,
-				  NULL, /* We don't need conflict info */
-				  NULL);
+	state_status =
+		state_lock(obj, nlm_owner, nlm_state,
+			   arg->block ? STATE_BLOCKING : STATE_NON_BLOCKING,
+			   LOCK_NLM, arg->block ? &pblock_data : NULL, &lock,
+			   NULL, /* We don't need conflict info */
+			   NULL);
 	STATELOCK_unlock(obj);
 
 	/* We prevented delegations from being granted while trying to acquire
 	 * the lock. However, when attempting to get a delegation in the
 	 * future existing locks will result in a conflict. Thus, we can
 	 * decrement the anonymous operations counter now. */
-	(void) atomic_dec_uint32_t(&obj->state_hdl->file.anon_ops);
+	(void)atomic_dec_uint32_t(&obj->state_hdl->file.anon_ops);
 
 	if (state_status != STATE_SUCCESS) {
-		res->res_nlm4.stat.stat =
-				nlm_convert_state_error(state_status);
+		res->res_nlm4.stat.stat = nlm_convert_state_error(state_status);
 
 		if (state_status == STATE_IN_GRACE)
 			res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
@@ -173,7 +159,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 	rc = NFS_REQ_OK;
 
- out_dec:
+out_dec:
 	/* If we didn't block, release the block data. Note that
 	 * state_lock() would set pblock_data to NULL if the lock was
 	 * blocked!
@@ -187,9 +173,7 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	obj->obj_ops->put_ref(obj);
 	dec_nlm_state_ref(nlm_state);
 
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST RESULT: %s %s",
-		 proc_name,
+	LogDebug(COMPONENT_NLM, "REQUEST RESULT: %s %s", proc_name,
 		 lock_result_str(res->res_nlm4.stat.stat));
 out:
 	if (grace_ref)
@@ -200,7 +184,7 @@ out:
 static void nlm4_lock_message_resp(state_async_queue_t *arg)
 {
 	state_nlm_async_data_t *nlm_arg =
-	    &arg->state_async_data.state_nlm_async_data;
+		&arg->state_async_data.state_nlm_async_data;
 	nfs_res_t *res = &nlm_arg->nlm_async_args.nlm_async_res;
 
 	if (isFullDebug(COMPONENT_NLM)) {
@@ -241,10 +225,8 @@ int nlm4_Lock_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	nsm_client = get_nsm_client(CARE_NO_MONITOR, arg->alock.caller_name);
 
 	if (nsm_client != NULL)
-		nlm_client = get_nlm_client(CARE_NO_MONITOR,
-					    req->rq_xprt,
-					    nsm_client,
-					    arg->alock.caller_name);
+		nlm_client = get_nlm_client(CARE_NO_MONITOR, req->rq_xprt,
+					    nsm_client, arg->alock.caller_name);
 
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
@@ -252,8 +234,7 @@ int nlm4_Lock_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		rc = nlm4_Lock(args, req, res);
 
 	if (rc == NFS_REQ_OK)
-		rc = nlm_send_async_res_nlm4(nlm_client,
-					     nlm4_lock_message_resp,
+		rc = nlm_send_async_res_nlm4(nlm_client, nlm4_lock_message_resp,
 					     res);
 
 	if (rc == NFS_REQ_DROP) {
@@ -267,7 +248,6 @@ int nlm4_Lock_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	}
 
 	return NFS_REQ_DROP;
-
 }
 
 /**

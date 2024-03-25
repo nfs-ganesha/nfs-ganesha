@@ -43,23 +43,23 @@
 #include "../../posix_acls.h"
 #endif /* ENABLE_VFS_POSIX_ACL */
 
-void vfs_sub_getattrs_common(struct vfs_fsal_obj_handle *vfs_hdl,
-			     int fd, attrmask_t request_mask,
+void vfs_sub_getattrs_common(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
+			     attrmask_t request_mask,
 			     struct fsal_attrlist *attrib)
 {
-	fsal_status_t fsal_st = {ERR_FSAL_NO_ERROR, 0};
+	fsal_status_t fsal_st = { ERR_FSAL_NO_ERROR, 0 };
 
 	if (FSAL_TEST_MASK(request_mask, ATTR4_FS_LOCATIONS) &&
-	    vfs_hdl->obj_handle.obj_ops->is_referral(&vfs_hdl->obj_handle,
-		attrib, false /*cache_attrs*/)) {
-
+	    vfs_hdl->obj_handle.obj_ops->is_referral(
+		    &vfs_hdl->obj_handle, attrib, false /*cache_attrs*/)) {
 		fsal_st = vfs_get_fs_locations(vfs_hdl, fd, attrib);
 		if (FSAL_IS_ERROR(fsal_st)) {
 			/* No error should be returned here, any major error
 			 * should have been caught before this */
-			LogDebug(COMPONENT_FSAL,
-				 "Could not get the fs locations for vfs handle: %p",
-				 vfs_hdl);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Could not get the fs locations for vfs handle: %p",
+				vfs_hdl);
 		}
 	}
 }
@@ -80,12 +80,12 @@ void vfs_sub_getattrs_release(struct fsal_attrlist *attrib)
 
 #if defined(ENABLE_VFS_DEBUG_ACL)
 struct vfs_acl_entry {
-	struct gsh_buffdesc	fa_key;		/**< Key for tree */
-	struct avltree_node	fa_node;	/**< AVL tree node */
-	fsal_acl_data_t		fa_acl;		/**< Actual ACLs */
+	struct gsh_buffdesc fa_key; /**< Key for tree */
+	struct avltree_node fa_node; /**< AVL tree node */
+	fsal_acl_data_t fa_acl; /**< Actual ACLs */
 };
 
-static struct avltree vfs_acl_tree = {0};
+static struct avltree vfs_acl_tree = { 0 };
 
 /**
  * @brief VFS acl comparator for AVL tree walk
@@ -143,7 +143,7 @@ static struct vfs_acl_entry *vfs_acl_locate(struct fsal_obj_handle *obj)
 		fa_entry = avltree_container_of(node, struct vfs_acl_entry,
 						fa_node);
 	} else {
-		fa_entry->fa_acl.aces = (fsal_ace_t *) nfs4_ace_alloc(0);
+		fa_entry->fa_acl.aces = (fsal_ace_t *)nfs4_ace_alloc(0);
 	}
 
 	return fa_entry;
@@ -167,8 +167,8 @@ void vfs_acl_release(struct gsh_buffdesc *key)
 	gsh_free(fa_entry);
 }
 
-fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
-			       int fd, attrmask_t request_mask,
+fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
+			       attrmask_t request_mask,
 			       struct fsal_attrlist *attrib)
 {
 	fsal_acl_status_t status;
@@ -193,7 +193,7 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG,
 		       (fsal_acl_t *)&fa->fa_acl);
 	acldata.naces = fa->fa_acl.naces;
-	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+	acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
 	memcpy(acldata.aces, fa->fa_acl.aces,
 	       acldata.naces * sizeof(fsal_ace_t));
 
@@ -207,8 +207,8 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
-			       int fd, attrmask_t request_mask,
+fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
+			       attrmask_t request_mask,
 			       struct fsal_attrlist *attrib)
 {
 	struct vfs_acl_entry *fa;
@@ -221,7 +221,7 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	fa = vfs_acl_locate(&vfs_hdl->obj_handle);
 	nfs4_ace_free(fa->fa_acl.aces);
 	fa->fa_acl.naces = attrib->acl->naces;
-	fa->fa_acl.aces = (fsal_ace_t *) nfs4_ace_alloc(fa->fa_acl.naces);
+	fa->fa_acl.aces = (fsal_ace_t *)nfs4_ace_alloc(fa->fa_acl.naces);
 	memcpy(fa->fa_acl.aces, attrib->acl->aces,
 	       fa->fa_acl.naces * sizeof(fsal_ace_t));
 	fsal_print_acl(COMPONENT_FSAL, NIV_FULL_DEBUG,
@@ -235,8 +235,7 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 }
 
 #elif defined(ENABLE_VFS_POSIX_ACL)
-fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
-			       int fd,
+fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
 			       attrmask_t request_mask,
 			       struct fsal_attrlist *attrib)
 {
@@ -290,36 +289,36 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	}
 
 	acldata.naces = 2 * (e_count + i_count);
-	LogDebug(COMPONENT_FSAL,
-			"No of aces present in fsal_acl_t = %d", acldata.naces);
+	LogDebug(COMPONENT_FSAL, "No of aces present in fsal_acl_t = %d",
+		 acldata.naces);
 	if (acldata.naces == 0) {
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 		goto out;
 	}
 
-	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+	acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
 	pace = acldata.aces;
 
 	if (e_count > 0) {
 		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false,
-							ACL_FOR_V4, &pace);
+						 ACL_FOR_V4, &pace);
 	} else {
 		LogDebug(COMPONENT_FSAL,
-			"effective acl is not set for this object");
+			 "effective acl is not set for this object");
 	}
 
 	if (i_count > 0) {
 		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true,
-							ACL_FOR_V4, &pace);
+						   ACL_FOR_V4, &pace);
 		new_count += new_i_count;
 	} else {
 		LogDebug(COMPONENT_FSAL,
-			"Inherit acl is not set for this directory");
+			 "Inherit acl is not set for this directory");
 	}
 
 	/* Reallocating acldata into the required size */
-	acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
-					new_count*sizeof(fsal_ace_t));
+	acldata.aces = (fsal_ace_t *)gsh_realloc(
+		acldata.aces, new_count * sizeof(fsal_ace_t));
 	acldata.naces = new_count;
 
 	attrib->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
@@ -342,8 +341,7 @@ out:
 	return status;
 }
 
-fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
-			       int fd,
+fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
 			       attrmask_t request_mask,
 			       struct fsal_attrlist *attrib)
 {
@@ -375,8 +373,7 @@ fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 
 	acl = fsal_acl_2_posix_acl(attrib->acl, ACL_TYPE_ACCESS);
 	if (acl == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "failed to set access type posix acl");
+		LogMajor(COMPONENT_FSAL, "failed to set access type posix acl");
 		status = fsalstat(ERR_FSAL_FAULT, 0);
 		goto out;
 	}
@@ -416,8 +413,8 @@ out:
 }
 
 #else /* NOT(ENABLE_VFS_DEBUG_ACL OR ENABLE_VFS_POSIX_ACL) */
-fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
-			       int fd, attrmask_t request_mask,
+fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
+			       attrmask_t request_mask,
 			       struct fsal_attrlist *attrib)
 {
 	vfs_sub_getattrs_common(vfs_hdl, fd, request_mask, attrib);
@@ -425,8 +422,8 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl,
-			       int fd, attrmask_t request_mask,
+fsal_status_t vfs_sub_setattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
+			       attrmask_t request_mask,
 			       struct fsal_attrlist *attrib)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

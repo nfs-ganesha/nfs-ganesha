@@ -60,7 +60,9 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	uint32_t expire_time_attr = 0;
 	uint32_t upflags;
 	int errsv = 0;
-	fsal_status_t fsal_status = {0,};
+	fsal_status_t fsal_status = {
+		0,
+	};
 	struct req_op_context op_context;
 	struct gsh_export *gsh_export;
 	struct fsal_export *fsal_export;
@@ -68,15 +70,15 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	rcu_register_thread();
 
 #ifdef _VALGRIND_MEMCHECK
-		memset(&handle, 0, sizeof(handle));
-		memset(&buf, 0, sizeof(buf));
-		memset(&fl, 0, sizeof(fl));
-		memset(&devid, 0, sizeof(devid));
+	memset(&handle, 0, sizeof(handle));
+	memset(&buf, 0, sizeof(buf));
+	memset(&fl, 0, sizeof(fl));
+	memset(&devid, 0, sizeof(devid));
 #endif
 
-	(void) snprintf(thr_name, sizeof(thr_name),
-			"fsal_up_%"PRIu64".%"PRIu64,
-			gpfs_fs->fs->dev.major, gpfs_fs->fs->dev.minor);
+	(void)snprintf(thr_name, sizeof(thr_name),
+		       "fsal_up_%" PRIu64 ".%" PRIu64, gpfs_fs->fs->dev.major,
+		       gpfs_fs->fs->dev.minor);
 	SetNameFunction(thr_name);
 
 	LogFullDebug(COMPONENT_FSAL_UP,
@@ -106,16 +108,17 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 	/* Start querying for events and processing. */
 	while (1) {
-		LogFullDebug(COMPONENT_FSAL_UP,
-			     "Requesting event from FSAL Callback interface for %d.",
-			     gpfs_fs->root_fd);
+		LogFullDebug(
+			COMPONENT_FSAL_UP,
+			"Requesting event from FSAL Callback interface for %d.",
+			gpfs_fs->root_fd);
 
 		handle.handle_size = GPFS_MAX_FH_SIZE;
 		handle.handle_key_size = OPENHANDLE_KEY_LEN;
 		handle.handle_version = OPENHANDLE_VERSION;
 
 		callback.interface_version =
-		    GPFS_INTERFACE_VERSION + GPFS_INTERFACE_SUB_VER;
+			GPFS_INTERFACE_VERSION + GPFS_INTERFACE_SUB_VER;
 
 		callback.mountdirfd = gpfs_fs->root_fd;
 		callback.handle = &handle;
@@ -132,9 +135,10 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		if (rc != 0) {
 			rc = -(rc);
 			if (rc > GPFS_INTERFACE_VERSION) {
-				LogFatal(COMPONENT_FSAL_UP,
-					 "Ganesha version %d mismatch GPFS version %d.",
-					 callback.interface_version, rc);
+				LogFatal(
+					COMPONENT_FSAL_UP,
+					"Ganesha version %d mismatch GPFS version %d.",
+					callback.interface_version, rc);
 				goto out;
 			}
 
@@ -143,8 +147,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 
 			LogCrit(COMPONENT_FSAL_UP,
 				"OPENHANDLE_INODE_UPDATE failed for %d. rc %d, errno %d (%s) reason %d",
-				gpfs_fs->root_fd, rc, errsv,
-				strerror(errsv), reason);
+				gpfs_fs->root_fd, rc, errsv, strerror(errsv),
+				reason);
 
 			/* @todo 1000 retry logic will go away once the
 			 * OPENHANDLE_INODE_UPDATE ioctl separates EINTR
@@ -168,28 +172,29 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		flags = flags & 0xffff;
 
 		LogDebug(COMPONENT_FSAL_UP,
-			 "inode update: rc %d reason %d update ino %"
-			 PRId64 " flags:%x",
+			 "inode update: rc %d reason %d update ino %" PRId64
+			 " flags:%x",
 			 rc, reason, callback.buf->st_ino, flags);
 
-		LogFullDebug(COMPONENT_FSAL_UP,
-			     "inode update: flags:%x callback.handle:%p handle size = %u handle_type:%d handle_version:%d key_size = %u handle_fsid=%X.%X f_handle:%p expire: %d",
-			     *callback.flags, callback.handle,
-			     callback.handle->handle_size,
-			     callback.handle->handle_type,
-			     callback.handle->handle_version,
-			     callback.handle->handle_key_size,
-			     callback.handle->handle_fsid[0],
-			     callback.handle->handle_fsid[1],
-			     callback.handle->f_handle, expire_time_attr);
+		LogFullDebug(
+			COMPONENT_FSAL_UP,
+			"inode update: flags:%x callback.handle:%p handle size = %u handle_type:%d handle_version:%d key_size = %u handle_fsid=%X.%X f_handle:%p expire: %d",
+			*callback.flags, callback.handle,
+			callback.handle->handle_size,
+			callback.handle->handle_type,
+			callback.handle->handle_version,
+			callback.handle->handle_key_size,
+			callback.handle->handle_fsid[0],
+			callback.handle->handle_fsid[1],
+			callback.handle->f_handle, expire_time_attr);
 
 		callback.handle->handle_version = OPENHANDLE_VERSION;
 
 		fhP = (int *)&(callback.handle->f_handle[0]);
-		LogFullDebug(COMPONENT_FSAL_UP,
-			     " inode update: handle %08x %08x %08x %08x %08x %08x %08x",
-			     fhP[0], fhP[1], fhP[2], fhP[3], fhP[4], fhP[5],
-			     fhP[6]);
+		LogFullDebug(
+			COMPONENT_FSAL_UP,
+			" inode update: handle %08x %08x %08x %08x %08x %08x %08x",
+			fhP[0], fhP[1], fhP[2], fhP[3], fhP[4], fhP[5], fhP[6]);
 
 		/* Here is where we decide what type of event this is
 		 * ... open,close,read,...,invalidate? */
@@ -220,79 +225,66 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 		event_func = fsal_export->up_ops;
 
 		switch (reason) {
-		case INODE_LOCK_GRANTED:	/* Lock Event */
-		case INODE_LOCK_AGAIN:	/* Lock Event */
-			{
-				LogMidDebug(COMPONENT_FSAL_UP,
-					    "%s: owner %p pid %d type %d start %lld len %lld",
-					    reason ==
-					    INODE_LOCK_GRANTED ?
-					    "inode lock granted" :
-					    "inode lock again", fl.lock_owner,
-					    fl.flock.l_pid, fl.flock.l_type,
-					    (long long)fl.flock.l_start,
-					    (long long)fl.flock.l_len);
+		case INODE_LOCK_GRANTED: /* Lock Event */
+		case INODE_LOCK_AGAIN: /* Lock Event */
+		{
+			LogMidDebug(
+				COMPONENT_FSAL_UP,
+				"%s: owner %p pid %d type %d start %lld len %lld",
+				reason == INODE_LOCK_GRANTED ?
+					"inode lock granted" :
+					"inode lock again",
+				fl.lock_owner, fl.flock.l_pid, fl.flock.l_type,
+				(long long)fl.flock.l_start,
+				(long long)fl.flock.l_len);
 
-				fsal_lock_param_t lockdesc = {
-					.lock_sle_type = FSAL_POSIX_LOCK,
-					.lock_type = fl.flock.l_type,
-					.lock_start = fl.flock.l_start,
-					.lock_length = fl.flock.l_len
-				};
-				if (reason == INODE_LOCK_AGAIN)
-					fsal_status = up_async_lock_avail(
-							 general_fridge,
-							 event_func,
-							 &key,
-							 fl.lock_owner,
-							 &lockdesc, NULL, NULL);
-				else
-					fsal_status = up_async_lock_grant(
-							 general_fridge,
-							 event_func,
-							 &key,
-							 fl.lock_owner,
-							 &lockdesc, NULL, NULL);
-			}
-			break;
+			fsal_lock_param_t lockdesc = {
+				.lock_sle_type = FSAL_POSIX_LOCK,
+				.lock_type = fl.flock.l_type,
+				.lock_start = fl.flock.l_start,
+				.lock_length = fl.flock.l_len
+			};
+			if (reason == INODE_LOCK_AGAIN)
+				fsal_status = up_async_lock_avail(
+					general_fridge, event_func, &key,
+					fl.lock_owner, &lockdesc, NULL, NULL);
+			else
+				fsal_status = up_async_lock_grant(
+					general_fridge, event_func, &key,
+					fl.lock_owner, &lockdesc, NULL, NULL);
+		} break;
 
-		case BREAK_DELEGATION:	/* Delegation Event */
+		case BREAK_DELEGATION: /* Delegation Event */
 			LogDebug(COMPONENT_FSAL_UP,
 				 "delegation recall: flags:%x ino %" PRId64,
 				 flags, callback.buf->st_ino);
-			fsal_status = up_async_delegrecall(general_fridge,
-						  event_func,
-						  &key, NULL, NULL);
+			fsal_status = up_async_delegrecall(
+				general_fridge, event_func, &key, NULL, NULL);
 			break;
 
-		case LAYOUT_FILE_RECALL:	/* Layout file recall Event */
-			{
-				struct pnfs_segment segment = {
-					.offset = 0,
-					.length = UINT64_MAX,
-					.io_mode = LAYOUTIOMODE4_ANY
-				};
-				LogDebug(COMPONENT_FSAL_UP,
-					 "layout file recall: flags:%x ino %"
-					 PRId64, flags, callback.buf->st_ino);
+		case LAYOUT_FILE_RECALL: /* Layout file recall Event */
+		{
+			struct pnfs_segment segment = {
+				.offset = 0,
+				.length = UINT64_MAX,
+				.io_mode = LAYOUTIOMODE4_ANY
+			};
+			LogDebug(COMPONENT_FSAL_UP,
+				 "layout file recall: flags:%x ino %" PRId64,
+				 flags, callback.buf->st_ino);
 
-				fsal_status = up_async_layoutrecall(
-							general_fridge,
-							event_func,
-							&key,
-							LAYOUT4_NFSV4_1_FILES,
-							false, &segment,
-							NULL, NULL, NULL,
-							NULL);
-			}
-			break;
+			fsal_status = up_async_layoutrecall(
+				general_fridge, event_func, &key,
+				LAYOUT4_NFSV4_1_FILES, false, &segment, NULL,
+				NULL, NULL, NULL);
+		} break;
 
-		case LAYOUT_RECALL_ANY:	/* Recall all layouts Event */
+		case LAYOUT_RECALL_ANY: /* Recall all layouts Event */
 			LogDebug(COMPONENT_FSAL_UP,
 				 "layout recall any: flags:%x ino %" PRId64,
 				 flags, callback.buf->st_ino);
 
-	    /**
+			/**
 	     * @todo This functionality needs to be implemented as a
 	     * bulk FSID CB_LAYOUTRECALL.  RECALL_ANY isn't suitable
 	     * since it can't be restricted to just one FSAL.  Also
@@ -302,39 +294,34 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 	     */
 			break;
 
-		case LAYOUT_NOTIFY_DEVICEID:	/* Device update Event */
+		case LAYOUT_NOTIFY_DEVICEID: /* Device update Event */
 			LogDebug(COMPONENT_FSAL_UP,
-				 "layout dev update: flags:%x ino %"
-				 PRId64 " seq %d fd %d fsid 0x%" PRIx64,
-				 flags,
-				callback.buf->st_ino,
-				devid.device_id2,
-				devid.device_id4,
-				devid.devid);
+				 "layout dev update: flags:%x ino %" PRId64
+				 " seq %d fd %d fsid 0x%" PRIx64,
+				 flags, callback.buf->st_ino, devid.device_id2,
+				 devid.device_id4, devid.devid);
 
 			memset(&devid, 0, sizeof(devid));
 			devid.fsal_id = FSAL_ID_GPFS;
 
-			fsal_status = up_async_notify_device(general_fridge,
-						event_func,
-						NOTIFY_DEVICEID4_DELETE_MASK,
-						LAYOUT4_NFSV4_1_FILES,
-						&devid,
-						true, NULL,
-						NULL);
+			fsal_status = up_async_notify_device(
+				general_fridge, event_func,
+				NOTIFY_DEVICEID4_DELETE_MASK,
+				LAYOUT4_NFSV4_1_FILES, &devid, true, NULL,
+				NULL);
 			break;
 
-		case INODE_UPDATE:	/* Update Event */
-			{
-				struct fsal_attrlist attr;
+		case INODE_UPDATE: /* Update Event */
+		{
+			struct fsal_attrlist attr;
 
-				LogMidDebug(COMPONENT_FSAL_UP,
-					    "inode update: flags:%x update ino %"
-					    PRId64 " n_link:%d",
-					    flags, callback.buf->st_ino,
-					    (int)callback.buf->st_nlink);
+			LogMidDebug(COMPONENT_FSAL_UP,
+				    "inode update: flags:%x update ino %" PRId64
+				    " n_link:%d",
+				    flags, callback.buf->st_ino,
+				    (int)callback.buf->st_nlink);
 
-				/** @todo: This notification is completely
+			/** @todo: This notification is completely
 				 * asynchronous.  If we happen to change some
 				 * of the attributes later, we end up over
 				 * writing those with these possibly stale
@@ -354,103 +341,91 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 * changes, and we may end up with stale values
 				 * until this gets fixed!
 				 */
-				if (flags & (UP_SIZE | UP_SIZE_BIG)) {
-					fsal_status = event_func->invalidate(
-						event_func, &key,
-						FSAL_UP_INVALIDATE_CACHE);
-					break;
-				}
+			if (flags & (UP_SIZE | UP_SIZE_BIG)) {
+				fsal_status = event_func->invalidate(
+					event_func, &key,
+					FSAL_UP_INVALIDATE_CACHE);
+				break;
+			}
 
-				/* Check for accepted flags, any other changes
+			/* Check for accepted flags, any other changes
 				   just invalidate. */
-				if (flags &
-				    ~(UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
-				     UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
-					fsal_status = event_func->invalidate(
-						event_func, &key,
-						FSAL_UP_INVALIDATE_CACHE);
-				} else {
-					/* buf may not have all attributes set.
+			if (flags & ~(UP_SIZE | UP_NLINK | UP_MODE | UP_OWN |
+				      UP_TIMES | UP_ATIME | UP_SIZE_BIG)) {
+				fsal_status = event_func->invalidate(
+					event_func, &key,
+					FSAL_UP_INVALIDATE_CACHE);
+			} else {
+				/* buf may not have all attributes set.
 					 * Set the mask to what is changed
 					 */
-					attr.valid_mask = 0;
-					attr.acl = NULL;
-					upflags = 0;
-					if (flags & UP_SIZE)
-						attr.valid_mask |=
-						   ATTR_CHANGE |
-						   ATTR_SIZE | ATTR_SPACEUSED;
-					if (flags & UP_SIZE_BIG) {
-						attr.valid_mask |=
-						   ATTR_CHANGE |
-						   ATTR_SIZE | ATTR_SPACEUSED;
-						upflags |=
-						   fsal_up_update_filesize_inc |
+				attr.valid_mask = 0;
+				attr.acl = NULL;
+				upflags = 0;
+				if (flags & UP_SIZE)
+					attr.valid_mask |= ATTR_CHANGE |
+							   ATTR_SIZE |
+							   ATTR_SPACEUSED;
+				if (flags & UP_SIZE_BIG) {
+					attr.valid_mask |= ATTR_CHANGE |
+							   ATTR_SIZE |
+							   ATTR_SPACEUSED;
+					upflags |= fsal_up_update_filesize_inc |
 						   fsal_up_update_spaceused_inc;
-					}
-					if (flags & UP_MODE)
-						attr.valid_mask |=
-						   ATTR_CHANGE |
-						   ATTR_MODE;
-					if (flags & UP_OWN)
-						attr.valid_mask |=
-						   ATTR_CHANGE |
-						   ATTR_OWNER | ATTR_GROUP |
-						   ATTR_MODE;
-					if (flags & UP_TIMES)
-						attr.valid_mask |=
-						   ATTR_CHANGE |
-						   ATTR_ATIME | ATTR_CTIME |
-						    ATTR_MTIME;
-					if (flags & UP_ATIME)
-						attr.valid_mask |=
-						   ATTR_CHANGE |
-						   ATTR_ATIME;
-					if (flags & UP_NLINK)
-						attr.valid_mask |=
-							ATTR_NUMLINKS;
-					attr.request_mask = attr.valid_mask;
+				}
+				if (flags & UP_MODE)
+					attr.valid_mask |= ATTR_CHANGE |
+							   ATTR_MODE;
+				if (flags & UP_OWN)
+					attr.valid_mask |=
+						ATTR_CHANGE | ATTR_OWNER |
+						ATTR_GROUP | ATTR_MODE;
+				if (flags & UP_TIMES)
+					attr.valid_mask |=
+						ATTR_CHANGE | ATTR_ATIME |
+						ATTR_CTIME | ATTR_MTIME;
+				if (flags & UP_ATIME)
+					attr.valid_mask |= ATTR_CHANGE |
+							   ATTR_ATIME;
+				if (flags & UP_NLINK)
+					attr.valid_mask |= ATTR_NUMLINKS;
+				attr.request_mask = attr.valid_mask;
 
-					attr.expire_time_attr =
-					    expire_time_attr;
+				attr.expire_time_attr = expire_time_attr;
 
-					posix2fsal_attributes(&buf, &attr);
-					fsal_status = event_func->update(
-							event_func, &key,
-							&attr, upflags);
+				posix2fsal_attributes(&buf, &attr);
+				fsal_status = event_func->update(
+					event_func, &key, &attr, upflags);
 
-					if ((flags & UP_NLINK)
-					    && (attr.numlinks == 0)) {
-						upflags = fsal_up_nlink;
-						attr.valid_mask = 0;
-						attr.request_mask = 0;
-						fsal_status = up_async_update
-						    (general_fridge,
-						     event_func,
-						     &key, &attr,
-						     upflags, NULL, NULL);
-					}
+				if ((flags & UP_NLINK) &&
+				    (attr.numlinks == 0)) {
+					upflags = fsal_up_nlink;
+					attr.valid_mask = 0;
+					attr.request_mask = 0;
+					fsal_status = up_async_update(
+						general_fridge, event_func,
+						&key, &attr, upflags, NULL,
+						NULL);
 				}
 			}
-			break;
+		} break;
 
-		case THREAD_STOP:  /* We wanted to terminate this thread */
+		case THREAD_STOP: /* We wanted to terminate this thread */
 			LogDebug(COMPONENT_FSAL_UP,
-				"Terminating the GPFS up call thread for %d",
-				gpfs_fs->root_fd);
+				 "Terminating the GPFS up call thread for %d",
+				 gpfs_fs->root_fd);
 			release_op_context();
 			goto out;
 
 		case INODE_INVALIDATE:
-			LogMidDebug(COMPONENT_FSAL_UP,
-				    "inode invalidate: flags:%x update ino %"
-				    PRId64, flags, callback.buf->st_ino);
+			LogMidDebug(
+				COMPONENT_FSAL_UP,
+				"inode invalidate: flags:%x update ino %" PRId64,
+				flags, callback.buf->st_ino);
 
 			upflags = FSAL_UP_INVALIDATE_CACHE;
 			fsal_status = event_func->invalidate_close(
-						event_func,
-						&key,
-						upflags);
+				event_func, &key, upflags);
 			break;
 
 		case THREAD_PAUSE:
@@ -481,4 +456,4 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 out:
 	rcu_unregister_thread();
 	return NULL;
-}				/* GPFSFSAL_UP_Thread */
+} /* GPFSFSAL_UP_Thread */

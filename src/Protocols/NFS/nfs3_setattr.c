@@ -34,7 +34,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "gsh_rpc.h"
@@ -68,10 +68,8 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_attrlist setattr;
 	struct fsal_obj_handle *obj = NULL;
-	pre_op_attr pre_attr = {
-		.attributes_follow = false
-	};
-	fsal_status_t fsal_status = {0, 0};
+	pre_op_attr pre_attr = { .attributes_follow = false };
+	fsal_status_t fsal_status = { 0, 0 };
 	int rc = NFS_REQ_OK;
 	SETATTR3resfail *resfail = &res->res_setattr3.SETATTR3res_u.resfail;
 	SETATTR3resok *resok = &res->res_setattr3.SETATTR3res_u.resok;
@@ -86,13 +84,11 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resfail->obj_wcc.after.attributes_follow = FALSE;
 
 	obj = nfs3_FhandleToCache(&arg->arg_setattr3.object,
-				    &res->res_setattr3.status,
-				    &rc);
+				  &res->res_setattr3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs3_FhandleToCache failed");
+		LogFullDebug(COMPONENT_NFSPROTO, "nfs3_FhandleToCache failed");
 		goto out;
 	}
 
@@ -113,11 +109,9 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		if (obj_ctime->tv_sec != pre_ctime->tv_sec ||
 		    obj_ctime->tv_nsec != pre_ctime->tv_nsec) {
-
 			res->res_setattr3.status = NFS3ERR_NOT_SYNC;
 			rc = NFS_REQ_OK;
-			LogFullDebug(COMPONENT_NFSPROTO,
-				     "guard check failed");
+			LogFullDebug(COMPONENT_NFSPROTO, "guard check failed");
 			goto out;
 		}
 	}
@@ -160,8 +154,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res->res_setattr3.status =
 				nfs3_Errno_status(fsal_status);
-			LogFullDebug(COMPONENT_NFSPROTO,
-				     "fsal_setattr failed");
+			LogFullDebug(COMPONENT_NFSPROTO, "fsal_setattr failed");
 			goto out_fail;
 		}
 	}
@@ -174,7 +167,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	rc = NFS_REQ_OK;
 
- out:
+out:
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&setattr);
@@ -183,14 +176,13 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (obj)
 		obj->obj_ops->put_ref(obj);
 
-	LogDebug(COMPONENT_NFSPROTO,
-		 "Result %s%s",
+	LogDebug(COMPONENT_NFSPROTO, "Result %s%s",
 		 nfsstat3_to_str(res->res_setattr3.status),
 		 rc == NFS_REQ_DROP ? " Dropping response" : "");
 
 	return rc;
 
- out_fail:
+out_fail:
 
 	nfs_SetWccData(&pre_attr, obj, NULL, &resfail->obj_wcc);
 
@@ -200,7 +192,7 @@ int nfs3_setattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	goto out;
-}				/* nfs3_setattr */
+} /* nfs3_setattr */
 
 /**
  * @brief Free the result structure allocated for nfs3_setattr.

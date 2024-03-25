@@ -93,11 +93,11 @@ extern "C" {
  * Buffer may be allocated global, on the stack, or by malloc.
  */
 struct display_buffer {
-	size_t b_size;		/*< Size of the buffer, will hold b_size
+	size_t b_size; /*< Size of the buffer, will hold b_size
 				    - 1 chars plus a '\0' */
-	char *b_current;	/*< Current position in the buffer, where the
+	char *b_current; /*< Current position in the buffer, where the
 				    next string will be appended */
-	char *b_start;		/*< Start of the buffer */
+	char *b_start; /*< Start of the buffer */
 };
 
 int display_buffer_remain(struct display_buffer *dspbuf);
@@ -193,8 +193,8 @@ static inline int display_printf(struct display_buffer *dspbuf, const char *fmt,
 /* Return -1 on EMPTTY target */
 #define OPAQUE_BYTES_INVALID_EMPTY 0x10
 
-int display_opaque_bytes_flags(struct display_buffer *dspbuf,
-			       void *value, int len, int flags);
+int display_opaque_bytes_flags(struct display_buffer *dspbuf, void *value,
+			       int len, int flags);
 
 /**
  * @brief Display a number of opaque bytes as a hex string.
@@ -206,8 +206,8 @@ int display_opaque_bytes_flags(struct display_buffer *dspbuf,
  * @return the bytes remaining in the buffer.
  *
  */
-static inline
-int display_opaque_bytes(struct display_buffer *dspbuf, void *value, int len)
+static inline int display_opaque_bytes(struct display_buffer *dspbuf,
+				       void *value, int len)
 {
 	return display_opaque_bytes_flags(dspbuf, value, len, OPAQUE_BYTES_0x);
 }
@@ -257,4 +257,4 @@ int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max);
 }
 #endif
 
-#endif				/* _DISPLAY_H */
+#endif /* _DISPLAY_H */

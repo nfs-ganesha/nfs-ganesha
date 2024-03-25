@@ -156,7 +156,7 @@ static char *gpfs_opcode_to_name(int opcode)
 		return "UNMONITORED";
 	}
 }
-#endif  /* USE_DBUS */
+#endif /* USE_DBUS */
 
 /** @fn prepare_for_stats(struct fsal_module *fsal_hdl)
  *  *  @brief prepare the structure which will hold the stats
@@ -195,58 +195,58 @@ void fsal_gpfs_extract_stats(struct fsal_module *fsal_hdl, void *iter)
 	dbus_message_iter_open_container(iter1, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);
 	for (i = 0; i < GPFS_STAT_PH_INDEX; i++) {
-		if (i == GPFS_STAT_NO_OP_1 || i == GPFS_STAT_NO_OP_2
-		     || i == GPFS_STAT_NO_OP_3)
+		if (i == GPFS_STAT_NO_OP_1 || i == GPFS_STAT_NO_OP_2 ||
+		    i == GPFS_STAT_NO_OP_3)
 			continue;
 
-		total_ops = atomic_fetch_uint64_t(
-				&gpfs_stats->op_stats[i].num_ops);
+		total_ops =
+			atomic_fetch_uint64_t(&gpfs_stats->op_stats[i].num_ops);
 		if (total_ops == 0)
 			continue;
 
 		total_resp = atomic_fetch_uint64_t(
-				&gpfs_stats->op_stats[i].resp_time);
+			&gpfs_stats->op_stats[i].resp_time);
 		min_resp = atomic_fetch_uint64_t(
-				&gpfs_stats->op_stats[i].resp_time_min);
+			&gpfs_stats->op_stats[i].resp_time_min);
 		max_resp = atomic_fetch_uint64_t(
-				&gpfs_stats->op_stats[i].resp_time_max);
+			&gpfs_stats->op_stats[i].resp_time_max);
 		/* We have valid stats, send it across */
 		message = gpfs_opcode_to_name(gpfs_stats->op_stats[i].op_code);
-		dbus_message_iter_append_basic(&struct_iter,
-				DBUS_TYPE_STRING, &message);
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_UINT64, &total_ops);
-		res = (double) total_resp * 0.000001 / total_ops;
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &res);
-		res = (double) min_resp * 0.000001;
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &res);
-		res = (double) max_resp * 0.000001;
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+					       &message);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+					       &total_ops);
+		res = (double)total_resp * 0.000001 / total_ops;
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+		res = (double)min_resp * 0.000001;
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+		res = (double)max_resp * 0.000001;
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
 		op_counter += total_ops;
 	}
 	if (op_counter == 0) {
 		message = "None";
 		/* insert dummy stats to avoid dbus crash */
-		dbus_message_iter_append_basic(&struct_iter,
-				DBUS_TYPE_STRING, &message);
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_UINT64, &total_ops);
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &res);
-		dbus_message_iter_append_basic(&struct_iter,
-			DBUS_TYPE_DOUBLE, &res);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING,
+					       &message);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+					       &total_ops);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
 	} else {
 		message = "OK";
 	}
 	dbus_message_iter_close_container(iter1, &struct_iter);
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_STRING, &message);
 }
-#endif   /* USE_DBUS */
+#endif /* USE_DBUS */
 
 void fsal_gpfs_reset_stats(struct fsal_module *fsal_hdl)
 {
@@ -257,15 +257,11 @@ void fsal_gpfs_reset_stats(struct fsal_module *fsal_hdl)
 
 	/* reset all the counters */
 	for (i = 0; i < GPFS_STAT_PH_INDEX; i++) {
-		atomic_store_uint64_t(
-				&gpfs_stats->op_stats[i].num_ops, 0);
-		atomic_store_uint64_t(
-				&gpfs_stats->op_stats[i].resp_time, 0);
-		atomic_store_uint64_t(
-				&gpfs_stats->op_stats[i].resp_time_min, 0);
-		atomic_store_uint64_t(
-				&gpfs_stats->op_stats[i].resp_time_max, 0);
+		atomic_store_uint64_t(&gpfs_stats->op_stats[i].num_ops, 0);
+		atomic_store_uint64_t(&gpfs_stats->op_stats[i].resp_time, 0);
+		atomic_store_uint64_t(&gpfs_stats->op_stats[i].resp_time_min,
+				      0);
+		atomic_store_uint64_t(&gpfs_stats->op_stats[i].resp_time_max,
+				      0);
 	}
 }
-
-

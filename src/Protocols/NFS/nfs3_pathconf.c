@@ -36,7 +36,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "fsal.h"
@@ -75,8 +75,7 @@ int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Convert file handle into a fsal_handle */
 	obj = nfs3_FhandleToCache(&arg->arg_pathconf3.object,
-				    &res->res_pathconf3.status,
-				    &rc);
+				  &res->res_pathconf3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -87,22 +86,22 @@ int nfs3_pathconf(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resok->name_max = exp_hdl->exp_ops.fs_maxnamelen(exp_hdl);
 	resok->no_trunc = exp_hdl->exp_ops.fs_supports(exp_hdl, fso_no_trunc);
 	resok->chown_restricted =
-	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_chown_restricted);
+		exp_hdl->exp_ops.fs_supports(exp_hdl, fso_chown_restricted);
 	resok->case_insensitive =
-	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_insensitive);
+		exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_insensitive);
 	resok->case_preserving =
-	    exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_preserving);
+		exp_hdl->exp_ops.fs_supports(exp_hdl, fso_case_preserving);
 
 	/* Build post op file attributes */
 	nfs_SetPostOpAttr(obj, &resok->obj_attributes, NULL);
 
- out:
+out:
 
 	if (obj)
 		obj->obj_ops->put_ref(obj);
 
 	return rc;
-}				/* nfs3_pathconf */
+} /* nfs3_pathconf */
 
 /**
  * @brief Free the result structure allocated for nfs3_pathconf.

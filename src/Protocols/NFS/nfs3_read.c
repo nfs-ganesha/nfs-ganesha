@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "fsal.h"
@@ -46,8 +46,7 @@
 #include "export_mgr.h"
 #include "sal_functions.h"
 
-static void nfs_read_ok(READ3resok *resok,
-			struct fsal_io_arg *read_arg,
+static void nfs_read_ok(READ3resok *resok, struct fsal_io_arg *read_arg,
 			struct fsal_obj_handle *obj)
 {
 	/* Build Post Op Attributes */
@@ -104,9 +103,9 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 
 	if (data->rc == NFS_REQ_OK) {
 		if (!op_ctx->fsal_export->exp_ops.fs_supports(
-		     op_ctx->fsal_export, fso_compliant_eof_behavior)
-			&& nfs_param.core_param.getattrs_in_complete_read
-		    && !read_arg->end_of_file) {
+			    op_ctx->fsal_export, fso_compliant_eof_behavior) &&
+		    nfs_param.core_param.getattrs_in_complete_read &&
+		    !read_arg->end_of_file) {
 			/*
 			 * NFS requires to set the EOF flag for all reads that
 			 * reach the EOF, i.e., even the ones returning data.
@@ -124,8 +123,8 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 
 			if (FSAL_IS_SUCCESS(status)) {
 				read_arg->end_of_file = (read_arg->offset +
-							 read_arg->io_amount)
-							>= attrs.filesize;
+							 read_arg->io_amount) >=
+							attrs.filesize;
 			}
 
 			/* Done with the attrs */
@@ -154,19 +153,19 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 	/* Now we convert NFS_REQ_ERROR into NFS_REQ_OK */
 	data->rc = NFS_REQ_OK;
 
- out:
+out:
 	/* return references */
 	if (data->obj)
 		data->obj->obj_ops->put_ref(data->obj);
 
 	server_stats_io_done(read_arg->io_request, read_arg->io_amount,
-			     (data->rc == NFS_REQ_OK) ?  true : false, false);
+			     (data->rc == NFS_REQ_OK) ? true : false, false);
 
 	return data->rc;
 }
 
 static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-			  void *read_data, void *caller_data);
+			 void *read_data, void *caller_data);
 
 static enum xprt_stat nfs3_read_resume(struct svc_req *req)
 {
@@ -180,9 +179,8 @@ static enum xprt_stat nfs3_read_resume(struct svc_req *req)
 
 	if (data->read_arg.fsal_resume) {
 		/* FSAL is requesting another read2 call on resume */
-		atomic_postclear_uint32_t_bits(&data->flags,
-					       ASYNC_PROC_EXIT |
-					       ASYNC_PROC_DONE);
+		atomic_postclear_uint32_t_bits(
+			&data->flags, ASYNC_PROC_EXIT | ASYNC_PROC_DONE);
 
 		data->obj->obj_ops->read2(data->obj, true, nfs3_read_cb,
 					  &data->read_arg, data);
@@ -190,8 +188,8 @@ static enum xprt_stat nfs3_read_resume(struct svc_req *req)
 		/* Only atomically set the flags if we actually call read2,
 		 * otherwise we will have indicated as having been DONE.
 		 */
-		flags =
-		    atomic_postset_uint32_t_bits(&data->flags, ASYNC_PROC_EXIT);
+		flags = atomic_postset_uint32_t_bits(&data->flags,
+						     ASYNC_PROC_EXIT);
 
 		if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
 			/* The read was not finished before we got here. When
@@ -228,7 +226,7 @@ static enum xprt_stat nfs3_read_resume(struct svc_req *req)
  * @param[in] caller_data	Data for caller
  */
 static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-			  void *read_data, void *caller_data)
+			 void *read_data, void *caller_data)
 {
 	struct nfs3_read_data *data = caller_data;
 	uint32_t flags;
@@ -290,7 +288,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *obj;
 	pre_op_attr pre_attr;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	uint64_t offset = arg->arg_read3.offset;
 	size_t size = arg->arg_read3.count;
 	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
@@ -305,16 +303,15 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	READ3resok *resok = &res->res_read3.READ3res_u.resok;
 
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_read3.file,
-		" start: %"PRIx64 " len: %zu",
-		offset, size);
+			  " start: %" PRIx64 " len: %zu", offset, size);
 
 	/* to avoid setting it on each error case */
-	resfail->file_attributes.attributes_follow =  FALSE;
+	resfail->file_attributes.attributes_follow = FALSE;
 
 	/* initialize for read of size 0 */
 	memset(&res->res_read3, 0, sizeof(res->res_read3));
-	obj = nfs3_FhandleToCache(&arg->arg_read3.file,
-				  &res->res_read3.status, &rc);
+	obj = nfs3_FhandleToCache(&arg->arg_read3.file, &res->res_read3.status,
+				  &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -324,15 +321,14 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	nfs_SetPreOpAttr(obj, &pre_attr);
 
-	fsal_status =
-	    obj->obj_ops->test_access(obj, FSAL_READ_ACCESS, NULL, NULL, true);
+	fsal_status = obj->obj_ops->test_access(obj, FSAL_READ_ACCESS, NULL,
+						NULL, true);
 
 	if (fsal_status.major == ERR_FSAL_ACCESS) {
 		/* Test for execute permission */
-		fsal_status = fsal_access(obj,
-				       FSAL_MODE_MASK_SET(FSAL_X_OK) |
-				       FSAL_ACE4_MASK_SET
-				       (FSAL_ACE_PERM_EXECUTE));
+		fsal_status = fsal_access(
+			obj, FSAL_MODE_MASK_SET(FSAL_X_OK) |
+				     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 	}
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -358,11 +354,11 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			     offset, size, MaxOffsetRead);
 
 		if ((offset + size) > MaxOffsetRead) {
-			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tried to violate max file size %"
-				 PRIu64 " for exportid #%hu",
-				 MaxOffsetRead,
-				 op_ctx->ctx_export->export_id);
+			LogEvent(
+				COMPONENT_NFSPROTO,
+				"A client tried to violate max file size %" PRIu64
+				" for exportid #%hu",
+				MaxOffsetRead, op_ctx->ctx_export->export_id);
 
 			res->res_read3.status = NFS3ERR_FBIG;
 
@@ -435,8 +431,8 @@ again:
 	/* Only atomically set the flags if we actually call read2, otherwise
 	 * we will have indicated as having been DONE.
 	 */
-	flags =
-	    atomic_postset_uint32_t_bits(&read_data->flags, ASYNC_PROC_EXIT);
+	flags = atomic_postset_uint32_t_bits(&read_data->flags,
+					     ASYNC_PROC_EXIT);
 
 	if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
 		/* The read was not finished before we got here. When the
@@ -450,9 +446,8 @@ again:
 
 	if (read_arg->fsal_resume) {
 		/* FSAL is requesting another read2 call */
-		atomic_postclear_uint32_t_bits(&read_data->flags,
-					       ASYNC_PROC_EXIT |
-					       ASYNC_PROC_DONE);
+		atomic_postclear_uint32_t_bits(
+			&read_data->flags, ASYNC_PROC_EXIT | ASYNC_PROC_DONE);
 		/* Make the call with the same params, though the FSAL will be
 		 * signaled by fsal_resume being set.
 		 */
@@ -477,7 +472,7 @@ return_ok:
 	server_stats_io_done(size, 0, true, false);
 
 	return NFS_REQ_OK;
-}				/* nfs3_read */
+} /* nfs3_read */
 
 /**
  * @brief Free the result structure allocated for nfs3_read.

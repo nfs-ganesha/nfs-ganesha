@@ -66,8 +66,8 @@ int dbus_append_signal_string(DBusMessageIter *args, void *sig_string)
  */
 
 int dbus_send_signal(DBusConnection *conn, char *obj_name, char *int_name,
-		     char *sig_name, int (*payload) (DBusMessageIter *signal,
-						     void *args),
+		     char *sig_name,
+		     int (*payload)(DBusMessageIter *signal, void *args),
 		     void *sig_args)
 {
 	static dbus_uint32_t serial;

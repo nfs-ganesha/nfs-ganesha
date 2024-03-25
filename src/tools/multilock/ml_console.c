@@ -31,7 +31,8 @@
 
 char options[] = "ekdqfsp:h?x:";
 char usage[] =
-	"Usage: ml_console [-p port] [-s] [-f] [-q] [-x script] [-d]\n" "\n"
+	"Usage: ml_console [-p port] [-s] [-f] [-q] [-x script] [-d]\n"
+	"\n"
 	"  -p port   - specify the port to listen to clients on\n"
 	"  -s        - specify strict mode (clients are not polled without EXPECT)\n"
 	"  -f        - specify errors are fatal mode\n"
@@ -40,8 +41,7 @@ char usage[] =
 	"  -x script - specify script to run\n"
 	"  -k        - syntax check only\n"
 	"  -e        - non-fatal errors, full accounting of errors to stderr, everything\n"
-	"              to stdout\n"
-	;
+	"              to stdout\n";
 
 int port, listensock;
 struct sockaddr_in addr;
@@ -62,8 +62,8 @@ void open_socket(void)
 	rc = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (rc == -1)
-		fatal("socket failed with ERRNO %d \"%s\"\n",
-		      errno, strerror(errno));
+		fatal("socket failed with ERRNO %d \"%s\"\n", errno,
+		      strerror(errno));
 
 	listensock = rc;
 	rc = setsockopt(listensock, SOL_SOCKET, SO_REUSEADDR, &reuse,
@@ -80,8 +80,8 @@ void open_socket(void)
 	rc = bind(listensock, (struct sockaddr *)&addr, sizeof(addr));
 
 	if (rc == -1)
-		fatal("bind failed with ERRNO %d \"%s\"\n",
-		      errno, strerror(errno));
+		fatal("bind failed with ERRNO %d \"%s\"\n", errno,
+		      strerror(errno));
 
 	FD_ZERO(&sockets);
 	FD_SET(listensock, &sockets);
@@ -90,8 +90,8 @@ void open_socket(void)
 	rc = listen(listensock, 10);
 
 	if (rc == -1)
-		fatal("listen failed with ERRNO %d \"%s\"\n",
-		      errno, strerror(errno));
+		fatal("listen failed with ERRNO %d \"%s\"\n", errno,
+		      strerror(errno));
 }
 
 void do_accept(void)
@@ -110,8 +110,8 @@ void do_accept(void)
 	client->c_socket = accept(listensock, &client->c_addr, &len);
 
 	if (client->c_socket == -1)
-		fatal("Accept failed ERRNO %d \"%s\"\n",
-		      errno, strerror(errno));
+		fatal("Accept failed ERRNO %d \"%s\"\n", errno,
+		      strerror(errno));
 
 	FD_SET(client->c_socket, &sockets);
 
@@ -126,8 +126,8 @@ void do_accept(void)
 	client->c_input = fdopen(client->c_socket, "r");
 
 	if (client->c_input == NULL)
-		fatal("Accept fdopen for input failed ERRNO %d \"%s\"\n",
-		      errno, strerror(errno));
+		fatal("Accept fdopen for input failed ERRNO %d \"%s\"\n", errno,
+		      strerror(errno));
 
 	rc = setvbuf(client->c_input, NULL, _IONBF, 0);
 
@@ -257,9 +257,9 @@ int receive(bool watchin, long timeout_secs)
 				fprintf_stderr("select terminated by signal\n");
 				return -3;
 			} else {
-				fprintf_stderr
-				    ("select failed with ERRNO %d \"%s\"\n",
-				     errno, strerror(errno));
+				fprintf_stderr(
+					"select failed with ERRNO %d \"%s\"\n",
+					errno, strerror(errno));
 				return -1;
 			}
 		}
@@ -278,8 +278,8 @@ int receive(bool watchin, long timeout_secs)
 			}
 			if (FD_ISSET(i, &exceptfds)) {
 				fprintf_stderr(
-				     "select received exception for socket %d\n",
-				     i);
+					"select received exception for socket %d\n",
+					i);
 			}
 		}
 	}
@@ -330,8 +330,8 @@ struct response *process_client_response(struct client *client)
 	len = readln(client->c_input, line, sizeof(line));
 
 	if (len >= 0) {
-		array_sprintf(client_resp->r_original, "%s %s",
-			      client->c_name, line);
+		array_sprintf(client_resp->r_original, "%s %s", client->c_name,
+			      line);
 		fprintf(output, "%s\n", client_resp->r_original);
 
 		rest = parse_response(line, client_resp);
@@ -390,9 +390,10 @@ struct response *receive_response(bool watchin, long timeout_secs)
 			resp->r_tag = -1;
 			array_strcpy(resp->r_data, "Receive failed");
 
-			array_sprintf(resp->r_original,
-				      "-1 QUIT ERRNO %d \"%s\" \"Receive failed\"",
-				      errno, strerror(errno));
+			array_sprintf(
+				resp->r_original,
+				"-1 QUIT ERRNO %d \"%s\" \"Receive failed\"",
+				errno, strerror(errno));
 
 			array_strcpy(errdetail, "Receive failed");
 			array_strcpy(badtoken, "");
@@ -428,23 +429,21 @@ enum console_cmd {
 	CCMD_FORK,
 };
 
-struct token console_commands[] = {
-	{"QUIT", 4, CCMD_QUIT},
-	{"STRICT", 6, CCMD_STRICT},
-	{"EXPECT", 6, CCMD_EXPECT},
-	{"FATAL", 5, CCMD_FATAL},
-	{"SLEEP", 5, CCMD_SLEEP},
-	{"{", 1, CCMD_OPEN_BRACE},
-	{"}", 1, CCMD_CLOSE_BRACE},
-	{"OK", 2, CCMD_SIMPLE_OK},
-	{"AVAILABLE", 9, CCMD_SIMPLE_AVAILABLE},
-	{"GRANTED", 7, CCMD_SIMPLE_GRANTED},
-	{"DENIED", 6, CCMD_SIMPLE_DENIED},
-	{"DEADLOCK", 8, CCMD_SIMPLE_DEADLOCK},
-	{"CLIENTS", 7, CCMD_CLIENTS},
-	{"FORK", 4, CCMD_FORK},
-	{"", 0, CCMD_CLIENT_CMD}
-};
+struct token console_commands[] = { { "QUIT", 4, CCMD_QUIT },
+				    { "STRICT", 6, CCMD_STRICT },
+				    { "EXPECT", 6, CCMD_EXPECT },
+				    { "FATAL", 5, CCMD_FATAL },
+				    { "SLEEP", 5, CCMD_SLEEP },
+				    { "{", 1, CCMD_OPEN_BRACE },
+				    { "}", 1, CCMD_CLOSE_BRACE },
+				    { "OK", 2, CCMD_SIMPLE_OK },
+				    { "AVAILABLE", 9, CCMD_SIMPLE_AVAILABLE },
+				    { "GRANTED", 7, CCMD_SIMPLE_GRANTED },
+				    { "DENIED", 6, CCMD_SIMPLE_DENIED },
+				    { "DEADLOCK", 8, CCMD_SIMPLE_DEADLOCK },
+				    { "CLIENTS", 7, CCMD_CLIENTS },
+				    { "FORK", 4, CCMD_FORK },
+				    { "", 0, CCMD_CLIENT_CMD } };
 
 static void handle_quit(void);
 
@@ -455,8 +454,8 @@ static void handle_quit(void);
  * unexpected response and this is not being called from handle_quit() force
  * fatal error.
  */
-void wait_for_expected_responses(const char *label, int count,
-				 const char *last, bool could_quit)
+void wait_for_expected_responses(const char *label, int count, const char *last,
+				 bool could_quit)
 {
 	struct response *expect_resp;
 	struct response *client_resp;
@@ -464,8 +463,8 @@ void wait_for_expected_responses(const char *label, int count,
 
 	fprintf(output, "Waiting for %d %s...\n", count, label);
 
-	while (expected_responses != NULL
-	       && (client_list != NULL || could_quit)) {
+	while (expected_responses != NULL &&
+	       (client_list != NULL || could_quit)) {
 		client_resp = receive_response(false, -1);
 
 		if (terminate && could_quit) {
@@ -473,8 +472,8 @@ void wait_for_expected_responses(const char *label, int count,
 			break;
 		}
 
-		expect_resp =
-		    check_expected_responses(expected_responses, client_resp);
+		expect_resp = check_expected_responses(expected_responses,
+						       client_resp);
 
 		if (expect_resp != NULL) {
 			fprintf(output, "Matched %s\n",
@@ -543,8 +542,7 @@ void handle_quit(void)
 			expect_resp->r_status = STATUS_OK;
 			expect_resp->r_tag = global_tag;
 			array_sprintf(expect_resp->r_original,
-				      "EXPECT %s * QUIT OK",
-				      client->c_name);
+				      "EXPECT %s * QUIT OK", client->c_name);
 			add_response(expect_resp, &expected_responses);
 			count++;
 
@@ -554,8 +552,7 @@ void handle_quit(void)
 			expect_resp->r_status = STATUS_OK;
 			expect_resp->r_tag = -2;
 			array_sprintf(expect_resp->r_original,
-				      "EXPECT %s -2 QUIT OK",
-				      client->c_name);
+				      "EXPECT %s -2 QUIT OK", client->c_name);
 			add_response(expect_resp, &expected_responses);
 			count++;
 		}
@@ -605,7 +602,7 @@ struct console_state {
 	char *rest;
 	char line[MAXXFER];
 	char out[MAXXFER];
-	char last[MAXXFER];	/* last command sent */
+	char last[MAXXFER]; /* last command sent */
 	struct client *client;
 	int len;
 	int cmd;
@@ -663,9 +660,7 @@ void ccmd_sleep(struct console_state *cs)
 			errno = 0;
 
 			if (err_accounting)
-				fprintf(stderr,
-					"%s\n%s\n",
-					cs->last,
+				fprintf(stderr, "%s\n%s\n", cs->last,
 					client_resp->r_original);
 
 			array_strcpy(errdetail, "Unexpected response");
@@ -701,10 +696,9 @@ void ccmd_close_brace(struct console_state *cs)
 		cs->rest = NULL;
 	} else if (!syntax) {
 		cs->inbrace = false;
-		wait_for_expected_responses("responses",
-					    cs->count, cs->last, true);
-		fprintf(output,
-			"All responses received OK\n");
+		wait_for_expected_responses("responses", cs->count, cs->last,
+					    true);
+		fprintf(output, "All responses received OK\n");
 		cs->count = 0;
 	} else {
 		cs->inbrace = false;
@@ -721,12 +715,9 @@ void ccmd_clients(struct console_state *cs)
 		return;
 	}
 
-	while (cs->rest != NULL && cs->rest[0] != '\0'
-	       && cs->rest[0] != '#') {
+	while (cs->rest != NULL && cs->rest[0] != '\0' && cs->rest[0] != '#') {
 		/* Get the next client to expect */
-		cs->rest = get_client(cs->rest,
-				      &cs->client,
-				      true,
+		cs->rest = get_client(cs->rest, &cs->client, true,
 				      REQUIRES_EITHER);
 
 		if (cs->rest == NULL)
@@ -741,8 +732,8 @@ void ccmd_clients(struct console_state *cs)
 		array_strcpy(cs->expect_resp->r_data, cs->client->c_name);
 
 		array_sprintf(cs->expect_resp->r_original,
-			      "EXPECT %s * HELLO OK \"%s\"",
-			      cs->client->c_name, cs->client->c_name);
+			      "EXPECT %s * HELLO OK \"%s\"", cs->client->c_name,
+			      cs->client->c_name);
 
 		cs->count++;
 
@@ -762,12 +753,9 @@ void ccmd_clients(struct console_state *cs)
 	}
 
 	if (!syntax) {
-		wait_for_expected_responses("clients",
-					    cs->count,
-					    cs->last,
+		wait_for_expected_responses("clients", cs->count, cs->last,
 					    true);
-		fprintf(output,
-			"All clients said HELLO OK\n");
+		fprintf(output, "All clients said HELLO OK\n");
 	}
 
 	cs->count = 0;
@@ -784,10 +772,7 @@ void ccmd_fork(struct console_state *cs)
 	}
 
 	/* Get the client to send FORK to */
-	cs->rest = get_client(cs->rest,
-			      &cs->client,
-			      syntax,
-			      REQUIRES_MORE);
+	cs->rest = get_client(cs->rest, &cs->client, syntax, REQUIRES_MORE);
 
 	if (cs->rest == NULL)
 		return;
@@ -801,10 +786,7 @@ void ccmd_fork(struct console_state *cs)
 	cs->count++;
 
 	/* Get the client that will be created */
-	cs->rest = get_client(cs->rest,
-			      &cs->client,
-			      true,
-			      REQUIRES_NO_MORE);
+	cs->rest = get_client(cs->rest, &cs->client, true, REQUIRES_NO_MORE);
 
 	if (cs->rest == NULL)
 		return;
@@ -816,19 +798,17 @@ void ccmd_fork(struct console_state *cs)
 	cs->expect_resp->r_status = STATUS_OK;
 
 	/* Use the created client's name as the FORK data */
-	array_strcpy(cs->client_cmd->r_data,
-		     cs->expect_resp->r_client->c_name);
+	array_strcpy(cs->client_cmd->r_data, cs->expect_resp->r_client->c_name);
 
 	array_strcpy(cs->expect_resp->r_data,
 		     cs->expect_resp->r_client->c_name);
 
-	array_sprintf(cs->client_cmd->r_original,
-		      "EXPECT %s * FORK OK \"%s\"",
+	array_sprintf(cs->client_cmd->r_original, "EXPECT %s * FORK OK \"%s\"",
 		      cs->client->c_name, cs->client->c_name);
 
 	array_sprintf(cs->expect_resp->r_original,
-		      "EXPECT %s * HELLO OK \"%s\"",
-		      cs->client->c_name, cs->client->c_name);
+		      "EXPECT %s * HELLO OK \"%s\"", cs->client->c_name,
+		      cs->client->c_name);
 
 	cs->count++;
 
@@ -849,9 +829,7 @@ void ccmd_fork(struct console_state *cs)
 	}
 
 	if (!syntax) {
-		wait_for_expected_responses("clients",
-					    cs->count,
-					    cs->last,
+		wait_for_expected_responses("clients", cs->count, cs->last,
 					    true);
 		fprintf(output, "All clients responded OK\n");
 	}
@@ -870,11 +848,10 @@ void ccmd_expect(struct console_state *cs)
 
 	if (script) {
 		array_sprintf(cs->expect_resp->r_original,
-			      "Line %4ld: EXPECT %s %s",
-			      lno, cs->client->c_name, cs->rest);
+			      "Line %4ld: EXPECT %s %s", lno,
+			      cs->client->c_name, cs->rest);
 	} else {
-		array_sprintf(cs->expect_resp->r_original,
-			      "EXPECT %s %s",
+		array_sprintf(cs->expect_resp->r_original, "EXPECT %s %s",
 			      cs->client->c_name, cs->rest);
 	}
 
@@ -927,8 +904,7 @@ void ccmd_simple(struct console_state *cs)
 	case CMD_HELLO:
 	case CMD_QUIT:
 		if (cs->cmd != CCMD_SIMPLE_OK) {
-			array_sprintf(errdetail,
-				      "Simple %s command expects OK",
+			array_sprintf(errdetail, "Simple %s command expects OK",
 				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
 			cs->rest = NULL;
@@ -937,13 +913,12 @@ void ccmd_simple(struct console_state *cs)
 
 	case CMD_READ:
 		if (cs->cmd != CCMD_SIMPLE_OK) {
-			array_sprintf(errdetail,
-				      "Simple %s command expects OK",
+			array_sprintf(errdetail, "Simple %s command expects OK",
 				      commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
 			cs->rest = NULL;
-		} else if (cs->client_cmd->r_length == 0
-			   || cs->client_cmd->r_data[0] == '\0') {
+		} else if (cs->client_cmd->r_length == 0 ||
+			   cs->client_cmd->r_data[0] == '\0') {
 			array_strcpy(errdetail,
 				     "Simple READ must have compare data");
 			errno = 0;
@@ -963,11 +938,12 @@ void ccmd_simple(struct console_state *cs)
 
 	case CMD_LOCK:
 	case CMD_HOP:
-		if (cs->cmd != CCMD_SIMPLE_DENIED
-		    && cs->cmd != CCMD_SIMPLE_GRANTED) {
-			array_sprintf(errdetail,
-				      "Simple %s command requires GRANTED or DENIED status",
-				      commands[cs->client_cmd->r_cmd].cmd_name);
+		if (cs->cmd != CCMD_SIMPLE_DENIED &&
+		    cs->cmd != CCMD_SIMPLE_GRANTED) {
+			array_sprintf(
+				errdetail,
+				"Simple %s command requires GRANTED or DENIED status",
+				commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
 			cs->rest = NULL;
 		}
@@ -976,9 +952,10 @@ void ccmd_simple(struct console_state *cs)
 	case CMD_TEST:
 	case CMD_LIST:
 		if (cs->cmd != CCMD_SIMPLE_AVAILABLE) {
-			array_sprintf(errdetail,
-				      "Simple %s command requires AVAILABLE status",
-				      commands[cs->client_cmd->r_cmd].cmd_name);
+			array_sprintf(
+				errdetail,
+				"Simple %s command requires AVAILABLE status",
+				commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
 			cs->rest = NULL;
 		}
@@ -987,9 +964,10 @@ void ccmd_simple(struct console_state *cs)
 	case CMD_UNLOCK:
 	case CMD_UNHOP:
 		if (cs->cmd != CCMD_SIMPLE_GRANTED) {
-			array_sprintf(errdetail,
-				      "Simple %s command requires GRANTED status",
-				      commands[cs->client_cmd->r_cmd].cmd_name);
+			array_sprintf(
+				errdetail,
+				"Simple %s command requires GRANTED status",
+				commands[cs->client_cmd->r_cmd].cmd_name);
 			errno = 0;
 			cs->rest = NULL;
 		}
@@ -1027,7 +1005,8 @@ void console_command(void)
 {
 	struct console_state cs = {
 		.inbrace = false,
-		.count = 0,};
+		.count = 0,
+	};
 
 	cs.last[0] = '\0';
 
@@ -1051,15 +1030,12 @@ void console_command(void)
 		if (script && !syntax)
 			fprintf(output, "Line %4ld: %s\n", lno, cs.line);
 
-		cs.rest = get_token_value(cs.rest,
-					  &cs.cmd,
-					  console_commands,
-					  true,
-					  REQUIRES_EITHER,
+		cs.rest = get_token_value(cs.rest, &cs.cmd, console_commands,
+					  true, REQUIRES_EITHER,
 					  "Invalid console command");
 
 		if (cs.rest != NULL)
-			switch ((enum console_cmd) cs.cmd) {
+			switch ((enum console_cmd)cs.cmd) {
 			case CCMD_QUIT:
 				if (syntax)
 					return;
@@ -1110,16 +1086,14 @@ void console_command(void)
 			case CCMD_SIMPLE_DEADLOCK:
 				ccmd_simple(&cs);
 				break;
-
 			}
 
 		if (cs.rest == NULL) {
 			error();
 
 			if (syntax)
-				fprintf(output,
-					"Line %4ld: %s\n",
-					lno, cs.line);
+				fprintf(output, "Line %4ld: %s\n", lno,
+					cs.line);
 
 			if ((error_is_fatal && !syntax) || terminate)
 				handle_quit();
@@ -1167,37 +1141,32 @@ int main(int argc, char **argv)
 	rc = sigaction(SIGINT, &sigact, NULL);
 
 	if (rc == -1)
-		fatal(
-		    "sigaction(SIGINT, &sigact, NULL) returned -1 errno %d \"%s\"\n",
-		    errno, strerror(errno));
+		fatal("sigaction(SIGINT, &sigact, NULL) returned -1 errno %d \"%s\"\n",
+		      errno, strerror(errno));
 
 	rc = sigaction(SIGTERM, &sigact, NULL);
 
 	if (rc == -1)
-		fatal(
-		    "sigaction(SIGTERM, &sigact, NULL) returned -1 errno %d \"%s\"\n",
-		    errno, strerror(errno));
+		fatal("sigaction(SIGTERM, &sigact, NULL) returned -1 errno %d \"%s\"\n",
+		      errno, strerror(errno));
 
 	rc = sigaction(SIGUSR1, &sigact, NULL);
 
 	if (rc == -1)
-		fatal(
-		    "sigaction(SIGUSR1, &sigact, NULL) returned -1 errno %d \"%s\"\n",
-		    errno, strerror(errno));
+		fatal("sigaction(SIGUSR1, &sigact, NULL) returned -1 errno %d \"%s\"\n",
+		      errno, strerror(errno));
 
 	rc = sigaction(SIGPIPE, &sigact, NULL);
 
 	if (rc == -1)
-		fatal(
-		    "sigaction(SIGPIPE, &sigact, NULL) returned -1 errno %d \"%s\"\n",
-		    errno, strerror(errno));
+		fatal("sigaction(SIGPIPE, &sigact, NULL) returned -1 errno %d \"%s\"\n",
+		      errno, strerror(errno));
 
 	rc = sigfillset(&full_signal_set);
 
 	if (rc == -1)
-		fatal(
-		    "sigfillset(&full_signal_set) returned -1 errno %d \"%s\"\n",
-		    errno, strerror(errno));
+		fatal("sigfillset(&full_signal_set) returned -1 errno %d \"%s\"\n",
+		      errno, strerror(errno));
 
 	sigprocmask(SIG_SETMASK, &full_signal_set, &original_signal_set);
 

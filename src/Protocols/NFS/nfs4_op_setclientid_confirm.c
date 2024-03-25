@@ -62,10 +62,10 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 						compound_data_t *data,
 						struct nfs_resop4 *resp)
 {
-	SETCLIENTID_CONFIRM4args * const arg_SETCLIENTID_CONFIRM4 =
-	    &op->nfs_argop4_u.opsetclientid_confirm;
-	SETCLIENTID_CONFIRM4res * const res_SETCLIENTID_CONFIRM4 =
-	    &resp->nfs_resop4_u.opsetclientid_confirm;
+	SETCLIENTID_CONFIRM4args *const arg_SETCLIENTID_CONFIRM4 =
+		&op->nfs_argop4_u.opsetclientid_confirm;
+	SETCLIENTID_CONFIRM4res *const res_SETCLIENTID_CONFIRM4 =
+		&resp->nfs_resop4_u.opsetclientid_confirm;
 	nfs_client_id_t *conf = NULL;
 	nfs_client_id_t *unconf = NULL;
 	nfs_client_record_t *client_record = NULL;
@@ -75,13 +75,14 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	/* The client name, for gratuitous logging */
 	char str_client[CLIENTNAME_BUFSIZE];
 	/* Display buffer for client name */
-	struct display_buffer dspbuf_client = {
-		sizeof(str_client), str_client, str_client};
+	struct display_buffer dspbuf_client = { sizeof(str_client), str_client,
+						str_client };
 	/* The clientid4 broken down into fields */
 	char str_clientid4[DISPLAY_CLIENTID_SIZE];
 	/* Display buffer for clientid4 */
-	struct display_buffer dspbuf_clientid4 = {
-		sizeof(str_clientid4), str_clientid4, str_clientid4};
+	struct display_buffer dspbuf_clientid4 = { sizeof(str_clientid4),
+						   str_clientid4,
+						   str_clientid4 };
 	int rc;
 
 	/* Make sure str_client is always printable even
@@ -105,20 +106,22 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		str_client_addr = op_ctx->client->hostaddr_str;
 
 	if (isDebug(COMPONENT_CLIENTID)) {
-		struct display_buffer dspbuf_verifier = {
-			sizeof(str_verifier), str_verifier, str_verifier};
+		struct display_buffer dspbuf_verifier = { sizeof(str_verifier),
+							  str_verifier,
+							  str_verifier };
 
 		display_opaque_bytes(
-				&dspbuf_verifier,
-				arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
-				NFS4_VERIFIER_SIZE);
+			&dspbuf_verifier,
+			arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
+			NFS4_VERIFIER_SIZE);
 	} else {
 		str_verifier[0] = '\0';
 	}
 
-	LogDebug(COMPONENT_CLIENTID,
-		 "SETCLIENTID_CONFIRM client addr=%s clientid=%s setclientid_confirm=%s",
-		 str_client_addr, str_clientid4, str_verifier);
+	LogDebug(
+		COMPONENT_CLIENTID,
+		"SETCLIENTID_CONFIRM client addr=%s clientid=%s setclientid_confirm=%s",
+		str_client_addr, str_clientid4, str_verifier);
 
 	/* First try to look up unconfirmed record */
 	rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
@@ -132,7 +135,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, unconf);
 			LogFullDebug(COMPONENT_CLIENTID, "Found %s", str);
@@ -142,11 +146,10 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		if (rc != CLIENT_ID_SUCCESS) {
 			/* No record whatsoever of this clientid */
-			LogDebug(COMPONENT_CLIENTID,
-				 "%s clientid = %s",
+			LogDebug(COMPONENT_CLIENTID, "%s clientid = %s",
 				 clientid_error_to_str(rc), str_clientid4);
 			res_SETCLIENTID_CONFIRM4->status =
-			    clientid_error_to_nfsstat_no_expire(rc);
+				clientid_error_to_nfsstat_no_expire(rc);
 
 			return NFS_REQ_ERROR;
 		}
@@ -159,7 +162,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, conf);
 			LogFullDebug(COMPONENT_CLIENTID, "Found %s", str);
@@ -179,15 +183,15 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_client_record(&dspbuf, client_record);
 
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
-			     str,
-			     client_record->cr_confirmed_rec,
-			     client_record->cr_unconfirmed_rec);
+		LogFullDebug(
+			COMPONENT_CLIENTID,
+			"Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
+			str, client_record->cr_confirmed_rec,
+			client_record->cr_unconfirmed_rec);
 	}
 
 	/* At this point one and only one of pconf and punconf is non-NULL */
@@ -195,22 +199,21 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 	if (unconf != NULL) {
 		/* First must match principal */
 		if (!nfs_compare_clientcred(&unconf->cid_credential,
-					    &data->credential)
-		    || op_ctx->client == NULL
-		    || unconf->gsh_client == NULL
-		    || op_ctx->client != unconf->gsh_client) {
+					    &data->credential) ||
+		    op_ctx->client == NULL || unconf->gsh_client == NULL ||
+		    op_ctx->client != unconf->gsh_client) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char *unconfirmed_addr = "(unknown)";
 
 				if (unconf->gsh_client != NULL)
 					unconfirmed_addr =
-					    unconf->gsh_client->hostaddr_str;
+						unconf->gsh_client->hostaddr_str;
 
-				LogDebug(COMPONENT_CLIENTID,
-					 "Unconfirmed ClientId %s->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
-					 str_clientid4,
-					 str_client_addr,
-					 unconfirmed_addr);
+				LogDebug(
+					COMPONENT_CLIENTID,
+					"Unconfirmed ClientId %s->'%s': Principals do not match... unconfirmed addr=%s Return NFS4ERR_CLID_INUSE",
+					str_clientid4, str_client_addr,
+					unconfirmed_addr);
 			}
 
 			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
@@ -224,8 +227,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			   SETCLIENTID_CONFIRM */
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-					sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
 				display_client_id_rec(&dspbuf, unconf);
 				LogDebug(COMPONENT_CLIENTID,
@@ -244,8 +247,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-					sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
 				display_client_id_rec(&dspbuf, unconf);
 
@@ -254,7 +257,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			}
 
 			res_SETCLIENTID_CONFIRM4->status =
-			    NFS4ERR_STALE_CLIENTID;
+				NFS4ERR_STALE_CLIENTID;
 
 			dec_client_id_ref(unconf);
 
@@ -268,37 +271,34 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		/* First must match principal */
 		if (!nfs_compare_clientcred(&conf->cid_credential,
-					    &data->credential)
-		    || op_ctx->client == NULL
-		    || conf->gsh_client == NULL
-		    || op_ctx->client != conf->gsh_client) {
+					    &data->credential) ||
+		    op_ctx->client == NULL || conf->gsh_client == NULL ||
+		    op_ctx->client != conf->gsh_client) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char *confirmed_addr = "(unknown)";
 
 				if (conf->gsh_client != NULL)
 					confirmed_addr =
-					    conf->gsh_client->hostaddr_str;
+						conf->gsh_client->hostaddr_str;
 
-				LogDebug(COMPONENT_CLIENTID,
-					 "Confirmed ClientId %s->%s addr=%s: Principals do not match...  confirmed addr=%s Return NFS4ERR_CLID_INUSE",
-					 str_clientid4,
-					 str_client,
-					 str_client_addr,
-					 confirmed_addr);
+				LogDebug(
+					COMPONENT_CLIENTID,
+					"Confirmed ClientId %s->%s addr=%s: Principals do not match...  confirmed addr=%s Return NFS4ERR_CLID_INUSE",
+					str_clientid4, str_client,
+					str_client_addr, confirmed_addr);
 			}
 
 			res_SETCLIENTID_CONFIRM4->status = NFS4ERR_CLID_INUSE;
-		} else if (memcmp(
-				conf->cid_verifier,
-				arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
-				NFS4_VERIFIER_SIZE) == 0) {
+		} else if (memcmp(conf->cid_verifier,
+				  arg_SETCLIENTID_CONFIRM4->setclientid_confirm,
+				  NFS4_VERIFIER_SIZE) == 0) {
 			/* In this case, the record was confirmed and
 			 * we have received a retry
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-					sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
 				display_client_id_rec(&dspbuf, conf);
 				LogDebug(COMPONENT_CLIENTID,
@@ -312,16 +312,17 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 			 */
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-					sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
 				display_cat(&dspbuf, "Verifier=");
 				display_opaque_bytes(&dspbuf,
 						     conf->cid_verifier,
 						     NFS4_VERIFIER_SIZE);
-				display_printf(&dspbuf,
-					       " doesn't match verifier=%s for ",
-					       str_verifier);
+				display_printf(
+					&dspbuf,
+					" doesn't match verifier=%s for ",
+					str_verifier);
 				display_client_id_rec(&dspbuf, conf);
 
 				LogDebug(COMPONENT_CLIENTID, "Confirm %s", str);
@@ -360,7 +361,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		/* Old confirmed record - need to expire it */
 		if (isDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, conf);
 			LogDebug(COMPONENT_CLIENTID, "Expiring %s", str);
@@ -381,7 +383,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		 */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, unconf);
 			LogFullDebug(COMPONENT_CLIENTID, "Updating from %s",
@@ -397,7 +400,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		conf->cid_cb.v40.cb_program = unconf->cid_cb.v40.cb_program;
 
 		conf->cid_cb.v40.cb_callback_ident =
-		    unconf->cid_cb.v40.cb_callback_ident;
+			unconf->cid_cb.v40.cb_callback_ident;
 
 		nfs_rpc_destroy_chan(&conf->cid_cb.v40.cb_chan);
 
@@ -421,7 +424,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		if (isDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, conf);
 			LogDebug(COMPONENT_CLIENTID, "Updated %s", str);
@@ -435,7 +439,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		} else {
 			set_cb_chan_down(conf, false);
 			LogDebug(COMPONENT_CLIENTID,
-				"setclid confirm: Callback channel is UP");
+				 "setclid confirm: Callback channel is UP");
 		}
 
 		/* Release our reference to the confirmed clientid. */
@@ -444,11 +448,11 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		/* This is a new clientid */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, unconf);
-			LogFullDebug(COMPONENT_CLIENTID,
-				     "Confirming new %s",
+			LogFullDebug(COMPONENT_CLIENTID, "Confirming new %s",
 				     str);
 		}
 
@@ -456,7 +460,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		if (rc != CLIENT_ID_SUCCESS) {
 			res_SETCLIENTID_CONFIRM4->status =
-			    clientid_error_to_nfsstat_no_expire(rc);
+				clientid_error_to_nfsstat_no_expire(rc);
 
 			LogEvent(COMPONENT_CLIENTID,
 				 "FAILED to confirm client");
@@ -472,7 +476,8 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 		if (isDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, unconf);
 
@@ -488,7 +493,7 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 		} else {
 			set_cb_chan_down(unconf, false);
 			LogDebug(COMPONENT_CLIENTID,
-				"setclid confirm: Callback channel is UP");
+				 "setclid confirm: Callback channel is UP");
 		}
 
 		/* Release our reference to the now confirmed record */
@@ -497,20 +502,20 @@ enum nfs_req_result nfs4_op_setclientid_confirm(struct nfs_argop4 *op,
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_client_record(&dspbuf, client_record);
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
-			     str,
-			     client_record->cr_confirmed_rec,
-			     client_record->cr_unconfirmed_rec);
+		LogFullDebug(
+			COMPONENT_CLIENTID,
+			"Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
+			str, client_record->cr_confirmed_rec,
+			client_record->cr_unconfirmed_rec);
 	}
 
 	/* Successful exit */
 	res_SETCLIENTID_CONFIRM4->status = NFS4_OK;
 
- out:
+out:
 
 	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */

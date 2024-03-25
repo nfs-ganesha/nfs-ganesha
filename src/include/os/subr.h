@@ -35,8 +35,8 @@
 #include <unistd.h>
 
 #ifndef UTIME_NOW
-#define UTIME_NOW	-1
-#define UTIME_OMIT	-2
+#define UTIME_NOW -1
+#define UTIME_OMIT -2
 #endif
 
 int vfs_utimesat(int fd, const char *path, const struct timespec times[2],
@@ -61,4 +61,4 @@ int set_threadgroups(size_t size, const gid_t *list);
 #define getuser geteuid
 #define getgroup getegid
 
-#endif/* SUBR_OS_H */
+#endif /* SUBR_OS_H */

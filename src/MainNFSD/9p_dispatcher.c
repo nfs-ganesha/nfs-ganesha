@@ -39,14 +39,14 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <poll.h>
-#include <arpa/inet.h>		/* For inet_ntop() */
+#include <arpa/inet.h> /* For inet_ntop() */
 #include "hashtable.h"
 #include "log.h"
 #include "abstract_mem.h"
@@ -67,7 +67,7 @@
 
 static struct fridgethr *_9p_worker_fridge;
 
-static struct _9p_req_st _9p_req_st;	/*< 9P request queues */
+static struct _9p_req_st _9p_req_st; /*< 9P request queues */
 
 static const char *req_q_s[N_REQ_QUEUES] = {
 	"REQ_Q_LOW_LATENCY",
@@ -102,10 +102,8 @@ static inline struct _9p_request_data *_9p_consume_req(struct req_q_pair *qpair)
 
 	PTHREAD_SPIN_lock(&qpair->consumer._9p_rq_spinlock);
 	if (qpair->consumer.size > 0) {
-		reqdata =
-		    glist_first_entry(&qpair->consumer.q,
-				      struct _9p_request_data,
-				      req_q);
+		reqdata = glist_first_entry(&qpair->consumer.q,
+					    struct _9p_request_data, req_q);
 		glist_del(&reqdata->req_q);
 		--(qpair->consumer.size);
 		PTHREAD_SPIN_unlock(&qpair->consumer._9p_rq_spinlock);
@@ -129,17 +127,17 @@ static inline struct _9p_request_data *_9p_consume_req(struct req_q_pair *qpair)
 			qpair->producer.size = 0;
 			/* consumer.size > 0 */
 			PTHREAD_SPIN_unlock(&qpair->producer._9p_rq_spinlock);
-			reqdata =
-			    glist_first_entry(&qpair->consumer.q,
-					      struct _9p_request_data,
-					      req_q);
+			reqdata = glist_first_entry(&qpair->consumer.q,
+						    struct _9p_request_data,
+						    req_q);
 			glist_del(&reqdata->req_q);
 			--(qpair->consumer.size);
 			PTHREAD_SPIN_unlock(&qpair->consumer._9p_rq_spinlock);
 			if (s)
-				LogFullDebug(COMPONENT_DISPATCH,
-					     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
-					     s, csize, psize);
+				LogFullDebug(
+					COMPONENT_DISPATCH,
+					"try splice, qpair %s consumer qsize=%u producer qsize=%u",
+					s, csize, psize);
 			goto out;
 		}
 
@@ -147,11 +145,12 @@ static inline struct _9p_request_data *_9p_consume_req(struct req_q_pair *qpair)
 		PTHREAD_SPIN_unlock(&qpair->consumer._9p_rq_spinlock);
 
 		if (s)
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "try splice, qpair %s consumer qsize=%u producer qsize=%u",
-				     s, csize, psize);
+			LogFullDebug(
+				COMPONENT_DISPATCH,
+				"try splice, qpair %s consumer qsize=%u producer qsize=%u",
+				s, csize, psize);
 	}
- out:
+out:
 	return reqdata;
 }
 
@@ -166,7 +165,7 @@ static struct _9p_request_data *_9p_dequeue_req(struct _9p_worker_data *worker)
 	/* XXX: the following stands in for a more robust/flexible
 	 * weighting function */
 
- retry_deq:
+retry_deq:
 	slot = atomic_inc_uint32_t(&_9p_req_st.reqs.ctr) % N_REQ_QUEUES;
 	for (ix = 0; ix < N_REQ_QUEUES; ++ix) {
 		qpair = &(_9p_request_q->qset[slot]);
@@ -184,7 +183,7 @@ static struct _9p_request_data *_9p_dequeue_req(struct _9p_worker_data *worker)
 		++slot;
 		slot = slot % N_REQ_QUEUES;
 
-	}			/* for */
+	} /* for */
 
 	/* wait */
 	if (!reqdata) {
@@ -205,23 +204,21 @@ static struct _9p_request_data *_9p_dequeue_req(struct _9p_worker_data *worker)
 			timeout.tv_sec = time(NULL) + 5;
 			timeout.tv_nsec = 0;
 			pthread_cond_timedwait(&wqe->lwe.wq_cv,
-					       &wqe->lwe.wq_mtx,
-					       &timeout);
+					       &wqe->lwe.wq_mtx, &timeout);
 			if (fridgethr_you_should_break(ctx)) {
 				/* We are returning;
 				 * so take us out of the waitq */
 				PTHREAD_SPIN_lock(
 					&_9p_req_st.reqs._9p_rq_st_spinlock);
-				if (wqe->waitq.next != NULL
-				    || wqe->waitq.prev != NULL) {
+				if (wqe->waitq.next != NULL ||
+				    wqe->waitq.prev != NULL) {
 					/* Element is still in wqitq,
 					 * remove it */
 					glist_del(&wqe->waitq);
 					--(_9p_req_st.reqs.waiters);
 					--(wqe->waiters);
-					wqe->flags &=
-					    ~(Wqe_LFlag_WaitSync |
-					      Wqe_LFlag_SyncDone);
+					wqe->flags &= ~(Wqe_LFlag_WaitSync |
+							Wqe_LFlag_SyncDone);
 				}
 				PTHREAD_SPIN_unlock(
 					&_9p_req_st.reqs._9p_rq_st_spinlock);
@@ -259,8 +256,8 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
 	PTHREAD_SPIN_unlock(&q->_9p_rq_spinlock);
 
 	LogDebug(COMPONENT_DISPATCH,
-		 "enqueued req, q %p (%s %p:%p) size is %d (enq %"
-		 PRIu64 " deq %" PRIu64 ")",
+		 "enqueued req, q %p (%s %p:%p) size is %d (enq %" PRIu64
+		 " deq %" PRIu64 ")",
 		 q, qpair->s, &qpair->producer, &qpair->consumer, q->size,
 		 nfs_health_.enqueued_reqs, nfs_health_.dequeued_reqs);
 
@@ -276,16 +273,18 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
 			wqe = glist_first_entry(&_9p_req_st.reqs.wait_list,
 						wait_q_entry_t, waitq);
 
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "_9p_req_st.reqs.waiters %u signal wqe %p (for q %p)",
-				     _9p_req_st.reqs.waiters, wqe, q);
+			LogFullDebug(
+				COMPONENT_DISPATCH,
+				"_9p_req_st.reqs.waiters %u signal wqe %p (for q %p)",
+				_9p_req_st.reqs.waiters, wqe, q);
 
 			/* release 1 waiter */
 			glist_del(&wqe->waitq);
 			--(_9p_req_st.reqs.waiters);
 			--(wqe->waiters);
 			/* ! SPIN LOCKED */
-			PTHREAD_SPIN_unlock(&_9p_req_st.reqs._9p_rq_st_spinlock);
+			PTHREAD_SPIN_unlock(
+				&_9p_req_st.reqs._9p_rq_st_spinlock);
 			PTHREAD_MUTEX_lock(&wqe->lwe.wq_mtx);
 			/* XXX reliable handoff */
 			wqe->flags |= Wqe_LFlag_SyncDone;
@@ -294,7 +293,8 @@ static void _9p_enqueue_req(struct _9p_request_data *reqdata)
 			PTHREAD_MUTEX_unlock(&wqe->lwe.wq_mtx);
 		} else
 			/* ! SPIN LOCKED */
-			PTHREAD_SPIN_unlock(&_9p_req_st.reqs._9p_rq_st_spinlock);
+			PTHREAD_SPIN_unlock(
+				&_9p_req_st.reqs._9p_rq_st_spinlock);
 	}
 }
 
@@ -308,8 +308,8 @@ static void _9p_execute(struct _9p_request_data *req9p)
 	struct req_op_context op_context;
 
 	init_op_context(&op_context, NULL, NULL,
-			(sockaddr_t *)&req9p->pconn->addrpeer,
-			0, 0, _9P_REQUEST);
+			(sockaddr_t *)&req9p->pconn->addrpeer, 0, 0,
+			_9P_REQUEST);
 
 	if (req9p->pconn->trans_type == _9P_TCP)
 		_9p_tcp_process_request(req9p);
@@ -318,7 +318,7 @@ static void _9p_execute(struct _9p_request_data *req9p)
 		_9p_rdma_process_request(req9p);
 #endif
 	release_op_context();
-}				/* _9p_execute */
+} /* _9p_execute */
 
 /**
  * @brief Free resources allocated for a 9p request
@@ -333,7 +333,7 @@ static void _9p_free_reqdata(struct _9p_request_data *req9p)
 		gsh_free(req9p->_9pmsg);
 
 	/* decrease connection refcount */
-	(void) atomic_dec_uint32_t(&req9p->pconn->refcount);
+	(void)atomic_dec_uint32_t(&req9p->pconn->refcount);
 }
 
 static uint32_t worker_indexer;
@@ -354,8 +354,7 @@ static void worker_thread_initializer(struct fridgethr_context *ctx)
 	/* We don't care about too long string, truncated is fine and we don't
 	 * expect EOVERRUN or EINVAL.
 	 */
-	(void) snprintf(thr_name, sizeof(thr_name),
-			"work-%u", wd->worker_index);
+	(void)snprintf(thr_name, sizeof(thr_name), "work-%u", wd->worker_index);
 	SetNameFunction(thr_name);
 
 	/* Initialize thr waitq */
@@ -417,7 +416,7 @@ static void _9p_worker_run(struct fridgethr_context *ctx)
 			     "Invalidating processed entry");
 
 		gsh_free(reqdata);
-		(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
+		(void)atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 	}
 
 	PTHREAD_MUTEX_destroy(&_9pw_mutex);
@@ -508,13 +507,13 @@ void DispatchWork9P(struct _9p_request_data *req)
 	switch (req->pconn->trans_type) {
 	case _9P_TCP:
 		LogDebug(COMPONENT_DISPATCH,
-			 "Dispatching 9P/TCP request %p, tcpsock=%lu",
-			 req, req->pconn->trans_data.sockfd);
+			 "Dispatching 9P/TCP request %p, tcpsock=%lu", req,
+			 req->pconn->trans_data.sockfd);
 		break;
 
 	case _9P_RDMA:
-		LogDebug(COMPONENT_DISPATCH,
-			 "Dispatching 9P/RDMA request %p", req);
+		LogDebug(COMPONENT_DISPATCH, "Dispatching 9P/RDMA request %p",
+			 req);
 		break;
 
 	default:
@@ -524,7 +523,7 @@ void DispatchWork9P(struct _9p_request_data *req)
 	}
 
 	/* increase connection refcount */
-	(void) atomic_inc_uint32_t(&req->pconn->refcount);
+	(void)atomic_inc_uint32_t(&req->pconn->refcount);
 
 	/* new-style dispatch */
 	_9p_enqueue_req(req);
@@ -550,8 +549,8 @@ void *_9p_socket_thread(void *Arg)
 	int fdcount = 1;
 	static char my_name[32];
 	char strcaller[SOCK_NAME_MAX];
-	struct display_buffer dspbuf = {
-				sizeof(strcaller), strcaller, strcaller};
+	struct display_buffer dspbuf = { sizeof(strcaller), strcaller,
+					 strcaller };
 	struct _9p_request_data *req = NULL;
 	int tag;
 	unsigned long sequence = 0;
@@ -568,8 +567,8 @@ void *_9p_socket_thread(void *Arg)
 	/* We don't care about too long string, truncated is fine and we don't
 	 * expect EOVERRUN or EINVAL.
 	 */
-	(void) snprintf(my_name, sizeof(my_name),
-			"9p_sock_mgr#fd=%ld", tcp_sock);
+	(void)snprintf(my_name, sizeof(my_name), "9p_sock_mgr#fd=%ld",
+		       tcp_sock);
 	SetNameFunction(my_name);
 	rcu_register_thread();
 
@@ -598,9 +597,10 @@ void *_9p_socket_thread(void *Arg)
 	rc = getpeername(tcp_sock, (struct sockaddr *)&_9p_conn.addrpeer,
 			 &addrpeerlen);
 	if (rc == -1) {
-		LogMajor(COMPONENT_9P,
-			 "Cannot get peername to tcp socket for 9p, error %d (%s)",
-			 errno, strerror(errno));
+		LogMajor(
+			COMPONENT_9P,
+			"Cannot get peername to tcp socket for 9p, error %d (%s)",
+			errno, strerror(errno));
 		/* XXX */
 		display_cat(&dspbuf, "(unresolved)");
 		goto end;
@@ -615,12 +615,11 @@ void *_9p_socket_thread(void *Arg)
 	/* Set up the structure used by poll */
 	memset((char *)fds, 0, sizeof(struct pollfd));
 	fds[0].fd = tcp_sock;
-	fds[0].events =
-	    POLLIN | POLLPRI | POLLRDBAND | POLLRDNORM | POLLRDHUP | POLLHUP |
-	    POLLERR | POLLNVAL;
+	fds[0].events = POLLIN | POLLPRI | POLLRDBAND | POLLRDNORM | POLLRDHUP |
+			POLLHUP | POLLERR | POLLNVAL;
 
 	for (;;) {
-		total_readlen = 0;  /* new message */
+		total_readlen = 0; /* new message */
 		rc = poll(fds, fdcount, -1);
 		if (rc == -1) {
 			/* timeout = -1 => Wait indefinitely for events */
@@ -641,9 +640,10 @@ void *_9p_socket_thread(void *Arg)
 		}
 
 		if (fds[0].revents & (POLLERR | POLLHUP | POLLRDHUP)) {
-			LogEvent(COMPONENT_9P,
-				 "Client %s on socket %lu has shut down and closed",
-				 strcaller, tcp_sock);
+			LogEvent(
+				COMPONENT_9P,
+				"Client %s on socket %lu has shut down and closed",
+				strcaller, tcp_sock);
 			goto end;
 		}
 
@@ -655,12 +655,11 @@ void *_9p_socket_thread(void *Arg)
 
 		/* An incoming 9P request: the msg has a 4 bytes header
 		   showing the size of the msg including the header */
-		readlen = recv(fds[0].fd, _9pmsg,
-			       _9P_HDR_SIZE, MSG_WAITALL);
+		readlen = recv(fds[0].fd, _9pmsg, _9P_HDR_SIZE, MSG_WAITALL);
 		if (readlen != _9P_HDR_SIZE)
 			goto badmsg;
 
-		msglen = *(uint32_t *) _9pmsg;
+		msglen = *(uint32_t *)_9pmsg;
 		if (msglen > _9p_conn.msize) {
 			LogCrit(COMPONENT_9P,
 				"Message size too big! got %u, max = %u",
@@ -668,32 +667,29 @@ void *_9p_socket_thread(void *Arg)
 			goto end;
 		}
 
-		LogFullDebug(COMPONENT_9P,
-			     "Received 9P/TCP message of size %u from client %s on socket %lu",
-			     msglen, strcaller, tcp_sock);
+		LogFullDebug(
+			COMPONENT_9P,
+			"Received 9P/TCP message of size %u from client %s on socket %lu",
+			msglen, strcaller, tcp_sock);
 
 		total_readlen += readlen;
 		while (total_readlen < msglen) {
-			readlen = recv(fds[0].fd,
-				       _9pmsg + total_readlen,
-				       msglen - total_readlen,
-				       0);
+			readlen = recv(fds[0].fd, _9pmsg + total_readlen,
+				       msglen - total_readlen, 0);
 
 			if (readlen > 0) {
 				total_readlen += readlen;
 				continue;
 			}
-			if (readlen == 0 ||
-			    (readlen < 0 && errno != EINTR))
+			if (readlen == 0 || (readlen < 0 && errno != EINTR))
 				goto badmsg;
-		}	/* while */
+		} /* while */
 
-		server_stats_transport_done(_9p_conn.client,
-					    total_readlen, 1, 0,
-					    0, 0, 0);
+		server_stats_transport_done(_9p_conn.client, total_readlen, 1,
+					    0, 0, 0, 0);
 
 		/* Message is good. */
-		(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
+		(void)atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 		req = gsh_calloc(1, sizeof(struct _9p_request_data));
 
 		req->_9pmsg = _9pmsg;
@@ -701,10 +697,9 @@ void *_9p_socket_thread(void *Arg)
 
 		/* Add this request to the request list,
 		 * should it be flushed later. */
-		tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
+		tag = *(u16 *)(_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
 		_9p_AddFlushHook(req, tag, sequence++);
-		LogFullDebug(COMPONENT_9P,
-			     "Request tag is %d", tag);
+		LogFullDebug(COMPONENT_9P, "Request tag is %d", tag);
 
 		/* Message was OK push it */
 		DispatchWork9P(req);
@@ -715,19 +710,20 @@ void *_9p_socket_thread(void *Arg)
 
 badmsg:
 		if (readlen == 0)
-			LogEvent(COMPONENT_9P,
-				 "Premature end for Client %s on socket %lu, total read = %u",
-				 strcaller, tcp_sock, total_readlen);
+			LogEvent(
+				COMPONENT_9P,
+				"Premature end for Client %s on socket %lu, total read = %u",
+				strcaller, tcp_sock, total_readlen);
 		else if (readlen < 0) {
-			LogEvent(COMPONENT_9P,
-				 "Read error client %s on socket %lu errno=%d, total read = %u",
-				 strcaller, tcp_sock,
-				 errno, total_readlen);
+			LogEvent(
+				COMPONENT_9P,
+				"Read error client %s on socket %lu errno=%d, total read = %u",
+				strcaller, tcp_sock, errno, total_readlen);
 		} else
-			LogEvent(COMPONENT_9P,
-				 "Header too small! for client %s on socket %lu: readlen=%u expected=%u",
-				 strcaller, tcp_sock, readlen,
-				 _9P_HDR_SIZE);
+			LogEvent(
+				COMPONENT_9P,
+				"Header too small! for client %s on socket %lu: readlen=%u expected=%u",
+				strcaller, tcp_sock, readlen, _9P_HDR_SIZE);
 
 		/* Either way, we close the connection.
 		 * It is not possible to survive
@@ -735,7 +731,7 @@ badmsg:
 		 * with the client
 		 */
 		break; /* bail out */
-	}			/* for( ;; ) */
+	} /* for( ;; ) */
 
 end:
 	LogEvent(COMPONENT_9P, "Closing connection on socket %lu", tcp_sock);
@@ -764,7 +760,7 @@ end:
 		PTHREAD_MUTEX_destroy(&_9p_conn.flush_buckets[i].flb_lock);
 
 	pthread_exit(NULL);
-}				/* _9p_socket_thread */
+} /* _9p_socket_thread */
 
 /**
  * _9p_create_socket_V4 : create the socket and bind for 9P using
@@ -778,38 +774,33 @@ end:
  */
 static int _9p_create_socket_V4(void)
 {
-	int			sock = -1;
-	int			one = 1;
-	int			centvingt = 120;
-	int			neuf = 9;
-	struct	netbuf		netbuf_tcp;
-	struct	t_bind		bindaddr_tcp;
-	struct	__rpc_sockinfo	si_tcp;
-	struct	sockaddr_in	sinaddr_tcp;
+	int sock = -1;
+	int one = 1;
+	int centvingt = 120;
+	int neuf = 9;
+	struct netbuf netbuf_tcp;
+	struct t_bind bindaddr_tcp;
+	struct __rpc_sockinfo si_tcp;
+	struct sockaddr_in sinaddr_tcp;
 
 	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (sock == -1) {
 		LogWarn(COMPONENT_9P_DISPATCH,
-			"Error creating 9p V4 socket, error %d(%s)",
-			errno, strerror(errno));
+			"Error creating 9p V4 socket, error %d(%s)", errno,
+			strerror(errno));
 		return -1;
 	}
 
-	if ((setsockopt(sock,
-			SOL_SOCKET, SO_REUSEADDR,
-			&one, sizeof(one)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_NODELAY,
-			&one, sizeof(one)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_KEEPIDLE,
-			&centvingt, sizeof(centvingt)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_KEEPINTVL,
-			&centvingt, sizeof(centvingt)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_KEEPCNT,
-			&neuf, sizeof(neuf)) == -1)) {
+	if ((setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) ==
+	     -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) ==
+	     -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &centvingt,
+			sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &centvingt,
+			sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &neuf, sizeof(neuf)) ==
+	     -1)) {
 		LogWarn(COMPONENT_9P_DISPATCH,
 			"Error setting 9p V4 socket option, error %d(%s)",
 			errno, strerror(errno));
@@ -837,9 +828,8 @@ static int _9p_create_socket_V4(void)
 		goto err;
 	}
 
-	if (bind(sock,
-		 (struct sockaddr *)bindaddr_tcp.addr.buf,
-		 (socklen_t) si_tcp.si_alen) == -1) {
+	if (bind(sock, (struct sockaddr *)bindaddr_tcp.addr.buf,
+		 (socklen_t)si_tcp.si_alen) == -1) {
 		LogWarn(COMPONENT_9P_DISPATCH,
 			"Cannot bind 9p tcp V4 socket, error %d(%s)", errno,
 			strerror(errno));
@@ -871,7 +861,7 @@ err:
 static int _9p_create_socket_V6(void)
 {
 	int sock = -1;
-	int one	= 1;
+	int one = 1;
 	int centvingt = 120;
 	int neuf = 9;
 	struct sockaddr_in6 sinaddr_tcp6;
@@ -891,24 +881,19 @@ static int _9p_create_socket_V6(void)
 		return -1;
 	}
 
-	if ((setsockopt(sock,
-			SOL_SOCKET, SO_REUSEADDR,
-			&one, sizeof(one)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_NODELAY,
-			&one, sizeof(one)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_KEEPIDLE,
-			&centvingt, sizeof(centvingt)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_KEEPINTVL,
-			&centvingt, sizeof(centvingt)) == -1) ||
-	    (setsockopt(sock,
-			IPPROTO_TCP, TCP_KEEPCNT,
-			&neuf, sizeof(neuf)) == -1)) {
+	if ((setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) ==
+	     -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) ==
+	     -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &centvingt,
+			sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &centvingt,
+			sizeof(centvingt)) == -1) ||
+	    (setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &neuf, sizeof(neuf)) ==
+	     -1)) {
 		LogWarn(COMPONENT_9P_DISPATCH,
-			"Error setting V6 socket option, error %d(%s)",
-			errno, strerror(errno));
+			"Error setting V6 socket option, error %d(%s)", errno,
+			strerror(errno));
 		goto err;
 	}
 
@@ -932,9 +917,8 @@ static int _9p_create_socket_V6(void)
 		goto err;
 	}
 
-	if (bind(sock,
-		 (struct sockaddr *)bindaddr_tcp6.addr.buf,
-		 (socklen_t) si_tcp6.si_alen) == -1) {
+	if (bind(sock, (struct sockaddr *)bindaddr_tcp6.addr.buf,
+		 (socklen_t)si_tcp6.si_alen) == -1) {
 		LogWarn(COMPONENT_9P_DISPATCH,
 			"Cannot bind 9p tcp6 socket, error %d (%s)", errno,
 			strerror(errno));
@@ -983,7 +967,7 @@ void *_9p_dispatcher_thread(void *Arg)
 	LogInfo(COMPONENT_9P_DISPATCH, "Entering 9P dispatcher");
 
 	LogDebug(COMPONENT_9P_DISPATCH, "My pthread id is %p",
-		 (void *) pthread_self());
+		 (void *)pthread_self());
 
 	/* Set up the _9p_socket (trying V6 first, will fall back to V4
 	 * if V6 fails).
@@ -1012,18 +996,19 @@ void *_9p_dispatcher_thread(void *Arg)
 		}
 
 		/* Starting the thread dedicated to signal handling */
-		rc = pthread_create(&tcp_thrid, &attr_thr,
-				    _9p_socket_thread, (void *)newsock);
+		rc = pthread_create(&tcp_thrid, &attr_thr, _9p_socket_thread,
+				    (void *)newsock);
 		if (rc != 0) {
-			LogFatal(COMPONENT_THREAD,
-				 "Could not create 9p socket manager thread, error = %d (%s)",
-				 errno, strerror(errno));
+			LogFatal(
+				COMPONENT_THREAD,
+				"Could not create 9p socket manager thread, error = %d (%s)",
+				errno, strerror(errno));
 		}
-	}			/* while */
+	} /* while */
 
 	close(_9p_socket);
 	PTHREAD_ATTR_destroy(&attr_thr);
 
 	rcu_unregister_thread();
 	return NULL;
-}				/* _9p_dispatcher_thread */
+} /* _9p_dispatcher_thread */

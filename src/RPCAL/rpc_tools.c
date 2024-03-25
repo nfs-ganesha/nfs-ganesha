@@ -133,37 +133,33 @@ uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 	int port;
 
 	switch (addr->ss_family) {
-	case AF_INET:
-		{
-			struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
+	case AF_INET: {
+		struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
 
-			addr_hash = paddr->sin_addr.s_addr;
-			if (!ignore_port) {
-				port = paddr->sin_port;
-				addr_hash ^= (port << 16);
-			}
-			break;
+		addr_hash = paddr->sin_addr.s_addr;
+		if (!ignore_port) {
+			port = paddr->sin_port;
+			addr_hash ^= (port << 16);
 		}
-	case AF_INET6:
-		{
-			struct sockaddr_in6 *paddr =
-			    (struct sockaddr_in6 *)addr;
-			uint32_t *va;
+		break;
+	}
+	case AF_INET6: {
+		struct sockaddr_in6 *paddr = (struct sockaddr_in6 *)addr;
+		uint32_t *va;
 
-			va = (uint32_t *)&paddr->sin6_addr;
-			addr_hash = va[0] ^ va[1] ^ va[2] ^ va[3];
-			if (!ignore_port) {
-				port = paddr->sin6_port;
-				addr_hash ^= (port << 16);
-			}
-			break;
+		va = (uint32_t *)&paddr->sin6_addr;
+		addr_hash = va[0] ^ va[1] ^ va[2] ^ va[3];
+		if (!ignore_port) {
+			port = paddr->sin6_port;
+			addr_hash ^= (port << 16);
 		}
+		break;
+	}
 #ifdef RPC_VSOCK
-	case AF_VSOCK:
-	{
+	case AF_VSOCK: {
 		struct sockaddr_vm *svm; /* XXX checkpatch horror */
 
-		svm = (struct sockaddr_vm *) addr;
+		svm = (struct sockaddr_vm *)addr;
 		addr_hash = svm->svm_cid;
 		if (!ignore_port)
 			addr_hash ^= svm->svm_port;
@@ -176,8 +172,8 @@ uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 	return addr_hash;
 }
 
-int display_sockaddr_port(struct display_buffer *dspbuf,
-			  const sockaddr_t *addr, bool ignore_port)
+int display_sockaddr_port(struct display_buffer *dspbuf, const sockaddr_t *addr,
+			  bool ignore_port)
 {
 	const char *name = NULL;
 	char ipname[SOCK_NAME_MAX];
@@ -191,16 +187,14 @@ int display_sockaddr_port(struct display_buffer *dspbuf,
 	case AF_INET:
 		name = inet_ntop(addr->ss_family,
 				 &(((struct sockaddr_in *)addr)->sin_addr),
-				 ipname,
-				 sizeof(ipname));
+				 ipname, sizeof(ipname));
 		port = ntohs(((struct sockaddr_in *)addr)->sin_port);
 		break;
 
 	case AF_INET6:
 		name = inet_ntop(addr->ss_family,
 				 &(((struct sockaddr_in6 *)addr)->sin6_addr),
-				 ipname,
-				 sizeof(ipname));
+				 ipname, sizeof(ipname));
 		port = ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
 		break;
 
@@ -240,38 +234,32 @@ int cmp_sockaddr(sockaddr_t *addr_1, sockaddr_t *addr_2, bool ignore_port)
 		return 0;
 
 	switch (addr_1->ss_family) {
-	case AF_INET:
-	{
+	case AF_INET: {
 		struct sockaddr_in *inaddr1 = (struct sockaddr_in *)addr_1;
 		struct sockaddr_in *inaddr2 = (struct sockaddr_in *)addr_2;
 
-		return (inaddr1->sin_addr.s_addr == inaddr2->sin_addr.s_addr
-			&& (ignore_port ||
-			    inaddr1->sin_port == inaddr2->sin_port));
+		return (inaddr1->sin_addr.s_addr == inaddr2->sin_addr.s_addr &&
+			(ignore_port ||
+			 inaddr1->sin_port == inaddr2->sin_port));
 	}
-	case AF_INET6:
-	{
+	case AF_INET6: {
 		struct sockaddr_in6 *ip6addr1 = (struct sockaddr_in6 *)addr_1;
 		struct sockaddr_in6 *ip6addr2 = (struct sockaddr_in6 *)addr_2;
 
 		return (memcmp(ip6addr1->sin6_addr.s6_addr,
 			       ip6addr2->sin6_addr.s6_addr,
-			       sizeof(ip6addr2->sin6_addr.s6_addr)) == 0)
-			&& (ignore_port ||
-			    ip6addr1->sin6_port == ip6addr2->sin6_port);
-	}
-	break;
+			       sizeof(ip6addr2->sin6_addr.s6_addr)) == 0) &&
+		       (ignore_port ||
+			ip6addr1->sin6_port == ip6addr2->sin6_port);
+	} break;
 #ifdef RPC_VSOCK
-	case AF_VSOCK:
-	{
+	case AF_VSOCK: {
 		struct sockaddr_vm *svm1 = (struct sockaddr_vm *)addr_1;
 		struct sockaddr_vm *svm2 = (struct sockaddr_vm *)addr_2;
 
-
-		return (svm1->svm_cid == svm2->svm_cid
-			&& (ignore_port || svm1->svm_port == svm2->svm_port));
-	}
-	break;
+		return (svm1->svm_cid == svm2->svm_cid &&
+			(ignore_port || svm1->svm_port == svm2->svm_port));
+	} break;
 #endif /* VSOCK */
 	default:
 		return 0;
@@ -290,8 +278,7 @@ int cmp_sockaddr(sockaddr_t *addr_1, sockaddr_t *addr_2, bool ignore_port)
 int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2, bool ignore_port)
 {
 	switch (addr1->ss_family) {
-	case AF_INET:
-	{
+	case AF_INET: {
 		struct sockaddr_in *in1 = (struct sockaddr_in *)addr1;
 		struct sockaddr_in *in2 = (struct sockaddr_in *)addr2;
 
@@ -310,8 +297,7 @@ int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2, bool ignore_port)
 		}
 		return 1;
 	}
-	case AF_INET6:
-	{
+	case AF_INET6: {
 		struct sockaddr_in6 *in1 = (struct sockaddr_in6 *)addr1;
 		struct sockaddr_in6 *in2 = (struct sockaddr_in6 *)addr2;
 		int acmp = memcmp(in1->sin6_addr.s6_addr,
@@ -330,8 +316,7 @@ int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2, bool ignore_port)
 			return acmp < 0 ? -1 : 1;
 	}
 #ifdef RPC_VSOCK
-	case AF_VSOCK:
-	{
+	case AF_VSOCK: {
 		struct sockaddr_vm *svm1 = (struct sockaddr_vm *)addr1;
 		struct sockaddr_vm *svm2 = (struct sockaddr_vm *)addr2;
 
@@ -349,8 +334,7 @@ int sockaddr_cmpf(sockaddr_t *addr1, sockaddr_t *addr2, bool ignore_port)
 			return 1;
 		}
 		return 1;
-	}
-	break;
+	} break;
 #endif /* VSOCK */
 	default:
 		/* unhandled AF */
@@ -400,32 +384,35 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 	 * |            0          |        FFFF       |    IPv4 address   |
 	 * |---------------------------------------------------------------|
 	 */
-	if ((ipv6->ss_family == AF_INET6)
-	    && !memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10)
-	    && (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF)
-	    && (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF)) {
+	if ((ipv6->ss_family == AF_INET6) &&
+	    !memcmp(psockaddr_in6->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
+	    (psockaddr_in6->sin6_addr.s6_addr[10] == 0xFF) &&
+	    (psockaddr_in6->sin6_addr.s6_addr[11] == 0xFF)) {
 		void *ab;
 
 		memset(ipv4, 0, sizeof(*ipv4));
 		ab = &(psockaddr_in6->sin6_addr.s6_addr[12]);
 
 		paddr->sin_port = psockaddr_in6->sin6_port;
-		paddr->sin_addr.s_addr = *(in_addr_t *) ab;
+		paddr->sin_addr.s_addr = *(in_addr_t *)ab;
 		ipv4->ss_family = AF_INET;
 
 		if (isMidDebug(COMPONENT_EXPORT)) {
 			char ipstring4[SOCK_NAME_MAX];
 			char ipstring6[SOCK_NAME_MAX];
-			struct display_buffer dspbuf4 = {
-				sizeof(ipstring4), ipstring4, ipstring4};
-			struct display_buffer dspbuf6 = {
-				sizeof(ipstring6), ipstring6, ipstring6};
+			struct display_buffer dspbuf4 = { sizeof(ipstring4),
+							  ipstring4,
+							  ipstring4 };
+			struct display_buffer dspbuf6 = { sizeof(ipstring6),
+							  ipstring6,
+							  ipstring6 };
 
 			display_sockip(&dspbuf4, ipv4);
 			display_sockip(&dspbuf6, ipv6);
-			LogMidDebug(COMPONENT_EXPORT,
-				    "Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
-				    ipstring6, ipstring4);
+			LogMidDebug(
+				COMPONENT_EXPORT,
+				"Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
+				ipstring6, ipstring4);
 		}
 
 		return ipv4;
@@ -468,13 +455,12 @@ bool is_loopback(sockaddr_t *addr)
 	 *
 	 * Otherwise we compare to ::1
 	 */
-	return (!memcmp(ip6addr->sin6_addr.s6_addr, ten_bytes_all_0, 10)
-			&& (ip6addr->sin6_addr.s6_addr[10] == 0xFF)
-			&& (ip6addr->sin6_addr.s6_addr[11] == 0xFF)
-			&& (ip6addr->sin6_addr.s6_addr[12] == 0x7F))
-		|| (memcmp(ip6addr->sin6_addr.s6_addr,
-			   &in6addr_loopback,
-			   sizeof(in6addr_loopback)) == 0);
+	return (!memcmp(ip6addr->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
+		(ip6addr->sin6_addr.s6_addr[10] == 0xFF) &&
+		(ip6addr->sin6_addr.s6_addr[11] == 0xFF) &&
+		(ip6addr->sin6_addr.s6_addr[12] == 0x7F)) ||
+	       (memcmp(ip6addr->sin6_addr.s6_addr, &in6addr_loopback,
+		       sizeof(in6addr_loopback)) == 0);
 }
 
 static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
@@ -483,8 +469,8 @@ static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
 	io_data *io_data = uio->uio_u2;
 
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "Releasing %p, references %"PRIi32", count %d",
-		     uio, uio->uio_references, (int) uio->uio_count);
+		     "Releasing %p, references %" PRIi32 ", count %d", uio,
+		     uio->uio_references, (int)uio->uio_count);
 
 	if (--uio->uio_references != 0)
 		return;
@@ -542,7 +528,7 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 	}
 
 	uio = gsh_calloc(1, sizeof(struct xdr_uio) +
-			 count * sizeof(struct xdr_vio) + extra);
+				    count * sizeof(struct xdr_vio) + extra);
 	uio->uio_release = xdr_io_data_uio_release;
 	uio->uio_count = count;
 	if (objp->release && objp->release_data) {
@@ -570,12 +556,11 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 		totlen += i_size;
 		remain -= i_size;
 
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "iov %p [%d].iov_base %p iov_len %zu for %zu of %u",
-			     objp->iov, i,
-			     objp->iov[i].iov_base,
-			     i_size,
-			     totlen, objp->data_len);
+		LogFullDebug(
+			COMPONENT_DISPATCH,
+			"iov %p [%d].iov_base %p iov_len %zu for %zu of %u",
+			objp->iov, i, objp->iov[i].iov_base, i_size, totlen,
+			objp->data_len);
 	}
 
 	if (size != size2) {
@@ -586,31 +571,30 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 		if (objp->last_iov_buf_size >=
 		    (uio->uio_vio[last].vio_length + n)) {
 			uio->uio_vio[last].vio_tail =
-			    uio->uio_vio[last].vio_tail + n;
+				uio->uio_vio[last].vio_tail + n;
 			uio->uio_vio[last].vio_wrap =
-			    uio->uio_vio[last].vio_wrap + n;
+				uio->uio_vio[last].vio_wrap + n;
 			uio->uio_vio[last].vio_length =
-			    uio->uio_vio[last].vio_length + n;
+				uio->uio_vio[last].vio_length + n;
 			uio->uio_count--;
 			goto putbufs;
 		}
 
 		char *p = uio->uio_vio[last].vio_base +
 			  uio->uio_vio[last].vio_length - n;
-		char *extra = (char *) uio + sizeof(struct xdr_uio) +
-					     count * sizeof(struct xdr_vio);
+		char *extra = (char *)uio + sizeof(struct xdr_uio) +
+			      count * sizeof(struct xdr_vio);
 
 		/* drop those bytes from the last buffer */
 		uio->uio_vio[last].vio_tail -= n;
 		uio->uio_vio[last].vio_wrap -= n;
 		uio->uio_vio[last].vio_length -= n;
 
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Extra trim uio_vio[%d].vio_base %p vio_length %"
-			     PRIu32,
-			     last,
-			     uio->uio_vio[last].vio_base,
-			     uio->uio_vio[last].vio_length);
+		LogFullDebug(
+			COMPONENT_DISPATCH,
+			"Extra trim uio_vio[%d].vio_base %p vio_length %" PRIu32,
+			last, uio->uio_vio[last].vio_base,
+			uio->uio_vio[last].vio_length);
 
 		/* move the bytes to the extra buffer and set it up as a
 		 * BYTES_PER_XDR_UNIT (4) byte buffer. Because it is part of the
@@ -627,11 +611,10 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 		uio->uio_vio[i].vio_length = BYTES_PER_XDR_UNIT;
 		uio->uio_vio[i].vio_type = VIO_DATA;
 
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Extra uio_vio[%d].vio_base %p vio_length %"PRIu32,
-			     i,
-			     uio->uio_vio[i].vio_base,
-			     uio->uio_vio[i].vio_length);
+		LogFullDebug(
+			COMPONENT_DISPATCH,
+			"Extra uio_vio[%d].vio_base %p vio_length %" PRIu32, i,
+			uio->uio_vio[i].vio_base, uio->uio_vio[i].vio_length);
 
 		/* Remember so we don't free... */
 		uio->uio_u3 = extra;
@@ -639,8 +622,8 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 
 putbufs:
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "Allocated %p, references %"PRIi32", count %d",
-		     uio, uio->uio_references, (int) uio->uio_count);
+		     "Allocated %p, references %" PRIi32 ", count %d", uio,
+		     uio->uio_references, (int)uio->uio_count);
 
 	if (!xdr_putbufs(xdrs, uio, UIO_FLAG_NONE)) {
 		uio->uio_release(uio, UIO_FLAG_NONE);
@@ -670,9 +653,7 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 	if (!inline_xdr_u_int32_t(xdrs, &objp->data_len))
 		return false;
 
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "data_len = %u",
-		     objp->data_len);
+	LogFullDebug(COMPONENT_DISPATCH, "data_len = %u", objp->data_len);
 
 	if (objp->data_len == 0) {
 		/* Special handling of length 0. */
@@ -684,10 +665,8 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 		objp->iov[i].iov_len = 0;
 
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "iov[%d].iov_base %p iov_len %zu for %zu of %u",
-			     i,
-			     objp->iov[i].iov_base,
-			     objp->iov[i].iov_len,
+			     "iov[%d].iov_base %p iov_len %zu for %zu of %u", i,
+			     objp->iov[i].iov_base, objp->iov[i].iov_len,
 			     totlen, objp->data_len);
 		return true;
 	}
@@ -701,9 +680,7 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 	/* Find out how many buffers the data occupies */
 	objp->iovcnt = XDR_IOVCOUNT(xdrs, start, objp->data_len);
 
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "iovcnt = %u",
-		     objp->iovcnt);
+	LogFullDebug(COMPONENT_DISPATCH, "iovcnt = %u", objp->iovcnt);
 
 	if (objp->iovcnt > IOV_MAX) {
 		char *buf;
@@ -756,20 +733,17 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 		objp->iov[i].iov_len = vio[i].vio_length;
 		totlen += vio[i].vio_length;
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "iov[%d].iov_base %p iov_len %zu for %zu of %u",
-			     i,
-			     objp->iov[i].iov_base,
-			     objp->iov[i].iov_len,
+			     "iov[%d].iov_base %p iov_len %zu for %zu of %u", i,
+			     objp->iov[i].iov_base, objp->iov[i].iov_len,
 			     totlen, objp->data_len);
 	}
 
 	/* We're done with the vio */
 	gsh_free(vio);
 
-
 	/* Now advance the position past the data (rounding up data_len) */
-	if (!XDR_SETPOS(xdrs,
-	    XDR_GETENDDATAPOS(xdrs, start, RNDUP(objp->data_len)))) {
+	if (!XDR_SETPOS(xdrs, XDR_GETENDDATAPOS(xdrs, start,
+						RNDUP(objp->data_len)))) {
 		gsh_free(objp->iov);
 		objp->iov = NULL;
 		return false;
@@ -827,8 +801,8 @@ void *get_buffer_for_io_response(uint64_t size, size_t *buffer_size)
 	if (req->rq_xprt->xp_rdma && req->data_chunk) {
 		LogDebug(COMPONENT_TIRPC,
 			 "Using data_chunk %p length %d from req %p xprt %p",
-			 req->data_chunk, req->data_chunk_length,
-			 req, req->rq_xprt);
+			 req->data_chunk, req->data_chunk_length, req,
+			 req->rq_xprt);
 		assert(size <= req->data_chunk_length);
 		if (buffer_size)
 			*buffer_size = req->data_chunk_length;

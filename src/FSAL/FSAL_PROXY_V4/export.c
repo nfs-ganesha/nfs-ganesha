@@ -39,17 +39,16 @@
 static struct config_item_list sec_types[] = {
 	CONFIG_LIST_TOK("krb5", RPCSEC_GSS_SVC_NONE),
 	CONFIG_LIST_TOK("krb5i", RPCSEC_GSS_SVC_INTEGRITY),
-	CONFIG_LIST_TOK("krb5p", RPCSEC_GSS_SVC_PRIVACY),
-	CONFIG_LIST_EOL
+	CONFIG_LIST_TOK("krb5p", RPCSEC_GSS_SVC_PRIVACY), CONFIG_LIST_EOL
 };
 #endif
 
 static struct config_item proxyv4_export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_UI32("Retry_SleepTime", 0, 60, 10,
-		       proxyv4_client_params, retry_sleeptime),
-	CONF_MAND_IP_ADDR("Srv_Addr", "127.0.0.1",
-			  proxyv4_client_params, srv_addr),
+	CONF_ITEM_UI32("Retry_SleepTime", 0, 60, 10, proxyv4_client_params,
+		       retry_sleeptime),
+	CONF_MAND_IP_ADDR("Srv_Addr", "127.0.0.1", proxyv4_client_params,
+			  srv_addr),
 	CONF_ITEM_UI32("NFS_Service", 0, UINT32_MAX, 100003,
 		       proxyv4_client_params, srv_prognum),
 	CONF_ITEM_UI64("NFS_SendSize", 512 + SEND_RECV_HEADER_SPACE,
@@ -60,35 +59,34 @@ static struct config_item proxyv4_export_params[] = {
 		       FSAL_MAXIOSIZE,
 		       DEFAULT_MAX_WRITE_READ + SEND_RECV_HEADER_SPACE,
 		       proxyv4_client_params, srv_recvsize),
-	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, 2049,
-		       proxyv4_client_params, srv_port),
+	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, 2049, proxyv4_client_params,
+		       srv_port),
 	CONF_ITEM_BOOL("Use_Privileged_Client_Port", true,
 		       proxyv4_client_params, use_privileged_client_port),
-	CONF_ITEM_UI32("RPC_Client_Timeout", 1, 60*4, 60,
+	CONF_ITEM_UI32("RPC_Client_Timeout", 1, 60 * 4, 60,
 		       proxyv4_client_params, srv_timeout),
 #ifdef _USE_GSSRPC
 	CONF_ITEM_STR("Remote_PrincipalName", 0, MAXNAMLEN, NULL,
 		      proxyv4_client_params, remote_principal),
-	CONF_ITEM_STR("KeytabPath", 0, MAXPATHLEN, "/etc/krb5.keytab"
-		      proxyv4_client_params, keytab),
-	CONF_ITEM_UI32("Credential_LifeTime", 0, 86400*2, 86400,
+	CONF_ITEM_STR("KeytabPath", 0, MAXPATHLEN,
+		      "/etc/krb5.keytab" proxyv4_client_params, keytab),
+	CONF_ITEM_UI32("Credential_LifeTime", 0, 86400 * 2, 86400,
 		       proxyv4_client_params, cred_lifetime),
 	CONF_ITEM_TOKEN("Sec_Type", RPCSEC_GSS_SVC_NONE, sec_types,
 			proxyv4_client_params, sec_type),
-	CONF_ITEM_BOOL("Active_krb5", false,
-		       proxyv4_client_params, active_krb5),
+	CONF_ITEM_BOOL("Active_krb5", false, proxyv4_client_params,
+		       active_krb5),
 #endif
 #ifdef PROXYV4_HANDLE_MAPPING
-	CONF_ITEM_BOOL("Enable_Handle_Mapping", false,
-		       proxyv4_client_params, enable_handle_mapping),
+	CONF_ITEM_BOOL("Enable_Handle_Mapping", false, proxyv4_client_params,
+		       enable_handle_mapping),
 	CONF_ITEM_STR("HandleMap_DB_Dir", 0, MAXPATHLEN,
-		      "/var/ganesha/handlemap",
-		      proxyv4_client_params, hdlmap.databases_directory),
-	CONF_ITEM_STR("HandleMap_Tmp_Dir", 0, MAXPATHLEN,
-		      "/var/ganesha/tmp",
+		      "/var/ganesha/handlemap", proxyv4_client_params,
+		      hdlmap.databases_directory),
+	CONF_ITEM_STR("HandleMap_Tmp_Dir", 0, MAXPATHLEN, "/var/ganesha/tmp",
 		      proxyv4_client_params, hdlmap.temp_directory),
-	CONF_ITEM_UI32("HandleMap_DB_Count", 1, 16, 8,
-		       proxyv4_client_params, hdlmap.database_count),
+	CONF_ITEM_UI32("HandleMap_DB_Count", 1, 16, 8, proxyv4_client_params,
+		       hdlmap.database_count),
 	CONF_ITEM_UI32("HandleMap_HashTable_Size", 1, 127, 103,
 		       proxyv4_client_params, hdlmap.hashtable_size),
 #endif
@@ -99,18 +97,16 @@ static int remote_commit(void *node, void *link_mem, void *self_struct,
 			 struct config_error_type *err_type)
 {
 	struct proxyv4_client_params *pcp =
-		(struct proxyv4_client_params *) link_mem;
+		(struct proxyv4_client_params *)link_mem;
 	struct proxyv4_fsal_module *proxyv4_module;
 
 	proxyv4_module = container_of(op_ctx->fsal_module,
-				      struct proxyv4_fsal_module,
-				      module);
+				      struct proxyv4_fsal_module, module);
 
 	if (proxyv4_module->module.fs_info.maxwrite + SEND_RECV_HEADER_SPACE >
-	    pcp->srv_sendsize ||
-	    proxyv4_module->module.fs_info.maxread +
-	    SEND_RECV_HEADER_SPACE >
-	    pcp->srv_recvsize) {
+		    pcp->srv_sendsize ||
+	    proxyv4_module->module.fs_info.maxread + SEND_RECV_HEADER_SPACE >
+		    pcp->srv_recvsize) {
 		LogCrit(COMPONENT_CONFIG,
 			"FSAL_PROXY_V4 CONF : maxwrite/maxread + header > Max_SendSize/Max_RecvSize");
 		err_type->invalid = true;
@@ -191,7 +187,7 @@ fsal_status_t proxyv4_create_export(struct fsal_module *fsal_hdl,
 				    struct config_error_type *err_type,
 				    const struct fsal_up_vector *up_ops)
 {
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	struct proxyv4_export *exp = gsh_calloc(1, sizeof(*exp));
 	int rc;
 
@@ -202,11 +198,8 @@ fsal_status_t proxyv4_create_export(struct fsal_module *fsal_hdl,
 	fsal_export_init(&exp->exp);
 
 	/* proxyv4 export option parsing */
-	rc = load_config_from_node(parse_node,
-				   &proxyv4_export_param,
-				   &exp->info,
-				   true,
-				   err_type);
+	rc = load_config_from_node(parse_node, &proxyv4_export_param,
+				   &exp->info, true, err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Incorrect or missing parameters for export %s",
@@ -243,13 +236,13 @@ fsal_status_t proxyv4_create_export(struct fsal_module *fsal_hdl,
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
- err_cleanup:
+err_cleanup:
 
 	proxyv4_close_thread(exp);
 	free_io_contexts(exp);
 	fsal_detach_export(fsal_hdl, &exp->exp.exports);
 
- err_free:
+err_free:
 
 	free_export_ops(&exp->exp);
 	proxyv4_export_destroy(exp);

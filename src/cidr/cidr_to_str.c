@@ -40,14 +40,14 @@
 #include "cidr.h"
 #include "abstract_mem.h"
 
-char *cidr_to_str(const CIDR * block, int flags)
+char *cidr_to_str(const CIDR *block, int flags)
 {
 	int i;
 	int zst, zcur, zlen, zmax;
 	short pflen;
-	short lzer;		/* Last zero */
+	short lzer; /* Last zero */
 	char *toret;
-	char tmpbuf[128];	/* We shouldn't need more than ~5 anywhere */
+	char tmpbuf[128]; /* We shouldn't need more than ~5 anywhere */
 	CIDR *nmtmp;
 	char *nmstr;
 	int nmflags;
@@ -88,8 +88,8 @@ char *cidr_to_str(const CIDR * block, int flags)
 	 * If it's a v4 address, we mask off everything but the last 4
 	 * octets, and just proceed from there.
 	 */
-	if ((block->proto == CIDR_IPV4 && !(flags & CIDR_FORCEV6))
-	    || (flags & CIDR_FORCEV4)) {
+	if ((block->proto == CIDR_IPV4 && !(flags & CIDR_FORCEV6)) ||
+	    (flags & CIDR_FORCEV4)) {
 		/* First off, creating the in-addr.arpa form is special */
 		if (flags & CIDR_REVERSE) {
 			/*
@@ -102,9 +102,9 @@ char *cidr_to_str(const CIDR * block, int flags)
 			 * host address, and treat it as such.
 			 */
 
-			(void) sprintf(toret, "%d.%d.%d.%d.in-addr.arpa",
-				       block->addr[15], block->addr[14],
-				       block->addr[13], block->addr[12]);
+			(void)sprintf(toret, "%d.%d.%d.%d.in-addr.arpa",
+				      block->addr[15], block->addr[14],
+				      block->addr[13], block->addr[12]);
 			return (toret);
 		}
 
@@ -135,7 +135,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 			/* USEV6 */
 			/* Now, slap on the v4 address */
 			for (i = 12; i <= 15; i++) {
-				(void) sprintf(tmpbuf, "%u", (block->addr)[i]);
+				(void)sprintf(tmpbuf, "%u", (block->addr)[i]);
 				strcat(toret, tmpbuf);
 				if (i < 15)
 					strcat(toret, ".");
@@ -162,7 +162,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 					moct = (block->mask)[i];
 					if (flags & CIDR_WILDCARD)
 						moct = ~(moct);
-					(void) sprintf(tmpbuf, "%u", moct);
+					(void)sprintf(tmpbuf, "%u", moct);
 					strcat(toret, tmpbuf);
 					if (i < 15)
 						strcat(toret, ".");
@@ -175,16 +175,17 @@ char *cidr_to_str(const CIDR * block, int flags)
 				pflen = cidr_get_pflen(block);
 				if (pflen == -1) {
 					gsh_free(toret);
-					return (NULL);	/* Preserve errno */
+					return (NULL); /* Preserve errno */
 				}
 				/* Special handling for forced modes */
-				if (block->proto == CIDR_IPV6
-				    && (flags & CIDR_FORCEV4))
+				if (block->proto == CIDR_IPV6 &&
+				    (flags & CIDR_FORCEV4))
 					pflen -= 96;
 
-				(void) sprintf(tmpbuf, "%u",
-					       (flags & CIDR_USEV6) ? pflen +
-								96 : pflen);
+				(void)sprintf(tmpbuf, "%u",
+					      (flags & CIDR_USEV6) ?
+						      pflen + 96 :
+						      pflen);
 
 				strcat(toret, tmpbuf);
 			}
@@ -192,15 +193,16 @@ char *cidr_to_str(const CIDR * block, int flags)
 
 		/* ! ONLYADDR */
 		/* That's it for a v4 address, in any of our forms */
-	} else if ((block->proto == CIDR_IPV6 && !(flags & CIDR_FORCEV4))
-		   || (flags & CIDR_FORCEV6)) {
+	} else if ((block->proto == CIDR_IPV6 && !(flags & CIDR_FORCEV4)) ||
+		   (flags & CIDR_FORCEV6)) {
 		/* First off, creating the .ip6.arpa form is special */
 		if (flags & CIDR_REVERSE) {
 			/*
 			 * Build the ...ip6.arpa form.  See notes in the CIDR_REVERSE
 			 * section of PROTO_IPV4 above for various notes.
 			 */
-			(void) sprintf(toret,
+			(void)sprintf(
+				toret,
 				"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 				"%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x.%x."
 				"%x.%x.%x.%x.%x.ip6.arpa",
@@ -230,8 +232,8 @@ char *cidr_to_str(const CIDR * block, int flags)
 			zst = zcur = -1;
 			zlen = zmax = 0;
 			for (i = 0; i <= 15; i += 2) {
-				if (block->addr[i] == 0
-				    && block->addr[i + 1] == 0) {
+				if (block->addr[i] == 0 &&
+				    block->addr[i + 1] == 0) {
 					/* This section is zero */
 					if (zcur != -1) {
 						/* We're already in a block of 0's */
@@ -294,10 +296,10 @@ char *cidr_to_str(const CIDR * block, int flags)
 				 * it.  If we ARE compacting, we want it unless the
 				 * previous octet was a 0 that we're minimizing.
 				 */
-				if (i != 0
-				    && ((flags & CIDR_NOCOMPACT) || lzer == 0))
+				if (i != 0 &&
+				    ((flags & CIDR_NOCOMPACT) || lzer == 0))
 					strcat(toret, ":");
-				lzer = 0;	/* Reset */
+				lzer = 0; /* Reset */
 
 				/*
 				 * From here on, we no longer have to worry about
@@ -314,13 +316,13 @@ char *cidr_to_str(const CIDR * block, int flags)
 				 * only use as many digits as we need.
 				 */
 				if (flags & CIDR_VERBOSE)
-					(void) sprintf(tmpbuf, "%.4x", v6sect);
+					(void)sprintf(tmpbuf, "%.4x", v6sect);
 				else
-					(void) sprintf(tmpbuf, "%x", v6sect);
+					(void)sprintf(tmpbuf, "%x", v6sect);
 				strcat(toret, tmpbuf);
 
 				/* And loop back around to the next 2-octet set */
-			}	/* for(each 16-bit set) */
+			} /* for(each 16-bit set) */
 		}
 
 		/* ! ONLYPFLEN */
@@ -341,7 +343,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 				for (i = 0; i <= 15; i++)
 					if (flags & CIDR_WILDCARD)
 						nmtmp->addr[i] =
-						    ~(block->mask[i]);
+							~(block->mask[i]);
 					else
 						nmtmp->addr[i] = block->mask[i];
 
@@ -360,7 +362,7 @@ char *cidr_to_str(const CIDR * block, int flags)
 				cidr_free(nmtmp);
 				if (nmstr == NULL) {
 					gsh_free(toret);
-					return (NULL);	/* Preserve errno */
+					return (NULL); /* Preserve errno */
 				}
 
 				/* No need to strip the prefix, it doesn't have it */
@@ -373,21 +375,21 @@ char *cidr_to_str(const CIDR * block, int flags)
 				pflen = cidr_get_pflen(block);
 				if (pflen == -1) {
 					gsh_free(toret);
-					return (NULL);	/* Preserve errno */
+					return (NULL); /* Preserve errno */
 				}
 				/* Special handling for forced modes */
-				if (block->proto == CIDR_IPV4
-				    && (flags & CIDR_FORCEV6))
+				if (block->proto == CIDR_IPV4 &&
+				    (flags & CIDR_FORCEV6))
 					pflen += 96;
 
-				(void) sprintf(tmpbuf, "%u", pflen);
+				(void)sprintf(tmpbuf, "%u", pflen);
 				strcat(toret, tmpbuf);
 			}
-		}		/* ! ONLYADDR */
+		} /* ! ONLYADDR */
 	} else {
 		/* Well, *I* dunno what the fuck it is */
 		gsh_free(toret);
-		errno = ENOENT;	/* Bad choice of errno */
+		errno = ENOENT; /* Bad choice of errno */
 		return (NULL);
 	}
 

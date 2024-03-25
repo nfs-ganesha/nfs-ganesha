@@ -73,7 +73,7 @@ struct proxyv4_client_params {
 };
 
 struct proxyv4_export_rpc {
-/**
+	/**
  * proxyv4_clientid_mutex protects proxyv4_clientid, proxyv4_client_seqid,
  * proxyv4_client_sessionid, no_sessionid and cond_sessionid.
  */
@@ -119,38 +119,30 @@ void free_io_contexts(struct proxyv4_export *proxyv4_exp);
 void proxyv4_close_thread(struct proxyv4_export *proxyv4_exp);
 int proxyv4_init_rpc(struct proxyv4_export *);
 
-fsal_status_t proxyv4_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				     unsigned int cookie,
-				     fsal_xattrent_t *xattrs_tab,
-				     unsigned int xattrs_tabsize,
-				     unsigned int *p_nb_returned,
-				     int *end_of_list);
+fsal_status_t
+proxyv4_list_ext_attrs(struct fsal_obj_handle *obj_hdl, unsigned int cookie,
+		       fsal_xattrent_t *xattrs_tab, unsigned int xattrs_tabsize,
+		       unsigned int *p_nb_returned, int *end_of_list);
 
 fsal_status_t proxyv4_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name,
 					    unsigned int *pxattr_id);
 
-fsal_status_t
-proxyv4_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-				 const char *xattr_name,
-				 void *buffer_addr,
-				 size_t buffer_size, size_t *len);
+fsal_status_t proxyv4_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
+					       const char *xattr_name,
+					       void *buffer_addr,
+					       size_t buffer_size, size_t *len);
 
 fsal_status_t proxyv4_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					     unsigned int xattr_id,
-					     void *buf,
-					     size_t sz,
-					     size_t *len);
+					     unsigned int xattr_id, void *buf,
+					     size_t sz, size_t *len);
 
 fsal_status_t proxyv4_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				       const char *xattr_name,
-				       void *buf,
-				       size_t sz,
-				       int create);
+				       const char *xattr_name, void *buf,
+				       size_t sz, int create);
 
 fsal_status_t proxyv4_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					     unsigned int xattr_id,
-					     void *buf,
+					     unsigned int xattr_id, void *buf,
 					     size_t sz);
 
 fsal_status_t proxyv4_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
@@ -163,8 +155,7 @@ fsal_status_t proxyv4_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t proxyv4_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					     const char *xattr_name);
 
-fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl,
-				  const char *path,
+fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl, const char *path,
 				  struct fsal_obj_handle **handle,
 				  struct fsal_attrlist *attrs_out);
 

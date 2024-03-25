@@ -41,7 +41,7 @@
 #ifdef CEPHFS_POSIX_ACL
 #include <sys/acl.h>
 #include <acl/libacl.h>
-#endif				/* CEPHFS_POSIX_ACL */
+#endif /* CEPHFS_POSIX_ACL */
 #include <cephfs/libcephfs.h>
 #include "fsal_types.h"
 #include "fsal.h"
@@ -52,7 +52,7 @@
 #include "internal.h"
 #ifdef CEPHFS_POSIX_ACL
 #include "posix_acls.h"
-#endif				/* CEPHFS_POSIX_ACL */
+#endif /* CEPHFS_POSIX_ACL */
 
 /**
  * @brief Construct a new filehandle
@@ -69,7 +69,7 @@
  */
 
 void construct_handle(const struct ceph_statx *stx, struct Inode *i,
-	struct ceph_export *export, struct ceph_handle **obj)
+		      struct ceph_export *export, struct ceph_handle **obj)
 {
 	/* Pointer to the handle under construction */
 	struct ceph_handle *constructing = NULL;
@@ -124,8 +124,7 @@ void deconstruct_handle(struct ceph_handle *obj)
 	gsh_free(obj);
 }
 
-unsigned int
-attrmask2ceph_want(attrmask_t mask)
+unsigned int attrmask2ceph_want(attrmask_t mask)
 {
 	unsigned int want = 0;
 
@@ -159,7 +158,8 @@ void ceph2fsal_attributes(const struct ceph_statx *stx,
 			  struct fsal_attrlist *fsalattr)
 {
 	/* These are always considered to be available */
-	fsalattr->valid_mask |= ATTR_TYPE|ATTR_FSID|ATTR_RAWDEV|ATTR_FILEID;
+	fsalattr->valid_mask |= ATTR_TYPE | ATTR_FSID | ATTR_RAWDEV |
+				ATTR_FILEID;
 	fsalattr->supported = CEPH_SUPPORTED_ATTRS;
 	fsalattr->type = posix2fsal_type(stx->stx_mode);
 	fsalattr->rawdev = posix2fsal_devt(stx->stx_rdev);
@@ -232,7 +232,8 @@ void ceph2fsal_attributes(const struct ceph_statx *stx,
  */
 
 int ceph_get_posix_acl(struct ceph_export *export,
-	struct ceph_handle *objhandle, const char *name, acl_t *p_acl)
+		       struct ceph_handle *objhandle, const char *name,
+		       acl_t *p_acl)
 {
 	char *value = NULL;
 	int rc = 0, size;
@@ -241,8 +242,8 @@ int ceph_get_posix_acl(struct ceph_export *export,
 	LogFullDebug(COMPONENT_FSAL, "get POSIX ACL");
 
 	/* Get extended attribute size */
-	size = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
-				NULL, 0, &op_ctx->creds);
+	size = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name, NULL,
+				     0, &op_ctx->creds);
 	if (size <= 0) {
 		LogFullDebug(COMPONENT_FSAL, "getxattr returned %d", size);
 		return 0;
@@ -251,8 +252,8 @@ int ceph_get_posix_acl(struct ceph_export *export,
 	value = gsh_malloc(size);
 
 	/* Read extended attribute's value */
-	rc = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name,
-				value, size, &op_ctx->creds);
+	rc = fsal_ceph_ll_getxattr(export->cmount, objhandle->i, name, value,
+				   size, &op_ctx->creds);
 	if (rc < 0) {
 		LogMajor(COMPONENT_FSAL, "getxattr returned %d", rc);
 		if (rc == -ENODATA) {
@@ -266,7 +267,7 @@ int ceph_get_posix_acl(struct ceph_export *export,
 	acl_tmp = xattr_2_posix_acl((struct acl_ea_header *)value, size);
 	if (!acl_tmp) {
 		LogMajor(COMPONENT_FSAL,
-				"failed to convert xattr to posix acl");
+			 "failed to convert xattr to posix acl");
 		rc = -EFAULT;
 		goto out;
 	}
@@ -289,14 +290,15 @@ out:
  */
 
 fsal_status_t ceph_set_acl(struct ceph_export *export,
-	struct ceph_handle *objhandle, bool is_dir, struct fsal_attrlist *attrs)
+			   struct ceph_handle *objhandle, bool is_dir,
+			   struct fsal_attrlist *attrs)
 {
 	int size = 0, count, rc;
 	acl_t acl = NULL;
 	acl_type_t type;
 	char *name = NULL;
 	void *value = NULL;
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 
 	if (!attrs->acl) {
 		LogWarn(COMPONENT_FSAL, "acl is empty");
@@ -315,7 +317,7 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 	acl = fsal_acl_2_posix_acl(attrs->acl, type);
 	if (acl_valid(acl) != 0) {
 		LogWarn(COMPONENT_FSAL,
-				"failed to convert fsal acl to posix acl");
+			"failed to convert fsal acl to posix acl");
 		status = fsalstat(ERR_FSAL_FAULT, 0);
 		goto out;
 	}
@@ -328,14 +330,14 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 		rc = posix_acl_2_xattr(acl, value, size);
 		if (rc < 0) {
 			LogMajor(COMPONENT_FSAL,
-					"failed to convert posix acl to xattr");
+				 "failed to convert posix acl to xattr");
 			status = fsalstat(ERR_FSAL_FAULT, 0);
 			goto out;
 		}
 	}
 
-	rc = fsal_ceph_ll_setxattr(export->cmount, objhandle->i,
-				name, value, size, 0, &op_ctx->creds);
+	rc = fsal_ceph_ll_setxattr(export->cmount, objhandle->i, name, value,
+				   size, 0, &op_ctx->creds);
 	if (rc < 0) {
 		status = ceph2fsal_error(rc);
 	}
@@ -363,7 +365,7 @@ out:
  */
 
 int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
-	bool is_dir, struct fsal_attrlist *attrs)
+		 bool is_dir, struct fsal_attrlist *attrs)
 {
 	acl_t e_acl = NULL, i_acl = NULL;
 	fsal_acl_data_t acldata;
@@ -374,54 +376,54 @@ int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
 
 	rc = ceph_get_posix_acl(export, objhandle, ACL_EA_ACCESS, &e_acl);
 	if (rc < 0) {
-		LogMajor(COMPONENT_FSAL,
-				"failed to get posix acl: %s", ACL_EA_ACCESS);
+		LogMajor(COMPONENT_FSAL, "failed to get posix acl: %s",
+			 ACL_EA_ACCESS);
 		goto out;
 	}
 	e_count = ace_count(e_acl);
 
 	if (is_dir) {
-		rc = ceph_get_posix_acl(export,
-					objhandle, ACL_EA_DEFAULT, &i_acl);
+		rc = ceph_get_posix_acl(export, objhandle, ACL_EA_DEFAULT,
+					&i_acl);
 		if (rc < 0) {
-			LogMajor(COMPONENT_FSAL,
-				"failed to get posix acl: %s", ACL_EA_DEFAULT);
+			LogMajor(COMPONENT_FSAL, "failed to get posix acl: %s",
+				 ACL_EA_DEFAULT);
 		} else {
 			i_count = ace_count(i_acl);
 		}
 	}
 
 	acldata.naces = 2 * (e_count + i_count);
-	LogDebug(COMPONENT_FSAL,
-			"No of aces present in fsal_acl_t = %d", acldata.naces);
+	LogDebug(COMPONENT_FSAL, "No of aces present in fsal_acl_t = %d",
+		 acldata.naces);
 	if (!acldata.naces) {
 		rc = 0;
 		goto out;
 	}
 
-	acldata.aces = (fsal_ace_t *) nfs4_ace_alloc(acldata.naces);
+	acldata.aces = (fsal_ace_t *)nfs4_ace_alloc(acldata.naces);
 	pace = acldata.aces;
 
 	if (e_count > 0) {
 		new_count = posix_acl_2_fsal_acl(e_acl, is_dir, false,
-							ACL_FOR_V4, &pace);
+						 ACL_FOR_V4, &pace);
 	} else {
 		LogDebug(COMPONENT_FSAL,
-			"effective acl is not set for this object");
+			 "effective acl is not set for this object");
 	}
 
 	if (i_count > 0) {
 		new_i_count = posix_acl_2_fsal_acl(i_acl, true, true,
-							ACL_FOR_V4, &pace);
+						   ACL_FOR_V4, &pace);
 		new_count += new_i_count;
 	} else {
 		LogDebug(COMPONENT_FSAL,
-			"Inherit acl is not set for this directory");
+			 "Inherit acl is not set for this directory");
 	}
 
 	/* Reallocating acldata into the required size */
-	acldata.aces = (fsal_ace_t *) gsh_realloc(acldata.aces,
-					new_count*sizeof(fsal_ace_t));
+	acldata.aces = (fsal_ace_t *)gsh_realloc(
+		acldata.aces, new_count * sizeof(fsal_ace_t));
 	acldata.naces = new_count;
 
 	attrs->acl = nfs4_acl_new_entry(&acldata, &aclstatus);
@@ -445,7 +447,7 @@ out:
 
 	return rc;
 }
-#endif				/* CEPHFS_POSIX_ACL */
+#endif /* CEPHFS_POSIX_ACL */
 
 struct avltree avl_cmount;
 
@@ -503,8 +505,8 @@ void ceph_mount_init(void)
 
 struct ceph_mount *ceph_mount_lookup(const struct avltree_node *key)
 {
-	struct avltree_node *node = avltree_inline_lookup(key, &avl_cmount,
-							  ceph_mount_key_cmpf);
+	struct avltree_node *node =
+		avltree_inline_lookup(key, &avl_cmount, ceph_mount_key_cmpf);
 
 	if (node != NULL)
 		return avltree_container_of(node, struct ceph_mount,

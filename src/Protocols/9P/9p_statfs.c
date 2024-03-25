@@ -51,8 +51,8 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct _9p_fid *pfid = NULL;
 
-	u32 type = 0x01021997;	/* V9FS_MAGIC */
-	u32 bsize = 1;		/* fsal_statfs and
+	u32 type = 0x01021997; /* V9FS_MAGIC */
+	u32 bsize = 1; /* fsal_statfs and
 				 * FSAL already care for blocksize */
 	u64 *blocks = NULL;
 	u64 *bfree = NULL;
@@ -71,7 +71,7 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TSTATFS: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TSTATFS: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -90,9 +90,8 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* Done with the attrs */
 		fsal_release_attrs(&attrs);
 
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 	}
 
 	/* Get the FS's stats */
@@ -101,17 +100,16 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* Done with the attrs */
 		fsal_release_attrs(&attrs);
 
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 	}
 
-	blocks = (u64 *) &dynamicinfo.total_bytes;
-	bfree = (u64 *) &dynamicinfo.free_bytes;
-	bavail = (u64 *) &dynamicinfo.avail_bytes;
-	files = (u64 *) &dynamicinfo.total_files;
-	ffree = (u64 *) &dynamicinfo.free_files;
-	fsid = (u64) attrs.rawdev.major;
+	blocks = (u64 *)&dynamicinfo.total_bytes;
+	bfree = (u64 *)&dynamicinfo.free_bytes;
+	bavail = (u64 *)&dynamicinfo.avail_bytes;
+	files = (u64 *)&dynamicinfo.total_files;
+	ffree = (u64 *)&dynamicinfo.free_files;
+	fsid = (u64)attrs.rawdev.major;
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);
@@ -133,7 +131,7 @@ int _9p_statfs(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RSTATFS: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "RSTATFS: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	return 1;
 }

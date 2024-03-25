@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "gsh_rpc.h"
@@ -67,10 +67,7 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *obj = NULL;
 	fsal_status_t fsal_status;
-	struct gsh_buffdesc link_buffer = {
-		.addr = NULL,
-		.len = 0
-	};
+	struct gsh_buffdesc link_buffer = { .addr = NULL, .len = 0 };
 	int rc = NFS_REQ_OK;
 	READLINK3resfail *resfail = &res->res_readlink3.READLINK3res_u.resfail;
 	READLINK3resok *resok = &res->res_readlink3.READLINK3res_u.resok;
@@ -82,8 +79,7 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resfail->symlink_attributes.attributes_follow = false;
 
 	obj = nfs3_FhandleToCache(&arg->arg_readlink3.symlink,
-				  &res->res_readlink3.status,
-				  &rc);
+				  &res->res_readlink3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -117,13 +113,13 @@ int nfs3_readlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	rc = NFS_REQ_OK;
 
- out:
+out:
 	/* return references */
 	if (obj)
 		obj->obj_ops->put_ref(obj);
 
 	return rc;
-}				/* nfs3_readlink */
+} /* nfs3_readlink */
 
 /**
  * @brief Free the result structure allocated for nfs3_readlink.

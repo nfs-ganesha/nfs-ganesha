@@ -35,7 +35,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -74,12 +74,11 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* to avoid setting it on each error case */
 	res->res_access3.ACCESS3res_u.resfail.obj_attributes.attributes_follow =
-	    FALSE;
+		FALSE;
 
 	/* Convert file handle into a vnode */
 	entry = nfs3_FhandleToCache(&(arg->arg_access3.object),
-				    &(res->res_access3.status),
-				    &rc);
+				    &(res->res_access3.status), &rc);
 
 	if (entry == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -88,7 +87,8 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Perform the 'access' call */
 	status = nfs_access_op(entry, arg->arg_access3.access,
-			  &res->res_access3.ACCESS3res_u.resok.access, NULL);
+			       &res->res_access3.ACCESS3res_u.resok.access,
+			       NULL);
 
 	if (status.major == ERR_FSAL_NO_ERROR ||
 	    status.major == ERR_FSAL_ACCESS) {
@@ -113,13 +113,13 @@ int nfs3_access(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nfs_SetPostOpAttr(entry,
 			  &res->res_access3.ACCESS3res_u.resfail.obj_attributes,
 			  NULL);
- out:
+out:
 
 	if (entry)
 		entry->obj_ops->put_ref(entry);
 
 	return rc;
-}				/* nfs3_access */
+} /* nfs3_access */
 
 /**
  * @brief Free the result structure allocated for nfs3_access.

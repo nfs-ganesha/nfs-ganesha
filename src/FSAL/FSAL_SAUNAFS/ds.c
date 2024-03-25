@@ -221,9 +221,9 @@ static nfsstat4 dsh_write(struct fsal_ds_handle *const dataServerHandle,
 			  const stateid4 *stateid, const offset4 offset,
 			  const count4 writeLength, const void *buffer,
 			  const stable_how4 stability,
-			  count4 * const writtenLength,
-			  verifier4 * const writeVerifier,
-			  stable_how4 * const stabilityGot)
+			  count4 *const writtenLength,
+			  verifier4 *const writeVerifier,
+			  stable_how4 *const stabilityGot)
 {
 	(void)stateid;
 	(void)writeVerifier;
@@ -283,7 +283,7 @@ static nfsstat4 dsh_write(struct fsal_ds_handle *const dataServerHandle,
  */
 static nfsstat4 dsh_commit(struct fsal_ds_handle *const dataServerHandle,
 			   const offset4 offset, const count4 count,
-			   verifier4 * const writeVerifier)
+			   verifier4 *const writeVerifier)
 {
 	struct SaunaFSExport *export = NULL;
 	struct DataServerHandle *dataServer = NULL;

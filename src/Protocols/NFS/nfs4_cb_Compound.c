@@ -49,7 +49,7 @@
 #include "nfs_rpc_callback.h"
 
 static const nfs4_cb_tag_t cbtagtab4[] = {
-	{NFS4_CB_TAG_DEFAULT, "Ganesha CB Compound", 19},
+	{ NFS4_CB_TAG_DEFAULT, "Ganesha CB Compound", 19 },
 };
 
 /* Some CITI-inspired compound helper ideas */
@@ -59,7 +59,7 @@ void cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops,
 			 uint32_t tag_len)
 {
 	/* args */
-	memset(cbt, 0, sizeof(nfs4_compound_t));	/* XDRS */
+	memset(cbt, 0, sizeof(nfs4_compound_t)); /* XDRS */
 
 	cbt->v_u.v4.args.minorversion = minorversion;
 	cbt->v_u.v4.args.callback_ident = ident;
@@ -72,14 +72,13 @@ void cb_compound_init_v4(nfs4_compound_t *cbt, uint32_t n_ops,
 		cbt->v_u.v4.args.tag.utf8string_len = tag_len;
 	} else {
 		cbt->v_u.v4.args.tag.utf8string_val =
-		    cbtagtab4[NFS4_CB_TAG_DEFAULT].val;
+			cbtagtab4[NFS4_CB_TAG_DEFAULT].val;
 		cbt->v_u.v4.args.tag.utf8string_len =
-		    cbtagtab4[NFS4_CB_TAG_DEFAULT].len;
+			cbtagtab4[NFS4_CB_TAG_DEFAULT].len;
 	}
 
 	cbt->v_u.v4.res.resarray.resarray_val = alloc_cb_resop(n_ops);
 	cbt->v_u.v4.res.resarray.resarray_len = 0;
-
 }
 
 void cb_compound_add_op(nfs4_compound_t *cbt, nfs_cb_argop4 *src)

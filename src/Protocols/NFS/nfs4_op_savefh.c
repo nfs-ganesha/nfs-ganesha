@@ -127,7 +127,7 @@ void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj)
 enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 				   struct nfs_resop4 *resp)
 {
-	SAVEFH4res * const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
+	SAVEFH4res *const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
 
 	/* First of all, set the reply to zero to make sure it contains no
 	 * parasite information
@@ -159,8 +159,7 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Copy the data from current FH to saved FH */
-	memcpy(data->savedFH.nfs_fh4_val,
-	       data->currentFH.nfs_fh4_val,
+	memcpy(data->savedFH.nfs_fh4_val, data->currentFH.nfs_fh4_val,
 	       data->currentFH.nfs_fh4_len);
 
 	data->savedFH.nfs_fh4_len = data->currentFH.nfs_fh4_len;
@@ -198,7 +197,7 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 	res_SAVEFH->status = NFS4_OK;
 
 	return NFS_REQ_OK;
-}				/* nfs4_op_savefh */
+} /* nfs4_op_savefh */
 
 /**
  * @brief Free memory allocated for SAVEFH result

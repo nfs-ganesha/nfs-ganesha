@@ -59,11 +59,10 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	int index_auth = 0;
 	int i = 0;
 	int retval = NFS_REQ_OK;
-	nfs_fh3 *fh3 = (nfs_fh3 *) &res->res_mnt3.mountres3_u.mountinfo.fhandle;
+	nfs_fh3 *fh3 = (nfs_fh3 *)&res->res_mnt3.mountres3_u.mountinfo.fhandle;
 	struct fsal_obj_handle *obj = NULL;
-	mountres3_ok * const RES_MOUNTINFO =
-	    &res->res_mnt3.mountres3_u.mountinfo;
-
+	mountres3_ok *const RES_MOUNTINFO =
+		&res->res_mnt3.mountres3_u.mountinfo;
 
 	LogDebug(COMPONENT_NFSPROTO,
 		 "REQUEST PROCESSING: Calling MNT_MNT path=%s", arg->arg_mnt);
@@ -129,23 +128,23 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	export_check_access();
 
 	if ((op_ctx->export_perms.options & EXPORT_OPTION_NFSV3) == 0) {
-		LogInfoAlt(COMPONENT_NFSPROTO, COMPONENT_EXPORT,
+		LogInfoAlt(
+			COMPONENT_NFSPROTO, COMPONENT_EXPORT,
 			"MOUNT: Export entry %s does not support NFS v3 for client %s",
 			ctx_export_path(op_ctx),
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 		res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 		goto out;
 	}
 
 	if ((op_ctx->export_perms.options & EXPORT_OPTION_ACCESS_MASK) == 0) {
-		LogInfoAlt(COMPONENT_NFSPROTO, COMPONENT_EXPORT,
+		LogInfoAlt(
+			COMPONENT_NFSPROTO, COMPONENT_EXPORT,
 			"MOUNT: Export entry %s does not allow access for client %s",
 			ctx_export_path(op_ctx),
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 		res->res_mnt3.fhs_status = MNT3ERR_ACCES;
 		goto out;
 	}
@@ -180,8 +179,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_mnt3.fhs_status = MNT3_OK;
 
 	/* Release the fsal_obj_handle created for the path */
-	LogFullDebug(COMPONENT_FSAL,
-		     "Releasing %p", obj);
+	LogFullDebug(COMPONENT_FSAL, "Releasing %p", obj);
 	obj->obj_ops->put_ref(obj);
 
 	/* Return the supported authentication flavor in V3 based
@@ -208,17 +206,17 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_opaque_bytes(&dspbuf, fh3->data.data_val,
 				     fh3->data.data_len);
 
-		LogDebug(COMPONENT_NFSPROTO,
-			 "MOUNT: Entry supports %d different flavours handle=%s for client %s",
-			 index_auth, str,
-			 op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+		LogDebug(
+			COMPONENT_NFSPROTO,
+			"MOUNT: Entry supports %d different flavours handle=%s for client %s",
+			index_auth, str,
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 	}
 
 	RES_MOUNTINFO->auth_flavors.auth_flavors_val =
@@ -227,15 +225,15 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	RES_MOUNTINFO->auth_flavors.auth_flavors_len = index_auth;
 	for (i = 0; i < index_auth; i++)
 		RES_MOUNTINFO->auth_flavors.auth_flavors_val[i] =
-		    auth_flavor[i];
+			auth_flavor[i];
 
- out:
+out:
 	if (export != NULL)
 		clear_op_context_export();
 
 	return retval;
 
-}				/* mnt_Mnt */
+} /* mnt_Mnt */
 
 /**
  * mnt_Mnt_Free: Frees the result structure allocated for mnt_Mnt.

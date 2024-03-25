@@ -30,10 +30,11 @@
  * can't call NTIRPC_AUTO_TRACEPOINT directly from Ganesha. */
 
 #define GSH_XPRT_AUTO_TRACEPOINT(prov, event, log_level, _xprt, format, ...) \
-	GSH_AUTO_TRACEPOINT(prov, event, log_level, XPRT_FMT " | " format, \
-		XPRT_VARS(_xprt), ##__VA_ARGS__)
+	GSH_AUTO_TRACEPOINT(prov, event, log_level, XPRT_FMT " | " format,   \
+			    XPRT_VARS(_xprt), ##__VA_ARGS__)
 
 #define GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(prov, event, log_level, _xprt, format, \
-	...) \
-	GSH_UNIQUE_AUTO_TRACEPOINT(prov, event, log_level, \
-		XPRT_FMT " | " format, XPRT_VARS(_xprt), ##__VA_ARGS__)
+					...)                                   \
+	GSH_UNIQUE_AUTO_TRACEPOINT(prov, event, log_level,                     \
+				   XPRT_FMT " | " format, XPRT_VARS(_xprt),    \
+				   ##__VA_ARGS__)

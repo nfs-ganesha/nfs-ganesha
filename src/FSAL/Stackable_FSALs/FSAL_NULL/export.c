@@ -34,7 +34,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -68,15 +68,13 @@ static void release(struct fsal_export *exp_hdl)
 	myself->export.sub_export->exp_ops.release(myself->export.sub_export);
 	fsal_put(sub_fsal);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s fsal_refcount %"PRIu32,
-		     sub_fsal->name,
-		     atomic_fetch_int32_t(&sub_fsal->refcount));
+	LogFullDebug(COMPONENT_FSAL, "FSAL %s fsal_refcount %" PRIu32,
+		     sub_fsal->name, atomic_fetch_int32_t(&sub_fsal->refcount));
 
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 
-	gsh_free(myself);	/* elvis has left the building */
+	gsh_free(myself); /* elvis has left the building */
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -86,9 +84,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	struct nullfs_fsal_export *exp =
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = exp->export.sub_export;
@@ -106,9 +103,8 @@ static bool fs_supports(struct fsal_export *exp_hdl,
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	bool result =
-		exp->export.sub_export->exp_ops.fs_supports(
-				exp->export.sub_export, option);
+	bool result = exp->export.sub_export->exp_ops.fs_supports(
+		exp->export.sub_export, option);
 
 	op_ctx->fsal_export = &exp->export;
 
@@ -121,9 +117,8 @@ static uint64_t fs_maxfilesize(struct fsal_export *exp_hdl)
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	uint64_t result =
-		exp->export.sub_export->exp_ops.fs_maxfilesize(
-				exp->export.sub_export);
+	uint64_t result = exp->export.sub_export->exp_ops.fs_maxfilesize(
+		exp->export.sub_export);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -136,7 +131,7 @@ static uint32_t fs_maxread(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->export.sub_export;
 	uint32_t result = exp->export.sub_export->exp_ops.fs_maxread(
-				exp->export.sub_export);
+		exp->export.sub_export);
 
 	op_ctx->fsal_export = &exp->export;
 
@@ -150,7 +145,7 @@ static uint32_t fs_maxwrite(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->export.sub_export;
 	uint32_t result = exp->export.sub_export->exp_ops.fs_maxwrite(
-				exp->export.sub_export);
+		exp->export.sub_export);
 
 	op_ctx->fsal_export = &exp->export;
 
@@ -164,7 +159,7 @@ static uint32_t fs_maxlink(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->export.sub_export;
 	uint32_t result = exp->export.sub_export->exp_ops.fs_maxlink(
-				exp->export.sub_export);
+		exp->export.sub_export);
 
 	op_ctx->fsal_export = &exp->export;
 
@@ -177,9 +172,8 @@ static uint32_t fs_maxnamelen(struct fsal_export *exp_hdl)
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	uint32_t result =
-		exp->export.sub_export->exp_ops.fs_maxnamelen(
-				exp->export.sub_export);
+	uint32_t result = exp->export.sub_export->exp_ops.fs_maxnamelen(
+		exp->export.sub_export);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -191,9 +185,8 @@ static uint32_t fs_maxpathlen(struct fsal_export *exp_hdl)
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	uint32_t result =
-		exp->export.sub_export->exp_ops.fs_maxpathlen(
-				exp->export.sub_export);
+	uint32_t result = exp->export.sub_export->exp_ops.fs_maxpathlen(
+		exp->export.sub_export);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -218,8 +211,7 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	attrmask_t result =
-		exp->export.sub_export->exp_ops.fs_supported_attrs(
+	attrmask_t result = exp->export.sub_export->exp_ops.fs_supported_attrs(
 		exp->export.sub_export);
 	op_ctx->fsal_export = &exp->export;
 
@@ -233,7 +225,7 @@ static uint32_t fs_umask(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->export.sub_export;
 	uint32_t result = exp->export.sub_export->exp_ops.fs_umask(
-				exp->export.sub_export);
+		exp->export.sub_export);
 
 	op_ctx->fsal_export = &exp->export;
 
@@ -246,9 +238,8 @@ static int32_t fs_expiretimeparent(struct fsal_export *exp_hdl)
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	uint32_t result =
-		exp->export.sub_export->exp_ops.fs_expiretimeparent(
-				exp->export.sub_export);
+	uint32_t result = exp->export.sub_export->exp_ops.fs_expiretimeparent(
+		exp->export.sub_export);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -265,17 +256,14 @@ static int32_t fs_expiretimeparent(struct fsal_export *exp_hdl)
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       int quota_id,
-			       fsal_quota_t *pquota)
+			       int quota_id, fsal_quota_t *pquota)
 {
 	struct nullfs_fsal_export *exp =
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	fsal_status_t result =
-		exp->export.sub_export->exp_ops.get_quota(
-			exp->export.sub_export, filepath,
-			quota_type, quota_id, pquota);
+	fsal_status_t result = exp->export.sub_export->exp_ops.get_quota(
+		exp->export.sub_export, filepath, quota_type, quota_id, pquota);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -287,17 +275,16 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       int quota_id,
-			       fsal_quota_t *pquota, fsal_quota_t *presquota)
+			       int quota_id, fsal_quota_t *pquota,
+			       fsal_quota_t *presquota)
 {
 	struct nullfs_fsal_export *exp =
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	fsal_status_t result =
-		exp->export.sub_export->exp_ops.set_quota(
-			exp->export.sub_export, filepath, quota_type, quota_id,
-			pquota, presquota);
+	fsal_status_t result = exp->export.sub_export->exp_ops.set_quota(
+		exp->export.sub_export, filepath, quota_type, quota_id, pquota,
+		presquota);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -311,9 +298,8 @@ static struct state_t *nullfs_alloc_state(struct fsal_export *exp_hdl,
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	state_t *state =
-		exp->export.sub_export->exp_ops.alloc_state(
-			exp->export.sub_export, state_type, related_state);
+	state_t *state = exp->export.sub_export->exp_ops.alloc_state(
+		exp->export.sub_export, state_type, related_state);
 	op_ctx->fsal_export = exp_hdl;
 
 	return state;
@@ -322,18 +308,17 @@ static struct state_t *nullfs_alloc_state(struct fsal_export *exp_hdl,
 static bool nullfs_is_superuser(struct fsal_export *exp_hdl,
 				const struct user_cred *creds)
 {
-	struct nullfs_fsal_export *exp = container_of(exp_hdl,
-					struct nullfs_fsal_export, export);
+	struct nullfs_fsal_export *exp =
+		container_of(exp_hdl, struct nullfs_fsal_export, export);
 	bool rv;
 
 	op_ctx->fsal_export = exp->export.sub_export;
 	rv = exp->export.sub_export->exp_ops.is_superuser(
-					exp->export.sub_export, creds);
+		exp->export.sub_export, creds);
 	op_ctx->fsal_export = &exp->export;
 
 	return rv;
 }
-
 
 /* extract a file handle from a buffer.
  * do verification checks and flag any and all suspicious bits.
@@ -342,32 +327,29 @@ static bool nullfs_is_superuser(struct fsal_export *exp_hdl,
  */
 
 static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
-				    fsal_digesttype_t in_type,
-				    struct gsh_buffdesc *fh_desc,
-				    int flags)
+				  fsal_digesttype_t in_type,
+				  struct gsh_buffdesc *fh_desc, int flags)
 {
 	struct nullfs_fsal_export *exp =
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	fsal_status_t result =
-		exp->export.sub_export->exp_ops.wire_to_host(
-			exp->export.sub_export, in_type, fh_desc, flags);
+	fsal_status_t result = exp->export.sub_export->exp_ops.wire_to_host(
+		exp->export.sub_export, in_type, fh_desc, flags);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
 }
 
 static fsal_status_t nullfs_host_to_key(struct fsal_export *exp_hdl,
-					  struct gsh_buffdesc *fh_desc)
+					struct gsh_buffdesc *fh_desc)
 {
 	struct nullfs_fsal_export *exp =
 		container_of(exp_hdl, struct nullfs_fsal_export, export);
 
 	op_ctx->fsal_export = exp->export.sub_export;
-	fsal_status_t result =
-		exp->export.sub_export->exp_ops.host_to_key(
-			exp->export.sub_export, fh_desc);
+	fsal_status_t result = exp->export.sub_export->exp_ops.host_to_key(
+		exp->export.sub_export, fh_desc);
 	op_ctx->fsal_export = &exp->export;
 
 	return result;
@@ -380,7 +362,7 @@ static void nullfs_prepare_unexport(struct fsal_export *exp_hdl)
 
 	op_ctx->fsal_export = exp->export.sub_export;
 	exp->export.sub_export->exp_ops.prepare_unexport(
-						exp->export.sub_export);
+		exp->export.sub_export);
 	op_ctx->fsal_export = &exp->export;
 }
 
@@ -419,16 +401,13 @@ struct nullfsal_args {
 };
 
 static struct config_item sub_fsal_params[] = {
-	CONF_ITEM_STR("name", 1, 10, NULL,
-		      subfsal_args, name),
-	CONFIG_EOL
+	CONF_ITEM_STR("name", 1, 10, NULL, subfsal_args, name), CONFIG_EOL
 };
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_RELAX_BLOCK("FSAL", sub_fsal_params,
-			 noop_conf_init, subfsal_commit,
-			 nullfsal_args, subfsal),
+	CONF_RELAX_BLOCK("FSAL", sub_fsal_params, noop_conf_init,
+			 subfsal_commit, nullfsal_args, subfsal),
 	CONFIG_EOL
 };
 
@@ -462,11 +441,8 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	/* process our FSAL block to get the name of the fsal
 	 * underneath us.
 	 */
-	retval = load_config_from_node(parse_node,
-				       &export_param,
-				       &nullfsal,
-				       true,
-				       err_type);
+	retval = load_config_from_node(parse_node, &export_param, &nullfsal,
+				       true, err_type);
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	fsal_stack = lookup_fsal(nullfsal.subfsal.name);
@@ -478,14 +454,11 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	}
 
 	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export));
-	expres = fsal_stack->m_ops.create_export(fsal_stack,
-						 nullfsal.subfsal.fsal_node,
-						 err_type,
-						 up_ops);
+	expres = fsal_stack->m_ops.create_export(
+		fsal_stack, nullfsal.subfsal.fsal_node, err_type, up_ops);
 	fsal_put(fsal_stack);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s fsal_refcount %"PRIu32,
+	LogFullDebug(COMPONENT_FSAL, "FSAL %s fsal_refcount %" PRIu32,
 		     fsal_stack->name,
 		     atomic_fetch_int32_t(&fsal_stack->refcount));
 
@@ -506,7 +479,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	 * Need to iterate through the lists to save and restore.
 	 */
 	nullfs_handle_ops_init(myself->export.obj_ops);
-#endif				/* EXPORT_OPS_INIT */
+#endif /* EXPORT_OPS_INIT */
 	myself->export.up_ops = up_ops;
 	myself->export.fsal = fsal_hdl;
 
@@ -529,8 +502,8 @@ fsal_status_t nullfs_update_export(struct fsal_module *fsal_hdl,
 	int retval;
 
 	/* Check for changes in stacking by calling default update_export. */
-	status = update_export(fsal_hdl, parse_node, err_type,
-			       original, updated_super);
+	status = update_export(fsal_hdl, parse_node, err_type, original,
+			       updated_super);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -538,11 +511,8 @@ fsal_status_t nullfs_update_export(struct fsal_module *fsal_hdl,
 	/* process our FSAL block to get the name of the fsal
 	 * underneath us.
 	 */
-	retval = load_config_from_node(parse_node,
-				       &export_param,
-				       &nullfsal,
-				       true,
-				       err_type);
+	retval = load_config_from_node(parse_node, &export_param, &nullfsal,
+				       true, err_type);
 
 	if (retval != 0)
 		return fsalstat(ERR_FSAL_INVAL, 0);
@@ -558,8 +528,7 @@ fsal_status_t nullfs_update_export(struct fsal_module *fsal_hdl,
 
 	status = fsal_stack->m_ops.update_export(fsal_stack,
 						 nullfsal.subfsal.fsal_node,
-						 err_type,
-						 original->sub_export,
+						 err_type, original->sub_export,
 						 fsal_hdl);
 	fsal_put(fsal_stack);
 

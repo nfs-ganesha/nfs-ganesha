@@ -42,7 +42,7 @@ const char *cidr_version(void)
 }
 
 /* Is a CIDR a v4-mapped IPv6 address? */
-int cidr_is_v4mapped(const CIDR * addr)
+int cidr_is_v4mapped(const CIDR *addr)
 {
 	int i;
 

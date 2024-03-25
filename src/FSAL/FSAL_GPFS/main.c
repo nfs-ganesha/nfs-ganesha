@@ -40,74 +40,64 @@ static const char myname[] = "GPFS";
 /** @struct GPFS
  *  @brief my module private storage
  */
-struct gpfs_fsal_module GPFS = {
-	.module = {
-		.fs_info = {
-			.maxfilesize = INT64_MAX,
-			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = 1024,
-			.maxpathlen = 1024,
-			.no_trunc = true,
-			.chown_restricted = false,
-			.case_insensitive = false,
-			.case_preserving = true,
-			.link_support = true,
-			.symlink_support = true,
-			.lock_support = true,
-			.lock_support_async_block = false,
-			.named_attr = true,
-			.unique_handles = true,
-			.acl_support = FSAL_ACLSUPPORT_ALLOW |
-							FSAL_ACLSUPPORT_DENY,
-			.cansettime = true,
-			.homogenous = true,
-			.supported_attrs = GPFS_SUPPORTED_ATTRIBUTES,
-			.maxread = FSAL_MAXIOSIZE,
-			.maxwrite = FSAL_MAXIOSIZE,
-			.umask = 0,
-			.auth_exportpath_xdev = true,
-			/* @todo Update lease handling to use new interfaces */
-			#if 0
+struct gpfs_fsal_module
+	GPFS = { .module = {
+			 .fs_info = {
+				 .maxfilesize = INT64_MAX,
+				 .maxlink = _POSIX_LINK_MAX,
+				 .maxnamelen = 1024,
+				 .maxpathlen = 1024,
+				 .no_trunc = true,
+				 .chown_restricted = false,
+				 .case_insensitive = false,
+				 .case_preserving = true,
+				 .link_support = true,
+				 .symlink_support = true,
+				 .lock_support = true,
+				 .lock_support_async_block = false,
+				 .named_attr = true,
+				 .unique_handles = true,
+				 .acl_support = FSAL_ACLSUPPORT_ALLOW |
+						FSAL_ACLSUPPORT_DENY,
+				 .cansettime = true,
+				 .homogenous = true,
+				 .supported_attrs = GPFS_SUPPORTED_ATTRIBUTES,
+				 .maxread = FSAL_MAXIOSIZE,
+				 .maxwrite = FSAL_MAXIOSIZE,
+				 .umask = 0,
+				 .auth_exportpath_xdev = true,
+/* @todo Update lease handling to use new interfaces */
+#if 0
 			/** not working with pNFS */
 			.delegations = FSAL_OPTION_FILE_READ_DELEG,
-			#endif
-			.pnfs_mds = true,
-			.pnfs_ds = true,
-			.fsal_trace = true,
-			.fsal_grace = false,
-			.link_supports_permission_checks = true,
-			.expire_time_parent = 60,
-		}
-	}
-};
+#endif
+				 .pnfs_mds = true,
+				 .pnfs_ds = true,
+				 .fsal_trace = true,
+				 .fsal_grace = false,
+				 .link_supports_permission_checks = true,
+				 .expire_time_parent = 60,
+			 } } };
 
 /** @struct gpfs_params
  *  @brief Configuration items
  */
 static struct config_item gpfs_params[] = {
-	CONF_ITEM_BOOL("link_support", true,
-		       fsal_staticfsinfo_t, link_support),
-	CONF_ITEM_BOOL("symlink_support", true,
-		       fsal_staticfsinfo_t, symlink_support),
-	CONF_ITEM_BOOL("cansettime", true,
-		       fsal_staticfsinfo_t, cansettime),
-	CONF_ITEM_MODE("umask", 0,
-		       fsal_staticfsinfo_t, umask),
-	CONF_ITEM_BOOL("auth_xdev_export", false,
-		       fsal_staticfsinfo_t, auth_exportpath_xdev),
+	CONF_ITEM_BOOL("link_support", true, fsal_staticfsinfo_t, link_support),
+	CONF_ITEM_BOOL("symlink_support", true, fsal_staticfsinfo_t,
+		       symlink_support),
+	CONF_ITEM_BOOL("cansettime", true, fsal_staticfsinfo_t, cansettime),
+	CONF_ITEM_MODE("umask", 0, fsal_staticfsinfo_t, umask),
+	CONF_ITEM_BOOL("auth_xdev_export", false, fsal_staticfsinfo_t,
+		       auth_exportpath_xdev),
 	/** At the moment GPFS doesn't support WRITE delegations */
-	CONF_ITEM_ENUM_BITS("Delegations",
-			    FSAL_OPTION_FILE_READ_DELEG,
-			    FSAL_OPTION_FILE_DELEGATIONS,
-			    deleg_types, fsal_staticfsinfo_t, delegations),
-	CONF_ITEM_BOOL("PNFS_MDS", true,
-		       fsal_staticfsinfo_t, pnfs_mds),
-	CONF_ITEM_BOOL("PNFS_DS", true,
-		       fsal_staticfsinfo_t, pnfs_ds),
-	CONF_ITEM_BOOL("fsal_trace", true,
-		       fsal_staticfsinfo_t, fsal_trace),
-	CONF_ITEM_BOOL("fsal_grace", false,
-		       fsal_staticfsinfo_t, fsal_grace),
+	CONF_ITEM_ENUM_BITS("Delegations", FSAL_OPTION_FILE_READ_DELEG,
+			    FSAL_OPTION_FILE_DELEGATIONS, deleg_types,
+			    fsal_staticfsinfo_t, delegations),
+	CONF_ITEM_BOOL("PNFS_MDS", true, fsal_staticfsinfo_t, pnfs_mds),
+	CONF_ITEM_BOOL("PNFS_DS", true, fsal_staticfsinfo_t, pnfs_ds),
+	CONF_ITEM_BOOL("fsal_trace", true, fsal_staticfsinfo_t, fsal_trace),
+	CONF_ITEM_BOOL("fsal_grace", false, fsal_staticfsinfo_t, fsal_grace),
 	CONFIG_EOL
 };
 
@@ -118,7 +108,7 @@ static struct config_block gpfs_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gpfs",
 	.blk_desc.name = "GPFS",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = gpfs_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
@@ -129,11 +119,11 @@ static struct config_block gpfs_param = {
  *	struct display_buffer *buffer, char *compstr, char *message)
  *  @brief Log to gpfs
  */
-static int
-log_to_gpfs(log_header_t headers, void *private, log_levels_t level,
-	    struct display_buffer *buffer, char *compstr, char *message)
+static int log_to_gpfs(log_header_t headers, void *private, log_levels_t level,
+		       struct display_buffer *buffer, char *compstr,
+		       char *message)
 {
-	struct trace_arg targ = {0};
+	struct trace_arg targ = { 0 };
 
 	if (level <= 0)
 		return 0;
@@ -155,17 +145,15 @@ static fsal_status_t init_config(struct fsal_module *gpfs_fsal_module,
 {
 	int rc;
 
-	(void) prepare_for_stats(gpfs_fsal_module);
+	(void)prepare_for_stats(gpfs_fsal_module);
 
 	LogFullDebug(COMPONENT_FSAL,
-			"Supported attributes default = 0x%" PRIx64,
-			gpfs_fsal_module->fs_info.supported_attrs);
+		     "Supported attributes default = 0x%" PRIx64,
+		     gpfs_fsal_module->fs_info.supported_attrs);
 
-	(void) load_config_from_parse(config_struct,
-					&gpfs_param,
-					&gpfs_fsal_module->fs_info,
-					true,
-					err_type);
+	(void)load_config_from_parse(config_struct, &gpfs_param,
+				     &gpfs_fsal_module->fs_info, true,
+				     err_type);
 
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
@@ -180,11 +168,11 @@ static fsal_status_t init_config(struct fsal_module *gpfs_fsal_module,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 gpfs_fsal_module->fs_info.supported_attrs);
 
-	rc = create_log_facility(myname, log_to_gpfs,
-				 NIV_FULL_DEBUG, LH_COMPONENT, NULL);
+	rc = create_log_facility(myname, log_to_gpfs, NIV_FULL_DEBUG,
+				 LH_COMPONENT, NULL);
 	if (rc != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Could not create GPFS logger (%s)", strerror(-rc));
+		LogCrit(COMPONENT_FSAL, "Could not create GPFS logger (%s)",
+			strerror(-rc));
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 

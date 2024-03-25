@@ -47,10 +47,12 @@
 #include "pnfs_utils.h"
 #include "nfs_creds.h"
 
-#define min(a, b)			\
-	({ typeof(a) _a = (a);		\
-	typeof(b) _b = (b);		\
-	_a < _b ? _a : _b; })
+#define min(a, b)                   \
+	({                          \
+		typeof(a) _a = (a); \
+		typeof(b) _b = (b); \
+		_a < _b ? _a : _b;  \
+	})
 
 /**
  * @brief Release a DS handle
@@ -87,8 +89,7 @@ static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
-			count4 * const supplied_length,
-			bool * const end_of_file)
+			count4 *const supplied_length, bool *const end_of_file)
 {
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
@@ -98,8 +99,8 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	struct dsread_arg rarg;
 	unsigned int *fh;
 	int errsv = 0;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	fh = (int *)&(gpfs_handle->f_handle);
@@ -114,11 +115,12 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	if (op_ctx && op_ctx->client)
 		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
-	LogDebug(COMPONENT_PNFS,
-		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-		 gpfs_handle->handle_size, gpfs_handle->handle_type,
-		 gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3],
-		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
+	LogDebug(
+		COMPONENT_PNFS,
+		"fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		gpfs_handle->handle_size, gpfs_handle->handle_type,
+		gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3], fh[4],
+		fh[5], fh[6], fh[7], fh[8], fh[9]);
 
 	amount_read = gpfs_ganesha(OPENHANDLE_DS_READ, &rarg);
 	errsv = errno;
@@ -157,11 +159,10 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.2 status code.
  */
 static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
-			const stateid4 *stateid, const offset4 offset,
-			const count4 requested_length, void *const buffer,
-			const count4 supplied_length,
-			bool * const end_of_file,
-			struct io_info *info)
+			     const stateid4 *stateid, const offset4 offset,
+			     const count4 requested_length, void *const buffer,
+			     const count4 supplied_length,
+			     bool *const end_of_file, struct io_info *info)
 {
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
@@ -172,8 +173,8 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	unsigned int *fh;
 	uint64_t filesize;
 	int errsv = 0;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	fh = (int *)&(gpfs_handle->f_handle);
@@ -189,11 +190,12 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 	if (op_ctx && op_ctx->client)
 		rarg.cli_ip = op_ctx->client->hostaddr_str;
 
-	LogDebug(COMPONENT_PNFS,
-		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-		 gpfs_handle->handle_size, gpfs_handle->handle_type,
-		 gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3],
-		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
+	LogDebug(
+		COMPONENT_PNFS,
+		"fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		gpfs_handle->handle_size, gpfs_handle->handle_type,
+		gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3], fh[4],
+		fh[5], fh[6], fh[7], fh[8], fh[9]);
 
 	amount_read = gpfs_ganesha(OPENHANDLE_DS_READ, &rarg);
 	errsv = errno;
@@ -205,8 +207,8 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 
 		/* errsv == ENODATA */
 		info->io_content.what = NFS4_CONTENT_HOLE;
-		info->io_content.hole.di_offset = offset;     /*offset of hole*/
-		info->io_content.hole.di_length = requested_length;/*hole len*/
+		info->io_content.hole.di_offset = offset; /*offset of hole*/
+		info->io_content.hole.di_length = requested_length; /*hole len*/
 
 		if ((requested_length + offset) > filesize) {
 			amount_read = filesize - offset;
@@ -251,13 +253,11 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
-			 const stateid4 *stateid, const offset4 offset,
-			 const count4 write_length, const void *buffer,
-			 const stable_how4 stability_wanted,
-			 count4 * const written_length,
-			 verifier4 * const writeverf,
-			 stable_how4 * const stability_got)
+static nfsstat4
+ds_write(struct fsal_ds_handle *const ds_pub, const stateid4 *stateid,
+	 const offset4 offset, const count4 write_length, const void *buffer,
+	 const stable_how4 stability_wanted, count4 *const written_length,
+	 verifier4 *const writeverf, stable_how4 *const stability_got)
 {
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
@@ -268,8 +268,8 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	unsigned int *fh;
 	struct gsh_buffdesc key;
 	int errsv = 0;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	fh = (int *)&(gpfs_handle->f_handle);
@@ -283,17 +283,18 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	warg.length = write_length;
 	warg.stability_wanted = stability_wanted;
 	warg.stability_got = stability_got;
-	warg.verifier4 = (int32_t *) writeverf;
+	warg.verifier4 = (int32_t *)writeverf;
 	warg.options = 0;
 	warg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		warg.cli_ip = op_ctx->client->hostaddr_str;
 
-	LogDebug(COMPONENT_PNFS,
-		 "fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
-		 gpfs_handle->handle_size, gpfs_handle->handle_type,
-		 gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3],
-		 fh[4], fh[5], fh[6], fh[7], fh[8], fh[9]);
+	LogDebug(
+		COMPONENT_PNFS,
+		"fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		gpfs_handle->handle_size, gpfs_handle->handle_type,
+		gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3], fh[4],
+		fh[5], fh[6], fh[7], fh[8], fh[9]);
 
 	amount_written = gpfs_ganesha(OPENHANDLE_DS_WRITE, &warg);
 	errsv = errno;
@@ -308,9 +309,8 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 	key.addr = gpfs_handle;
 	key.len = gpfs_handle->handle_key_size;
-	op_ctx->fsal_export->up_ops->invalidate(
-			op_ctx->fsal_export->up_ops, &key,
-			FSAL_UP_INVALIDATE_CACHE);
+	op_ctx->fsal_export->up_ops->invalidate(op_ctx->fsal_export->up_ops,
+						&key, FSAL_UP_INVALIDATE_CACHE);
 
 	*written_length = amount_written;
 
@@ -334,7 +334,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 			  const offset4 offset, const count4 count,
-			  verifier4 * const writeverf)
+			  verifier4 *const writeverf)
 {
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
@@ -360,11 +360,10 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 
 static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 			       const struct gsh_buffdesc *const desc,
-			       struct fsal_ds_handle **const handle,
-			       int flags)
+			       struct fsal_ds_handle **const handle, int flags)
 {
 	struct gpfs_file_handle *fh = (struct gpfs_file_handle *)desc->addr;
-	struct gpfs_ds *ds;		/* Handle to be created */
+	struct gpfs_ds *ds; /* Handle to be created */
 	struct fsal_filesystem *fs;
 	struct fsal_fsid__ fsid;
 
@@ -388,26 +387,27 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 		fh->handle_key_size = bswap_16(fh->handle_key_size);
 #endif
 	}
-	LogFullDebug(COMPONENT_FSAL,
-	  "flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X",
-	   flags, fh->handle_size, fh->handle_type, fh->handle_version,
-	   fh->handle_key_size, fh->handle_fsid[0], fh->handle_fsid[1]);
+	LogFullDebug(
+		COMPONENT_FSAL,
+		"flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X",
+		flags, fh->handle_size, fh->handle_type, fh->handle_version,
+		fh->handle_key_size, fh->handle_fsid[0], fh->handle_fsid[1]);
 
 	gpfs_extract_fsid(fh, &fsid);
 
 	fs = lookup_fsid(&fsid, GPFS_FSID_TYPE);
 	if (fs == NULL) {
 		LogInfo(COMPONENT_FSAL,
-			"Could not find filesystem for fsid=0x%016"PRIx64
-			".0x%016"PRIx64" from handle",
+			"Could not find filesystem for fsid=0x%016" PRIx64
+			".0x%016" PRIx64 " from handle",
 			fsid.major, fsid.minor);
 		return NFS4ERR_STALE;
 	}
 
 	if (fs->fsal != pds->fsal) {
 		LogInfo(COMPONENT_FSAL,
-			"Non GPFS filesystem fsid=0x%016"PRIx64".0x%016"PRIx64
-			" from handle",
+			"Non GPFS filesystem fsid=0x%016" PRIx64
+			".0x%016" PRIx64 " from handle",
 			fsid.major, fsid.minor);
 		return NFS4ERR_STALE;
 	}

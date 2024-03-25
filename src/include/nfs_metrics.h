@@ -36,8 +36,8 @@
 #include "nfs23.h"
 
 void nfs_metrics__nfs4_op_completed(nfs_opnum4, nfsstat4, nsecs_elapsed_t);
-void nfs_metrics__nfs4_compound_completed(
-	nfsstat4, nsecs_elapsed_t, int num_ops);
+void nfs_metrics__nfs4_compound_completed(nfsstat4, nsecs_elapsed_t,
+					  int num_ops);
 void nfs_metrics__rpc_received(void);
 void nfs_metrics__rpc_completed(void);
 void nfs_metrics__rpcs_in_flight(int64_t value);
@@ -57,15 +57,15 @@ void nfs_metrics__init(void);
  */
 
 void nfs_metrics__nfs3_request(const uint32_t proc,
-			     const nsecs_elapsed_t request_time,
-			     const nfsstat3 status,
-			     const export_id_t export_id,
-			     const char *client_ip);
+			       const nsecs_elapsed_t request_time,
+			       const nfsstat3 status,
+			       const export_id_t export_id,
+			       const char *client_ip);
 
 void nfs_metrics__nfs4_request(const uint32_t op,
-			     const nsecs_elapsed_t request_time,
-			     const nfsstat4 status,
-			     const export_id_t export_id,
-			     const char *client_ip);
+			       const nsecs_elapsed_t request_time,
+			       const nfsstat4 status,
+			       const export_id_t export_id,
+			       const char *client_ip);
 
 #endif /* !NFS_METRICS_H */

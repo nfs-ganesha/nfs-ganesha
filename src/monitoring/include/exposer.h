@@ -32,17 +32,21 @@
 
 #include "prometheus/registry.h"
 
-namespace ganesha_monitoring {
+namespace ganesha_monitoring
+{
 
 class Exposer {
-public:
-	Exposer(prometheus::Registry &registry) : registry_(registry) {}
+    public:
+	Exposer(prometheus::Registry &registry)
+		: registry_(registry)
+	{
+	}
 	~Exposer();
 
 	void start(uint16_t port);
 	void stop(void);
 
-private:
+    private:
 	prometheus::Registry &registry_;
 	static constexpr int INVALID_FD = -1;
 	int server_fd_ = INVALID_FD;
@@ -51,10 +55,10 @@ private:
 	std::mutex mutex_;
 
 	// Delete copy/move constructor/assignment
-	Exposer(const Exposer&) = delete;
-	Exposer& operator=(const Exposer&) = delete;
-	Exposer(Exposer&&) = delete;
-	Exposer& operator=(Exposer&&) = delete;
+	Exposer(const Exposer &) = delete;
+	Exposer &operator=(const Exposer &) = delete;
+	Exposer(Exposer &&) = delete;
+	Exposer &operator=(Exposer &&) = delete;
 
 	static void *server_thread(void *arg);
 };

@@ -512,13 +512,13 @@ uint64_t nfs_htonl64(uint64_t arg64)
 	uint64_t res64;
 
 #ifdef LITTLEEND
-	uint32_t low = (uint32_t) (arg64 & 0x00000000FFFFFFFFLL);
-	uint32_t high = (uint32_t) ((arg64 & 0xFFFFFFFF00000000LL) >> 32);
+	uint32_t low = (uint32_t)(arg64 & 0x00000000FFFFFFFFLL);
+	uint32_t high = (uint32_t)((arg64 & 0xFFFFFFFF00000000LL) >> 32);
 
 	low = htonl(low);
 	high = htonl(high);
 
-	res64 = (uint64_t) high + (((uint64_t) low) << 32);
+	res64 = (uint64_t)high + (((uint64_t)low) << 32);
 #else
 	res64 = arg64;
 #endif
@@ -538,13 +538,13 @@ uint64_t nfs_ntohl64(uint64_t arg64)
 	uint64_t res64;
 
 #ifdef LITTLEEND
-	uint32_t low = (uint32_t) (arg64 & 0x00000000FFFFFFFFLL);
-	uint32_t high = (uint32_t) ((arg64 & 0xFFFFFFFF00000000LL) >> 32);
+	uint32_t low = (uint32_t)(arg64 & 0x00000000FFFFFFFFLL);
+	uint32_t high = (uint32_t)((arg64 & 0xFFFFFFFF00000000LL) >> 32);
 
 	low = ntohl(low);
 	high = ntohl(high);
 
-	res64 = (uint64_t) high + (((uint64_t) low) << 32);
+	res64 = (uint64_t)high + (((uint64_t)low) << 32);
 #else
 	res64 = arg64;
 #endif
@@ -794,9 +794,10 @@ nfsstat4 nfs4_Errno_verbose(fsal_status_t status, const char *where)
 	case ERR_FSAL_NO_ACE:
 	case ERR_FSAL_STILL_IN_USE:
 		/* Should not occur */
-		LogDebug(COMPONENT_NFS_V4,
-			 "Line %u should never be reached in nfs4_Errno from %s for cache_status=%u",
-			 __LINE__, where, status.major);
+		LogDebug(
+			COMPONENT_NFS_V4,
+			"Line %u should never be reached in nfs4_Errno from %s for cache_status=%u",
+			__LINE__, where, status.major);
 		nfserror = NFS4ERR_INVAL;
 		break;
 	}
@@ -971,13 +972,14 @@ nfsstat3 nfs3_Errno_verbose(fsal_status_t status, const char *where)
 	case ERR_FSAL_NOXATTR:
 	case ERR_FSAL_XATTR2BIG:
 		/* Should not occur */
-		LogDebug(COMPONENT_NFSPROTO,
-			 "Line %u should never be reached in nfs3_Errno from %s for FSAL error=%s",
-			 __LINE__, where, msg_fsal_err(status.major));
+		LogDebug(
+			COMPONENT_NFSPROTO,
+			"Line %u should never be reached in nfs3_Errno from %s for FSAL error=%s",
+			__LINE__, where, msg_fsal_err(status.major));
 		nfserror = NFS3ERR_INVAL;
 		break;
 	}
 
 	return nfserror;
-}				/* nfs3_Errno */
+} /* nfs3_Errno */
 #endif

@@ -32,7 +32,6 @@
 
 int main(int argc, char **argv)
 {
-
 	SetDefaultLogging("TEST");
 	SetNamePgm("verif_syntax");
 	char *errtxt;
@@ -59,5 +58,4 @@ int main(int argc, char **argv)
 	config_Free(config);
 
 	return 0;
-
 }

@@ -45,11 +45,10 @@
  *  @return ERR_FSAL_NO_ERROR on success, otherwise error
  *
  */
-fsal_status_t
-GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
-		uint32_t accessmode,
-		struct gpfs_file_handle *gpfs_fh,
-		struct fsal_attrlist *fsal_attr)
+fsal_status_t GPFSFSAL_create(struct fsal_obj_handle *dir_hdl,
+			      const char *filename, uint32_t accessmode,
+			      struct gpfs_file_handle *gpfs_fh,
+			      struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 	mode_t unix_mode;
@@ -63,15 +62,15 @@ GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 
 	/* Apply umask */
 	unix_mode = unix_mode &
-		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	LogFullDebug(COMPONENT_FSAL, "Creation mode: 0%o", accessmode);
 
 	/* call to filesystem */
 
 	fsal_set_credentials(&op_ctx->creds);
-	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG,
-				      0, gpfs_fh, NULL);
+	status = fsal_internal_create(dir_hdl, filename, unix_mode | S_IFREG, 0,
+				      gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -81,11 +80,10 @@ GPFSFSAL_create(struct fsal_obj_handle *dir_hdl, const char *filename,
 				 gpfs_fh, fsal_attr);
 }
 
-fsal_status_t
-GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
-		mode_t unix_mode,
-		struct gpfs_file_handle *gpfs_fh, int posix_flags,
-		struct fsal_attrlist *fsal_attr)
+fsal_status_t GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl,
+			       const char *filename, mode_t unix_mode,
+			       struct gpfs_file_handle *gpfs_fh,
+			       int posix_flags, struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 
@@ -105,8 +103,8 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
 	if (!FSAL_IS_ERROR(status) && fsal_attr != NULL) {
 		/* retrieve file attributes */
 		status = GPFSFSAL_getattrs(op_ctx->fsal_export,
-					   dir_hdl->fs->private_data,
-					   gpfs_fh, fsal_attr);
+					   dir_hdl->fs->private_data, gpfs_fh,
+					   fsal_attr);
 	}
 
 	return status;
@@ -123,10 +121,10 @@ GPFSFSAL_create2(struct fsal_obj_handle *dir_hdl, const char *filename,
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  *
  */
-fsal_status_t
-GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
-	       uint32_t accessmode,
-	       struct gpfs_file_handle *gpfs_fh, struct fsal_attrlist *obj_attr)
+fsal_status_t GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl,
+			     const char *dir_name, uint32_t accessmode,
+			     struct gpfs_file_handle *gpfs_fh,
+			     struct fsal_attrlist *obj_attr)
 {
 	mode_t unix_mode;
 	fsal_status_t status;
@@ -140,24 +138,23 @@ GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
 
 	/* Apply umask */
 	unix_mode = unix_mode &
-		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	/* build new entry path */
 
 	/* creates the directory and get its handle */
 
 	fsal_set_credentials(&op_ctx->creds);
-	status = fsal_internal_create(dir_hdl, dir_name, unix_mode | S_IFDIR,
-				      0, gpfs_fh, NULL);
+	status = fsal_internal_create(dir_hdl, dir_name, unix_mode | S_IFDIR, 0,
+				      gpfs_fh, NULL);
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status))
 		return status;
 
 	/* retrieve file attributes */
-	return GPFSFSAL_getattrs(op_ctx->fsal_export,
-				dir_hdl->fs->private_data,
-				gpfs_fh, obj_attr);
+	return GPFSFSAL_getattrs(op_ctx->fsal_export, dir_hdl->fs->private_data,
+				 gpfs_fh, obj_attr);
 }
 
 /**
@@ -169,14 +166,14 @@ GPFSFSAL_mkdir(struct fsal_obj_handle *dir_hdl, const char *dir_name,
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  *
  */
-fsal_status_t
-GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
-	      const char *linkname)
+fsal_status_t GPFSFSAL_link(struct fsal_obj_handle *dir_hdl,
+			    struct gpfs_file_handle *gpfs_fh,
+			    const char *linkname)
 {
 	fsal_status_t status;
 	struct gpfs_fsal_obj_handle *dest_dir;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	dest_dir =
@@ -191,8 +188,8 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
 	/* Create the link on the filesystem */
 
 	fsal_set_credentials(&op_ctx->creds);
-	status = fsal_internal_link_fh(export_fd, gpfs_fh,
-				       dest_dir->handle, linkname);
+	status = fsal_internal_link_fh(export_fd, gpfs_fh, dest_dir->handle,
+				       linkname);
 
 	fsal_restore_ganesha_credentials();
 
@@ -212,12 +209,11 @@ GPFSFSAL_link(struct fsal_obj_handle *dir_hdl, struct gpfs_file_handle *gpfs_fh,
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  *
  */
-fsal_status_t
-GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
-		uint32_t accessmode,
-		mode_t nodetype, fsal_dev_t *dev,
-		struct gpfs_file_handle *gpfs_fh,
-		struct fsal_attrlist *fsal_attr)
+fsal_status_t GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl,
+			      const char *node_name, uint32_t accessmode,
+			      mode_t nodetype, fsal_dev_t *dev,
+			      struct gpfs_file_handle *gpfs_fh,
+			      struct fsal_attrlist *fsal_attr)
 {
 	fsal_status_t status;
 	mode_t unix_mode = 0;
@@ -231,7 +227,7 @@ GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 
 	/* Apply umask */
 	unix_mode = unix_mode &
-		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	switch (nodetype) {
 	case BLOCK_FILE:
@@ -272,7 +268,6 @@ GPFSFSAL_mknode(struct fsal_obj_handle *dir_hdl, const char *node_name,
 		return status;
 
 	/* Fills the attributes */
-	return GPFSFSAL_getattrs(op_ctx->fsal_export,
-				dir_hdl->fs->private_data,
-				gpfs_fh, fsal_attr);
+	return GPFSFSAL_getattrs(op_ctx->fsal_export, dir_hdl->fs->private_data,
+				 gpfs_fh, fsal_attr);
 }

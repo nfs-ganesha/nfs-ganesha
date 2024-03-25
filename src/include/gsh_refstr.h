@@ -38,8 +38,8 @@ extern "C" {
  * gsh_refstr_put.
  */
 struct gsh_refstr {
-	struct urcu_ref	gr_ref;		/* refcount */
-	char		gr_val[];	/* buffer */
+	struct urcu_ref gr_ref; /* refcount */
+	char gr_val[]; /* buffer */
 };
 
 /**
@@ -109,7 +109,7 @@ static inline struct gsh_refstr *gsh_refstr_get(struct gsh_refstr *gr)
  */
 static inline struct gsh_refstr *gsh_refstr_get(struct gsh_refstr *gr)
 {
-	struct urcu_ref	*ref = &gr->gr_ref;
+	struct urcu_ref *ref = &gr->gr_ref;
 	long cur;
 
 	/*

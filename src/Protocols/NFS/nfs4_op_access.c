@@ -63,18 +63,16 @@
 enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 				   struct nfs_resop4 *resp)
 {
-	ACCESS4args * const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
-	ACCESS4res * const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
+	ACCESS4args *const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
+	ACCESS4res *const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
 	fsal_status_t status;
-	uint32_t max_access = (ACCESS4_READ | ACCESS4_LOOKUP |
-			       ACCESS4_MODIFY | ACCESS4_EXTEND |
-			       ACCESS4_DELETE | ACCESS4_EXECUTE);
+	uint32_t max_access =
+		(ACCESS4_READ | ACCESS4_LOOKUP | ACCESS4_MODIFY |
+		 ACCESS4_EXTEND | ACCESS4_DELETE | ACCESS4_EXECUTE);
 
 	/* xattrs are a v4.2+ feature */
 	if (data->minorversion >= 2) {
-		max_access |= ACCESS4_XAREAD |
-			      ACCESS4_XAWRITE |
-			      ACCESS4_XALIST;
+		max_access |= ACCESS4_XAREAD | ACCESS4_XAWRITE | ACCESS4_XALIST;
 	}
 
 	/* initialize output */
@@ -97,17 +95,17 @@ enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Perform the 'access' call */
 	status = nfs_access_op(data->current_obj, arg_ACCESS4->access,
-			  &res_ACCESS4->ACCESS4res_u.resok4.access,
-			  &res_ACCESS4->ACCESS4res_u.resok4.supported);
+			       &res_ACCESS4->ACCESS4res_u.resok4.access,
+			       &res_ACCESS4->ACCESS4res_u.resok4.supported);
 
-	if (status.major == ERR_FSAL_NO_ERROR
-	    || status.major == ERR_FSAL_ACCESS)
+	if (status.major == ERR_FSAL_NO_ERROR ||
+	    status.major == ERR_FSAL_ACCESS)
 		res_ACCESS4->status = NFS4_OK;
 	else
 		res_ACCESS4->status = nfs4_Errno_status(status);
 
 	return nfsstat4_to_nfs_req_result(res_ACCESS4->status);
-}				/* nfs4_op_access */
+} /* nfs4_op_access */
 
 /**
  * @brief Free memory allocated for ACCESS result

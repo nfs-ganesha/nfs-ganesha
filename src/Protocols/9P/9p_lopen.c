@@ -61,8 +61,8 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, fid, u32);
 	_9p_getptr(cursor, flags, u32);
 
-	LogDebug(COMPONENT_9P, "TLOPEN: tag=%u fid=%u flags=0x%x",
-		 (u32) *msgtag, *fid, *flags);
+	LogDebug(COMPONENT_9P, "TLOPEN: tag=%u fid=%u flags=0x%x", (u32)*msgtag,
+		 *fid, *flags);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -87,13 +87,13 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		if (*flags & 0x10)
 			openflags |= FSAL_O_TRUNC;
 
-		fsal_status = fsal_reopen2(pfid->pentry, pfid->state,
-					   openflags, true);
+		fsal_status = fsal_reopen2(pfid->pentry, pfid->state, openflags,
+					   true);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 
 		atomic_inc_uint32_t(&pfid->opens);
 
@@ -111,10 +111,11 @@ int _9p_lopen(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u",
-		 *msgtag, *fid, (u32) pfid->qid.type, pfid->qid.version,
-		 (unsigned long long)pfid->qid.path, _9P_IOUNIT);
+	LogDebug(
+		COMPONENT_9P,
+		"RLOPEN: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu) iounit=%u",
+		*msgtag, *fid, (u32)pfid->qid.type, pfid->qid.version,
+		(unsigned long long)pfid->qid.path, _9P_IOUNIT);
 
 	return 1;
 }

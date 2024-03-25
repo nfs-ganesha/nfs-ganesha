@@ -45,7 +45,7 @@ CIDR *cidr_alloc(void)
 }
 
 /* Duplicate a CIDR */
-CIDR *cidr_dup(const CIDR * src)
+CIDR *cidr_dup(const CIDR *src)
 {
 	CIDR *toret;
 
@@ -57,7 +57,7 @@ CIDR *cidr_dup(const CIDR * src)
 }
 
 /* Free a struct cidr_addr */
-void cidr_free(CIDR * tofree)
+void cidr_free(CIDR *tofree)
 {
 	gsh_free(tofree);
 }

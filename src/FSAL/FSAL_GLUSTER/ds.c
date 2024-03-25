@@ -44,7 +44,7 @@
  */
 static void dsh_release(struct fsal_ds_handle *const ds_pub)
 {
-	int    rc                 = 0;
+	int rc = 0;
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 
@@ -81,22 +81,21 @@ static void dsh_release(struct fsal_ds_handle *const ds_pub)
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
-			count4 * const supplied_length,
-			bool * const end_of_file)
+			count4 *const supplied_length, bool *const end_of_file)
 {
 	/* The private DS handle */
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
-	int    rc = 0;
+	int rc = 0;
 	struct glusterfs_export *glfs_export =
-	container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
-		     struct glusterfs_export, export);
+		container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
+			     struct glusterfs_export, export);
 
 	if (ds->glhandle == NULL)
 		LogDebug(COMPONENT_PNFS, "glhandle NULL");
 
-	rc = glfs_h_anonymous_read(glfs_export->gl_fs->fs, ds->glhandle,
-				   buffer, requested_length, offset);
+	rc = glfs_h_anonymous_read(glfs_export->gl_fs->fs, ds->glhandle, buffer,
+				   requested_length, offset);
 	if (rc < 0) {
 		rc = errno;
 		LogMajor(COMPONENT_PNFS, "Read failed on DS");
@@ -106,7 +105,6 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	*supplied_length = rc;
 	if (rc == 0 || rc < requested_length)
 		*end_of_file = true;
-
 
 	return NFS4_OK;
 }
@@ -129,20 +127,18 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
-			 const stateid4 *stateid, const offset4 offset,
-			 const count4 write_length, const void *buffer,
-			 const stable_how4 stability_wanted,
-			 count4 * const written_length,
-			 verifier4 * const writeverf,
-			 stable_how4 * const stability_got)
+static nfsstat4
+ds_write(struct fsal_ds_handle *const ds_pub, const stateid4 *stateid,
+	 const offset4 offset, const count4 write_length, const void *buffer,
+	 const stable_how4 stability_wanted, count4 *const written_length,
+	 verifier4 *const writeverf, stable_how4 *const stability_got)
 {
 	struct glfs_ds_handle *ds =
 		container_of(ds_pub, struct glfs_ds_handle, ds);
 	struct glusterfs_export *glfs_export =
-	container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
-		     struct glusterfs_export, export);
-	int    rc = 0;
+		container_of(op_ctx->ctx_pnfs_ds->mds_fsal_export,
+			     struct glusterfs_export, export);
+	int rc = 0;
 
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
@@ -191,7 +187,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 			  const offset4 offset, const count4 count,
-			  verifier4 * const writeverf)
+			  verifier4 *const writeverf)
 {
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 	struct glfs_ds_handle *ds =
@@ -220,12 +216,11 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 		rc = glfs_fsync(glfd);
 #endif
 		if (rc != 0)
-			LogMajor(COMPONENT_PNFS,
-				 "glfs_fsync failed %d", errno);
+			LogMajor(COMPONENT_PNFS, "glfs_fsync failed %d", errno);
 		rc = glfs_close(glfd);
 		if (rc != 0)
-			LogDebug(COMPONENT_PNFS,
-				 "status after close %d", errno);
+			LogDebug(COMPONENT_PNFS, "status after close %d",
+				 errno);
 
 		RESET_GLUSTER_CREDS(glfs_export);
 	}
@@ -252,17 +247,14 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
  */
 static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 			       const struct gsh_buffdesc *const hdl_desc,
-			       struct fsal_ds_handle **const handle,
-			       int flags)
+			       struct fsal_ds_handle **const handle, int flags)
 {
-
 	/* Handle to be created for DS */
-	struct glfs_ds_handle *ds                   = NULL;
-	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+	struct glfs_ds_handle *ds = NULL;
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = { '\0' };
 	struct stat sb;
-	struct glusterfs_export *glfs_export =
-		container_of(pds->mds_fsal_export,
-			     struct glusterfs_export, export);
+	struct glusterfs_export *glfs_export = container_of(
+		pds->mds_fsal_export, struct glusterfs_export, export);
 
 	*handle = NULL;
 
@@ -276,12 +268,10 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	memcpy(globjhdl, hdl_desc->addr, GFAPI_HANDLE_LENGTH);
 
 	/* Create glfs_object for the DS handle */
-	ds->glhandle =	glfs_h_create_from_handle(glfs_export->gl_fs->fs,
-						  globjhdl,
-						  GFAPI_HANDLE_LENGTH, &sb);
+	ds->glhandle = glfs_h_create_from_handle(
+		glfs_export->gl_fs->fs, globjhdl, GFAPI_HANDLE_LENGTH, &sb);
 	if (ds->glhandle == NULL) {
-		LogDebug(COMPONENT_PNFS,
-			 "glhandle in ds_handle is NULL");
+		LogDebug(COMPONENT_PNFS, "glhandle in ds_handle is NULL");
 		return NFS4ERR_SERVERFAULT;
 	}
 

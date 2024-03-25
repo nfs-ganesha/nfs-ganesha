@@ -79,8 +79,7 @@ struct nullfs_fsal_export {
 	/* Other private export data goes here */
 };
 
-fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl,
-				 const char *path,
+fsal_status_t nullfs_lookup_path(struct fsal_export *exp_hdl, const char *path,
 				 struct fsal_obj_handle **handle,
 				 struct fsal_attrlist *attrs_out);
 
@@ -89,12 +88,11 @@ fsal_status_t nullfs_create_handle(struct fsal_export *exp_hdl,
 				   struct fsal_obj_handle **handle,
 				   struct fsal_attrlist *attrs_out);
 
-fsal_status_t nullfs_alloc_and_check_handle(
-		struct nullfs_fsal_export *export,
-		struct fsal_obj_handle *sub_handle,
-		struct fsal_filesystem *fs,
-		struct fsal_obj_handle **new_handle,
-		fsal_status_t subfsal_status);
+fsal_status_t nullfs_alloc_and_check_handle(struct nullfs_fsal_export *export,
+					    struct fsal_obj_handle *sub_handle,
+					    struct fsal_filesystem *fs,
+					    struct fsal_obj_handle **new_handle,
+					    fsal_status_t subfsal_status);
 
 /*
  * NULLFS internal object handle
@@ -111,7 +109,7 @@ fsal_status_t nullfs_alloc_and_check_handle(
 struct nullfs_fsal_obj_handle {
 	struct fsal_obj_handle obj_handle; /*< Handle containing nullfs data.*/
 	struct fsal_obj_handle *sub_handle; /*< Handle of the sub fsal.*/
-	int32_t refcnt;		/*< Reference count.  This is signed to make
+	int32_t refcnt; /*< Reference count.  This is signed to make
 				   mistakes easy to see. */
 };
 
@@ -120,8 +118,8 @@ int nullfs_fsal_readlink(struct nullfs_fsal_obj_handle *, fsal_errors_t *);
 
 static inline bool nullfs_unopenable_type(object_file_type_t type)
 {
-	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE)
-	    || (type == BLOCK_FILE)) {
+	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE) ||
+	    (type == BLOCK_FILE)) {
 		return true;
 	} else {
 		return false;
@@ -132,46 +130,34 @@ static inline bool nullfs_unopenable_type(object_file_type_t type)
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl);
 
 /* Multi-FD */
-fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   fsal_openflags_t openflags,
-			   enum fsal_create_mode createmode,
-			   const char *name,
-			   struct fsal_attrlist *attrs_in,
-			   fsal_verifier_t verifier,
-			   struct fsal_obj_handle **new_obj,
-			   struct fsal_attrlist *attrs_out,
-			   bool *caller_perm_check,
-			   struct fsal_attrlist *parent_pre_attrs_out,
-			   struct fsal_attrlist *parent_post_attrs_out);
+fsal_status_t
+nullfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	     fsal_openflags_t openflags, enum fsal_create_mode createmode,
+	     const char *name, struct fsal_attrlist *attrs_in,
+	     fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
+	     struct fsal_attrlist *attrs_out, bool *caller_perm_check,
+	     struct fsal_attrlist *parent_pre_attrs_out,
+	     struct fsal_attrlist *parent_post_attrs_out);
 bool nullfs_check_verifier(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier);
 fsal_openflags_t nullfs_status2(struct fsal_obj_handle *obj_hdl,
 				struct state_t *state);
 fsal_status_t nullfs_reopen2(struct fsal_obj_handle *obj_hdl,
-			     struct state_t *state,
-			     fsal_openflags_t openflags);
-void nullfs_read2(struct fsal_obj_handle *obj_hdl,
-		  bool bypass,
-		  fsal_async_cb done_cb,
-		  struct fsal_io_arg *read_arg,
+			     struct state_t *state, fsal_openflags_t openflags);
+void nullfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		  fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 		  void *caller_arg);
-void nullfs_write2(struct fsal_obj_handle *obj_hdl,
-		   bool bypass,
-		   fsal_async_cb done_cb,
-		   struct fsal_io_arg *write_arg,
+void nullfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		   fsal_async_cb done_cb, struct fsal_io_arg *write_arg,
 		   void *caller_arg);
 fsal_status_t nullfs_seek2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   struct io_info *info);
+			   struct state_t *state, struct io_info *info);
 fsal_status_t nullfs_io_advise2(struct fsal_obj_handle *obj_hdl,
-				struct state_t *state,
-				struct io_hints *hints);
+				struct state_t *state, struct io_hints *hints);
 fsal_status_t nullfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset,
 			     size_t len);
 fsal_status_t nullfs_lock_op2(struct fsal_obj_handle *obj_hdl,
-			      struct state_t *state,
-			      void *p_owner,
+			      struct state_t *state, void *p_owner,
 			      fsal_lock_op_t lock_op,
 			      fsal_lock_param_t *req_lock,
 			      fsal_lock_param_t *conflicting_lock);
@@ -182,12 +168,10 @@ fsal_status_t nullfs_fallocate(struct fsal_obj_handle *obj_hdl,
 			       uint64_t length, bool allocate);
 
 /* extended attributes management */
-fsal_status_t nullfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				    unsigned int cookie,
-				    fsal_xattrent_t *xattrs_tab,
-				    unsigned int xattrs_tabsize,
-				    unsigned int *p_nb_returned,
-				    int *end_of_list);
+fsal_status_t
+nullfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl, unsigned int cookie,
+		      fsal_xattrent_t *xattrs_tab, unsigned int xattrs_tabsize,
+		      unsigned int *p_nb_returned, int *end_of_list);
 fsal_status_t nullfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					   const char *xattr_name,
 					   unsigned int *pxattr_id);
@@ -202,10 +186,8 @@ fsal_status_t nullfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    size_t buffer_size,
 					    size_t *p_output_size);
 fsal_status_t nullfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				      const char *xattr_name,
-				      void *buffer_addr,
-				      size_t buffer_size,
-				      int create);
+				      const char *xattr_name, void *buffer_addr,
+				      size_t buffer_size, int create);
 fsal_status_t nullfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 					    unsigned int xattr_id,
 					    void *buffer_addr,
@@ -215,4 +197,4 @@ fsal_status_t nullfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t nullfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *xattr_name);
 
-#endif			/* NULLFS_METHODS_H */
+#endif /* NULLFS_METHODS_H */

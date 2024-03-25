@@ -39,8 +39,7 @@ static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
 	struct lzfs_fsal_handle *lzfs_hdl;
 	struct lzfs_fsal_ds_wire ds_wire;
 	struct gsh_buffdesc ds_desc = {
-		.addr = &ds_wire,
-		.len = sizeof(struct lzfs_fsal_ds_wire)
+		.addr = &ds_wire, .len = sizeof(struct lzfs_fsal_ds_wire)
 	};
 	struct pnfs_deviceid deviceid = DEVICE_ID_INIT_ZERO(FSAL_ID_LIZARDFS);
 	nfl_util4 layout_util = 0;
@@ -55,8 +54,9 @@ static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
-	LogDebug(COMPONENT_PNFS, "will issue layout offset: %" PRIu64
-		 " length: %" PRIu64, res->segment.offset, res->segment.length);
+	LogDebug(COMPONENT_PNFS,
+		 "will issue layout offset: %" PRIu64 " length: %" PRIu64,
+		 res->segment.offset, res->segment.length);
 
 	deviceid.device_id2 = lzfs_hdl->export->export.export_id;
 	deviceid.devid = lzfs_hdl->inode;
@@ -65,8 +65,8 @@ static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
 
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, layout_util,
 					     0, 0,
-					     &op_ctx->ctx_export->export_id,
-					     1, &ds_desc);
+					     &op_ctx->ctx_export->export_id, 1,
+					     &ds_desc);
 	if (nfs_status) {
 		LogMajor(COMPONENT_PNFS,
 			 "Failed to encode nfsv4_1_file_layout.");
@@ -114,14 +114,12 @@ static nfsstat4 lzfs_fsal_layoutcommit(struct fsal_obj_handle *obj_pub,
 
 	/* Sanity check on type */
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
-		LogCrit(COMPONENT_PNFS,
-			"Unsupported layout type: %x",
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x",
 			arg->type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_hdl = container_of(obj_pub, struct lzfs_fsal_handle, handle);
 
@@ -149,8 +147,8 @@ static nfsstat4 lzfs_fsal_layoutcommit(struct fsal_obj_handle *obj_pub,
 
 	if (arg->time_changed &&
 	    (arg->new_time.seconds > lzfs_old.attr.st_mtim.tv_sec ||
-	      (arg->new_time.seconds == lzfs_old.attr.st_mtim.tv_sec &&
-	       arg->new_time.nseconds > lzfs_old.attr.st_mtim.tv_nsec))) {
+	     (arg->new_time.seconds == lzfs_old.attr.st_mtim.tv_sec &&
+	      arg->new_time.nseconds > lzfs_old.attr.st_mtim.tv_nsec))) {
 		attr.st_mtim.tv_sec = arg->new_time.seconds;
 		attr.st_mtim.tv_sec = arg->new_time.nseconds;
 		mask |= LIZ_SET_ATTR_MTIME;
@@ -158,12 +156,8 @@ static nfsstat4 lzfs_fsal_layoutcommit(struct fsal_obj_handle *obj_pub,
 
 	liz_attr_reply_t reply;
 
-	rc = liz_cred_setattr(lzfs_export->lzfs_instance,
-			      &op_ctx->creds,
-			      lzfs_hdl->inode,
-			      &attr,
-			      mask,
-			      &reply);
+	rc = liz_cred_setattr(lzfs_export->lzfs_instance, &op_ctx->creds,
+			      lzfs_hdl->inode, &attr, mask, &reply);
 
 	if (rc < 0) {
 		LogCrit(COMPONENT_PNFS,

@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "fsal.h"
@@ -68,38 +68,34 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	const char *file_name = arg->arg_create3.where.name;
 	struct fsal_obj_handle *file_obj = NULL;
 	struct fsal_obj_handle *parent_obj = NULL;
-	pre_op_attr pre_parent = {
-		.attributes_follow = false
-	};
+	pre_op_attr pre_parent = { .attributes_follow = false };
 	struct fsal_attrlist sattr, attrs, parent_pre_attrs, parent_post_attrs;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	int rc = NFS_REQ_OK;
 	fsal_verifier_t verifier;
 	enum fsal_create_mode createmode;
 
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_create3.where.dir,
-			  " name: %s",
-			 file_name ? file_name : "");
+			  " name: %s", file_name ? file_name : "");
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	fsal_prepare_attrs(&parent_pre_attrs,
-		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+			   ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	memset(&sattr, 0, sizeof(struct fsal_attrlist));
 
 	/* to avoid setting it on each error case */
 	res->res_create3.CREATE3res_u.resfail.dir_wcc.before.attributes_follow =
-	    FALSE;
+		FALSE;
 	res->res_create3.CREATE3res_u.resfail.dir_wcc.after.attributes_follow =
-	    FALSE;
+		FALSE;
 
 	parent_obj = nfs3_FhandleToCache(&arg->arg_create3.where.dir,
-					   &res->res_create3.status,
-					   &rc);
+					 &res->res_create3.status, &rc);
 
 	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -120,9 +116,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
-							op_ctx->fsal_export,
-							CTX_FULLPATH(op_ctx),
-							FSAL_QUOTA_INODES);
+		op_ctx->fsal_export, CTX_FULLPATH(op_ctx), FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_create3.status = NFS3ERR_DQUOT;
@@ -136,11 +130,11 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Check if asked attributes are correct */
-	if (arg->arg_create3.how.mode == GUARDED
-	    || arg->arg_create3.how.mode == UNCHECKED) {
-		if (nfs3_Sattr_To_FSALattr(
-		     &sattr,
-		     &arg->arg_create3.how.createhow3_u.obj_attributes) == 0) {
+	if (arg->arg_create3.how.mode == GUARDED ||
+	    arg->arg_create3.how.mode == UNCHECKED) {
+		if (nfs3_Sattr_To_FSALattr(&sattr,
+					   &arg->arg_create3.how.createhow3_u
+						    .obj_attributes) == 0) {
 			res->res_create3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -158,8 +152,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	if (createmode == FSAL_EXCLUSIVE) {
 		/* Set the verifier if EXCLUSIVE */
-		memcpy(verifier,
-		       &arg->arg_create3.how.createhow3_u.verf,
+		memcpy(verifier, &arg->arg_create3.how.createhow3_u.verf,
 		       sizeof(fsal_verifier_t));
 	}
 
@@ -169,17 +162,9 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	squash_setattr(&sattr);
 
 	/* Stateless open, assume Read/Write. */
-	fsal_status = fsal_open2(parent_obj,
-				 NULL,
-				 FSAL_O_RDWR,
-				 createmode,
-				 file_name,
-				 &sattr,
-				 verifier,
-				 &file_obj,
-				 &attrs,
-				 &parent_pre_attrs,
-				 &parent_post_attrs);
+	fsal_status = fsal_open2(parent_obj, NULL, FSAL_O_RDWR, createmode,
+				 file_name, &sattr, verifier, &file_obj, &attrs,
+				 &parent_pre_attrs, &parent_post_attrs);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
@@ -188,10 +173,10 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_release_attrs(&sattr);
 
 	/* Build file handle and set Post Op Fh3 structure */
-	if (!nfs3_FSALToFhandle(
-	     true,
-	     &res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle,
-	     file_obj, op_ctx->ctx_export)) {
+	if (!nfs3_FSALToFhandle(true,
+				&res->res_create3.CREATE3res_u.resok.obj
+					 .post_op_fh3_u.handle,
+				file_obj, op_ctx->ctx_export)) {
 		res->res_create3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
 		goto out;
@@ -214,7 +199,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	rc = NFS_REQ_OK;
 
- out:
+out:
 	fsal_release_attrs(&parent_pre_attrs);
 	fsal_release_attrs(&parent_post_attrs);
 
@@ -227,7 +212,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	return rc;
 
- out_fail:
+out_fail:
 
 	/* Release the attributes. */
 	fsal_release_attrs(&attrs);
@@ -243,7 +228,7 @@ int nfs3_create(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	goto out;
-}				/* nfs3_create */
+} /* nfs3_create */
 
 /**
  * @brief Free the result structure allocated for nfs3_create.
@@ -258,8 +243,8 @@ void nfs3_create_free(nfs_res_t *res)
 	nfs_fh3 *handle =
 		&res->res_create3.CREATE3res_u.resok.obj.post_op_fh3_u.handle;
 
-	if ((res->res_create3.status == NFS3_OK)
-	    && (res->res_create3.CREATE3res_u.resok.obj.handle_follows)) {
+	if ((res->res_create3.status == NFS3_OK) &&
+	    (res->res_create3.CREATE3res_u.resok.obj.handle_follows)) {
 		gsh_free(handle->data.data_val);
 	}
 }

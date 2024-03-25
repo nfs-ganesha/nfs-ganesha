@@ -35,7 +35,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
@@ -59,36 +59,33 @@ static const char mdcachename[] = "MDCACHE";
 
 /* my module private storage
  */
-struct mdcache_fsal_module MDCACHE = {
-	.module = {
-		.fs_info = {
-			.maxfilesize = UINT64_MAX,
-			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = 1024,
-			.maxpathlen = 1024,
-			.no_trunc = true,
-			.chown_restricted = true,
-			.case_insensitive = false,
-			.case_preserving = true,
-			.link_support = true,
-			.symlink_support = true,
-			.lock_support = true,
-			.lock_support_async_block = false,
-			.named_attr = true,
-			.unique_handles = true,
-			.acl_support = FSAL_ACLSUPPORT_ALLOW,
-			.cansettime = true,
-			.homogenous = true,
-			.supported_attrs = ALL_ATTRIBUTES,
-			.maxread = FSAL_MAXIOSIZE,
-			.maxwrite = FSAL_MAXIOSIZE,
-			.umask = 0,
-			.auth_exportpath_xdev = false,
-			.link_supports_permission_checks = true,
-			.expire_time_parent = -1,
-		}
-	}
-};
+struct mdcache_fsal_module
+	MDCACHE = { .module = { .fs_info = {
+					.maxfilesize = UINT64_MAX,
+					.maxlink = _POSIX_LINK_MAX,
+					.maxnamelen = 1024,
+					.maxpathlen = 1024,
+					.no_trunc = true,
+					.chown_restricted = true,
+					.case_insensitive = false,
+					.case_preserving = true,
+					.link_support = true,
+					.symlink_support = true,
+					.lock_support = true,
+					.lock_support_async_block = false,
+					.named_attr = true,
+					.unique_handles = true,
+					.acl_support = FSAL_ACLSUPPORT_ALLOW,
+					.cansettime = true,
+					.homogenous = true,
+					.supported_attrs = ALL_ATTRIBUTES,
+					.maxread = FSAL_MAXIOSIZE,
+					.maxwrite = FSAL_MAXIOSIZE,
+					.umask = 0,
+					.auth_exportpath_xdev = false,
+					.link_supports_permission_checks = true,
+					.expire_time_parent = -1,
+				} } };
 
 /* private helper for export object
  */
@@ -139,8 +136,7 @@ void mdcache_export_uninit(void)
 
 	fsal_put(sub_export->fsal);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s fsal_refcount %"PRIu32,
+	LogFullDebug(COMPONENT_FSAL, "FSAL %s fsal_refcount %" PRIu32,
 		     sub_export->fsal->name,
 		     atomic_fetch_int32_t(&sub_export->fsal->refcount));
 
@@ -178,7 +174,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 			   struct config_error_type *err_type,
 			   const struct fsal_up_vector *super_up_ops)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 	struct mdcache_fsal_export *myself;
 
 	myself = gsh_calloc(1, sizeof(struct mdcache_fsal_export));
@@ -198,10 +194,8 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	PTHREAD_MUTEX_init(&myself->mdc_exp_lock, NULL);
 	PTHREAD_MUTEX_init(&myself->dirent_map.dm_mtx, NULL);
 
-	status = sub_fsal->m_ops.create_export(sub_fsal,
-						 parse_node,
-						 err_type,
-						 &myself->up_ops);
+	status = sub_fsal->m_ops.create_export(sub_fsal, parse_node, err_type,
+					       &myself->up_ops);
 	if (FSAL_IS_ERROR(status)) {
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
@@ -214,8 +208,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	/* Get ref for sub-FSAL */
 	fsal_get(myself->mfe_exp.fsal);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s fsal_refcount %"PRIu32,
+	LogFullDebug(COMPONENT_FSAL, "FSAL %s fsal_refcount %" PRIu32,
 		     myself->mfe_exp.fsal->name,
 		     atomic_fetch_int32_t(&myself->mfe_exp.fsal->refcount));
 
@@ -256,12 +249,12 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
  * @param[in] existing_export	The existing export that is being updated
  * @return FSAL status
  */
-fsal_status_t
-mdcache_fsal_update_export(struct fsal_module *sub_fsal, void *parse_node,
-			   struct config_error_type *err_type,
-			   struct fsal_export *original)
+fsal_status_t mdcache_fsal_update_export(struct fsal_module *sub_fsal,
+					 void *parse_node,
+					 struct config_error_type *err_type,
+					 struct fsal_export *original)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 #if 0
 	/* We currently don't actually have any MDCACHE EXPORT FSAL parameters
 	 * so we don't need an mdcache_fsal_export to fill in.
@@ -277,9 +270,7 @@ mdcache_fsal_update_export(struct fsal_module *sub_fsal, void *parse_node,
 
 	/* Now update the sub-fsal */
 
-	status = sub_fsal->m_ops.update_export(sub_fsal,
-					       parse_node,
-					       err_type,
+	status = sub_fsal->m_ops.update_export(sub_fsal, parse_node, err_type,
 					       original->sub_export,
 					       &MDCACHE.module);
 
@@ -307,9 +298,7 @@ mdcache_fsal_update_export(struct fsal_module *sub_fsal, void *parse_node,
 /* linkage to the exports and handle ops initializers
  */
 
-
-static int
-mdcache_fsal_unload(struct fsal_module *fsal_hdl)
+static int mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 {
 	fsal_status_t status;
 	int retval;
@@ -367,8 +356,8 @@ fsal_status_t mdcache_pkginit(void)
 	if (mdcache_entry_pool)
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 
-	mdcache_entry_pool = pool_basic_init("MDCACHE Entry Pool",
-					     sizeof(mdcache_entry_t));
+	mdcache_entry_pool =
+		pool_basic_init("MDCACHE Entry Pool", sizeof(mdcache_entry_t));
 
 	status = mdcache_lru_pkginit();
 	if (FSAL_IS_ERROR(status)) {
@@ -393,27 +382,27 @@ void mdcache_dbus_show(DBusMessageIter *iter)
 	type = " Cache Requests: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_req);
+				       &cache_st.inode_req);
 	type = " Cache Hits: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_hit);
+				       &cache_st.inode_hit);
 	type = " Cache Misses: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_miss);
+				       &cache_st.inode_miss);
 	type = " Cache Conflicts: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_conf);
+				       &cache_st.inode_conf);
 	type = " Cache Adds: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_added);
+				       &cache_st.inode_added);
 	type = " Cache Mapping: ";
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &type);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-					&cache_st.inode_mapping);
+				       &cache_st.inode_mapping);
 
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
@@ -426,7 +415,6 @@ void mdcache_utilization(DBusMessageIter *iter)
 	uint64_t entries_used, chunks_used;
 	uint32_t fd_limit, fd_state;
 	size_t open_fds;
-
 
 	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
 					 &struct_iter);
@@ -476,7 +464,6 @@ void mdcache_utilization(DBusMessageIter *iter)
 				       &chunks_used);
 
 	dbus_message_iter_close_container(iter, &struct_iter);
-
 }
 #endif /* USE_DBUS */
 

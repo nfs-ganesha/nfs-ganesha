@@ -67,7 +67,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, count, u32);
 
 	LogDebug(COMPONENT_9P, "TREAD: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32)*msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -103,23 +103,21 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
 					  preply);
 
-		read_size = MIN(*count,
-				pfid->xattr->xattr_size - *offset);
-		memcpy(databuffer,
-		       pfid->xattr->xattr_content + *offset,
+		read_size = MIN(*count, pfid->xattr->xattr_size - *offset);
+		memcpy(databuffer, pfid->xattr->xattr_content + *offset,
 		       read_size);
 
 		outcount = read_size;
 	} else {
 		struct async_process_data read_data;
-		struct fsal_io_arg *read_arg = alloca(sizeof(*read_arg) +
-							sizeof(struct iovec));
+		struct fsal_io_arg *read_arg =
+			alloca(sizeof(*read_arg) + sizeof(struct iovec));
 
 		read_arg->info = NULL;
 		read_arg->state = pfid->state;
 		read_arg->offset = *offset;
 		read_arg->iov_count = 1;
-		read_arg->iov = (struct iovec *) (read_arg + 1);
+		read_arg->iov = (struct iovec *)(read_arg + 1);
 		read_arg->iov[0].iov_len = *count;
 		read_arg->iov[0].iov_base = databuffer;
 		read_arg->io_amount = 0;
@@ -148,7 +146,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					  _9p_tools_errno(read_data.ret),
 					  plenout, preply);
 
-		outcount = (u32) read_arg->io_amount;
+		outcount = (u32)read_arg->io_amount;
 	}
 	_9p_setfilledbuffer(cursor, outcount);
 
@@ -156,9 +154,9 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RREAD: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32)*msgtag, *fid, (unsigned long long)*offset, *count);
 
-/**
+	/**
  * @todo read statistics accounting goes here
  * modeled on nfs I/O statistics
  */

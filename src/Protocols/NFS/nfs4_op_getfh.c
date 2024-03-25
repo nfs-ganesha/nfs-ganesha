@@ -57,7 +57,7 @@
 enum nfs_req_result nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 				  struct nfs_resop4 *resp)
 {
-	GETFH4res * const res_GETFH = &resp->nfs_resop4_u.opgetfh;
+	GETFH4res *const res_GETFH = &resp->nfs_resop4_u.opgetfh;
 	struct fsal_attrlist attrs;
 	bool result;
 
@@ -73,9 +73,10 @@ enum nfs_req_result nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 		goto out;
 
 	/* Fill in and check response size and make sure it fits. */
-	data->op_resp_size = sizeof(nfsstat4) + sizeof(uint32_t) +
+	data->op_resp_size =
+		sizeof(nfsstat4) + sizeof(uint32_t) +
 		((data->currentFH.nfs_fh4_len + sizeof(uint32_t) - 1) &
-		~(sizeof(uint32_t) - 1));
+		 ~(sizeof(uint32_t) - 1));
 
 	res_GETFH->status = check_resp_room(data, data->op_resp_size);
 
@@ -84,13 +85,13 @@ enum nfs_req_result nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 
 	fsal_prepare_attrs(&attrs,
 			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
-					op_ctx->fsal_export));
+				   op_ctx->fsal_export));
 
 	/* Do not require ACLs and FS_LOCATIONS */
 	attrs.request_mask &= ~(ATTR_ACL | ATTR4_FS_LOCATIONS);
 
 	result = data->current_obj->obj_ops->is_referral(data->current_obj,
-				&attrs, true);
+							 &attrs, true);
 
 	fsal_release_attrs(&attrs);
 
@@ -104,11 +105,10 @@ enum nfs_req_result nfs4_op_getfh(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Put the data in place */
 	res_GETFH->GETFH4res_u.resok4.object.nfs_fh4_len =
-	    data->currentFH.nfs_fh4_len;
+		data->currentFH.nfs_fh4_len;
 
 	memcpy(res_GETFH->GETFH4res_u.resok4.object.nfs_fh4_val,
-	       data->currentFH.nfs_fh4_val,
-	       data->currentFH.nfs_fh4_len);
+	       data->currentFH.nfs_fh4_val, data->currentFH.nfs_fh4_len);
 
 	LogHandleNFS4("NFS4 GETFH AFTER: ",
 		      &res_GETFH->GETFH4res_u.resok4.object);
@@ -121,7 +121,7 @@ out:
 	}
 
 	return nfsstat4_to_nfs_req_result(res_GETFH->status);
-}				/* nfs4_op_getfh */
+} /* nfs4_op_getfh */
 
 /**
  * @brief Free memory allocated for GETFH result
@@ -137,4 +137,4 @@ void nfs4_op_getfh_Free(nfs_resop4 *res)
 
 	if (resp->status == NFS4_OK)
 		gsh_free(resp->GETFH4res_u.resok4.object.nfs_fh4_val);
-}				/* nfs4_op_getfh_Free */
+} /* nfs4_op_getfh_Free */

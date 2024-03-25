@@ -62,7 +62,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
-	LOOKUPP4res * const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
+	LOOKUPP4res *const res_LOOKUPP4 = &resp->nfs_resop4_u.oplookupp;
 	struct fsal_obj_handle *dir_obj = NULL;
 	struct fsal_obj_handle *file_obj;
 	struct fsal_obj_handle *root_obj;
@@ -100,11 +100,11 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 		struct gsh_export *parent_exp = NULL;
 
 		/* Handle reverse junction */
-		LogDebug(COMPONENT_EXPORT,
-			 "Handling reverse junction from Export_Id %d Pseudo %s Parent=%p",
-			 original_export->export_id,
-			 CTX_PSEUDOPATH(op_ctx),
-			 original_export->exp_parent_exp);
+		LogDebug(
+			COMPONENT_EXPORT,
+			"Handling reverse junction from Export_Id %d Pseudo %s Parent=%p",
+			original_export->export_id, CTX_PSEUDOPATH(op_ctx),
+			original_export->exp_parent_exp);
 
 		if (original_export->exp_parent_exp == NULL) {
 			/* lookupp on the root on the pseudofs should return
@@ -149,8 +149,7 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			LogCrit(COMPONENT_EXPORT,
 				"Reverse junction from Export_Id %d Pseudo %s Parent=%p is stale",
 				original_export->export_id,
-				CTX_PSEUDOPATH(op_ctx),
-				parent_exp);
+				CTX_PSEUDOPATH(op_ctx), parent_exp);
 			res_LOOKUPP4->status = NFS4ERR_STALE;
 			return NFS_REQ_ERROR;
 		}
@@ -188,10 +187,10 @@ enum nfs_req_result nfs4_op_lookupp(struct nfs_argop4 *op,
 			 * hide it. It was not visible in READDIR response.
 			 */
 			root_obj->obj_ops->put_ref(root_obj);
-			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
-				 parent_exp->export_id,
-				 CTX_PSEUDOPATH(op_ctx));
+			LogDebug(
+				COMPONENT_EXPORT,
+				"NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
+				parent_exp->export_id, CTX_PSEUDOPATH(op_ctx));
 			res_LOOKUPP4->status = NFS4ERR_NOENT;
 			return NFS_REQ_ERROR;
 		}
@@ -209,9 +208,8 @@ not_junction:
 
 	if (file_obj != NULL) {
 		/* Convert it to a file handle */
-		if (!nfs4_FSALToFhandle(false, &data->currentFH,
-						file_obj,
-						op_ctx->ctx_export)) {
+		if (!nfs4_FSALToFhandle(false, &data->currentFH, file_obj,
+					op_ctx->ctx_export)) {
 			res_LOOKUPP4->status = NFS4ERR_SERVERFAULT;
 			file_obj->obj_ops->put_ref(file_obj);
 			return NFS_REQ_ERROR;
@@ -234,7 +232,7 @@ not_junction:
 	}
 
 	return nfsstat4_to_nfs_req_result(res_LOOKUPP4->status);
-}				/* nfs4_op_lookupp */
+} /* nfs4_op_lookupp */
 
 /**
  * @brief Free memory allocated for LOOKUPP result

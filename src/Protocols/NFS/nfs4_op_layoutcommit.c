@@ -63,10 +63,10 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 					 struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
-	LAYOUTCOMMIT4args * const args = &op->nfs_argop4_u.oplayoutcommit;
+	LAYOUTCOMMIT4args *const args = &op->nfs_argop4_u.oplayoutcommit;
 	/* Convenience alias for response */
-	LAYOUTCOMMIT4res * const res_LAYOUTCOMMIT4 =
-	    &resp->nfs_resop4_u.oplayoutcommit;
+	LAYOUTCOMMIT4res *const res_LAYOUTCOMMIT4 =
+		&resp->nfs_resop4_u.oplayoutcommit;
 	/* Convenience alias for response */
 	LAYOUTCOMMIT4resok *resok =
 		&res_LAYOUTCOMMIT4->LAYOUTCOMMIT4res_u.locr_resok4;
@@ -103,7 +103,6 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-
 	memset(&arg, 0, sizeof(struct fsal_layoutcommit_arg));
 	memset(&res, 0, sizeof(struct fsal_layoutcommit_res));
 
@@ -117,8 +116,7 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
 	arg.reclaim = args->loca_reclaim;
 
-	xdrmem_create(&lou_body,
-		      args->loca_layoutupdate.lou_body.lou_body_val,
+	xdrmem_create(&lou_body, args->loca_layoutupdate.lou_body.lou_body_val,
 		      args->loca_layoutupdate.lou_body.lou_body_len,
 		      XDR_DECODE);
 
@@ -135,13 +133,9 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
 	/* Retrieve state corresponding to supplied ID */
 
-	nfs_status = nfs4_Check_Stateid(&args->loca_stateid,
-					data->current_obj,
+	nfs_status = nfs4_Check_Stateid(&args->loca_stateid, data->current_obj,
 					&layout_state, data,
-					STATEID_SPECIAL_CURRENT,
-					0,
-					false,
-					tag);
+					STATEID_SPECIAL_CURRENT, 0, false, tag);
 
 	if (nfs_status != NFS4_OK)
 		goto out;
@@ -149,19 +143,16 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 	arg.type = layout_state->state_data.layout.state_layout_type;
 
 	STATELOCK_lock(data->current_obj);
-	glist_for_each(glist, &layout_state->state_data.layout.state_segments) {
-		segment = glist_entry(glist,
-				      state_layout_segment_t,
+	glist_for_each(glist, &layout_state->state_data.layout.state_segments)
+	{
+		segment = glist_entry(glist, state_layout_segment_t,
 				      sls_state_segments);
 
 		arg.segment = segment->sls_segment;
 		arg.fsal_seg_data = segment->sls_fsal_data;
 
 		nfs_status = data->current_obj->obj_ops->layoutcommit(
-						data->current_obj,
-						&lou_body,
-						&arg,
-						&res);
+			data->current_obj, &lou_body, &arg, &res);
 
 		if (nfs_status != NFS4_OK) {
 			STATELOCK_unlock(data->current_obj);
@@ -186,7 +177,7 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 
 	nfs_status = NFS4_OK;
 
- out:
+out:
 
 	if (layout_state != NULL)
 		dec_state_t_ref(layout_state);
@@ -196,7 +187,7 @@ enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *op,
 	res_LAYOUTCOMMIT4->locr_status = nfs_status;
 
 	return nfsstat4_to_nfs_req_result(res_LAYOUTCOMMIT4->locr_status);
-}				/* nfs41_op_layoutcommit */
+} /* nfs41_op_layoutcommit */
 
 /**
  * @brief free memory allocated for response of LAYOUTCOMMIT

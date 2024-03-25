@@ -38,7 +38,8 @@
 
 #define STR_SIZE 100
 
-#define USAGE "usage: %s [-p <port>] -l <local address> " \
+#define USAGE                                       \
+	"usage: %s [-p <port>] -l <local address> " \
 	"-m <monitor host> -r <remote address> -s <state>\n"
 
 #define ERR_MSG1 "%s address too long\n"
@@ -57,8 +58,7 @@ void LogMallocFailure(const char *file, int line, const char *function,
 	printf("Aborting %s due to out of memory", allocator);
 }
 
-void *
-nsm_notify_1(notify *argp, CLIENT *clnt)
+void *nsm_notify_1(notify *argp, CLIENT *clnt)
 {
 	static char clnt_res;
 	struct clnt_req *cc;
@@ -68,8 +68,8 @@ nsm_notify_1(notify *argp, CLIENT *clnt)
 
 	cc = gsh_malloc(sizeof(*cc));
 	clnt_req_fill(cc, clnt, authnone_ncreate(), SM_NOTIFY,
-		      (xdrproc_t) xdr_notify, argp,
-		      (xdrproc_t) xdr_void, &clnt_res);
+		      (xdrproc_t)xdr_notify, argp, (xdrproc_t)xdr_void,
+		      &clnt_res);
 	ret = clnt_req_setup(cc, tout);
 	if (ret == RPC_SUCCESS) {
 		cc->cc_refreshes = 1;
@@ -109,8 +109,8 @@ int main(int argc, char **argv)
 			sflag = 1;
 			break;
 		case 'm':
-			if (strlcpy(mon_client, optarg, sizeof(mon_client))
-			    >= sizeof(mon_client)) {
+			if (strlcpy(mon_client, optarg, sizeof(mon_client)) >=
+			    sizeof(mon_client)) {
 				fprintf(stderr, ERR_MSG1, "monitor host");
 				exit(1);
 			}
@@ -118,16 +118,17 @@ int main(int argc, char **argv)
 			break;
 		case 'r':
 			if (strlcpy(remote_addr_s, optarg,
-				    sizeof(remote_addr_s))
-			    >= sizeof(remote_addr_s)) {
+				    sizeof(remote_addr_s)) >=
+			    sizeof(remote_addr_s)) {
 				fprintf(stderr, ERR_MSG1, "remote address");
 				exit(1);
 			}
 			rflag = 1;
 			break;
 		case 'l':
-			if (strlcpy(local_addr_s, optarg, sizeof(local_addr_s))
-			    >= sizeof(local_addr_s)) {
+			if (strlcpy(local_addr_s, optarg,
+				    sizeof(local_addr_s)) >=
+			    sizeof(local_addr_s)) {
 				fprintf(stderr, ERR_MSG1, "local address");
 				exit(1);
 			}
@@ -138,16 +139,15 @@ int main(int argc, char **argv)
 			fprintf(stderr, USAGE, argv[0]);
 			exit(1);
 			break;
-	}
+		}
 
 	if ((sflag + lflag + mflag + rflag) != 4) {
 		fprintf(stderr, USAGE, argv[0]);
 		exit(1);
 	}
 
-
 	/* create a udp socket */
-	fd = socket(PF_INET, SOCK_DGRAM|SOCK_NONBLOCK, IPPROTO_UDP);
+	fd = socket(PF_INET, SOCK_DGRAM | SOCK_NONBLOCK, IPPROTO_UDP);
 	if (fd < 0) {
 		fprintf(stderr, "socket call failed. errno=%d\n", errno);
 		exit(1);
@@ -159,17 +159,14 @@ int main(int argc, char **argv)
 	local_addr.sin_port = htons(port);
 	local_addr.sin_addr.s_addr = inet_addr(local_addr_s);
 
-	if (bind(fd, (struct sockaddr *)&local_addr,
-			sizeof(struct sockaddr)) < 0) {
+	if (bind(fd, (struct sockaddr *)&local_addr, sizeof(struct sockaddr)) <
+	    0) {
 		fprintf(stderr, "bind call failed. errno=%d\n", errno);
 		exit(1);
 	}
 
 	/* find the port for SM service of the remote server */
-	buf = rpcb_find_mapped_addr(
-				"udp",
-				SM_PROG, SM_VERS,
-				remote_addr_s);
+	buf = rpcb_find_mapped_addr("udp", SM_PROG, SM_VERS, remote_addr_s);
 
 	/* handle error here, for example,
 	 * client side blocking rpc call
@@ -180,11 +177,10 @@ int main(int argc, char **argv)
 	}
 
 	/* convert port to string format */
-	(void) sprintf(port_str, "%d",
-		       htons(((struct sockaddr_in *) buf->buf)->sin_port));
+	(void)sprintf(port_str, "%d",
+		      htons(((struct sockaddr_in *)buf->buf)->sin_port));
 
-	clnt = clnt_dg_ncreate(fd, buf, SM_PROG,
-			SM_VERS, 0, 0);
+	clnt = clnt_dg_ncreate(fd, buf, SM_PROG, SM_VERS, 0, 0);
 
 	arg.my_name = mon_client;
 	arg.state = state;

@@ -26,7 +26,6 @@
  * ---------------------------------------
  */
 
-
 #ifndef _HANDLE_MAPPING_INTERNAL_H
 #define _HANDLE_MAPPING_INTERNAL_H
 

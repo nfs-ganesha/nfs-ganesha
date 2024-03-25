@@ -132,7 +132,6 @@ void avl_unit_PkgInit(void)
  */
 int init_suite1(void)
 {
-
 	avltree_init(&avl_tree_1, avl_unit_cmpf, 0 /* flags */);
 
 	return 0;
@@ -171,7 +170,6 @@ int init_suite2(void)
  */
 int clean_suite2(void)
 {
-
 	avltree_destroy(&avl_tree_2);
 
 	return 0;
@@ -196,7 +194,6 @@ int init_suite100(void)
  */
 int clean_suite100(void)
 {
-
 	avltree_destroy(&avl_tree_100);
 
 	return 0;
@@ -245,7 +242,6 @@ int init_supremum(void)
  */
 int clean_supremum(void)
 {
-
 	avltree_destroy(&avl_tree_2);
 
 	return 0;
@@ -265,7 +261,6 @@ void inserts_tree_1(void)
 	int ix;
 
 	for (ix = 1; ix < 2; ++ix) {
-
 		/* new k, v */
 		v = avl_unit_new_val(ix);
 
@@ -291,7 +286,6 @@ void lookups_tree_1(void)
 	int ix;
 
 	for (ix = 1; ix < 2; ++ix) {
-
 		/* reuse v */
 		v->key = ix;
 
@@ -312,7 +306,6 @@ void deletes_tree_1(void)
 	int ix;
 
 	for (ix = 1; ix < 2; ++ix) {
-
 		/* reuse key */
 		v->key = ix;
 
@@ -336,7 +329,6 @@ void inserts_tree_2(void)
 	int ix;
 
 	for (ix = 1; ix < 4; ++ix) {
-
 		/* new k, v */
 		v = avl_unit_new_val(ix);
 
@@ -354,7 +346,6 @@ void inserts_tree_2r(void)
 	int ix;
 
 	for (ix = 3; ix > 0; --ix) {
-
 		/* new k, v */
 		v = avl_unit_new_val(ix);
 
@@ -380,7 +371,6 @@ void lookups_tree_2(void)
 	int ix;
 
 	for (ix = 1; ix < 4; ++ix) {
-
 		/* reuse v */
 		v->key = ix;
 
@@ -401,7 +391,6 @@ void deletes_tree_2(void)
 	int ix;
 
 	for (ix = 1; ix < 4; ++ix) {
-
 		/* reuse key */
 		v->key = ix;
 
@@ -425,7 +414,6 @@ void inserts_supremum(void)
 	int ix;
 
 	for (ix = 100; ix < 1000; ix += 100) {
-
 		/* new k, v */
 		v = avl_unit_new_val(ix);
 
@@ -444,9 +432,8 @@ void checks_supremum(void)
 	int ix;
 
 	for (ix = 100; ix < 1000; ix += 100) {
-
 		/* reuse v */
-		v->key = (ix - 2);	/* a value -just less than ix- */
+		v->key = (ix - 2); /* a value -just less than ix- */
 
 		/* lookup mapping */
 		node = avltree_sup(&v->node_k, &avl_tree_2);
@@ -457,7 +444,7 @@ void checks_supremum(void)
 		}
 
 		/* ok, now find the -infimum- */
-		v->key = ix + 2;	/* a value just above ix */
+		v->key = ix + 2; /* a value just above ix */
 
 		/* lookup mapping */
 		node = avltree_inf(&v->node_k, &avl_tree_2);
@@ -466,7 +453,6 @@ void checks_supremum(void)
 			v2 = avltree_container_of(node, avl_unit_val_t, node_k);
 			CU_ASSERT((unsigned long)v2->val == (ix + 1));
 		}
-
 	}
 
 	/* now check the boundary case for supremum */
@@ -498,7 +484,6 @@ void deletes_supremum(void)
 	int ix;
 
 	for (ix = 100; ix < 1000; ix += 100) {
-
 		/* reuse key */
 		v->key = ix;
 
@@ -522,7 +507,6 @@ void inserts_tree_100(void)
 	int ix;
 
 	for (ix = 1; ix < 101; ++ix) {
-
 		/* new k, v */
 		v = avl_unit_new_val(ix);
 
@@ -548,7 +532,6 @@ void lookups_tree_100(void)
 	int ix;
 
 	for (ix = 1; ix < 2; ++ix) {
-
 		/* reuse v */
 		v->key = ix;
 
@@ -587,7 +570,6 @@ void deletes_tree_100(void)
 	int ix;
 
 	for (ix = 1; ix < 101; ++ix) {
-
 		/* reuse key */
 		v->key = ix;
 
@@ -611,7 +593,6 @@ void inserts_tree_10000(void)
 	int ix;
 
 	for (ix = 1; ix < 10001; ++ix) {
-
 		/* new k, v */
 		v = avl_unit_new_val(ix);
 
@@ -637,7 +618,6 @@ void lookups_tree_10000(void)
 	int ix;
 
 	for (ix = 1; ix < 2; ++ix) {
-
 		/* reuse v */
 		v->key = ix;
 
@@ -676,7 +656,6 @@ void deletes_tree_10000(void)
 	int ix;
 
 	for (ix = 1; ix < 10001; ++ix) {
-
 		/* reuse key */
 		v->key = ix;
 
@@ -789,12 +768,10 @@ void check_delete_1(void)
 	CU_ASSERT(v2->val == (3382 + 1));
 
 	avl_unit_free_val(v);
-
 }
 
 void check_min_1(void)
 {
-
 	avl_unit_val_t *v;
 	struct avltree_node *node;
 
@@ -868,113 +845,78 @@ int main(int argc, char *argv[])
 
 	/* General avl_tree test. */
 	CU_TestInfo avl_tree_unit_1_arr[] = {
-		{"Tree insertions 1.", inserts_tree_1}
-		,
-		{"Tree check 1.", check_tree_1}
-		,
-		{"Tree lookups 1.", lookups_tree_1}
-		,
-		{"Tree deletes 1.", deletes_tree_1}
-		,
+		{ "Tree insertions 1.", inserts_tree_1 },
+		{ "Tree check 1.", check_tree_1 },
+		{ "Tree lookups 1.", lookups_tree_1 },
+		{ "Tree deletes 1.", deletes_tree_1 },
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_TestInfo avl_tree_unit_2_arr[] = {
-		{"Tree insertions 2.", inserts_tree_2}
-		,
-		{"Tree check 2.", check_tree_2}
-		,
-		{"Tree lookups 2.", lookups_tree_2}
-		,
-		{"Tree deletes 2.", deletes_tree_2}
-		,
+		{ "Tree insertions 2.", inserts_tree_2 },
+		{ "Tree check 2.", check_tree_2 },
+		{ "Tree lookups 2.", lookups_tree_2 },
+		{ "Tree deletes 2.", deletes_tree_2 },
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_TestInfo avl_tree_unit_2r_arr[] = {
-		{"Tree insertions 2.", inserts_tree_2r}
-		,
-		{"Tree check 2.", check_tree_2}
-		,
-		{"Tree lookups 2.", lookups_tree_2}
-		,
-		{"Tree deletes 2.", deletes_tree_2}
-		,
+		{ "Tree insertions 2.", inserts_tree_2r },
+		{ "Tree check 2.", check_tree_2 },
+		{ "Tree lookups 2.", lookups_tree_2 },
+		{ "Tree deletes 2.", deletes_tree_2 },
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_TestInfo avl_tree_unit_100_arr[] = {
-		{"Tree insertions 100.", inserts_tree_100}
-		,
-		{"Tree check 100.", check_tree_100}
-		,
-		{"Tree lookups 100.", lookups_tree_100}
-		,
-		{"Tree traverse 100.", trav_tree_100}
-		,
-		{"Tree deletes 100.", deletes_tree_100}
-		,
+		{ "Tree insertions 100.", inserts_tree_100 },
+		{ "Tree check 100.", check_tree_100 },
+		{ "Tree lookups 100.", lookups_tree_100 },
+		{ "Tree traverse 100.", trav_tree_100 },
+		{ "Tree deletes 100.", deletes_tree_100 },
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_TestInfo avl_tree_unit_10000_arr[] = {
-		{"Tree insertions 10000.", inserts_tree_10000}
-		,
-		{"Tree lookups 10000.", lookups_tree_10000}
-		,
-		{"Tree check 10000.", check_tree_10000}
-		,
-		{"Tree traverse 10000.", trav_tree_10000}
-		,
-		{"Tree deletes 10000.", deletes_tree_10000}
-		,
+		{ "Tree insertions 10000.", inserts_tree_10000 },
+		{ "Tree lookups 10000.", lookups_tree_10000 },
+		{ "Tree check 10000.", check_tree_10000 },
+		{ "Tree traverse 10000.", trav_tree_10000 },
+		{ "Tree deletes 10000.", deletes_tree_10000 },
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_TestInfo avl_tree_unit_min_1_arr[] = {
-		{"Check min after inserts, deletes.", check_min_1}
-		,
-		{"Check lookup after delete.", check_delete_1}
-		,
-#if 1				/* skews perf */
-		{"Random min check.", check_min_2}
-		,
+		{ "Check min after inserts, deletes.", check_min_1 },
+		{ "Check lookup after delete.", check_delete_1 },
+#if 1 /* skews perf */
+		{ "Random min check.", check_min_2 },
 #endif
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_TestInfo avl_tree_unit_supremum[] = {
-		{"Inserts supremum.", inserts_supremum}
-		,
-		{"Checks supremum (and infimum).", checks_supremum}
-		,
-		{"Deletes supremum.", deletes_supremum}
-		,
+		{ "Inserts supremum.", inserts_supremum },
+		{ "Checks supremum (and infimum).", checks_supremum },
+		{ "Deletes supremum.", deletes_supremum },
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_SuiteInfo suites[] = {
-		{"Avl operations 1", init_suite1, clean_suite1,
-		 avl_setup, avl_teardown, avl_tree_unit_1_arr}
-		,
-		{"Avl operations 2", init_suite2, clean_suite2,
-		 avl_setup, avl_teardown, avl_tree_unit_2_arr}
-		,
-		{"Avl operations 2 R", init_suite2, clean_suite2,
-		 avl_setup, avl_teardown, avl_tree_unit_2r_arr}
-		,
-		{"Avl operations 100", init_suite100, clean_suite100,
-		 avl_setup, avl_teardown, avl_tree_unit_100_arr}
-		,
-		{"Avl operations 10000", init_suite10000, clean_suite10000,
-		 avl_setup, avl_teardown, avl_tree_unit_10000_arr}
-		,
-		{"Check min 1", init_suite1, clean_suite1,
-		 avl_setup, avl_teardown, avl_tree_unit_min_1_arr}
-		,
-		{"Check supremum", init_supremum, clean_supremum,
-		 avl_setup, avl_teardown, avl_tree_unit_supremum}
-		,
+		{ "Avl operations 1", init_suite1, clean_suite1, avl_setup,
+		  avl_teardown, avl_tree_unit_1_arr },
+		{ "Avl operations 2", init_suite2, clean_suite2, avl_setup,
+		  avl_teardown, avl_tree_unit_2_arr },
+		{ "Avl operations 2 R", init_suite2, clean_suite2, avl_setup,
+		  avl_teardown, avl_tree_unit_2r_arr },
+		{ "Avl operations 100", init_suite100, clean_suite100,
+		  avl_setup, avl_teardown, avl_tree_unit_100_arr },
+		{ "Avl operations 10000", init_suite10000, clean_suite10000,
+		  avl_setup, avl_teardown, avl_tree_unit_10000_arr },
+		{ "Check min 1", init_suite1, clean_suite1, avl_setup,
+		  avl_teardown, avl_tree_unit_min_1_arr },
+		{ "Check supremum", init_supremum, clean_supremum, avl_setup,
+		  avl_teardown, avl_tree_unit_supremum },
 		CU_SUITE_INFO_NULL,
 	};
 

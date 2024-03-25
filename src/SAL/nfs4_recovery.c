@@ -48,24 +48,24 @@
 static pthread_mutex_t grace_mutex;
 static struct timespec current_grace; /* current grace period timeout */
 static int clid_count; /* number of active clients */
-static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list);  /* clients */
+static struct glist_head clid_list = GLIST_HEAD_INIT(clid_list); /* clients */
 
 /*
  * Low two bits of grace_status word are flags. One for whether we're currently
  * in a grace period and one if a change was requested.
  */
-#define GRACE_STATUS_ACTIVE_SHIFT	0
-#define GRACE_STATUS_CHANGE_REQ_SHIFT	1
+#define GRACE_STATUS_ACTIVE_SHIFT 0
+#define GRACE_STATUS_CHANGE_REQ_SHIFT 1
 
 /* The remaining bits are for the refcount */
-#define GRACE_STATUS_COUNTER_SHIFT	2
+#define GRACE_STATUS_COUNTER_SHIFT 2
 
-#define GRACE_STATUS_ACTIVE		(1U << GRACE_STATUS_ACTIVE_SHIFT)
-#define GRACE_STATUS_CHANGE_REQ		(1U << GRACE_STATUS_CHANGE_REQ_SHIFT)
-#define GRACE_STATUS_REF_INCREMENT	(1U << GRACE_STATUS_COUNTER_SHIFT)
-#define GRACE_STATUS_COUNT_MASK		((~0U) << GRACE_STATUS_COUNTER_SHIFT)
+#define GRACE_STATUS_ACTIVE (1U << GRACE_STATUS_ACTIVE_SHIFT)
+#define GRACE_STATUS_CHANGE_REQ (1U << GRACE_STATUS_CHANGE_REQ_SHIFT)
+#define GRACE_STATUS_REF_INCREMENT (1U << GRACE_STATUS_COUNTER_SHIFT)
+#define GRACE_STATUS_COUNT_MASK ((~0U) << GRACE_STATUS_COUNTER_SHIFT)
 
-static uint32_t	grace_status;
+static uint32_t grace_status;
 
 static int default_recovery_init(void)
 {
@@ -104,24 +104,20 @@ static struct nfs4_recovery_backend default_recovery_backend = {
 	.add_revoke_fh = default_add_revoke_fh,
 };
 
-
 static struct nfs4_recovery_backend *recovery_backend =
-					&default_recovery_backend;
+	&default_recovery_backend;
 int32_t reclaim_completes; /* atomic */
 
 static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip);
 static void nfs_release_v4_clients(char *ip);
 
-
-
-
 clid_entry_t *nfs4_add_clid_entry(char *cl_name)
 {
 	clid_entry_t *new_ent = gsh_malloc(sizeof(clid_entry_t));
 
 	glist_init(&new_ent->cl_rfh_list);
-	(void) strlcpy(new_ent->cl_name, cl_name, sizeof(new_ent->cl_name));
+	(void)strlcpy(new_ent->cl_name, cl_name, sizeof(new_ent->cl_name));
 	glist_add(&clid_list, &new_ent->cl_list);
 	++clid_count;
 	return new_ent;
@@ -140,8 +136,7 @@ void nfs4_cleanup_clid_entries(void)
 {
 	struct clid_entry *clid_entry;
 	/* when not doing a takeover, start with an empty list */
-	while ((clid_entry = glist_first_entry(&clid_list,
-					       struct clid_entry,
+	while ((clid_entry = glist_first_entry(&clid_list, struct clid_entry,
 					       cl_list)) != NULL) {
 		glist_del(&clid_entry->cl_list);
 		gsh_free(clid_entry);
@@ -198,8 +193,7 @@ void nfs_put_grace_status(void)
 /**
  * Lift the grace period if it's still active.
  */
-static void
-nfs_lift_grace_locked(void)
+static void nfs_lift_grace_locked(void)
 {
 	uint32_t cur;
 
@@ -212,7 +206,8 @@ nfs_lift_grace_locked(void)
 		__sync_synchronize();
 		/* Now change the actual status */
 		cur = __sync_and_and_fetch(&grace_status,
-			~(GRACE_STATUS_ACTIVE|GRACE_STATUS_CHANGE_REQ));
+					   ~(GRACE_STATUS_ACTIVE |
+					     GRACE_STATUS_CHANGE_REQ));
 		assert(!(cur & GRACE_STATUS_COUNT_MASK));
 		LogEvent(COMPONENT_STATE, "NFS Server Now NOT IN GRACE");
 	}
@@ -271,7 +266,7 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 	ret = clock_gettime(CLOCK_MONOTONIC, &current_grace);
 	if (ret != 0) {
 		LogCrit(COMPONENT_MAIN, "Failed to get timestamp");
-		assert(0);	/* if this is broken, we are toast so die */
+		assert(0); /* if this is broken, we are toast so die */
 	}
 
 	cur = atomic_fetch_uint32_t(&grace_status);
@@ -317,11 +312,11 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 	__sync_synchronize();
 
 	if ((int)nfs_param.nfsv4_param.grace_period <
-		(int)nfs_param.nfsv4_param.lease_lifetime) {
+	    (int)nfs_param.nfsv4_param.lease_lifetime) {
 		LogWarn(COMPONENT_STATE,
-		 "NFS Server GRACE duration should at least match LEASE period. Current configured values are GRACE(%d), LEASE(%d)",
-		 (int)nfs_param.nfsv4_param.grace_period,
-		 (int)nfs_param.nfsv4_param.lease_lifetime);
+			"NFS Server GRACE duration should at least match LEASE period. Current configured values are GRACE(%d), LEASE(%d)",
+			(int)nfs_param.nfsv4_param.grace_period,
+			(int)nfs_param.nfsv4_param.lease_lifetime);
 	}
 
 	LogEvent(COMPONENT_STATE, "NFS Server Now IN GRACE, duration %d",
@@ -371,7 +366,7 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 		}
 	}
 	LogEvent(COMPONENT_STATE,
-		"grace reload client info completed from backend");
+		 "grace reload client info completed from backend");
 out:
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 	return ret;
@@ -466,7 +461,7 @@ int nfs_recovery_get_nodeid(char **pnodeid)
 	 */
 	hostname = gsh_malloc(MAXNAMLEN + 1);
 	rc = gsh_gethostname(hostname, MAXNAMLEN + 1,
-			nfs_param.core_param.enable_AUTHSTATS);
+			     nfs_param.core_param.enable_AUTHSTATS);
 	if (rc != 0) {
 		LogEvent(COMPONENT_CLIENTID, "gethostname failed: %d", errno);
 		rc = -errno;
@@ -504,8 +499,10 @@ void nfs_try_lift_grace(void)
 	 */
 	PTHREAD_MUTEX_lock(&grace_mutex);
 	rc_count = atomic_fetch_int32_t(&reclaim_completes);
-	LogEvent(COMPONENT_STATE, "check grace:reclaim complete(%d)"
-		" clid count(%d)", rc_count, clid_count);
+	LogEvent(COMPONENT_STATE,
+		 "check grace:reclaim complete(%d)"
+		 " clid count(%d)",
+		 rc_count, clid_count);
 #ifdef _USE_NLM
 	if (!nfs_param.core_param.enable_NLM)
 #endif
@@ -556,8 +553,8 @@ void nfs_try_lift_grace(void)
 			pro = old | GRACE_STATUS_CHANGE_REQ;
 			if (pro == old)
 				break;
-			cur = __sync_val_compare_and_swap(&grace_status,
-							  old, pro);
+			cur = __sync_val_compare_and_swap(&grace_status, old,
+							  pro);
 		} while (cur != old);
 
 		/* Otherwise, go ahead and lift if we can */
@@ -580,11 +577,11 @@ void nfs_wait_for_grace_enforcement(void)
 	pthread_mutex_lock(&enforcing_mutex);
 	nfs_try_lift_grace();
 	while (nfs_in_grace() && !nfs_grace_enforcing()) {
-		struct timespec	timeo = { .tv_sec = time(NULL) + 5,
+		struct timespec timeo = { .tv_sec = time(NULL) + 5,
 					  .tv_nsec = 0 };
 
 		pthread_cond_timedwait(&enforcing_cond, &enforcing_mutex,
-						&timeo);
+				       &timeo);
 
 		pthread_mutex_unlock(&enforcing_mutex);
 		nfs_start_grace(&gsp);
@@ -607,10 +604,8 @@ static pthread_mutex_t norefs_mutex;
 void nfs_wait_for_grace_norefs(void)
 {
 	pthread_mutex_lock(&norefs_mutex);
-	struct timespec	timeo = { .tv_sec = time(NULL) + 5,
-				  .tv_nsec = 0 };
-	pthread_cond_timedwait(&norefs_cond, &norefs_mutex,
-			       &timeo);
+	struct timespec timeo = { .tv_sec = time(NULL) + 5, .tv_nsec = 0 };
+	pthread_cond_timedwait(&norefs_cond, &norefs_mutex, &timeo);
 	pthread_mutex_unlock(&norefs_mutex);
 }
 
@@ -653,13 +648,11 @@ static bool check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
 {
 	bool ret = false;
 
-
 	LogDebug(COMPONENT_CLIENTID, "compare %s to %s",
 		 clientid->cid_recov_tag, clid_ent->cl_name);
 
 	if (clientid->cid_recov_tag &&
-	    !strncmp(clientid->cid_recov_tag,
-		     clid_ent->cl_name, PATH_MAX))
+	    !strncmp(clientid->cid_recov_tag, clid_ent->cl_name, PATH_MAX))
 		ret = true;
 
 	return ret;
@@ -672,7 +665,7 @@ static bool check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
  *
  * @param[in] clientid Client record
  */
-void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
+void nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 {
 	struct glist_head *node;
 	clid_entry_t *clid_ent;
@@ -690,13 +683,14 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 	 * find it, mark it to allow reclaims.
 	 */
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
-	glist_for_each(node, &clid_list) {
+	glist_for_each(node, &clid_list)
+	{
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
 		if (check_clid(clientid, clid_ent)) {
 			if (isDebug(COMPONENT_CLIENTID)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-					sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
 				display_client_id_rec(&dspbuf, clientid);
 
@@ -712,7 +706,7 @@ void  nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 }
 
-void  nfs4_chk_clid(nfs_client_id_t *clientid)
+void nfs4_chk_clid(nfs_client_id_t *clientid)
 {
 	clid_entry_t *dummy_clid_ent;
 
@@ -733,7 +727,7 @@ static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 	LogDebug(COMPONENT_STATE, "Load recovery cli %p", gsp);
 
 	recovery_backend->recovery_read_clids(gsp, nfs4_add_clid_entry,
-						nfs4_add_rfh_entry);
+					      nfs4_add_rfh_entry);
 }
 
 #ifdef USE_RADOS_RECOV
@@ -744,7 +738,9 @@ static struct {
 	void (*cluster_init)(struct nfs4_recovery_backend **);
 	int (*load_config_from_parse)(config_file_t,
 				      struct config_error_type *);
-} rados = { NULL,};
+} rados = {
+	NULL,
+};
 
 static int load_rados_recov(void)
 {
@@ -758,10 +754,10 @@ static int load_rados_recov(void)
 	if (rados.dl) {
 		rados.kv_init = dlsym(rados.dl, "rados_kv_backend_init");
 		rados.ng_init = dlsym(rados.dl, "rados_ng_backend_init");
-		rados.cluster_init = dlsym(rados.dl,
-					   "rados_cluster_backend_init");
-		rados.load_config_from_parse = dlsym(rados.dl,
-					   "rados_load_config_from_parse");
+		rados.cluster_init =
+			dlsym(rados.dl, "rados_cluster_backend_init");
+		rados.load_config_from_parse =
+			dlsym(rados.dl, "rados_load_config_from_parse");
 
 		if (!rados.kv_init || !rados.ng_init || !rados.cluster_init ||
 		    !rados.load_config_from_parse) {
@@ -850,7 +846,7 @@ void nfs4_recovery_shutdown(void)
 		recovery_backend->recovery_shutdown();
 #ifdef USE_RADOS_RECOV
 	if (rados.dl)
-		(void) dlclose(rados.dl);
+		(void)dlclose(rados.dl);
 	rados.dl = NULL;
 #endif
 }
@@ -914,13 +910,14 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 	PTHREAD_MUTEX_lock(&grace_mutex);
 	nfs4_chk_clid_impl(clid, &clid_ent);
 	if (clid_ent) {
-		glist_for_each(node, &clid_ent->cl_rfh_list) {
+		glist_for_each(node, &clid_ent->cl_rfh_list)
+		{
 			rfh_entry = glist_entry(node, rdel_fh_t, rdfh_list);
 			assert(rfh_entry != NULL);
 			if (!strcmp(rhdlstr, rfh_entry->rdfh_handle_str)) {
 				LogFullDebug(COMPONENT_CLIENTID,
-					"Can't reclaim revoked fh:%s",
-					rfh_entry->rdfh_handle_str);
+					     "Can't reclaim revoked fh:%s",
+					     rfh_entry->rdfh_handle_str);
 				retval = false;
 				break;
 			}
@@ -944,9 +941,8 @@ static void nlm_releasecall(struct fridgethr_context *ctx)
 	nsm_cp = ctx->arg;
 	err = state_nlm_notify(nsm_cp, false, 0);
 	if (err != STATE_SUCCESS)
-		LogDebug(COMPONENT_STATE,
-			"state_nlm_notify failed with %d",
-			err);
+		LogDebug(COMPONENT_STATE, "state_nlm_notify failed with %d",
+			 err);
 	dec_nsm_client_ref(nsm_cp);
 }
 #endif /* _USE_NLM */
@@ -960,7 +956,7 @@ void extractv4(char *ipv6, char *ipv4, size_t size)
 	while (token != NULL) {
 		/* IPv4 delimiter is '.' */
 		if (strchr(token, '.') != NULL) {
-			(void) strlcpy(ipv4, token, size);
+			(void)strlcpy(ipv4, token, size);
 			return;
 		}
 		token = strtok_r(NULL, delim, &saveptr);
@@ -1025,19 +1021,19 @@ static void nfs_release_nlm_state(char *release_ip)
 		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].ht_lock);
 		head_rbt = &ht->partitions[i].rbt;
 		/* go through all entries in the red-black-tree */
-		RBT_LOOP(head_rbt, pn) {
+		RBT_LOOP(head_rbt, pn)
+		{
 			pdata = RBT_OPAQ(pn);
-			nlm_cp = (state_nlm_client_t *) pdata->val.addr;
+			nlm_cp = (state_nlm_client_t *)pdata->val.addr;
 
-			if (sprint_sockip(&nlm_cp->slc_server_addr,
-					  serverip, sizeof(serverip)) &&
+			if (sprint_sockip(&nlm_cp->slc_server_addr, serverip,
+					  sizeof(serverip)) &&
 			    ip_str_match(release_ip, serverip)) {
 				nsm_cp = nlm_cp->slc_nsm_client;
 				inc_nsm_client_ref(nsm_cp);
 				state_status = fridgethr_submit(
-						state_async_fridge,
-						nlm_releasecall,
-						nsm_cp);
+					state_async_fridge, nlm_releasecall,
+					nsm_cp);
 				if (state_status != STATE_SUCCESS) {
 					dec_nsm_client_ref(nsm_cp);
 					LogCrit(COMPONENT_STATE,
@@ -1057,10 +1053,10 @@ static int ip_match(char *ip, nfs_client_id_t *cid)
 	char *value = cid->cid_client_record->cr_client_val;
 	int len = cid->cid_client_record->cr_client_val_len;
 
-	LogDebug(COMPONENT_STATE, "NFS Server V4 match ip %s with (%.*s)",
-		 ip, len, value);
+	LogDebug(COMPONENT_STATE, "NFS Server V4 match ip %s with (%.*s)", ip,
+		 len, value);
 
-	if (strlen(ip) == 0)	/* No IP all are matching */
+	if (strlen(ip) == 0) /* No IP all are matching */
 		return 1;
 
 	haystack = alloca(len + 1);
@@ -1069,7 +1065,7 @@ static int ip_match(char *ip, nfs_client_id_t *cid)
 	if (strstr(haystack, ip) != NULL)
 		return 1;
 
-	return 0;		/* no match */
+	return 0; /* no match */
 }
 
 /*
@@ -1097,13 +1093,14 @@ restart:
 		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].ht_lock);
 
 		/* go through all entries in the red-black-tree */
-		RBT_LOOP(head_rbt, pn) {
+		RBT_LOOP(head_rbt, pn)
+		{
 			pdata = RBT_OPAQ(pn);
 
-			cp = (nfs_client_id_t *) pdata->val.addr;
+			cp = (nfs_client_id_t *)pdata->val.addr;
 			PTHREAD_MUTEX_lock(&cp->cid_mutex);
-			if ((cp->cid_confirmed == CONFIRMED_CLIENT_ID)
-			     && ip_match(ip, cp)) {
+			if ((cp->cid_confirmed == CONFIRMED_CLIENT_ID) &&
+			    ip_match(ip, cp)) {
 				inc_client_id_ref(cp);
 
 				/* client_record is always non-NULL. */
@@ -1112,7 +1109,7 @@ restart:
 				PTHREAD_MUTEX_unlock(&cp->cid_mutex);
 
 				PTHREAD_RWLOCK_unlock(
-						&ht->partitions[i].ht_lock);
+					&ht->partitions[i].ht_lock);
 
 				/* nfs_client_id_expire requires cr_mutex */
 				PTHREAD_MUTEX_lock(&recp->cr_mutex);
@@ -1180,7 +1177,7 @@ int load_recovery_param_from_conf(config_file_t parse_tree,
 			LogCrit(COMPONENT_CLIENTID,
 				"Failed to load Backend %s. Please install the appropriate package",
 				recovery_backend_str(
-				       nfs_param.nfsv4_param.recovery_backend));
+					nfs_param.nfsv4_param.recovery_backend));
 			return -1;
 		}
 

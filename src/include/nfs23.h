@@ -8,7 +8,7 @@
  */
 
 #ifndef _NFS23_H_RPCGEN
-#define	_NFS23_H_RPCGEN
+#define _NFS23_H_RPCGEN
 
 #include "gsh_rpc.h"
 #include "extended_types.h"
@@ -32,7 +32,7 @@ extern "C" {
 #define NFS3_CREATEVERFSIZE 8
 #define NFS3_WRITEVERFSIZE 8
 
-#define NFS2_MAX_FILESIZE   (2147483647)	/* 0x7fffffff */
+#define NFS2_MAX_FILESIZE (2147483647) /* 0x7fffffff */
 
 typedef char fhandle2[NFS2_FHSIZE];
 
@@ -387,12 +387,12 @@ struct LOOKUP3res {
 	} LOOKUP3res_u;
 };
 typedef struct LOOKUP3res LOOKUP3res;
-#define	ACCESS3_READ 0x0001
-#define	ACCESS3_LOOKUP 0x0002
-#define	ACCESS3_MODIFY 0x0004
-#define	ACCESS3_EXTEND 0x0008
-#define	ACCESS3_DELETE 0x0010
-#define	ACCESS3_EXECUTE 0x0020
+#define ACCESS3_READ 0x0001
+#define ACCESS3_LOOKUP 0x0002
+#define ACCESS3_MODIFY 0x0004
+#define ACCESS3_EXTEND 0x0008
+#define ACCESS3_DELETE 0x0010
+#define ACCESS3_EXECUTE 0x0020
 
 struct ACCESS3args {
 	nfs_fh3 object;
@@ -475,11 +475,7 @@ struct READ3res {
 };
 typedef struct READ3res READ3res;
 
-enum stable_how {
-	UNSTABLE = 0,
-	DATA_SYNC = 1,
-	FILE_SYNC = 2
-};
+enum stable_how { UNSTABLE = 0, DATA_SYNC = 1, FILE_SYNC = 2 };
 typedef enum stable_how stable_how;
 
 struct WRITE3args {
@@ -513,11 +509,7 @@ struct WRITE3res {
 };
 typedef struct WRITE3res WRITE3res;
 
-enum createmode3 {
-	UNCHECKED = 0,
-	GUARDED = 1,
-	EXCLUSIVE = 2
-};
+enum createmode3 { UNCHECKED = 0, GUARDED = 1, EXCLUSIVE = 2 };
 typedef enum createmode3 createmode3;
 
 struct createhow3 {
@@ -881,10 +873,10 @@ struct FSSTAT3res {
 	} FSSTAT3res_u;
 };
 typedef struct FSSTAT3res FSSTAT3res;
-#define	FSF3_LINK 0x0001
-#define	FSF3_SYMLINK 0x0002
-#define	FSF3_HOMOGENEOUS 0x0008
-#define	FSF3_CANSETTIME 0x0010
+#define FSF3_LINK 0x0001
+#define FSF3_SYMLINK 0x0002
+#define FSF3_HOMOGENEOUS 0x0008
+#define FSF3_CANSETTIME 0x0010
 
 struct FSINFO3args {
 	nfs_fh3 fsroot;
@@ -977,49 +969,49 @@ struct COMMIT3res {
 };
 typedef struct COMMIT3res COMMIT3res;
 
-#define	NFS_PROGRAM	100003
-#define	NFS_V2	2
-#define	NFSPROC_NULL	0
-#define	NFSPROC_GETATTR	1
-#define	NFSPROC_SETATTR	2
-#define	NFSPROC_ROOT	3
-#define	NFSPROC_LOOKUP	4
-#define	NFSPROC_READLINK	5
-#define	NFSPROC_READ	6
-#define	NFSPROC_WRITECACHE	7
-#define	NFSPROC_WRITE	8
-#define	NFSPROC_CREATE	9
-#define	NFSPROC_REMOVE	10
-#define	NFSPROC_RENAME	11
-#define	NFSPROC_LINK	12
-#define	NFSPROC_SYMLINK	13
-#define	NFSPROC_MKDIR	14
-#define	NFSPROC_RMDIR	15
-#define	NFSPROC_READDIR	16
-#define	NFSPROC_STATFS	17
-#define	NFS_V3	3
-#define	NFSPROC3_NULL	0
-#define	NFSPROC3_GETATTR	1
-#define	NFSPROC3_SETATTR	2
-#define	NFSPROC3_LOOKUP	3
-#define	NFSPROC3_ACCESS	4
-#define	NFSPROC3_READLINK	5
-#define	NFSPROC3_READ	6
-#define	NFSPROC3_WRITE	7
-#define	NFSPROC3_CREATE	8
-#define	NFSPROC3_MKDIR	9
-#define	NFSPROC3_SYMLINK	10
-#define	NFSPROC3_MKNOD	11
-#define	NFSPROC3_REMOVE	12
-#define	NFSPROC3_RMDIR	13
-#define	NFSPROC3_RENAME	14
-#define	NFSPROC3_LINK	15
-#define	NFSPROC3_READDIR	16
-#define	NFSPROC3_READDIRPLUS	17
-#define	NFSPROC3_FSSTAT	18
-#define	NFSPROC3_FSINFO	19
-#define	NFSPROC3_PATHCONF	20
-#define	NFSPROC3_COMMIT	21
+#define NFS_PROGRAM 100003
+#define NFS_V2 2
+#define NFSPROC_NULL 0
+#define NFSPROC_GETATTR 1
+#define NFSPROC_SETATTR 2
+#define NFSPROC_ROOT 3
+#define NFSPROC_LOOKUP 4
+#define NFSPROC_READLINK 5
+#define NFSPROC_READ 6
+#define NFSPROC_WRITECACHE 7
+#define NFSPROC_WRITE 8
+#define NFSPROC_CREATE 9
+#define NFSPROC_REMOVE 10
+#define NFSPROC_RENAME 11
+#define NFSPROC_LINK 12
+#define NFSPROC_SYMLINK 13
+#define NFSPROC_MKDIR 14
+#define NFSPROC_RMDIR 15
+#define NFSPROC_READDIR 16
+#define NFSPROC_STATFS 17
+#define NFS_V3 3
+#define NFSPROC3_NULL 0
+#define NFSPROC3_GETATTR 1
+#define NFSPROC3_SETATTR 2
+#define NFSPROC3_LOOKUP 3
+#define NFSPROC3_ACCESS 4
+#define NFSPROC3_READLINK 5
+#define NFSPROC3_READ 6
+#define NFSPROC3_WRITE 7
+#define NFSPROC3_CREATE 8
+#define NFSPROC3_MKDIR 9
+#define NFSPROC3_SYMLINK 10
+#define NFSPROC3_MKNOD 11
+#define NFSPROC3_REMOVE 12
+#define NFSPROC3_RMDIR 13
+#define NFSPROC3_RENAME 14
+#define NFSPROC3_LINK 15
+#define NFSPROC3_READDIR 16
+#define NFSPROC3_READDIRPLUS 17
+#define NFSPROC3_FSSTAT 18
+#define NFSPROC3_FSINFO 19
+#define NFSPROC3_PATHCONF 20
+#define NFSPROC3_COMMIT 21
 
 /* Number of NFSv3 commands. */
 #define NFS_V3_NB_COMMAND (NFSPROC3_COMMIT + 1)
@@ -1171,4 +1163,4 @@ extern bool xdr_fhstatus2(XDR *, fhstatus2 *);
 }
 #endif
 
-#endif				/* !_NFS23_H_RPCGEN */
+#endif /* !_NFS23_H_RPCGEN */

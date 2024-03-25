@@ -47,9 +47,9 @@
  * This wraps the given callback arg with NULL specific info
  */
 struct null_async_arg {
-	struct fsal_obj_handle *obj_hdl;	/**< NULL's handle */
-	fsal_async_cb cb;			/**< Wrapped callback */
-	void *cb_arg;				/**< Wrapped callback data */
+	struct fsal_obj_handle *obj_hdl; /**< NULL's handle */
+	fsal_async_cb cb; /**< Wrapped callback */
+	void *cb_arg; /**< Wrapped callback data */
 };
 
 /**
@@ -81,13 +81,11 @@ void null_async_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
@@ -98,44 +96,33 @@ fsal_status_t nullfs_close(struct fsal_obj_handle *obj_hdl)
 	return status;
 }
 
-fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   fsal_openflags_t openflags,
-			   enum fsal_create_mode createmode,
-			   const char *name,
-			   struct fsal_attrlist *attrs_in,
-			   fsal_verifier_t verifier,
-			   struct fsal_obj_handle **new_obj,
-			   struct fsal_attrlist *attrs_out,
-			   bool *caller_perm_check,
-			   struct fsal_attrlist *parent_pre_attrs_out,
-			   struct fsal_attrlist *parent_post_attrs_out)
+fsal_status_t
+nullfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	     fsal_openflags_t openflags, enum fsal_create_mode createmode,
+	     const char *name, struct fsal_attrlist *attrs_in,
+	     fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
+	     struct fsal_attrlist *attrs_out, bool *caller_perm_check,
+	     struct fsal_attrlist *parent_pre_attrs_out,
+	     struct fsal_attrlist *parent_post_attrs_out)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 	struct fsal_obj_handle *sub_handle = NULL;
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops->open2(handle->sub_handle, state,
-						  openflags, createmode, name,
-						  attrs_in, verifier,
-						  &sub_handle, attrs_out,
-						  caller_perm_check,
-						  parent_pre_attrs_out,
-						  parent_post_attrs_out);
+	fsal_status_t status = handle->sub_handle->obj_ops->open2(
+		handle->sub_handle, state, openflags, createmode, name,
+		attrs_in, verifier, &sub_handle, attrs_out, caller_perm_check,
+		parent_pre_attrs_out, parent_post_attrs_out);
 	op_ctx->fsal_export = &export->export;
 
 	if (sub_handle) {
 		/* wrap the subfsal handle in a nullfs handle. */
-		return nullfs_alloc_and_check_handle(export, sub_handle,
-						     obj_hdl->fs, new_obj,
-						     status);
+		return nullfs_alloc_and_check_handle(
+			export, sub_handle, obj_hdl->fs, new_obj, status);
 	}
 
 	return status;
@@ -144,19 +131,16 @@ fsal_status_t nullfs_open2(struct fsal_obj_handle *obj_hdl,
 bool nullfs_check_verifier(struct fsal_obj_handle *obj_hdl,
 			   fsal_verifier_t verifier)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	bool result =
-		handle->sub_handle->obj_ops->check_verifier(handle->sub_handle,
-							   verifier);
+	bool result = handle->sub_handle->obj_ops->check_verifier(
+		handle->sub_handle, verifier);
 	op_ctx->fsal_export = &export->export;
 
 	return result;
@@ -165,58 +149,47 @@ bool nullfs_check_verifier(struct fsal_obj_handle *obj_hdl,
 fsal_openflags_t nullfs_status2(struct fsal_obj_handle *obj_hdl,
 				struct state_t *state)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
 	fsal_openflags_t result =
-		handle->sub_handle->obj_ops->status2(handle->sub_handle,
-						    state);
+		handle->sub_handle->obj_ops->status2(handle->sub_handle, state);
 	op_ctx->fsal_export = &export->export;
 
 	return result;
 }
 
 fsal_status_t nullfs_reopen2(struct fsal_obj_handle *obj_hdl,
-			     struct state_t *state,
-			     fsal_openflags_t openflags)
+			     struct state_t *state, fsal_openflags_t openflags)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops->reopen2(handle->sub_handle,
-						    state, openflags);
+	fsal_status_t status = handle->sub_handle->obj_ops->reopen2(
+		handle->sub_handle, state, openflags);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
 }
 
-void nullfs_read2(struct fsal_obj_handle *obj_hdl,
-		  bool bypass,
-		  fsal_async_cb done_cb,
-		  struct fsal_io_arg *read_arg,
+void nullfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		  fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 		  void *caller_arg)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 	struct null_async_arg *arg;
 
 	/* Set up async callback */
@@ -228,23 +201,19 @@ void nullfs_read2(struct fsal_obj_handle *obj_hdl,
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
 	handle->sub_handle->obj_ops->read2(handle->sub_handle, bypass,
-					  null_async_cb, read_arg, arg);
+					   null_async_cb, read_arg, arg);
 	op_ctx->fsal_export = &export->export;
 }
 
-void nullfs_write2(struct fsal_obj_handle *obj_hdl,
-		   bool bypass,
-		   fsal_async_cb done_cb,
-		   struct fsal_io_arg *write_arg,
+void nullfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		   fsal_async_cb done_cb, struct fsal_io_arg *write_arg,
 		   void *caller_arg)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 	struct null_async_arg *arg;
 
 	/* Set up async callback */
@@ -256,49 +225,41 @@ void nullfs_write2(struct fsal_obj_handle *obj_hdl,
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
 	handle->sub_handle->obj_ops->write2(handle->sub_handle, bypass,
-					   null_async_cb, write_arg, arg);
+					    null_async_cb, write_arg, arg);
 	op_ctx->fsal_export = &export->export;
 }
 
 fsal_status_t nullfs_seek2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   struct io_info *info)
+			   struct state_t *state, struct io_info *info)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops->seek2(handle->sub_handle, state,
-						  info);
+	fsal_status_t status = handle->sub_handle->obj_ops->seek2(
+		handle->sub_handle, state, info);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
 }
 
 fsal_status_t nullfs_io_advise2(struct fsal_obj_handle *obj_hdl,
-				struct state_t *state,
-				struct io_hints *hints)
+				struct state_t *state, struct io_hints *hints)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops->io_advise2(handle->sub_handle,
-						       state, hints);
+	fsal_status_t status = handle->sub_handle->obj_ops->io_advise2(
+		handle->sub_handle, state, hints);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
@@ -307,45 +268,38 @@ fsal_status_t nullfs_io_advise2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t nullfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset,
 			     size_t len)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops->commit2(handle->sub_handle, offset,
-						    len);
+	fsal_status_t status = handle->sub_handle->obj_ops->commit2(
+		handle->sub_handle, offset, len);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
 }
 
 fsal_status_t nullfs_lock_op2(struct fsal_obj_handle *obj_hdl,
-			      struct state_t *state,
-			      void *p_owner,
+			      struct state_t *state, void *p_owner,
 			      fsal_lock_op_t lock_op,
 			      fsal_lock_param_t *req_lock,
 			      fsal_lock_param_t *conflicting_lock)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	fsal_status_t status =
-		handle->sub_handle->obj_ops->lock_op2(handle->sub_handle, state,
-						     p_owner, lock_op, req_lock,
-						     conflicting_lock);
+	fsal_status_t status = handle->sub_handle->obj_ops->lock_op2(
+		handle->sub_handle, state, p_owner, lock_op, req_lock,
+		conflicting_lock);
 	op_ctx->fsal_export = &export->export;
 
 	return status;
@@ -354,13 +308,11 @@ fsal_status_t nullfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 fsal_status_t nullfs_close2(struct fsal_obj_handle *obj_hdl,
 			    struct state_t *state)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
@@ -375,20 +327,17 @@ fsal_status_t nullfs_fallocate(struct fsal_obj_handle *obj_hdl,
 			       struct state_t *state, uint64_t offset,
 			       uint64_t length, bool allocate)
 {
-	struct nullfs_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct nullfs_fsal_obj_handle,
-			     obj_handle);
+	struct nullfs_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct nullfs_fsal_obj_handle, obj_handle);
 
-	struct nullfs_fsal_export *export =
-		container_of(op_ctx->fsal_export, struct nullfs_fsal_export,
-			     export);
+	struct nullfs_fsal_export *export = container_of(
+		op_ctx->fsal_export, struct nullfs_fsal_export, export);
 	fsal_status_t status;
 
 	/* calling subfsal method */
 	op_ctx->fsal_export = export->export.sub_export;
-	status = handle->sub_handle->obj_ops->fallocate(handle->sub_handle,
-							state, offset, length,
-							allocate);
+	status = handle->sub_handle->obj_ops->fallocate(
+		handle->sub_handle, state, offset, length, allocate);
 	op_ctx->fsal_export = &export->export;
 	return status;
 }

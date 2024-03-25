@@ -60,11 +60,9 @@ enum nfs_req_result nfs4_op_readlink(struct nfs_argop4 *op,
 				     compound_data_t *data,
 				     struct nfs_resop4 *resp)
 {
-	READLINK4res * const res_READLINK4 = &resp->nfs_resop4_u.opreadlink;
-	fsal_status_t fsal_status = {0, 0};
-	struct gsh_buffdesc link_buffer = {.addr = NULL,
-		.len = 0
-	};
+	READLINK4res *const res_READLINK4 = &resp->nfs_resop4_u.opreadlink;
+	fsal_status_t fsal_status = { 0, 0 };
+	struct gsh_buffdesc link_buffer = { .addr = NULL, .len = 0 };
 	uint32_t resp_size;
 
 	resp->resop = NFS4_OP_READLINK;
@@ -75,7 +73,7 @@ enum nfs_req_result nfs4_op_readlink(struct nfs_argop4 *op,
 	 * ...
 	 */
 	res_READLINK4->status =
-	    nfs4_sanity_check_FH(data, SYMBOLIC_LINK, false);
+		nfs4_sanity_check_FH(data, SYMBOLIC_LINK, false);
 
 	if (res_READLINK4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
@@ -87,11 +85,11 @@ enum nfs_req_result nfs4_op_readlink(struct nfs_argop4 *op,
 	}
 
 	res_READLINK4->READLINK4res_u.resok4.link.utf8string_val =
-	    link_buffer.addr;
+		link_buffer.addr;
 
 	/* NFSv4 does not require the \NUL terminator. */
 	res_READLINK4->READLINK4res_u.resok4.link.utf8string_len =
-	    link_buffer.len - 1;
+		link_buffer.len - 1;
 
 	/* Response size is space for nfsstat4, length, pointer, and the
 	 * link itself.
@@ -102,14 +100,14 @@ enum nfs_req_result nfs4_op_readlink(struct nfs_argop4 *op,
 
 	if (res_READLINK4->status != NFS4_OK) {
 		/* No room for response, free link. */
-		gsh_free(
-		    res_READLINK4->READLINK4res_u.resok4.link.utf8string_val);
+		gsh_free(res_READLINK4->READLINK4res_u.resok4.link
+				 .utf8string_val);
 	}
 
 	data->op_resp_size = resp_size;
 
 	return nfsstat4_to_nfs_req_result(res_READLINK4->status);
-}				/* nfs4_op_readlink */
+} /* nfs4_op_readlink */
 
 /**
  * @brief Free memory allocated for READLINK result

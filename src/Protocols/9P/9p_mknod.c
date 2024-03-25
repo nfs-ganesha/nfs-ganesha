@@ -60,7 +60,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_qid qid_newobj;
 
 	struct fsal_obj_handle *pentry_newobj = NULL;
-	char obj_name[MAXNAMLEN+1];
+	char obj_name[MAXNAMLEN + 1];
 	uint64_t fileid = 0LL;
 	fsal_status_t fsal_status;
 	object_file_type_t nodetype;
@@ -76,10 +76,11 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, minor, u32);
 	_9p_getptr(cursor, gid, u32);
 
-	LogDebug(COMPONENT_9P,
-		 "TMKNOD: tag=%u fid=%u name=%.*s mode=0%o major=%u minor=%u gid=%u",
-		 (u32) *msgtag, *fid, *name_len, name_str, *mode, *major,
-		 *minor, *gid);
+	LogDebug(
+		COMPONENT_9P,
+		"TMKNOD: tag=%u fid=%u name=%.*s mode=0%o major=%u minor=%u gid=%u",
+		(u32)*msgtag, *fid, *name_len, name_str, *mode, *major, *minor,
+		*gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -100,8 +101,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len >= sizeof(obj_name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(obj_name, *name_len, name_str);
@@ -115,7 +115,7 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		nodetype = FIFO_FILE;
 	else if (S_ISSOCK(*mode))
 		nodetype = SOCKET_FILE;
-	else			/* bad type */
+	else /* bad type */
 		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
 	fsal_prepare_attrs(&object_attributes, ATTR_RAWDEV | ATTR_MODE);
@@ -156,11 +156,12 @@ int _9p_mknod(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "TMKNOD: tag=%u fid=%u name=%.*s major=%u minor=%u qid=(type=%u,version=%u,path=%llu)",
-		 (u32) *msgtag, *fid, *name_len, name_str, *major, *minor,
-		 qid_newobj.type, qid_newobj.version,
-		 (unsigned long long)qid_newobj.path);
+	LogDebug(
+		COMPONENT_9P,
+		"TMKNOD: tag=%u fid=%u name=%.*s major=%u minor=%u qid=(type=%u,version=%u,path=%llu)",
+		(u32)*msgtag, *fid, *name_len, name_str, *major, *minor,
+		qid_newobj.type, qid_newobj.version,
+		(unsigned long long)qid_newobj.path);
 
 	return 1;
 }

@@ -55,7 +55,7 @@ bool proxyv3_nlm_init(void)
 		       strlen(kClientName) + 1 /* For NULL */);
 	}
 
-	nlmSvid = (int32_t) getpid();
+	nlmSvid = (int32_t)getpid();
 	nlm_initialised = true;
 	return true;
 }
@@ -74,13 +74,12 @@ bool proxyv3_nlm_init(void)
  *         - False, otherwise.
  */
 
-static bool
-proxyv3_is_valid_lockop(struct fsal_obj_handle *obj_hdl,
-			struct state_t *state,
-			struct state_owner_t *owner,
-			fsal_lock_op_t lock_op,
-			fsal_lock_param_t *request_lock,
-			fsal_lock_param_t *conflicting_lock)
+static bool proxyv3_is_valid_lockop(struct fsal_obj_handle *obj_hdl,
+				    struct state_t *state,
+				    struct state_owner_t *owner,
+				    fsal_lock_op_t lock_op,
+				    fsal_lock_param_t *request_lock,
+				    fsal_lock_param_t *conflicting_lock)
 {
 	if (lock_op == FSAL_OP_LOCKB) {
 		LogCrit(COMPONENT_FSAL,
@@ -100,8 +99,7 @@ proxyv3_is_valid_lockop(struct fsal_obj_handle *obj_hdl,
 		 * We need the owner info to fill in the various alock fields in
 		 * the requests.
 		 */
-		LogCrit(COMPONENT_FSAL,
-			"Didn't receive an owner. Unexpected.");
+		LogCrit(COMPONENT_FSAL, "Didn't receive an owner. Unexpected.");
 		return false;
 	}
 
@@ -131,11 +129,16 @@ proxyv3_is_valid_lockop(struct fsal_obj_handle *obj_hdl,
 static const char *lock_op_to_cstr(fsal_lock_op_t op)
 {
 	switch (op) {
-	case FSAL_OP_LOCKT: return "TEST";
-	case FSAL_OP_LOCK:  return "LOCK_IMMEDIATE";
-	case FSAL_OP_LOCKB: return "LOCK_ASYNC";
-	case FSAL_OP_UNLOCK: return "UNLOCK";
-	case FSAL_OP_CANCEL: return "CANCEL";
+	case FSAL_OP_LOCKT:
+		return "TEST";
+	case FSAL_OP_LOCK:
+		return "LOCK_IMMEDIATE";
+	case FSAL_OP_LOCKB:
+		return "LOCK_ASYNC";
+	case FSAL_OP_UNLOCK:
+		return "UNLOCK";
+	case FSAL_OP_CANCEL:
+		return "CANCEL";
 	}
 	return "INVALID";
 }
@@ -151,16 +154,26 @@ static const char *lock_op_to_cstr(fsal_lock_op_t op)
 static const char *nlm4stat_to_cstr(nlm4_stats status)
 {
 	switch (status) {
-	case NLM4_GRANTED: return "NLM4_GRANTED";
-	case NLM4_DENIED: return "NLM4_DENIED";
-	case NLM4_DENIED_NOLOCKS: return "NLM4_DENIED_NOLOCKS";
-	case NLM4_BLOCKED: return "NLM4_BLOCKED";
-	case NLM4_DENIED_GRACE_PERIOD: return "NLM4_DENIED_GRACE_PERIOD";
-	case NLM4_DEADLCK: return "NLM4_DEADLCK";
-	case NLM4_ROFS: return "NLM4_ROFS";
-	case NLM4_STALE_FH: return "NLM4_STALE_FH";
-	case NLM4_FBIG: return "NLM4_FBIG";
-	case NLM4_FAILED: return "NLM4_FAILED";
+	case NLM4_GRANTED:
+		return "NLM4_GRANTED";
+	case NLM4_DENIED:
+		return "NLM4_DENIED";
+	case NLM4_DENIED_NOLOCKS:
+		return "NLM4_DENIED_NOLOCKS";
+	case NLM4_BLOCKED:
+		return "NLM4_BLOCKED";
+	case NLM4_DENIED_GRACE_PERIOD:
+		return "NLM4_DENIED_GRACE_PERIOD";
+	case NLM4_DEADLCK:
+		return "NLM4_DEADLCK";
+	case NLM4_ROFS:
+		return "NLM4_ROFS";
+	case NLM4_STALE_FH:
+		return "NLM4_STALE_FH";
+	case NLM4_FBIG:
+		return "NLM4_FBIG";
+	case NLM4_FAILED:
+		return "NLM4_FAILED";
 	}
 	return "INVALID";
 }
@@ -176,13 +189,12 @@ static const char *nlm4stat_to_cstr(nlm4_stats status)
  * @param lock The output nlm4_lock argument.
  */
 
-static void
-proxyv3_nlm_fill_common_args(struct proxyv3_obj_handle *obj,
-			     struct state_t *state,
-			     struct state_owner_t *state_owner,
-			     fsal_lock_param_t *request_lock,
-			     struct netobj *cookie,
-			     struct nlm4_lock *lock)
+static void proxyv3_nlm_fill_common_args(struct proxyv3_obj_handle *obj,
+					 struct state_t *state,
+					 struct state_owner_t *state_owner,
+					 fsal_lock_param_t *request_lock,
+					 struct netobj *cookie,
+					 struct nlm4_lock *lock)
 {
 	/*
 	 * Fill in the cookie.
@@ -204,7 +216,6 @@ proxyv3_nlm_fill_common_args(struct proxyv3_obj_handle *obj,
 	} else {
 		cookie->n_len = obj->fh3.data.data_len;
 	}
-
 
 	/*
 	 * @todo: if we (the proxy) crash, the backend will try to reach out to
@@ -228,40 +239,31 @@ proxyv3_nlm_fill_common_args(struct proxyv3_obj_handle *obj,
 	lock->l_len = request_lock->lock_length;
 }
 
-
 /**
  * @brief A little helper to perform an NLM RPC via proxyv3_nlm_call.
  */
 
 static fsal_status_t
 proxyv3_nlm_commonrpc(rpcproc_t nlmProc, const char *procName,
-		      xdrproc_t encFunc, void *args,
-		      xdrproc_t decFunc, void *result,
-		      nlm4_stats *status,
-		      struct netobj *cookie,
+		      xdrproc_t encFunc, void *args, xdrproc_t decFunc,
+		      void *result, nlm4_stats *status, struct netobj *cookie,
 		      struct nlm4_lock *lock)
 {
 	LogDebug(COMPONENT_FSAL,
 		 "Issuing an %s. Lock info: offset %" PRIu64 ", len %" PRIu64,
 		 procName, lock->l_offset, lock->l_len);
 
-	if (!proxyv3_nlm_call(proxyv3_sockaddr(),
-			      proxyv3_socklen(),
-			      proxyv3_nlm_port(),
-			      &op_ctx->creds,
-			      nlmProc,
-			      encFunc, args,
-			      decFunc, result)) {
-		LogCrit(COMPONENT_FSAL,
-			"PROXY_V3: NLM op %s failed.",
+	if (!proxyv3_nlm_call(proxyv3_sockaddr(), proxyv3_socklen(),
+			      proxyv3_nlm_port(), &op_ctx->creds, nlmProc,
+			      encFunc, args, decFunc, result)) {
+		LogCrit(COMPONENT_FSAL, "PROXY_V3: NLM op %s failed.",
 			procName);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
 	/* For now, always log the results. */
-	LogDebug(COMPONENT_FSAL,
-		 "PROXY_V3: NLM op %s returned %s",
-		 procName, nlm4stat_to_cstr(*status));
+	LogDebug(COMPONENT_FSAL, "PROXY_V3: NLM op %s returned %s", procName,
+		 nlm4stat_to_cstr(*status));
 
 	return nlm4stat_to_fsalstat(*status);
 }
@@ -270,13 +272,12 @@ proxyv3_nlm_commonrpc(rpcproc_t nlmProc, const char *procName,
  * @brief Handle NLM_TEST.
  */
 
-static fsal_status_t
-proxyv3_nlm_test(struct proxyv3_obj_handle *obj,
-		 struct state_t *state,
-		 struct state_owner_t *state_owner,
-		 bool exclusive_lock,
-		 fsal_lock_param_t *request_lock,
-		 fsal_lock_param_t *conflicting_lock)
+static fsal_status_t proxyv3_nlm_test(struct proxyv3_obj_handle *obj,
+				      struct state_t *state,
+				      struct state_owner_t *state_owner,
+				      bool exclusive_lock,
+				      fsal_lock_param_t *request_lock,
+				      fsal_lock_param_t *conflicting_lock)
 {
 	nlm4_testargs args;
 	nlm4_testres result;
@@ -287,17 +288,14 @@ proxyv3_nlm_test(struct proxyv3_obj_handle *obj,
 	memset(&result, 0, sizeof(result));
 
 	args.exclusive = exclusive_lock;
-	proxyv3_nlm_fill_common_args(obj, state, state_owner,
-				     request_lock,
-				     &args.cookie,
-				     &args.alock);
+	proxyv3_nlm_fill_common_args(obj, state, state_owner, request_lock,
+				     &args.cookie, &args.alock);
 
 	status = &result.test_stat.stat;
-	rc =
-		proxyv3_nlm_commonrpc(NLMPROC4_TEST, "NLM_TEST",
-				      (xdrproc_t) xdr_nlm4_testargs, &args,
-				      (xdrproc_t) xdr_nlm4_testres, &result,
-				      status, &args.cookie, &args.alock);
+	rc = proxyv3_nlm_commonrpc(NLMPROC4_TEST, "NLM_TEST",
+				   (xdrproc_t)xdr_nlm4_testargs, &args,
+				   (xdrproc_t)xdr_nlm4_testres, &result, status,
+				   &args.cookie, &args.alock);
 
 	/* If we don't get an explicit DENIED response, return the result. */
 	if (*status != NLM4_DENIED) {
@@ -312,26 +310,23 @@ proxyv3_nlm_test(struct proxyv3_obj_handle *obj,
 	 * clear if you're supposed to fill in state_owner with that info...
 	 */
 
-	conflicting_lock->lock_type =
-		(holder->exclusive) ? FSAL_LOCK_W : FSAL_LOCK_R;
+	conflicting_lock->lock_type = (holder->exclusive) ? FSAL_LOCK_W :
+							    FSAL_LOCK_R;
 	conflicting_lock->lock_start = holder->l_offset;
 	conflicting_lock->lock_length = holder->l_len;
 
 	return rc;
 }
 
-
-
 /**
  * @brief Handle NLM_LOCK.
  */
 
-static fsal_status_t
-proxyv3_nlm_lock(struct proxyv3_obj_handle *obj,
-		 struct state_t *state,
-		 struct state_owner_t *state_owner,
-		 bool exclusive_lock,
-		 fsal_lock_param_t *request_lock)
+static fsal_status_t proxyv3_nlm_lock(struct proxyv3_obj_handle *obj,
+				      struct state_t *state,
+				      struct state_owner_t *state_owner,
+				      bool exclusive_lock,
+				      fsal_lock_param_t *request_lock)
 {
 	nlm4_lockargs args;
 	nlm4_res result;
@@ -348,16 +343,13 @@ proxyv3_nlm_lock(struct proxyv3_obj_handle *obj,
 	 */
 	args.state = state->state_seqid;
 
-	proxyv3_nlm_fill_common_args(obj, state, state_owner,
-				     request_lock,
-				     &args.cookie,
-				     &args.alock);
+	proxyv3_nlm_fill_common_args(obj, state, state_owner, request_lock,
+				     &args.cookie, &args.alock);
 
 	return proxyv3_nlm_commonrpc(NLMPROC4_LOCK, "NLM_LOCK",
-				     (xdrproc_t) xdr_nlm4_lockargs, &args,
-				     (xdrproc_t) xdr_nlm4_res, &result,
-				     &result.stat.stat,
-				     &args.cookie,
+				     (xdrproc_t)xdr_nlm4_lockargs, &args,
+				     (xdrproc_t)xdr_nlm4_res, &result,
+				     &result.stat.stat, &args.cookie,
 				     &args.alock);
 }
 
@@ -370,12 +362,11 @@ proxyv3_nlm_lock(struct proxyv3_obj_handle *obj,
  * @brief Handle NLM_CANCEL.
  */
 
-static fsal_status_t
-proxyv3_nlm_cancel(struct proxyv3_obj_handle *obj,
-		   struct state_t *state,
-		   struct state_owner_t *state_owner,
-		   bool exclusive_lock,
-		   fsal_lock_param_t *request_lock)
+static fsal_status_t proxyv3_nlm_cancel(struct proxyv3_obj_handle *obj,
+					struct state_t *state,
+					struct state_owner_t *state_owner,
+					bool exclusive_lock,
+					fsal_lock_param_t *request_lock)
 {
 	nlm4_cancargs args;
 	nlm4_res result;
@@ -385,46 +376,38 @@ proxyv3_nlm_cancel(struct proxyv3_obj_handle *obj,
 	args.block = false;
 	args.exclusive = exclusive_lock;
 
-	proxyv3_nlm_fill_common_args(obj, state, state_owner,
-				     request_lock,
-				     &args.cookie,
-				     &args.alock);
+	proxyv3_nlm_fill_common_args(obj, state, state_owner, request_lock,
+				     &args.cookie, &args.alock);
 
 	return proxyv3_nlm_commonrpc(NLMPROC4_CANCEL, "NLM_CANCEL",
-				     (xdrproc_t) xdr_nlm4_cancargs, &args,
-				     (xdrproc_t) xdr_nlm4_res, &result,
-				     &result.stat.stat,
-				     &args.cookie,
+				     (xdrproc_t)xdr_nlm4_cancargs, &args,
+				     (xdrproc_t)xdr_nlm4_res, &result,
+				     &result.stat.stat, &args.cookie,
 				     &args.alock);
 }
-
 
 /**
  * @brief Handle NLM_UNLOCK.
  */
 
-static fsal_status_t
-proxyv3_nlm_unlock(struct proxyv3_obj_handle *obj,
-		   struct state_t *state,
-		   struct state_owner_t *state_owner,
-		   bool exclusive_lock,
-		   fsal_lock_param_t *request_lock)
+static fsal_status_t proxyv3_nlm_unlock(struct proxyv3_obj_handle *obj,
+					struct state_t *state,
+					struct state_owner_t *state_owner,
+					bool exclusive_lock,
+					fsal_lock_param_t *request_lock)
 {
 	nlm4_unlockargs args;
 	nlm4_res result;
 
 	memset(&result, 0, sizeof(result));
 
-	proxyv3_nlm_fill_common_args(obj, state, state_owner,
-				     request_lock,
-				     &args.cookie,
-				     &args.alock);
+	proxyv3_nlm_fill_common_args(obj, state, state_owner, request_lock,
+				     &args.cookie, &args.alock);
 
 	return proxyv3_nlm_commonrpc(NLMPROC4_UNLOCK, "NLM4_UNLOCK",
-				     (xdrproc_t) xdr_nlm4_unlockargs, &args,
-				     (xdrproc_t) xdr_nlm4_res, &result,
-				     &result.stat.stat,
-				     &args.cookie,
+				     (xdrproc_t)xdr_nlm4_unlockargs, &args,
+				     (xdrproc_t)xdr_nlm4_res, &result,
+				     &result.stat.stat, &args.cookie,
 				     &args.alock);
 }
 
@@ -436,9 +419,8 @@ proxyv3_nlm_unlock(struct proxyv3_obj_handle *obj,
  *
  */
 
-static void
-proxyv3_clear_conflicting_lock(fsal_lock_op_t lock_op,
-			       fsal_lock_param_t *conflicting_lock)
+static void proxyv3_clear_conflicting_lock(fsal_lock_op_t lock_op,
+					   fsal_lock_param_t *conflicting_lock)
 {
 	if (lock_op != FSAL_OP_LOCKT) {
 		/*
@@ -453,9 +435,10 @@ proxyv3_clear_conflicting_lock(fsal_lock_op_t lock_op,
 		 * &unknown_holder anyway... so it doesn't seem like we should
 		 * waste our time.
 		 */
-		LogDebug(COMPONENT_FSAL,
-			 "Lock op is %s, but Ganesha wants to know about the conflict. Report the whole file as locked like nlm_process_conflict.",
-			 lock_op_to_cstr(lock_op));
+		LogDebug(
+			COMPONENT_FSAL,
+			"Lock op is %s, but Ganesha wants to know about the conflict. Report the whole file as locked like nlm_process_conflict.",
+			lock_op_to_cstr(lock_op));
 	}
 
 	conflicting_lock->lock_sle_type = FSAL_POSIX_LOCK;
@@ -464,7 +447,6 @@ proxyv3_clear_conflicting_lock(fsal_lock_op_t lock_op,
 	conflicting_lock->lock_length = 0; /* Whole file */
 	conflicting_lock->lock_reclaim = false;
 }
-
 
 /**
  * @brief Handle all basic NLM lock operations (LOCK, UNLOCK, TEST, CANCEL).
@@ -479,17 +461,14 @@ proxyv3_clear_conflicting_lock(fsal_lock_op_t lock_op,
  * @return - fsal_status_t for the result of the operation.
  */
 
-fsal_status_t
-proxyv3_lock_op2(struct fsal_obj_handle *obj_hdl,
-		 struct state_t *state,
-		 void *void_owner,
-		 fsal_lock_op_t lock_op,
-		 fsal_lock_param_t *request_lock,
-		 fsal_lock_param_t *conflicting_lock)
+fsal_status_t proxyv3_lock_op2(struct fsal_obj_handle *obj_hdl,
+			       struct state_t *state, void *void_owner,
+			       fsal_lock_op_t lock_op,
+			       fsal_lock_param_t *request_lock,
+			       fsal_lock_param_t *conflicting_lock)
 {
-	LogDebug(COMPONENT_FSAL,
-		 "Got lock_op2 for obj %p. Op is %s",
-		 obj_hdl, lock_op_to_cstr(lock_op));
+	LogDebug(COMPONENT_FSAL, "Got lock_op2 for obj %p. Op is %s", obj_hdl,
+		 lock_op_to_cstr(lock_op));
 
 	struct proxyv3_obj_handle *obj =
 		container_of(obj_hdl, struct proxyv3_obj_handle, obj);
@@ -498,7 +477,7 @@ proxyv3_lock_op2(struct fsal_obj_handle *obj_hdl,
 	 * NOTE(boulos): I'm super confused as to whether state->state_owner is
 	 * supposed to be used here vs casting owner to state_owner_t...
 	 */
-	struct state_owner_t *owner = (struct state_owner_t *) void_owner;
+	struct state_owner_t *owner = (struct state_owner_t *)void_owner;
 
 	/*
 	 * A write lock is an exclusive request, while reads are not. See
@@ -518,12 +497,8 @@ proxyv3_lock_op2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Make sure we can handle the request and that it's well formed. */
-	if (!proxyv3_is_valid_lockop(obj_hdl,
-				     state,
-				     owner,
-				     lock_op,
-				     request_lock,
-				     conflicting_lock)) {
+	if (!proxyv3_is_valid_lockop(obj_hdl, state, owner, lock_op,
+				     request_lock, conflicting_lock)) {
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
@@ -532,19 +507,17 @@ proxyv3_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return proxyv3_nlm_test(obj, state, owner, exclusive,
 					request_lock, conflicting_lock);
 	case FSAL_OP_LOCK:
-		return proxyv3_nlm_lock(obj, state, owner,
-					exclusive, request_lock);
+		return proxyv3_nlm_lock(obj, state, owner, exclusive,
+					request_lock);
 	case FSAL_OP_UNLOCK:
-		return proxyv3_nlm_unlock(obj, state, owner,
-					  exclusive, request_lock);
+		return proxyv3_nlm_unlock(obj, state, owner, exclusive,
+					  request_lock);
 	case FSAL_OP_CANCEL:
-		return proxyv3_nlm_cancel(obj, state, owner,
-					  exclusive, request_lock);
+		return proxyv3_nlm_cancel(obj, state, owner, exclusive,
+					  request_lock);
 	default:
 		/* UNREACHABLE. (Tested in is_valid_lockop). */
-		LogCrit(COMPONENT_FSAL,
-			"Unexpected lock op %d",
-			lock_op);
+		LogCrit(COMPONENT_FSAL, "Unexpected lock op %d", lock_op);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 }

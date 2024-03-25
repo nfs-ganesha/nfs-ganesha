@@ -38,4 +38,4 @@ typedef uint64_t u64;
 #define u64 uint64_t
 #endif
 
-#endif				/* _9P_TYPES_H */
+#endif /* _9P_TYPES_H */

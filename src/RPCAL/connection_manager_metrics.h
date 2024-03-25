@@ -23,7 +23,6 @@
  * ---------------------------------------
  */
 
-
 /**
  * @file connection_manager_metrics.h
  * @author Yoni Couriel <yonic@google.com>

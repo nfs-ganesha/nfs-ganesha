@@ -32,15 +32,15 @@
 #include <sys/param.h>
 
 #include "gsh_rpc.h"
-#include <netdb.h>		/* for having MAXHOSTNAMELEN */
+#include <netdb.h> /* for having MAXHOSTNAMELEN */
 #include "hashtable.h"
 
 /* IP/name cache error */
-#define IP_NAME_SUCCESS             0
+#define IP_NAME_SUCCESS 0
 #define IP_NAME_INSERT_MALLOC_ERROR 1
-#define IP_NAME_NOT_FOUND           2
+#define IP_NAME_NOT_FOUND 2
 
-#define IP_NAME_PREALLOC_SIZE      200
+#define IP_NAME_PREALLOC_SIZE 200
 
 /* NFS IPaddr cache entry structure */
 typedef struct nfs_ip_name__ {

@@ -43,8 +43,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	count = atoi(argv[2])
-	if (count == 0) {
+	count = atoi(argv[2]) if (count == 0)
+	{
 		LogTest("usage: test_handle_mapping_db <db_dir> <db_count>");
 		exit(1);
 	}
@@ -64,8 +64,7 @@ int main(int argc, char **argv)
 	LogTest("handlemap_db_count(%s)=%d", dir, rc);
 
 	if (rc != 0 && count != rc) {
-		LogTest(
-			"Warning: incompatible thread count %d <> database count %d",
+		LogTest("Warning: incompatible thread count %d <> database count %d",
 			count, rc);
 	}
 
@@ -142,5 +141,4 @@ int main(int argc, char **argv)
 		count, (int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
 	exit(0);
-
 }

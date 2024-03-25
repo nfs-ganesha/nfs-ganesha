@@ -54,12 +54,11 @@
  * @return per RFC5661, p. 375
  */
 
-enum nfs_req_result nfs4_op_verify(struct nfs_argop4 *op,
-				   compound_data_t *data,
+enum nfs_req_result nfs4_op_verify(struct nfs_argop4 *op, compound_data_t *data,
 				   struct nfs_resop4 *resp)
 {
-	VERIFY4args * const arg_VERIFY4 = &op->nfs_argop4_u.opverify;
-	VERIFY4res * const res_VERIFY4 = &resp->nfs_resop4_u.opverify;
+	VERIFY4args *const arg_VERIFY4 = &op->nfs_argop4_u.opverify;
+	VERIFY4res *const res_VERIFY4 = &resp->nfs_resop4_u.opverify;
 	fattr4 file_attr4;
 	int rc = 0;
 	struct fsal_attrlist attrs;
@@ -74,8 +73,8 @@ enum nfs_req_result nfs4_op_verify(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 
 	/* Get only attributes that are allowed to be read */
-	if (!nfs4_Fattr_Check_Access
-	    (&arg_VERIFY4->obj_attributes, FATTR4_ATTR_READ)) {
+	if (!nfs4_Fattr_Check_Access(&arg_VERIFY4->obj_attributes,
+				     FATTR4_ATTR_READ)) {
 		res_VERIFY4->status = NFS4ERR_INVAL;
 		return NFS_REQ_ERROR;
 	}
@@ -88,9 +87,8 @@ enum nfs_req_result nfs4_op_verify(struct nfs_argop4 *op,
 
 	fsal_prepare_attrs(&attrs, 0);
 
-	res_VERIFY4->status =
-		bitmap4_to_attrmask_t(&arg_VERIFY4->obj_attributes.attrmask,
-				      &attrs.request_mask);
+	res_VERIFY4->status = bitmap4_to_attrmask_t(
+		&arg_VERIFY4->obj_attributes.attrmask, &attrs.request_mask);
 
 	if (res_VERIFY4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
@@ -116,7 +114,7 @@ enum nfs_req_result nfs4_op_verify(struct nfs_argop4 *op,
 
 	nfs4_Fattr_Free(&file_attr4);
 	return nfsstat4_to_nfs_req_result(res_VERIFY4->status);
-}				/* nfs4_op_verify */
+} /* nfs4_op_verify */
 
 /**
  * @brief Frees memory allocated for VERIFY result.

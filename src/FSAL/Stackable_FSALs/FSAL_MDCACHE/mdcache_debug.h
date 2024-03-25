@@ -56,5 +56,4 @@ struct fsal_obj_handle *mdcdb_get_sub_handle(struct fsal_obj_handle *obj_hdl)
 	return entry->sub_handle;
 }
 
-
 #endif /* MDCACHE_DEBUG_H */

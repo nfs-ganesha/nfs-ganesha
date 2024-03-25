@@ -70,7 +70,6 @@ extern const nfs_function_desc_t rquota2_func_desc[];
 extern const nfs_function_desc_t nfsacl_func_desc[];
 #endif
 
-
 #ifdef _USE_NFS3
 int mnt_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
@@ -364,8 +363,7 @@ enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *,
 					    compound_data_t *,
 					    struct nfs_resop4 *);
 
-enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *,
-				      compound_data_t *,
+enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *, compound_data_t *,
 				      struct nfs_resop4 *);
 
 enum nfs_req_result nfs4_op_layoutcommit(struct nfs_argop4 *, compound_data_t *,
@@ -392,7 +390,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *, compound_data_t *,
 
 /* NFSv4.2 */
 enum nfs_req_result nfs4_op_write_same(struct nfs_argop4 *, compound_data_t *,
-				      struct nfs_resop4 *);
+				       struct nfs_resop4 *);
 
 void nfs4_op_write_same_Free(nfs_resop4 *resp);
 
@@ -402,12 +400,12 @@ enum nfs_req_result nfs4_op_read_plus(struct nfs_argop4 *, compound_data_t *,
 void nfs4_op_read_plus_Free(nfs_resop4 *resp);
 
 enum nfs_req_result nfs4_op_allocate(struct nfs_argop4 *, compound_data_t *,
-				      struct nfs_resop4 *);
+				     struct nfs_resop4 *);
 
 void nfs4_op_allocate_Free(nfs_resop4 *resp);
 
 enum nfs_req_result nfs4_op_deallocate(struct nfs_argop4 *, compound_data_t *,
-				      struct nfs_resop4 *);
+				       struct nfs_resop4 *);
 
 void nfs4_op_deallocate_Free(nfs_resop4 *resp);
 
@@ -422,7 +420,7 @@ enum nfs_req_result nfs4_op_io_advise(struct nfs_argop4 *, compound_data_t *,
 void nfs4_op_io_advise_Free(nfs_resop4 *resp);
 
 enum nfs_req_result nfs4_op_layouterror(struct nfs_argop4 *, compound_data_t *,
-				       struct nfs_resop4 *);
+					struct nfs_resop4 *);
 
 void nfs4_op_layouterror_Free(nfs_resop4 *resp);
 
@@ -448,7 +446,7 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *, compound_data_t *,
 void nfs4_op_listxattr_Free(nfs_resop4 *resp);
 
 enum nfs_req_result nfs4_op_removexattr(struct nfs_argop4 *, compound_data_t *,
-				       struct nfs_resop4 *);
+					struct nfs_resop4 *);
 
 void nfs4_op_removexattr_Free(nfs_resop4 *resp);
 
@@ -573,10 +571,8 @@ void nfs4_op_close_CopyRes(CLOSE4res *, CLOSE4res *);
 void nfs4_op_lock_CopyRes(LOCK4res *, LOCK4res *);
 void nfs4_op_locku_CopyRes(LOCKU4res *, LOCKU4res *);
 void nfs4_op_open_CopyRes(OPEN4res *, OPEN4res *);
-void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res *,
-				  OPEN_CONFIRM4res *);
-void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *,
-				    OPEN_DOWNGRADE4res *);
+void nfs4_op_open_confirm_CopyRes(OPEN_CONFIRM4res *, OPEN_CONFIRM4res *);
+void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *, OPEN_DOWNGRADE4res *);
 
 void nfs4_op_nfs4_op_bind_conn_Free(nfs_resop4 *resp);
 void nfs4_op_exchange_id_Free(nfs_resop4 *);
@@ -599,15 +595,14 @@ void nfs4_op_reclaim_complete_Free(nfs_resop4 *);
 
 void compound_data_Free(compound_data_t *);
 uint32_t get_nfs4_opcodes(compound_data_t *data, nfs_opnum4 *opcodes,
-	uint32_t opcodes_array_len);
+			  uint32_t opcodes_array_len);
 bool xdr_COMPOUND4res_extended(XDR *xdrs, struct COMPOUND4res_extended **objp);
 
 /* Pseudo FS functions */
 bool pseudo_mount_export(struct gsh_export *exp);
 void create_pseudofs(void);
 void pseudo_unmount_export_tree(struct gsh_export *exp);
-void prune_pseudofs_subtree(struct gsh_export *exp,
-			    uint64_t generation,
+void prune_pseudofs_subtree(struct gsh_export *exp, uint64_t generation,
 			    bool ancestor_is_defunct);
 
 /* Slot functions */
@@ -622,4 +617,4 @@ static inline void release_slot(nfs41_session_slot_t *slot)
 	}
 }
 
-#endif	/* NFS_PROTO_FUNCTIONS_H */
+#endif /* NFS_PROTO_FUNCTIONS_H */

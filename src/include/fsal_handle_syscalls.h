@@ -46,8 +46,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <stddef.h>		/* For having offsetof defined */
-#include <stdint.h>     /* For uint8_t */
+#include <stddef.h> /* For having offsetof defined */
+#include <stdint.h> /* For uint8_t */
 #include <stdbool.h>
 
 #include "gsh_types.h"
@@ -64,17 +64,17 @@ static inline bool vfs_handle_invalid(struct gsh_buffdesc *desc)
 	return desc->len > VFS_HANDLE_LEN;
 }
 
-#define vfs_alloc_handle(fh)						\
-	do {								\
-		(fh) = alloca(sizeof(struct vfs_file_handle));		\
-		memset((fh), 0, (sizeof(struct vfs_file_handle)));	\
-		(fh)->handle_len = VFS_HANDLE_LEN;			\
+#define vfs_alloc_handle(fh)                                       \
+	do {                                                       \
+		(fh) = alloca(sizeof(struct vfs_file_handle));     \
+		memset((fh), 0, (sizeof(struct vfs_file_handle))); \
+		(fh)->handle_len = VFS_HANDLE_LEN;                 \
 	} while (0)
 
-#define vfs_malloc_handle(fh)						\
-	do {								\
-		(fh) = gsh_calloc(1, sizeof(struct vfs_file_handle));	\
-		(fh)->handle_len = VFS_HANDLE_LEN;			\
+#define vfs_malloc_handle(fh)                                         \
+	do {                                                          \
+		(fh) = gsh_calloc(1, sizeof(struct vfs_file_handle)); \
+		(fh)->handle_len = VFS_HANDLE_LEN;                    \
 	} while (0)
 
 #ifdef LINUX

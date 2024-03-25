@@ -96,11 +96,11 @@ static inline int EXPORT_ADMIN_TRYLOCK(void)
  * rare so even if the code catches a half-updated counter (due to NOT using
  * atomics) it just results in a false negative.
  */
-static inline
-bool is_export_admin_counter_valid(uint64_t start_export_admin_counter)
+static inline bool
+is_export_admin_counter_valid(uint64_t start_export_admin_counter)
 {
 	return (start_export_admin_counter % 2) == 0 &&
-		start_export_admin_counter == export_admin_counter;
+	       start_export_admin_counter == export_admin_counter;
 }
 
 /**
@@ -120,8 +120,8 @@ static inline bool is_export_update_in_progress(void)
 }
 
 enum export_status {
-	EXPORT_READY,		/*< searchable, usable */
-	EXPORT_STALE,		/*< export is no longer valid */
+	EXPORT_READY, /*< searchable, usable */
+	EXPORT_STALE, /*< export is no longer valid */
 };
 
 /**
@@ -211,8 +211,8 @@ struct gsh_export {
 	/** CFG: Export_Id for this export - static option */
 	uint16_t export_id;
 
-	uint8_t export_status;		/*< current condition */
-	bool has_pnfs_ds;		/*< id_servers matches export_id */
+	uint8_t export_status; /*< current condition */
+	bool has_pnfs_ds; /*< id_servers matches export_id */
 	/** Inidcator if the export is mounted in the pseudofs */
 	bool is_mounted;
 	/** Due to an update, during the prune phase, this export must be
@@ -225,19 +225,18 @@ struct gsh_export {
 };
 
 /* Use macro to define this to get around include file order. */
-#define ctx_export_path(ctx) \
-	((nfs_param.core_param.mount_path_pseudo) \
-		? CTX_PSEUDOPATH(ctx) \
-		: CTX_FULLPATH(ctx))
+#define ctx_export_path(ctx)                                              \
+	((nfs_param.core_param.mount_path_pseudo) ? CTX_PSEUDOPATH(ctx) : \
+						    CTX_FULLPATH(ctx))
 
 /* If op_ctx request is NFS_V4 always use pseudopath, otherwise use fullpath
  * for export.
  */
-#define op_ctx_export_path(ctx) \
-	((ctx->nfs_vers == NFS_V4) || \
-	 (nfs_param.core_param.mount_path_pseudo) \
-		? CTX_PSEUDOPATH(ctx) \
-		: CTX_FULLPATH(ctx))
+#define op_ctx_export_path(ctx)                                     \
+	((ctx->nfs_vers == NFS_V4) ||                               \
+			 (nfs_param.core_param.mount_path_pseudo) ? \
+		 CTX_PSEUDOPATH(ctx) :                              \
+		 CTX_FULLPATH(ctx))
 
 /**
  * @brief Structure to make it easier to access the fullpath and pseudopath for
@@ -256,16 +255,15 @@ struct tmp_export_paths {
 
 #define TMP_FULLPATH(tmp) ((tmp)->tmp_fullpath->gr_val)
 
-#define tmp_export_path(tmp) \
-	((nfs_param.core_param.mount_path_pseudo) \
-		? TMP_PSEUDOPATH(tmp) \
-		: TMP_FULLPATH(tmp))
+#define tmp_export_path(tmp)                                              \
+	((nfs_param.core_param.mount_path_pseudo) ? TMP_PSEUDOPATH(tmp) : \
+						    TMP_FULLPATH(tmp))
 
-#define op_ctx_tmp_export_path(ctx, tmp) \
-	((ctx->nfs_vers == NFS_V4) || \
-	 (nfs_param.core_param.mount_path_pseudo) \
-		? TMP_PSEUDOPATH(tmp) \
-		: TMP_FULLPATH(tmp))
+#define op_ctx_tmp_export_path(ctx, tmp)                            \
+	((ctx->nfs_vers == NFS_V4) ||                               \
+			 (nfs_param.core_param.mount_path_pseudo) ? \
+		 TMP_PSEUDOPATH(tmp) :                              \
+		 TMP_FULLPATH(tmp))
 
 static inline void tmp_get_exp_paths(struct tmp_export_paths *tmp,
 				     struct gsh_export *exp)
@@ -317,8 +315,7 @@ struct gsh_export *alloc_export(void);
 bool insert_gsh_export(struct gsh_export *a_export);
 struct gsh_export *get_gsh_export(uint16_t export_id);
 struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match);
-struct gsh_export *get_gsh_export_by_path_locked(char *path,
-						 bool exact_match);
+struct gsh_export *get_gsh_export_by_path_locked(char *path, bool exact_match);
 struct gsh_export *get_gsh_export_by_pseudo(char *path, bool exact_match);
 struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 						   bool exact_match);
@@ -326,7 +323,7 @@ struct gsh_export *get_gsh_export_by_tag(char *tag);
 bool mount_gsh_export(struct gsh_export *exp);
 void unmount_gsh_export(struct gsh_export *exp);
 void remove_gsh_export(uint16_t export_id);
-bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
+bool foreach_gsh_export(bool (*cb)(struct gsh_export *exp, void *state),
 			bool wrlock, void *state);
 
 /**
@@ -347,23 +344,23 @@ static inline bool export_ready(struct gsh_export *a_export)
 	return a_export->export_status == EXPORT_READY;
 }
 
-void _get_gsh_export_ref(struct gsh_export *a_export,
-			 char *file, int line, char *function);
+void _get_gsh_export_ref(struct gsh_export *a_export, char *file, int line,
+			 char *function);
 
-#define get_gsh_export_ref(a_export) \
-	_get_gsh_export_ref(a_export, \
-	(char *) __FILE__, __LINE__, (char *) __func__)
+#define get_gsh_export_ref(a_export)                              \
+	_get_gsh_export_ref(a_export, (char *)__FILE__, __LINE__, \
+			    (char *)__func__)
 
-void _put_gsh_export(struct gsh_export *a_export, bool config,
-		     char *file, int line, char *function);
+void _put_gsh_export(struct gsh_export *a_export, bool config, char *file,
+		     int line, char *function);
 
-#define put_gsh_export(a_export) \
-	_put_gsh_export(a_export, false, \
-	(char *) __FILE__, __LINE__, (char *) __func__)
+#define put_gsh_export(a_export)                                     \
+	_put_gsh_export(a_export, false, (char *)__FILE__, __LINE__, \
+			(char *)__func__)
 
-#define put_gsh_export_config(a_export) \
-	_put_gsh_export(a_export, true, \
-	(char *) __FILE__, __LINE__, (char *) __func__)
+#define put_gsh_export_config(a_export)                             \
+	_put_gsh_export(a_export, true, (char *)__FILE__, __LINE__, \
+			(char *)__func__)
 
 void export_revert(struct gsh_export *a_export);
 void export_add_to_mount_work(struct gsh_export *a_export);
@@ -379,5 +376,5 @@ void remove_all_exports(void);
 
 extern struct timespec nfs_stats_time;
 void nfs_init_stats_time(void);
-#endif				/* !EXPORT_MGR_H */
+#endif /* !EXPORT_MGR_H */
 /** @} */

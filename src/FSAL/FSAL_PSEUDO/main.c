@@ -31,7 +31,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
@@ -45,36 +45,34 @@ static const char pseudoname[] = "PSEUDO";
 /* my module private storage
  */
 
-struct pseudo_fsal_module PSEUDOFS = {
-	.module = {
-		.fs_info = {
-			.maxfilesize = 512,
-			.maxlink = 0,
-			.maxnamelen = MAXNAMLEN,
-			.maxpathlen = MAXPATHLEN,
-			.no_trunc = true,
-			.chown_restricted = true,
-			.case_insensitive = false,
-			.case_preserving = true,
-			.link_support = false,
-			.symlink_support = false,
-			.lock_support = false,
-			.lock_support_async_block = false,
-			.named_attr = false,
-			.unique_handles = true,
-			.acl_support = 0,
-			.cansettime = true,
-			.homogenous = true,
-			.supported_attrs = PSEUDO_SUPPORTED_ATTRS,
-			.maxread = FSAL_MAXIOSIZE,
-			.maxwrite = FSAL_MAXIOSIZE,
-			.umask = 0,
-			.auth_exportpath_xdev = false,
-			.link_supports_permission_checks = false,
-			.expire_time_parent = -1,
-		}
-	}
-};
+struct pseudo_fsal_module
+	PSEUDOFS = { .module = {
+			     .fs_info = {
+				     .maxfilesize = 512,
+				     .maxlink = 0,
+				     .maxnamelen = MAXNAMLEN,
+				     .maxpathlen = MAXPATHLEN,
+				     .no_trunc = true,
+				     .chown_restricted = true,
+				     .case_insensitive = false,
+				     .case_preserving = true,
+				     .link_support = false,
+				     .symlink_support = false,
+				     .lock_support = false,
+				     .lock_support_async_block = false,
+				     .named_attr = false,
+				     .unique_handles = true,
+				     .acl_support = 0,
+				     .cansettime = true,
+				     .homogenous = true,
+				     .supported_attrs = PSEUDO_SUPPORTED_ATTRS,
+				     .maxread = FSAL_MAXIOSIZE,
+				     .maxwrite = FSAL_MAXIOSIZE,
+				     .umask = 0,
+				     .auth_exportpath_xdev = false,
+				     .link_supports_permission_checks = false,
+				     .expire_time_parent = -1,
+			     } } };
 
 /* private helper for export object
  */

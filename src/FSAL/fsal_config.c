@@ -114,7 +114,7 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 	case fso_allocate_own_read_buffer:
 		return !!info->allocate_own_read_buffer;
 	default:
-		return false;	/* whatever I don't know about,
+		return false; /* whatever I don't know about,
 				 * you can't do
 				 */
 	}

@@ -57,7 +57,7 @@ int _9p_getlock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u16 *client_id_len = NULL;
 	char *client_id_str = NULL;
 
-/*   struct _9p_fid * pfid = NULL ; */
+	/*   struct _9p_fid * pfid = NULL ; */
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -69,11 +69,12 @@ int _9p_getlock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, proc_id, u32);
 	_9p_getstr(cursor, client_id_len, client_id_str);
 
-	LogDebug(COMPONENT_9P,
-		 "TGETLOCK: tag=%u fid=%u type=%u start=%llu length=%llu proc_id=%u client=%.*s",
-		 (u32) *msgtag, *fid, *type, (unsigned long long) *start,
-		 (unsigned long long)*length, *proc_id, *client_id_len,
-		 client_id_str);
+	LogDebug(
+		COMPONENT_9P,
+		"TGETLOCK: tag=%u fid=%u type=%u start=%llu length=%llu proc_id=%u client=%.*s",
+		(u32)*msgtag, *fid, *type, (unsigned long long)*start,
+		(unsigned long long)*length, *proc_id, *client_id_len,
+		client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -96,11 +97,12 @@ int _9p_getlock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RGETLOCK: tag=%u fid=%u type=%u start=%llu length=%llu proc_id=%u client=%.*s",
-		 (u32) *msgtag, *fid, *type, (unsigned long long) *start,
-		 (unsigned long long)*length, *proc_id, *client_id_len,
-		 client_id_str);
+	LogDebug(
+		COMPONENT_9P,
+		"RGETLOCK: tag=%u fid=%u type=%u start=%llu length=%llu proc_id=%u client=%.*s",
+		(u32)*msgtag, *fid, *type, (unsigned long long)*start,
+		(unsigned long long)*length, *proc_id, *client_id_len,
+		client_id_str);
 
 	return 1;
 }

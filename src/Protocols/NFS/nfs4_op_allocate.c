@@ -44,13 +44,11 @@
 
 static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 					       stateid4 *stateid,
-					       uint64_t offset,
-					       uint64_t size,
-					       bool allocate,
-					       nfsstat4 *status)
+					       uint64_t offset, uint64_t size,
+					       bool allocate, nfsstat4 *status)
 {
 	state_t *state = NULL;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *obj = NULL;
 	uint64_t MaxOffsetWrite =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
@@ -63,9 +61,7 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 	/* if quota support is active, then we should check if the FSAL
 	   allows block allocation */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
-						op_ctx->fsal_export,
-						CTX_FULLPATH(op_ctx),
-						FSAL_QUOTA_BLOCKS);
+		op_ctx->fsal_export, CTX_FULLPATH(op_ctx), FSAL_QUOTA_BLOCKS);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*status = NFS4ERR_DQUOT;
 		return NFS_REQ_ERROR;
@@ -119,9 +115,8 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 			if (!(sdeleg->sd_type & OPEN_DELEGATE_WRITE)) {
 				/* Invalid delegation for this operation. */
 				LogDebug(COMPONENT_STATE,
-					"Delegation type:%d state:%d",
-					sdeleg->sd_type,
-					sdeleg->sd_state);
+					 "Delegation type:%d state:%d",
+					 sdeleg->sd_type, sdeleg->sd_state);
 				*status = NFS4ERR_BAD_STATEID;
 				goto out;
 			}
@@ -137,19 +132,19 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 		/* This is an ALLOCATE operation, this means that the file
 		 * MUST have been opened for writing
 		 */
-		if (state != NULL &&
-		    (state->state_data.share.share_access &
-		     OPEN4_SHARE_ACCESS_WRITE) == 0) {
+		if (state != NULL && (state->state_data.share.share_access &
+				      OPEN4_SHARE_ACCESS_WRITE) == 0) {
 			/* Bad open mode, return NFS4ERR_OPENMODE */
 			*status = NFS4ERR_OPENMODE;
 			if (isDebug(COMPONENT_NFS_V4_LOCK)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-						sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 				display_stateid(&dspbuf, state);
-				LogDebug(COMPONENT_NFS_V4_LOCK,
-					 "ALLOCATE %s doesn't have OPEN4_SHARE_ACCESS_WRITE",
-					 str);
+				LogDebug(
+					COMPONENT_NFS_V4_LOCK,
+					"ALLOCATE %s doesn't have OPEN4_SHARE_ACCESS_WRITE",
+					str);
 			}
 			goto out;
 		}
@@ -165,8 +160,8 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 	}
 
 	/* Same permissions as required for a WRITE */
-	fsal_status = obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS,
-					       NULL, NULL, true);
+	fsal_status = obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS, NULL,
+						NULL, true);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		*status = nfs4_Errno_status(fsal_status);
@@ -177,15 +172,15 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 	if (MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
-			     " MaxOffSet=%" PRIu64, offset, size,
-			     MaxOffsetWrite);
+			     " MaxOffSet=%" PRIu64,
+			     offset, size, MaxOffsetWrite);
 
 		if ((offset + size) > MaxOffsetWrite) {
-			LogEvent(COMPONENT_NFS_V4,
-				 "A client tried to violate max file size %"
-				 PRIu64 " for exportid #%hu",
-				 MaxOffsetWrite,
-				 op_ctx->ctx_export->export_id);
+			LogEvent(
+				COMPONENT_NFS_V4,
+				"A client tried to violate max file size %" PRIu64
+				" for exportid #%hu",
+				MaxOffsetWrite, op_ctx->ctx_export->export_id);
 			*status = NFS4ERR_FBIG;
 			goto out;
 		}
@@ -202,8 +197,8 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 	}
 
 	/* Do the actual fallocate */
-	fsal_status = obj->obj_ops->fallocate(obj, state, offset, size,
-						allocate);
+	fsal_status =
+		obj->obj_ops->fallocate(obj, state, offset, size, allocate);
 	if (FSAL_IS_ERROR(fsal_status))
 		*status = nfs4_Errno_status(fsal_status);
 out:
@@ -211,7 +206,7 @@ out:
 		dec_state_t_ref(state);
 
 	return nfsstat4_to_nfs_req_result(*status);
-}				/* nfs4_op_allocate */
+} /* nfs4_op_allocate */
 
 /**
  * @brief The NFS4_OP_ALLOCATE operation
@@ -227,19 +222,16 @@ enum nfs_req_result nfs4_op_allocate(struct nfs_argop4 *op,
 				     compound_data_t *data,
 				     struct nfs_resop4 *resp)
 {
-	ALLOCATE4args * const arg_ALLOCATE4 = &op->nfs_argop4_u.opallocate;
-	ALLOCATE4res * const res_ALLOCATE4 = &resp->nfs_resop4_u.opallocate;
+	ALLOCATE4args *const arg_ALLOCATE4 = &op->nfs_argop4_u.opallocate;
+	ALLOCATE4res *const res_ALLOCATE4 = &resp->nfs_resop4_u.opallocate;
 
 	resp->resop = NFS4_OP_ALLOCATE;
 
-	return allocate_deallocate(data,
-				   &arg_ALLOCATE4->aa_stateid,
+	return allocate_deallocate(data, &arg_ALLOCATE4->aa_stateid,
 				   arg_ALLOCATE4->aa_offset,
-				   arg_ALLOCATE4->aa_length,
-				   true,
+				   arg_ALLOCATE4->aa_length, true,
 				   &res_ALLOCATE4->ar_status);
 }
-
 
 /**
  * @brief The NFS4_OP_DEALLOCATE
@@ -255,15 +247,13 @@ enum nfs_req_result nfs4_op_deallocate(struct nfs_argop4 *op,
 				       compound_data_t *data,
 				       struct nfs_resop4 *resp)
 {
-	DEALLOCATE4args * const arg_DEALLOC = &op->nfs_argop4_u.opdeallocate;
-	DEALLOCATE4res * const res_DEALLOC = &resp->nfs_resop4_u.opdeallocate;
+	DEALLOCATE4args *const arg_DEALLOC = &op->nfs_argop4_u.opdeallocate;
+	DEALLOCATE4res *const res_DEALLOC = &resp->nfs_resop4_u.opdeallocate;
 
 	resp->resop = NFS4_OP_DEALLOCATE;
 
-	return allocate_deallocate(data,
-				   &arg_DEALLOC->da_stateid,
+	return allocate_deallocate(data, &arg_DEALLOC->da_stateid,
 				   arg_DEALLOC->da_offset,
-				   arg_DEALLOC->da_length,
-				   false,
+				   arg_DEALLOC->da_length, false,
 				   &res_DEALLOC->dr_status);
 }

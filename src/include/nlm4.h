@@ -17,303 +17,292 @@ extern "C" {
 #define SM_MAXSTRLEN 1024
 #define SM_PRIV_SZ 16
 
-	typedef int int32_t;
+typedef int int32_t;
 
-	typedef u_int uint32_t;
+typedef u_int uint32_t;
 
-	typedef quad_t int64_t;
+typedef quad_t int64_t;
 
-	typedef u_quad_t uint64_t;
+typedef u_quad_t uint64_t;
 
-	enum nlm4_stats {
-		NLM4_GRANTED = 0,
-		NLM4_DENIED = 1,
-		NLM4_DENIED_NOLOCKS = 2,
-		NLM4_BLOCKED = 3,
-		NLM4_DENIED_GRACE_PERIOD = 4,
-		NLM4_DEADLCK = 5,
-		NLM4_ROFS = 6,
-		NLM4_STALE_FH = 7,
-		NLM4_FBIG = 8,
-		NLM4_FAILED = 9,
-	};
-	typedef enum nlm4_stats nlm4_stats;
+enum nlm4_stats {
+	NLM4_GRANTED = 0,
+	NLM4_DENIED = 1,
+	NLM4_DENIED_NOLOCKS = 2,
+	NLM4_BLOCKED = 3,
+	NLM4_DENIED_GRACE_PERIOD = 4,
+	NLM4_DEADLCK = 5,
+	NLM4_ROFS = 6,
+	NLM4_STALE_FH = 7,
+	NLM4_FBIG = 8,
+	NLM4_FAILED = 9,
+};
+typedef enum nlm4_stats nlm4_stats;
 
-	struct nlm4_stat {
-		nlm4_stats stat;
-	};
-	typedef struct nlm4_stat nlm4_stat;
+struct nlm4_stat {
+	nlm4_stats stat;
+};
+typedef struct nlm4_stat nlm4_stat;
 
-	struct nlm4_res {
-		netobj cookie;
-		nlm4_stat stat;
-	};
-	typedef struct nlm4_res nlm4_res;
+struct nlm4_res {
+	netobj cookie;
+	nlm4_stat stat;
+};
+typedef struct nlm4_res nlm4_res;
 
-	struct nlm4_holder {
-		bool_t exclusive;
-		int32_t svid;
-		netobj oh;
-		uint64_t l_offset;
-		uint64_t l_len;
-	};
-	typedef struct nlm4_holder nlm4_holder;
+struct nlm4_holder {
+	bool_t exclusive;
+	int32_t svid;
+	netobj oh;
+	uint64_t l_offset;
+	uint64_t l_len;
+};
+typedef struct nlm4_holder nlm4_holder;
 
-	struct nlm4_testrply {
-		nlm4_stats stat;
-		union {
-			struct nlm4_holder holder;
-		} nlm4_testrply_u;
-	};
-	typedef struct nlm4_testrply nlm4_testrply;
+struct nlm4_testrply {
+	nlm4_stats stat;
+	union {
+		struct nlm4_holder holder;
+	} nlm4_testrply_u;
+};
+typedef struct nlm4_testrply nlm4_testrply;
 
-	struct nlm4_testres {
-		netobj cookie;
-		nlm4_testrply test_stat;
-	};
-	typedef struct nlm4_testres nlm4_testres;
+struct nlm4_testres {
+	netobj cookie;
+	nlm4_testrply test_stat;
+};
+typedef struct nlm4_testres nlm4_testres;
 
-	struct nlm4_lock {
-		char *caller_name;
-		netobj fh;
-		netobj oh;
-		int32_t svid;
-		uint64_t l_offset;
-		uint64_t l_len;
-	};
-	typedef struct nlm4_lock nlm4_lock;
+struct nlm4_lock {
+	char *caller_name;
+	netobj fh;
+	netobj oh;
+	int32_t svid;
+	uint64_t l_offset;
+	uint64_t l_len;
+};
+typedef struct nlm4_lock nlm4_lock;
 
-	struct nlm4_lockargs {
-		netobj cookie;
-		bool_t block;
-		bool_t exclusive;
-		struct nlm4_lock alock;
-		bool_t reclaim;
-		int32_t state;
-	};
-	typedef struct nlm4_lockargs nlm4_lockargs;
+struct nlm4_lockargs {
+	netobj cookie;
+	bool_t block;
+	bool_t exclusive;
+	struct nlm4_lock alock;
+	bool_t reclaim;
+	int32_t state;
+};
+typedef struct nlm4_lockargs nlm4_lockargs;
 
-	struct nlm4_cancargs {
-		netobj cookie;
-		bool_t block;
-		bool_t exclusive;
-		struct nlm4_lock alock;
-	};
-	typedef struct nlm4_cancargs nlm4_cancargs;
+struct nlm4_cancargs {
+	netobj cookie;
+	bool_t block;
+	bool_t exclusive;
+	struct nlm4_lock alock;
+};
+typedef struct nlm4_cancargs nlm4_cancargs;
 
-	struct nlm4_testargs {
-		netobj cookie;
-		bool_t exclusive;
-		struct nlm4_lock alock;
-	};
-	typedef struct nlm4_testargs nlm4_testargs;
+struct nlm4_testargs {
+	netobj cookie;
+	bool_t exclusive;
+	struct nlm4_lock alock;
+};
+typedef struct nlm4_testargs nlm4_testargs;
 
-	struct nlm4_unlockargs {
-		netobj cookie;
-		struct nlm4_lock alock;
-	};
-	typedef struct nlm4_unlockargs nlm4_unlockargs;
+struct nlm4_unlockargs {
+	netobj cookie;
+	struct nlm4_lock alock;
+};
+typedef struct nlm4_unlockargs nlm4_unlockargs;
 
-	enum fsh4_mode {
-		fsm_DN = 0,
-		fsm_DR = 1,
-		fsm_DW = 2,
-		fsm_DRW = 3,
-	};
-	typedef enum fsh4_mode fsh4_mode;
+enum fsh4_mode {
+	fsm_DN = 0,
+	fsm_DR = 1,
+	fsm_DW = 2,
+	fsm_DRW = 3,
+};
+typedef enum fsh4_mode fsh4_mode;
 
-	enum fsh4_access {
-		fsa_NONE = 0,
-		fsa_R = 1,
-		fsa_W = 2,
-		fsa_RW = 3,
-	};
-	typedef enum fsh4_access fsh4_access;
+enum fsh4_access {
+	fsa_NONE = 0,
+	fsa_R = 1,
+	fsa_W = 2,
+	fsa_RW = 3,
+};
+typedef enum fsh4_access fsh4_access;
 
-	struct nlm4_share {
-		char *caller_name;
-		netobj fh;
-		netobj oh;
-		fsh4_mode mode;
-		fsh4_access access;
-	};
-	typedef struct nlm4_share nlm4_share;
+struct nlm4_share {
+	char *caller_name;
+	netobj fh;
+	netobj oh;
+	fsh4_mode mode;
+	fsh4_access access;
+};
+typedef struct nlm4_share nlm4_share;
 
-	struct nlm4_shareargs {
-		netobj cookie;
-		nlm4_share share;
-		bool_t reclaim;
-	};
-	typedef struct nlm4_shareargs nlm4_shareargs;
+struct nlm4_shareargs {
+	netobj cookie;
+	nlm4_share share;
+	bool_t reclaim;
+};
+typedef struct nlm4_shareargs nlm4_shareargs;
 
-	struct nlm4_shareres {
-		netobj cookie;
-		nlm4_stats stat;
-		int32_t sequence;
-	};
-	typedef struct nlm4_shareres nlm4_shareres;
+struct nlm4_shareres {
+	netobj cookie;
+	nlm4_stats stat;
+	int32_t sequence;
+};
+typedef struct nlm4_shareres nlm4_shareres;
 
-	struct nlm4_free_allargs {
-		char *name;
-		uint32_t state;
-	};
-	typedef struct nlm4_free_allargs nlm4_free_allargs;
+struct nlm4_free_allargs {
+	char *name;
+	uint32_t state;
+};
+typedef struct nlm4_free_allargs nlm4_free_allargs;
 
-	struct nlm4_sm_notifyargs {
-		char *name;
-		int32_t state;
-		char priv[SM_PRIV_SZ];
-	};
-	typedef struct nlm4_sm_notifyargs nlm4_sm_notifyargs;
-	extern void nlm_init(void);
+struct nlm4_sm_notifyargs {
+	char *name;
+	int32_t state;
+	char priv[SM_PRIV_SZ];
+};
+typedef struct nlm4_sm_notifyargs nlm4_sm_notifyargs;
+extern void nlm_init(void);
 
 #define NLMPROG 100021
 #define NLM4_VERS 4
 
 #if defined(__STDC__) || defined(__cplusplus)
 #define NLMPROC4_NULL 0
-	extern void *nlmproc4_null_4(void *, CLIENT *);
-	extern void *nlmproc4_null_4_svc(void *, struct svc_req *);
+extern void *nlmproc4_null_4(void *, CLIENT *);
+extern void *nlmproc4_null_4_svc(void *, struct svc_req *);
 #define NLMPROC4_TEST 1
-	extern nlm4_testres *nlmproc4_test_4(nlm4_testargs *, CLIENT *);
-	extern nlm4_testres *nlmproc4_test_4_svc(nlm4_testargs *,
-						 struct svc_req *);
+extern nlm4_testres *nlmproc4_test_4(nlm4_testargs *, CLIENT *);
+extern nlm4_testres *nlmproc4_test_4_svc(nlm4_testargs *, struct svc_req *);
 #define NLMPROC4_LOCK 2
-	extern nlm4_res *nlmproc4_lock_4(nlm4_lockargs *, CLIENT *);
-	extern nlm4_res *nlmproc4_lock_4_svc(nlm4_lockargs *, struct svc_req *);
+extern nlm4_res *nlmproc4_lock_4(nlm4_lockargs *, CLIENT *);
+extern nlm4_res *nlmproc4_lock_4_svc(nlm4_lockargs *, struct svc_req *);
 #define NLMPROC4_CANCEL 3
-	extern nlm4_res *nlmproc4_cancel_4(nlm4_cancargs *, CLIENT *);
-	extern nlm4_res *nlmproc4_cancel_4_svc(nlm4_cancargs *,
-					       struct svc_req *);
+extern nlm4_res *nlmproc4_cancel_4(nlm4_cancargs *, CLIENT *);
+extern nlm4_res *nlmproc4_cancel_4_svc(nlm4_cancargs *, struct svc_req *);
 #define NLMPROC4_UNLOCK 4
-	extern nlm4_res *nlmproc4_unlock_4(nlm4_unlockargs *, CLIENT *);
-	extern nlm4_res *nlmproc4_unlock_4_svc(nlm4_unlockargs *,
-					       struct svc_req *);
+extern nlm4_res *nlmproc4_unlock_4(nlm4_unlockargs *, CLIENT *);
+extern nlm4_res *nlmproc4_unlock_4_svc(nlm4_unlockargs *, struct svc_req *);
 #define NLMPROC4_GRANTED 5
-	extern nlm4_res *nlmproc4_granted_4(nlm4_testargs *, CLIENT *);
-	extern nlm4_res *nlmproc4_granted_4_svc(nlm4_testargs *,
-						struct svc_req *);
+extern nlm4_res *nlmproc4_granted_4(nlm4_testargs *, CLIENT *);
+extern nlm4_res *nlmproc4_granted_4_svc(nlm4_testargs *, struct svc_req *);
 #define NLMPROC4_TEST_MSG 6
-	extern void *nlmproc4_test_msg_4(nlm4_testargs *, CLIENT *);
-	extern void *nlmproc4_test_msg_4_svc(nlm4_testargs *, struct svc_req *);
+extern void *nlmproc4_test_msg_4(nlm4_testargs *, CLIENT *);
+extern void *nlmproc4_test_msg_4_svc(nlm4_testargs *, struct svc_req *);
 #define NLMPROC4_LOCK_MSG 7
-	extern void *nlmproc4_lock_msg_4(nlm4_lockargs *, CLIENT *);
-	extern void *nlmproc4_lock_msg_4_svc(nlm4_lockargs *, struct svc_req *);
+extern void *nlmproc4_lock_msg_4(nlm4_lockargs *, CLIENT *);
+extern void *nlmproc4_lock_msg_4_svc(nlm4_lockargs *, struct svc_req *);
 #define NLMPROC4_CANCEL_MSG 8
-	extern void *nlmproc4_cancel_msg_4(nlm4_cancargs *, CLIENT *);
-	extern void *nlmproc4_cancel_msg_4_svc(nlm4_cancargs *,
-					       struct svc_req *);
+extern void *nlmproc4_cancel_msg_4(nlm4_cancargs *, CLIENT *);
+extern void *nlmproc4_cancel_msg_4_svc(nlm4_cancargs *, struct svc_req *);
 #define NLMPROC4_UNLOCK_MSG 9
-	extern void *nlmproc4_unlock_msg_4(nlm4_unlockargs *, CLIENT *);
-	extern void *nlmproc4_unlock_msg_4_svc(nlm4_unlockargs *,
-					       struct svc_req *);
+extern void *nlmproc4_unlock_msg_4(nlm4_unlockargs *, CLIENT *);
+extern void *nlmproc4_unlock_msg_4_svc(nlm4_unlockargs *, struct svc_req *);
 #define NLMPROC4_GRANTED_MSG 10
-	extern void *nlmproc4_granted_msg_4(nlm4_testargs *, CLIENT *);
-	extern void *nlmproc4_granted_msg_4_svc(nlm4_testargs *,
-						struct svc_req *);
+extern void *nlmproc4_granted_msg_4(nlm4_testargs *, CLIENT *);
+extern void *nlmproc4_granted_msg_4_svc(nlm4_testargs *, struct svc_req *);
 #define NLMPROC4_TEST_RES 11
-	extern void *nlmproc4_test_res_4(nlm4_testres *, CLIENT *);
-	extern void *nlmproc4_test_res_4_svc(nlm4_testres *, struct svc_req *);
+extern void *nlmproc4_test_res_4(nlm4_testres *, CLIENT *);
+extern void *nlmproc4_test_res_4_svc(nlm4_testres *, struct svc_req *);
 #define NLMPROC4_LOCK_RES 12
-	extern void *nlmproc4_lock_res_4(nlm4_res *, CLIENT *);
-	extern void *nlmproc4_lock_res_4_svc(nlm4_res *, struct svc_req *);
+extern void *nlmproc4_lock_res_4(nlm4_res *, CLIENT *);
+extern void *nlmproc4_lock_res_4_svc(nlm4_res *, struct svc_req *);
 #define NLMPROC4_CANCEL_RES 13
-	extern void *nlmproc4_cancel_res_4(nlm4_res *, CLIENT *);
-	extern void *nlmproc4_cancel_res_4_svc(nlm4_res *, struct svc_req *);
+extern void *nlmproc4_cancel_res_4(nlm4_res *, CLIENT *);
+extern void *nlmproc4_cancel_res_4_svc(nlm4_res *, struct svc_req *);
 #define NLMPROC4_UNLOCK_RES 14
-	extern void *nlmproc4_unlock_res_4(nlm4_res *, CLIENT *);
-	extern void *nlmproc4_unlock_res_4_svc(nlm4_res *, struct svc_req *);
+extern void *nlmproc4_unlock_res_4(nlm4_res *, CLIENT *);
+extern void *nlmproc4_unlock_res_4_svc(nlm4_res *, struct svc_req *);
 #define NLMPROC4_GRANTED_RES 15
-	extern void *nlmproc4_granted_res_4(nlm4_res *, CLIENT *);
-	extern void *nlmproc4_granted_res_4_svc(nlm4_res *, struct svc_req *);
+extern void *nlmproc4_granted_res_4(nlm4_res *, CLIENT *);
+extern void *nlmproc4_granted_res_4_svc(nlm4_res *, struct svc_req *);
 #define NLMPROC4_SM_NOTIFY 16
-	extern void *nlmproc4_sm_notify_4(nlm4_sm_notifyargs *, CLIENT *);
-	extern void *nlmproc4_sm_notify_4_svc(nlm4_sm_notifyargs *,
-					      struct svc_req *);
+extern void *nlmproc4_sm_notify_4(nlm4_sm_notifyargs *, CLIENT *);
+extern void *nlmproc4_sm_notify_4_svc(nlm4_sm_notifyargs *, struct svc_req *);
 #define NLMPROC4_SHARE 20
-	extern nlm4_shareres *nlmproc4_share_4(nlm4_shareargs *, CLIENT *);
-	extern nlm4_shareres *nlmproc4_share_4_svc(nlm4_shareargs *,
-						   struct svc_req *);
+extern nlm4_shareres *nlmproc4_share_4(nlm4_shareargs *, CLIENT *);
+extern nlm4_shareres *nlmproc4_share_4_svc(nlm4_shareargs *, struct svc_req *);
 #define NLMPROC4_UNSHARE 21
-	extern nlm4_shareres *nlmproc4_unshare_4(nlm4_shareargs *, CLIENT *);
-	extern nlm4_shareres *nlmproc4_unshare_4_svc(nlm4_shareargs *,
-						     struct svc_req *);
-#define NLMPROC4_NM_LOCK 22
-	extern nlm4_res *nlmproc4_nm_lock_4(nlm4_lockargs *, CLIENT *);
-	extern nlm4_res *nlmproc4_nm_lock_4_svc(nlm4_lockargs *,
-						struct svc_req *);
-#define NLMPROC4_FREE_ALL 23
-	extern void *nlmproc4_free_all_4(nlm4_free_allargs *, CLIENT *);
-	extern void *nlmproc4_free_all_4_svc(nlm4_free_allargs *,
+extern nlm4_shareres *nlmproc4_unshare_4(nlm4_shareargs *, CLIENT *);
+extern nlm4_shareres *nlmproc4_unshare_4_svc(nlm4_shareargs *,
 					     struct svc_req *);
-	extern int nlmprog_4_freeresult(SVCXPRT *, xdrproc_t, void *);
-
-#else				/* K&R C */
-#define NLMPROC4_NULL 0
-	extern void *nlmproc4_null_4();
-	extern void *nlmproc4_null_4_svc();
-#define NLMPROC4_TEST 1
-	extern nlm4_testres *nlmproc4_test_4();
-	extern nlm4_testres *nlmproc4_test_4_svc();
-#define NLMPROC4_LOCK 2
-	extern nlm4_res *nlmproc4_lock_4();
-	extern nlm4_res *nlmproc4_lock_4_svc();
-#define NLMPROC4_CANCEL 3
-	extern nlm4_res *nlmproc4_cancel_4();
-	extern nlm4_res *nlmproc4_cancel_4_svc();
-#define NLMPROC4_UNLOCK 4
-	extern nlm4_res *nlmproc4_unlock_4();
-	extern nlm4_res *nlmproc4_unlock_4_svc();
-#define NLMPROC4_GRANTED 5
-	extern nlm4_res *nlmproc4_granted_4();
-	extern nlm4_res *nlmproc4_granted_4_svc();
-#define NLMPROC4_TEST_MSG 6
-	extern void *nlmproc4_test_msg_4();
-	extern void *nlmproc4_test_msg_4_svc();
-#define NLMPROC4_LOCK_MSG 7
-	extern void *nlmproc4_lock_msg_4();
-	extern void *nlmproc4_lock_msg_4_svc();
-#define NLMPROC4_CANCEL_MSG 8
-	extern void *nlmproc4_cancel_msg_4();
-	extern void *nlmproc4_cancel_msg_4_svc();
-#define NLMPROC4_UNLOCK_MSG 9
-	extern void *nlmproc4_unlock_msg_4();
-	extern void *nlmproc4_unlock_msg_4_svc();
-#define NLMPROC4_GRANTED_MSG 10
-	extern void *nlmproc4_granted_msg_4();
-	extern void *nlmproc4_granted_msg_4_svc();
-#define NLMPROC4_TEST_RES 11
-	extern void *nlmproc4_test_res_4();
-	extern void *nlmproc4_test_res_4_svc();
-#define NLMPROC4_LOCK_RES 12
-	extern void *nlmproc4_lock_res_4();
-	extern void *nlmproc4_lock_res_4_svc();
-#define NLMPROC4_CANCEL_RES 13
-	extern void *nlmproc4_cancel_res_4();
-	extern void *nlmproc4_cancel_res_4_svc();
-#define NLMPROC4_UNLOCK_RES 14
-	extern void *nlmproc4_unlock_res_4();
-	extern void *nlmproc4_unlock_res_4_svc();
-#define NLMPROC4_GRANTED_RES 15
-	extern void *nlmproc4_granted_res_4();
-	extern void *nlmproc4_granted_res_4_svc();
-#define NLMPROC4_SM_NOTIFY 16
-	extern void *nlmproc4_sm_notify_4();
-	extern void *nlmproc4_sm_notify_4_svc();
-#define NLMPROC4_SHARE 20
-	extern nlm4_shareres *nlmproc4_share_4();
-	extern nlm4_shareres *nlmproc4_share_4_svc();
-#define NLMPROC4_UNSHARE 21
-	extern nlm4_shareres *nlmproc4_unshare_4();
-	extern nlm4_shareres *nlmproc4_unshare_4_svc();
 #define NLMPROC4_NM_LOCK 22
-	extern nlm4_res *nlmproc4_nm_lock_4();
-	extern nlm4_res *nlmproc4_nm_lock_4_svc();
+extern nlm4_res *nlmproc4_nm_lock_4(nlm4_lockargs *, CLIENT *);
+extern nlm4_res *nlmproc4_nm_lock_4_svc(nlm4_lockargs *, struct svc_req *);
 #define NLMPROC4_FREE_ALL 23
-	extern void *nlmproc4_free_all_4();
-	extern void *nlmproc4_free_all_4_svc();
-	extern int nlmprog_4_freeresult();
-#endif				/* K&R C */
+extern void *nlmproc4_free_all_4(nlm4_free_allargs *, CLIENT *);
+extern void *nlmproc4_free_all_4_svc(nlm4_free_allargs *, struct svc_req *);
+extern int nlmprog_4_freeresult(SVCXPRT *, xdrproc_t, void *);
+
+#else /* K&R C */
+#define NLMPROC4_NULL 0
+extern void *nlmproc4_null_4();
+extern void *nlmproc4_null_4_svc();
+#define NLMPROC4_TEST 1
+extern nlm4_testres *nlmproc4_test_4();
+extern nlm4_testres *nlmproc4_test_4_svc();
+#define NLMPROC4_LOCK 2
+extern nlm4_res *nlmproc4_lock_4();
+extern nlm4_res *nlmproc4_lock_4_svc();
+#define NLMPROC4_CANCEL 3
+extern nlm4_res *nlmproc4_cancel_4();
+extern nlm4_res *nlmproc4_cancel_4_svc();
+#define NLMPROC4_UNLOCK 4
+extern nlm4_res *nlmproc4_unlock_4();
+extern nlm4_res *nlmproc4_unlock_4_svc();
+#define NLMPROC4_GRANTED 5
+extern nlm4_res *nlmproc4_granted_4();
+extern nlm4_res *nlmproc4_granted_4_svc();
+#define NLMPROC4_TEST_MSG 6
+extern void *nlmproc4_test_msg_4();
+extern void *nlmproc4_test_msg_4_svc();
+#define NLMPROC4_LOCK_MSG 7
+extern void *nlmproc4_lock_msg_4();
+extern void *nlmproc4_lock_msg_4_svc();
+#define NLMPROC4_CANCEL_MSG 8
+extern void *nlmproc4_cancel_msg_4();
+extern void *nlmproc4_cancel_msg_4_svc();
+#define NLMPROC4_UNLOCK_MSG 9
+extern void *nlmproc4_unlock_msg_4();
+extern void *nlmproc4_unlock_msg_4_svc();
+#define NLMPROC4_GRANTED_MSG 10
+extern void *nlmproc4_granted_msg_4();
+extern void *nlmproc4_granted_msg_4_svc();
+#define NLMPROC4_TEST_RES 11
+extern void *nlmproc4_test_res_4();
+extern void *nlmproc4_test_res_4_svc();
+#define NLMPROC4_LOCK_RES 12
+extern void *nlmproc4_lock_res_4();
+extern void *nlmproc4_lock_res_4_svc();
+#define NLMPROC4_CANCEL_RES 13
+extern void *nlmproc4_cancel_res_4();
+extern void *nlmproc4_cancel_res_4_svc();
+#define NLMPROC4_UNLOCK_RES 14
+extern void *nlmproc4_unlock_res_4();
+extern void *nlmproc4_unlock_res_4_svc();
+#define NLMPROC4_GRANTED_RES 15
+extern void *nlmproc4_granted_res_4();
+extern void *nlmproc4_granted_res_4_svc();
+#define NLMPROC4_SM_NOTIFY 16
+extern void *nlmproc4_sm_notify_4();
+extern void *nlmproc4_sm_notify_4_svc();
+#define NLMPROC4_SHARE 20
+extern nlm4_shareres *nlmproc4_share_4();
+extern nlm4_shareres *nlmproc4_share_4_svc();
+#define NLMPROC4_UNSHARE 21
+extern nlm4_shareres *nlmproc4_unshare_4();
+extern nlm4_shareres *nlmproc4_unshare_4_svc();
+#define NLMPROC4_NM_LOCK 22
+extern nlm4_res *nlmproc4_nm_lock_4();
+extern nlm4_res *nlmproc4_nm_lock_4_svc();
+#define NLMPROC4_FREE_ALL 23
+extern void *nlmproc4_free_all_4();
+extern void *nlmproc4_free_all_4_svc();
+extern int nlmprog_4_freeresult();
+#endif /* K&R C */
 
 /* Number of nlm v4 operations. */
 #define NLM_V4_NB_OPERATION (NLMPROC4_FREE_ALL + 1)
@@ -321,52 +310,52 @@ extern "C" {
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-	extern bool xdr_int64_t(XDR *, int64_t *);
-	extern bool xdr_uint64_t(XDR *, uint64_t *);
-	extern bool xdr_nlm4_stats(XDR *, nlm4_stats *);
-	extern bool xdr_nlm4_stat(XDR *, nlm4_stat *);
-	extern bool xdr_nlm4_res(XDR *, nlm4_res *);
-	extern bool xdr_nlm4_holder(XDR *, nlm4_holder *);
-	extern bool xdr_nlm4_testrply(XDR *, nlm4_testrply *);
-	extern bool xdr_nlm4_testres(XDR *, nlm4_testres *);
-	extern bool xdr_nlm4_lock(XDR *, nlm4_lock *);
-	extern bool xdr_nlm4_lockargs(XDR *, nlm4_lockargs *);
-	extern bool xdr_nlm4_cancargs(XDR *, nlm4_cancargs *);
-	extern bool xdr_nlm4_testargs(XDR *, nlm4_testargs *);
-	extern bool xdr_nlm4_unlockargs(XDR *, nlm4_unlockargs *);
-	extern bool xdr_fsh4_mode(XDR *, fsh4_mode *);
-	extern bool xdr_fsh4_access(XDR *, fsh4_access *);
-	extern bool xdr_nlm4_share(XDR *, nlm4_share *);
-	extern bool xdr_nlm4_shareargs(XDR *, nlm4_shareargs *);
-	extern bool xdr_nlm4_shareres(XDR *, nlm4_shareres *);
-	extern bool xdr_nlm4_free_allargs(XDR *, nlm4_free_allargs *);
-	extern bool xdr_nlm4_sm_notifyargs(XDR *, nlm4_sm_notifyargs *);
+extern bool xdr_int64_t(XDR *, int64_t *);
+extern bool xdr_uint64_t(XDR *, uint64_t *);
+extern bool xdr_nlm4_stats(XDR *, nlm4_stats *);
+extern bool xdr_nlm4_stat(XDR *, nlm4_stat *);
+extern bool xdr_nlm4_res(XDR *, nlm4_res *);
+extern bool xdr_nlm4_holder(XDR *, nlm4_holder *);
+extern bool xdr_nlm4_testrply(XDR *, nlm4_testrply *);
+extern bool xdr_nlm4_testres(XDR *, nlm4_testres *);
+extern bool xdr_nlm4_lock(XDR *, nlm4_lock *);
+extern bool xdr_nlm4_lockargs(XDR *, nlm4_lockargs *);
+extern bool xdr_nlm4_cancargs(XDR *, nlm4_cancargs *);
+extern bool xdr_nlm4_testargs(XDR *, nlm4_testargs *);
+extern bool xdr_nlm4_unlockargs(XDR *, nlm4_unlockargs *);
+extern bool xdr_fsh4_mode(XDR *, fsh4_mode *);
+extern bool xdr_fsh4_access(XDR *, fsh4_access *);
+extern bool xdr_nlm4_share(XDR *, nlm4_share *);
+extern bool xdr_nlm4_shareargs(XDR *, nlm4_shareargs *);
+extern bool xdr_nlm4_shareres(XDR *, nlm4_shareres *);
+extern bool xdr_nlm4_free_allargs(XDR *, nlm4_free_allargs *);
+extern bool xdr_nlm4_sm_notifyargs(XDR *, nlm4_sm_notifyargs *);
 
-#else				/* K&R C */
-	extern bool xdr_int64_t();
-	extern bool xdr_uint64_t();
-	extern bool xdr_nlm4_stats();
-	extern bool xdr_nlm4_stat();
-	extern bool xdr_nlm4_res();
-	extern bool xdr_nlm4_holder();
-	extern bool xdr_nlm4_testrply();
-	extern bool xdr_nlm4_testres();
-	extern bool xdr_nlm4_lock();
-	extern bool xdr_nlm4_lockargs();
-	extern bool xdr_nlm4_cancargs();
-	extern bool xdr_nlm4_testargs();
-	extern bool xdr_nlm4_unlockargs();
-	extern bool xdr_fsh4_mode();
-	extern bool xdr_fsh4_access();
-	extern bool xdr_nlm4_share();
-	extern bool xdr_nlm4_shareargs();
-	extern bool xdr_nlm4_shareres();
-	extern bool xdr_nlm4_free_allargs();
-	extern bool xdr_nlm4_sm_notifyargs();
+#else /* K&R C */
+extern bool xdr_int64_t();
+extern bool xdr_uint64_t();
+extern bool xdr_nlm4_stats();
+extern bool xdr_nlm4_stat();
+extern bool xdr_nlm4_res();
+extern bool xdr_nlm4_holder();
+extern bool xdr_nlm4_testrply();
+extern bool xdr_nlm4_testres();
+extern bool xdr_nlm4_lock();
+extern bool xdr_nlm4_lockargs();
+extern bool xdr_nlm4_cancargs();
+extern bool xdr_nlm4_testargs();
+extern bool xdr_nlm4_unlockargs();
+extern bool xdr_fsh4_mode();
+extern bool xdr_fsh4_access();
+extern bool xdr_nlm4_share();
+extern bool xdr_nlm4_shareargs();
+extern bool xdr_nlm4_shareres();
+extern bool xdr_nlm4_free_allargs();
+extern bool xdr_nlm4_sm_notifyargs();
 
-#endif				/* K&R C */
+#endif /* K&R C */
 
 #ifdef __cplusplus
 }
 #endif
-#endif				/* !_NLM4_H_RPCGEN */
+#endif /* !_NLM4_H_RPCGEN */

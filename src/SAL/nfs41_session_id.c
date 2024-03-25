@@ -78,8 +78,7 @@ int display_session_id(struct display_buffer *dspbuf, char *session_id)
 	int b_left = display_cat(dspbuf, "sessionid=");
 
 	if (b_left > 0)
-		b_left = display_opaque_value(dspbuf,
-					      session_id,
+		b_left = display_opaque_value(dspbuf, session_id,
 					      NFS4_SESSIONID_SIZE);
 
 	return b_left;
@@ -93,7 +92,7 @@ int display_session_id(struct display_buffer *dspbuf, char *session_id)
  */
 
 int display_session_id_key(struct display_buffer *dspbuf,
-			      struct gsh_buffdesc *buff)
+			   struct gsh_buffdesc *buff)
 {
 	return display_session_id(dspbuf, buff->addr);
 }
@@ -131,7 +130,7 @@ int display_session(struct display_buffer *dspbuf, nfs41_session_t *session)
  */
 
 int display_nfs4_operations(struct display_buffer *dspbuf, nfs_opnum4 *opcodes,
-	uint32_t opcode_num)
+			    uint32_t opcode_num)
 {
 	uint32_t i = 0;
 
@@ -139,7 +138,7 @@ int display_nfs4_operations(struct display_buffer *dspbuf, nfs_opnum4 *opcodes,
 
 	while (b_left > 0 && i < opcode_num) {
 		if (i > 0)
-			(void) display_cat(dspbuf, ", ");
+			(void)display_cat(dspbuf, ", ");
 
 		b_left = display_cat(dspbuf, nfsop4_to_str(opcodes[i]));
 		i++;
@@ -159,7 +158,7 @@ int display_nfs4_operations(struct display_buffer *dspbuf, nfs_opnum4 *opcodes,
  */
 
 int display_session_id_val(struct display_buffer *dspbuf,
-			      struct gsh_buffdesc *buff)
+			   struct gsh_buffdesc *buff)
 {
 	return display_session(dspbuf, buff->addr);
 }
@@ -267,7 +266,8 @@ int32_t _inc_session_ref(nfs41_session_t *session, const char *func, int line)
 {
 	int32_t refcnt = atomic_inc_int32_t(&session->refcount);
 	GSH_AUTO_TRACEPOINT(nfs4, incref, TRACE_INFO,
-		"Session incref. Session: {}, refcount: {}", session, refcnt);
+			    "Session incref. Session: {}, refcount: {}",
+			    session, refcnt);
 	return refcnt;
 }
 
@@ -276,12 +276,12 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 	int i;
 	int32_t refcnt = atomic_dec_int32_t(&session->refcount);
 	GSH_AUTO_TRACEPOINT(nfs4, decref, TRACE_INFO,
-		"Session decref. Session: {}, refcount: {}", session, refcnt);
+			    "Session decref. Session: {}, refcount: {}",
+			    session, refcnt);
 
 	assert(refcnt >= 0);
 
 	if (refcnt == 0) {
-
 		/* Unlink the session from the client's list of
 		   sessions */
 		PTHREAD_MUTEX_lock(&session->clientid_record->cid_mutex);
@@ -312,14 +312,13 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 
 		/* Free the session's callback security params */
 		for (i = 0; i < session->cb_sec_parms.sec_parms_len; ++i) {
-			callback_sec_parms4 * const sp =
+			callback_sec_parms4 *const sp =
 				&session->cb_sec_parms.sec_parms_val[i];
 			if (sp->cb_secflavor == AUTH_NONE) {
 				/* Do nothing */
 			} else if (sp->cb_secflavor == AUTH_SYS) {
 				struct authunix_parms *cb_auth_sys_params =
-					&sp->callback_sec_parms4_u
-						.cbsp_sys_cred;
+					&sp->callback_sec_parms4_u.cbsp_sys_cred;
 				gsh_free(cb_auth_sys_params->aup_machname);
 				gsh_free(cb_auth_sys_params->aup_gids);
 #ifdef _HAVE_GSSAPI
@@ -376,14 +375,13 @@ int nfs41_Session_Set(nfs41_session_t *session_data)
 	if (code == HASHTABLE_ERROR_NO_SUCH_KEY) {
 		/* nfs4_op_create_session ensures refcount == 2 for new
 		 * session records */
-		code =
-		    hashtable_setlatched(ht_session_id, &key, &val, &latch,
-					 false, NULL, NULL);
+		code = hashtable_setlatched(ht_session_id, &key, &val, &latch,
+					    false, NULL, NULL);
 		if (code == HASHTABLE_SUCCESS)
 			rc = 1;
 	}
 
- out:
+out:
 	return rc;
 }
 
@@ -404,7 +402,7 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	struct gsh_buffdesc val;
 	struct hash_latch latch;
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	hash_error_t code;
 
@@ -421,13 +419,13 @@ int nfs41_Session_Get_Pointer(char sessionid[NFS4_SESSIONID_SIZE],
 	if (code != HASHTABLE_SUCCESS) {
 		hashtable_releaselatched(ht_session_id, &latch);
 		if (str_valid)
-			LogFullDebug(COMPONENT_SESSIONS,
-				     "Session %s Not Found", str);
+			LogFullDebug(COMPONENT_SESSIONS, "Session %s Not Found",
+				     str);
 		return 0;
 	}
 
 	*session_data = val.addr;
-	inc_session_ref(*session_data);	/* XXX more locks? */
+	inc_session_ref(*session_data); /* XXX more locks? */
 
 	hashtable_releaselatched(ht_session_id, &latch);
 
@@ -447,10 +445,11 @@ static void release_all_session_connections(nfs41_session_t *session)
 	/* Take connections write-lock */
 	PTHREAD_RWLOCK_wrlock(&session->conn_lock);
 
-	glist_for_each_safe(curr_node, next_node, &session->connection_xprts) {
-		connection_xprt_t * const curr_entry = glist_entry(
-			curr_node, connection_xprt_t, node);
-		SVCXPRT * const xprt = curr_entry->xprt;
+	glist_for_each_safe(curr_node, next_node, &session->connection_xprts)
+	{
+		connection_xprt_t *const curr_entry =
+			glist_entry(curr_node, connection_xprt_t, node);
+		SVCXPRT *const xprt = curr_entry->xprt;
 
 		remove_nfs41_session_from_xprt(xprt, session);
 
@@ -509,8 +508,7 @@ void nfs41_Session_PrintAll(void)
 	hashtable_log(COMPONENT_SESSIONS, ht_session_id);
 }
 
-bool check_session_conn(nfs41_session_t *session,
-			compound_data_t *data,
+bool check_session_conn(nfs41_session_t *session, compound_data_t *data,
 			bool can_associate)
 {
 	struct glist_head *curr_node;
@@ -521,21 +519,25 @@ bool check_session_conn(nfs41_session_t *session,
 
 retry:
 
-	glist_for_each(curr_node, &session->connection_xprts) {
-		connection_xprt_t * const curr_entry = glist_entry(curr_node,
-			connection_xprt_t, node);
+	glist_for_each(curr_node, &session->connection_xprts)
+	{
+		connection_xprt_t *const curr_entry =
+			glist_entry(curr_node, connection_xprt_t, node);
 
 		if (isFullDebug(COMPONENT_SESSIONS)) {
 			char str1[SOCK_NAME_MAX] = "\0";
 			char str2[SOCK_NAME_MAX] = "\0";
-			struct display_buffer db1 = {sizeof(str1), str1, str1};
-			struct display_buffer db2 = {sizeof(str2), str2, str2};
+			struct display_buffer db1 = { sizeof(str1), str1,
+						      str1 };
+			struct display_buffer db2 = { sizeof(str2), str2,
+						      str2 };
 
 			display_xprt_sockaddr(&db1, data->req->rq_xprt);
 			display_xprt_sockaddr(&db2, curr_entry->xprt);
-			LogFullDebug(COMPONENT_SESSIONS,
-				     "Comparing addr %s for %s to Session bound addr %s",
-				     str1, data->opname, str2);
+			LogFullDebug(
+				COMPONENT_SESSIONS,
+				"Comparing addr %s for %s to Session bound addr %s",
+				str1, data->opname, str2);
 		}
 
 		if (data->req->rq_xprt == curr_entry->xprt) {
@@ -551,12 +553,13 @@ retry:
 
 		if (isDebug(COMPONENT_SESSIONS)) {
 			char str1[SOCK_NAME_MAX] = "\0";
-			struct display_buffer db1 = {sizeof(str1), str1, str1};
+			struct display_buffer db1 = { sizeof(str1), str1,
+						      str1 };
 
 			display_xprt_sockaddr(&db1, data->req->rq_xprt);
 			LogDebug(COMPONENT_SESSIONS,
-				     "Found no match for addr %s for %s",
-				     str1, data->opname);
+				 "Found no match for addr %s for %s", str1,
+				 data->opname);
 		}
 		return false;
 	}
@@ -578,8 +581,8 @@ retry:
 	}
 
 	/* Add session to the xprt */
-	added_session_to_xprt = add_nfs41_session_to_xprt(data->req->rq_xprt,
-		session);
+	added_session_to_xprt =
+		add_nfs41_session_to_xprt(data->req->rq_xprt, session);
 
 	if (!added_session_to_xprt) {
 		PTHREAD_RWLOCK_unlock(&session->conn_lock);
@@ -603,7 +606,7 @@ retry:
  */
 void nfs41_Session_Add_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 {
-	connection_xprt_t * const new_entry =
+	connection_xprt_t *const new_entry =
 		gsh_malloc(sizeof(connection_xprt_t));
 	new_entry->xprt = xprt;
 	glist_add_tail(&session->connection_xprts, &new_entry->node);
@@ -619,24 +622,26 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 	struct glist_head *curr_node;
 	connection_xprt_t *found_xprt = NULL;
 	char xprt_addr[SOCK_NAME_MAX] = "\0";
-	struct display_buffer xprt_db = {
-		sizeof(xprt_addr), xprt_addr, xprt_addr};
+	struct display_buffer xprt_db = { sizeof(xprt_addr), xprt_addr,
+					  xprt_addr };
 
 	display_xprt_sockaddr(&xprt_db, xprt);
 	PTHREAD_RWLOCK_wrlock(&session->conn_lock);
 
-	glist_for_each(curr_node, &session->connection_xprts) {
-		connection_xprt_t * const curr_entry = glist_entry(curr_node,
-			connection_xprt_t, node);
+	glist_for_each(curr_node, &session->connection_xprts)
+	{
+		connection_xprt_t *const curr_entry =
+			glist_entry(curr_node, connection_xprt_t, node);
 
 		if (isFullDebug(COMPONENT_SESSIONS)) {
 			char curr_xprt_addr[SOCK_NAME_MAX] = "\0";
-			struct display_buffer db = {
-				sizeof(curr_xprt_addr), curr_xprt_addr,
-				curr_xprt_addr};
+			struct display_buffer db = { sizeof(curr_xprt_addr),
+						     curr_xprt_addr,
+						     curr_xprt_addr };
 
 			display_xprt_sockaddr(&db, curr_entry->xprt);
-			LogFullDebug(COMPONENT_SESSIONS,
+			LogFullDebug(
+				COMPONENT_SESSIONS,
 				"Comparing input xprt addr %s to session bound xprt addr %s",
 				xprt_addr, curr_xprt_addr);
 		}
@@ -674,8 +679,8 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 
 	PTHREAD_RWLOCK_unlock(&session->conn_lock);
 	LogDebug(COMPONENT_SESSIONS,
-		"Successfuly removed the connection for xprt addr %s",
-		xprt_addr);
+		 "Successfuly removed the connection for xprt addr %s",
+		 xprt_addr);
 }
 
 /**
@@ -683,11 +688,11 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
  * it uses the input xprt.
  */
 void nfs41_Session_Destroy_Backchannel_For_Xprt(nfs41_session_t *session,
-	SVCXPRT *xprt)
+						SVCXPRT *xprt)
 {
 	char session_str[NFS4_SESSIONID_BUFFER_SIZE] = "\0";
-	struct display_buffer db2 = {
-		sizeof(session_str), session_str, session_str};
+	struct display_buffer db2 = { sizeof(session_str), session_str,
+				      session_str };
 
 	display_session_id(&db2, session->session_id);
 	PTHREAD_MUTEX_lock(&session->cb_chan.chan_mtx);
@@ -704,7 +709,8 @@ void nfs41_Session_Destroy_Backchannel_For_Xprt(nfs41_session_t *session,
 	 */
 	if (clnt_vc_get_client_xprt(session->cb_chan.clnt) != xprt) {
 		PTHREAD_MUTEX_unlock(&session->cb_chan.chan_mtx);
-		LogDebug(COMPONENT_SESSIONS,
+		LogDebug(
+			COMPONENT_SESSIONS,
 			"Backchannel xprt for session %s does not match the xprt to be destroyed. Skip destroying backchannel",
 			session_str);
 		return;
@@ -715,14 +721,13 @@ void nfs41_Session_Destroy_Backchannel_For_Xprt(nfs41_session_t *session,
 	PTHREAD_MUTEX_unlock(&session->cb_chan.chan_mtx);
 
 	LogDebug(COMPONENT_SESSIONS,
-		"Backchannel destroyed for current session %s",
-		session_str);
+		 "Backchannel destroyed for current session %s", session_str);
 	return;
 
- no_backchannel:
+no_backchannel:
 	LogDebug(COMPONENT_SESSIONS,
-		"Backchannel is not up for session %s, skip destroying it",
-		session_str);
+		 "Backchannel is not up for session %s, skip destroying it",
+		 session_str);
 }
 
 /** @} */

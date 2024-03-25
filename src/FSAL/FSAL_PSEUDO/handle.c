@@ -49,9 +49,8 @@ uint64_t inode_number = 1;
 /* helpers
  */
 
-static inline int
-pseudofs_n_cmpf(const struct avltree_node *lhs,
-		const struct avltree_node *rhs)
+static inline int pseudofs_n_cmpf(const struct avltree_node *lhs,
+				  const struct avltree_node *rhs)
 {
 	struct pseudo_fsal_obj_handle *lk, *rk;
 
@@ -61,9 +60,8 @@ pseudofs_n_cmpf(const struct avltree_node *lhs,
 	return strcmp(lk->name, rk->name);
 }
 
-static inline int
-pseudofs_i_cmpf(const struct avltree_node *lhs,
-		const struct avltree_node *rhs)
+static inline int pseudofs_i_cmpf(const struct avltree_node *lhs,
+				  const struct avltree_node *rhs)
 {
 	struct pseudo_fsal_obj_handle *lk, *rk;
 
@@ -98,13 +96,12 @@ avltree_inline_name_lookup(const struct avltree_node *key,
  *
  * @return The nfsv4 pseudofs file handle as a char *
  */
-static void package_pseudo_handle(char *buff,
-				  struct display_buffer *pathbuf)
+static void package_pseudo_handle(char *buff, struct display_buffer *pathbuf)
 {
 	ushort len = display_buffer_len(pathbuf);
 	int opaque_bytes_used = 0, pathlen = 0;
-	uint64_t hashkey = CityHash64(pathbuf->b_start,
-				      display_buffer_len(pathbuf));
+	uint64_t hashkey =
+		CityHash64(pathbuf->b_start, display_buffer_len(pathbuf));
 
 	memcpy(buff, &hashkey, sizeof(hashkey));
 	opaque_bytes_used += sizeof(hashkey);
@@ -172,40 +169,36 @@ static int create_fullpath(struct display_buffer *pathbuf,
  * allocate and fill in a handle
  */
 
-static struct pseudo_fsal_obj_handle
-*alloc_directory_handle(struct pseudo_fsal_obj_handle *parent,
-			const char *name,
-			struct fsal_export *exp_hdl,
-			struct fsal_attrlist *attrs)
+static struct pseudo_fsal_obj_handle *
+alloc_directory_handle(struct pseudo_fsal_obj_handle *parent, const char *name,
+		       struct fsal_export *exp_hdl, struct fsal_attrlist *attrs)
 {
 	struct pseudo_fsal_obj_handle *hdl;
 	char path[MAXPATHLEN] = "\0";
-	struct display_buffer pathbuf = {sizeof(path), path, path};
+	struct display_buffer pathbuf = { sizeof(path), path, path };
 	uint64_t fileid = 0;
 	int rc;
 
 	hdl = gsh_calloc(1, sizeof(struct pseudo_fsal_obj_handle) +
-			    V4_FH_OPAQUE_SIZE);
+				    V4_FH_OPAQUE_SIZE);
 
 	/* Establish tree details for this directory */
 	hdl->name = gsh_strdup(name);
 	hdl->parent = parent;
 
 	if (hdl->name == NULL) {
-		LogDebug(COMPONENT_FSAL,
-			 "Could not name");
+		LogDebug(COMPONENT_FSAL, "Could not name");
 		goto spcerr;
 	}
 
 	/* Create the handle */
-	hdl->handle = (char *) &hdl[1];
+	hdl->handle = (char *)&hdl[1];
 
 	/* Create the full path */
 	rc = create_fullpath(&pathbuf, hdl);
 
 	if (rc < 0) {
-		LogDebug(COMPONENT_FSAL,
-			 "Could not create handle");
+		LogDebug(COMPONENT_FSAL, "Could not create handle");
 		goto spcerr;
 	}
 
@@ -229,7 +222,8 @@ static struct pseudo_fsal_obj_handle
 	hdl->obj_handle.fileid = fileid;
 	hdl->attributes.fileid = hdl->obj_handle.fileid;
 
-	hdl->attributes.mode = attrs->mode & (~S_IFMT & 0xFFFF) &
+	hdl->attributes.mode =
+		attrs->mode & (~S_IFMT & 0xFFFF) &
 		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	hdl->attributes.numlinks = 2;
@@ -284,19 +278,19 @@ static struct pseudo_fsal_obj_handle
 
 		now(&parent->attributes.mtime);
 		parent->attributes.ctime = parent->attributes.mtime;
-		parent->attributes.change = timespec_to_nsecs(
-					&parent->attributes.mtime);
+		parent->attributes.change =
+			timespec_to_nsecs(&parent->attributes.mtime);
 
 		PTHREAD_RWLOCK_unlock(&parent->obj_handle.obj_lock);
 	}
 	return hdl;
 
- spcerr:
+spcerr:
 
 	if (hdl->name != NULL)
 		gsh_free(hdl->name);
 
-	gsh_free(hdl);		/* elvis has left the building */
+	gsh_free(hdl); /* elvis has left the building */
 	return NULL;
 }
 
@@ -307,8 +301,7 @@ static struct pseudo_fsal_obj_handle
  * deprecated NULL parent && NULL path implies root handle
  */
 
-static fsal_status_t lookup(struct fsal_obj_handle *parent,
-			    const char *path,
+static fsal_status_t lookup(struct fsal_obj_handle *parent, const char *path,
 			    struct fsal_obj_handle **handle,
 			    struct fsal_attrlist *attrs_out)
 {
@@ -317,9 +310,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	struct avltree_node *node;
 	fsal_errors_t error = ERR_FSAL_NOENT;
 
-	myself = container_of(parent,
-			      struct pseudo_fsal_obj_handle,
-			      obj_handle);
+	myself =
+		container_of(parent, struct pseudo_fsal_obj_handle, obj_handle);
 
 	/* Check if this context already holds the lock on
 	 * this directory.
@@ -327,8 +319,7 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 	if (op_ctx->fsal_private != parent)
 		PTHREAD_RWLOCK_rdlock(&parent->obj_lock);
 	else
-		LogFullDebug(COMPONENT_FSAL,
-			     "Skipping lock for %s",
+		LogFullDebug(COMPONENT_FSAL, "Skipping lock for %s",
 			     myself->name);
 
 	if (strcmp(path, "..") == 0) {
@@ -337,15 +328,14 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 			hdl = myself->parent;
 			*handle = &hdl->obj_handle;
 			error = ERR_FSAL_NO_ERROR;
-			LogFullDebug(COMPONENT_FSAL,
-				     "Found %s/%s hdl=%p",
+			LogFullDebug(COMPONENT_FSAL, "Found %s/%s hdl=%p",
 				     myself->name, path, hdl);
 		}
 
 		goto out;
 	}
 
-	key->name = (char *) path;
+	key->name = (char *)path;
 	node = avltree_inline_name_lookup(&key->avl_n, &myself->avl_name);
 	if (node) {
 		hdl = avltree_container_of(node, struct pseudo_fsal_obj_handle,
@@ -353,9 +343,8 @@ static fsal_status_t lookup(struct fsal_obj_handle *parent,
 
 		*handle = &hdl->obj_handle;
 		error = ERR_FSAL_NO_ERROR;
-			LogFullDebug(COMPONENT_FSAL,
-				     "Found %s/%s hdl=%p",
-				     myself->name, path, hdl);
+		LogFullDebug(COMPONENT_FSAL, "Found %s/%s hdl=%p", myself->name,
+			     path, hdl);
 	}
 
 out:
@@ -363,7 +352,7 @@ out:
 	 * request from the export update process and so we should answer it
 	 * with the current state */
 	if (is_export_update_in_progress() &&
-		!op_ctx->flags.pseudo_fsal_internal_lookup) {
+	    !op_ctx->flags.pseudo_fsal_internal_lookup) {
 		/* An export update is in progress, we can't trust our entries.
 		 * Tell the client to retry.
 		 */
@@ -414,8 +403,7 @@ out:
  *
  * @return FSAL status.
  */
-static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
-			     const char *name,
+static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl, const char *name,
 			     struct fsal_attrlist *attrs_in,
 			     struct fsal_obj_handle **handle,
 			     struct fsal_attrlist *attrs_out,
@@ -427,7 +415,7 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 
 	LogDebug(COMPONENT_FSAL, "create %s", name);
 
-	*handle = NULL;		/* poison it */
+	*handle = NULL; /* poison it */
 
 	if (!fsal_obj_handle_is(dir_hdl, DIRECTORY)) {
 		LogCrit(COMPONENT_FSAL,
@@ -436,21 +424,17 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
-	myself = container_of(dir_hdl,
-			      struct pseudo_fsal_obj_handle,
+	myself = container_of(dir_hdl, struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
 	/* allocate an obj_handle and fill it up */
-	hdl = alloc_directory_handle(myself,
-				     name,
-				     op_ctx->fsal_export,
+	hdl = alloc_directory_handle(myself, name, op_ctx->fsal_export,
 				     attrs_in);
 
 	numlinks = atomic_inc_uint32_t(&myself->numlinks);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "%s numlinks %"PRIu32,
-		     myself->name, numlinks);
+	LogFullDebug(COMPONENT_FSAL, "%s numlinks %" PRIu32, myself->name,
+		     numlinks);
 
 	*handle = &hdl->obj_handle;
 
@@ -472,10 +456,8 @@ static fsal_status_t makedir(struct fsal_obj_handle *dir_hdl,
  */
 
 static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
-				  fsal_cookie_t *whence,
-				  void *dir_state,
-				  fsal_readdir_cb cb,
-				  attrmask_t attrmask,
+				  fsal_cookie_t *whence, void *dir_state,
+				  fsal_readdir_cb cb, attrmask_t attrmask,
 				  bool *eof)
 {
 	struct pseudo_fsal_obj_handle *myself, *hdl;
@@ -488,17 +470,14 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	if (whence != NULL)
 		seekloc = *whence;
 	else
-		seekloc = 2;    /* start from index 2, if no cookie */
+		seekloc = 2; /* start from index 2, if no cookie */
 
 	*eof = true;
 
-	myself = container_of(dir_hdl,
-			      struct pseudo_fsal_obj_handle,
+	myself = container_of(dir_hdl, struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
-	LogDebug(COMPONENT_FSAL,
-		 "hdl=%p, name=%s",
-		 myself, myself->name);
+	LogDebug(COMPONENT_FSAL, "hdl=%p, name=%s", myself, myself->name);
 
 	PTHREAD_RWLOCK_rdlock(&dir_hdl->obj_lock);
 
@@ -507,11 +486,9 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 	 */
 	op_ctx->fsal_private = dir_hdl;
 
-	for (node = avltree_first(&myself->avl_index);
-	     node != NULL;
+	for (node = avltree_first(&myself->avl_index); node != NULL;
 	     node = avltree_next(node)) {
-		hdl = avltree_container_of(node,
-					   struct pseudo_fsal_obj_handle,
+		hdl = avltree_container_of(node, struct pseudo_fsal_obj_handle,
 					   avl_i);
 
 		if (is_export_update_in_progress()) {
@@ -526,8 +503,8 @@ static fsal_status_t read_dirents(struct fsal_obj_handle *dir_hdl,
 		fsal_prepare_attrs(&attrs, attrmask);
 		fsal_copy_attrs(&attrs, &hdl->attributes, false);
 
-		cb_rc = cb(hdl->name, &hdl->obj_handle, &attrs,
-			   dir_state, hdl->index + 1);
+		cb_rc = cb(hdl->name, &hdl->obj_handle, &attrs, dir_state,
+			   hdl->index + 1);
 
 		fsal_release_attrs(&attrs);
 
@@ -551,8 +528,7 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 {
 	struct pseudo_fsal_obj_handle *myself;
 
-	myself = container_of(obj_hdl,
-			      struct pseudo_fsal_obj_handle,
+	myself = container_of(obj_hdl, struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
 	if (myself->parent != NULL && !myself->inavl) {
@@ -567,11 +543,8 @@ static fsal_status_t getattrs(struct fsal_obj_handle *obj_hdl,
 	myself->attributes.numlinks = atomic_fetch_uint32_t(&myself->numlinks);
 	*outattrs = myself->attributes;
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "hdl=%p, name=%s numlinks %"PRIu32,
-		     myself,
-		     myself->name,
-		     myself->attributes.numlinks);
+	LogFullDebug(COMPONENT_FSAL, "hdl=%p, name=%s numlinks %" PRIu32,
+		     myself, myself->name, myself->attributes.numlinks);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -590,30 +563,25 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 	fsal_errors_t error = ERR_FSAL_NOENT;
 	uint32_t numlinks;
 
-	myself = container_of(dir_hdl,
-			      struct pseudo_fsal_obj_handle,
+	myself = container_of(dir_hdl, struct pseudo_fsal_obj_handle,
 			      obj_handle);
-	hdl = container_of(obj_hdl,
-			      struct pseudo_fsal_obj_handle,
-			      obj_handle);
+	hdl = container_of(obj_hdl, struct pseudo_fsal_obj_handle, obj_handle);
 
 	PTHREAD_RWLOCK_wrlock(&dir_hdl->obj_lock);
 
 	/* Check if directory is empty */
 	numlinks = atomic_fetch_uint32_t(&hdl->numlinks);
 	if (numlinks != 2) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "%s numlinks %"PRIu32,
-			     hdl->name, numlinks);
+		LogFullDebug(COMPONENT_FSAL, "%s numlinks %" PRIu32, hdl->name,
+			     numlinks);
 		error = ERR_FSAL_NOTEMPTY;
 		goto unlock;
 	}
 
 	/* We need to update the numlinks. */
 	numlinks = atomic_dec_uint32_t(&myself->numlinks);
-	LogFullDebug(COMPONENT_FSAL,
-		     "%s numlinks %"PRIu32,
-		     myself->name, numlinks);
+	LogFullDebug(COMPONENT_FSAL, "%s numlinks %" PRIu32, myself->name,
+		     numlinks);
 
 	/* Remove from directory's name and index avls */
 	avltree_remove(&hdl->avl_n, &myself->avl_name);
@@ -624,8 +592,8 @@ static fsal_status_t file_unlink(struct fsal_obj_handle *dir_hdl,
 
 	now(&myself->attributes.mtime);
 	myself->attributes.ctime = myself->attributes.mtime;
-	myself->attributes.change = timespec_to_nsecs(
-					&myself->attributes.mtime);
+	myself->attributes.change =
+		timespec_to_nsecs(&myself->attributes.mtime);
 
 unlock:
 	PTHREAD_RWLOCK_unlock(&dir_hdl->obj_lock);
@@ -646,18 +614,18 @@ static fsal_status_t handle_to_wire(const struct fsal_obj_handle *obj_hdl,
 {
 	const struct pseudo_fsal_obj_handle *myself;
 
-	myself = container_of(obj_hdl,
-			      const struct pseudo_fsal_obj_handle,
+	myself = container_of(obj_hdl, const struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
 	switch (output_type) {
 	case FSAL_DIGEST_NFSV3:
 	case FSAL_DIGEST_NFSV4:
 		if (fh_desc->len < V4_FH_OPAQUE_SIZE) {
-			LogMajor(COMPONENT_FSAL,
-				 "Space too small for handle.  need %lu, have %zu",
-				 ((unsigned long) V4_FH_OPAQUE_SIZE),
-				 fh_desc->len);
+			LogMajor(
+				COMPONENT_FSAL,
+				"Space too small for handle.  need %lu, have %zu",
+				((unsigned long)V4_FH_OPAQUE_SIZE),
+				fh_desc->len);
 			return fsalstat(ERR_FSAL_TOOSMALL, 0);
 		}
 
@@ -684,8 +652,7 @@ static void handle_to_key(struct fsal_obj_handle *obj_hdl,
 {
 	struct pseudo_fsal_obj_handle *myself;
 
-	myself = container_of(obj_hdl,
-			      struct pseudo_fsal_obj_handle,
+	myself = container_of(obj_hdl, struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
 	fh_desc->addr = myself->handle;
@@ -702,8 +669,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 {
 	struct pseudo_fsal_obj_handle *myself;
 
-	myself = container_of(obj_hdl,
-			      struct pseudo_fsal_obj_handle,
+	myself = container_of(obj_hdl, struct pseudo_fsal_obj_handle,
 			      obj_handle);
 
 	if (myself->parent == NULL || myself->inavl) {
@@ -716,8 +682,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	fsal_obj_handle_fini(obj_hdl, true);
 
-	LogDebug(COMPONENT_FSAL,
-		 "Releasing obj_hdl=%p, myself=%p, name=%s",
+	LogDebug(COMPONENT_FSAL, "Releasing obj_hdl=%p, myself=%p, name=%s",
 		 obj_hdl, myself, myself->name);
 
 	if (myself->name != NULL)
@@ -749,9 +714,9 @@ void pseudofs_handle_ops_init(struct fsal_obj_ops *ops)
  */
 
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
-				 const char *path,
-				 struct fsal_obj_handle **handle,
-				 struct fsal_attrlist *attrs_out)
+				   const char *path,
+				   struct fsal_obj_handle **handle,
+				   struct fsal_attrlist *attrs_out)
 {
 	struct pseudofs_fsal_export *myself;
 	struct fsal_attrlist attrs;
@@ -760,8 +725,7 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 
 	if (strcmp(path, myself->export_path) != 0) {
 		/* Lookup of a path other than the export's root. */
-		LogCrit(COMPONENT_FSAL,
-			"Attempt to lookup non-root path %s",
+		LogCrit(COMPONENT_FSAL, "Attempt to lookup non-root path %s",
 			path);
 		return fsalstat(ERR_FSAL_NOENT, ENOENT);
 	}
@@ -770,11 +734,8 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
 	attrs.mode = 0755;
 
 	if (myself->root_handle == NULL) {
-		myself->root_handle =
-			alloc_directory_handle(NULL,
-					       myself->export_path,
-					       exp_hdl,
-					       &attrs);
+		myself->root_handle = alloc_directory_handle(
+			NULL, myself->export_path, exp_hdl, &attrs);
 	}
 
 	*handle = &myself->root_handle->obj_handle;
@@ -799,9 +760,9 @@ fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
  */
 
 fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
-				   struct gsh_buffdesc *hdl_desc,
-				   struct fsal_obj_handle **handle,
-				   struct fsal_attrlist *attrs_out)
+				     struct gsh_buffdesc *hdl_desc,
+				     struct fsal_obj_handle **handle,
+				     struct fsal_attrlist *attrs_out)
 {
 	struct glist_head *glist;
 	struct fsal_obj_handle *hdl;
@@ -810,29 +771,25 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 	*handle = NULL;
 
 	if (hdl_desc->len != V4_FH_OPAQUE_SIZE) {
-		LogCrit(COMPONENT_FSAL,
-			"Invalid handle size %zu expected %lu",
-			hdl_desc->len,
-			((unsigned long) V4_FH_OPAQUE_SIZE));
+		LogCrit(COMPONENT_FSAL, "Invalid handle size %zu expected %lu",
+			hdl_desc->len, ((unsigned long)V4_FH_OPAQUE_SIZE));
 
 		return fsalstat(ERR_FSAL_BADHANDLE, 0);
 	}
 
 	PTHREAD_RWLOCK_rdlock(&exp_hdl->fsal->fsm_lock);
 
-	glist_for_each(glist, &exp_hdl->fsal->handles) {
+	glist_for_each(glist, &exp_hdl->fsal->handles)
+	{
 		hdl = glist_entry(glist, struct fsal_obj_handle, handles);
 
-		my_hdl = container_of(hdl,
-				      struct pseudo_fsal_obj_handle,
+		my_hdl = container_of(hdl, struct pseudo_fsal_obj_handle,
 				      obj_handle);
 
-		if (memcmp(my_hdl->handle,
-			   hdl_desc->addr,
-			   V4_FH_OPAQUE_SIZE) == 0) {
-			LogDebug(COMPONENT_FSAL,
-				 "Found hdl=%p name=%s",
-				 my_hdl, my_hdl->name);
+		if (memcmp(my_hdl->handle, hdl_desc->addr, V4_FH_OPAQUE_SIZE) ==
+		    0) {
+			LogDebug(COMPONENT_FSAL, "Found hdl=%p name=%s", my_hdl,
+				 my_hdl->name);
 
 			*handle = hdl;
 
@@ -853,14 +810,14 @@ fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
 		 */
 		PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->fsm_lock);
 
-		LogDebug(COMPONENT_EXPORT,
-			 "PseudoFS create handle may have failed due to export update");
+		LogDebug(
+			COMPONENT_EXPORT,
+			"PseudoFS create handle may have failed due to export update");
 
 		return fsalstat(ERR_FSAL_DELAY, 0);
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		"Could not find handle");
+	LogDebug(COMPONENT_FSAL, "Could not find handle");
 
 	PTHREAD_RWLOCK_unlock(&exp_hdl->fsal->fsm_lock);
 

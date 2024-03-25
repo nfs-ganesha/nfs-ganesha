@@ -23,7 +23,7 @@
 #include "saunafs_fsal_types.h"
 
 #ifdef LINUX
-#include <linux/falloc.h>  /* for fallocate  */
+#include <linux/falloc.h> /* for fallocate  */
 #include <sys/sysmacros.h> /* for makedev(3) */
 #endif
 
@@ -363,7 +363,7 @@ fsal_status_t reopen_func(struct fsal_obj_handle *objectHandle,
 	struct sau_fileinfo *saunafsFD = NULL;
 	struct SaunaFSExport *export = NULL;
 	int posixFlags = 0;
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
 	handle = container_of(objectHandle, struct SaunaFSHandle, handle);
 	fileDescriptor = container_of(fsalFd, struct SaunaFSFd, fsalFd);
@@ -726,13 +726,12 @@ static fsal_status_t openByName(struct fsal_obj_handle *objectHandle,
  */
 static fsal_status_t
 open2(struct fsal_obj_handle *objectHandle, struct state_t *state,
-		fsal_openflags_t openflags, enum fsal_create_mode createmode,
-		const char *name, struct fsal_attrlist *attributesToSet,
-		fsal_verifier_t verifier,
-		struct fsal_obj_handle **createdObject,
-		struct fsal_attrlist *attributes, bool *callerPermissionCheck,
-		struct fsal_attrlist *parentPreAttributes,
-		struct fsal_attrlist *parentPostAttributes)
+      fsal_openflags_t openflags, enum fsal_create_mode createmode,
+      const char *name, struct fsal_attrlist *attributesToSet,
+      fsal_verifier_t verifier, struct fsal_obj_handle **createdObject,
+      struct fsal_attrlist *attributes, bool *callerPermissionCheck,
+      struct fsal_attrlist *parentPreAttributes,
+      struct fsal_attrlist *parentPostAttributes)
 {
 	struct SaunaFSExport *export = NULL;
 	struct SaunaFSHandle *handle = NULL;
@@ -2648,8 +2647,7 @@ struct SaunaFSHandle *allocateHandle(const struct stat *attribute,
 	result->key.inode = attribute->st_ino;
 
 	fsal_obj_handle_init(&result->handle, &export->export,
-			     posix2fsal_type(attribute->st_mode),
-			     true);
+			     posix2fsal_type(attribute->st_mode), true);
 
 	result->handle.obj_ops = &SaunaFS.handleOperations;
 	result->handle.fsid = posix2fsal_fsid(attribute->st_dev);

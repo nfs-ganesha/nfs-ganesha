@@ -41,7 +41,8 @@ int register_url_provider(struct gsh_url_provider *nurl_p)
 	int code = 0;
 
 	PTHREAD_RWLOCK_wrlock(&url_rwlock);
-	glist_for_each(gl, &url_providers) {
+	glist_for_each(gl, &url_providers)
+	{
 		url_p = glist_entry(gl, struct gsh_url_provider, link);
 		if (!strcasecmp(url_p->name, nurl_p->name)) {
 			code = EEXIST;
@@ -56,8 +57,7 @@ int register_url_provider(struct gsh_url_provider *nurl_p)
 }
 
 /* simplistic URL syntax */
-#define CONFIG_URL_REGEX \
-	"^\"?(rados)://([^\"]+)\"?"
+#define CONFIG_URL_REGEX "^\"?(rados)://([^\"]+)\"?"
 
 /** @brief url regex initializer
  */
@@ -67,8 +67,7 @@ static void init_url_regex(void)
 
 	r = regcomp(&url_regex, CONFIG_URL_REGEX, REG_EXTENDED);
 	if (!!r) {
-		LogFatal(COMPONENT_INIT,
-			"Error initializing config url regex");
+		LogFatal(COMPONENT_INIT, "Error initializing config url regex");
 	}
 }
 
@@ -78,24 +77,26 @@ static struct {
 	void (*pkginit)(void);
 	int (*setup_watch)(void);
 	void (*shutdown_watch)(void);
-} rados_urls = { NULL,};
+} rados_urls = {
+	NULL,
+};
 
 static void load_rados_config(void)
 {
 	rados_urls.dl = dlopen("libganesha_rados_urls.so",
 #if defined(LINUX) && !defined(SANITIZE_ADDRESS)
-			      RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+			       RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
 #elif defined(FREEBSD) || defined(SANITIZE_ADDRESS)
-			      RTLD_NOW | RTLD_LOCAL);
+			       RTLD_NOW | RTLD_LOCAL);
 #endif
 
 	if (rados_urls.dl) {
-		rados_urls.pkginit = dlsym(rados_urls.dl,
-					   "conf_url_rados_pkginit");
-		rados_urls.setup_watch = dlsym(rados_urls.dl,
-					       "rados_url_setup_watch");
-		rados_urls.shutdown_watch = dlsym(rados_urls.dl,
-						  "rados_url_shutdown_watch");
+		rados_urls.pkginit =
+			dlsym(rados_urls.dl, "conf_url_rados_pkginit");
+		rados_urls.setup_watch =
+			dlsym(rados_urls.dl, "rados_url_setup_watch");
+		rados_urls.shutdown_watch =
+			dlsym(rados_urls.dl, "rados_url_shutdown_watch");
 
 		if (!rados_urls.pkginit || !rados_urls.setup_watch ||
 		    !rados_urls.shutdown_watch) {
@@ -135,8 +136,8 @@ void config_url_shutdown(void)
 	struct gsh_url_provider *url_p;
 
 	PTHREAD_RWLOCK_wrlock(&url_rwlock);
-	while ((url_p = glist_first_entry(
-			      &url_providers, struct gsh_url_provider, link))) {
+	while ((url_p = glist_first_entry(&url_providers,
+					  struct gsh_url_provider, link))) {
 		glist_del(&url_p->link);
 		url_p->url_shutdown();
 	}
@@ -180,7 +181,7 @@ static inline char *match_dup(regmatch_t *m, char *in)
 
 		size = m->rm_eo - m->rm_so + 1;
 		s = (char *)gsh_malloc(size);
-		(void) snprintf(s, size, "%s", in + m->rm_so);
+		(void)snprintf(s, size, "%s", in + m->rm_so);
 	}
 	return s;
 }
@@ -212,21 +213,21 @@ int config_url_fetch(const char *url, FILE **f, char **fbuf)
 		}
 	} else if (code == REG_NOMATCH) {
 		LogWarn(COMPONENT_CONFIG,
-			"%s: Failed to match %s as a config URL",
-			__func__, url);
+			"%s: Failed to match %s as a config URL", __func__,
+			url);
 		goto out;
 	} else {
 		char ebuf[100];
 
 		regerror(code, &url_regex, ebuf, sizeof(ebuf));
-		LogWarn(COMPONENT_CONFIG,
-			"%s: Error in regexec: %s",
-			__func__, ebuf);
+		LogWarn(COMPONENT_CONFIG, "%s: Error in regexec: %s", __func__,
+			ebuf);
 		goto out;
 	}
 
 	PTHREAD_RWLOCK_rdlock(&url_rwlock);
-	glist_for_each(gl, &url_providers) {
+	glist_for_each(gl, &url_providers)
+	{
 		url_p = glist_entry(gl, struct gsh_url_provider, link);
 		if (!strcasecmp(url_type, url_p->name)) {
 			code = url_p->url_fetch(m_url, f, fbuf);

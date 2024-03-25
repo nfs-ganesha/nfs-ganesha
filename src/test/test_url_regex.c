@@ -27,8 +27,7 @@
 #include <regex.h>
 
 /* decompose RADOS URL into (<pool>/)object */
-#define RADOS_URL_REGEX \
-	"([-a-zA-Z0-9_&=.]+)/?([-a-zA-Z0-9_&=/.]+)?"
+#define RADOS_URL_REGEX "([-a-zA-Z0-9_&=.]+)/?([-a-zA-Z0-9_&=/.]+)?"
 
 #define URL1 "my_rados_object"
 #define URL2 "mypool_baby/myobject_baby"
@@ -36,8 +35,7 @@
 #define URL4 "mypool.baby/myobject.conf"
 
 /* match general URL with optional enclosing quotes */
-#define CONFIG_URL_REGEX \
-	"^\"?(rados)://([^\"]+)\"?"
+#define CONFIG_URL_REGEX "^\"?(rados)://([^\"]+)\"?"
 
 #define CONF_URL1 "rados://mypool-baby/myobject-baby"
 #define CONF_URL2 "\"rados://mypool-baby/myobject-baby\""
@@ -88,16 +86,14 @@ void split_pool(char *url)
 		free(x2);
 
 	} else if (code == REG_NOMATCH) {
-		printf("%s: Failed to match %s as a config URL\n",
-			__func__, url);
+		printf("%s: Failed to match %s as a config URL\n", __func__,
+		       url);
 	} else {
 		char ebuf[100];
 
 		regerror(code, &url_regex, ebuf, sizeof(ebuf));
-		printf("%s: Error in regexec: %s\n",
-			__func__, ebuf);
+		printf("%s: Error in regexec: %s\n", __func__, ebuf);
 	}
-
 }
 
 void split_url(char *url)
@@ -126,16 +122,14 @@ void split_url(char *url)
 		free(x2);
 
 	} else if (code == REG_NOMATCH) {
-		printf("%s: Failed to match %s as a config URL\n",
-			__func__, url);
+		printf("%s: Failed to match %s as a config URL\n", __func__,
+		       url);
 	} else {
 		char ebuf[100];
 
 		regerror(code, &url_regex, ebuf, sizeof(ebuf));
-		printf("%s: Error in regexec: %s\n",
-			__func__, ebuf);
+		printf("%s: Error in regexec: %s\n", __func__, ebuf);
 	}
-
 }
 
 int main(int argc, char **argv)
@@ -149,8 +143,7 @@ int main(int argc, char **argv)
 		char ebuf[100];
 
 		regerror(r, &url_regex, ebuf, sizeof(ebuf));
-		printf("Error initializing rados url regex %s",
-			ebuf);
+		printf("Error initializing rados url regex %s", ebuf);
 		exit(1);
 	}
 
@@ -164,8 +157,7 @@ int main(int argc, char **argv)
 		char ebuf[100];
 
 		regerror(r, &url_regex, ebuf, sizeof(ebuf));
-		printf("Error initializing rados url regex %s",
-			ebuf);
+		printf("Error initializing rados url regex %s", ebuf);
 		exit(1);
 	}
 

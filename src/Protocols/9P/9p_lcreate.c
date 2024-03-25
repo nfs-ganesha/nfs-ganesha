@@ -61,7 +61,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 iounit = _9P_IOUNIT;
 
 	struct fsal_obj_handle *pentry_newfile = NULL;
-	char file_name[MAXNAMLEN+1];
+	char file_name[MAXNAMLEN + 1];
 	fsal_status_t fsal_status;
 	fsal_openflags_t openflags = 0;
 
@@ -80,8 +80,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	LogDebug(COMPONENT_9P,
 		 "TLCREATE: tag=%u fid=%u name=%.*s flags=0%o mode=0%o gid=%u",
-		 (u32) *msgtag, *fid, *name_len, name_str, *flags, *mode,
-		 *gid);
+		 (u32)*msgtag, *fid, *name_len, name_str, *flags, *mode, *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -101,8 +100,7 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len >= sizeof(file_name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(file_name, *name_len, name_str);
@@ -132,24 +130,15 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		createmode = FSAL_EXCLUSIVE_9P;
 	}
 
-	fsal_status = fsal_open2(pfid->pentry,
-				 pfid->state,
-				 openflags,
-				 createmode,
-				 file_name,
-				 &sattr,
-				 verifier,
-				 &pentry_newfile,
-				 NULL,
-				 NULL,
-				 NULL);
+	fsal_status = fsal_open2(pfid->pentry, pfid->state, openflags,
+				 createmode, file_name, &sattr, verifier,
+				 &pentry_newfile, NULL, NULL, NULL);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
 
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status),
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
 				  plenout, preply);
 
 	/* put parent directory entry */
@@ -179,11 +168,12 @@ int _9p_lcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RLCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u pentry=%p",
-		 (u32) *msgtag, *fid, *name_len, name_str, qid_newfile.type,
-		 qid_newfile.version, (unsigned long long)qid_newfile.path,
-		 iounit, pfid->pentry);
+	LogDebug(
+		COMPONENT_9P,
+		"RLCREATE: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu) iounit=%u pentry=%p",
+		(u32)*msgtag, *fid, *name_len, name_str, qid_newfile.type,
+		qid_newfile.version, (unsigned long long)qid_newfile.path,
+		iounit, pfid->pentry);
 
 	return 1;
 }

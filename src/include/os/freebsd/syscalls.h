@@ -34,20 +34,20 @@
 #include <sys/syscall.h>
 
 #ifndef AT_FDCWD
-#define AT_FDCWD               -100
+#define AT_FDCWD -100
 
-#define AT_SYMLINK_NOFOLLOW     0x200	/* Do not follow symbolic links */
-#define AT_SYMLINK_FOLLOW       0x400	/* Follow symbolic link */
-#define AT_REMOVEDIR            0x800	/* Remove directory instead of file */
+#define AT_SYMLINK_NOFOLLOW 0x200 /* Do not follow symbolic links */
+#define AT_SYMLINK_FOLLOW 0x400 /* Follow symbolic link */
+#define AT_REMOVEDIR 0x800 /* Remove directory instead of file */
 
-#endif				/* AT_FDCWD */
+#endif /* AT_FDCWD */
 
-#if __FreeBSD_cc_version  >= 800001
+#if __FreeBSD_cc_version >= 800001
 /* getfhat() is not implemented in FreeBSD kernel yet */
 int getfhat(int fd, char *path, fhandle_t *fhp, int flag);
 int fhlink(struct fhandle *fhp, int tofd, const char *to);
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize);
-#endif				/* __FreeBSD_cc_version */
+#endif /* __FreeBSD_cc_version */
 
 #ifndef SYS_openat
 int openat(int dir_fd, const char *file, int oflag, mode_t mode);
@@ -69,6 +69,6 @@ int renameat(int oldfd, const char *old, int newfd, const char *new);
 int utimensat(int dir_fd, char *path, struct timespec *times, int flags);
 int fhlink(struct fhandle *fhp, int tofd, const char *to);
 int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize);
-#endif				/* SYS_openat */
+#endif /* SYS_openat */
 
-#endif				/* _SYSCALLS_FREEBSD_H */
+#endif /* _SYSCALLS_FREEBSD_H */

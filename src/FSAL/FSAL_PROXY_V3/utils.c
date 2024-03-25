@@ -26,7 +26,6 @@
 
 #include "proxyv3_fsal_methods.h"
 
-
 /**
  * @brief Map from nfsstat3 error codes to the FSAL error codes.
  * @param status Input status as an nfsstat3.
@@ -42,48 +41,77 @@ static fsal_errors_t nfsstat3_to_fsal(nfsstat3 status)
 		 * Most of these have identical enum values, but do this
 		 * explicitly anyway.
 		 */
-	case NFS3_OK:        return ERR_FSAL_NO_ERROR;
-	case NFS3ERR_PERM:      return ERR_FSAL_PERM;
-	case NFS3ERR_NOENT:     return ERR_FSAL_NOENT;
-	case NFS3ERR_IO:     return ERR_FSAL_IO;
-	case NFS3ERR_NXIO:   return ERR_FSAL_NXIO;
-	case NFS3ERR_ACCES:  return ERR_FSAL_ACCESS;
-	case NFS3ERR_EXIST:  return ERR_FSAL_EXIST;
-	case NFS3ERR_XDEV:   return ERR_FSAL_XDEV;
+	case NFS3_OK:
+		return ERR_FSAL_NO_ERROR;
+	case NFS3ERR_PERM:
+		return ERR_FSAL_PERM;
+	case NFS3ERR_NOENT:
+		return ERR_FSAL_NOENT;
+	case NFS3ERR_IO:
+		return ERR_FSAL_IO;
+	case NFS3ERR_NXIO:
+		return ERR_FSAL_NXIO;
+	case NFS3ERR_ACCES:
+		return ERR_FSAL_ACCESS;
+	case NFS3ERR_EXIST:
+		return ERR_FSAL_EXIST;
+	case NFS3ERR_XDEV:
+		return ERR_FSAL_XDEV;
 		/*
 		 * FSAL doesn't have NODEV, but NXIO is "No such device or
 		 * address"
 		 */
-	case NFS3ERR_NODEV:  return ERR_FSAL_NXIO;
-	case NFS3ERR_NOTDIR: return ERR_FSAL_NOTDIR;
-	case NFS3ERR_ISDIR:  return ERR_FSAL_ISDIR;
-	case NFS3ERR_INVAL:  return ERR_FSAL_INVAL;
-	case NFS3ERR_FBIG:   return ERR_FSAL_FBIG;
-	case NFS3ERR_NOSPC:  return ERR_FSAL_NOSPC;
-	case NFS3ERR_ROFS:   return ERR_FSAL_ROFS;
-	case NFS3ERR_MLINK:  return ERR_FSAL_MLINK;
-	case NFS3ERR_NAMETOOLONG: return ERR_FSAL_NAMETOOLONG;
-	case NFS3ERR_NOTEMPTY:    return ERR_FSAL_NOTEMPTY;
-	case NFS3ERR_DQUOT:       return ERR_FSAL_DQUOT;
-	case NFS3ERR_STALE:       return ERR_FSAL_STALE;
+	case NFS3ERR_NODEV:
+		return ERR_FSAL_NXIO;
+	case NFS3ERR_NOTDIR:
+		return ERR_FSAL_NOTDIR;
+	case NFS3ERR_ISDIR:
+		return ERR_FSAL_ISDIR;
+	case NFS3ERR_INVAL:
+		return ERR_FSAL_INVAL;
+	case NFS3ERR_FBIG:
+		return ERR_FSAL_FBIG;
+	case NFS3ERR_NOSPC:
+		return ERR_FSAL_NOSPC;
+	case NFS3ERR_ROFS:
+		return ERR_FSAL_ROFS;
+	case NFS3ERR_MLINK:
+		return ERR_FSAL_MLINK;
+	case NFS3ERR_NAMETOOLONG:
+		return ERR_FSAL_NAMETOOLONG;
+	case NFS3ERR_NOTEMPTY:
+		return ERR_FSAL_NOTEMPTY;
+	case NFS3ERR_DQUOT:
+		return ERR_FSAL_DQUOT;
+	case NFS3ERR_STALE:
+		return ERR_FSAL_STALE;
 		/*
 		 * FSAL doesn't have REMOTE (too many remotes), so just return
 		 * NAMETOOLONG.
 		 */
-	case NFS3ERR_REMOTE:      return ERR_FSAL_NAMETOOLONG;
-	case NFS3ERR_BADHANDLE:   return ERR_FSAL_BADHANDLE;
+	case NFS3ERR_REMOTE:
+		return ERR_FSAL_NAMETOOLONG;
+	case NFS3ERR_BADHANDLE:
+		return ERR_FSAL_BADHANDLE;
 		/* FSAL doesn't have NOT_SYNC, so... INVAL? */
-	case NFS3ERR_NOT_SYNC:    return ERR_FSAL_INVAL;
-	case NFS3ERR_BAD_COOKIE:  return ERR_FSAL_BADCOOKIE;
-	case NFS3ERR_NOTSUPP:     return ERR_FSAL_NOTSUPP;
-	case NFS3ERR_TOOSMALL:    return ERR_FSAL_TOOSMALL;
-	case NFS3ERR_SERVERFAULT: return ERR_FSAL_SERVERFAULT;
-	case NFS3ERR_BADTYPE:     return ERR_FSAL_BADTYPE;
+	case NFS3ERR_NOT_SYNC:
+		return ERR_FSAL_INVAL;
+	case NFS3ERR_BAD_COOKIE:
+		return ERR_FSAL_BADCOOKIE;
+	case NFS3ERR_NOTSUPP:
+		return ERR_FSAL_NOTSUPP;
+	case NFS3ERR_TOOSMALL:
+		return ERR_FSAL_TOOSMALL;
+	case NFS3ERR_SERVERFAULT:
+		return ERR_FSAL_SERVERFAULT;
+	case NFS3ERR_BADTYPE:
+		return ERR_FSAL_BADTYPE;
 		/*
 		 * FSAL doesn't have a single JUKEBOX error, so choose
 		 * ERR_FSAL_LOCKED.
 		 */
-	case NFS3ERR_JUKEBOX:     return ERR_FSAL_LOCKED;
+	case NFS3ERR_JUKEBOX:
+		return ERR_FSAL_LOCKED;
 	}
 
 	/* Shouldn't have gotten here with valid input. */
@@ -101,22 +129,32 @@ static fsal_errors_t nfsstat3_to_fsal(nfsstat3 status)
 static fsal_errors_t nlm4stat_to_fsal(nlm4_stats status)
 {
 	switch (status) {
-	case NLM4_GRANTED:             return ERR_FSAL_NO_ERROR;
+	case NLM4_GRANTED:
+		return ERR_FSAL_NO_ERROR;
 		/*
 		 * We want NLM4_DENIED to convert to STATE_LOCK_CONFLICT in
 		 * state_error_convert.
 		 */
-	case NLM4_DENIED:              return ERR_FSAL_DELAY;
+	case NLM4_DENIED:
+		return ERR_FSAL_DELAY;
 		/* No "space" to allocate. */
-	case NLM4_DENIED_NOLOCKS:      return ERR_FSAL_NOSPC;
-	case NLM4_BLOCKED:             return ERR_FSAL_BLOCKED;
-	case NLM4_DENIED_GRACE_PERIOD: return ERR_FSAL_IN_GRACE;
-	case NLM4_DEADLCK:             return ERR_FSAL_DEADLOCK;
-	case NLM4_ROFS:                return ERR_FSAL_ROFS;
-	case NLM4_STALE_FH:            return ERR_FSAL_STALE;
-	case NLM4_FBIG:                return ERR_FSAL_FBIG;
+	case NLM4_DENIED_NOLOCKS:
+		return ERR_FSAL_NOSPC;
+	case NLM4_BLOCKED:
+		return ERR_FSAL_BLOCKED;
+	case NLM4_DENIED_GRACE_PERIOD:
+		return ERR_FSAL_IN_GRACE;
+	case NLM4_DEADLCK:
+		return ERR_FSAL_DEADLOCK;
+	case NLM4_ROFS:
+		return ERR_FSAL_ROFS;
+	case NLM4_STALE_FH:
+		return ERR_FSAL_STALE;
+	case NLM4_FBIG:
+		return ERR_FSAL_FBIG;
 		/* Don't retry. */
-	case NLM4_FAILED:              return ERR_FSAL_PERM;
+	case NLM4_FAILED:
+		return ERR_FSAL_PERM;
 	}
 
 	/* Shouldn't get here. */
@@ -134,7 +172,7 @@ fsal_status_t nfsstat3_to_fsalstat(nfsstat3 status)
 {
 	fsal_errors_t rc = nfsstat3_to_fsal(status);
 
-	return fsalstat(rc, (rc == ERR_FSAL_INVAL) ? (int) status : 0);
+	return fsalstat(rc, (rc == ERR_FSAL_INVAL) ? (int)status : 0);
 }
 
 /**
@@ -148,7 +186,7 @@ fsal_status_t nlm4stat_to_fsalstat(nlm4_stats status)
 {
 	fsal_errors_t rc = nlm4stat_to_fsal(status);
 
-	return fsalstat(rc, (rc == ERR_FSAL_INVAL) ? (int) status : 0);
+	return fsalstat(rc, (rc == ERR_FSAL_INVAL) ? (int)status : 0);
 }
 
 /**
@@ -170,10 +208,9 @@ bool attrmask_is_posix(attrmask_t mask)
 
 	if (FSAL_UNSET_MASK(mask, ATTRS_POSIX | ATTR_RDATTR_ERR) != 0) {
 		LogDebug(COMPONENT_FSAL,
-			 "requested = %0" PRIx64
-			 "\tNFS3 = %0" PRIx64
+			 "requested = %0" PRIx64 "\tNFS3 = %0" PRIx64
 			 "\tExtra = %0" PRIx64,
-			 orig, (attrmask_t) ATTRS_NFS3, mask);
+			 orig, (attrmask_t)ATTRS_NFS3, mask);
 		return false;
 	}
 
@@ -194,19 +231,14 @@ static bool attrmask_valid(const attrmask_t mask, const bool allow_rawdev)
 	attrmask_t temp = mask;
 	attrmask_t possible =
 		/* mode, uid, gid, size, atime, mtime */
-		ATTRS_SET_TIME |
-		ATTRS_CREDS |
-		ATTR_SIZE |
-		ATTR_MODE;
+		ATTRS_SET_TIME | ATTRS_CREDS | ATTR_SIZE | ATTR_MODE;
 	if (allow_rawdev) {
 		possible |= ATTR_RAWDEV;
 	}
 
-
 	if (FSAL_UNSET_MASK(temp, possible)) {
 		LogDebug(COMPONENT_FSAL,
-			 "requested = %0" PRIx64
-			 "\tNFS3 = %0" PRIx64
+			 "requested = %0" PRIx64 "\tNFS3 = %0" PRIx64
 			 "\tExtra = %0" PRIx64,
 			 mask, possible, temp);
 		return false;
@@ -239,9 +271,9 @@ static void update_attrs_change(struct fsal_attrlist *attrs_in_out)
 {
 	/* Same logic like in posix2fsal_attributes */
 	attrs_in_out->change =
-		gsh_time_cmp(&attrs_in_out->mtime, &attrs_in_out->ctime) > 0
-			? timespec_to_nsecs(&attrs_in_out->mtime)
-			: timespec_to_nsecs(&attrs_in_out->ctime);
+		gsh_time_cmp(&attrs_in_out->mtime, &attrs_in_out->ctime) > 0 ?
+			timespec_to_nsecs(&attrs_in_out->mtime) :
+			timespec_to_nsecs(&attrs_in_out->ctime);
 
 	attrs_in_out->valid_mask |= ATTR_CHANGE;
 }
@@ -301,9 +333,9 @@ void pre_attrs_to_fsalattr(const pre_op_attr *pre_attrs,
 		return;
 
 	nfs_time_to_timespec(&pre_attrs->pre_op_attr_u.attributes.mtime,
-		&out_attrs->mtime);
+			     &out_attrs->mtime);
 	nfs_time_to_timespec(&pre_attrs->pre_op_attr_u.attributes.ctime,
-		&out_attrs->ctime);
+			     &out_attrs->ctime);
 	out_attrs->filesize = pre_attrs->pre_op_attr_u.attributes.size;
 	out_attrs->valid_mask = ATTR_CTIME | ATTR_MTIME | ATTR_SIZE;
 
@@ -327,8 +359,8 @@ void post_attrs_to_fsalattr(const post_op_attr *post_attrs,
 	if (!post_attrs->attributes_follow)
 		return;
 
-	(void) fattr3_to_fsalattr(&post_attrs->post_op_attr_u.attributes,
-		out_attrs);
+	(void)fattr3_to_fsalattr(&post_attrs->post_op_attr_u.attributes,
+				 out_attrs);
 }
 
 /**
@@ -342,8 +374,7 @@ void post_attrs_to_fsalattr(const post_op_attr *post_attrs,
  */
 
 bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,
-			const bool allow_rawdev,
-			sattr3 *attrs_out)
+			const bool allow_rawdev, sattr3 *attrs_out)
 {
 	/*
 	 * Zero the struct so that all the "set_it" optionals are false by

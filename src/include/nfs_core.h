@@ -50,14 +50,14 @@
 #endif
 
 /* Delegation client cache limits */
-#define DELEG_SPACE_LIMIT_FILESZ 102400  /* just 100K, revisit? */
+#define DELEG_SPACE_LIMIT_FILESZ 102400 /* just 100K, revisit? */
 #define DELEG_SPACE_LIMIT_BLOCKS 200
 
 #define XATTR_BUFFERSIZE 4096
 
 extern char *nfs_host_name;
 
-extern char cid_server_owner[MAXNAMLEN+1]; /* max hostname length */
+extern char cid_server_owner[MAXNAMLEN + 1]; /* max hostname length */
 extern char *cid_server_scope;
 
 /*
@@ -77,7 +77,7 @@ typedef struct __nfs4_compound {
 
 typedef struct _rpc_call rpc_call_t;
 
-typedef void (*rpc_call_func) (rpc_call_t *call);
+typedef void (*rpc_call_func)(rpc_call_t *call);
 
 #ifdef _HAVE_GSSAPI
 extern gss_OID_desc krb5oid;
@@ -102,10 +102,10 @@ struct _nfs_health {
 };
 
 enum evchan {
-	UDP_UREG_CHAN,		/*< Put UDP on a dedicated channel */
-	TCP_UREG_CHAN,		/*< Accepts new TCP connections */
+	UDP_UREG_CHAN, /*< Put UDP on a dedicated channel */
+	TCP_UREG_CHAN, /*< Accepts new TCP connections */
 #ifdef _USE_NFS_RDMA
-	RDMA_UREG_CHAN,		/*< Accepts new RDMA connections */
+	RDMA_UREG_CHAN, /*< Accepts new RDMA connections */
 #endif
 	EVCHAN_SIZE
 };
@@ -117,8 +117,8 @@ bool nfs_health(void);
 extern struct timespec nfs_ServerBootTime;
 extern time_t nfs_ServerEpoch;
 
-extern verifier4 NFS4_write_verifier;	/*< NFS V4 write verifier */
-extern writeverf3 NFS3_write_verifier;	/*< NFS V3 write verifier */
+extern verifier4 NFS4_write_verifier; /*< NFS V4 write verifier */
+extern writeverf3 NFS3_write_verifier; /*< NFS V3 write verifier */
 
 extern char *nfs_config_path;
 extern char *nfs_pidfile_path;
@@ -188,4 +188,4 @@ int reaper_init(void);
 void reaper_wake(void);
 int reaper_shutdown(void);
 
-#endif				/* !NFS_CORE_H */
+#endif /* !NFS_CORE_H */

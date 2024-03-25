@@ -31,7 +31,7 @@
 
 #include "config.h"
 
-#include <libgen.h>	     /* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -59,7 +59,7 @@ static void kvsfs_export_release(struct fsal_export *exp_hdl)
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 
-	gsh_free(myself);		/* elvis has left the building */
+	gsh_free(myself); /* elvis has left the building */
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -80,8 +80,7 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 
 static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
 					fsal_digesttype_t in_type,
-					struct gsh_buffdesc *fh_desc,
-					int flags)
+					struct gsh_buffdesc *fh_desc, int flags)
 {
 	struct kvsfs_file_handle *hdl;
 	size_t fh_size;
@@ -95,13 +94,11 @@ static fsal_status_t kvsfs_wire_to_host(struct fsal_export *exp_hdl,
 	if (fh_desc->len != fh_size) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %lu, got %u",
-			 (unsigned long)fh_size,
-			 (unsigned int)fh_desc->len);
+			 (unsigned long)fh_size, (unsigned int)fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	fh_desc->len = fh_size;	/* pass back the actual size */
+	fh_desc->len = fh_size; /* pass back the actual size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 static attrmask_t kvsfs_supported_attrs(struct fsal_export *exp_hdl)
@@ -156,7 +153,6 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 	return state;
 }
 
-
 /**
  * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
  *
@@ -166,9 +162,8 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
  *
  * @return the fsal_obj_handle.
  */
-void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
-				  struct fsal_fd *fd,
-				  struct fsal_obj_handle **handle)
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl, struct fsal_fd *fd,
+		      struct fsal_obj_handle **handle)
 {
 	struct kvsfs_fd *my_fd = NULL;
 	struct kvsfs_fsal_obj_handle *myself = NULL;
@@ -178,7 +173,6 @@ void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
 
 	*handle = &myself->obj_handle;
 }
-
 
 /* kvsfs_export_ops_init
  * overwrite vector entries with the methods that we support
@@ -194,12 +188,9 @@ void kvsfs_export_ops_init(struct export_ops *ops)
 	ops->fs_supported_attrs = kvsfs_supported_attrs;
 	ops->alloc_state = kvsfs_alloc_state;
 	ops->get_fsal_obj_hdl = get_fsal_obj_hdl;
-
 }
 
-static int kvsfs_conf_pnfs_commit(void *node,
-				  void *link_mem,
-				  void *self_struct,
+static int kvsfs_conf_pnfs_commit(void *node, void *link_mem, void *self_struct,
 				  struct config_error_type *err_type)
 {
 	/* struct lustre_pnfs_param *lpp = self_struct; */
@@ -209,39 +200,38 @@ static int kvsfs_conf_pnfs_commit(void *node,
 	return 0;
 }
 
-
 static struct config_item ds_array_params[] = {
-	CONF_MAND_IP_ADDR("DS_Addr", "127.0.0.1",
-			  kvsfs_pnfs_ds_parameter, ipaddr),
+	CONF_MAND_IP_ADDR("DS_Addr", "127.0.0.1", kvsfs_pnfs_ds_parameter,
+			  ipaddr),
 	CONF_ITEM_UI16("DS_Port", 1024, UINT16_MAX, 2049,
 		       kvsfs_pnfs_ds_parameter, ipport), /* default is nfs */
 	CONFIG_EOL
 };
 
 static struct config_item pnfs_params[] = {
-	CONF_MAND_UI32("Stripe_Unit", 8192, 1024*1024, 1024,
+	CONF_MAND_UI32("Stripe_Unit", 8192, 1024 * 1024, 1024,
 		       kvsfs_exp_pnfs_parameter, stripe_unit),
-	CONF_ITEM_BOOL("pnfs_enabled", false,
-		       kvsfs_exp_pnfs_parameter, pnfs_enabled),
+	CONF_ITEM_BOOL("pnfs_enabled", false, kvsfs_exp_pnfs_parameter,
+		       pnfs_enabled),
 
-	CONF_MAND_UI32("Nb_Dataserver", 1, 4, 1,
-		       kvsfs_exp_pnfs_parameter, nb_ds),
+	CONF_MAND_UI32("Nb_Dataserver", 1, 4, 1, kvsfs_exp_pnfs_parameter,
+		       nb_ds),
 
-	CONF_ITEM_BLOCK("DS1", ds_array_params,
-			noop_conf_init, noop_conf_commit,
-			kvsfs_exp_pnfs_parameter, ds_array[0]),
+	CONF_ITEM_BLOCK("DS1", ds_array_params, noop_conf_init,
+			noop_conf_commit, kvsfs_exp_pnfs_parameter,
+			ds_array[0]),
 
-	CONF_ITEM_BLOCK("DS2", ds_array_params,
-			noop_conf_init, noop_conf_commit,
-			kvsfs_exp_pnfs_parameter, ds_array[1]),
+	CONF_ITEM_BLOCK("DS2", ds_array_params, noop_conf_init,
+			noop_conf_commit, kvsfs_exp_pnfs_parameter,
+			ds_array[1]),
 
-	CONF_ITEM_BLOCK("DS3", ds_array_params,
-			noop_conf_init, noop_conf_commit,
-			kvsfs_exp_pnfs_parameter, ds_array[2]),
+	CONF_ITEM_BLOCK("DS3", ds_array_params, noop_conf_init,
+			noop_conf_commit, kvsfs_exp_pnfs_parameter,
+			ds_array[2]),
 
-	CONF_ITEM_BLOCK("DS4", ds_array_params,
-			noop_conf_init, noop_conf_commit,
-			kvsfs_exp_pnfs_parameter, ds_array[3]),
+	CONF_ITEM_BLOCK("DS4", ds_array_params, noop_conf_init,
+			noop_conf_commit, kvsfs_exp_pnfs_parameter,
+			ds_array[3]),
 	CONFIG_EOL
 
 };
@@ -250,12 +240,10 @@ static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
 	CONF_ITEM_STR("kvsns_config", 0, MAXPATHLEN, KVSNS_DEFAULT_CONFIG,
 		      kvsfs_fsal_export, kvsns_config),
-	CONF_ITEM_BLOCK("PNFS", pnfs_params,
-			noop_conf_init, kvsfs_conf_pnfs_commit,
-			kvsfs_fsal_export, pnfs_param),
+	CONF_ITEM_BLOCK("PNFS", pnfs_params, noop_conf_init,
+			kvsfs_conf_pnfs_commit, kvsfs_fsal_export, pnfs_param),
 	CONFIG_EOL
 };
-
 
 static struct config_block export_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.kvsfs-export",
@@ -274,9 +262,9 @@ static struct config_block export_param = {
  */
 
 fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
-				void *parse_node,
-				struct config_error_type *err_type,
-				const struct fsal_up_vector *up_ops)
+				  void *parse_node,
+				  struct config_error_type *err_type,
+				  const struct fsal_up_vector *up_ops)
 {
 	struct kvsfs_fsal_export *myself = NULL;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -291,10 +279,7 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 
 	LogDebug(COMPONENT_FSAL, "kvsfs_create_export");
 
-	retval = load_config_from_node(parse_node,
-				       &export_param,
-				       myself,
-				       true,
+	retval = load_config_from_node(parse_node, &export_param, myself, true,
 				       err_type);
 	if (retval != 0)
 		goto errout;
@@ -310,26 +295,25 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 
 	retval = fsal_attach_export(fsal_hdl, &myself->export.exports);
 	if (retval != 0)
-		goto err_locked;	/* seriously bad */
+		goto err_locked; /* seriously bad */
 	myself->export.fsal = fsal_hdl;
 
 	op_ctx->fsal_export = &myself->export;
 
 	myself->pnfs_ds_enabled =
-	    myself->export.exp_ops.fs_supports(&myself->export,
-					    fso_pnfs_ds_supported) &&
-					    myself->pnfs_param.pnfs_enabled;
+		myself->export.exp_ops.fs_supports(&myself->export,
+						   fso_pnfs_ds_supported) &&
+		myself->pnfs_param.pnfs_enabled;
 	myself->pnfs_mds_enabled =
-	    myself->export.exp_ops.fs_supports(&myself->export,
-					    fso_pnfs_mds_supported) &&
-					    myself->pnfs_param.pnfs_enabled;
+		myself->export.exp_ops.fs_supports(&myself->export,
+						   fso_pnfs_mds_supported) &&
+		myself->pnfs_param.pnfs_enabled;
 
 	if (myself->pnfs_ds_enabled) {
 		struct fsal_pnfs_ds *pds = NULL;
 
 		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
-							     parse_node,
-							     &pds);
+							     parse_node, &pds);
 		if (status.major != ERR_FSAL_NO_ERROR)
 			goto err_locked;
 
@@ -367,5 +351,4 @@ errout:
 	gsh_free(myself);
 
 	return fsalstat(fsal_error, retval);
-
 }

@@ -58,6 +58,6 @@ void delayed_start(void);
 void delayed_shutdown(void);
 int delayed_submit(void (*)(void *), void *, nsecs_elapsed_t);
 
-#endif				/* DELAYED_EXEC_H */
+#endif /* DELAYED_EXEC_H */
 
 /** @} */

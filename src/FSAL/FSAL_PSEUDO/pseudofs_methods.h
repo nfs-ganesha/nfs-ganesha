@@ -33,7 +33,7 @@
 #include "avltree.h"
 #include "gsh_list.h"
 
-#define PSEUDO_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX))
+#define PSEUDO_SUPPORTED_ATTRS ((const attrmask_t)(ATTRS_POSIX))
 
 struct pseudo_fsal_obj_handle;
 
@@ -54,14 +54,14 @@ struct pseudofs_fsal_export {
 };
 
 fsal_status_t pseudofs_lookup_path(struct fsal_export *exp_hdl,
-				 const char *path,
-				 struct fsal_obj_handle **handle,
-				 struct fsal_attrlist *attrs_out);
-
-fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
-				   struct gsh_buffdesc *hdl_desc,
+				   const char *path,
 				   struct fsal_obj_handle **handle,
 				   struct fsal_attrlist *attrs_out);
+
+fsal_status_t pseudofs_create_handle(struct fsal_export *exp_hdl,
+				     struct gsh_buffdesc *hdl_desc,
+				     struct fsal_obj_handle **handle,
+				     struct fsal_attrlist *attrs_out);
 
 /**
  * @brief PSEUDOFS internal object handle
@@ -90,8 +90,8 @@ struct pseudo_fsal_obj_handle {
 
 static inline bool pseudofs_unopenable_type(object_file_type_t type)
 {
-	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE)
-	    || (type == BLOCK_FILE)) {
+	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE) ||
+	    (type == BLOCK_FILE)) {
 		return true;
 	} else {
 		return false;

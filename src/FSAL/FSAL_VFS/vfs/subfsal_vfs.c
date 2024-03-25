@@ -51,11 +51,10 @@ static struct config_item_list fsid_types[] = {
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_TOKEN("fsid_type", FSID_NO_TYPE,
-			fsid_types,
-			vfs_fsal_export, fsid_type),
-	CONF_ITEM_BOOL("async_hsm_restore", true,
-		       vfs_fsal_export, async_hsm_restore),
+	CONF_ITEM_TOKEN("fsid_type", FSID_NO_TYPE, fsid_types, vfs_fsal_export,
+			fsid_type),
+	CONF_ITEM_BOOL("async_hsm_restore", true, vfs_fsal_export,
+		       async_hsm_restore),
 	CONFIG_EOL
 };
 
@@ -77,7 +76,7 @@ void vfs_sub_fini(struct vfs_fsal_export *myself)
 }
 
 void vfs_sub_init_export_ops(struct vfs_fsal_export *myself,
-			      const char *export_path)
+			     const char *export_path)
 {
 }
 
@@ -93,15 +92,13 @@ struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
 {
 	struct vfs_fsal_obj_handle *hdl;
 
-	hdl = gsh_calloc(1,
-			 (sizeof(struct vfs_fsal_obj_handle) +
-			  sizeof(vfs_file_handle_t)));
+	hdl = gsh_calloc(1, (sizeof(struct vfs_fsal_obj_handle) +
+			     sizeof(vfs_file_handle_t)));
 
-	hdl->handle = (vfs_file_handle_t *) &hdl[1];
+	hdl->handle = (vfs_file_handle_t *)&hdl[1];
 
 	return hdl;
 }
-
 
 struct vfs_subfsal_obj_ops vfs_obj_subops = {
 	vfs_sub_getattrs,
@@ -109,8 +106,7 @@ struct vfs_subfsal_obj_ops vfs_obj_subops = {
 };
 
 int vfs_sub_init_handle(struct vfs_fsal_export *myself,
-		struct vfs_fsal_obj_handle *hdl,
-		const char *path)
+			struct vfs_fsal_obj_handle *hdl, const char *path)
 {
 	hdl->sub_ops = &vfs_obj_subops;
 	return 0;

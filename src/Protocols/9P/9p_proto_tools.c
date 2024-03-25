@@ -74,14 +74,14 @@ static struct _9p_user_cred *new_9p_user_creds(void)
  */
 static void set_op_ctx_creds_from_fid(struct _9p_fid *pfid)
 {
-	(void) atomic_inc_int64_t(&pfid->ucred->refcount);
+	(void)atomic_inc_int64_t(&pfid->ucred->refcount);
 	op_ctx->proto_private = pfid->ucred;
 	op_ctx->creds = pfid->ucred->creds;
 }
 
 void get_9p_user_cred_ref(struct _9p_user_cred *creds)
 {
-	(void) atomic_inc_int64_t(&creds->refcount);
+	(void)atomic_inc_int64_t(&creds->refcount);
 }
 
 void release_9p_user_cred_ref(struct _9p_user_cred *creds)
@@ -117,7 +117,7 @@ static void release_op_ctx_creds_ref_to_fid_creds(void)
 int _9p_init(void)
 {
 	return 0;
-}				/* _9p_init */
+} /* _9p_init */
 
 void _9p_init_opctx(struct _9p_fid *pfid, struct _9p_request_data *req9p)
 {
@@ -175,15 +175,12 @@ int _9p_tools_get_req_context_by_uid(u32 uid, struct _9p_fid *pfid)
 	op_ctx->req_type = _9P_REQUEST;
 
 	return 0;
-}				/* _9p_tools_get_fsal_cred */
+} /* _9p_tools_get_fsal_cred */
 
 int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 				      struct _9p_fid *pfid)
 {
-	struct gsh_buffdesc name = {
-		.addr = uname_str,
-		.len = uname_len
-	};
+	struct gsh_buffdesc name = { .addr = uname_str, .len = uname_len };
 	struct group_data *grpdata;
 
 	if (!name2grp(&name, &grpdata))
@@ -203,7 +200,7 @@ int _9p_tools_get_req_context_by_name(int uname_len, char *uname_str,
 	op_ctx->req_type = _9P_REQUEST;
 
 	return 0;
-}				/* _9p_tools_get_fsal_cred */
+} /* _9p_tools_get_fsal_cred */
 
 int _9p_tools_errno(fsal_status_t fsal_status)
 {
@@ -297,7 +294,7 @@ int _9p_tools_errno(fsal_status_t fsal_status)
 	}
 
 	return rc;
-}				/* _9p_tools_errno */
+} /* _9p_tools_errno */
 
 void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 {
@@ -312,7 +309,7 @@ void _9p_openflags2FSAL(u32 *inflags, fsal_openflags_t *outflags)
 	/* We consider that non( has O_WRONLY or has O_RDWR ) is RD_ONLY */
 	if (!(*inflags & (O_WRONLY | O_RDWR)))
 		*outflags = FSAL_O_READ;
-}				/* _9p_openflags2FSAL */
+} /* _9p_openflags2FSAL */
 
 void free_fid(struct _9p_fid *pfid)
 {
@@ -320,9 +317,8 @@ void free_fid(struct _9p_fid *pfid)
 		if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
 			/* We need to close the state before freeing the state.
 			 */
-			(void) pfid->pentry->obj_ops->close2(
-						pfid->pentry,
-						pfid->state);
+			(void)pfid->pentry->obj_ops->close2(pfid->pentry,
+							    pfid->state);
 
 			/* Now release the active references, we do this
 			 * after the close to make sure the object lifetime is
@@ -380,13 +376,10 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 			return EINVAL;
 		}
 
-		fsal_status =
-		    pfid->pentry->obj_ops->setextattr_value(
-				pfid->pentry,
-				pfid->xattr->xattr_name,
-				pfid->xattr->xattr_content,
-				pfid->xattr->xattr_size,
-				false);
+		fsal_status = pfid->pentry->obj_ops->setextattr_value(
+			pfid->pentry, pfid->xattr->xattr_name,
+			pfid->xattr->xattr_content, pfid->xattr->xattr_size,
+			false);
 		if (FSAL_IS_ERROR(fsal_status)) {
 			free_fid(pfid);
 			return _9p_tools_errno(fsal_status);
@@ -395,8 +388,7 @@ int _9p_tools_clunk(struct _9p_fid *pfid)
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
-		LogDebug(COMPONENT_9P,
-			 "Calling close on %s entry %p",
+		LogDebug(COMPONENT_9P, "Calling close on %s entry %p",
 			 object_file_type_to_str(pfid->pentry->type),
 			 pfid->pentry);
 
@@ -438,7 +430,7 @@ void _9p_cleanup_fids(struct _9p_conn *conn)
 			_9p_init_opctx(conn->fids[i], NULL);
 			_9p_tools_clunk(conn->fids[i]);
 			_9p_release_opctx();
-			conn->fids[i] = NULL;	/* poison the entry */
+			conn->fids[i] = NULL; /* poison the entry */
 		}
 	}
 

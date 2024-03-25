@@ -24,4 +24,4 @@
 
 #define get_open_file_limit(rlim) getrlimit(RLIMIT_NOFILE, (rlim))
 
-#endif		/* LINUX_SYS_RESOURCE_H_ */
+#endif /* LINUX_SYS_RESOURCE_H_ */

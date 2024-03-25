@@ -2,17 +2,7 @@
 #ifndef _CONFIG_PARSING_H
 #define _CONFIG_PARSING_H
 
-enum test_number {
-	ONE = 1,
-	TWO,
-	THREE,
-	FOUR,
-	FIVE,
-	SIX,
-	SEVEN,
-	EIGHT,
-	NINE
-};
+enum test_number { ONE = 1, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE };
 
 struct btest {
 	enum test_number num;

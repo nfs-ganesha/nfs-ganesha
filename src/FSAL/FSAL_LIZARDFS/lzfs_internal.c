@@ -57,8 +57,7 @@ nfsstat4 lzfs_nfs4_last_err(void)
 	return lizardfs2nfs4_error(liz_last_err());
 }
 
-liz_context_t *lzfs_fsal_create_context(liz_t *instance,
-					struct user_cred *cred)
+liz_context_t *lzfs_fsal_create_context(liz_t *instance, struct user_cred *cred)
 {
 	static const int kLocalGArraySize = 64;
 
@@ -69,9 +68,11 @@ liz_context_t *lzfs_fsal_create_context(liz_t *instance,
 
 	liz_context_t *ctx;
 	uid_t uid = (cred->caller_uid == op_ctx->export_perms.anonymous_uid) ?
-							0 : cred->caller_uid;
+			    0 :
+			    cred->caller_uid;
 	gid_t gid = (cred->caller_gid == op_ctx->export_perms.anonymous_gid) ?
-							0 : cred->caller_gid;
+			    0 :
+			    cred->caller_gid;
 
 	ctx = liz_create_user_context(uid, gid, 0, 0);
 	if (!ctx) {
@@ -81,11 +82,10 @@ liz_context_t *lzfs_fsal_create_context(liz_t *instance,
 	if (cred->caller_glen > 0) {
 		if (cred->caller_glen > kLocalGArraySize) {
 			gid_t *garray = gsh_malloc((cred->caller_glen + 1) *
-							sizeof(gid_t));
+						   sizeof(gid_t));
 
 			garray[0] = gid;
-			memcpy(garray + 1,
-			       cred->caller_garray,
+			memcpy(garray + 1, cred->caller_garray,
 			       sizeof(gid_t) * cred->caller_glen);
 			liz_update_groups(instance, ctx, garray,
 					  cred->caller_glen + 1);
@@ -107,13 +107,14 @@ liz_context_t *lzfs_fsal_create_context(liz_t *instance,
 
 fsal_staticfsinfo_t *lzfs_fsal_staticinfo(struct fsal_module *module_hdl)
 {
-	struct lzfs_fsal_module *lzfs_module = container_of(
-				module_hdl, struct lzfs_fsal_module, fsal);
+	struct lzfs_fsal_module *lzfs_module =
+		container_of(module_hdl, struct lzfs_fsal_module, fsal);
 	return &lzfs_module->fs_info;
 }
 
-struct lzfs_fsal_handle *lzfs_fsal_new_handle(
-		const struct stat *attr, struct lzfs_fsal_export *lzfs_export)
+struct lzfs_fsal_handle *
+lzfs_fsal_new_handle(const struct stat *attr,
+		     struct lzfs_fsal_export *lzfs_export)
 {
 	struct lzfs_fsal_handle *result = NULL;
 
@@ -124,8 +125,7 @@ struct lzfs_fsal_handle *lzfs_fsal_new_handle(
 	result->unique_key.export_id = lzfs_export->export.export_id;
 	result->unique_key.inode = attr->st_ino;
 
-	fsal_obj_handle_init(&result->handle,
-			     &lzfs_export->export,
+	fsal_obj_handle_init(&result->handle, &lzfs_export->export,
 			     posix2fsal_type(attr->st_mode), true);
 	lzfs_fsal_handle_ops_init(lzfs_export, result->handle.obj_ops);
 	result->handle.fsid = posix2fsal_fsid(attr->st_dev);

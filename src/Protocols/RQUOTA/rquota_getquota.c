@@ -26,7 +26,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "gsh_rpc.h"
@@ -35,7 +35,7 @@
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "mount.h"
-#include <os/quota.h>		/* For USRQUOTA */
+#include <os/quota.h> /* For USRQUOTA */
 #include "rquota.h"
 #include "nfs_proto_functions.h"
 #include "export_mgr.h"
@@ -84,8 +84,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 */
 	if (quota_path[0] != '/') {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Searching for export by tag for %s",
-			     quota_path);
+			     "Searching for export by tag for %s", quota_path);
 		exp = get_gsh_export_by_tag(quota_path);
 	} else if (nfs_param.core_param.mount_path_pseudo) {
 		LogFullDebug(COMPONENT_NFSPROTO,
@@ -94,15 +93,14 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		exp = get_gsh_export_by_pseudo(quota_path, false);
 	} else {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Searching for export by path for %s",
-			     quota_path);
+			     "Searching for export by path for %s", quota_path);
 		exp = get_gsh_export_by_path(quota_path, false);
 	}
 
 	if (exp == NULL) {
 		/* No export found, return ACCESS error. */
-		LogEvent(COMPONENT_NFSPROTO,
-			 "Export entry for %s not found", quota_path);
+		LogEvent(COMPONENT_NFSPROTO, "Export entry for %s not found",
+			 quota_path);
 
 		/* entry not found. */
 		return NFS_REQ_OK;
@@ -122,9 +120,10 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		return NFS_REQ_OK;
 	}
 
-	fsal_status = exp->fsal_export->exp_ops.get_quota(
-				exp->fsal_export, CTX_FULLPATH(op_ctx),
-				quota_type, quota_id, &fsal_quota);
+	fsal_status = exp->fsal_export->exp_ops.get_quota(exp->fsal_export,
+							  CTX_FULLPATH(op_ctx),
+							  quota_type, quota_id,
+							  &fsal_quota);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
@@ -137,8 +136,8 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	curblocksscaled = fsal_quota.curblocks;
 	bsizescaled = fsal_quota.bsize;
 	while ((bhardlimitscaled > UINT32_MAX) ||
-			(bsoftlimitscaled > UINT32_MAX) ||
-			(curblocksscaled > UINT32_MAX)) {
+	       (bsoftlimitscaled > UINT32_MAX) ||
+	       (curblocksscaled > UINT32_MAX)) {
 		/* check if we hit the limit of scaling, then limit to max */
 		if ((bsizescaled << 1) > UINT32_MAX) {
 			if (bhardlimitscaled > UINT32_MAX)
@@ -170,7 +169,7 @@ int rquota_getquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	qres->status = Q_OK;
 
 	return NFS_REQ_OK;
-}				/* rquota_getquota */
+} /* rquota_getquota */
 
 /**
  * @brief Free the result structure allocated for rquota_getquota

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
- /*
+/*
   * vimf:noexpandtab:shiftwidth=8:tabstop=8:
   *
   * Copyright CEA/DAM/DIF  (2008)
@@ -46,11 +46,9 @@
 #include "nfs_proto_tools.h"
 #include <assert.h>
 
-fsal_errors_t nfs3_readdir_callback(void *opaque,
-				    struct fsal_obj_handle *obj,
+fsal_errors_t nfs3_readdir_callback(void *opaque, struct fsal_obj_handle *obj,
 				    const struct fsal_attrlist *attr,
-				    uint64_t mounted_on_fileid,
-				    uint64_t cookie,
+				    uint64_t mounted_on_fileid, uint64_t cookie,
 				    enum cb_state cb_state);
 
 /**
@@ -61,20 +59,20 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
  */
 
 struct nfs3_readdir_cb_data {
-	XDR xdr;                /*< The xdrmem to serialize the entries */
-	uint8_t *entries;          /*< The array holding serialized entries */
-	size_t mem_avail;       /*< The amount of memory available before we
+	XDR xdr; /*< The xdrmem to serialize the entries */
+	uint8_t *entries; /*< The array holding serialized entries */
+	size_t mem_avail; /*< The amount of memory available before we
 				   hit maxcount */
-	int count;		/*< Number of entries accumulated so far. */
-	uint32_t max_count;	/*< Maximum number of entries allowed. */
-	nfsstat3 error;		/*< Set to a value other than NFS_OK if the
+	int count; /*< Number of entries accumulated so far. */
+	uint32_t max_count; /*< Maximum number of entries allowed. */
+	nfsstat3 error; /*< Set to a value other than NFS_OK if the
 				   callback function finds a fatal error. */
 };
 
-static
-nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj, const char *name,
-			       uint64_t cookie, helper_readdir_cb cb,
-			       struct nfs3_readdir_cb_data *tracker)
+static nfsstat3 nfs_readdir_dot_entry(struct fsal_obj_handle *obj,
+				      const char *name, uint64_t cookie,
+				      helper_readdir_cb cb,
+				      struct nfs3_readdir_cb_data *tracker)
 {
 	struct fsal_readdir_cb_parms cb_parms;
 	fsal_status_t fsal_status;
@@ -125,19 +123,18 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	uint64_t max_mem = 0;
 	object_file_type_t dir_filetype = 0;
 	bool eod_met = false;
-	fsal_status_t fsal_status = {0, 0};
-	fsal_status_t fsal_status_gethandle = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
+	fsal_status_t fsal_status_gethandle = { 0, 0 };
 	int rc = NFS_REQ_OK;
 	struct nfs3_readdir_cb_data tracker;
-	bool use_cookie_verifier = op_ctx_export_has_option(
-					EXPORT_OPTION_USE_COOKIE_VERIFIER);
+	bool use_cookie_verifier =
+		op_ctx_export_has_option(EXPORT_OPTION_USE_COOKIE_VERIFIER);
 	READDIR3resfail *resfail = &res->res_readdir3.READDIR3res_u.resfail;
 
-	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_readdir3.dir,
-			  "");
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_readdir3.dir, "");
 
-	READDIR3resok * const RES_READDIR3_OK =
-	    &res->res_readdir3.READDIR3res_u.resok;
+	READDIR3resok *const RES_READDIR3_OK =
+		&res->res_readdir3.READDIR3res_u.resok;
 
 	/* to avoid setting it on each error case */
 	resfail->dir_attributes.attributes_follow = FALSE;
@@ -146,8 +143,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Look up object for filehandle */
 	dir_obj = nfs3_FhandleToCache(&(arg->arg_readdir3.dir),
-					&(res->res_readdir3.status),
-					&rc);
+				      &(res->res_readdir3.status), &rc);
 	if (dir_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		goto out;
@@ -182,11 +178,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	else
 		maxcount = arg->arg_readdir3.count;
 
-	mem_avail = maxcount
-			- BYTES_PER_XDR_UNIT
-			- BYTES_PER_XDR_UNIT
-			- sizeof(struct fattr3_wire)
-			- sizeof(cookieverf3);
+	mem_avail = maxcount - BYTES_PER_XDR_UNIT - BYTES_PER_XDR_UNIT -
+		    sizeof(struct fattr3_wire) - sizeof(cookieverf3);
 
 	max_mem = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
 	tracker.mem_avail = MIN(mem_avail, max_mem);
@@ -201,7 +194,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	LogDebug(COMPONENT_NFS_READDIR,
 		 "---> NFS3_READDIR: count=%u  cookie=%" PRIu64
-		 " mem_avail=%zd max_count =%"PRIu32,
+		 " mem_avail=%zd max_count =%" PRIu32,
 		 arg->arg_readdir3.count, cookie, tracker.mem_avail,
 		 tracker.max_count);
 
@@ -222,9 +215,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res->res_readdir3.status =
-						nfs3_Errno_status(fsal_status);
-			LogDebug(COMPONENT_NFS_READDIR,
-				 "getattrs returned %s",
+				nfs3_Errno_status(fsal_status);
+			LogDebug(COMPONENT_NFS_READDIR, "getattrs returned %s",
 				 msg_fsal_err(fsal_status.major));
 			goto out;
 		}
@@ -240,8 +232,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* Not the first call, so we have to check the cookie
 		 * verifier
 		 */
-		if (memcmp(cookie_verifier,
-			   arg->arg_readdir3.cookieverf,
+		if (memcmp(cookie_verifier, arg->arg_readdir3.cookieverf,
 			   NFS3_COOKIEVERFSIZE) != 0) {
 			res->res_readdir3.status = NFS3ERR_BAD_COOKIE;
 			rc = NFS_REQ_OK;
@@ -259,7 +250,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	tracker.error = NFS3_OK;
 
 	/* Adjust the cookie we supply to fsal */
-	if (cookie > 2) {	/* it is not the cookie for "." nor ".." */
+	if (cookie > 2) { /* it is not the cookie for "." nor ".." */
 		fsal_cookie = cookie;
 	} else {
 		fsal_cookie = 0;
@@ -267,8 +258,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Fills "."  */
 	if (cookie == 0) {
-		res->res_readdir3.status = nfs_readdir_dot_entry(dir_obj, ".",
-					 1, nfs3_readdir_callback, &tracker);
+		res->res_readdir3.status = nfs_readdir_dot_entry(
+			dir_obj, ".", 1, nfs3_readdir_callback, &tracker);
 
 		if (res->res_readdir3.status != NFS3_OK) {
 			rc = NFS_REQ_OK;
@@ -279,19 +270,19 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Fills ".." */
 	if ((cookie <= 1)) {
 		/* Get parent pentry */
-		fsal_status_gethandle = fsal_lookupp(dir_obj,
-						     &parent_dir_obj,
-						     NULL);
+		fsal_status_gethandle =
+			fsal_lookupp(dir_obj, &parent_dir_obj, NULL);
 
 		if (parent_dir_obj == NULL) {
 			res->res_readdir3.status =
-			    nfs3_Errno_status(fsal_status_gethandle);
+				nfs3_Errno_status(fsal_status_gethandle);
 			rc = NFS_REQ_OK;
 			goto out_destroy;
 		}
 
-		res->res_readdir3.status = nfs_readdir_dot_entry(parent_dir_obj,
-				"..", 2, nfs3_readdir_callback, &tracker);
+		res->res_readdir3.status =
+			nfs_readdir_dot_entry(parent_dir_obj, "..", 2,
+					      nfs3_readdir_callback, &tracker);
 
 		if (res->res_readdir3.status != NFS3_OK) {
 			rc = NFS_REQ_OK;
@@ -304,7 +295,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Call readdir */
 	fsal_status = fsal_readdir(dir_obj, fsal_cookie, &num_entries, &eod_met,
-				   0,	/* no attr */
+				   0, /* no attr */
 				   nfs3_readdir_callback, &tracker);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
@@ -325,8 +316,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	LogDebug(COMPONENT_NFS_READDIR,
-		 "-- Readdir -> Call to fsal_readdir(cookie=%"
-		 PRIu64 ")",
+		 "-- Readdir -> Call to fsal_readdir(cookie=%" PRIu64 ")",
 		 fsal_cookie);
 
 	if ((num_entries == 0) && (cookie > 1)) {
@@ -357,8 +347,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		tmp = eod_met;
 		if (!xdr_bool(&tracker.xdr, &tmp)) {
 			/* Oops... */
-			LogCrit(COMPONENT_NFS_READDIR,
-				"Encode of EOD failed.");
+			LogCrit(COMPONENT_NFS_READDIR, "Encode of EOD failed.");
 			res->res_readdir3.status = NFS3ERR_SERVERFAULT;
 			goto out_destroy;
 		}
@@ -366,8 +355,8 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		pos_end = xdr_getpos(&tracker.xdr);
 
 		/* Get an xdr_uio and fill it in */
-		uio = gsh_calloc(
-			1, sizeof(struct xdr_uio) + sizeof(struct xdr_uio));
+		uio = gsh_calloc(1, sizeof(struct xdr_uio) +
+					    sizeof(struct xdr_uio));
 		uio->uio_release = xdr_dirlist3_uio_release;
 		uio->uio_count = 1;
 		uio->uio_vio[0].vio_base = tracker.entries;
@@ -393,7 +382,7 @@ out_destroy:
 
 	xdr_destroy(&tracker.xdr);
 
- out:
+out:
 	/* return references */
 	if (dir_obj)
 		dir_obj->obj_ops->put_ref(dir_obj);
@@ -408,7 +397,7 @@ out_destroy:
 	}
 
 	return rc;
-}				/* nfs3_readdir */
+} /* nfs3_readdir */
 
 /**
  * @brief Free the result structure allocated for nfs3_readdir
@@ -436,11 +425,9 @@ void nfs3_readdir_free(nfs_res_t *resp)
  * @param cookie [in] The readdir cookie for the current obj
  */
 
-fsal_errors_t nfs3_readdir_callback(void *opaque,
-				    struct fsal_obj_handle *obj,
+fsal_errors_t nfs3_readdir_callback(void *opaque, struct fsal_obj_handle *obj,
 				    const struct fsal_attrlist *attr,
-				    uint64_t mounted_on_fileid,
-				    uint64_t cookie,
+				    uint64_t mounted_on_fileid, uint64_t cookie,
 				    enum cb_state cb_state)
 {
 	/* Not-so-opaque pointer to callback data` */
@@ -451,7 +438,7 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 
 	memset(&e3, 0, sizeof(e3));
 	e3.fileid = obj->fileid;
-	e3.name = (char *) cb_parms->name;
+	e3.name = (char *)cb_parms->name;
 	e3.cookie = cookie;
 
 	/* Encode the entry into the xdrmem buffer and then assure there is
@@ -462,8 +449,8 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 	 */
 	if (tracker->count >= tracker->max_count ||
 	    !xdr_encode_entry3(&tracker->xdr, &e3) ||
-	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)
-	    >= tracker->mem_avail) {
+	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) >=
+		    tracker->mem_avail) {
 		bool_t res_false = false;
 
 		/* XDR serialization of the entry failed or we ran out of room
@@ -487,4 +474,4 @@ fsal_errors_t nfs3_readdir_callback(void *opaque,
 	}
 
 	return ERR_FSAL_NO_ERROR;
-}				/* nfs3_readdir_callback */
+} /* nfs3_readdir_callback */

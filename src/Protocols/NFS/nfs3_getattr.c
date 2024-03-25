@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "gsh_rpc.h"
@@ -76,13 +76,11 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_prepare_attrs(attrs, ATTRS_NFS3);
 
 	obj = nfs3_FhandleToCache(&arg->arg_getattr3.object,
-				    &res->res_getattr3.status,
-				    &rc);
+				  &res->res_getattr3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "nfs_Getattr returning %d",
+		LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr returning %d",
 			     rc);
 		goto out;
 	}
@@ -106,7 +104,7 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getattr succeeded");
 	rc = NFS_REQ_OK;
 
- out:
+out:
 
 	/* Done with the attrs (NFSv3 doesn't use ANY of the reffed attributes)
 	 */
@@ -117,7 +115,6 @@ int nfs3_getattr(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		obj->obj_ops->put_ref(obj);
 
 	return rc;
-
 }
 
 /**

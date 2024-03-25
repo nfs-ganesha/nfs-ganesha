@@ -130,9 +130,8 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 enum clnt_stat nfs_rpc_call(rpc_call_t *call, uint32_t flags);
 
 int nfs_rpc_cb_single(nfs_client_id_t *clientid, nfs_cb_argop4 *op,
-		       struct state_refer *refer,
-		       void (*completion)(rpc_call_t *),
-		       void *completion_arg);
+		      struct state_refer *refer,
+		      void (*completion)(rpc_call_t *), void *completion_arg);
 void nfs41_release_single(rpc_call_t *call);
 enum clnt_stat nfs_test_cb_chan(nfs_client_id_t *);
 

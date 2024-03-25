@@ -30,7 +30,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -54,23 +54,18 @@
  * @param[out] end_of_list	True if reached end of list
  * @return FSAL status
  */
-fsal_status_t mdcache_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				     unsigned int argcookie,
-				     fsal_xattrent_t *xattrs_tab,
-				     unsigned int xattrs_tabsize,
-				     unsigned int *p_nb_returned,
-				     int *end_of_list)
+fsal_status_t
+mdcache_list_ext_attrs(struct fsal_obj_handle *obj_hdl, unsigned int argcookie,
+		       fsal_xattrent_t *xattrs_tab, unsigned int xattrs_tabsize,
+		       unsigned int *p_nb_returned, int *end_of_list)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-		     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->list_ext_attrs(
+	subcall(status = handle->sub_handle->obj_ops->list_ext_attrs(
 			handle->sub_handle, argcookie, xattrs_tab,
-			xattrs_tabsize, p_nb_returned, end_of_list)
-	       );
+			xattrs_tabsize, p_nb_returned, end_of_list));
 
 	return status;
 }
@@ -89,15 +84,12 @@ fsal_status_t mdcache_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
 					    const char *name,
 					    unsigned int *p_id)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->getextattr_id_by_name(
-				handle->sub_handle, name, p_id)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->getextattr_id_by_name(
+			handle->sub_handle, name, p_id));
 
 	return status;
 }
@@ -115,21 +107,16 @@ fsal_status_t mdcache_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					     unsigned int id,
-					     void *buf,
+					     unsigned int id, void *buf,
 					     size_t buf_size,
 					     size_t *p_output_size)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->getextattr_value_by_id(
-				handle->sub_handle, id, buf,
-				buf_size, p_output_size)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->getextattr_value_by_id(
+			handle->sub_handle, id, buf, buf_size, p_output_size));
 
 	return status;
 }
@@ -147,21 +134,17 @@ fsal_status_t mdcache_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					       const char *name,
-					       void *buf,
+					       const char *name, void *buf,
 					       size_t buf_size,
 					       size_t *p_output_size)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->getextattr_value_by_name(
-				handle->sub_handle, name, buf,
-				buf_size, p_output_size)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->getextattr_value_by_name(
+			handle->sub_handle, name, buf, buf_size,
+			p_output_size));
 
 	return status;
 }
@@ -179,21 +162,15 @@ fsal_status_t mdcache_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				       const char *name,
-				       void *buf,
-				       size_t buf_size,
-				       int create)
+				       const char *name, void *buf,
+				       size_t buf_size, int create)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->setextattr_value(
-			handle->sub_handle, name, buf,
-			buf_size, create)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->setextattr_value(
+			handle->sub_handle, name, buf, buf_size, create));
 
 	return status;
 }
@@ -210,20 +187,15 @@ fsal_status_t mdcache_setextattr_value(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status
  */
 fsal_status_t mdcache_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					     unsigned int id,
-					     void *buf,
+					     unsigned int id, void *buf,
 					     size_t buf_size)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->setextattr_value_by_id(
-				handle->sub_handle, id, buf,
-				buf_size)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->setextattr_value_by_id(
+			handle->sub_handle, id, buf, buf_size));
 
 	return status;
 }
@@ -240,15 +212,12 @@ fsal_status_t mdcache_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 					   unsigned int id)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->remove_extattr_by_id(
-			handle->sub_handle, id)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->remove_extattr_by_id(
+			handle->sub_handle, id));
 
 	return status;
 }
@@ -265,15 +234,12 @@ fsal_status_t mdcache_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 					     const char *name)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->remove_extattr_by_name(
-			handle->sub_handle, name)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->remove_extattr_by_name(
+			handle->sub_handle, name));
 
 	return status;
 }
@@ -291,15 +257,12 @@ fsal_status_t mdcache_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_getxattrs(struct fsal_obj_handle *obj_hdl,
 				xattrkey4 *name, xattrvalue4 *value)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->getxattrs(
-			handle->sub_handle, name, value)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->getxattrs(
+			handle->sub_handle, name, value));
 
 	return status;
 }
@@ -319,15 +282,12 @@ fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
 				setxattr_option4 option, xattrkey4 *name,
 				xattrvalue4 *value)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->setxattrs(
-			handle->sub_handle, option, name, value)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->setxattrs(
+			handle->sub_handle, option, name, value));
 
 	return status;
 }
@@ -344,15 +304,12 @@ fsal_status_t mdcache_setxattrs(struct fsal_obj_handle *obj_hdl,
 fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
 				   xattrkey4 *name)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->removexattrs(
-			handle->sub_handle, name)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->removexattrs(
+			handle->sub_handle, name));
 
 	return status;
 }
@@ -370,19 +327,16 @@ fsal_status_t mdcache_removexattrs(struct fsal_obj_handle *obj_hdl,
  * @param[out] names	list of extended attribute names
  * @return FSAL status
  */
-fsal_status_t mdcache_listxattrs(struct fsal_obj_handle *obj_hdl,
-				 count4 len, nfs_cookie4 *cookie,
-				 bool_t *eof, xattrlist4 *names)
+fsal_status_t mdcache_listxattrs(struct fsal_obj_handle *obj_hdl, count4 len,
+				 nfs_cookie4 *cookie, bool_t *eof,
+				 xattrlist4 *names)
 {
-	struct mdcache_fsal_obj_handle *handle =
-		container_of(obj_hdl, struct mdcache_fsal_obj_handle,
-			     obj_handle);
+	struct mdcache_fsal_obj_handle *handle = container_of(
+		obj_hdl, struct mdcache_fsal_obj_handle, obj_handle);
 	fsal_status_t status;
 
-	subcall(
-		status = handle->sub_handle->obj_ops->listxattrs(
-			handle->sub_handle, len, cookie, eof, names)
-	       );
+	subcall(status = handle->sub_handle->obj_ops->listxattrs(
+			handle->sub_handle, len, cookie, eof, names));
 
 	return status;
 }

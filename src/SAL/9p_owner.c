@@ -112,8 +112,8 @@ int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2)
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		char str1[LOG_BUFF_LEN / 2] = "\0";
 		char str2[LOG_BUFF_LEN / 2] = "\0";
-		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
-		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+		struct display_buffer dspbuf1 = { sizeof(str1), str1, str1 };
+		struct display_buffer dspbuf2 = { sizeof(str2), str2, str2 };
 
 		display_9p_owner(&dspbuf1, owner1);
 		display_9p_owner(&dspbuf2, owner2);
@@ -154,7 +154,6 @@ int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2)
 int compare_9p_owner_key(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
 	return compare_9p_owner(buff1->addr, buff2->addr);
-
 }
 
 /**
@@ -173,7 +172,7 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
 	state_owner_t *pkey = key->addr;
 
 	struct sockaddr_in *paddr =
-	    (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
+		(struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
 
 	/* so_owner_len is always zero so don't bother with so_owner_val */
 
@@ -188,7 +187,6 @@ uint32_t _9p_owner_value_hash_func(hash_parameter_t *hparam,
 			     res % hparam->index_size);
 
 	return (uint32_t)(res % hparam->index_size);
-
 }
 
 /**
@@ -207,7 +205,7 @@ uint64_t _9p_owner_rbt_hash_func(hash_parameter_t *hparam,
 	state_owner_t *pkey = key->addr;
 
 	struct sockaddr_in *paddr =
-	    (struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
+		(struct sockaddr_in *)&pkey->so_owner.so_9p_owner.client_addr;
 
 	/* so_owner_len is always zero so don't bother with so_owner_val */
 
@@ -261,8 +259,7 @@ int Init_9p_hash(void)
  * @return The found owner or NULL.
  */
 
-state_owner_t *get_9p_owner(sockaddr_t *client_addr,
-			    uint32_t proc_id)
+state_owner_t *get_9p_owner(sockaddr_t *client_addr, uint32_t proc_id)
 {
 	state_owner_t key;
 

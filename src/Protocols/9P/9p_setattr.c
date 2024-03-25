@@ -80,14 +80,14 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, mtime_sec, u64);
 	_9p_getptr(cursor, mtime_nsec, u64);
 
-	LogDebug(COMPONENT_9P,
-		 "TSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%"
-		 PRIu64 " atime=(%llu|%llu) mtime=(%llu|%llu)", (u32) *msgtag,
-		 *fid, *valid, *mode, *uid, *gid, *size,
-		 (unsigned long long)*atime_sec,
-		 (unsigned long long)*atime_nsec,
-		 (unsigned long long)*mtime_sec,
-		 (unsigned long long)*mtime_nsec);
+	LogDebug(
+		COMPONENT_9P,
+		"TSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%" PRIu64
+		" atime=(%llu|%llu) mtime=(%llu|%llu)",
+		(u32)*msgtag, *fid, *valid, *mode, *uid, *gid, *size,
+		(unsigned long long)*atime_sec, (unsigned long long)*atime_nsec,
+		(unsigned long long)*mtime_sec,
+		(unsigned long long)*mtime_nsec);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -110,11 +110,12 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*valid &
 	    (_9P_SETATTR_ATIME | _9P_SETATTR_CTIME | _9P_SETATTR_MTIME)) {
 		if (gettimeofday(&t, NULL) == -1) {
-			LogMajor(COMPONENT_9P,
-				 "TSETATTR: tag=%u fid=%u ERROR !! gettimeofday returned -1 with errno=%u",
-				 (u32) *msgtag, *fid, errno);
-			return _9p_rerror(req9p, msgtag, errno,
-					  plenout, preply);
+			LogMajor(
+				COMPONENT_9P,
+				"TSETATTR: tag=%u fid=%u ERROR !! gettimeofday returned -1 with errno=%u",
+				(u32)*msgtag, *fid, errno);
+			return _9p_rerror(req9p, msgtag, errno, plenout,
+					  preply);
 		}
 	}
 
@@ -178,9 +179,8 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_release_attrs(&fsalattr);
 
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RSETATTR);
@@ -189,14 +189,14 @@ int _9p_setattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%"
-		 PRIu64 " atime=(%llu|%llu) mtime=(%llu|%llu)", (u32) *msgtag,
-		 *fid, *valid, *mode, *uid, *gid, *size,
-		 (unsigned long long)*atime_sec,
-		 (unsigned long long)*atime_nsec,
-		 (unsigned long long)*mtime_sec,
-		 (unsigned long long)*mtime_nsec);
+	LogDebug(
+		COMPONENT_9P,
+		"RSETATTR: tag=%u fid=%u valid=0x%x mode=0%o uid=%u gid=%u size=%" PRIu64
+		" atime=(%llu|%llu) mtime=(%llu|%llu)",
+		(u32)*msgtag, *fid, *valid, *mode, *uid, *gid, *size,
+		(unsigned long long)*atime_sec, (unsigned long long)*atime_nsec,
+		(unsigned long long)*mtime_sec,
+		(unsigned long long)*mtime_nsec);
 
 	/* _9p_stat_update(*pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req); */
 	return 1;

@@ -40,28 +40,29 @@
 
 /* CONSTANTS */
 /* String forms (cidr_to_str()) */
-#define CIDR_NOFLAGS      (0)
-#define CIDR_NOCOMPACT    (1)	/* Don't do :: compaction */
-#define CIDR_VERBOSE      (1<<1)	/* Don't minimize leading zeros */
-#define CIDR_USEV6        (1<<2)	/* Use v6 form for v4 addresses */
-#define CIDR_USEV4COMPAT  (1<<3)	/* Use v4-compat rather than v4-mapped */
-#define CIDR_NETMASK      (1<<4)	/* Show netmask instead of pflen */
-#define CIDR_ONLYADDR     (1<<5)	/* Only show the address */
-#define CIDR_ONLYPFLEN    (1<<6)	/* Only show the pf/mask */
-#define CIDR_WILDCARD     (1<<7)	/* Show wildcard-mask instead of netmask */
-#define CIDR_FORCEV6      (1<<8)	/* Force treating as v6 address */
-#define CIDR_FORCEV4      (1<<9)	/* Force treating as v4 address */
-#define CIDR_REVERSE      (1<<10)	/* Return a DNS PTR name */
+#define CIDR_NOFLAGS (0)
+#define CIDR_NOCOMPACT (1) /* Don't do :: compaction */
+#define CIDR_VERBOSE (1 << 1) /* Don't minimize leading zeros */
+#define CIDR_USEV6 (1 << 2) /* Use v6 form for v4 addresses */
+#define CIDR_USEV4COMPAT (1 << 3) /* Use v4-compat rather than v4-mapped */
+#define CIDR_NETMASK (1 << 4) /* Show netmask instead of pflen */
+#define CIDR_ONLYADDR (1 << 5) /* Only show the address */
+#define CIDR_ONLYPFLEN (1 << 6) /* Only show the pf/mask */
+#define CIDR_WILDCARD (1 << 7) /* Show wildcard-mask instead of netmask */
+#define CIDR_FORCEV6 (1 << 8) /* Force treating as v6 address */
+#define CIDR_FORCEV4 (1 << 9) /* Force treating as v4 address */
+#define CIDR_REVERSE (1 << 10) /* Return a DNS PTR name */
 
 /* Protocols */
-#define CIDR_NOPROTO        0
-#define CIDR_IPV4           1
-#define CIDR_IPV6           2
+#define CIDR_NOPROTO 0
+#define CIDR_IPV4 1
+#define CIDR_IPV6 2
 
 /* Versioning info */
 #define CIDR_VERSION "1.1"
 #define CIDR_RELEASE "release"
-#define CIDR_REVISION " (fullermd@over-yonder.net-20061125141312-f6mjjptgl4zqh6wt)"
+#define CIDR_REVISION \
+	" (fullermd@over-yonder.net-20061125141312-f6mjjptgl4zqh6wt)"
 #define CIDR_VERSION_STR (CIDR_VERSION "-" CIDR_RELEASE CIDR_REVISION)
 
 /* DATA STRUCTURES */
@@ -114,4 +115,4 @@ struct in6_addr *cidr_to_in6addr(const CIDR *, struct in6_addr *);
 char *cidr_to_str(const CIDR *, int);
 const char *cidr_version(void);
 
-#endif				/* __LIBCIDR_H */
+#endif /* __LIBCIDR_H */

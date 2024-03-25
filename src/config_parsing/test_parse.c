@@ -54,8 +54,7 @@ int main(int argc, char **argv)
 
 	config_Print(stdout, config);
 
-
-/* free and reload the file */
+	/* free and reload the file */
 	config_Free(config);
 
 	config = config_ParseFile(fichier);
@@ -71,5 +70,4 @@ int main(int argc, char **argv)
 	config_Free(config);
 
 	exit(0);
-
 }

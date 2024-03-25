@@ -68,9 +68,9 @@ void cleanup_layouts(compound_data_t *data)
 	 * return_on_close.
 	 */
 
-	glist_for_each(glist, &ostate->file.list_of_states) {
-		state_t *state = glist_entry(glist, state_t,
-					     state_list);
+	glist_for_each(glist, &ostate->file.list_of_states)
+	{
+		state_t *state = glist_entry(glist, state_t, state_list);
 		state_owner_t *owner = get_state_owner_ref(state);
 
 		if (owner == NULL) {
@@ -80,8 +80,8 @@ void cleanup_layouts(compound_data_t *data)
 
 		if ((state->state_type == STATE_TYPE_SHARE) &&
 		    (owner->so_type == STATE_OPEN_OWNER_NFSV4) &&
-		    (owner->so_owner.so_nfs4_owner.so_clientid
-		     == data->session->clientid)) {
+		    (owner->so_owner.so_nfs4_owner.so_clientid ==
+		     data->session->clientid)) {
 			dec_state_owner_ref(owner);
 			return;
 		}
@@ -89,17 +89,13 @@ void cleanup_layouts(compound_data_t *data)
 		dec_state_owner_ref(owner);
 	}
 
-	glist_for_each_safe(glist,
-			    glistn,
-			    &ostate->file.list_of_states) {
-		state_t *state = glist_entry(glist, state_t,
-					     state_list);
+	glist_for_each_safe(glist, glistn, &ostate->file.list_of_states)
+	{
+		state_t *state = glist_entry(glist, state_t, state_list);
 		bool deleted = false;
-		struct pnfs_segment entire = {
-			.io_mode = LAYOUTIOMODE4_ANY,
-			.offset = 0,
-			.length = NFS4_UINT64_MAX
-		};
+		struct pnfs_segment entire = { .io_mode = LAYOUTIOMODE4_ANY,
+					       .offset = 0,
+					       .length = NFS4_UINT64_MAX };
 		state_owner_t *owner = get_state_owner_ref(state);
 
 		if (owner == NULL) {
@@ -108,17 +104,13 @@ void cleanup_layouts(compound_data_t *data)
 		}
 
 		if ((state->state_type == STATE_TYPE_LAYOUT) &&
-		    (owner->so_owner.so_nfs4_owner.so_clientrec
-		      == data->session->clientid_record) &&
+		    (owner->so_owner.so_nfs4_owner.so_clientrec ==
+		     data->session->clientid_record) &&
 		    state->state_data.layout.state_return_on_close) {
 			nfs4_return_one_state(data->current_obj,
 					      LAYOUTRETURN4_FILE,
-					      circumstance_roc,
-					      state,
-					      entire,
-					      0,
-					      NULL,
-					      &deleted);
+					      circumstance_roc, state, entire,
+					      0, NULL, &deleted);
 			if (!deleted) {
 				LogCrit(COMPONENT_PNFS,
 					"Layout state not destroyed on last close return.");
@@ -147,9 +139,9 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 				  struct nfs_resop4 *resp)
 {
 	/* Short alias for arguments */
-	CLOSE4args * const arg_CLOSE4 = &op->nfs_argop4_u.opclose;
+	CLOSE4args *const arg_CLOSE4 = &op->nfs_argop4_u.opclose;
 	/* Short alias for response */
-	CLOSE4res * const res_CLOSE4 = &resp->nfs_resop4_u.opclose;
+	CLOSE4res *const res_CLOSE4 = &resp->nfs_resop4_u.opclose;
 	/* Status for NFS protocol functions */
 	nfsstat4 nfs_status = NFS4_OK;
 	/* The state for the open to be closed */
@@ -178,15 +170,12 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check stateid correctness and get pointer to state */
 	nfs_status = nfs4_Check_Stateid(&arg_CLOSE4->open_stateid,
-					data->current_obj,
-					&state_found,
-					data,
+					data->current_obj, &state_found, data,
 					data->minorversion == 0 ?
-					    STATEID_SPECIAL_FOR_CLOSE_40 :
-					    STATEID_SPECIAL_FOR_CLOSE_41,
+						STATEID_SPECIAL_FOR_CLOSE_40 :
+						STATEID_SPECIAL_FOR_CLOSE_41,
 					arg_CLOSE4->seqid,
-					data->minorversion == 0,
-					close_tag);
+					data->minorversion == 0, close_tag);
 
 	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_CLOSE4->status = nfs_status;
@@ -211,32 +200,27 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 			dec_state_t_ref(state_found);
 		res_CLOSE4->status = NFS4_OK;
 		memcpy(res_CLOSE4->CLOSE4res_u.open_stateid.other,
-		       arg_CLOSE4->open_stateid.other,
-		       OTHERSIZE);
+		       arg_CLOSE4->open_stateid.other, OTHERSIZE);
 
 		res_CLOSE4->CLOSE4res_u.open_stateid.seqid =
-		    arg_CLOSE4->open_stateid.seqid + 1;
+			arg_CLOSE4->open_stateid.seqid + 1;
 
 		if (res_CLOSE4->CLOSE4res_u.open_stateid.seqid == 0)
 			res_CLOSE4->CLOSE4res_u.open_stateid.seqid = 1;
 
-		LogDebug(COMPONENT_STATE,
-			 "CLOSE failed nfs4_Check_Stateid must have already been closed. But treating it as replayed close and returning NFS4_OK");
+		LogDebug(
+			COMPONENT_STATE,
+			"CLOSE failed nfs4_Check_Stateid must have already been closed. But treating it as replayed close and returning NFS4_OK");
 
 		return NFS_REQ_OK;
 	}
-
 
 	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
 	if (data->minorversion == 0) {
-		if (!Check_nfs4_seqid(open_owner,
-				      arg_CLOSE4->seqid,
-				      op,
-				      state_obj,
-				      resp,
-				      close_tag)) {
+		if (!Check_nfs4_seqid(open_owner, arg_CLOSE4->seqid, op,
+				      state_obj, resp, close_tag)) {
 			/* Response is all setup for us and LogDebug
 			 * told what was wrong
 			 */
@@ -251,10 +235,10 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Clean all associated lock states */
 	glist_for_each_safe(glist, glistn,
-			    &state_found->state_data.share.share_lockstates) {
-		state_t *lock_state =
-				glist_entry(glist, state_t,
-					    state_data.lock.state_sharelist);
+			    &state_found->state_data.share.share_lockstates)
+	{
+		state_t *lock_state = glist_entry(
+			glist, state_t, state_data.lock.state_sharelist);
 
 		inc_state_t_ref(lock_state);
 
@@ -268,15 +252,13 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	if (data->minorversion == 0) {
 		/* Handle stateid/seqid for success for v4.0 */
 		update_stateid(state_found,
-			       &res_CLOSE4->CLOSE4res_u.open_stateid,
-			       data,
+			       &res_CLOSE4->CLOSE4res_u.open_stateid, data,
 			       close_tag);
 	} else {
 		/* In NFS V4.1 and later, the server SHOULD return a special
 		 * invalid stateid to prevent re-use of a now closed stateid.
 		 */
-		memcpy(&res_CLOSE4->CLOSE4res_u.open_stateid.other,
-		       all_zero,
+		memcpy(&res_CLOSE4->CLOSE4res_u.open_stateid.other, all_zero,
 		       sizeof(res_CLOSE4->CLOSE4res_u.open_stateid.other));
 		res_CLOSE4->CLOSE4res_u.open_stateid.seqid = UINT32_MAX;
 	}
@@ -310,13 +292,13 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 				    state_obj, resp, close_tag);
 	}
 
- out2:
+out2:
 	dec_state_owner_ref(open_owner);
 	state_obj->obj_ops->put_ref(state_obj);
 	dec_state_t_ref(state_found);
 
 	return nfsstat4_to_nfs_req_result(res_CLOSE4->status);
-}				/* nfs4_op_close */
+} /* nfs4_op_close */
 
 /**
  * @brief Free memory allocated for CLOSE result

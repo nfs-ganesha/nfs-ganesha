@@ -63,12 +63,13 @@ static unsigned int _valid_lease(nfs_client_id_t *clientid, bool is_from_reaper)
 	t = time(NULL);
 
 	if (clientid->cid_last_renew + nfs_param.nfsv4_param.lease_lifetime >
-		t) {
+	    t) {
 		return (clientid->cid_last_renew +
-			nfs_param.nfsv4_param.lease_lifetime) - t;
+			nfs_param.nfsv4_param.lease_lifetime) -
+		       t;
 	} else if (!is_from_reaper && clientid->marked_for_delayed_cleanup) {
 		LogFullDebug(COMPONENT_CLIENTID,
-			"Returning as valid as client is added to list");
+			     "Returning as valid as client is added to list");
 		return 1;
 	}
 
@@ -95,7 +96,7 @@ bool valid_lease(nfs_client_id_t *clientid, bool is_from_reaper)
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID,
@@ -128,7 +129,7 @@ int reserve_lease(nfs_client_id_t *clientid)
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID,
@@ -168,7 +169,7 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update,
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID,
@@ -188,7 +189,7 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update,
 		}
 
 		/* Get the client record. */
-		nfs_client_record_t *client_rec =  clientid->cid_client_record;
+		nfs_client_record_t *client_rec = clientid->cid_client_record;
 
 		/* get a ref to client_id as we might drop the
 		* last reference with expiring.
@@ -257,7 +258,7 @@ void update_lease(nfs_client_id_t *clientid)
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID, "Update Lease %s", str);

@@ -26,28 +26,36 @@
  * The definition has been stolen from the Linux kernel.
  */
 #ifdef __GNUC__
-#define bstree_container_of(node, type, member) ({			\
-	const struct bstree_node *__mptr = (node);			\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
-#define rbtree_container_of(node, type, member) ({			\
-	const struct rbtree_node *__mptr = (node);			\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
-#define avltree_container_of(node, type, member) ({			\
-	const struct avltree_node *__mptr = (node);			\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
-#define splaytree_container_of(node, type, member) ({			\
-	const struct splaytree_node *__mptr = (node);			\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
+#define bstree_container_of(node, type, member)                    \
+	({                                                         \
+		const struct bstree_node *__mptr = (node);         \
+		(type *)((char *)__mptr - offsetof(type, member)); \
+	})
+#define rbtree_container_of(node, type, member)                    \
+	({                                                         \
+		const struct rbtree_node *__mptr = (node);         \
+		(type *)((char *)__mptr - offsetof(type, member)); \
+	})
+#define avltree_container_of(node, type, member)                   \
+	({                                                         \
+		const struct avltree_node *__mptr = (node);        \
+		(type *)((char *)__mptr - offsetof(type, member)); \
+	})
+#define splaytree_container_of(node, type, member)                 \
+	({                                                         \
+		const struct splaytree_node *__mptr = (node);      \
+		(type *)((char *)__mptr - offsetof(type, member)); \
+	})
 #else
-#define bstree_container_of(node, type, member)			\
+#define bstree_container_of(node, type, member) \
 	((type *)((char *)(node) - offsetof(type, member)))
-#define rbtree_container_of(node, type, member)			\
+#define rbtree_container_of(node, type, member) \
 	((type *)((char *)(node) - offsetof(type, member)))
-#define avltree_container_of(node, type, member)			\
+#define avltree_container_of(node, type, member) \
 	((type *)((char *)(node) - offsetof(type, member)))
-#define splaytree_container_of(node, type, member)			\
+#define splaytree_container_of(node, type, member) \
 	((type *)((char *)(node) - offsetof(type, member)))
-#endif				/* __GNUC__ */
+#endif /* __GNUC__ */
 
 /*
  * Threaded binary search tree
@@ -56,20 +64,20 @@
 
 struct bstree_node {
 	uintptr_t left, right;
-} __attribute__ ((aligned(2)));
+} __attribute__((aligned(2)));
 
 #else
 
 struct bstree_node {
 	struct bstree_node *left, *right;
-	unsigned left_is_thread:1;
-	unsigned right_is_thread:1;
+	unsigned left_is_thread : 1;
+	unsigned right_is_thread : 1;
 };
 
-#endif				/* UINTPTR_MAX */
+#endif /* UINTPTR_MAX */
 
-typedef int (*bstree_cmp_fn_t) (const struct bstree_node *,
-				const struct bstree_node *);
+typedef int (*bstree_cmp_fn_t)(const struct bstree_node *,
+			       const struct bstree_node *);
 
 struct bstree {
 	struct bstree_node *root;
@@ -105,7 +113,7 @@ enum rb_color {
 struct rbtree_node {
 	struct rbtree_node *left, *right;
 	uintptr_t parent;
-} __attribute__ ((aligned(2)));
+} __attribute__((aligned(2)));
 
 #else
 
@@ -115,10 +123,10 @@ struct rbtree_node {
 	enum rb_color color;
 };
 
-#endif				/* UINTPTR_MAX */
+#endif /* UINTPTR_MAX */
 
-typedef int (*rbtree_cmp_fn_t) (const struct rbtree_node *,
-				const struct rbtree_node *);
+typedef int (*rbtree_cmp_fn_t)(const struct rbtree_node *,
+			       const struct rbtree_node *);
 
 struct rbtree {
 	struct rbtree_node *root;
@@ -148,8 +156,8 @@ int rbtree_init(struct rbtree *tree, rbtree_cmp_fn_t cmp, unsigned long flags);
 
 struct avltree_node {
 	struct avltree_node *left, *right;
-	uintptr_t parent;	/* balance factor [0:4] */
-} __attribute__ ((aligned(8)));
+	uintptr_t parent; /* balance factor [0:4] */
+} __attribute__((aligned(8)));
 
 static inline signed int get_balance(struct avltree_node *node)
 {
@@ -161,7 +169,7 @@ static inline signed int get_balance(struct avltree_node *node)
 struct avltree_node {
 	struct avltree_node *left, *right;
 	struct avltree_node *parent;
-	signed balance:3;	/* balance factor [-2:+2] */
+	signed balance : 3; /* balance factor [-2:+2] */
 };
 
 static inline signed int get_balance(struct avltree_node *node)
@@ -171,8 +179,8 @@ static inline signed int get_balance(struct avltree_node *node)
 
 #endif
 
-typedef int (*avltree_cmp_fn_t) (const struct avltree_node *,
-				 const struct avltree_node *);
+typedef int (*avltree_cmp_fn_t)(const struct avltree_node *,
+				const struct avltree_node *);
 
 struct avltree {
 	struct avltree_node *root;
@@ -202,13 +210,11 @@ struct avltree {
  *
  * @returns The node found if any
  */
-static inline
-struct avltree_node *avltree_do_lookup(const struct avltree_node *key,
-				       const struct avltree *tree,
-				       struct avltree_node **pparent,
-				       struct avltree_node **unbalanced,
-				       int *is_left,
-				       avltree_cmp_fn_t cmp_fn)
+static inline struct avltree_node *
+avltree_do_lookup(const struct avltree_node *key, const struct avltree *tree,
+		  struct avltree_node **pparent,
+		  struct avltree_node **unbalanced, int *is_left,
+		  avltree_cmp_fn_t cmp_fn)
 {
 	struct avltree_node *node = tree->root;
 	int res = 0;
@@ -234,10 +240,9 @@ struct avltree_node *avltree_do_lookup(const struct avltree_node *key,
 	return NULL;
 }
 
-static inline
-struct avltree_node *avltree_inline_lookup(const struct avltree_node *key,
-					   const struct avltree *tree,
-					   avltree_cmp_fn_t cmp_fn)
+static inline struct avltree_node *
+avltree_inline_lookup(const struct avltree_node *key,
+		      const struct avltree *tree, avltree_cmp_fn_t cmp_fn)
 {
 	struct avltree_node *parent, *unbalanced;
 	int is_left;
@@ -246,23 +251,19 @@ struct avltree_node *avltree_inline_lookup(const struct avltree_node *key,
 				 cmp_fn);
 }
 
-static inline
-struct avltree_node *avltree_lookup(const struct avltree_node *key,
-				    const struct avltree *tree)
+static inline struct avltree_node *
+avltree_lookup(const struct avltree_node *key, const struct avltree *tree)
 {
 	return avltree_inline_lookup(key, tree, tree->cmp_fn);
 }
 
-void avltree_do_insert(struct avltree_node *node,
-		       struct avltree *tree,
+void avltree_do_insert(struct avltree_node *node, struct avltree *tree,
 		       struct avltree_node *parent,
-		       struct avltree_node *unbalanced,
-		       int is_left);
+		       struct avltree_node *unbalanced, int is_left);
 
-static inline
-struct avltree_node *avltree_inline_insert(struct avltree_node *node,
-					   struct avltree *tree,
-					   avltree_cmp_fn_t cmp_fn)
+static inline struct avltree_node *
+avltree_inline_insert(struct avltree_node *node, struct avltree *tree,
+		      avltree_cmp_fn_t cmp_fn)
 {
 	struct avltree_node *found, *parent, *unbalanced;
 	int is_left;
@@ -278,21 +279,18 @@ struct avltree_node *avltree_inline_insert(struct avltree_node *node,
 	return NULL;
 }
 
-static inline
-struct avltree_node *avltree_insert(struct avltree_node *node,
-				    struct avltree *tree)
+static inline struct avltree_node *avltree_insert(struct avltree_node *node,
+						  struct avltree *tree)
 {
 	return avltree_inline_insert(node, tree, tree->cmp_fn);
 }
 
-static inline
-struct avltree_node *avltree_first(const struct avltree *tree)
+static inline struct avltree_node *avltree_first(const struct avltree *tree)
 {
 	return tree->first;
 }
 
-static inline
-struct avltree_node *avltree_last(const struct avltree *tree)
+static inline struct avltree_node *avltree_last(const struct avltree *tree)
 {
 	return tree->last;
 }
@@ -317,20 +315,20 @@ int avltree_init(struct avltree *tree, avltree_cmp_fn_t cmp,
 
 struct splaytree_node {
 	uintptr_t left, right;
-} __attribute__ ((aligned(2)));
+} __attribute__((aligned(2)));
 
 #else
 
 struct splaytree_node {
 	struct splaytree_node *left, *right;
-	unsigned left_is_thread:1;
-	unsigned right_is_thread:1;
+	unsigned left_is_thread : 1;
+	unsigned right_is_thread : 1;
 };
 
 #endif
 
-typedef int (*splaytree_cmp_fn_t) (const struct splaytree_node *,
-				   const struct splaytree_node *);
+typedef int (*splaytree_cmp_fn_t)(const struct splaytree_node *,
+				  const struct splaytree_node *);
 
 struct splaytree {
 	struct splaytree_node *root;
@@ -354,4 +352,4 @@ void splaytree_replace(struct splaytree_node *old, struct splaytree_node *newe,
 int splaytree_init(struct splaytree *tree, splaytree_cmp_fn_t cmp,
 		   unsigned long flags);
 
-#endif				/* _LIBTREE_H */
+#endif /* _LIBTREE_H */

@@ -70,4 +70,4 @@ nfsstat3 nfs3_Errno_verbose(fsal_status_t, const char *);
 }
 #endif
 
-#endif				/* _NFS_CONVERT_H */
+#endif /* _NFS_CONVERT_H */

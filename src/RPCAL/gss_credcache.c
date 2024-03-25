@@ -95,19 +95,14 @@
  */
 
 #ifdef HAVE_KRB5
-#define k5_free_unparsed_name(ctx, name)	\
-	krb5_free_unparsed_name((ctx), (name))
-#define k5_free_default_realm(ctx, realm)	\
+#define k5_free_unparsed_name(ctx, name) krb5_free_unparsed_name((ctx), (name))
+#define k5_free_default_realm(ctx, realm) \
 	krb5_free_default_realm((ctx), (realm))
-#define k5_free_kt_entry(ctx, kte)			\
-	krb5_free_keytab_entry_contents((ctx), (kte))
-#else				/* Heimdal */
-#define k5_free_unparsed_name(ctx, name)	\
-	gsh_free(name)
-#define k5_free_default_realm(ctx, realm)	\
-	gsh_free(realm)
-#define k5_free_kt_entry(ctx, kte)		\
-	krb5_kt_free_entry((ctx), (kte))
+#define k5_free_kt_entry(ctx, kte) krb5_free_keytab_entry_contents((ctx), (kte))
+#else /* Heimdal */
+#define k5_free_unparsed_name(ctx, name) gsh_free(name)
+#define k5_free_default_realm(ctx, realm) gsh_free(realm)
+#define k5_free_kt_entry(ctx, kte) krb5_kt_free_entry((ctx), (kte))
 
 #undef USE_GSS_KRB5_CCACHE_NAME
 #define USE_GSS_KRB5_CCACHE_NAME 1
@@ -127,15 +122,13 @@ struct gssd_k5_kt_princ {
 
 typedef void (*gssd_err_func_t)(const char *, ...);
 
-
 static int use_memcache;
 static struct gssd_k5_kt_princ *gssd_k5_kt_princ_list;
 static pthread_mutex_t ple_mtx;
 
 static char *gssd_k5_err_msg(krb5_context context, krb5_error_code code);
 static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
-				     struct gssd_k5_kt_princ *ple,
-				     int nocache);
+				     struct gssd_k5_kt_princ *ple, int nocache);
 static void gssd_set_krb5_ccache_name(char *ccname);
 
 void gssd_init_cred_cache(void)
@@ -164,11 +157,11 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 				     struct gssd_k5_kt_princ *ple, int nocache)
 {
 #if HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ADDRESSLESS
-	krb5_get_init_creds_opt * init_opts = NULL;
+	krb5_get_init_creds_opt *init_opts = NULL;
 #else
 	krb5_get_init_creds_opt options;
 #endif
-	krb5_get_init_creds_opt * opts;
+	krb5_get_init_creds_opt *opts;
 	krb5_creds my_creds;
 	krb5_ccache ccache = NULL;
 	char kt_name[BUFSIZ];
@@ -183,8 +176,8 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 
 	if (ple->ccname && ple->endtime > now && !nocache) {
 		LogFullDebug(COMPONENT_NFS_CB,
-			 "INFO: Credentials in CC '%s' are good until %d",
-			 ple->ccname, ple->endtime);
+			     "INFO: Credentials in CC '%s' are good until %d",
+			     ple->ccname, ple->endtime);
 		code = 0;
 		goto out;
 	}
@@ -192,7 +185,7 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	code = krb5_kt_get_name(context, kt, kt_name, BUFSIZ);
 	if (code != 0) {
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: Unable to get keytab name in %s", __func__);
+			"ERROR: Unable to get keytab name in %s", __func__);
 		goto out;
 	}
 
@@ -203,13 +196,13 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	code = krb5_get_init_creds_opt_alloc(context, &init_opts);
 	if (code) {
 		k5err = gssd_k5_err_msg(context, code);
-		LogCrit(COMPONENT_NFS_CB,
-			"ERROR: %s allocating gic options", k5err);
+		LogCrit(COMPONENT_NFS_CB, "ERROR: %s allocating gic options",
+			k5err);
 		goto out;
 	}
 	if (krb5_get_init_creds_opt_set_addressless(context, init_opts, 1))
 		LogWarn(COMPONENT_NFS_CB,
-			 "WARNING: Unable to set option for addressless tickets.  May have problems behind a NAT.");
+			"WARNING: Unable to set option for addressless tickets.  May have problems behind a NAT.");
 #ifdef TEST_SHORT_LIFETIME
 	/* set a short lifetime (for debugging only!) */
 	LogCrit(COMPONENT_NFS_CB,
@@ -231,15 +224,13 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	opts = &options;
 #endif
 
-	code = krb5_get_init_creds_keytab(context, &my_creds,
-					  ple->princ, kt, 0,
+	code = krb5_get_init_creds_keytab(context, &my_creds, ple->princ, kt, 0,
 					  NULL, opts);
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogWarn(COMPONENT_NFS_CB,
-			 "WARNING: %s while getting initial ticket for principal '%s' using keytab '%s'",
-			 k5err,
-			 pname ? pname : "<unparsable>", kt_name);
+			"WARNING: %s while getting initial ticket for principal '%s' using keytab '%s'",
+			k5err, pname ? pname : "<unparsable>", kt_name);
 		goto out;
 	}
 
@@ -271,33 +262,34 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s while opening credential cache '%s'",
-			 k5err, cc_name);
+			"ERROR: %s while opening credential cache '%s'", k5err,
+			cc_name);
 		goto out;
 	}
 	code = krb5_cc_initialize(context, ccache, ple->princ);
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s while initializing credential cache '%s'",
-			 k5err, cc_name);
+			"ERROR: %s while initializing credential cache '%s'",
+			k5err, cc_name);
 		goto out;
 	}
 	code = krb5_cc_store_cred(context, ccache, &my_creds);
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s while storing credentials in '%s'",
-			 k5err, cc_name);
+			"ERROR: %s while storing credentials in '%s'", k5err,
+			cc_name);
 		goto out;
 	}
 	/* if we get this far, let gss mech know */
 	gssd_set_krb5_ccache_name(cc_name);
 	code = 0;
-	LogFullDebug(COMPONENT_NFS_CB,
-		 "Successfully obtained machine credentials for principal '%s' stored in ccache '%s'",
-		 pname, cc_name);
- out:
+	LogFullDebug(
+		COMPONENT_NFS_CB,
+		"Successfully obtained machine credentials for principal '%s' stored in ccache '%s'",
+		pname, cc_name);
+out:
 #if HAVE_KRB5_GET_INIT_CREDS_OPT_SET_ADDRESSLESS
 	if (init_opts)
 		krb5_get_init_creds_opt_free(context, init_opts);
@@ -321,13 +313,13 @@ static void gssd_set_krb5_ccache_name(char *ccname)
 	u_int maj_stat, min_stat;
 
 	LogFullDebug(COMPONENT_NFS_CB,
-		 "using gss_krb5_ccache_name to select krb5 ccache %s",
-		 ccname);
+		     "using gss_krb5_ccache_name to select krb5 ccache %s",
+		     ccname);
 	maj_stat = gss_krb5_ccache_name(&min_stat, ccname, NULL);
 	if (maj_stat != GSS_S_COMPLETE) {
 		LogCrit(COMPONENT_NFS_CB,
-			 "WARNING: gss_krb5_ccache_name with name '%s' failed (%s)",
-			 ccname, error_message(min_stat));
+			"WARNING: gss_krb5_ccache_name with name '%s' failed (%s)",
+			ccname, error_message(min_stat));
 	}
 #else
 	/*
@@ -337,8 +329,8 @@ static void gssd_set_krb5_ccache_name(char *ccname)
 	 * equivalent.)
 	 */
 	LogFullDebug(COMPONENT_NFS_CB,
-		 "using environment variable to select krb5 ccache %s",
-		 ccname);
+		     "using environment variable to select krb5 ccache %s",
+		     ccname);
 	setenv("KRB5CCNAME", ccname, 1);
 #endif
 }
@@ -452,12 +444,12 @@ static int get_full_hostname(const char *inhost, char *outhost, int outhostlen)
 
 	/* Get full target hostname */
 	retval = gsh_getaddrinfo(inhost, NULL, &hints, &addrs,
-			nfs_param.core_param.enable_AUTHSTATS);
+				 nfs_param.core_param.enable_AUTHSTATS);
 
 	if (retval) {
 		LogWarn(COMPONENT_NFS_CB,
-			 "%s while getting full hostname for '%s'",
-			 gai_strerror(retval), inhost);
+			"%s while getting full hostname for '%s'",
+			gai_strerror(retval), inhost);
 		return retval;
 	}
 
@@ -469,11 +461,11 @@ static int get_full_hostname(const char *inhost, char *outhost, int outhostlen)
 	for (c = outhost; *c != '\0'; c++)
 		*c = tolower(*c);
 
-	LogFullDebug(COMPONENT_NFS_CB,
-		     "Full hostname for '%s' is '%s'", inhost, outhost);
+	LogFullDebug(COMPONENT_NFS_CB, "Full hostname for '%s' is '%s'", inhost,
+		     outhost);
 	retval = 0;
 
- out:
+out:
 
 	freeaddrinfo(addrs);
 	return retval;
@@ -492,10 +484,10 @@ static int realm_and_service_match(krb5_principal p, const char *realm,
 	if (p->length != 2)
 		return 0;
 
-	if ((strlen(realm) == p->realm.length)
-	    && (strncmp(realm, p->realm.data, p->realm.length) == 0)
-	    && (strlen(service) == p->data[0].length)
-	    && (strncmp(service, p->data[0].data, p->data[0].length) == 0))
+	if ((strlen(realm) == p->realm.length) &&
+	    (strncmp(realm, p->realm.data, p->realm.length) == 0) &&
+	    (strlen(service) == p->data[0].length) &&
+	    (strncmp(service, p->data[0].data, p->data[0].length) == 0))
 		return 1;
 
 	return 0;
@@ -513,8 +505,7 @@ static int realm_and_service_match(krb5_context context, krb5_principal p,
 	inst = krb5_principal_get_comp_string(context, p, 1);
 	if (name == NULL || inst == NULL)
 		return 0;
-	if ((strcmp(realm, p->realm) == 0)
-	    && (strcmp(service, name) == 0))
+	if ((strcmp(realm, p->realm) == 0) && (strcmp(service, name) == 0))
 		return 1;
 
 	return 0;
@@ -560,8 +551,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s attempting to get keytab name",
-			 k5err);
+			"ERROR: %s attempting to get keytab name", k5err);
 		gsh_free(k5err);
 		retval = code;
 		goto out;
@@ -570,8 +560,8 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s while beginning keytab scan for keytab '%s'",
-			 k5err, kt_name);
+			"ERROR: %s while beginning keytab scan for keytab '%s'",
+			k5err, kt_name);
 		gsh_free(k5err);
 		retval = code;
 		goto out;
@@ -582,8 +572,8 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		if (code != 0) {
 			k5err = gssd_k5_err_msg(context, code);
 			LogCrit(COMPONENT_NFS_CB,
-				 "WARNING: Skipping keytab entry because we failed to unparse principal name: %s",
-				 k5err);
+				"WARNING: Skipping keytab entry because we failed to unparse principal name: %s",
+				k5err);
 			k5_free_kt_entry(context, kte);
 			gsh_free(k5err);
 			continue;
@@ -594,11 +584,10 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		/* Use the first matching keytab entry found */
 #ifdef HAVE_KRB5
 		status =
-		    realm_and_service_match(kte->principal, realm, service);
+			realm_and_service_match(kte->principal, realm, service);
 #else
-		status =
-		    realm_and_service_match(context, kte->principal, realm,
-					    service);
+		status = realm_and_service_match(context, kte->principal, realm,
+						 service);
 #endif
 		if (status) {
 			LogFullDebug(COMPONENT_NFS_CB,
@@ -612,8 +601,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 				retval = ENOMEM;
 				k5_free_kt_entry(context, kte);
 				k5_free_unparsed_name(context, pname);
-				(void) krb5_kt_end_seq_get(
-					context, kt, &cursor);
+				(void)krb5_kt_end_seq_get(context, kt, &cursor);
 				goto out;
 			} else {
 				retval = 0;
@@ -633,13 +621,13 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "WARNING: %s while ending keytab scan for keytab '%s'",
-			 k5err, kt_name);
+			"WARNING: %s while ending keytab scan for keytab '%s'",
+			k5err, kt_name);
 		gsh_free(k5err);
 	}
 
 	retval = 0;
- out:
+out:
 	return retval;
 }
 
@@ -664,18 +652,18 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 	krb5_principal princ;
 
 	/* Get full target hostname */
-	retval =
-	    get_full_hostname(hostname, targethostname, sizeof(targethostname));
+	retval = get_full_hostname(hostname, targethostname,
+				   sizeof(targethostname));
 	if (retval)
 		goto out;
 
 	/* Get full local hostname */
 	retval = gsh_gethostname(myhostname, sizeof(myhostname),
-			nfs_param.core_param.enable_AUTHSTATS);
+				 nfs_param.core_param.enable_AUTHSTATS);
 	if (retval) {
 		k5err = gssd_k5_err_msg(context, retval);
-		LogWarn(COMPONENT_NFS_CB,
-			"%s while getting local hostname", k5err);
+		LogWarn(COMPONENT_NFS_CB, "%s while getting local hostname",
+			k5err);
 		gsh_free(k5err);
 		goto out;
 	}
@@ -695,8 +683,8 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 	if (code) {
 		retval = code;
 		k5err = gssd_k5_err_msg(context, code);
-		LogWarn(COMPONENT_NFS_CB,
-			"%s while getting default realm name", k5err);
+		LogWarn(COMPONENT_NFS_CB, "%s while getting default realm name",
+			k5err);
 		gsh_free(k5err);
 		goto out;
 	}
@@ -711,8 +699,8 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 	if (code) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s while getting realm(s) for host '%s'",
-			 k5err, targethostname);
+			"ERROR: %s while getting realm(s) for host '%s'", k5err,
+			targethostname);
 		gsh_free(k5err);
 		retval = code;
 		goto out;
@@ -772,8 +760,8 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 			if (code) {
 				k5err = gssd_k5_err_msg(context, code);
 				LogWarn(COMPONENT_NFS_CB,
-					 "%s while building principal for '%s'",
-					 k5err, spn);
+					"%s while building principal for '%s'",
+					k5err, spn);
 				gsh_free(k5err);
 				continue;
 			}
@@ -781,14 +769,16 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 			krb5_free_principal(context, princ);
 			if (code) {
 				k5err = gssd_k5_err_msg(context, code);
-				LogFullDebug(COMPONENT_NFS_CB,
-					 "%s while getting keytab entry for '%s'",
-					 k5err, spn);
+				LogFullDebug(
+					COMPONENT_NFS_CB,
+					"%s while getting keytab entry for '%s'",
+					k5err, spn);
 				gsh_free(k5err);
 			} else {
-				LogFullDebug(COMPONENT_NFS_CB,
-					 "Success getting keytab entry for '%s'",
-					 spn);
+				LogFullDebug(
+					COMPONENT_NFS_CB,
+					"Success getting keytab entry for '%s'",
+					spn);
 				retval = 0;
 				goto out;
 			}
@@ -803,13 +793,13 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 
 			if (strcmp(svcnames[j], "$") == 0)
 				continue;
-			code =
-			    gssd_search_krb5_keytab(context, kt, realm,
-						    svcnames[j], &found, kte);
+			code = gssd_search_krb5_keytab(
+				context, kt, realm, svcnames[j], &found, kte);
 			if (!code && found) {
-				LogFullDebug(COMPONENT_NFS_CB,
-					 "Success getting keytab entry for %s/*@%s",
-					 svcnames[j], realm);
+				LogFullDebug(
+					COMPONENT_NFS_CB,
+					"Success getting keytab entry for %s/*@%s",
+					svcnames[j], realm);
 				retval = 0;
 				goto out;
 			}
@@ -819,7 +809,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 			realm = realmnames[i];
 		}
 	}
- out:
+out:
 	if (default_realm)
 		k5_free_default_realm(context, default_realm);
 	if (realmnames)
@@ -888,8 +878,8 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 	if (code) {
 		k5err = gssd_k5_err_msg(NULL, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s: %s while initializing krb5 context",
-			 __func__, k5err);
+			"ERROR: %s: %s while initializing krb5 context",
+			__func__, k5err);
 		retval = code;
 		gsh_free(k5err);
 		goto out_wo_context;
@@ -899,8 +889,8 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 	if (code != 0) {
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			 "ERROR: %s: %s while resolving keytab '%s'",
-			 __func__, k5err, keytabfile);
+			"ERROR: %s: %s while resolving keytab '%s'", __func__,
+			k5err, keytabfile);
 		gsh_free(k5err);
 		goto out;
 	}
@@ -908,12 +898,11 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 	if (ple == NULL) {
 		krb5_keytab_entry kte;
 
-		code = find_keytab_entry(context, kt, hostname, &kte,
-					 svcnames);
+		code = find_keytab_entry(context, kt, hostname, &kte, svcnames);
 		if (code) {
 			LogCrit(COMPONENT_NFS_CB,
-				 "ERROR: %s: no usable keytab entry found in keytab %s for connection with host %s",
-				 __func__, keytabfile, hostname);
+				"ERROR: %s: no usable keytab entry found in keytab %s for connection with host %s",
+				__func__, keytabfile, hostname);
 			retval = code;
 			goto out;
 		}
@@ -928,20 +917,20 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 				pname = NULL;
 			}
 			LogCrit(COMPONENT_NFS_CB,
-				 "ERROR: %s: Could not locate or create ple struct for principal %s for connection with host %s",
-				 __func__,
-				 pname ? pname : "<unparsable>", hostname);
+				"ERROR: %s: Could not locate or create ple struct for principal %s for connection with host %s",
+				__func__, pname ? pname : "<unparsable>",
+				hostname);
 			if (pname)
 				k5_free_unparsed_name(context, pname);
 			goto out;
 		}
 	}
 	retval = gssd_get_single_krb5_cred(context, kt, ple, 0);
- out:
+out:
 	if (kt)
 		krb5_kt_close(context, kt);
 	krb5_free_context(context);
- out_wo_context:
+out_wo_context:
 	return retval;
 }
 
@@ -954,13 +943,13 @@ int gssd_check_mechs(void)
 	maj_stat = gss_indicate_mechs(&min_stat, &supported_mechs);
 	if (maj_stat != GSS_S_COMPLETE) {
 		LogCrit(COMPONENT_NFS_CB,
-			 "Unable to obtain list of supported mechanisms. Check that gss library is properly configured.");
+			"Unable to obtain list of supported mechanisms. Check that gss library is properly configured.");
 		goto out;
 	}
 	if (supported_mechs == GSS_C_NO_OID_SET ||
 	    supported_mechs->count == 0) {
 		LogCrit(COMPONENT_NFS_CB,
-			 "Unable to obtain list of supported mechanisms. Check that gss library is properly configured.");
+			"Unable to obtain list of supported mechanisms. Check that gss library is properly configured.");
 		goto out;
 	}
 	maj_stat = gss_release_oid_set(&min_stat, &supported_mechs);
@@ -971,7 +960,7 @@ out:
 
 /* This function destroys the krb5 creds cache for the input principal entry */
 static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
-	krb5_context *context)
+				     krb5_context *context)
 {
 	krb5_error_code code = 0;
 	char *k5err = NULL;
@@ -985,8 +974,8 @@ static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
 	if (code) {
 		k5err = gssd_k5_err_msg(*context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			"Received %s while resolving krb5 cache %s",
-			k5err, ple->ccname);
+			"Received %s while resolving krb5 cache %s", k5err,
+			ple->ccname);
 		gsh_free(k5err);
 		return;
 	}
@@ -994,13 +983,13 @@ static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
 	if (code) {
 		k5err = gssd_k5_err_msg(*context, code);
 		LogCrit(COMPONENT_NFS_CB,
-			"Received %s while destroying krb5 cache %s",
-			k5err, ple->ccname);
+			"Received %s while destroying krb5 cache %s", k5err,
+			ple->ccname);
 		gsh_free(k5err);
 		return;
 	}
-	LogInfo(COMPONENT_NFS_CB,
-		"krb5 cache %s has been destroyed", ple->ccname);
+	LogInfo(COMPONENT_NFS_CB, "krb5 cache %s has been destroyed",
+		ple->ccname);
 }
 
 /* This function frees-up a ple entry */

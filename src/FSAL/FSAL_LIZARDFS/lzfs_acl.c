@@ -36,7 +36,9 @@ liz_acl_t *lzfs_int_convert_fsal_acl(const fsal_acl_t *fsal_acl)
 		fsal_ace_t *fsal_ace = fsal_acl->aces + i;
 
 		count += (IS_FSAL_ACE_ALLOW(*fsal_ace) ||
-				IS_FSAL_ACE_DENY(*fsal_ace)) ? 1 : 0;
+			  IS_FSAL_ACE_DENY(*fsal_ace)) ?
+				 1 :
+				 0;
 	}
 
 	lzfs_acl = liz_create_acl();
@@ -117,7 +119,8 @@ fsal_acl_t *lzfs_int_convert_lzfs_acl(const liz_acl_t *lzfs_acl)
 		fsal_ace->type = lzfs_ace.type;
 		fsal_ace->flag = lzfs_ace.flags & 0xFF;
 		fsal_ace->iflag = (lzfs_ace.flags & LIZ_ACL_SPECIAL_WHO) ?
-						FSAL_ACE_IFLAG_SPECIAL_ID : 0;
+					  FSAL_ACE_IFLAG_SPECIAL_ID :
+					  0;
 
 		if (IS_FSAL_ACE_GROUP_ID(*fsal_ace)) {
 			fsal_ace->who.gid = lzfs_ace.id;
@@ -179,10 +182,11 @@ fsal_status_t lzfs_int_getacl(struct lzfs_fsal_export *lzfs_export,
 	liz_destroy_acl(acl);
 
 	if (*fsal_acl == NULL) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "Failed to convert lzfs acl to nfs4 acl, export=%"
-			     PRIu16 " inode=%" PRIu32,
-			     lzfs_export->export.export_id, inode);
+		LogFullDebug(
+			COMPONENT_FSAL,
+			"Failed to convert lzfs acl to nfs4 acl, export=%" PRIu16
+			" inode=%" PRIu32,
+			lzfs_export->export.export_id, inode);
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}
 

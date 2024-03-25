@@ -38,12 +38,12 @@
 #include "vfs_methods.h"
 
 struct vfs_state_entry {
-	struct gsh_buffdesc	fs_key;		/**< Key for tree */
-	struct avltree_node	fs_node;	/**< AVL tree node */
-	struct state_hdl	ostate;		/**< Actual file state */
+	struct gsh_buffdesc fs_key; /**< Key for tree */
+	struct avltree_node fs_node; /**< AVL tree node */
+	struct state_hdl ostate; /**< Actual file state */
 };
 
-static struct avltree vfs_state_tree = {0};
+static struct avltree vfs_state_tree = { 0 };
 
 /**
  * @brief VFS state comparator for AVL tree walk

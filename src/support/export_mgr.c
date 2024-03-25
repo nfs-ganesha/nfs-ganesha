@@ -153,8 +153,8 @@ static inline uint16_t eid_cache_offsetof(uint16_t k)
 void export_revert(struct gsh_export *export)
 {
 	struct avltree_node *cnode;
-	void **cache_slot = (void **)
-	     &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
+	void **cache_slot = (void **)&(
+		export_by_id.cache[eid_cache_offsetof(export->export_id)]);
 	struct req_op_context op_context;
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
@@ -248,8 +248,8 @@ struct gsh_export *alloc_export(void)
 bool insert_gsh_export(struct gsh_export *export)
 {
 	struct avltree_node *node;
-	void **cache_slot = (void **)
-	    &(export_by_id.cache[eid_cache_offsetof(export->export_id)]);
+	void **cache_slot = (void **)&(
+		export_by_id.cache[eid_cache_offsetof(export->export_id)]);
 
 	PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
 	node = avltree_insert(&export->node_k, &export_by_id.t);
@@ -286,8 +286,8 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	struct gsh_export v;
 	struct avltree_node *node;
 	struct gsh_export *exp;
-	void **cache_slot = (void **)
-	    &(export_by_id.cache[eid_cache_offsetof(export_id)]);
+	void **cache_slot =
+		(void **)&(export_by_id.cache[eid_cache_offsetof(export_id)]);
 
 	v.export_id = export_id;
 	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
@@ -314,17 +314,15 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
 	} else {
 		PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
-
 		LOG_EXPORT(NIV_DEBUG, "Found", NULL, false);
 
 		return NULL;
 	}
 
- out:
+out:
 	get_gsh_export_ref(exp);
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
-
 
 	LOG_EXPORT(NIV_DEBUG, "Found", exp, false);
 
@@ -345,8 +343,7 @@ struct gsh_export *get_gsh_export(uint16_t export_id)
  * @return pointer to ref counted export
  */
 
-struct gsh_export *get_gsh_export_by_path_locked(char *path,
-						 bool exact_match)
+struct gsh_export *get_gsh_export_by_path_locked(char *path, bool exact_match)
 {
 	struct gsh_export *export;
 	struct glist_head *glist;
@@ -358,11 +355,11 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 	if (len_path > 1 && path[len_path - 1] == '/')
 		len_path--;
 
-	LogFullDebug(COMPONENT_EXPORT,
-		     "Searching for export matching path %s",
+	LogFullDebug(COMPONENT_EXPORT, "Searching for export matching path %s",
 		     path);
 
-	glist_for_each(glist, &exportlist) {
+	glist_for_each(glist, &exportlist)
+	{
 		struct gsh_refstr *ref_fullpath;
 
 		export = glist_entry(glist, struct gsh_export, exp_list);
@@ -375,8 +372,7 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		rcu_read_unlock();
 
 		if (ref_fullpath == NULL) {
-			LogFatal(COMPONENT_EXPORT,
-				 "Export %d has no fullpath",
+			LogFatal(COMPONENT_EXPORT, "Export %d has no fullpath",
 				 export->export_id);
 		}
 
@@ -393,8 +389,7 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		 * Also skip if this export has a shorter path than
 		 * the previous match.
 		 */
-		if (len_path < len_export ||
-		    len_export < len_ret) {
+		if (len_path < len_export || len_export < len_ret) {
 			gsh_refstr_put(ref_fullpath);
 			continue;
 		}
@@ -408,8 +403,7 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 		/* if the char in fullpath just after the end of path is not '/'
 		 * it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
-		if (len_export > 1 &&
-		    path[len_export] != '/' &&
+		if (len_export > 1 && path[len_export] != '/' &&
 		    path[len_export] != '\0') {
 			gsh_refstr_put(ref_fullpath);
 			continue;
@@ -431,7 +425,6 @@ struct gsh_export *get_gsh_export_by_path_locked(char *path,
 
 	if (ret_exp != NULL)
 		get_gsh_export_ref(ret_exp);
-
 
 	LOG_EXPORT(NIV_DEBUG, "Found", ret_exp, false);
 
@@ -477,8 +470,7 @@ struct gsh_export *get_gsh_export_by_path(char *path, bool exact_match)
  * @return pointer to ref counted export
  */
 
-struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
-						   bool exact_match)
+struct gsh_export *get_gsh_export_by_pseudo_locked(char *path, bool exact_match)
 {
 	struct gsh_export *export;
 	struct glist_head *glist;
@@ -492,10 +484,10 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		len_path--;
 
 	LogFullDebug(COMPONENT_EXPORT,
-		     "Searching for export matching pseudo path %s",
-		     path);
+		     "Searching for export matching pseudo path %s", path);
 
-	glist_for_each(glist, &exportlist) {
+	glist_for_each(glist, &exportlist)
+	{
 		struct gsh_refstr *ref_pseudopath;
 
 		export = glist_entry(glist, struct gsh_export, exp_list);
@@ -518,10 +510,8 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 
 		len_export = strlen(ref_pseudopath->gr_val);
 
-		LogFullDebug(COMPONENT_EXPORT,
-			     "Comparing %s %d to %s %d",
-			     path, len_path,
-			     ref_pseudopath->gr_val, len_export);
+		LogFullDebug(COMPONENT_EXPORT, "Comparing %s %d to %s %d", path,
+			     len_path, ref_pseudopath->gr_val, len_export);
 
 		if (len_path == 0 && len_export == 1) {
 			/* Special case for Pseudo root match */
@@ -534,8 +524,7 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		 * Also skip if this export has a shorter path than
 		 * the previous match.
 		 */
-		if (len_path < len_export ||
-		    len_export < len_ret) {
+		if (len_path < len_export || len_export < len_ret) {
 			gsh_refstr_put(ref_pseudopath);
 			continue;
 		}
@@ -549,8 +538,7 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 		/* if the char in pseudopath just after the end of path is not
 		 * '/' it is a name token longer, i.e. /mnt/foo != /mnt/foob/
 		 */
-		if (len_export > 1 &&
-		    path[len_export] != '/' &&
+		if (len_export > 1 && path[len_export] != '/' &&
 		    path[len_export] != '\0') {
 			gsh_refstr_put(ref_pseudopath);
 			continue;
@@ -558,8 +546,7 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 
 		/* we agree on size, now compare the leading substring
 		 */
-		if (strncmp(ref_pseudopath->gr_val, path, len_export)
-		    == 0) {
+		if (strncmp(ref_pseudopath->gr_val, path, len_export) == 0) {
 			ret_exp = export;
 			len_ret = len_export;
 
@@ -622,22 +609,21 @@ struct gsh_export *get_gsh_export_by_tag(char *tag)
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
 
-	glist_for_each(glist, &exportlist) {
+	glist_for_each(glist, &exportlist)
+	{
 		export = glist_entry(glist, struct gsh_export, exp_list);
 
-		if (export->FS_tag != NULL &&
-		    !strcmp(export->FS_tag, tag))
+		if (export->FS_tag != NULL && !strcmp(export->FS_tag, tag))
 			goto out;
 	}
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 
-
 	LOG_EXPORT(NIV_DEBUG, "Found", NULL, false);
 
 	return NULL;
 
- out:
+out:
 	get_gsh_export_ref(export);
 
 	PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
@@ -686,23 +672,22 @@ void unmount_gsh_export(struct gsh_export *exp)
  * @brief Take a reference to an export.
  */
 
-void _get_gsh_export_ref(struct gsh_export *a_export,
-			 char *file, int line, char *function)
+void _get_gsh_export_ref(struct gsh_export *a_export, char *file, int line,
+			 char *function)
 {
 	int64_t refcount = atomic_inc_int64_t(&a_export->refcnt);
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
-		struct tmp_export_paths tmp_path = {NULL, NULL};
+		struct tmp_export_paths tmp_path = { NULL, NULL };
 
 		tmp_get_exp_paths(&tmp_path, a_export);
 
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
-			NIV_FULL_DEBUG,
-			"get export ref for id %" PRIu16 " %s, exp_refcount = %"
-			PRIi64,
-			a_export->export_id,
-			tmp_export_path(&tmp_path),
-			refcount);
+					 NIV_FULL_DEBUG,
+					 "get export ref for id %" PRIu16
+					 " %s, exp_refcount = %" PRIi64,
+					 a_export->export_id,
+					 tmp_export_path(&tmp_path), refcount);
 
 		tmp_put_exp_paths(&tmp_path);
 	}
@@ -714,8 +699,8 @@ void _get_gsh_export_ref(struct gsh_export *a_export,
  * We are done with it, let it go.
  */
 
-void _put_gsh_export(struct gsh_export *export, bool config,
-		     char *file, int line, char *function)
+void _put_gsh_export(struct gsh_export *export, bool config, char *file,
+		     int line, char *function)
 {
 	int64_t refcount = atomic_dec_int64_t(&export->refcnt);
 	struct export_stats *export_st;
@@ -723,17 +708,16 @@ void _put_gsh_export(struct gsh_export *export, bool config,
 	assert(refcount >= 0);
 
 	if (isFullDebug(COMPONENT_EXPORT)) {
-		struct tmp_export_paths tmp_path = {NULL, NULL};
+		struct tmp_export_paths tmp_path = { NULL, NULL };
 
 		tmp_get_exp_paths(&tmp_path, export);
 
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
-			NIV_FULL_DEBUG,
-			"put export ref for id %" PRIu16 " %s, exp_refcount = %"
-			PRIi64,
-			export->export_id,
-			tmp_export_path(&tmp_path),
-			refcount);
+					 NIV_FULL_DEBUG,
+					 "put export ref for id %" PRIu16
+					 " %s, exp_refcount = %" PRIi64,
+					 export->export_id,
+					 tmp_export_path(&tmp_path), refcount);
 
 		tmp_put_exp_paths(&tmp_path);
 	}
@@ -760,16 +744,16 @@ void remove_gsh_export(uint16_t export_id)
 	struct gsh_export v;
 	struct avltree_node *node;
 	struct gsh_export *export = NULL;
-	void **cache_slot = (void **)
-	    &(export_by_id.cache[eid_cache_offsetof(export_id)]);
+	void **cache_slot =
+		(void **)&(export_by_id.cache[eid_cache_offsetof(export_id)]);
 
 	v.export_id = export_id;
 	PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
 
 	node = avltree_lookup(&v.node_k, &export_by_id.t);
 	if (node) {
-		struct avltree_node *cnode = (struct avltree_node *)
-			atomic_fetch_voidptr(cache_slot);
+		struct avltree_node *cnode =
+			(struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 
 		/* Remove from the AVL cache and tree */
 		if (node == cnode)
@@ -812,7 +796,7 @@ void remove_gsh_export(uint16_t export_id)
  * @param state [IN] param block to pass
  */
 
-bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
+bool foreach_gsh_export(bool (*cb)(struct gsh_export *exp, void *state),
 			bool wrlock, void *state)
 {
 	struct glist_head *glist, *glistn;
@@ -823,7 +807,8 @@ bool foreach_gsh_export(bool(*cb) (struct gsh_export *exp, void *state),
 		PTHREAD_RWLOCK_wrlock(&export_by_id.eid_lock);
 	else
 		PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
-	glist_for_each_safe(glist, glistn, &exportlist) {
+	glist_for_each_safe(glist, glistn, &exportlist)
+	{
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		rc = cb(export, state);
 		if (!rc)
@@ -880,8 +865,8 @@ void remove_all_exports(void)
 	 */
 	export = get_gsh_export_by_pseudo("/", true);
 
-	init_op_context(&op_context, export, export->fsal_export,
-			NULL, NFS_V4, 0, NFS_RELATED);
+	init_op_context(&op_context, export, export->fsal_export, NULL, NFS_V4,
+			0, NFS_RELATED);
 
 	/* Clean up the whole PseudoFS */
 	pseudo_unmount_export_tree(export);
@@ -890,7 +875,7 @@ void remove_all_exports(void)
 	/* Put all exports on the unexport work list.
 	 * Ignore return since remove_one_export can't fail.
 	 */
-	(void) foreach_gsh_export(remove_one_export, true, NULL);
+	(void)foreach_gsh_export(remove_one_export, true, NULL);
 
 	process_unexports();
 
@@ -911,8 +896,7 @@ static bool prune_defunct_export(struct gsh_export *exp, void *state)
 
 			LogDebug(COMPONENT_EXPORT,
 				 "Pruning export %d path %s pseudo %s",
-				 exp->export_id,
-				 TMP_FULLPATH(&tmp),
+				 exp->export_id, TMP_FULLPATH(&tmp),
 				 TMP_PSEUDOPATH(&tmp));
 
 			tmp_put_exp_paths(&tmp);
@@ -931,8 +915,7 @@ void prune_defunct_exports(uint64_t generation)
 	 * Initialize op_context, we use NFSv4 types here to make paths show
 	 * up sanely in the logs.
 	 */
-	init_op_context(&op_context, NULL, NULL, NULL,
-			NFS_V4, 0, NFS_RELATED);
+	init_op_context(&op_context, NULL, NULL, NULL, NFS_V4, 0, NFS_RELATED);
 
 	(void)foreach_gsh_export(prune_defunct_export, true, &generation);
 
@@ -952,13 +935,9 @@ void prune_defunct_exports(uint64_t generation)
 void nfs_init_stats_time(void)
 {
 	now(&nfs_stats_time);
-	fsal_stats_time = v3_full_stats_time
-			= v4_full_stats_time
-			= auth_stats_time
-			= clnt_allops_stats_time
-			= nfs_stats_time;
+	fsal_stats_time = v3_full_stats_time = v4_full_stats_time =
+		auth_stats_time = clnt_allops_stats_time = nfs_stats_time;
 }
-
 
 #ifdef USE_DBUS
 
@@ -990,10 +969,10 @@ static bool get_all_export_io(struct gsh_export *export_node, void *array_iter)
 		gsh_refstr_put(ref_fullpath);
 	}
 
-	export_statistics = container_of(export_node, struct export_stats,
-					 export);
+	export_statistics =
+		container_of(export_node, struct export_stats, export);
 	server_dbus_all_iostats(export_statistics,
-				(DBusMessageIter *) array_iter);
+				(DBusMessageIter *)array_iter);
 
 	return true;
 }
@@ -1059,8 +1038,8 @@ static void config_errs_to_dbus(char *err, void *dest,
 	struct error_detail *err_dest = dest;
 
 	if (err_dest->fp == NULL) {
-		err_dest->fp = open_memstream(&err_dest->buf,
-					      &err_dest->bufsize);
+		err_dest->fp =
+			open_memstream(&err_dest->buf, &err_dest->bufsize);
 		if (err_dest->fp == NULL) {
 			LogCrit(COMPONENT_EXPORT,
 				"Unable to allocate space for parse errors");
@@ -1087,8 +1066,7 @@ struct showexports_state {
  * @return        true for success, false with error filled out for failure
  */
 
-static bool gsh_export_addexport(DBusMessageIter *args,
-				 DBusMessage *reply,
+static bool gsh_export_addexport(DBusMessageIter *args, DBusMessage *reply,
 				 DBusError *error)
 {
 	int rc, exp_cnt = 0, err;
@@ -1100,7 +1078,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	struct config_error_type err_type;
 	DBusMessageIter iter;
 	char *err_detail = NULL;
-	struct error_detail conf_errs = {NULL, 0, NULL};
+	struct error_detail conf_errs = { NULL, 0, NULL };
 	struct stat st;
 
 	/* Get path */
@@ -1125,8 +1103,9 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	}
 
 	if (EXPORT_ADMIN_TRYLOCK() != 0) {
-		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
-			       "another export admin operation is in progress, try again later");
+		dbus_set_error(
+			error, DBUS_ERROR_INVALID_ARGS,
+			"another export admin operation is in progress, try again later");
 		status = false;
 		goto out;
 	}
@@ -1144,9 +1123,10 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	rc = stat(file_path, &st);
 	if (rc < 0) {
 		err = errno;
-		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
-			       "error %d (%s) when attempting to stat config file %s",
-			       err, strerror(err), file_path);
+		dbus_set_error(
+			error, DBUS_ERROR_INVALID_ARGS,
+			"error %d (%s) when attempting to stat config file %s",
+			err, strerror(err), file_path);
 		status = false;
 		goto out_unlock;
 	}
@@ -1161,31 +1141,28 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 	config_struct = config_ParseFile(file_path, &err_type);
 	if (!cur_exp_config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
-		LogCrit(COMPONENT_EXPORT,
-			"Error while parsing %s", file_path);
-		(void) report_config_errors(&err_type,
-					    &conf_errs,
-					    config_errs_to_dbus);
+		LogCrit(COMPONENT_EXPORT, "Error while parsing %s", file_path);
+		(void)report_config_errors(&err_type, &conf_errs,
+					   config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
-		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "Error while parsing %s because of %s errors. Details:\n%s",
-			       file_path,
-			       err_detail != NULL ? err_detail : "unknown",
-			       conf_errs.buf);
+		dbus_set_error(
+			error, DBUS_ERROR_INVALID_FILE_CONTENT,
+			"Error while parsing %s because of %s errors. Details:\n%s",
+			file_path, err_detail != NULL ? err_detail : "unknown",
+			conf_errs.buf);
 		status = false;
 		goto out_unlock;
 	}
 
-	rc = find_config_nodes(config_struct, export_expr,
-			       &config_list, &err_type);
+	rc = find_config_nodes(config_struct, export_expr, &config_list,
+			       &err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_EXPORT,
-			"Error finding exports: %s because %s",
-			export_expr, strerror(rc));
-		(void) report_config_errors(&err_type,
-					    &conf_errs,
-					    config_errs_to_dbus);
+			"Error finding exports: %s because %s", export_expr,
+			strerror(rc));
+		(void)report_config_errors(&err_type, &conf_errs,
+					   config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
@@ -1199,10 +1176,8 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		lp_next = lp->next;
 		if (status) {
 			rc = load_config_from_node(lp->tree_node,
-						   &add_export_param,
-						   NULL,
-						   false,
-						   &err_type);
+						   &add_export_param, NULL,
+						   false, &err_type);
 			if (rc == 0 ||
 			    cur_exp_config_error_is_harmless(&err_type))
 				exp_cnt++;
@@ -1211,9 +1186,7 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 		}
 		gsh_free(lp);
 	}
-	(void) report_config_errors(&err_type,
-				    &conf_errs,
-				    config_errs_to_dbus);
+	(void)report_config_errors(&err_type, &conf_errs, config_errs_to_dbus);
 	if (conf_errs.fp != NULL)
 		fclose(conf_errs.fp);
 	if (status) {
@@ -1223,29 +1196,30 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 
 			if (conf_errs.buf != NULL &&
 			    strlen(conf_errs.buf) > 0) {
-				msg_size += (strlen(conf_errs.buf)
-					     + strlen(". Errors found:\n"));
+				msg_size += (strlen(conf_errs.buf) +
+					     strlen(". Errors found:\n"));
 				message = gsh_calloc(1, msg_size);
-				(void) snprintf(message, msg_size,
-					 "%d exports added. Errors found:\n%s",
-					 exp_cnt, conf_errs.buf);
+				(void)snprintf(
+					message, msg_size,
+					"%d exports added. Errors found:\n%s",
+					exp_cnt, conf_errs.buf);
 			} else {
 				message = gsh_calloc(1, msg_size);
-				(void) snprintf(message, msg_size,
-					 "%d exports added", exp_cnt);
+				(void)snprintf(message, msg_size,
+					       "%d exports added", exp_cnt);
 			}
 			dbus_message_iter_init_append(reply, &iter);
-			dbus_message_iter_append_basic(&iter,
-						       DBUS_TYPE_STRING,
+			dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
 						       &message);
 			gsh_free(message);
 		} else if (err_type.exists) {
 			LogWarn(COMPONENT_EXPORT,
 				"Selected entries in %s already active!!!",
 				file_path);
-			dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-				       "Selected entries in %s already active!!!",
-				       file_path);
+			dbus_set_error(
+				error, DBUS_ERROR_INVALID_FILE_CONTENT,
+				"Selected entries in %s already active!!!",
+				file_path);
 			status = false;
 		} else {
 			LogWarn(COMPONENT_EXPORT,
@@ -1263,12 +1237,12 @@ static bool gsh_export_addexport(DBusMessageIter *args,
 			"%d export entries in %s added because %s errors",
 			exp_cnt, file_path,
 			err_detail != NULL ? err_detail : "unknown");
-		dbus_set_error(error,
-			       DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "%d export entries in %s added because %s errors. Details:\n%s",
-			       exp_cnt, file_path,
-			       err_detail != NULL ? err_detail : "unknown",
-			       conf_errs.buf);
+		dbus_set_error(
+			error, DBUS_ERROR_INVALID_FILE_CONTENT,
+			"%d export entries in %s added because %s errors. Details:\n%s",
+			exp_cnt, file_path,
+			err_detail != NULL ? err_detail : "unknown",
+			conf_errs.buf);
 	}
 
 out_unlock:
@@ -1287,10 +1261,7 @@ out:
 static struct gsh_dbus_method export_add_export = {
 	.name = "AddExport",
 	.method = gsh_export_addexport,
-	.args =	{PATH_ARG,
-		 EXPR_ARG,
-		 MESSAGE_REPLY,
-		 END_ARG_LIST}
+	.args = { PATH_ARG, EXPR_ARG, MESSAGE_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -1301,8 +1272,7 @@ static struct gsh_dbus_method export_add_export = {
  * @return           As above, use DBusError to return errors.
  */
 
-static bool gsh_export_removeexport(DBusMessageIter *args,
-				    DBusMessage *reply,
+static bool gsh_export_removeexport(DBusMessageIter *args, DBusMessage *reply,
 				    DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -1313,16 +1283,14 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	export = lookup_export(args, &errormsg);
 	if (export == NULL) {
 		LogDebug(COMPONENT_EXPORT, "lookup_export failed with %s",
-			errormsg);
+			 errormsg);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
-			       "lookup_export failed with %s",
-			       errormsg);
+			       "lookup_export failed with %s", errormsg);
 		goto out;
 	}
 
 	if (export->export_id == 0) {
-		LogDebug(COMPONENT_EXPORT,
-			"Cannot remove export with id 0");
+		LogDebug(COMPONENT_EXPORT, "Cannot remove export with id 0");
 		put_gsh_export(export);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "Cannot remove export with id 0");
@@ -1330,8 +1298,9 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	}
 
 	if (EXPORT_ADMIN_TRYLOCK() != 0) {
-		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
-			       "another export admin operation is in progress, try again later");
+		dbus_set_error(
+			error, DBUS_ERROR_INVALID_ARGS,
+			"another export admin operation is in progress, try again later");
 		rc = false;
 		goto out;
 	}
@@ -1341,7 +1310,7 @@ static bool gsh_export_removeexport(DBusMessageIter *args,
 	PTHREAD_RWLOCK_unlock(&export->exp_lock);
 	if (!rc) {
 		LogDebug(COMPONENT_EXPORT,
-			"Cannot remove export with submounts");
+			 "Cannot remove export with submounts");
 		put_gsh_export(export);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
 			       "Cannot remove export with submounts");
@@ -1370,36 +1339,18 @@ out:
 static struct gsh_dbus_method export_remove_export = {
 	.name = "RemoveExport",
 	.method = gsh_export_removeexport,
-	.args = {ID_ARG,
-		 END_ARG_LIST}
+	.args = { ID_ARG, END_ARG_LIST }
 };
 
-#define DISP_EXP_REPLY		\
-{				\
-	.name = "id",		\
-	.type = "q",		\
-	.direction = "out"	\
-},				\
-{				\
-	.name = "fullpath",	\
-	.type = "s",		\
-	.direction = "out"	\
-},				\
-{				\
-	.name = "pseudopath",	\
-	.type = "s",		\
-	.direction = "out"	\
-},				\
-{				\
-	.name = "tag",		\
-	.type = "s",		\
-	.direction = "out"	\
-},				\
-{				\
-	.name = "clients",	\
-	.type = "a(siyyiuuuuu)",\
-	.direction = "out",	\
-}
+#define DISP_EXP_REPLY                                                     \
+	{ .name = "id", .type = "q", .direction = "out" },                 \
+		{ .name = "fullpath", .type = "s", .direction = "out" },   \
+		{ .name = "pseudopath", .type = "s", .direction = "out" }, \
+		{ .name = "tag", .type = "s", .direction = "out" },        \
+	{                                                                  \
+		.name = "clients", .type = "a(siyyiuuuuu)",                \
+		.direction = "out",                                        \
+	}
 
 static void client_of_export(struct exportlist_client_entry *expclient,
 			     void *state)
@@ -1412,8 +1363,8 @@ static void client_of_export(struct exportlist_client_entry *expclient,
 
 	switch (client->type) {
 	case NETWORK_CLIENT:
-		grp_name = cidr_to_str(client->client.network.cidr,
-				CIDR_NOFLAGS);
+		grp_name =
+			cidr_to_str(client->client.network.cidr, CIDR_NOFLAGS);
 		if (grp_name == NULL) {
 			grp_name = "Invalid Network Address";
 		}
@@ -1441,18 +1392,18 @@ static void client_of_export(struct exportlist_client_entry *expclient,
 				       &grp_name);
 	// Client Cidr block
 	if (client->type == NETWORK_CLIENT) {
-		dbus_message_iter_append_basic(&client_struct_iter,
-					DBUS_TYPE_INT32,
-					&client->client.network.cidr->version);
-		dbus_message_iter_append_basic(&client_struct_iter,
-					DBUS_TYPE_BYTE,
-					&client->client.network.cidr->addr);
-		dbus_message_iter_append_basic(&client_struct_iter,
-					DBUS_TYPE_BYTE,
-					&client->client.network.cidr->mask);
-		dbus_message_iter_append_basic(&client_struct_iter,
-					DBUS_TYPE_INT32,
-					&client->client.network.cidr->proto);
+		dbus_message_iter_append_basic(
+			&client_struct_iter, DBUS_TYPE_INT32,
+			&client->client.network.cidr->version);
+		dbus_message_iter_append_basic(
+			&client_struct_iter, DBUS_TYPE_BYTE,
+			&client->client.network.cidr->addr);
+		dbus_message_iter_append_basic(
+			&client_struct_iter, DBUS_TYPE_BYTE,
+			&client->client.network.cidr->mask);
+		dbus_message_iter_append_basic(
+			&client_struct_iter, DBUS_TYPE_INT32,
+			&client->client.network.cidr->proto);
 	} else {
 		int dummy_val1 = 0;
 		uint8_t dummy_val2 = 0;
@@ -1471,8 +1422,9 @@ static void client_of_export(struct exportlist_client_entry *expclient,
 				       &expclient->client_perms.anonymous_uid);
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
 				       &expclient->client_perms.anonymous_gid);
-	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
-				     &expclient->client_perms.expire_time_attr);
+	dbus_message_iter_append_basic(
+		&client_struct_iter, DBUS_TYPE_UINT32,
+		&expclient->client_perms.expire_time_attr);
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
 				       &expclient->client_perms.options);
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_UINT32,
@@ -1489,8 +1441,7 @@ static void client_of_export(struct exportlist_client_entry *expclient,
  * but should not be considered a permanent method
  */
 
-static bool gsh_export_displayexport(DBusMessageIter *args,
-				     DBusMessage *reply,
+static bool gsh_export_displayexport(DBusMessageIter *args, DBusMessage *reply,
 				     DBusError *error)
 {
 	DBusMessageIter iter;
@@ -1500,15 +1451,14 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 	char *path;
 	struct showexports_state client_array_iter;
 	struct glist_head *glist;
-	struct tmp_export_paths tmp = {NULL, NULL};
+	struct tmp_export_paths tmp = { NULL, NULL };
 
 	export = lookup_export(args, &errormsg);
 	if (export == NULL) {
 		LogDebug(COMPONENT_EXPORT, "lookup_export failed with %s",
-			errormsg);
+			 errormsg);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
-			       "lookup_export failed with %s",
-			       errormsg);
+			       "lookup_export failed with %s", errormsg);
 		rc = false;
 		goto out;
 	}
@@ -1517,39 +1467,31 @@ static bool gsh_export_displayexport(DBusMessageIter *args,
 
 	/* create a reply from the message */
 	dbus_message_iter_init_append(reply, &iter);
-	dbus_message_iter_append_basic(&iter,
-				       DBUS_TYPE_UINT16,
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_UINT16,
 				       &export->export_id);
 	path = TMP_FULLPATH(&tmp);
 
 	if (path == NULL)
 		path = "";
 
-	dbus_message_iter_append_basic(&iter,
-				       DBUS_TYPE_STRING,
-				       &path);
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &path);
 
 	path = tmp_export_path(&tmp);
 
-	dbus_message_iter_append_basic(&iter,
-				       DBUS_TYPE_STRING,
-				       &path);
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &path);
 	path = (export->FS_tag != NULL) ? export->FS_tag : "";
-	dbus_message_iter_append_basic(&iter,
-				       DBUS_TYPE_STRING,
-				       &path);
-	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 "(siyyiuuuuu)",
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &path);
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(siyyiuuuuu)",
 					 &client_array_iter.export_iter);
 	PTHREAD_RWLOCK_rdlock(&export->exp_lock);
-	glist_for_each(glist, &export->clients) {
+	glist_for_each(glist, &export->clients)
+	{
 		struct base_client_entry *client;
 		struct exportlist_client_entry *expclient;
 
 		client = glist_entry(glist, struct base_client_entry, cle_list);
 
-		expclient = container_of(client,
-					 struct exportlist_client_entry,
+		expclient = container_of(client, struct exportlist_client_entry,
 					 client_entry);
 
 		client_of_export(expclient, (void *)&client_array_iter);
@@ -1568,19 +1510,17 @@ out:
 static struct gsh_dbus_method export_display_export = {
 	.name = "DisplayExport",
 	.method = gsh_export_displayexport,
-	.args = {ID_ARG,
-		 DISP_EXP_REPLY,
-		 END_ARG_LIST}
+	.args = { ID_ARG, DISP_EXP_REPLY, END_ARG_LIST }
 };
 
 static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 {
 	struct showexports_state *iter_state =
-	    (struct showexports_state *)state;
+		(struct showexports_state *)state;
 	struct export_stats *exp;
 	DBusMessageIter struct_iter;
 	const char *path;
-	struct tmp_export_paths tmp = {NULL, NULL};
+	struct tmp_export_paths tmp = { NULL, NULL };
 
 	tmp_get_exp_paths(&tmp, exp_node);
 
@@ -1602,8 +1542,7 @@ static bool export_to_dbus(struct gsh_export *exp_node, void *state)
 	return true;
 }
 
-static bool gsh_export_showexports(DBusMessageIter *args,
-				   DBusMessage *reply,
+static bool gsh_export_showexports(DBusMessageIter *args, DBusMessage *reply,
 				   DBusError *error)
 {
 	DBusMessageIter iter;
@@ -1625,17 +1564,14 @@ static bool gsh_export_showexports(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_exports = {
 	.name = "ShowExports",
 	.method = gsh_export_showexports,
-	.args = {TIMESTAMP_REPLY,
-		 EXPORTS_REPLY,
-		 END_ARG_LIST}
+	.args = { TIMESTAMP_REPLY, EXPORTS_REPLY, END_ARG_LIST }
 };
 
 /**
  *   DBUS method to detailed client statistics
  */
-static bool gsh_export_details(DBusMessageIter *args,
-				DBusMessage *reply,
-				DBusError *error)
+static bool gsh_export_details(DBusMessageIter *args, DBusMessage *reply,
+			       DBusError *error)
 {
 	char *errormsg = "OK";
 	bool success = true;
@@ -1659,11 +1595,8 @@ static bool gsh_export_details(DBusMessageIter *args,
 static struct gsh_dbus_method export_details = {
 	.name = "GetExportDetails",
 	.method = gsh_export_details,
-	.args = {ID_ARG,
-		STATUS_REPLY,
-		TIMESTAMP_REPLY,
-		CE_STATS_REPLY,
-		END_ARG_LIST}
+	.args = { ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, CE_STATS_REPLY,
+		  END_ARG_LIST }
 };
 /**
  * @brief Reset stat counters for all exports
@@ -1675,7 +1608,8 @@ void reset_export_stats(void)
 	struct export_stats *exp;
 
 	PTHREAD_RWLOCK_rdlock(&export_by_id.eid_lock);
-	glist_for_each(glist, &exportlist) {
+	glist_for_each(glist, &exportlist)
+	{
 		export = glist_entry(glist, struct gsh_export, exp_list);
 		exp = container_of(export, struct export_stats, export);
 		reset_gsh_stats(&exp->st);
@@ -1695,8 +1629,7 @@ void reset_export_stats(void)
  * @return        true for success, false with error filled out for failure
  */
 
-static bool gsh_export_update_export(DBusMessageIter *args,
-				     DBusMessage *reply,
+static bool gsh_export_update_export(DBusMessageIter *args, DBusMessage *reply,
 				     DBusError *error)
 {
 	int rc, exp_cnt = 0;
@@ -1708,7 +1641,7 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 	struct config_error_type err_type;
 	DBusMessageIter iter;
 	char *err_detail = NULL;
-	struct error_detail conf_errs = {NULL, 0, NULL};
+	struct error_detail conf_errs = { NULL, 0, NULL };
 
 	/* Get path */
 	if (dbus_message_iter_get_arg_type(args) == DBUS_TYPE_STRING)
@@ -1740,31 +1673,28 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 	config_struct = config_ParseFile(file_path, &err_type);
 	if (!cur_exp_config_error_is_harmless(&err_type)) {
 		err_detail = err_type_str(&err_type);
-		LogCrit(COMPONENT_EXPORT,
-			"Error while parsing %s", file_path);
-		(void) report_config_errors(&err_type,
-					    &conf_errs,
-					    config_errs_to_dbus);
+		LogCrit(COMPONENT_EXPORT, "Error while parsing %s", file_path);
+		(void)report_config_errors(&err_type, &conf_errs,
+					   config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
-		dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "Error while parsing %s because of %s errors. Details:\n%s",
-			       file_path,
-			       err_detail != NULL ? err_detail : "unknown",
-			       conf_errs.buf);
+		dbus_set_error(
+			error, DBUS_ERROR_INVALID_FILE_CONTENT,
+			"Error while parsing %s because of %s errors. Details:\n%s",
+			file_path, err_detail != NULL ? err_detail : "unknown",
+			conf_errs.buf);
 		status = false;
 		goto out;
 	}
 
-	rc = find_config_nodes(config_struct, export_expr,
-			       &config_list, &err_type);
+	rc = find_config_nodes(config_struct, export_expr, &config_list,
+			       &err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_EXPORT,
-			"Error finding exports: %s because %s",
-			export_expr, strerror(rc));
-		(void) report_config_errors(&err_type,
-					    &conf_errs,
-					    config_errs_to_dbus);
+			"Error finding exports: %s because %s", export_expr,
+			strerror(rc));
+		(void)report_config_errors(&err_type, &conf_errs,
+					   config_errs_to_dbus);
 		if (conf_errs.fp != NULL)
 			fclose(conf_errs.fp);
 		dbus_set_error(error, DBUS_ERROR_INVALID_ARGS,
@@ -1778,10 +1708,8 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 		lp_next = lp->next;
 		if (status) {
 			rc = load_config_from_node(lp->tree_node,
-						   &update_export_param,
-						   NULL,
-						   false,
-						   &err_type);
+						   &update_export_param, NULL,
+						   false, &err_type);
 			if (rc == 0 ||
 			    cur_exp_config_error_is_harmless(&err_type))
 				exp_cnt++;
@@ -1790,9 +1718,7 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 		}
 		gsh_free(lp);
 	}
-	(void) report_config_errors(&err_type,
-				    &conf_errs,
-				    config_errs_to_dbus);
+	(void)report_config_errors(&err_type, &conf_errs, config_errs_to_dbus);
 	if (conf_errs.fp != NULL)
 		fclose(conf_errs.fp);
 	if (status) {
@@ -1802,29 +1728,30 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 
 			if (conf_errs.buf != NULL &&
 			    strlen(conf_errs.buf) > 0) {
-				msg_size += (strlen(conf_errs.buf)
-					     + strlen(". Errors found:\n"));
+				msg_size += (strlen(conf_errs.buf) +
+					     strlen(". Errors found:\n"));
 				message = gsh_calloc(1, msg_size);
-				(void) snprintf(message, msg_size,
-					 "%d exports updated. Errors found:\n%s",
-					 exp_cnt, conf_errs.buf);
+				(void)snprintf(
+					message, msg_size,
+					"%d exports updated. Errors found:\n%s",
+					exp_cnt, conf_errs.buf);
 			} else {
 				message = gsh_calloc(1, msg_size);
-				(void) snprintf(message, msg_size,
-					 "%d exports updated", exp_cnt);
+				(void)snprintf(message, msg_size,
+					       "%d exports updated", exp_cnt);
 			}
 			dbus_message_iter_init_append(reply, &iter);
-			dbus_message_iter_append_basic(&iter,
-						       DBUS_TYPE_STRING,
+			dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
 						       &message);
 			gsh_free(message);
 		} else if (err_type.exists) {
 			LogWarn(COMPONENT_EXPORT,
 				"Selected entries in %s already active!!!",
 				file_path);
-			dbus_set_error(error, DBUS_ERROR_INVALID_FILE_CONTENT,
-				       "Selected entries in %s already active!!!",
-				       file_path);
+			dbus_set_error(
+				error, DBUS_ERROR_INVALID_FILE_CONTENT,
+				"Selected entries in %s already active!!!",
+				file_path);
 			status = false;
 		} else {
 			LogWarn(COMPONENT_EXPORT,
@@ -1842,12 +1769,12 @@ static bool gsh_export_update_export(DBusMessageIter *args,
 			"%d export entries in %s updated because %s errors",
 			exp_cnt, file_path,
 			err_detail != NULL ? err_detail : "unknown");
-		dbus_set_error(error,
-			       DBUS_ERROR_INVALID_FILE_CONTENT,
-			       "%d export entries in %s updated because %s errors. Details:\n%s",
-			       exp_cnt, file_path,
-			       err_detail != NULL ? err_detail : "unknown",
-			       conf_errs.buf);
+		dbus_set_error(
+			error, DBUS_ERROR_INVALID_FILE_CONTENT,
+			"%d export entries in %s updated because %s errors. Details:\n%s",
+			exp_cnt, file_path,
+			err_detail != NULL ? err_detail : "unknown",
+			conf_errs.buf);
 	}
 
 out:
@@ -1862,19 +1789,12 @@ out:
 static struct gsh_dbus_method export_update_export = {
 	.name = "UpdateExport",
 	.method = gsh_export_update_export,
-	.args =	{PATH_ARG,
-		 EXPR_ARG,
-		 MESSAGE_REPLY,
-		 END_ARG_LIST}
+	.args = { PATH_ARG, EXPR_ARG, MESSAGE_REPLY, END_ARG_LIST }
 };
 
 static struct gsh_dbus_method *export_mgr_methods[] = {
-	&export_add_export,
-	&export_remove_export,
-	&export_display_export,
-	&export_show_exports,
-	&export_update_export,
-	NULL
+	&export_add_export,   &export_remove_export, &export_display_export,
+	&export_show_exports, &export_update_export, NULL
 };
 
 /* org.ganesha.nfsd.exportmgr interface
@@ -1895,8 +1815,7 @@ static struct gsh_dbus_interface export_mgr_table = {
  *
  */
 
-static bool get_nfsv3_export_io(DBusMessageIter *args,
-				DBusMessage *reply,
+static bool get_nfsv3_export_io(DBusMessageIter *args, DBusMessage *reply,
 				DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -1913,8 +1832,7 @@ static bool get_nfsv3_export_io(DBusMessageIter *args,
 		success = false;
 		errormsg = "No export available";
 	} else {
-		export_st = container_of(export, struct export_stats,
-					 export);
+		export_st = container_of(export, struct export_stats, export);
 		if (export_st->st.nfsv3 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv3 activity";
@@ -1932,11 +1850,8 @@ static bool get_nfsv3_export_io(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_v3_io = {
 	.name = "GetNFSv3IO",
 	.method = get_nfsv3_export_io,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 IOSTATS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, IOSTATS_REPLY,
+		  END_ARG_LIST }
 };
 #endif
 
@@ -1945,8 +1860,7 @@ static struct gsh_dbus_method export_show_v3_io = {
  *
  */
 
-static bool get_nfsv40_export_io(DBusMessageIter *args,
-				 DBusMessage *reply,
+static bool get_nfsv40_export_io(DBusMessageIter *args, DBusMessage *reply,
 				 DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -1962,8 +1876,7 @@ static bool get_nfsv40_export_io(DBusMessageIter *args,
 	if (export == NULL) {
 		success = false;
 	} else {
-		export_st = container_of(export, struct export_stats,
-					 export);
+		export_st = container_of(export, struct export_stats, export);
 		if (export_st->st.nfsv40 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.0 activity";
@@ -1981,11 +1894,8 @@ static bool get_nfsv40_export_io(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_v40_io = {
 	.name = "GetNFSv40IO",
 	.method = get_nfsv40_export_io,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 IOSTATS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, IOSTATS_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
@@ -1993,8 +1903,7 @@ static struct gsh_dbus_method export_show_v40_io = {
  *
  */
 
-static bool get_nfsv41_export_io(DBusMessageIter *args,
-				 DBusMessage *reply,
+static bool get_nfsv41_export_io(DBusMessageIter *args, DBusMessage *reply,
 				 DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2010,8 +1919,7 @@ static bool get_nfsv41_export_io(DBusMessageIter *args,
 	if (export == NULL) {
 		success = false;
 	} else {
-		export_st = container_of(export, struct export_stats,
-					 export);
+		export_st = container_of(export, struct export_stats, export);
 		if (export_st->st.nfsv41 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.1 activity";
@@ -2029,11 +1937,8 @@ static bool get_nfsv41_export_io(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_v41_io = {
 	.name = "GetNFSv41IO",
 	.method = get_nfsv41_export_io,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 IOSTATS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, IOSTATS_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
@@ -2041,8 +1946,7 @@ static struct gsh_dbus_method export_show_v41_io = {
  *
  */
 
-static bool get_nfsv41_export_layouts(DBusMessageIter *args,
-				      DBusMessage *reply,
+static bool get_nfsv41_export_layouts(DBusMessageIter *args, DBusMessage *reply,
 				      DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2058,8 +1962,7 @@ static bool get_nfsv41_export_layouts(DBusMessageIter *args,
 	if (export == NULL) {
 		success = false;
 	} else {
-		export_st = container_of(export, struct export_stats,
-					 export);
+		export_st = container_of(export, struct export_stats, export);
 		if (export_st->st.nfsv41 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.1 activity";
@@ -2079,8 +1982,7 @@ static bool get_nfsv41_export_layouts(DBusMessageIter *args,
  *
  */
 
-static bool get_nfsv42_export_io(DBusMessageIter *args,
-				 DBusMessage *reply,
+static bool get_nfsv42_export_io(DBusMessageIter *args, DBusMessage *reply,
 				 DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2096,8 +1998,7 @@ static bool get_nfsv42_export_io(DBusMessageIter *args,
 	if (export == NULL) {
 		success = false;
 	} else {
-		export_st = container_of(export, struct export_stats,
-					 export);
+		export_st = container_of(export, struct export_stats, export);
 		if (export_st->st.nfsv42 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.2 activity";
@@ -2115,11 +2016,8 @@ static bool get_nfsv42_export_io(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_v42_io = {
 	.name = "GetNFSv42IO",
 	.method = get_nfsv42_export_io,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 IOSTATS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, IOSTATS_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
@@ -2127,8 +2025,7 @@ static struct gsh_dbus_method export_show_v42_io = {
  *
  */
 
-static bool get_nfsv42_export_layouts(DBusMessageIter *args,
-				      DBusMessage *reply,
+static bool get_nfsv42_export_layouts(DBusMessageIter *args, DBusMessage *reply,
 				      DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2144,8 +2041,7 @@ static bool get_nfsv42_export_layouts(DBusMessageIter *args,
 	if (export == NULL) {
 		success = false;
 	} else {
-		export_st = container_of(export, struct export_stats,
-					 export);
+		export_st = container_of(export, struct export_stats, export);
 		if (export_st->st.nfsv42 == NULL) {
 			success = false;
 			errormsg = "Export does not have any NFSv4.2 activity";
@@ -2165,8 +2061,7 @@ static bool get_nfsv42_export_layouts(DBusMessageIter *args,
  *
  */
 
-static bool get_nfsmon_export_io(DBusMessageIter *args,
-				 DBusMessage *reply,
+static bool get_nfsmon_export_io(DBusMessageIter *args, DBusMessage *reply,
 				 DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2201,11 +2096,8 @@ static bool get_nfsmon_export_io(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_nfsmon_io = {
 	.name = "GetNFSIOMon",
 	.method = get_nfsmon_export_io,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 IOSTATS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, IOSTATS_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
@@ -2213,8 +2105,7 @@ static struct gsh_dbus_method export_show_nfsmon_io = {
  *
  */
 
-static bool get_nfsv_export_total_ops(DBusMessageIter *args,
-				      DBusMessage *reply,
+static bool get_nfsv_export_total_ops(DBusMessageIter *args, DBusMessage *reply,
 				      DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2240,8 +2131,7 @@ static bool get_nfsv_export_total_ops(DBusMessageIter *args,
 	return true;
 }
 
-static bool get_nfsv_global_total_ops(DBusMessageIter *args,
-				      DBusMessage *reply,
+static bool get_nfsv_global_total_ops(DBusMessageIter *args, DBusMessage *reply,
 				      DBusError *error)
 {
 	bool success = true;
@@ -2258,8 +2148,7 @@ static bool get_nfsv_global_total_ops(DBusMessageIter *args,
 	return true;
 }
 
-static bool get_nfsv_global_fast_ops(DBusMessageIter *args,
-				     DBusMessage *reply,
+static bool get_nfsv_global_fast_ops(DBusMessageIter *args, DBusMessage *reply,
 				     DBusError *error)
 {
 	bool success = true;
@@ -2276,8 +2165,7 @@ static bool get_nfsv_global_fast_ops(DBusMessageIter *args,
 	return true;
 }
 
-static bool show_mdcache_stats(DBusMessageIter *args,
-			       DBusMessage *reply,
+static bool show_mdcache_stats(DBusMessageIter *args, DBusMessage *reply,
 			       DBusError *error)
 {
 	bool success = true;
@@ -2296,8 +2184,7 @@ static bool show_mdcache_stats(DBusMessageIter *args,
 	return true;
 }
 
-static bool show_fd_usage_summary(DBusMessageIter *args,
-				  DBusMessage *reply,
+static bool show_fd_usage_summary(DBusMessageIter *args, DBusMessage *reply,
 				  DBusError *error)
 {
 	bool success = true;
@@ -2318,21 +2205,15 @@ static bool show_fd_usage_summary(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_v41_layouts = {
 	.name = "GetNFSv41Layouts",
 	.method = get_nfsv41_export_layouts,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 LAYOUTS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, LAYOUTS_REPLY,
+		  END_ARG_LIST }
 };
 
 static struct gsh_dbus_method export_show_v42_layouts = {
 	.name = "GetNFSv42Layouts",
 	.method = get_nfsv42_export_layouts,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 LAYOUTS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, LAYOUTS_REPLY,
+		  END_ARG_LIST }
 };
 
 /* Reset FSAL stats */
@@ -2343,11 +2224,11 @@ static void reset_fsal_stats(void)
 	/* Next module */
 	struct glist_head *mn = NULL;
 
-	glist_for_each_safe(mi, mn, &fsal_list) {
+	glist_for_each_safe(mi, mn, &fsal_list)
+	{
 		/* The module to reset stats */
-		struct fsal_module *m = glist_entry(mi,
-						    struct fsal_module,
-						    fsals);
+		struct fsal_module *m =
+			glist_entry(mi, struct fsal_module, fsals);
 		if (m->stats != NULL)
 			m->m_ops.fsal_reset_stats(m);
 	}
@@ -2357,8 +2238,7 @@ static void reset_fsal_stats(void)
  * DBUS method to reset all ops statistics
  *
  */
-static bool stats_reset(DBusMessageIter *args,
-			DBusMessage *reply,
+static bool stats_reset(DBusMessageIter *args, DBusMessage *reply,
 			DBusError *error)
 {
 	bool success = true;
@@ -2383,19 +2263,15 @@ static bool stats_reset(DBusMessageIter *args,
 static struct gsh_dbus_method reset_statistics = {
 	.name = "ResetStats",
 	.method = stats_reset,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, END_ARG_LIST }
 };
-
 
 #ifdef _USE_NFS3
 /**
  * DBUS method to get NFSv3 Detailed stats
  */
-static bool stats_v3_full(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error)
+static bool stats_v3_full(DBusMessageIter *args, DBusMessage *reply,
+			  DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -2417,20 +2293,16 @@ static bool stats_v3_full(DBusMessageIter *args,
 static struct gsh_dbus_method v3_full_statistics = {
 	.name = "GetFULLV3Stats",
 	.method = stats_v3_full,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 V3_FULL_REPLY,
-		 MESSAGE_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, V3_FULL_REPLY, MESSAGE_REPLY,
+		  END_ARG_LIST }
 };
 #endif
 
 /**
  * DBUS method to get NFSv4 Detailed stats
  */
-static bool stats_v4_full(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error)
+static bool stats_v4_full(DBusMessageIter *args, DBusMessage *reply,
+			  DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -2452,19 +2324,15 @@ static bool stats_v4_full(DBusMessageIter *args,
 static struct gsh_dbus_method v4_full_statistics = {
 	.name = "GetFULLV4Stats",
 	.method = stats_v4_full,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 V4_FULL_REPLY,
-		 MESSAGE_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, V4_FULL_REPLY, MESSAGE_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
  * DBUS method to know current status of stats counting
  */
-static bool stats_status(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error)
+static bool stats_status(DBusMessageIter *args, DBusMessage *reply,
+			 DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -2500,7 +2368,7 @@ static bool stats_status(DBusMessageIter *args,
 					 &v3_full_status);
 	value = nfs_param.core_param.enable_FULLV3STATS;
 	dbus_message_iter_append_basic(&v3_full_status, DBUS_TYPE_BOOLEAN,
-					&value);
+				       &value);
 	gsh_dbus_append_timestamp(&v3_full_status, &v3_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v3_full_status);
 #endif
@@ -2510,25 +2378,24 @@ static bool stats_status(DBusMessageIter *args,
 					 &v4_full_status);
 	value = nfs_param.core_param.enable_FULLV4STATS;
 	dbus_message_iter_append_basic(&v4_full_status, DBUS_TYPE_BOOLEAN,
-					&value);
+				       &value);
 	gsh_dbus_append_timestamp(&v4_full_status, &v4_full_stats_time);
 	dbus_message_iter_close_container(&iter, &v4_full_status);
 
 	/* Send info about auth stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
-						&authstatus);
+					 &authstatus);
 	value = nfs_param.core_param.enable_AUTHSTATS;
-	dbus_message_iter_append_basic(&authstatus, DBUS_TYPE_BOOLEAN,
-						&value);
+	dbus_message_iter_append_basic(&authstatus, DBUS_TYPE_BOOLEAN, &value);
 	gsh_dbus_append_timestamp(&authstatus, &auth_stats_time);
 	dbus_message_iter_close_container(&iter, &authstatus);
 
 	/* Send info about client allops stats */
 	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
-						&clnt_allops_status);
+					 &clnt_allops_status);
 	value = nfs_param.core_param.enable_CLNTALLSTATS;
 	dbus_message_iter_append_basic(&clnt_allops_status, DBUS_TYPE_BOOLEAN,
-						&value);
+				       &value);
 	gsh_dbus_append_timestamp(&clnt_allops_status, &clnt_allops_stats_time);
 	dbus_message_iter_close_container(&iter, &clnt_allops_status);
 
@@ -2538,19 +2405,15 @@ static bool stats_status(DBusMessageIter *args,
 static struct gsh_dbus_method status_stats = {
 	.name = "StatusStats",
 	.method = stats_status,
-	.args = {STATUS_REPLY,
-		 STATS_STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, STATS_STATUS_REPLY, END_ARG_LIST }
 };
-
 
 /**
  * DBUS method to disable statistics counting
  *
  */
-static bool stats_disable(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error)
+static bool stats_disable(DBusMessageIter *args, DBusMessage *reply,
+			  DBusError *error)
 {
 	char *errormsg = "OK";
 	char *stat_type = NULL;
@@ -2587,7 +2450,7 @@ static bool stats_disable(DBusMessageIter *args,
 		/* resetting server stats includes v3_full & v4_full stats */
 		reset_server_stats();
 		LogEvent(COMPONENT_CONFIG,
-				"Disabling auth statistics counting");
+			 "Disabling auth statistics counting");
 		/* reset auth counters */
 		reset_auth_stats();
 	}
@@ -2629,14 +2492,14 @@ static bool stats_disable(DBusMessageIter *args,
 	if (strcmp(stat_type, "auth") == 0) {
 		nfs_param.core_param.enable_AUTHSTATS = false;
 		LogEvent(COMPONENT_CONFIG,
-			"Disabling auth statistics counting");
+			 "Disabling auth statistics counting");
 		/* reset auth counters */
 		reset_auth_stats();
 	}
 	if (strcmp(stat_type, "client_all_ops") == 0) {
 		nfs_param.core_param.enable_CLNTALLSTATS = false;
 		LogEvent(COMPONENT_CONFIG,
-			"Disabling client all ops statistics counting");
+			 "Disabling client all ops statistics counting");
 		/* reset client all ops counters */
 		reset_clnt_allops_stats();
 	}
@@ -2653,19 +2516,15 @@ error:
 static struct gsh_dbus_method disable_statistics = {
 	.name = "DisableStats",
 	.method = stats_disable,
-	.args = {STAT_TYPE_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 END_ARG_LIST}
+	.args = { STAT_TYPE_ARG, STATUS_REPLY, TIMESTAMP_REPLY, END_ARG_LIST }
 };
 
 /**
  * DBUS method to enable statistics counting
  *
  */
-static bool stats_enable(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error)
+static bool stats_enable(DBusMessageIter *args, DBusMessage *reply,
+			 DBusError *error)
 {
 	char *errormsg = "OK";
 	char *stat_type = NULL;
@@ -2714,7 +2573,7 @@ static bool stats_enable(DBusMessageIter *args,
 		if (!nfs_param.core_param.enable_AUTHSTATS) {
 			nfs_param.core_param.enable_AUTHSTATS = true;
 			LogEvent(COMPONENT_CONFIG,
-					"Enabling auth statistics counting");
+				 "Enabling auth statistics counting");
 			now(&auth_stats_time);
 		}
 		if (!nfs_param.core_param.enable_CLNTALLSTATS) {
@@ -2723,57 +2582,55 @@ static bool stats_enable(DBusMessageIter *args,
 				 "Enabling client all ops statistics counting");
 			now(&clnt_allops_stats_time);
 		}
-
 	}
 	if (strcmp(stat_type, "nfs") == 0 &&
-			!nfs_param.core_param.enable_NFSSTATS) {
+	    !nfs_param.core_param.enable_NFSSTATS) {
 		nfs_param.core_param.enable_NFSSTATS = true;
 		LogEvent(COMPONENT_CONFIG,
 			 "Enabling NFS server statistics counting");
 		now(&nfs_stats_time);
 	}
 	if (strcmp(stat_type, "fsal") == 0 &&
-			!nfs_param.core_param.enable_FSALSTATS) {
+	    !nfs_param.core_param.enable_FSALSTATS) {
 		nfs_param.core_param.enable_FSALSTATS = true;
-		LogEvent(COMPONENT_CONFIG,
-			 "Enabling FSAL statistics counting");
+		LogEvent(COMPONENT_CONFIG, "Enabling FSAL statistics counting");
 		now(&fsal_stats_time);
 	}
 #ifdef _USE_NFS3
 	if (strcmp(stat_type, "v3_full") == 0 &&
-			!nfs_param.core_param.enable_FULLV3STATS) {
+	    !nfs_param.core_param.enable_FULLV3STATS) {
 		if (!nfs_param.core_param.enable_NFSSTATS) {
 			errormsg = "First enable NFS stats counting";
 			goto error;
 		} else {
 			nfs_param.core_param.enable_FULLV3STATS = true;
 			LogEvent(COMPONENT_CONFIG,
-			 "Enabling NFSv3 Detailed statistics counting");
+				 "Enabling NFSv3 Detailed statistics counting");
 			now(&v3_full_stats_time);
 		}
 	}
 #endif
 	if (strcmp(stat_type, "v4_full") == 0 &&
-			!nfs_param.core_param.enable_FULLV4STATS) {
+	    !nfs_param.core_param.enable_FULLV4STATS) {
 		if (!nfs_param.core_param.enable_NFSSTATS) {
 			errormsg = "First enable NFS stats counting";
 			goto error;
 		} else {
 			nfs_param.core_param.enable_FULLV4STATS = true;
 			LogEvent(COMPONENT_CONFIG,
-			 "Enabling NFSv4 Detailed statistics counting");
+				 "Enabling NFSv4 Detailed statistics counting");
 			now(&v4_full_stats_time);
 		}
 	}
 	if (strcmp(stat_type, "client_all_ops") == 0 &&
-			!nfs_param.core_param.enable_CLNTALLSTATS) {
+	    !nfs_param.core_param.enable_CLNTALLSTATS) {
 		if (!nfs_param.core_param.enable_NFSSTATS) {
 			errormsg = "First enable NFS stats counting";
 			goto error;
 		} else {
 			nfs_param.core_param.enable_CLNTALLSTATS = true;
 			LogEvent(COMPONENT_CONFIG,
-			 "Enabling client all ops statistics counting");
+				 "Enabling client all ops statistics counting");
 			now(&clnt_allops_stats_time);
 		}
 	}
@@ -2781,8 +2638,7 @@ static bool stats_enable(DBusMessageIter *args,
 	if (strcmp(stat_type, "auth") == 0 &&
 	    !nfs_param.core_param.enable_AUTHSTATS) {
 		nfs_param.core_param.enable_AUTHSTATS = true;
-		LogEvent(COMPONENT_CONFIG,
-				"Enabling auth statistics counting");
+		LogEvent(COMPONENT_CONFIG, "Enabling auth statistics counting");
 		now(&auth_stats_time);
 	}
 
@@ -2798,19 +2654,15 @@ error:
 static struct gsh_dbus_method enable_statistics = {
 	.name = "EnableStats",
 	.method = stats_enable,
-	.args = {STAT_TYPE_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 END_ARG_LIST}
+	.args = { STAT_TYPE_ARG, STATUS_REPLY, TIMESTAMP_REPLY, END_ARG_LIST }
 };
 
 /**
  * DBUS method to gather FSAL statistics
  *
  */
-static bool stats_fsal(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error)
+static bool stats_fsal(DBusMessageIter *args, DBusMessage *reply,
+		       DBusError *error)
 {
 	char *errormsg = "OK";
 	char *fsal_name;
@@ -2867,22 +2719,16 @@ error:
 static struct gsh_dbus_method fsal_statistics = {
 	.name = "GetFSALStats",
 	.method = stats_fsal,
-	.args = {FSAL_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 FSAL_OPS_REPLY,
-		 MESSAGE_REPLY,
-		 END_ARG_LIST}
+	.args = { FSAL_ARG, STATUS_REPLY, TIMESTAMP_REPLY, FSAL_OPS_REPLY,
+		  MESSAGE_REPLY, END_ARG_LIST }
 };
-
 
 #ifdef _USE_9P
 /**
  * DBUS method to report 9p I/O statistics
  *
  */
-static bool get_9p_export_io(DBusMessageIter *args,
-			     DBusMessage *reply,
+static bool get_9p_export_io(DBusMessageIter *args, DBusMessage *reply,
 			     DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2914,19 +2760,15 @@ static bool get_9p_export_io(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_9p_io = {
 	.name = "Get9pIO",
 	.method = get_9p_export_io,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 IOSTATS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, IOSTATS_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
  * DBUS method to report 9p protocol operation statistics
  *
  */
-static bool get_9p_export_op_stats(DBusMessageIter *args,
-				   DBusMessage *reply,
+static bool get_9p_export_op_stats(DBusMessageIter *args, DBusMessage *reply,
 				   DBusError *error)
 {
 	struct gsh_export *export = NULL;
@@ -2962,60 +2804,42 @@ static bool get_9p_export_op_stats(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_9p_op_stats = {
 	.name = "Get9pOpStats",
 	.method = get_9p_export_op_stats,
-	.args = {EXPORT_ID_ARG,
-		 _9P_OP_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 OP_STATS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, _9P_OP_ARG, STATUS_REPLY, TIMESTAMP_REPLY,
+		  OP_STATS_REPLY, END_ARG_LIST }
 };
 #endif
 
 static struct gsh_dbus_method export_show_total_ops = {
 	.name = "GetTotalOPS",
 	.method = get_nfsv_export_total_ops,
-	.args = {EXPORT_ID_ARG,
-		 STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 TOTAL_OPS_REPLY,
-		 END_ARG_LIST}
+	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, TOTAL_OPS_REPLY,
+		  END_ARG_LIST }
 };
 
 static struct gsh_dbus_method global_show_total_ops = {
 	.name = "GetGlobalOPS",
 	.method = get_nfsv_global_total_ops,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 TOTAL_OPS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, TOTAL_OPS_REPLY, END_ARG_LIST }
 };
 
 static struct gsh_dbus_method global_show_fast_ops = {
 	.name = "GetFastOPS",
 	.method = get_nfsv_global_fast_ops,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 TOTAL_OPS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, TOTAL_OPS_REPLY, END_ARG_LIST }
 };
 
 static struct gsh_dbus_method mdcache_show = {
 	.name = "ShowMDCache",
 	.method = show_mdcache_stats,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 TOTAL_OPS_REPLY,
-		 LRU_UTILIZATION_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, TOTAL_OPS_REPLY,
+		  LRU_UTILIZATION_REPLY, END_ARG_LIST }
 };
 
 static struct gsh_dbus_method fd_usage_summary = {
 	.name = "ShowFDUsage",
 	.method = show_fd_usage_summary,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 FD_USAGE_SUMM_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, FD_USAGE_SUMM_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
@@ -3036,9 +2860,8 @@ static struct gsh_dbus_method fd_usage_summary = {
  *			queue wait)
  *	)
  */
-static bool get_nfs_io(DBusMessageIter *args,
-				DBusMessage *message,
-				DBusError *error)
+static bool get_nfs_io(DBusMessageIter *args, DBusMessage *message,
+		       DBusError *error)
 {
 	bool success = true;
 	char *errormsg = "OK";
@@ -3056,8 +2879,8 @@ static bool get_nfs_io(DBusMessageIter *args,
 	dbus_message_iter_open_container(&reply_iter, DBUS_TYPE_ARRAY,
 					 NFS_ALL_IO_REPLY_ARRAY_TYPE,
 					 &array_iter);
-	(void) foreach_gsh_export(&get_all_export_io, false,
-				  (void *) &array_iter);
+	(void)foreach_gsh_export(&get_all_export_io, false,
+				 (void *)&array_iter);
 	dbus_message_iter_close_container(&reply_iter, &array_iter);
 
 	return true;
@@ -3066,10 +2889,8 @@ static bool get_nfs_io(DBusMessageIter *args,
 static struct gsh_dbus_method export_show_all_io = {
 	.name = "GetNFSIO",
 	.method = get_nfs_io,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 NFS_ALL_IO_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, NFS_ALL_IO_REPLY,
+		  END_ARG_LIST }
 };
 
 static struct gsh_dbus_method *export_stats_methods[] = {
@@ -3116,17 +2937,15 @@ static struct gsh_dbus_interface export_stats_table = {
 /* DBUS list of interfaces on /org/ganesha/nfsd/ExportMgr
  */
 
-static struct gsh_dbus_interface *export_interfaces[] = {
-	&export_mgr_table,
-	&export_stats_table,
-	NULL
-};
+static struct gsh_dbus_interface *export_interfaces[] = { &export_mgr_table,
+							  &export_stats_table,
+							  NULL };
 
 void dbus_export_init(void)
 {
 	gsh_dbus_register_path("ExportMgr", export_interfaces);
 }
-#endif				/* USE_DBUS */
+#endif /* USE_DBUS */
 
 /* Cleanup on shutdown */
 void export_mgr_cleanup(void)

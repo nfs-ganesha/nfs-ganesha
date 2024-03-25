@@ -41,7 +41,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/signal.h>
 #include <poll.h>
 #include "hashtable.h"
@@ -75,306 +75,253 @@
 const nfs_function_desc_t invalid_funcdesc = {
 	.service_function = nfs_null,
 	.free_function = nfs_null_free,
-	.xdr_decode_func = (xdrproc_t) xdr_void,
-	.xdr_encode_func = (xdrproc_t) xdr_void,
+	.xdr_decode_func = (xdrproc_t)xdr_void,
+	.xdr_encode_func = (xdrproc_t)xdr_void,
 	.funcname = "invalid_function",
 	.dispatch_behaviour = NOTHING_SPECIAL
 };
 
 #ifdef _USE_NFS3
 const nfs_function_desc_t nfs3_func_desc[] = {
-	{
-	 .service_function = nfs_null,
-	 .free_function = nfs_null_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "NFS3_NULL",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = nfs3_getattr,
-	 .free_function = nfs3_getattr_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_GETATTR3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_GETATTR3res,
-	 .funcname = "NFS3_GETATTR",
-	 .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS},
-	{
-	 .service_function = nfs3_setattr,
-	 .free_function = nfs3_setattr_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_SETATTR3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_SETATTR3res,
-	 .funcname = "NFS3_SETATTR",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_lookup,
-	 .free_function = nfs3_lookup_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_LOOKUP3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_LOOKUP3res,
-	 .funcname = "NFS3_LOOKUP",
-	 .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS},
-	{
-	 .service_function = nfs3_access,
-	 .free_function = nfs3_access_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_ACCESS3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_ACCESS3res,
-	 .funcname = "NFS3_ACCESS",
-	 .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS},
-	{
-	 .service_function = nfs3_readlink,
-	 .free_function = nfs3_readlink_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_READLINK3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_READLINK3res,
-	 .funcname = "NFS3_READLINK",
-	 .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS},
-	{
-	 .service_function = nfs3_read,
-	 .free_function = nfs3_read_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_READ3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_READ3res,
-	 .funcname = "NFS3_READ",
-	 .dispatch_behaviour =
-	 NEEDS_CRED | SUPPORTS_GSS | MAKES_IO},
-	{
-	 .service_function = nfs3_write,
-	 .free_function = nfs3_write_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_WRITE3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_WRITE3res,
-	 .funcname = "NFS3_WRITE",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS |
-	  MAKES_IO)
-	 },
-	{
-	 .service_function = nfs3_create,
-	 .free_function = nfs3_create_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_CREATE3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_CREATE3res,
-	 .funcname = "NFS3_CREATE",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_mkdir,
-	 .free_function = nfs3_mkdir_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_MKDIR3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_MKDIR3res,
-	 .funcname = "NFS3_MKDIR",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_symlink,
-	 .free_function = nfs3_symlink_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_SYMLINK3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_SYMLINK3res,
-	 .funcname = "NFS3_SYMLINK",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_mknod,
-	 .free_function = nfs3_mknod_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_MKNOD3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_MKNOD3res,
-	 .funcname = "NFS3_MKNOD",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_remove,
-	 .free_function = nfs3_remove_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_REMOVE3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_REMOVE3res,
-	 .funcname = "NFS3_REMOVE",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_rmdir,
-	 .free_function = nfs3_rmdir_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_RMDIR3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_RMDIR3res,
-	 .funcname = "NFS3_RMDIR",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_rename,
-	 .free_function = nfs3_rename_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_RENAME3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_RENAME3res,
-	 .funcname = "NFS3_RENAME",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_link,
-	 .free_function = nfs3_link_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_LINK3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_LINK3res,
-	 .funcname = "NFS3_LINK",
-	 .dispatch_behaviour =
-	 (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_readdir,
-	 .free_function = nfs3_readdir_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_READDIR3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_READDIR3res,
-	 .funcname = "NFS3_READDIR",
-	 .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_readdirplus,
-	 .free_function = nfs3_readdirplus_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_READDIRPLUS3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_READDIRPLUS3res,
-	 .funcname = "NFS3_READDIRPLUS",
-	 .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_fsstat,
-	 .free_function = nfs3_fsstat_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_FSSTAT3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_FSSTAT3res,
-	 .funcname = "NFS3_FSSTAT",
-	 .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_fsinfo,
-	 .free_function = nfs3_fsinfo_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_FSINFO3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_FSINFO3res,
-	 .funcname = "NFS3_FSINFO",
-	 .dispatch_behaviour = (NEEDS_CRED)
-	 },
-	{
-	 .service_function = nfs3_pathconf,
-	 .free_function = nfs3_pathconf_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_PATHCONF3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_PATHCONF3res,
-	 .funcname = "NFS3_PATHCONF",
-	 .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS)
-	 },
-	{
-	 .service_function = nfs3_commit,
-	 .free_function = nfs3_commit_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_COMMIT3args,
-	 .xdr_encode_func = (xdrproc_t) xdr_COMMIT3res,
-	 .funcname = "NFS3_COMMIT",
-	 .dispatch_behaviour = (MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS)}
+	{ .service_function = nfs_null,
+	  .free_function = nfs_null_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "NFS3_NULL",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = nfs3_getattr,
+	  .free_function = nfs3_getattr_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_GETATTR3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_GETATTR3res,
+	  .funcname = "NFS3_GETATTR",
+	  .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS },
+	{ .service_function = nfs3_setattr,
+	  .free_function = nfs3_setattr_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_SETATTR3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_SETATTR3res,
+	  .funcname = "NFS3_SETATTR",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_lookup,
+	  .free_function = nfs3_lookup_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_LOOKUP3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_LOOKUP3res,
+	  .funcname = "NFS3_LOOKUP",
+	  .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS },
+	{ .service_function = nfs3_access,
+	  .free_function = nfs3_access_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_ACCESS3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_ACCESS3res,
+	  .funcname = "NFS3_ACCESS",
+	  .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS },
+	{ .service_function = nfs3_readlink,
+	  .free_function = nfs3_readlink_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_READLINK3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_READLINK3res,
+	  .funcname = "NFS3_READLINK",
+	  .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS },
+	{ .service_function = nfs3_read,
+	  .free_function = nfs3_read_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_READ3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_READ3res,
+	  .funcname = "NFS3_READ",
+	  .dispatch_behaviour = NEEDS_CRED | SUPPORTS_GSS | MAKES_IO },
+	{ .service_function = nfs3_write,
+	  .free_function = nfs3_write_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_WRITE3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_WRITE3res,
+	  .funcname = "NFS3_WRITE",
+	  .dispatch_behaviour = (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP |
+				 SUPPORTS_GSS | MAKES_IO) },
+	{ .service_function = nfs3_create,
+	  .free_function = nfs3_create_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_CREATE3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_CREATE3res,
+	  .funcname = "NFS3_CREATE",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_mkdir,
+	  .free_function = nfs3_mkdir_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_MKDIR3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_MKDIR3res,
+	  .funcname = "NFS3_MKDIR",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_symlink,
+	  .free_function = nfs3_symlink_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_SYMLINK3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_SYMLINK3res,
+	  .funcname = "NFS3_SYMLINK",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_mknod,
+	  .free_function = nfs3_mknod_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_MKNOD3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_MKNOD3res,
+	  .funcname = "NFS3_MKNOD",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_remove,
+	  .free_function = nfs3_remove_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_REMOVE3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_REMOVE3res,
+	  .funcname = "NFS3_REMOVE",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_rmdir,
+	  .free_function = nfs3_rmdir_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_RMDIR3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_RMDIR3res,
+	  .funcname = "NFS3_RMDIR",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_rename,
+	  .free_function = nfs3_rename_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_RENAME3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_RENAME3res,
+	  .funcname = "NFS3_RENAME",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_link,
+	  .free_function = nfs3_link_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_LINK3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_LINK3res,
+	  .funcname = "NFS3_LINK",
+	  .dispatch_behaviour =
+		  (MAKES_WRITE | NEEDS_CRED | CAN_BE_DUP | SUPPORTS_GSS) },
+	{ .service_function = nfs3_readdir,
+	  .free_function = nfs3_readdir_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_READDIR3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_READDIR3res,
+	  .funcname = "NFS3_READDIR",
+	  .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS) },
+	{ .service_function = nfs3_readdirplus,
+	  .free_function = nfs3_readdirplus_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_READDIRPLUS3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_READDIRPLUS3res,
+	  .funcname = "NFS3_READDIRPLUS",
+	  .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS) },
+	{ .service_function = nfs3_fsstat,
+	  .free_function = nfs3_fsstat_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_FSSTAT3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_FSSTAT3res,
+	  .funcname = "NFS3_FSSTAT",
+	  .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS) },
+	{ .service_function = nfs3_fsinfo,
+	  .free_function = nfs3_fsinfo_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_FSINFO3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_FSINFO3res,
+	  .funcname = "NFS3_FSINFO",
+	  .dispatch_behaviour = (NEEDS_CRED) },
+	{ .service_function = nfs3_pathconf,
+	  .free_function = nfs3_pathconf_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_PATHCONF3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_PATHCONF3res,
+	  .funcname = "NFS3_PATHCONF",
+	  .dispatch_behaviour = (NEEDS_CRED | SUPPORTS_GSS) },
+	{ .service_function = nfs3_commit,
+	  .free_function = nfs3_commit_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_COMMIT3args,
+	  .xdr_encode_func = (xdrproc_t)xdr_COMMIT3res,
+	  .funcname = "NFS3_COMMIT",
+	  .dispatch_behaviour = (MAKES_WRITE | NEEDS_CRED | SUPPORTS_GSS) }
 };
 #endif /* _USE_NFS3 */
 
 /* Remember that NFSv4 manages authentication though junction crossing, and
  * so does it for RO FS management (for each operation) */
 const nfs_function_desc_t nfs4_func_desc[] = {
-	{
-	 .service_function = nfs_null,
-	 .free_function = nfs_null_free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "NFS_NULL",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = nfs4_Compound,
-	 .free_function = nfs4_Compound_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_COMPOUND4args,
-	 .xdr_encode_func = (xdrproc_t) xdr_COMPOUND4res_extended,
-	 .funcname = "NFS4_COMP",
-	 .dispatch_behaviour = CAN_BE_DUP}
+	{ .service_function = nfs_null,
+	  .free_function = nfs_null_free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "NFS_NULL",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = nfs4_Compound,
+	  .free_function = nfs4_Compound_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_COMPOUND4args,
+	  .xdr_encode_func = (xdrproc_t)xdr_COMPOUND4res_extended,
+	  .funcname = "NFS4_COMP",
+	  .dispatch_behaviour = CAN_BE_DUP }
 };
 
 #ifdef _USE_NFS3
 const nfs_function_desc_t mnt1_func_desc[] = {
-	{
-	 .service_function = mnt_Null,
-	 .free_function = mnt_Null_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "MNT_NULL",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_Mnt,
-	 .free_function = mnt1_Mnt_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_dirpath,
-	 .xdr_encode_func = (xdrproc_t) xdr_fhstatus2,
-	 .funcname = "MNT_MNT",
-	 .dispatch_behaviour = NEEDS_CRED},
-	{
-	 .service_function = mnt_Dump,
-	 .free_function = mnt_Dump_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_mountlist,
-	 .funcname = "MNT_DUMP",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_Umnt,
-	 .free_function = mnt_Umnt_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_dirpath,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "MNT_UMNT",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_UmntAll,
-	 .free_function = mnt_UmntAll_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "MNT_UMNTALL",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_Export,
-	 .free_function = mnt_Export_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_exports,
-	 .funcname = "MNT_EXPORT",
-	 .dispatch_behaviour = NOTHING_SPECIAL}
+	{ .service_function = mnt_Null,
+	  .free_function = mnt_Null_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "MNT_NULL",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_Mnt,
+	  .free_function = mnt1_Mnt_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_dirpath,
+	  .xdr_encode_func = (xdrproc_t)xdr_fhstatus2,
+	  .funcname = "MNT_MNT",
+	  .dispatch_behaviour = NEEDS_CRED },
+	{ .service_function = mnt_Dump,
+	  .free_function = mnt_Dump_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_mountlist,
+	  .funcname = "MNT_DUMP",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_Umnt,
+	  .free_function = mnt_Umnt_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_dirpath,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "MNT_UMNT",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_UmntAll,
+	  .free_function = mnt_UmntAll_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "MNT_UMNTALL",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_Export,
+	  .free_function = mnt_Export_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_exports,
+	  .funcname = "MNT_EXPORT",
+	  .dispatch_behaviour = NOTHING_SPECIAL }
 };
 
 const nfs_function_desc_t mnt3_func_desc[] = {
-	{
-	 .service_function = mnt_Null,
-	 .free_function = mnt_Null_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "MNT_NULL",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_Mnt,
-	 .free_function = mnt3_Mnt_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_dirpath,
-	 .xdr_encode_func = (xdrproc_t) xdr_mountres3,
-	 .funcname = "MNT_MNT",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_Dump,
-	 .free_function = mnt_Dump_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_mountlist,
-	 .funcname = "MNT_DUMP",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_Umnt,
-	 .free_function = mnt_Umnt_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_dirpath,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "MNT_UMNT",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_UmntAll,
-	 .free_function = mnt_UmntAll_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_void,
-	 .funcname = "MNT_UMNTALL",
-	 .dispatch_behaviour = NOTHING_SPECIAL},
-	{
-	 .service_function = mnt_Export,
-	 .free_function = mnt_Export_Free,
-	 .xdr_decode_func = (xdrproc_t) xdr_void,
-	 .xdr_encode_func = (xdrproc_t) xdr_exports,
-	 .funcname = "MNT_EXPORT",
-	 .dispatch_behaviour = NOTHING_SPECIAL}
+	{ .service_function = mnt_Null,
+	  .free_function = mnt_Null_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "MNT_NULL",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_Mnt,
+	  .free_function = mnt3_Mnt_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_dirpath,
+	  .xdr_encode_func = (xdrproc_t)xdr_mountres3,
+	  .funcname = "MNT_MNT",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_Dump,
+	  .free_function = mnt_Dump_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_mountlist,
+	  .funcname = "MNT_DUMP",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_Umnt,
+	  .free_function = mnt_Umnt_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_dirpath,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "MNT_UMNT",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_UmntAll,
+	  .free_function = mnt_UmntAll_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_void,
+	  .funcname = "MNT_UMNTALL",
+	  .dispatch_behaviour = NOTHING_SPECIAL },
+	{ .service_function = mnt_Export,
+	  .free_function = mnt_Export_Free,
+	  .xdr_decode_func = (xdrproc_t)xdr_void,
+	  .xdr_encode_func = (xdrproc_t)xdr_exports,
+	  .funcname = "MNT_EXPORT",
+	  .dispatch_behaviour = NOTHING_SPECIAL }
 };
 #endif
 
@@ -567,133 +514,116 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 
 #ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
-	[0] = {
-	       .service_function = rquota_Null,
-	       .free_function = rquota_Null_Free,
-	       .xdr_decode_func = (xdrproc_t) xdr_void,
-	       .xdr_encode_func = (xdrproc_t) xdr_void,
-	       .funcname = "RQUOTA_NULL",
-	       .dispatch_behaviour = NOTHING_SPECIAL},
-	[RQUOTAPROC_GETQUOTA] = {
-				 .service_function = rquota_getquota,
-				 .free_function = rquota_getquota_Free,
-				 .xdr_decode_func =
-				 (xdrproc_t) xdr_getquota_args,
-				 .xdr_encode_func =
-				 (xdrproc_t) xdr_getquota_rslt,
-				 .funcname = "RQUOTA_GETQUOTA",
-				 .dispatch_behaviour = NEEDS_CRED},
-	[RQUOTAPROC_GETACTIVEQUOTA] = {
-				       .service_function =
-				       rquota_getactivequota,
-				       .free_function =
-				       rquota_getactivequota_Free,
-				       .xdr_decode_func =
-				       (xdrproc_t) xdr_getquota_args,
-				       .xdr_encode_func =
-				       (xdrproc_t) xdr_getquota_rslt,
-				       .funcname = "RQUOTA_GETACTIVEQUOTA",
-				       .dispatch_behaviour = NEEDS_CRED},
-	[RQUOTAPROC_SETQUOTA] = {
-				 .service_function = rquota_setquota,
-				 .free_function = rquota_setquota_Free,
-				 .xdr_decode_func =
-				 (xdrproc_t) xdr_setquota_args,
-				 .xdr_encode_func =
-				 (xdrproc_t) xdr_setquota_rslt,
-				 .funcname = "RQUOTA_SETACTIVEQUOTA",
-				 .dispatch_behaviour = NEEDS_CRED},
-	[RQUOTAPROC_SETACTIVEQUOTA] = {
-				       .service_function =
-				       rquota_setactivequota,
-				       .free_function =
-				       rquota_setactivequota_Free,
-				       .xdr_decode_func =
-				       (xdrproc_t) xdr_setquota_args,
-				       .xdr_encode_func =
-				       (xdrproc_t) xdr_setquota_rslt,
-				       .funcname = "RQUOTA_GETACTIVEQUOTA",
-				       .dispatch_behaviour = NEEDS_CRED}
+	[0] = { .service_function = rquota_Null,
+		.free_function = rquota_Null_Free,
+		.xdr_decode_func = (xdrproc_t)xdr_void,
+		.xdr_encode_func = (xdrproc_t)xdr_void,
+		.funcname = "RQUOTA_NULL",
+		.dispatch_behaviour = NOTHING_SPECIAL },
+	[RQUOTAPROC_GETQUOTA] = { .service_function = rquota_getquota,
+				  .free_function = rquota_getquota_Free,
+				  .xdr_decode_func =
+					  (xdrproc_t)xdr_getquota_args,
+				  .xdr_encode_func =
+					  (xdrproc_t)xdr_getquota_rslt,
+				  .funcname = "RQUOTA_GETQUOTA",
+				  .dispatch_behaviour = NEEDS_CRED },
+	[RQUOTAPROC_GETACTIVEQUOTA] = { .service_function =
+						rquota_getactivequota,
+					.free_function =
+						rquota_getactivequota_Free,
+					.xdr_decode_func =
+						(xdrproc_t)xdr_getquota_args,
+					.xdr_encode_func =
+						(xdrproc_t)xdr_getquota_rslt,
+					.funcname = "RQUOTA_GETACTIVEQUOTA",
+					.dispatch_behaviour = NEEDS_CRED },
+	[RQUOTAPROC_SETQUOTA] = { .service_function = rquota_setquota,
+				  .free_function = rquota_setquota_Free,
+				  .xdr_decode_func =
+					  (xdrproc_t)xdr_setquota_args,
+				  .xdr_encode_func =
+					  (xdrproc_t)xdr_setquota_rslt,
+				  .funcname = "RQUOTA_SETACTIVEQUOTA",
+				  .dispatch_behaviour = NEEDS_CRED },
+	[RQUOTAPROC_SETACTIVEQUOTA] = { .service_function =
+						rquota_setactivequota,
+					.free_function =
+						rquota_setactivequota_Free,
+					.xdr_decode_func =
+						(xdrproc_t)xdr_setquota_args,
+					.xdr_encode_func =
+						(xdrproc_t)xdr_setquota_rslt,
+					.funcname = "RQUOTA_GETACTIVEQUOTA",
+					.dispatch_behaviour = NEEDS_CRED }
 };
 
 const nfs_function_desc_t rquota2_func_desc[] = {
-	[0] = {
-	       .service_function = rquota_Null,
-	       .free_function = rquota_Null_Free,
-	       .xdr_decode_func = (xdrproc_t) xdr_void,
-	       .xdr_encode_func = (xdrproc_t) xdr_void,
-	       .funcname = "RQUOTA_NULL",
-	       .dispatch_behaviour = NOTHING_SPECIAL},
-	[RQUOTAPROC_GETQUOTA] = {
-				 .service_function = rquota_getquota,
-				 .free_function = rquota_getquota_Free,
-				 .xdr_decode_func =
-				 (xdrproc_t) xdr_ext_getquota_args,
-				 .xdr_encode_func =
-				 (xdrproc_t) xdr_getquota_rslt,
-				 .funcname = "RQUOTA_EXT_GETQUOTA",
-				 .dispatch_behaviour = NEEDS_CRED},
-	[RQUOTAPROC_GETACTIVEQUOTA] = {
-				       .service_function =
-				       rquota_getactivequota,
-				       .free_function =
-				       rquota_getactivequota_Free,
-				       .xdr_decode_func =
-				       (xdrproc_t) xdr_ext_getquota_args,
-				       .xdr_encode_func =
-				       (xdrproc_t) xdr_getquota_rslt,
-				       .funcname = "RQUOTA_EXT_GETACTIVEQUOTA",
-				       .dispatch_behaviour = NEEDS_CRED},
-	[RQUOTAPROC_SETQUOTA] = {
-				 .service_function = rquota_setquota,
-				 .free_function = rquota_setquota_Free,
-				 .xdr_decode_func =
-				 (xdrproc_t) xdr_ext_setquota_args,
-				 .xdr_encode_func =
-				 (xdrproc_t) xdr_setquota_rslt,
-				 .funcname = "RQUOTA_EXT_SETACTIVEQUOTA",
-				 .dispatch_behaviour = NEEDS_CRED},
-	[RQUOTAPROC_SETACTIVEQUOTA] = {
-				       .service_function =
-				       rquota_setactivequota,
-				       .free_function =
-				       rquota_setactivequota_Free,
-				       .xdr_decode_func =
-				       (xdrproc_t) xdr_ext_setquota_args,
-				       .xdr_encode_func =
-				       (xdrproc_t) xdr_setquota_rslt,
-				       .funcname = "RQUOTA_EXT_GETACTIVEQUOTA",
-				       .dispatch_behaviour = NEEDS_CRED}
+	[0] = { .service_function = rquota_Null,
+		.free_function = rquota_Null_Free,
+		.xdr_decode_func = (xdrproc_t)xdr_void,
+		.xdr_encode_func = (xdrproc_t)xdr_void,
+		.funcname = "RQUOTA_NULL",
+		.dispatch_behaviour = NOTHING_SPECIAL },
+	[RQUOTAPROC_GETQUOTA] = { .service_function = rquota_getquota,
+				  .free_function = rquota_getquota_Free,
+				  .xdr_decode_func =
+					  (xdrproc_t)xdr_ext_getquota_args,
+				  .xdr_encode_func =
+					  (xdrproc_t)xdr_getquota_rslt,
+				  .funcname = "RQUOTA_EXT_GETQUOTA",
+				  .dispatch_behaviour = NEEDS_CRED },
+	[RQUOTAPROC_GETACTIVEQUOTA] = { .service_function =
+						rquota_getactivequota,
+					.free_function =
+						rquota_getactivequota_Free,
+					.xdr_decode_func = (xdrproc_t)
+						xdr_ext_getquota_args,
+					.xdr_encode_func =
+						(xdrproc_t)xdr_getquota_rslt,
+					.funcname = "RQUOTA_EXT_GETACTIVEQUOTA",
+					.dispatch_behaviour = NEEDS_CRED },
+	[RQUOTAPROC_SETQUOTA] = { .service_function = rquota_setquota,
+				  .free_function = rquota_setquota_Free,
+				  .xdr_decode_func =
+					  (xdrproc_t)xdr_ext_setquota_args,
+				  .xdr_encode_func =
+					  (xdrproc_t)xdr_setquota_rslt,
+				  .funcname = "RQUOTA_EXT_SETACTIVEQUOTA",
+				  .dispatch_behaviour = NEEDS_CRED },
+	[RQUOTAPROC_SETACTIVEQUOTA] = { .service_function =
+						rquota_setactivequota,
+					.free_function =
+						rquota_setactivequota_Free,
+					.xdr_decode_func = (xdrproc_t)
+						xdr_ext_setquota_args,
+					.xdr_encode_func =
+						(xdrproc_t)xdr_setquota_rslt,
+					.funcname = "RQUOTA_EXT_GETACTIVEQUOTA",
+					.dispatch_behaviour = NEEDS_CRED }
 };
 #endif
 
 #ifdef USE_NFSACL3
 const nfs_function_desc_t nfsacl_func_desc[] = {
-	[0] = {
-	       .service_function = nfsacl_Null,
-	       .free_function = nfsacl_Null_Free,
-	       .xdr_decode_func = (xdrproc_t) xdr_void,
-	       .xdr_encode_func = (xdrproc_t) xdr_void,
-	       .funcname = "NFSACL_NULL",
-	       .dispatch_behaviour = NOTHING_SPECIAL},
-	[NFSACLPROC_GETACL] = {
-				 .service_function = nfsacl_getacl,
-				 .free_function = nfsacl_getacl_Free,
-				 .xdr_decode_func =
-				 (xdrproc_t) xdr_getaclargs,
-				 .xdr_encode_func =
-				 (xdrproc_t) xdr_getaclres,
-				 .funcname = "NFSACL_GETACL",
-				 .dispatch_behaviour = NEEDS_CRED},
-	[NFSACLPROC_SETACL] = {
-				 .service_function = nfsacl_setacl,
-				 .free_function = nfsacl_setacl_Free,
-				 .xdr_decode_func =
-				 (xdrproc_t) xdr_setaclargs,
-				 .xdr_encode_func =
-				 (xdrproc_t) xdr_setaclres,
-				 .funcname = "NFSACL_SETACL",
-				 .dispatch_behaviour = NEEDS_CRED}
+	[0] = { .service_function = nfsacl_Null,
+		.free_function = nfsacl_Null_Free,
+		.xdr_decode_func = (xdrproc_t)xdr_void,
+		.xdr_encode_func = (xdrproc_t)xdr_void,
+		.funcname = "NFSACL_NULL",
+		.dispatch_behaviour = NOTHING_SPECIAL },
+	[NFSACLPROC_GETACL] = { .service_function = nfsacl_getacl,
+				.free_function = nfsacl_getacl_Free,
+				.xdr_decode_func = (xdrproc_t)xdr_getaclargs,
+				.xdr_encode_func = (xdrproc_t)xdr_getaclres,
+				.funcname = "NFSACL_GETACL",
+				.dispatch_behaviour = NEEDS_CRED },
+	[NFSACLPROC_SETACL] = { .service_function = nfsacl_setacl,
+				.free_function = nfsacl_setacl_Free,
+				.xdr_decode_func = (xdrproc_t)xdr_setaclargs,
+				.xdr_encode_func = (xdrproc_t)xdr_setaclres,
+				.funcname = "NFSACL_SETACL",
+				.dispatch_behaviour = NEEDS_CRED }
 };
 #endif
 
@@ -710,14 +640,12 @@ void free_args(nfs_request_t *reqdata)
 
 	/* Free the allocated resources once the work is done */
 	/* Free the arguments */
-	if ((reqdata->svc.rq_msg.cb_vers == 2)
-	 || (reqdata->svc.rq_msg.cb_vers == 3)
-	 || (reqdata->svc.rq_msg.cb_vers == 4)) {
-		if (!xdr_free(reqdesc->xdr_decode_func,
-			      &reqdata->arg_nfs)) {
+	if ((reqdata->svc.rq_msg.cb_vers == 2) ||
+	    (reqdata->svc.rq_msg.cb_vers == 3) ||
+	    (reqdata->svc.rq_msg.cb_vers == 4)) {
+		if (!xdr_free(reqdesc->xdr_decode_func, &reqdata->arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,
-				"%s FAILURE: Bad xdr_free for %s",
-				__func__,
+				"%s FAILURE: Bad xdr_free for %s", __func__,
 				reqdesc->funcname);
 		}
 	}
@@ -736,9 +664,8 @@ void free_args(nfs_request_t *reqdata)
 	clean_credentials();
 	release_op_context();
 
-
-	GSH_AUTO_TRACEPOINT(nfs_rpc, end, TRACE_INFO,
-		"Rpc end. request: {}", reqdata);
+	GSH_AUTO_TRACEPOINT(nfs_rpc, end, TRACE_INFO, "Rpc end. request: {}",
+			    reqdata);
 }
 
 enum nfs_req_result complete_request(nfs_request_t *reqdata,
@@ -748,18 +675,16 @@ enum nfs_req_result complete_request(nfs_request_t *reqdata,
 	const nfs_function_desc_t *reqdesc = reqdata->funcdesc;
 
 	/* NFSv4 stats are handled in nfs4_compound() */
-	if (reqdata->svc.rq_msg.cb_prog != NFS_program[P_NFS]
-	    || reqdata->svc.rq_msg.cb_vers != NFS_V4)
+	if (reqdata->svc.rq_msg.cb_prog != NFS_program[P_NFS] ||
+	    reqdata->svc.rq_msg.cb_vers != NFS_V4)
 		server_stats_nfs_done(reqdata, rc, false);
 
 	/* If request is dropped, no return to the client */
 	if (rc == NFS_REQ_DROP) {
 		/* The request was dropped */
 		LogDebug(COMPONENT_DISPATCH,
-			 "Drop request rpc_xid=%" PRIu32
-			 ", program %" PRIu32
-			 ", version %" PRIu32
-			 ", function %" PRIu32,
+			 "Drop request rpc_xid=%" PRIu32 ", program %" PRIu32
+			 ", version %" PRIu32 ", function %" PRIu32,
 			 reqdata->svc.rq_msg.rm_xid,
 			 reqdata->svc.rq_msg.cb_prog,
 			 reqdata->svc.rq_msg.cb_vers,
@@ -773,39 +698,32 @@ enum nfs_req_result complete_request(nfs_request_t *reqdata,
 		return rc;
 	}
 
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "Before svc_sendreply on socket %d", xprt->xp_fd);
+	LogFullDebug(COMPONENT_DISPATCH, "Before svc_sendreply on socket %d",
+		     xprt->xp_fd);
 
 	reqdata->svc.rq_msg.RPCM_ack.ar_results.where = reqdata->res_nfs;
-	reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
-				reqdesc->xdr_encode_func;
+	reqdata->svc.rq_msg.RPCM_ack.ar_results.proc = reqdesc->xdr_encode_func;
 
 	GSH_XPRT_AUTO_TRACEPOINT(nfs_rpc, before_reply, TRACE_INFO, xprt,
-		"Before reply");
+				 "Before reply");
 
 	if (svc_sendreply(&reqdata->svc) >= XPRT_DIED) {
-		LogDebug(COMPONENT_DISPATCH,
-			 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%"
-			 PRIu32
-			 " socket=%d function:%s client:%s program:%"
-			 PRIu32
-			 " nfs version:%" PRIu32
-			 " proc:%" PRIu32
-			 " errno: %d",
-			 reqdata->svc.rq_msg.rm_xid,
-			 xprt->xp_fd,
-			 reqdesc->funcname,
-			 op_ctx->client->hostaddr_str,
-			 reqdata->svc.rq_msg.cb_prog,
-			 reqdata->svc.rq_msg.cb_vers,
-			 reqdata->svc.rq_msg.cb_proc,
-			 errno);
+		LogDebug(
+			COMPONENT_DISPATCH,
+			"NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%" PRIu32
+			" socket=%d function:%s client:%s program:%" PRIu32
+			" nfs version:%" PRIu32 " proc:%" PRIu32 " errno: %d",
+			reqdata->svc.rq_msg.rm_xid, xprt->xp_fd,
+			reqdesc->funcname, op_ctx->client->hostaddr_str,
+			reqdata->svc.rq_msg.cb_prog,
+			reqdata->svc.rq_msg.cb_vers,
+			reqdata->svc.rq_msg.cb_proc, errno);
 		SVC_DESTROY(xprt);
 		rc = NFS_REQ_XPRT_DIED;
 	}
 
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "After svc_sendreply on socket %d", xprt->xp_fd);
+	LogFullDebug(COMPONENT_DISPATCH, "After svc_sendreply on socket %d",
+		     xprt->xp_fd);
 
 	/* Finish any request not already deleted */
 	nfs_dupreq_finish(reqdata, rc);
@@ -814,8 +732,8 @@ enum nfs_req_result complete_request(nfs_request_t *reqdata,
 
 void complete_request_instrumentation(nfs_request_t *reqdata)
 {
-	GSH_AUTO_TRACEPOINT(nfs_rpc, op_end, TRACE_INFO,
-		"Op end. request: {}", reqdata);
+	GSH_AUTO_TRACEPOINT(nfs_rpc, op_end, TRACE_INFO, "Op end. request: {}",
+			    reqdata);
 }
 
 /** @brief Completion of async RPC dispatch
@@ -842,10 +760,10 @@ enum nfs_req_result process_dupreq(nfs_request_t *reqdata,
 
 	/* Found the request in the dupreq cache.
 	 * Send cached reply. */
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "DUP: DupReq Cache Hit: using previous reply, rpcxid=%"
-		     PRIu32,
-		     reqdata->svc.rq_msg.rm_xid);
+	LogFullDebug(
+		COMPONENT_DISPATCH,
+		"DUP: DupReq Cache Hit: using previous reply, rpcxid=%" PRIu32,
+		reqdata->svc.rq_msg.rm_xid);
 
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "Before svc_sendreply on socket %d (dup req)",
@@ -853,30 +771,24 @@ enum nfs_req_result process_dupreq(nfs_request_t *reqdata,
 
 	reqdata->svc.rq_msg.RPCM_ack.ar_results.where = reqdata->res_nfs;
 	reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
-				reqdata->funcdesc->xdr_encode_func;
+		reqdata->funcdesc->xdr_encode_func;
 
 	GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(nfs_rpc, before_reply, TRACE_INFO,
-		reqdata->svc.rq_xprt, "Before reply");
+					reqdata->svc.rq_xprt, "Before reply");
 
 	xprt_rc = svc_sendreply(&reqdata->svc);
 
 	if (xprt_rc >= XPRT_DIED) {
-		LogDebug(COMPONENT_DISPATCH,
-			 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%"
-			 PRIu32
-			 " socket=%d function:%s client:%s program:%"
-			 PRIu32
-			 " nfs version:%" PRIu32
-			 " proc:%" PRIu32
-			 " errno: %d",
-			 reqdata->svc.rq_msg.rm_xid,
-			 reqdata->svc.rq_xprt->xp_fd,
-			 reqdata->funcdesc->funcname,
-			 client_ip,
-			 reqdata->svc.rq_msg.cb_prog,
-			 reqdata->svc.rq_msg.cb_vers,
-			 reqdata->svc.rq_msg.cb_proc,
-			 errno);
+		LogDebug(
+			COMPONENT_DISPATCH,
+			"NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a duplicate request. rpcxid=%" PRIu32
+			" socket=%d function:%s client:%s program:%" PRIu32
+			" nfs version:%" PRIu32 " proc:%" PRIu32 " errno: %d",
+			reqdata->svc.rq_msg.rm_xid, reqdata->svc.rq_xprt->xp_fd,
+			reqdata->funcdesc->funcname, client_ip,
+			reqdata->svc.rq_msg.cb_prog,
+			reqdata->svc.rq_msg.cb_vers,
+			reqdata->svc.rq_msg.cb_proc, errno);
 		svcerr_systemerr(&reqdata->svc);
 		return NFS_REQ_XPRT_DIED;
 	}
@@ -913,7 +825,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 		goto retry_after_drc_suspend;
 
 	GSH_AUTO_TRACEPOINT(nfs_rpc, start, TRACE_INFO,
-		"Rpc start. request: {}", reqdata);
+			    "Rpc start. request: {}", reqdata);
 
 	if ((xprt->xp_proxy.ss.ss_family == AF_INET ||
 	     xprt->xp_proxy.ss.ss_family == AF_INET6) &&
@@ -922,27 +834,21 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 		 * that is not authorized.
 		 */
 		char addr[SOCK_NAME_MAX];
-		struct display_buffer dspbuf = {sizeof(addr), addr, addr};
+		struct display_buffer dspbuf = { sizeof(addr), addr, addr };
 
-		(void) display_sockaddr(&dspbuf, &xprt->xp_proxy.ss);
+		(void)display_sockaddr(&dspbuf, &xprt->xp_proxy.ss);
 
 		LogWarn(COMPONENT_DISPATCH,
-			"HAProxy connection from %s rejected",
-			addr);
+			"HAProxy connection from %s rejected", addr);
 
 		return svcerr_auth(&reqdata->svc, AUTH_FAILED);
 	}
 
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "About to authenticate Prog=%" PRIu32
-		     ", vers=%" PRIu32
-		     ", proc=%" PRIu32
-		     ", xid=%" PRIu32
-		     ", SVCXPRT=%p, fd=%d",
-		     reqdata->svc.rq_msg.cb_prog,
-		     reqdata->svc.rq_msg.cb_vers,
-		     reqdata->svc.rq_msg.cb_proc,
-		     reqdata->svc.rq_msg.rm_xid,
+		     "About to authenticate Prog=%" PRIu32 ", vers=%" PRIu32
+		     ", proc=%" PRIu32 ", xid=%" PRIu32 ", SVCXPRT=%p, fd=%d",
+		     reqdata->svc.rq_msg.cb_prog, reqdata->svc.rq_msg.cb_vers,
+		     reqdata->svc.rq_msg.cb_proc, reqdata->svc.rq_msg.rm_xid,
 		     xprt, xprt->xp_fd);
 
 	/* If authentication is AUTH_NONE or AUTH_UNIX, then the value of
@@ -961,14 +867,14 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 			auth_stat2str(auth_rc));
 		return svcerr_auth(&reqdata->svc, auth_rc);
 #ifdef _HAVE_GSSAPI
-	} else if (reqdata->svc.rq_msg.RPCM_ack.ar_verf.oa_flavor
-		   == RPCSEC_GSS) {
-		struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
-			reqdata->svc.rq_msg.rq_cred_body;
+	} else if (reqdata->svc.rq_msg.RPCM_ack.ar_verf.oa_flavor ==
+		   RPCSEC_GSS) {
+		struct rpc_gss_cred *gc =
+			(struct rpc_gss_cred *)reqdata->svc.rq_msg.rq_cred_body;
 
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%"
-			     PRIu32 ") %s",
+			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%" PRIu32
+			     ") %s",
 			     no_dispatch, gc->gc_proc,
 			     str_gc_proc(gc->gc_proc));
 
@@ -1011,17 +917,18 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 			/* We already sent the GSS auth response to client
 			 * through ntirpc.
 			 */
-			LogFullDebug(COMPONENT_DISPATCH,
+			LogFullDebug(
+				COMPONENT_DISPATCH,
 				"Received AUTH_OK for RPCSEC_GSS (non-DATA procedure) with no-dispatch set to true. We silently return from the function");
 			return SVC_STAT(xprt);
 		}
 	} else if (no_dispatch) {
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "RPCSEC_GSS no_dispatch=%d", no_dispatch);
-		if (reqdata->svc.rq_msg.cb_cred.oa_flavor
-			== RPCSEC_GSS) {
-			struct rpc_gss_cred *gc = (struct rpc_gss_cred *)
-				reqdata->svc.rq_msg.rq_cred_body;
+		LogFullDebug(COMPONENT_DISPATCH, "RPCSEC_GSS no_dispatch=%d",
+			     no_dispatch);
+		if (reqdata->svc.rq_msg.cb_cred.oa_flavor == RPCSEC_GSS) {
+			struct rpc_gss_cred *gc =
+				(struct rpc_gss_cred *)
+					reqdata->svc.rq_msg.rq_cred_body;
 
 			if (gc->gc_proc == RPCSEC_GSS_DATA)
 				return svcerr_auth(&reqdata->svc,
@@ -1035,8 +942,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 	 * Extract RPC argument.
 	 */
 	LogFullDebug(COMPONENT_DISPATCH,
-		     "Before SVCAUTH_CHECKSUM on SVCXPRT %p fd %d",
-		     xprt, xprt->xp_fd);
+		     "Before SVCAUTH_CHECKSUM on SVCXPRT %p fd %d", xprt,
+		     xprt->xp_fd);
 
 	memset(arg_nfs, 0, sizeof(nfs_arg_t));
 	reqdata->svc.rq_msg.rm_xdr.where = arg_nfs;
@@ -1046,20 +953,16 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 	if (!SVCAUTH_CHECKSUM(&reqdata->svc)) {
 		LogInfo(COMPONENT_DISPATCH,
 			"SVCAUTH_CHECKSUM failed for Program %" PRIu32
-			", Version %" PRIu32
-			", Function %" PRIu32
-			", xid=%" PRIu32
-			", SVCXPRT=%p, fd=%d",
+			", Version %" PRIu32 ", Function %" PRIu32
+			", xid=%" PRIu32 ", SVCXPRT=%p, fd=%d",
 			reqdata->svc.rq_msg.cb_prog,
 			reqdata->svc.rq_msg.cb_vers,
-			reqdata->svc.rq_msg.cb_proc,
-			reqdata->svc.rq_msg.rm_xid,
+			reqdata->svc.rq_msg.cb_proc, reqdata->svc.rq_msg.rm_xid,
 			xprt, xprt->xp_fd);
 
 		if (!xdr_free(reqdesc->xdr_decode_func, arg_nfs)) {
 			LogCrit(COMPONENT_DISPATCH,
-				"%s FAILURE: Bad xdr_free for %s",
-				__func__,
+				"%s FAILURE: Bad xdr_free for %s", __func__,
 				reqdesc->funcname);
 		}
 		return svcerr_decode(&reqdata->svc);
@@ -1096,8 +999,7 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 	if (op_ctx->client == NULL) {
 		LogDebug(COMPONENT_DISPATCH,
 			 "Cannot get client block for Program %" PRIu32
-			 ", Version %" PRIu32
-			 ", Function %" PRIu32,
+			 ", Version %" PRIu32 ", Function %" PRIu32,
 			 reqdata->svc.rq_msg.cb_prog,
 			 reqdata->svc.rq_msg.cb_vers,
 			 reqdata->svc.rq_msg.cb_proc);
@@ -1107,11 +1009,9 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 		client_ip = op_ctx->client->hostaddr_str;
 		LogDebug(COMPONENT_DISPATCH,
 			 "Request from %s for Program %" PRIu32
-			 ", Version %" PRIu32
-			 ", Function %" PRIu32
+			 ", Version %" PRIu32 ", Function %" PRIu32
 			 " has xid=%" PRIu32,
-			 client_ip,
-			 reqdata->svc.rq_msg.cb_prog,
+			 client_ip, reqdata->svc.rq_msg.cb_prog,
 			 reqdata->svc.rq_msg.cb_vers,
 			 reqdata->svc.rq_msg.cb_proc,
 			 reqdata->svc.rq_msg.rm_xid);
@@ -1124,20 +1024,22 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 
 	if (dpq_status == DUPREQ_SUCCESS) {
 		/* A new request, continue processing it. */
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "Current request is not duplicate or not cacheable.");
+		LogFullDebug(
+			COMPONENT_DISPATCH,
+			"Current request is not duplicate or not cacheable.");
 	} else {
 		switch (dpq_status) {
 		case DUPREQ_EXISTS:
-			(void) process_dupreq(reqdata, client_ip);
+			(void)process_dupreq(reqdata, client_ip);
 			break;
 
 			/* Another thread owns the request */
 		case DUPREQ_BEING_PROCESSED:
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "Suspending DUP: Request xid=%" PRIu32
-				     " is already being processed; the active thread will reply",
-				     reqdata->svc.rq_msg.rm_xid);
+			LogFullDebug(
+				COMPONENT_DISPATCH,
+				"Suspending DUP: Request xid=%" PRIu32
+				" is already being processed; the active thread will reply",
+				reqdata->svc.rq_msg.rm_xid);
 			/* The request is suspended, don't touch the request in
 			 * any way because the resume may already be scheduled
 			 * and running on nother thread. The xp_resume_cb has
@@ -1148,10 +1050,11 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 			return XPRT_SUSPEND;
 
 		case DUPREQ_DROP:
-			LogFullDebug(COMPONENT_DISPATCH,
-				     "DUP: Request xid=%" PRIu32
-				     " is already being processed and has too many dupes queued",
-				     reqdata->svc.rq_msg.rm_xid);
+			LogFullDebug(
+				COMPONENT_DISPATCH,
+				"DUP: Request xid=%" PRIu32
+				" is already being processed and has too many dupes queued",
+				reqdata->svc.rq_msg.rm_xid);
 			/* Free the arguments */
 			/* Ignore the request, send no error */
 			break;
@@ -1180,15 +1083,15 @@ retry_after_drc_suspend:
 	 * NFS v2 is set to invalid_funcdesc in nfs_rpc_get_funcdesc()
 	 */
 
-	if (reqdesc == &invalid_funcdesc
-	    || reqdata->svc.rq_msg.cb_proc == NFSPROC_NULL)
+	if (reqdesc == &invalid_funcdesc ||
+	    reqdata->svc.rq_msg.cb_proc == NFSPROC_NULL)
 		goto null_op;
 	/* Get the export entry */
 	if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS]
 #ifdef USE_NFSACL3
 	    || reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFSACL]
 #endif
-	    ) {
+	) {
 		/* The NFSv3 functions' arguments always begin with the file
 		 * handle (but not the NULL function).  This hook is used to
 		 * get the fhandle with the arguments and so determine the
@@ -1199,7 +1102,7 @@ retry_after_drc_suspend:
 		progname = "NFS";
 #ifdef _USE_NFS3
 		if (reqdata->svc.rq_msg.cb_vers == NFS_V3) {
-			exportid = nfs3_FhandleToExportId((nfs_fh3 *) arg_nfs);
+			exportid = nfs3_FhandleToExportId((nfs_fh3 *)arg_nfs);
 
 			if (exportid < 0) {
 				LogInfo(COMPONENT_DISPATCH,
@@ -1208,7 +1111,7 @@ retry_after_drc_suspend:
 
 				/* Bad handle, report to client */
 				reqdata->res_nfs->res_getattr3.status =
-							NFS3ERR_BADHANDLE;
+					NFS3ERR_BADHANDLE;
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
@@ -1216,21 +1119,23 @@ retry_after_drc_suspend:
 			set_op_context_export(get_gsh_export(exportid));
 
 			if (op_ctx->ctx_export == NULL) {
-				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+				LogInfoAlt(
+					COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"NFS3 Request from client %s has invalid export %d",
 					client_ip, exportid);
 
 				/* Bad export, report to client */
 				reqdata->res_nfs->res_getattr3.status =
-								NFS3ERR_STALE;
+					NFS3ERR_STALE;
 				rc = NFS_REQ_OK;
 				goto req_error;
 			}
 
-			LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				    "Found export entry for path=%s as exportid=%d",
-				    op_ctx_export_path(op_ctx),
-				    op_ctx->ctx_export->export_id);
+			LogMidDebugAlt(
+				COMPONENT_DISPATCH, COMPONENT_EXPORT,
+				"Found export entry for path=%s as exportid=%d",
+				op_ctx_export_path(op_ctx),
+				op_ctx->ctx_export->export_id);
 		}
 #endif /* _USE_NFS3 */
 		/* NFS V4 gets its own export id from the ops
@@ -1300,11 +1205,11 @@ retry_after_drc_suspend:
 				set_op_context_export(get_gsh_export(exportid));
 
 				if (op_ctx->ctx_export == NULL) {
-					LogInfoAlt(COMPONENT_DISPATCH,
-						   COMPONENT_EXPORT,
-						   "NLM4 Request from client %s has invalid export %d",
-						   client_ip,
-						   exportid);
+					LogInfoAlt(
+						COMPONENT_DISPATCH,
+						COMPONENT_EXPORT,
+						"NLM4 Request from client %s has invalid export %d",
+						client_ip, exportid);
 
 					/* We need to send a NLM4_STALE_FH
 					 * response (NLM doesn't have an error
@@ -1315,7 +1220,8 @@ retry_after_drc_suspend:
 					 * can respond to ASYNC calls.
 					 */
 				} else {
-					LogMidDebugAlt(COMPONENT_DISPATCH,
+					LogMidDebugAlt(
+						COMPONENT_DISPATCH,
 						COMPONENT_EXPORT,
 						"Found export entry for dirname=%s as exportid=%d",
 						ctx_export_path(op_ctx),
@@ -1335,19 +1241,20 @@ retry_after_drc_suspend:
 		/* We ONLY get here for NFS v3 or NLM requests with a handle */
 		xprt_type_t xprt_type = svc_get_xprt_type(xprt);
 
-		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			    "%s about to call nfs_export_check_access for client %s",
-			    __func__, client_ip);
+		LogMidDebugAlt(
+			COMPONENT_DISPATCH, COMPONENT_EXPORT,
+			"%s about to call nfs_export_check_access for client %s",
+			__func__, client_ip);
 
 		export_check_access();
 
 		if ((op_ctx->export_perms.options &
 		     EXPORT_OPTION_ACCESS_MASK) == 0) {
-			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				"Client %s is not allowed to access Export_Id %d %s, vers=%"
-				PRIu32 ", proc=%" PRIu32,
-				client_ip,
-				op_ctx->ctx_export->export_id,
+			LogInfoAlt(
+				COMPONENT_DISPATCH, COMPONENT_EXPORT,
+				"Client %s is not allowed to access Export_Id %d %s, vers=%" PRIu32
+				", proc=%" PRIu32,
+				client_ip, op_ctx->ctx_export->export_id,
 				op_ctx_export_path(op_ctx),
 				reqdata->svc.rq_msg.cb_vers,
 				reqdata->svc.rq_msg.cb_proc);
@@ -1356,53 +1263,47 @@ retry_after_drc_suspend:
 			goto freeargs;
 		}
 
-		if ((op_ctx->export_perms.options &
-		     EXPORT_OPTION_NFSV3) == 0) {
-			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+		if ((op_ctx->export_perms.options & EXPORT_OPTION_NFSV3) == 0) {
+			LogInfoAlt(
+				COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
 				" not allowed on Export_Id %d %s for client %s",
-				progname,
-				reqdata->svc.rq_msg.cb_vers,
+				progname, reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx),
-				client_ip);
+				op_ctx_export_path(op_ctx), client_ip);
 
 			auth_failure(reqdata, AUTH_FAILED);
 			goto freeargs;
 		}
 
 		/* Check transport type */
-		if (((xprt_type == XPRT_UDP)
-		     && ((op_ctx->export_perms.options &
-			  EXPORT_OPTION_UDP) == 0))
-		    || ((xprt_type == XPRT_TCP)
-			&& ((op_ctx->export_perms.options &
-			     EXPORT_OPTION_TCP) == 0))) {
-			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+		if (((xprt_type == XPRT_UDP) && ((op_ctx->export_perms.options &
+						  EXPORT_OPTION_UDP) == 0)) ||
+		    ((xprt_type == XPRT_TCP) && ((op_ctx->export_perms.options &
+						  EXPORT_OPTION_TCP) == 0))) {
+			LogInfoAlt(
+				COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
 				" over %s not allowed on Export_Id %d %s for client %s",
-				progname,
-				reqdata->svc.rq_msg.cb_vers,
+				progname, reqdata->svc.rq_msg.cb_vers,
 				xprt_type_to_str(xprt_type),
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx),
-				client_ip);
+				op_ctx_export_path(op_ctx), client_ip);
 
 			auth_failure(reqdata, AUTH_FAILED);
 			goto freeargs;
 		}
 
 		/* Test if export allows the authentication provided */
-		if ((reqdesc->dispatch_behaviour & SUPPORTS_GSS)
-		 && !export_check_security(&reqdata->svc)) {
-			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+		if ((reqdesc->dispatch_behaviour & SUPPORTS_GSS) &&
+		    !export_check_security(&reqdata->svc)) {
+			LogInfoAlt(
+				COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"%s Version %" PRIu32
 				" auth not allowed on Export_Id %d %s for client %s",
-				progname,
-				reqdata->svc.rq_msg.cb_vers,
+				progname, reqdata->svc.rq_msg.cb_vers,
 				op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx),
-				client_ip);
+				op_ctx_export_path(op_ctx), client_ip);
 
 			auth_failure(reqdata, AUTH_TOOWEAK);
 			goto freeargs;
@@ -1410,15 +1311,15 @@ retry_after_drc_suspend:
 
 		/* Check if client is using a privileged port,
 		 * but only for NFS protocol */
-		if ((reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
-		    && (op_ctx->export_perms.options &
-			EXPORT_OPTION_PRIVILEGED_PORT)
-		    && (port >= IPPORT_RESERVED)) {
-			LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+		if ((reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS]) &&
+		    (op_ctx->export_perms.options &
+		     EXPORT_OPTION_PRIVILEGED_PORT) &&
+		    (port >= IPPORT_RESERVED)) {
+			LogInfoAlt(
+				COMPONENT_DISPATCH, COMPONENT_EXPORT,
 				"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 				port, op_ctx->ctx_export->export_id,
-				op_ctx_export_path(op_ctx),
-				client_ip);
+				op_ctx_export_path(op_ctx), client_ip);
 
 			auth_failure(reqdata, AUTH_TOOWEAK);
 			goto freeargs;
@@ -1429,9 +1330,9 @@ retry_after_drc_suspend:
 	 * It is now time for checking if export list allows the machine
 	 * to perform the request
 	 */
-	if (op_ctx->ctx_export != NULL
-	    && (reqdesc->dispatch_behaviour & MAKES_IO)
-	    && !(op_ctx->export_perms.options & EXPORT_OPTION_RW_ACCESS)) {
+	if (op_ctx->ctx_export != NULL &&
+	    (reqdesc->dispatch_behaviour & MAKES_IO) &&
+	    !(op_ctx->export_perms.options & EXPORT_OPTION_RW_ACCESS)) {
 		/* Request of type MDONLY_RO were rejected at the
 		 * nfs_rpc_dispatcher level.
 		 * This is done by replying EDQUOT
@@ -1442,65 +1343,67 @@ retry_after_drc_suspend:
 			switch (reqdata->svc.rq_msg.cb_vers) {
 #ifdef _USE_NFS3
 			case NFS_V3:
-				LogDebugAlt(COMPONENT_DISPATCH,
-					    COMPONENT_EXPORT,
-					    "Returning NFS3ERR_DQUOT because request is on an MD Only export");
+				LogDebugAlt(
+					COMPONENT_DISPATCH, COMPONENT_EXPORT,
+					"Returning NFS3ERR_DQUOT because request is on an MD Only export");
 				reqdata->res_nfs->res_getattr3.status =
-								NFS3ERR_DQUOT;
+					NFS3ERR_DQUOT;
 				rc = NFS_REQ_OK;
 				break;
 #endif /* _USE_NFS3 */
 
 			default:
-				LogDebugAlt(COMPONENT_DISPATCH,
-					    COMPONENT_EXPORT,
-					    "Dropping IO request on an MD Only export");
+				LogDebugAlt(
+					COMPONENT_DISPATCH, COMPONENT_EXPORT,
+					"Dropping IO request on an MD Only export");
 				rc = NFS_REQ_DROP;
 				break;
-		} else {
+			}
+		else {
 			LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				 "Dropping IO request on an MD Only export");
+				    "Dropping IO request on an MD Only export");
 			rc = NFS_REQ_DROP;
 		}
-	} else if (op_ctx->ctx_export != NULL
-		   && (reqdesc->dispatch_behaviour & MAKES_WRITE)
-		   && (op_ctx->export_perms.options
-		       & (EXPORT_OPTION_WRITE_ACCESS
-			| EXPORT_OPTION_MD_WRITE_ACCESS)) == 0) {
+	} else if (op_ctx->ctx_export != NULL &&
+		   (reqdesc->dispatch_behaviour & MAKES_WRITE) &&
+		   (op_ctx->export_perms.options &
+		    (EXPORT_OPTION_WRITE_ACCESS |
+		     EXPORT_OPTION_MD_WRITE_ACCESS)) == 0) {
 		if (reqdata->svc.rq_msg.cb_prog == NFS_program[P_NFS])
 			switch (reqdata->svc.rq_msg.cb_vers) {
 #ifdef _USE_NFS3
 			case NFS_V3:
-				LogDebugAlt(COMPONENT_DISPATCH,
-					    COMPONENT_EXPORT,
-					    "Returning NFS3ERR_ROFS because request is on a Read Only export");
+				LogDebugAlt(
+					COMPONENT_DISPATCH, COMPONENT_EXPORT,
+					"Returning NFS3ERR_ROFS because request is on a Read Only export");
 				reqdata->res_nfs->res_getattr3.status =
-								NFS3ERR_ROFS;
+					NFS3ERR_ROFS;
 				rc = NFS_REQ_OK;
 				break;
 #endif /* _USE_NFS3 */
 
 			default:
-				LogDebugAlt(COMPONENT_DISPATCH,
-					    COMPONENT_EXPORT,
-					    "Dropping request on a Read Only export");
+				LogDebugAlt(
+					COMPONENT_DISPATCH, COMPONENT_EXPORT,
+					"Dropping request on a Read Only export");
 				rc = NFS_REQ_DROP;
 				break;
-		} else {
+			}
+		else {
 			LogDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-				 "Dropping request on a Read Only export");
+				    "Dropping request on a Read Only export");
 			rc = NFS_REQ_DROP;
 		}
-	} else if (op_ctx->ctx_export != NULL
-		   && (op_ctx->export_perms.options
-		       & (EXPORT_OPTION_READ_ACCESS
-			 | EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
-		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			"Client %s is not allowed to access Export_Id %d %s, vers=%"
-			PRIu32 ", proc=%" PRIu32,
+	} else if (op_ctx->ctx_export != NULL &&
+		   (op_ctx->export_perms.options &
+		    (EXPORT_OPTION_READ_ACCESS |
+		     EXPORT_OPTION_MD_READ_ACCESS)) == 0) {
+		LogInfoAlt(
+			COMPONENT_DISPATCH, COMPONENT_EXPORT,
+			"Client %s is not allowed to access Export_Id %d %s, vers=%" PRIu32
+			", proc=%" PRIu32,
 			client_ip, op_ctx->ctx_export->export_id,
-			op_ctx_export_path(op_ctx),
-			reqdata->svc.rq_msg.cb_vers,
+			op_ctx_export_path(op_ctx), reqdata->svc.rq_msg.cb_vers,
 			reqdata->svc.rq_msg.cb_proc);
 		auth_failure(reqdata, AUTH_TOOWEAK);
 		goto freeargs;
@@ -1512,7 +1415,8 @@ retry_after_drc_suspend:
 				op_ctx->export_perms.options &=
 					~EXPORT_OPTION_SQUASH_TYPES;
 			} else if (nfs_req_creds(&reqdata->svc) != NFS4_OK) {
-				LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
+				LogInfoAlt(
+					COMPONENT_DISPATCH, COMPONENT_EXPORT,
 					"could not get uid and gid, rejecting client %s",
 					client_ip);
 
@@ -1545,13 +1449,15 @@ retry_after_drc_suspend:
 		}
 #endif
 
- null_op:
+null_op:
 
-		GSH_AUTO_TRACEPOINT(nfs_rpc, op_start, TRACE_INFO,
+		GSH_AUTO_TRACEPOINT(
+			nfs_rpc, op_start, TRACE_INFO,
 			"Op start. request: {}, func: {}, export_id: {}",
 			reqdata, TP_STR(reqdesc->funcname),
-			   (op_ctx->ctx_export != NULL
-			    ? op_ctx->ctx_export->export_id : -1));
+			(op_ctx->ctx_export != NULL ?
+				 op_ctx->ctx_export->export_id :
+				 -1));
 
 		rc = reqdesc->service_function(arg_nfs, &reqdata->svc,
 					       reqdata->res_nfs);
@@ -1571,12 +1477,12 @@ retry_after_drc_suspend:
 	}
 
 #ifdef _USE_NFS3
- req_error:
+req_error:
 #endif /* _USE_NFS3 */
 
 	rc = complete_request(reqdata, rc);
 
- freeargs:
+freeargs:
 
 	free_args(reqdata);
 
@@ -1644,9 +1550,10 @@ enum xprt_stat drc_resume(struct svc_req *req)
 		/* The attempt to send a response failed because the XPRT died
 		 * so now we need to actually resend the response here.
 		 */
-		rc = process_dupreq(reqdata, op_ctx->client != NULL
-					     ? op_ctx->client->hostaddr_str
-					     : "<unknown client>");
+		rc = process_dupreq(reqdata,
+				    op_ctx->client != NULL ?
+					    op_ctx->client->hostaddr_str :
+					    "<unknown client>");
 
 		/* And now we need to try and finish this request. If we had
 		 * another XPRT_DIED and there's yet another duplicate request
@@ -1682,8 +1589,7 @@ enum xprt_stat drc_resume(struct svc_req *req)
  */
 static enum xprt_stat nfs_rpc_noprog(nfs_request_t *reqdata)
 {
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "Invalid Program number %" PRIu32,
+	LogFullDebug(COMPONENT_DISPATCH, "Invalid Program number %" PRIu32,
 		     reqdata->svc.rq_msg.cb_prog);
 	return svcerr_noprog(&reqdata->svc);
 }
@@ -1694,14 +1600,13 @@ static enum xprt_stat nfs_rpc_noprog(nfs_request_t *reqdata)
  * @param[in] reqnfs	NFS request
  *
  */
-static enum xprt_stat nfs_rpc_novers(nfs_request_t *reqdata,
-				     int lo_vers, int hi_vers)
+static enum xprt_stat nfs_rpc_novers(nfs_request_t *reqdata, int lo_vers,
+				     int hi_vers)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "Invalid protocol Version %" PRIu32
 		     " for Program number %" PRIu32,
-		     reqdata->svc.rq_msg.cb_vers,
-		     reqdata->svc.rq_msg.cb_prog);
+		     reqdata->svc.rq_msg.cb_vers, reqdata->svc.rq_msg.cb_prog);
 	return svcerr_progvers(&reqdata->svc, lo_vers, hi_vers);
 }
 
@@ -1717,8 +1622,7 @@ static enum xprt_stat nfs_rpc_noproc(nfs_request_t *reqdata)
 		     "Invalid Procedure %" PRIu32
 		     " in protocol Version %" PRIu32
 		     " for Program number %" PRIu32,
-		     reqdata->svc.rq_msg.cb_proc,
-		     reqdata->svc.rq_msg.cb_vers,
+		     reqdata->svc.rq_msg.cb_proc, reqdata->svc.rq_msg.cb_vers,
 		     reqdata->svc.rq_msg.cb_prog);
 	return svcerr_noproc(&reqdata->svc);
 }
@@ -1738,15 +1642,15 @@ static enum xprt_stat nfs_rpc_noproc(nfs_request_t *reqdata)
  */
 enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 {
-	nfs_request_t *reqdata =
-			container_of(req, struct nfs_request, svc);
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
 	int lo_vers;
 	int hi_vers;
 
-	GSH_AUTO_TRACEPOINT(nfs_rpc, valid, TRACE_INFO,
+	GSH_AUTO_TRACEPOINT(
+		nfs_rpc, valid, TRACE_INFO,
 		"Valid nfs req. xprt_ptr: {}, cb_prog: {}, cb_vers: {} cb_proc: {}",
-		reqdata->svc.rq_xprt, req->rq_msg.cb_prog,
-		req->rq_msg.cb_vers, reqdata->svc.rq_msg.cb_proc);
+		reqdata->svc.rq_xprt, req->rq_msg.cb_prog, req->rq_msg.cb_vers,
+		reqdata->svc.rq_msg.cb_proc);
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
@@ -1806,13 +1710,12 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 #ifdef _USE_NLM
 enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 {
-	nfs_request_t *reqdata =
-			container_of(req, struct nfs_request, svc);
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
-	if (req->rq_msg.cb_prog == NFS_program[P_NLM]
-	     && (NFS_options & CORE_OPTION_NFSV3)) {
+	if (req->rq_msg.cb_prog == NFS_program[P_NLM] &&
+	    (NFS_options & CORE_OPTION_NFSV3)) {
 		if (req->rq_msg.cb_vers == NLM4_VERS) {
 			if (req->rq_msg.cb_proc <= NLMPROC4_FREE_ALL) {
 				reqdata->funcdesc =
@@ -1830,13 +1733,12 @@ enum xprt_stat nfs_rpc_valid_NLM(struct svc_req *req)
 #ifdef _USE_NFS3
 enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 {
-	nfs_request_t *reqdata =
-			container_of(req, struct nfs_request, svc);
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
-	if (req->rq_msg.cb_prog == NFS_program[P_MNT]
-	    && (NFS_options & CORE_OPTION_NFSV3)) {
+	if (req->rq_msg.cb_prog == NFS_program[P_MNT] &&
+	    (NFS_options & CORE_OPTION_NFSV3)) {
 		reqdata->lookahead.flags |= NFS_LOOKAHEAD_MOUNT;
 
 		/* Some clients may use the wrong mount version to
@@ -1854,8 +1756,8 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 			return nfs_rpc_noproc(reqdata);
 		}
 		if (req->rq_msg.cb_vers == MOUNT_V1) {
-			if (req->rq_msg.cb_proc <= MOUNTPROC2_EXPORT
-			    && req->rq_msg.cb_proc != MOUNTPROC2_MNT) {
+			if (req->rq_msg.cb_proc <= MOUNTPROC2_EXPORT &&
+			    req->rq_msg.cb_proc != MOUNTPROC2_MNT) {
 				reqdata->funcdesc =
 					&mnt1_func_desc[req->rq_msg.cb_proc];
 				return nfs_rpc_process_request(reqdata, false);
@@ -1871,8 +1773,7 @@ enum xprt_stat nfs_rpc_valid_MNT(struct svc_req *req)
 #ifdef _USE_RQUOTA
 enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 {
-	nfs_request_t *reqdata =
-			container_of(req, struct nfs_request, svc);
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
@@ -1902,8 +1803,7 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *req)
 #ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 {
-	nfs_request_t *reqdata =
-			container_of(req, struct nfs_request, svc);
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
 
 	reqdata->funcdesc = &invalid_funcdesc;
 
@@ -1925,8 +1825,7 @@ enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 #ifdef _USE_NFS_RDMA
 enum xprt_stat nfs_rpc_valid_NFS_RDMA(struct svc_req *req)
 {
-	nfs_request_t *reqdata =
-			container_of(req, struct nfs_request, svc);
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
 	SVCXPRT *xprt = reqdata->svc.rq_xprt;
 
 	/* NFS over RDMA transport is supported by default for NFSv4.0 Only,
@@ -1935,10 +1834,10 @@ enum xprt_stat nfs_rpc_valid_NFS_RDMA(struct svc_req *req)
 	 * logic done inside nfs4_Compound()
 	 */
 	if (get_port(svc_getrpclocal(xprt)) ==
-	    nfs_param.core_param.port[P_NFS_RDMA] &&
+		    nfs_param.core_param.port[P_NFS_RDMA] &&
 	    reqdata->svc.rq_msg.cb_vers == NFS_V3 &&
 	    !(nfs_param.core_param.nfs_rdma_supported_protocol_versions &
-	    NFS_RDMA_ENABLE_FOR_NFSV3)) {
+	      NFS_RDMA_ENABLE_FOR_NFSV3)) {
 		LogCrit(COMPONENT_DISPATCH,
 			"NFS over RDMA transport is not supported for NFSv3, failing the request !!!");
 		/* mount.nfs gets Protocol not supported errors */

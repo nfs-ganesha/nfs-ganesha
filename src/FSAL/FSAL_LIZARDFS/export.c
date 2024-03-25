@@ -35,8 +35,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 {
 	struct lzfs_fsal_export *lzfs_export;
 
-	lzfs_export = container_of(export_hdl, struct lzfs_fsal_export,
-				   export);
+	lzfs_export = container_of(export_hdl, struct lzfs_fsal_export, export);
 
 	lzfs_fsal_delete_handle(lzfs_export->root);
 	lzfs_export->root = NULL;
@@ -46,8 +45,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 	free_export_ops(&lzfs_export->export);
 
 	if (lzfs_export->fileinfo_cache) {
-		liz_reset_fileinfo_cache_params(lzfs_export->fileinfo_cache,
-						0,
+		liz_reset_fileinfo_cache_params(lzfs_export->fileinfo_cache, 0,
 						0);
 
 		while (1) {
@@ -55,7 +53,7 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 			liz_fileinfo_t *file_handle;
 
 			cache_handle = liz_fileinfo_cache_pop_expired(
-						lzfs_export->fileinfo_cache);
+				lzfs_export->fileinfo_cache);
 			if (!cache_handle) {
 				break;
 			}
@@ -93,9 +91,7 @@ static fsal_status_t lzfs_fsal_lookup_path(struct fsal_export *export_hdl,
 	LogFullDebug(COMPONENT_FSAL, "export_id=%" PRIu16 " path=%s",
 		     export_hdl->export_id, path);
 
-	lzfs_export = container_of(export_hdl,
-				   struct lzfs_fsal_export,
-				   export);
+	lzfs_export = container_of(export_hdl, struct lzfs_fsal_export, export);
 
 	*pub_handle = NULL;
 
@@ -196,11 +192,10 @@ static fsal_status_t lzfs_fsal_wire_to_host(struct fsal_export *exp_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_create_handle(
-					struct fsal_export *exp_hdl,
-					struct gsh_buffdesc *desc,
-					struct fsal_obj_handle **pub_handle,
-					struct fsal_attrlist *attrs_out)
+static fsal_status_t
+lzfs_fsal_create_handle(struct fsal_export *exp_hdl, struct gsh_buffdesc *desc,
+			struct fsal_obj_handle **pub_handle,
+			struct fsal_attrlist *attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *handle = NULL;
@@ -239,10 +234,10 @@ static fsal_status_t lzfs_fsal_create_handle(
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_get_fs_dynamic_info(
-					struct fsal_export *exp_hdl,
-					struct fsal_obj_handle *obj_hdl,
-					fsal_dynamicfsinfo_t *info)
+static fsal_status_t
+lzfs_fsal_get_fs_dynamic_info(struct fsal_export *exp_hdl,
+			      struct fsal_obj_handle *obj_hdl,
+			      fsal_dynamicfsinfo_t *info)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	int rc;
@@ -426,7 +421,6 @@ struct state_t *lzfs_fsal_alloc_state(struct fsal_export *exp_hdl,
 	return state;
 }
 
-
 /**
  * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
  *
@@ -436,9 +430,8 @@ struct state_t *lzfs_fsal_alloc_state(struct fsal_export *exp_hdl,
  *
  * @return the fsal_obj_handle.
  */
-void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
-				  struct fsal_fd *fd,
-				  struct fsal_obj_handle **handle)
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl, struct fsal_fd *fd,
+		      struct fsal_obj_handle **handle)
 {
 	struct lzfs_fsal_fd *my_fd = NULL;
 	struct lzfs_fsal_handle *myself = NULL;

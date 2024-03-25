@@ -61,10 +61,10 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
-	SETATTR4args * const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
-	SETATTR4res * const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
+	SETATTR4args *const arg_SETATTR4 = &op->nfs_argop4_u.opsetattr;
+	SETATTR4res *const res_SETATTR4 = &resp->nfs_resop4_u.opsetattr;
 	struct fsal_attrlist sattr;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	const char *tag = "SETATTR";
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
@@ -89,8 +89,8 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 	}
 
 	/* Get only attributes that are allowed to be read */
-	if (!nfs4_Fattr_Check_Access
-	    (&arg_SETATTR4->obj_attributes, FATTR4_ATTR_WRITE)) {
+	if (!nfs4_Fattr_Check_Access(&arg_SETATTR4->obj_attributes,
+				     FATTR4_ATTR_WRITE)) {
 		res_SETATTR4->status = NFS4ERR_INVAL;
 		goto done;
 	}
@@ -102,10 +102,8 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 	}
 
 	/* Convert the fattr4 in the request to a fsal sattr structure */
-	res_SETATTR4->status =
-		nfs4_Fattr_To_FSAL_attr(&sattr,
-					&arg_SETATTR4->obj_attributes,
-					data);
+	res_SETATTR4->status = nfs4_Fattr_To_FSAL_attr(
+		&sattr, &arg_SETATTR4->obj_attributes, data);
 
 	if (res_SETATTR4->status != NFS4_OK)
 		goto done;
@@ -113,8 +111,8 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 	/* Trunc may change Xtime so we have to start with trunc and
 	 * finish by the mtime and atime
 	 */
-	if ((FSAL_TEST_MASK(sattr.valid_mask, ATTR_SIZE))
-	     || (FSAL_TEST_MASK(sattr.valid_mask, ATTR4_SPACE_RESERVED))) {
+	if ((FSAL_TEST_MASK(sattr.valid_mask, ATTR_SIZE)) ||
+	    (FSAL_TEST_MASK(sattr.valid_mask, ATTR4_SPACE_RESERVED))) {
 		/* Setting the size of a directory is prohibited */
 		if (data->current_filetype == DIRECTORY) {
 			res_SETATTR4->status = NFS4ERR_ISDIR;
@@ -128,15 +126,9 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 		}
 
 		/* Check stateid correctness and get pointer to state */
-		res_SETATTR4->status =
-		    nfs4_Check_Stateid(&arg_SETATTR4->stateid,
-				       data->current_obj,
-				       &state_found,
-				       data,
-				       STATEID_SPECIAL_ANY,
-				       0,
-				       false,
-				       tag);
+		res_SETATTR4->status = nfs4_Check_Stateid(
+			&arg_SETATTR4->stateid, data->current_obj, &state_found,
+			data, STATEID_SPECIAL_ANY, 0, false, tag);
 
 		if (res_SETATTR4->status != NFS4_OK)
 			goto done;
@@ -156,11 +148,12 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 
 			case STATE_TYPE_LOCK:
 				state_open = nfs4_State_Get_Pointer(
-				    state_found->state_data.lock.openstate_key);
+					state_found->state_data.lock
+						.openstate_key);
 
 				if (state_open == NULL) {
 					res_SETATTR4->status =
-					    NFS4ERR_BAD_STATEID;
+						NFS4ERR_BAD_STATEID;
 					goto done;
 				}
 
@@ -216,10 +209,8 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 	 * is_open_write is simple at this stage, it's just a check that
 	 * we have an open owner.
 	 */
-	fsal_status = fsal_setattr(data->current_obj,
-				   false,
-				   state_found,
-				   &sattr);
+	fsal_status =
+		fsal_setattr(data->current_obj, false, state_found, &sattr);
 
 	/* Release the attributes (may release an explicit or inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -235,7 +226,7 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 	/* Exit with no error */
 	res_SETATTR4->status = NFS4_OK;
 
- done:
+done:
 	nfs_put_grace_status();
 
 	if (state_found != NULL)
@@ -245,7 +236,7 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 		dec_state_t_ref(state_open);
 
 	return nfsstat4_to_nfs_req_result(res_SETATTR4->status);
-}				/* nfs4_op_setattr */
+} /* nfs4_op_setattr */
 
 /**
  * @brief Free memory allocated for SETATTR result

@@ -34,8 +34,8 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <misc/portable.h>	/* used for 'bswap*' */
-#include <libgen.h>		/* used for 'dirname' */
+#include <misc/portable.h> /* used for 'bswap*' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -54,7 +54,6 @@
 /* helpers to/from other PSEUDO objects
  */
 
-
 /* export object methods
  */
 
@@ -67,8 +66,7 @@ static void release(struct fsal_export *exp_hdl)
 	if (myself->root_handle != NULL) {
 		fsal_obj_handle_fini(&myself->root_handle->obj_handle, true);
 
-		LogDebug(COMPONENT_FSAL,
-			 "Releasing hdl=%p, name=%s",
+		LogDebug(COMPONENT_FSAL, "Releasing hdl=%p, name=%s",
 			 myself->root_handle, myself->root_handle->name);
 
 		if (myself->root_handle->name != NULL)
@@ -114,8 +112,7 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 
 static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       int quota_id,
-			       fsal_quota_t *pquota)
+			       int quota_id, fsal_quota_t *pquota)
 {
 	/* PSEUDOFS doesn't support quotas */
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -127,8 +124,8 @@ static fsal_status_t get_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 			       const char *filepath, int quota_type,
-			       int quota_id,
-			       fsal_quota_t *pquota, fsal_quota_t *presquota)
+			       int quota_id, fsal_quota_t *pquota,
+			       fsal_quota_t *presquota)
 {
 	/* PSEUDOFS doesn't support quotas */
 	return fsalstat(ERR_FSAL_NOTSUPP, 0);
@@ -142,8 +139,7 @@ static fsal_status_t set_quota(struct fsal_export *exp_hdl,
 
 static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 				  fsal_digesttype_t in_type,
-				  struct gsh_buffdesc *fh_desc,
-				  int flags)
+				  struct gsh_buffdesc *fh_desc, int flags)
 {
 	size_t fh_min;
 	uint64_t *hashkey;
@@ -206,8 +202,7 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	myself = gsh_calloc(1, sizeof(struct pseudofs_fsal_export));
 
 	if (myself == NULL) {
-		LogMajor(COMPONENT_FSAL,
-			 "Could not allocate export");
+		LogMajor(COMPONENT_FSAL, "Could not allocate export");
 		return fsalstat(posix2fsal_error(errno), errno);
 	}
 
@@ -218,12 +213,11 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 
 	if (retval != 0) {
 		/* seriously bad */
-		LogMajor(COMPONENT_FSAL,
-			 "Could not attach export");
+		LogMajor(COMPONENT_FSAL, "Could not attach export");
 		gsh_free(myself->export_path);
 		gsh_free(myself->root_handle);
 		free_export_ops(&myself->export);
-		gsh_free(myself);	/* elvis has left the building */
+		gsh_free(myself); /* elvis has left the building */
 
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
@@ -238,9 +232,8 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 
 	op_ctx->fsal_export = &myself->export;
 
-	LogDebug(COMPONENT_FSAL,
-		 "Created exp %p - %s",
-		 myself, myself->export_path);
+	LogDebug(COMPONENT_FSAL, "Created exp %p - %s", myself,
+		 myself->export_path);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

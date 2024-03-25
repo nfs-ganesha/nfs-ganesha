@@ -39,11 +39,9 @@
 #include "export_mgr.h"
 #include "nfs_creds.h"
 
-static int do_rquota_setquota(char *quota_path, int quota_type,
-			      int quota_id,
-			      sq_dqblk * quota_dqblk,
-			      struct svc_req *req,
-			      setquota_rslt * qres);
+static int do_rquota_setquota(char *quota_path, int quota_type, int quota_id,
+			      sq_dqblk *quota_dqblk, struct svc_req *req,
+			      setquota_rslt *qres);
 
 /**
  * @brief The Rquota setquota function, for all versions.
@@ -78,14 +76,12 @@ int rquota_setquota(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		quota_dqblk = &arg->arg_rquota_setquota.sqa_dqblk;
 	}
 
-	return do_rquota_setquota(quota_path, quota_type,
-				  quota_id, quota_dqblk, req, qres);
-}                               /* rquota_setquota */
+	return do_rquota_setquota(quota_path, quota_type, quota_id, quota_dqblk,
+				  req, qres);
+} /* rquota_setquota */
 
-static int do_rquota_setquota(char *quota_path, int quota_type,
-			      int quota_id,
-			      sq_dqblk *quota_dqblk,
-			      struct svc_req *req,
+static int do_rquota_setquota(char *quota_path, int quota_type, int quota_id,
+			      sq_dqblk *quota_dqblk, struct svc_req *req,
 			      setquota_rslt *qres)
 {
 	fsal_status_t fsal_status;
@@ -97,8 +93,7 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 
 	qres->status = Q_EPERM;
 
-	qpath = check_handle_lead_slash(quota_path, path,
-					MAXPATHLEN);
+	qpath = check_handle_lead_slash(quota_path, path, MAXPATHLEN);
 	if (qpath == NULL)
 		return NFS_REQ_OK;
 
@@ -106,25 +101,22 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	 */
 	if (qpath[0] != '/') {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Searching for export by tag for %s",
-			     qpath);
+			     "Searching for export by tag for %s", qpath);
 		exp = get_gsh_export_by_tag(qpath);
 	} else if (nfs_param.core_param.mount_path_pseudo) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Searching for export by pseudo for %s",
-			     qpath);
+			     "Searching for export by pseudo for %s", qpath);
 		exp = get_gsh_export_by_pseudo(qpath, false);
 	} else {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Searching for export by path for %s",
-			     qpath);
+			     "Searching for export by path for %s", qpath);
 		exp = get_gsh_export_by_path(qpath, false);
 	}
 
 	if (exp == NULL) {
 		/* No export found, return ACCESS error. */
-		LogEvent(COMPONENT_NFSPROTO,
-			 "Export entry for %s not found", qpath);
+		LogEvent(COMPONENT_NFSPROTO, "Export entry for %s not found",
+			 qpath);
 
 		/* entry not found. */
 		return NFS_REQ_OK;
@@ -156,9 +148,8 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 	fsal_quota_in.ftimeleft = quota_dqblk->rq_ftimeleft;
 
 	fsal_status = exp->fsal_export->exp_ops.set_quota(
-				exp->fsal_export, CTX_FULLPATH(op_ctx),
-				quota_type, quota_id, &fsal_quota_in,
-				&fsal_quota_out);
+		exp->fsal_export, CTX_FULLPATH(op_ctx), quota_type, quota_id,
+		&fsal_quota_in, &fsal_quota_out);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_NO_QUOTA)
@@ -170,23 +161,23 @@ static int do_rquota_setquota(char *quota_path, int quota_type,
 
 	qres->setquota_rslt_u.sqr_rquota.rq_active = TRUE;
 	qres->setquota_rslt_u.sqr_rquota.rq_bhardlimit =
-	    fsal_quota_out.bhardlimit;
+		fsal_quota_out.bhardlimit;
 	qres->setquota_rslt_u.sqr_rquota.rq_bsoftlimit =
-	    fsal_quota_out.bsoftlimit;
+		fsal_quota_out.bsoftlimit;
 	qres->setquota_rslt_u.sqr_rquota.rq_curblocks =
-	    fsal_quota_out.curblocks;
+		fsal_quota_out.curblocks;
 	qres->setquota_rslt_u.sqr_rquota.rq_fhardlimit =
-	    fsal_quota_out.fhardlimit;
+		fsal_quota_out.fhardlimit;
 	qres->setquota_rslt_u.sqr_rquota.rq_fsoftlimit =
-	    fsal_quota_out.fsoftlimit;
+		fsal_quota_out.fsoftlimit;
 	qres->setquota_rslt_u.sqr_rquota.rq_btimeleft =
-	    fsal_quota_out.btimeleft;
+		fsal_quota_out.btimeleft;
 	qres->setquota_rslt_u.sqr_rquota.rq_ftimeleft =
-	    fsal_quota_out.ftimeleft;
+		fsal_quota_out.ftimeleft;
 	qres->status = Q_OK;
 
 	return NFS_REQ_OK;
-}				/* do_rquota_setquota */
+} /* do_rquota_setquota */
 
 /**
  * @brief Frees the result structure allocated for rquota_setquota

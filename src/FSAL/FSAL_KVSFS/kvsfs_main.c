@@ -31,7 +31,7 @@
 
 #include "config.h"
 
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -49,33 +49,31 @@
 static const char myname[] = "KVSFS";
 
 /* filesystem info for your filesystem */
-struct kvsfs_fsal_module KVSFS = {
-	.fsal = {
-		.fs_info = {
-			.maxfilesize = INT64_MAX,
-			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = MAXNAMLEN,
-			.maxpathlen = MAXPATHLEN,
-			.no_trunc = true,
-			.chown_restricted = false,
-			.case_insensitive = false,
-			.case_preserving = true,
-			.link_support = true,
-			.symlink_support = false,
-			.lock_support = false,
-			.lock_support_async_block = false,
-			.named_attr = true, /* XXX */
-			.unique_handles = true,
-			.acl_support = 0,
-			.cansettime = true,
-			.homogenous = true,
-			.supported_attrs = KVSFS_SUPPORTED_ATTRIBUTES,
-			.maxread = FSAL_MAXIOSIZE,
-			.maxwrite = FSAL_MAXIOSIZE,
-			.umask = 0,
-		}
-	}
-};
+struct kvsfs_fsal_module
+	KVSFS = { .fsal = {
+			  .fs_info = {
+				  .maxfilesize = INT64_MAX,
+				  .maxlink = _POSIX_LINK_MAX,
+				  .maxnamelen = MAXNAMLEN,
+				  .maxpathlen = MAXPATHLEN,
+				  .no_trunc = true,
+				  .chown_restricted = false,
+				  .case_insensitive = false,
+				  .case_preserving = true,
+				  .link_support = true,
+				  .symlink_support = false,
+				  .lock_support = false,
+				  .lock_support_async_block = false,
+				  .named_attr = true, /* XXX */
+				  .unique_handles = true,
+				  .acl_support = 0,
+				  .cansettime = true,
+				  .homogenous = true,
+				  .supported_attrs = KVSFS_SUPPORTED_ATTRIBUTES,
+				  .maxread = FSAL_MAXIOSIZE,
+				  .maxwrite = FSAL_MAXIOSIZE,
+				  .umask = 0,
+			  } } };
 
 /* Module methods
  */
@@ -85,11 +83,11 @@ struct kvsfs_fsal_module KVSFS = {
  */
 
 static fsal_status_t kvsfs_init_config(struct fsal_module *fsal_hdl,
-				     config_file_t config_struct,
-				     struct config_error_type *err_type)
+				       config_file_t config_struct,
+				       struct config_error_type *err_type)
 {
 	struct kvsfs_fsal_module *kvsfs_me =
-	    container_of(fsal_hdl, struct kvsfs_fsal_module, fsal);
+		container_of(fsal_hdl, struct kvsfs_fsal_module, fsal);
 
 	LogDebug(COMPONENT_FSAL, "KVSFS module setup.");
 
@@ -97,7 +95,7 @@ static fsal_status_t kvsfs_init_config(struct fsal_module *fsal_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "Supported attributes constant = 0x%" PRIx64,
-		     (uint64_t) KVSFS_SUPPORTED_ATTRIBUTES);
+		     (uint64_t)KVSFS_SUPPORTED_ATTRIBUTES);
 	LogDebug(COMPONENT_FSAL,
 		 "FSAL INIT: Supported attributes mask = 0x%" PRIx64,
 		 kvsfs_me->fsal.fs_info.supported_attrs);
@@ -109,9 +107,9 @@ static fsal_status_t kvsfs_init_config(struct fsal_module *fsal_hdl,
  */
 
 fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
-				void *parse_node,
-				struct config_error_type *err_type,
-				const struct fsal_up_vector *up_ops);
+				  void *parse_node,
+				  struct config_error_type *err_type,
+				  const struct fsal_up_vector *up_ops);
 
 /* Module initialization.
  * Called by dlopen() to register the module
@@ -126,10 +124,8 @@ MODULE_INIT void kvsfs_load(void)
 	int retval;
 	struct fsal_module *myself = &KVSFS.fsal;
 
-	retval = register_fsal(myself, myname,
-			       FSAL_MAJOR_VERSION,
-			       FSAL_MINOR_VERSION,
-			       FSAL_ID_KVSFS);
+	retval = register_fsal(myself, myname, FSAL_MAJOR_VERSION,
+			       FSAL_MINOR_VERSION, FSAL_ID_KVSFS);
 	if (retval != 0) {
 		fprintf(stderr, "KVSFS module failed to register\n");
 		return;

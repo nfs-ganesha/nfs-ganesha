@@ -31,7 +31,7 @@
 #include "config.h"
 
 #include <fcntl.h>
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/sysmacros.h>
@@ -56,7 +56,7 @@
 static void release(struct fsal_export *exp_hdl)
 {
 	struct gpfs_fsal_export *myself =
-	    container_of(exp_hdl, struct gpfs_fsal_export, export);
+		container_of(exp_hdl, struct gpfs_fsal_export, export);
 
 	unclaim_all_export_maps(exp_hdl);
 
@@ -64,7 +64,7 @@ static void release(struct fsal_export *exp_hdl)
 	free_export_ops(exp_hdl);
 	close(myself->export_fd);
 
-	gsh_free(myself);		/* elvis has left the building */
+	gsh_free(myself); /* elvis has left the building */
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -74,8 +74,8 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	fsal_status_t status;
 	struct statfs buffstatgpfs;
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	if (!infop) {
@@ -97,7 +97,7 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->time_delta.tv_sec = 0;
 	infop->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
- out:
+out:
 	return fsalstat(fsal_error, 0);
 }
 
@@ -129,17 +129,16 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
  * on linux, can map st_dev -> /proc/partitions name -> /dev/<name>
  */
 
-static fsal_status_t
-get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
-	  int quota_id, fsal_quota_t *fsal_quota)
+static fsal_status_t get_quota(struct fsal_export *exp_hdl,
+			       const char *filepath, int quota_type,
+			       int quota_id, fsal_quota_t *fsal_quota)
 {
-	gpfs_quotaInfo_t gpfs_quota = {0};
+	gpfs_quotaInfo_t gpfs_quota = { 0 };
 	struct stat path_stat;
 	int retval = 0;
 	struct quotactl_arg args;
-	struct fsal_filesystem *fs = container_of(exp_hdl,
-						  struct gpfs_fsal_export,
-						  export)->root_fs;
+	struct fsal_filesystem *fs =
+		container_of(exp_hdl, struct gpfs_fsal_export, export)->root_fs;
 
 	if (stat(filepath, &path_stat) < 0) {
 		retval = errno;
@@ -151,10 +150,11 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 
 	if ((major(path_stat.st_dev) != fs->dev.major) ||
 	    (minor(path_stat.st_dev) != fs->dev.minor)) {
-		LogMajor(COMPONENT_FSAL,
-			 "GPFS get quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 fs->path, filepath);
-		return fsalstat(ERR_FSAL_FAULT, 0);  /* maybe a better error? */
+		LogMajor(
+			COMPONENT_FSAL,
+			"GPFS get quota: crossed mount boundary! root_path: %s, quota path: %s",
+			fs->path, filepath);
+		return fsalstat(ERR_FSAL_FAULT, 0); /* maybe a better error? */
 	}
 
 	args.pathname = filepath;
@@ -190,17 +190,17 @@ get_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
  * same lower mount restriction applies
  */
 
-static fsal_status_t
-set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
-	  int quota_id, fsal_quota_t *fsal_quota, fsal_quota_t *res_quota)
+static fsal_status_t set_quota(struct fsal_export *exp_hdl,
+			       const char *filepath, int quota_type,
+			       int quota_id, fsal_quota_t *fsal_quota,
+			       fsal_quota_t *res_quota)
 {
-	gpfs_quotaInfo_t gpfs_quota = {0};
+	gpfs_quotaInfo_t gpfs_quota = { 0 };
 	struct stat path_stat;
 	int retval = 0;
 	struct quotactl_arg args;
-	struct fsal_filesystem *fs = container_of(exp_hdl,
-						  struct gpfs_fsal_export,
-						  export)->root_fs;
+	struct fsal_filesystem *fs =
+		container_of(exp_hdl, struct gpfs_fsal_export, export)->root_fs;
 
 	if (stat(filepath, &path_stat) < 0) {
 		retval = errno;
@@ -212,10 +212,11 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 
 	if ((major(path_stat.st_dev) != fs->dev.major) ||
 	    (minor(path_stat.st_dev) != fs->dev.minor)) {
-		LogMajor(COMPONENT_FSAL,
-			 "GPFS set quota: crossed mount boundary! root_path: %s, quota path: %s",
-			 fs->path, filepath);
-		return fsalstat(ERR_FSAL_FAULT, 0);  /* maybe a better error? */
+		LogMajor(
+			COMPONENT_FSAL,
+			"GPFS set quota: crossed mount boundary! root_path: %s, quota path: %s",
+			fs->path, filepath);
+		return fsalstat(ERR_FSAL_FAULT, 0); /* maybe a better error? */
 	}
 
 	gpfs_quota.blockHardLimit = fsal_quota->bhardlimit;
@@ -242,8 +243,8 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
 		return fsalstat(posix2fsal_error(retval), retval);
 
 	if (res_quota != NULL)
-		return get_quota(exp_hdl, filepath,
-				 quota_type, quota_id, res_quota);
+		return get_quota(exp_hdl, filepath, quota_type, quota_id,
+				 res_quota);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -254,9 +255,9 @@ set_quota(struct fsal_export *exp_hdl, const char *filepath, int quota_type,
  * common behavior, done here is to just reset the length.
  */
 
-static fsal_status_t
-gpfs_wire_to_host(struct fsal_export *exp_hdl, fsal_digesttype_t in_type,
-		  struct gsh_buffdesc *fh_desc, int flags)
+static fsal_status_t gpfs_wire_to_host(struct fsal_export *exp_hdl,
+				       fsal_digesttype_t in_type,
+				       struct gsh_buffdesc *fh_desc, int flags)
 {
 	struct gpfs_file_handle *hdl;
 	size_t fh_size;
@@ -282,30 +283,29 @@ gpfs_wire_to_host(struct fsal_export *exp_hdl, fsal_digesttype_t in_type,
 #endif
 	}
 	fh_size = gpfs_sizeof_handle(hdl);
-	LogFullDebug(COMPONENT_FSAL,
-	  "flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X fh_size %zu",
-	   flags, hdl->handle_size, hdl->handle_type, hdl->handle_version,
-	   hdl->handle_key_size, hdl->handle_fsid[0], hdl->handle_fsid[1],
-	   fh_size);
+	LogFullDebug(
+		COMPONENT_FSAL,
+		"flags 0x%X size %d type %d ver %d key_size %d FSID 0x%X:%X fh_size %zu",
+		flags, hdl->handle_size, hdl->handle_type, hdl->handle_version,
+		hdl->handle_key_size, hdl->handle_fsid[0], hdl->handle_fsid[1],
+		fh_size);
 
 	/* Some older file handles include additional 16 bytes in fh_desc->len.
 	 * Honor those as well.
 	 */
-	if (fh_desc->len != fh_size &&
-	    fh_desc->len != fh_size + 16) {
+	if (fh_desc->len != fh_size && fh_desc->len != fh_size + 16) {
 		LogMajor(COMPONENT_FSAL,
 			 "Size mismatch for handle.  should be %zu, got %zu",
 			 fh_size, fh_desc->len);
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-	fh_desc->len = hdl->handle_size;	/* pass back the size */
+	fh_desc->len = hdl->handle_size; /* pass back the size */
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 /* Produce handle-key from a host-handle */
-static fsal_status_t
-gpfs_host_to_key(struct fsal_export *exp_hdl,
-		   struct gsh_buffdesc *fh_desc)
+static fsal_status_t gpfs_host_to_key(struct fsal_export *exp_hdl,
+				      struct gsh_buffdesc *fh_desc)
 {
 	struct gpfs_file_handle *hdl;
 
@@ -313,7 +313,7 @@ gpfs_host_to_key(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	hdl = (struct gpfs_file_handle *)fh_desc->addr;
-	fh_desc->len = hdl->handle_key_size;	/* pass back the key size */
+	fh_desc->len = hdl->handle_key_size; /* pass back the key size */
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "size %d type %d ver %d key_size %d FSID 0x%X:%X",
@@ -347,9 +347,9 @@ void gpfs_free_state(struct state_t *state)
  *
  * @returns a state structure.
  */
-struct state_t *
-gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
-		 struct state_t *related_state)
+struct state_t *gpfs_alloc_state(struct fsal_export *exp_hdl,
+				 enum state_type state_type,
+				 struct state_t *related_state)
 {
 	struct state_t *state;
 	struct gpfs_fd *my_fd;
@@ -365,7 +365,6 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
 	return state;
 }
 
-
 /**
  * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
  *
@@ -375,9 +374,8 @@ gpfs_alloc_state(struct fsal_export *exp_hdl, enum state_type state_type,
  *
  * @return the fsal_obj_handle.
  */
-void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
-				  struct fsal_fd *fd,
-				  struct fsal_obj_handle **handle)
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl, struct fsal_fd *fd,
+		      struct fsal_obj_handle **handle)
 {
 	struct gpfs_fd *my_fd = NULL;
 	struct gpfs_fsal_obj_handle *myself = NULL;
@@ -436,7 +434,7 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 	struct fsal_fsid__ fsid;
 	int retval;
 	fsal_status_t status;
-	struct gpfs_file_handle fh = {0};
+	struct gpfs_file_handle fh = { 0 };
 
 	gpfs_fs->root_fd = open(gpfs_fs->fs->path, O_RDONLY | O_DIRECTORY);
 
@@ -448,11 +446,10 @@ int open_root_fd(struct gpfs_filesystem *gpfs_fs)
 		return retval;
 	}
 	LogFullDebug(COMPONENT_FSAL, "root export_fd %d path %s",
-				gpfs_fs->root_fd, gpfs_fs->fs->path);
+		     gpfs_fs->root_fd, gpfs_fs->fs->path);
 
-	status = fsal_internal_get_handle_at(gpfs_fs->root_fd,
-					     gpfs_fs->fs->path, &fh,
-					     gpfs_fs->root_fd);
+	status = fsal_internal_get_handle_at(
+		gpfs_fs->root_fd, gpfs_fs->fs->path, &fh, gpfs_fs->root_fd);
 
 	if (FSAL_IS_ERROR(status)) {
 		retval = status.minor;
@@ -488,8 +485,7 @@ errout:
  *  @param exp FSAL export
  *  @return 0(zero) on success, otherwise error.
  */
-int gpfs_claim_filesystem(struct fsal_filesystem *fs,
-			  struct fsal_export *exp,
+int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp,
 			  void **private_data)
 {
 	struct gpfs_filesystem *gpfs_fs = NULL;
@@ -502,7 +498,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 
 	if (strcmp(fs->type, "gpfs") != 0) {
 		LogEvent(COMPONENT_FSAL,
-			"Attempt to claim non-GPFS filesystem %s", fs->path);
+			 "Attempt to claim non-GPFS filesystem %s", fs->path);
 		return ENXIO;
 	}
 
@@ -513,8 +509,8 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 	if (myself->export_fd < 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
-			"Could not open GPFS export point %s: rc = %s (%d)",
-			CTX_FULLPATH(op_ctx), strerror(retval), retval);
+			 "Could not open GPFS export point %s: rc = %s (%d)",
+			 CTX_FULLPATH(op_ctx), strerror(retval), retval);
 		goto errout;
 	}
 
@@ -522,9 +518,10 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 		/* Already claimed, and private_data is already set, nothing to
 		 * do here.
 		 */
-		LogDebug(COMPONENT_FSAL,
-			 "file system %s is already claimed with fd %d private_data %p",
-			 fs->path, (int) (long) *private_data, *private_data);
+		LogDebug(
+			COMPONENT_FSAL,
+			"file system %s is already claimed with fd %d private_data %p",
+			fs->path, (int)(long)*private_data, *private_data);
 		return 0;
 	}
 
@@ -533,9 +530,8 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs,
 	gpfs_fs->root_fd = -1;
 	gpfs_fs->fs = fs;
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "export_fd %d path %s",
-		     myself->export_fd, CTX_FULLPATH(op_ctx));
+	LogFullDebug(COMPONENT_FSAL, "export_fd %d path %s", myself->export_fd,
+		     CTX_FULLPATH(op_ctx));
 
 	/* Get an fd for the root and create an upcall thread */
 	retval = open_root_fd(gpfs_fs);
@@ -594,7 +590,7 @@ errout:
 void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 {
 	struct gpfs_filesystem *gpfs_fs = fs->private_data;
-	struct callback_arg callback = {0};
+	struct callback_arg callback = { 0 };
 	int reason = THREAD_STOP;
 
 	if (gpfs_fs == NULL)
@@ -628,11 +624,10 @@ out:
 /* GPFS FSAL export config */
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_ITEM_BOOL("ignore_mode_change", false,
-		       gpfs_fsal_export, ignore_mode_change),
+	CONF_ITEM_BOOL("ignore_mode_change", false, gpfs_fsal_export,
+		       ignore_mode_change),
 	CONFIG_EOL
 };
-
 
 static struct config_block export_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gpfs-export%d",
@@ -642,7 +637,6 @@ static struct config_block export_param = {
 	.blk_desc.u.blk.params = export_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
-
 
 /**
  * @brief create_export
@@ -654,10 +648,9 @@ static struct config_block export_param = {
  *
  *  @return FSAL status
  */
-fsal_status_t
-gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
-		   struct config_error_type *err_type,
-		   const struct fsal_up_vector *up_ops)
+fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
+				 struct config_error_type *err_type,
+				 const struct fsal_up_vector *up_ops)
 {
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
@@ -679,10 +672,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	gpfs_export_ops_init(&exp->exp_ops);
 
 	/* Load GPFS FSAL specific export config */
-	rc = load_config_from_node(parse_node,
-				   &export_param,
-				   gpfs_exp,
-				   true,
+	rc = load_config_from_node(parse_node, &export_param, gpfs_exp, true,
 				   err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -695,24 +685,23 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	status.minor = fsal_attach_export(fsal_hdl, &exp->exports);
 	if (status.minor != 0) {
 		status.major = posix2fsal_error(status.minor);
-		goto free;	/* seriously bad */
+		goto free; /* seriously bad */
 	}
 
 	exp->fsal = fsal_hdl;
 	exp->up_ops = up_ops;
 	op_ctx->fsal_export = exp;
 
-	status.minor = resolve_posix_filesystem(CTX_FULLPATH(op_ctx),
-						fsal_hdl, exp,
-						gpfs_claim_filesystem,
+	status.minor = resolve_posix_filesystem(CTX_FULLPATH(op_ctx), fsal_hdl,
+						exp, gpfs_claim_filesystem,
 						gpfs_unclaim_filesystem,
 						&gpfs_exp->root_fs);
 
 	if (status.minor != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"resolve_posix_filesystem(%s) returned %s (%d)",
-			CTX_FULLPATH(op_ctx),
-			strerror(status.minor), status.minor);
+			CTX_FULLPATH(op_ctx), strerror(status.minor),
+			status.minor);
 		status.major = posix2fsal_error(status.minor);
 		goto detach;
 	}
@@ -720,7 +709,7 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	/* if the nodeid has not been obtained, get it now */
 	if (!g_nodeid) {
 		struct gpfs_filesystem *gpfs_fs =
-						gpfs_exp->root_fs->private_data;
+			gpfs_exp->root_fs->private_data;
 		struct grace_period_arg gpa;
 		int nodeid;
 
@@ -732,21 +721,20 @@ gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 			LogFullDebug(COMPONENT_FSAL, "nodeid %d", g_nodeid);
 		} else
 			LogCrit(COMPONENT_FSAL,
-			    "OPENHANDLE_GET_NODEID failed rc %d", nodeid);
+				"OPENHANDLE_GET_NODEID failed rc %d", nodeid);
 	}
 
 	gpfs_exp->pnfs_ds_enabled =
-	    exp->exp_ops.fs_supports(exp, fso_pnfs_ds_supported);
+		exp->exp_ops.fs_supports(exp, fso_pnfs_ds_supported);
 
 	gpfs_exp->pnfs_mds_enabled =
-	    exp->exp_ops.fs_supports(exp, fso_pnfs_mds_supported);
+		exp->exp_ops.fs_supports(exp, fso_pnfs_mds_supported);
 
 	if (gpfs_exp->pnfs_ds_enabled) {
 		struct fsal_pnfs_ds *pds = NULL;
 
 		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
-							     parse_node,
-							     &pds);
+							     parse_node, &pds);
 
 		if (status.major != ERR_FSAL_NO_ERROR)
 			goto unexport;

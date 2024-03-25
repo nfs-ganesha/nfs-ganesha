@@ -34,23 +34,22 @@
 #include <glusterfs/api/glfs-handles.h>
 #include "nfs_exports.h"
 
-#define GLUSTER_VOLNAME_KEY  "volume"
+#define GLUSTER_VOLNAME_KEY "volume"
 #define GLUSTER_HOSTNAME_KEY "hostname"
-#define GLUSTER_VOLPATH_KEY  "volpath"
+#define GLUSTER_VOLPATH_KEY "volpath"
 
 /* defined the set of attributes supported with POSIX */
-#define GLUSTERFS_SUPPORTED_ATTRIBUTES (ATTRS_POSIX | ATTR_ACL | \
-					ATTR4_SEC_LABEL)
+#define GLUSTERFS_SUPPORTED_ATTRIBUTES \
+	(ATTRS_POSIX | ATTR_ACL | ATTR4_SEC_LABEL)
 
 /**
  * The attributes this FSAL can set.
  */
 
-#define GLUSTERFS_SETTABLE_ATTRIBUTES (		  \
-ATTR_MODE     | ATTR_OWNER	  | ATTR_GROUP	      |  \
-ATTR_ATIME    | ATTR_CTIME	  | ATTR_MTIME	      |  \
-ATTR_SIZE     | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER |  \
-ATTR_ACL      | ATTR4_SEC_LABEL   | ATTR4_XATTR)
+#define GLUSTERFS_SETTABLE_ATTRIBUTES                                     \
+	(ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_CTIME |  \
+	 ATTR_MTIME | ATTR_SIZE | ATTR_MTIME_SERVER | ATTR_ATIME_SERVER | \
+	 ATTR_ACL | ATTR4_SEC_LABEL | ATTR4_XATTR)
 
 /**
  * Override internal Gluster defines for the time being.
@@ -58,15 +57,15 @@ ATTR_ACL      | ATTR4_SEC_LABEL   | ATTR4_XATTR)
 /* Values for valid flags to be used when using XXXsetattr, to set multiple
  * attribute values passed via the related stat structure.
  */
-#define GLAPI_SET_ATTR_MODE  GFAPI_SET_ATTR_MODE
-#define GLAPI_SET_ATTR_UID   GFAPI_SET_ATTR_UID
-#define GLAPI_SET_ATTR_GID   GFAPI_SET_ATTR_GID
-#define GLAPI_SET_ATTR_SIZE  GFAPI_SET_ATTR_SIZE
+#define GLAPI_SET_ATTR_MODE GFAPI_SET_ATTR_MODE
+#define GLAPI_SET_ATTR_UID GFAPI_SET_ATTR_UID
+#define GLAPI_SET_ATTR_GID GFAPI_SET_ATTR_GID
+#define GLAPI_SET_ATTR_SIZE GFAPI_SET_ATTR_SIZE
 #define GLAPI_SET_ATTR_ATIME GFAPI_SET_ATTR_ATIME
 #define GLAPI_SET_ATTR_MTIME GFAPI_SET_ATTR_MTIME
 
 /* UUID length for the object returned from glfs_get_volume_id */
-#define GLAPI_UUID_LENGTH   16
+#define GLAPI_UUID_LENGTH 16
 
 /*
  * GFAPI_HANDLE_LENGTH is the handle length for object handles
@@ -75,16 +74,14 @@ ATTR_ACL      | ATTR4_SEC_LABEL   | ATTR4_XATTR)
  * GLAPI_HANDLE_LENGTH is the total length of the handle descriptor
  * to be used in the wire handle.
  */
-#define GLAPI_HANDLE_LENGTH (		\
-		GFAPI_HANDLE_LENGTH +	\
-		GLAPI_UUID_LENGTH)
+#define GLAPI_HANDLE_LENGTH (GFAPI_HANDLE_LENGTH + GLAPI_UUID_LENGTH)
 
 /* Flags to determine if ACLs are supported */
 #define NFSv4_ACL_SUPPORT (!op_ctx_export_has_option(EXPORT_OPTION_DISABLE_ACL))
 
 /* define flags for attr_valid */
-#define XATTR_STAT      (1 << 0) /* 01 */
-#define XATTR_ACL       (1 << 1) /* 02 */
+#define XATTR_STAT (1 << 0) /* 01 */
+#define XATTR_ACL (1 << 1) /* 02 */
 
 /* END Override */
 
@@ -127,21 +124,21 @@ struct latency_data {
 struct glusterfs_fsal_module {
 	struct fsal_module fsal;
 	struct fsal_obj_ops handle_ops;
-	struct glist_head  fs_obj; /* list of glusterfs_fs filesystem objects */
-	pthread_mutex_t   glfs_lock; /* lock to protect above list */
+	struct glist_head fs_obj; /* list of glusterfs_fs filesystem objects */
+	pthread_mutex_t glfs_lock; /* lock to protect above list */
 };
 extern struct glusterfs_fsal_module GlusterFS;
 
 struct glusterfs_fs {
 	struct glist_head fs_obj; /* link to glusterfs_fs filesystem objects */
-	char      *volname;
-	glfs_t    *fs;
-	const struct fsal_up_vector *up_ops;    /*< Upcall operations */
-	int64_t    refcnt;
-	pthread_t  up_thread; /* upcall thread */
+	char *volname;
+	glfs_t *fs;
+	const struct fsal_up_vector *up_ops; /*< Upcall operations */
+	int64_t refcnt;
+	pthread_t up_thread; /* upcall thread */
 	int8_t destroy_mode;
 	uint64_t up_poll_usec;
-	bool   enable_upcall;
+	bool enable_upcall;
 };
 
 struct glusterfs_export {
@@ -172,14 +169,20 @@ struct glusterfs_fd {
 #endif
 };
 
-#define GLUSTERFS_FD_INIT { FSAL_FD_INIT, NULL, { 0, 0, 0, NULL } }
+#define GLUSTERFS_FD_INIT             \
+	{                             \
+		FSAL_FD_INIT, NULL,   \
+		{                     \
+			0, 0, 0, NULL \
+		}                     \
+	}
 
 struct glusterfs_handle {
 	struct glfs_object *glhandle;
-	unsigned char globjhdl[GLAPI_HANDLE_LENGTH];	/* handle descriptor,
+	unsigned char globjhdl[GLAPI_HANDLE_LENGTH]; /* handle descriptor,
 							   for wire handle */
 	struct glusterfs_fd globalfd;
-	struct fsal_obj_handle handle;	/* public FSAL handle */
+	struct fsal_obj_handle handle; /* public FSAL handle */
 	struct fsal_share share; /* share_reservations */
 
 	/* following added for pNFS support */
@@ -198,7 +201,7 @@ struct glusterfs_handle {
 struct glfs_ds_handle {
 	struct fsal_ds_handle ds;
 	struct glfs_object *glhandle;
-	stable_how4  stability_got;
+	stable_how4 stability_got;
 	bool connected;
 };
 
@@ -250,114 +253,105 @@ void setglustercreds(struct glusterfs_export *glfs_export, uid_t *uid,
 		     char *file, int line, char *function);
 
 #ifdef USE_GLUSTER_DELEGATION
-#define SET_GLUSTER_CREDS_OP_CTX(glfs_export)				    \
-do {									    \
-	int old_errno = errno;						    \
-	void *sa = NULL;						    \
-	size_t sa_len = 0;						    \
-									    \
-	if (op_ctx->caller_addr != NULL) {				    \
-		sa = socket_addr(op_ctx->caller_addr);			    \
-		sa_len = socket_addr_len(op_ctx->caller_addr);		    \
-	} else if (op_ctx->client != NULL) {				    \
-		sa = socket_addr(&op_ctx->client->cl_addrbuf);		    \
-		sa_len = socket_addr_len(&op_ctx->client->cl_addrbuf);      \
-	}								    \
-									    \
-	((void) setglustercreds(glfs_export,				    \
-				&op_ctx->creds.caller_uid,		    \
-				&op_ctx->creds.caller_gid,		    \
-				op_ctx->creds.caller_glen,		    \
-				op_ctx->creds.caller_garray,		    \
-				sa, sa_len,				    \
-			       (char *) __FILE__,			    \
-			       __LINE__, (char *) __func__));		    \
-	errno = old_errno;						    \
-} while (0)
+#define SET_GLUSTER_CREDS_OP_CTX(glfs_export)                                  \
+	do {                                                                   \
+		int old_errno = errno;                                         \
+		void *sa = NULL;                                               \
+		size_t sa_len = 0;                                             \
+                                                                               \
+		if (op_ctx->caller_addr != NULL) {                             \
+			sa = socket_addr(op_ctx->caller_addr);                 \
+			sa_len = socket_addr_len(op_ctx->caller_addr);         \
+		} else if (op_ctx->client != NULL) {                           \
+			sa = socket_addr(&op_ctx->client->cl_addrbuf);         \
+			sa_len = socket_addr_len(&op_ctx->client->cl_addrbuf); \
+		}                                                              \
+                                                                               \
+		((void)setglustercreds(                                        \
+			glfs_export, &op_ctx->creds.caller_uid,                \
+			&op_ctx->creds.caller_gid, op_ctx->creds.caller_glen,  \
+			op_ctx->creds.caller_garray, sa, sa_len,               \
+			(char *)__FILE__, __LINE__, (char *)__func__));        \
+		errno = old_errno;                                             \
+	} while (0)
 
-#define SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd)			    \
-do {									    \
-	int old_errno = errno;						    \
-									    \
-	((void) setglustercreds(glfs_export,				    \
-				&(my_fd)->creds.caller_uid,		    \
-				&(my_fd)->creds.caller_gid,		    \
-				(my_fd)->creds.caller_glen,		    \
-				(my_fd)->creds.caller_garray,		    \
-				(my_fd)->lease_id, GLAPI_LEASE_ID_SIZE,	    \
-			       (char *) __FILE__,			    \
-			       __LINE__, (char *) __func__));		    \
-	errno = old_errno;						    \
-} while (0)
+#define SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd)                      \
+	do {                                                             \
+		int old_errno = errno;                                   \
+                                                                         \
+		((void)setglustercreds(                                  \
+			glfs_export, &(my_fd)->creds.caller_uid,         \
+			&(my_fd)->creds.caller_gid,                      \
+			(my_fd)->creds.caller_glen,                      \
+			(my_fd)->creds.caller_garray, (my_fd)->lease_id, \
+			GLAPI_LEASE_ID_SIZE, (char *)__FILE__, __LINE__, \
+			(char *)__func__));                              \
+		errno = old_errno;                                       \
+	} while (0)
 
 /** @todo: This doesn't quite work right if op_ctx has no client, hopefully
  *         in that case there won't actually ever be any leases...
  */
-#define SET_GLUSTER_LEASE_ID(my_fd)					    \
-do {									    \
-	void *sa = NULL;						    \
-	size_t sa_len = 0;						    \
-									    \
-	if (op_ctx->caller_addr != NULL) {				    \
-		sa = socket_addr(op_ctx->caller_addr);			    \
-		sa_len = socket_addr_len(op_ctx->caller_addr);		    \
-	} else if (op_ctx->client != NULL) {				    \
-		sa = socket_addr(&op_ctx->client->cl_addrbuf);		    \
-		sa_len = socket_addr_len(&op_ctx->client->cl_addrbuf);      \
-	}								    \
-									    \
-	memset((my_fd)->lease_id, 0, GLAPI_LEASE_ID_SIZE);		    \
-									    \
-	if (sa_len != 0 && sa_len <= GLAPI_LEASE_ID_SIZE) {		    \
-		memcpy((my_fd)->lease_id, sa, sa_len);			    \
-	}								    \
-} while (0)
+#define SET_GLUSTER_LEASE_ID(my_fd)                                            \
+	do {                                                                   \
+		void *sa = NULL;                                               \
+		size_t sa_len = 0;                                             \
+                                                                               \
+		if (op_ctx->caller_addr != NULL) {                             \
+			sa = socket_addr(op_ctx->caller_addr);                 \
+			sa_len = socket_addr_len(op_ctx->caller_addr);         \
+		} else if (op_ctx->client != NULL) {                           \
+			sa = socket_addr(&op_ctx->client->cl_addrbuf);         \
+			sa_len = socket_addr_len(&op_ctx->client->cl_addrbuf); \
+		}                                                              \
+                                                                               \
+		memset((my_fd)->lease_id, 0, GLAPI_LEASE_ID_SIZE);             \
+                                                                               \
+		if (sa_len != 0 && sa_len <= GLAPI_LEASE_ID_SIZE) {            \
+			memcpy((my_fd)->lease_id, sa, sa_len);                 \
+		}                                                              \
+	} while (0)
 
 #else
-#define SET_GLUSTER_CREDS_OP_CTX(glfs_export)				    \
-do {									    \
-	int old_errno = errno;						    \
-									    \
-	((void) setglustercreds(glfs_export,				    \
-				&op_ctx->creds.caller_uid,		    \
-				&op_ctx->creds.caller_gid,		    \
-				op_ctx->creds.caller_glen,		    \
-				op_ctx->creds.caller_garray,		    \
-				NULL, 0,				    \
-			       (char *) __FILE__,			    \
-			       __LINE__, (char *) __func__));		    \
-	errno = old_errno;						    \
-} while (0)
+#define SET_GLUSTER_CREDS_OP_CTX(glfs_export)                                 \
+	do {                                                                  \
+		int old_errno = errno;                                        \
+                                                                              \
+		((void)setglustercreds(                                       \
+			glfs_export, &op_ctx->creds.caller_uid,               \
+			&op_ctx->creds.caller_gid, op_ctx->creds.caller_glen, \
+			op_ctx->creds.caller_garray, NULL, 0,                 \
+			(char *)__FILE__, __LINE__, (char *)__func__));       \
+		errno = old_errno;                                            \
+	} while (0)
 
-#define SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd)			    \
-do {									    \
-	int old_errno = errno;						    \
-									    \
-	((void) setglustercreds(glfs_export,				    \
-				&(my_fd)->creds.caller_uid,		    \
-				&(my_fd)->creds.caller_gid,		    \
-				(my_fd)->creds.caller_glen,		    \
-				(my_fd)->creds.caller_garray,		    \
-				NULL, 0,				    \
-			       (char *) __FILE__,			    \
-			       __LINE__, (char *) __func__));		    \
-	errno = old_errno;						    \
-} while (0)
+#define SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd)                     \
+	do {                                                            \
+		int old_errno = errno;                                  \
+                                                                        \
+		((void)setglustercreds(                                 \
+			glfs_export, &(my_fd)->creds.caller_uid,        \
+			&(my_fd)->creds.caller_gid,                     \
+			(my_fd)->creds.caller_glen,                     \
+			(my_fd)->creds.caller_garray, NULL, 0,          \
+			(char *)__FILE__, __LINE__, (char *)__func__)); \
+		errno = old_errno;                                      \
+	} while (0)
 
-#define SET_GLUSTER_LEASE_ID(my_fd)					    \
-do {									    \
-	/* NOTHING TO DO */						    \
-} while (0)
+#define SET_GLUSTER_LEASE_ID(my_fd) \
+	do {                        \
+		/* NOTHING TO DO */ \
+	} while (0)
 #endif
 
-#define RESET_GLUSTER_CREDS(glfs_export) \
-do {									    \
-	int old_errno = errno;						    \
-	((void) setglustercreds(glfs_export, NULL, NULL, 0, NULL, NULL, 0,  \
-			       (char *) __FILE__,			    \
-			       __LINE__, (char *) __func__));		    \
-	errno = old_errno;						    \
-} while (0)
+#define RESET_GLUSTER_CREDS(glfs_export)                                       \
+	do {                                                                   \
+		int old_errno = errno;                                         \
+		((void)setglustercreds(glfs_export, NULL, NULL, 0, NULL, NULL, \
+				       0, (char *)__FILE__, __LINE__,          \
+				       (char *)__func__));                     \
+		errno = old_errno;                                             \
+	} while (0)
 
 #ifdef GLTIMING
 struct latency_data glfsal_latencies[LATENCY_SLOTS];
@@ -393,16 +387,15 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 void gluster_cleanup_vars(struct glfs_object *glhandle);
 
 fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
-				 struct glfs_object *objhandle,
-				 glusterfs_fsal_xstat_t *buffxstat,
-				 struct fsal_attrlist *fsalattr);
+				struct glfs_object *objhandle,
+				glusterfs_fsal_xstat_t *buffxstat,
+				struct fsal_attrlist *fsalattr);
 
 fsal_status_t glusterfs_set_acl(struct glusterfs_export *glfs_export,
-				 struct glusterfs_handle *objhandle,
-				 glusterfs_fsal_xstat_t *buffxstat);
+				struct glusterfs_handle *objhandle,
+				glusterfs_fsal_xstat_t *buffxstat);
 
-fsal_status_t glusterfs_process_acl(struct glfs *fs,
-				    struct glfs_object *object,
+fsal_status_t glusterfs_process_acl(struct glfs *fs, struct glfs_object *object,
 				    struct fsal_attrlist *attrs,
 				    glusterfs_fsal_xstat_t *buffxstat);
 
@@ -425,9 +418,9 @@ void dsh_ops_init(struct fsal_dsh_ops *ops);
 
 void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
 
-nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
-			XDR *da_addr_body, const layouttype4 type,
-			const struct pnfs_deviceid *deviceid);
+nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
+		       const layouttype4 type,
+		       const struct pnfs_deviceid *deviceid);
 
 /* UP thread routines */
 void *GLUSTERFSAL_UP_Thread(void *Arg);
@@ -438,4 +431,4 @@ int up_process_event_object(struct glusterfs_fs *gl_fs,
 void gluster_process_upcall(struct glfs_upcall *cbk, void *data);
 
 fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd);
-#endif				/* GLUSTER_INTERNAL */
+#endif /* GLUSTER_INTERNAL */

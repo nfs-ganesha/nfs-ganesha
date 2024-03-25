@@ -100,11 +100,10 @@ struct lru_state lru_state;
  */
 
 struct lru_q {
-	struct glist_head q;	/* LRU is at HEAD, MRU at tail */
+	struct glist_head q; /* LRU is at HEAD, MRU at tail */
 	enum lru_q_id id;
 	uint64_t size;
 };
-
 
 /**
  * A single queue lane, holding all entries.
@@ -113,8 +112,8 @@ struct lru_q {
 struct lru_q_lane {
 	struct lru_q L1;
 	struct lru_q L2;
-	struct lru_q cleanup;	/* deferred cleanup */
-	struct lru_q ACTIVE;	/* active references */
+	struct lru_q cleanup; /* deferred cleanup */
+	struct lru_q ACTIVE; /* active references */
 	pthread_mutex_t ql_mtx;
 
 	CACHE_PAD(0);
@@ -123,24 +122,22 @@ struct lru_q_lane {
 /* The queue lock and the partition lock interact.  The partition lock must
  * always be taken before the queue lock to avoid deadlock */
 #ifdef USE_LTTNG
-#define QLOCK(qlane) \
-	do { \
-		PTHREAD_MUTEX_lock(&(qlane)->ql_mtx); \
+#define QLOCK(qlane)                                                    \
+	do {                                                            \
+		PTHREAD_MUTEX_lock(&(qlane)->ql_mtx);                   \
 		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, qlock, TRACE_DEBUG, \
-			"QLOCK. qlane: {}", qlane); \
+					   "QLOCK. qlane: {}", qlane);  \
 	} while (0)
 
-#define QUNLOCK(qlane) \
-	do { \
+#define QUNLOCK(qlane)                                                    \
+	do {                                                              \
 		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, qunlock, TRACE_DEBUG, \
-			"QUNLOCK. qlane: {}", qlane); \
-		PTHREAD_MUTEX_unlock(&(qlane)->ql_mtx); \
+					   "QUNLOCK. qlane: {}", qlane);  \
+		PTHREAD_MUTEX_unlock(&(qlane)->ql_mtx);                   \
 	} while (0)
 #else
-#define QLOCK(qlane) \
-	PTHREAD_MUTEX_lock(&(qlane)->ql_mtx)
-#define QUNLOCK(qlane) \
-	PTHREAD_MUTEX_unlock(&(qlane)->ql_mtx)
+#define QLOCK(qlane) PTHREAD_MUTEX_lock(&(qlane)->ql_mtx)
+#define QUNLOCK(qlane) PTHREAD_MUTEX_unlock(&(qlane)->ql_mtx)
 #endif
 
 /**
@@ -183,31 +180,28 @@ static struct fridgethr *lru_fridge;
 static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 
 /* Some helper macros */
-#define LRU_NEXT(n) \
-	(atomic_inc_uint32_t(&(n)) % LRU_N_Q_LANES)
+#define LRU_NEXT(n) (atomic_inc_uint32_t(&(n)) % LRU_N_Q_LANES)
 
 /* Delete lru, use iif the current thread is not the LRU
  * thread.  The node being removed is lru, glist a pointer to L1's q,
  * qlane its lane. */
-#define LRU_DQ(lru, q) \
-	do { \
+#define LRU_DQ(lru, q)                \
+	do {                          \
 		glist_del(&(lru)->q); \
-		--((q)->size); \
+		--((q)->size);        \
 	} while (0)
 
-#define CHUNK_LRU_DQ(lru, qq) \
-	do { \
+#define CHUNK_LRU_DQ(lru, qq)         \
+	do {                          \
 		glist_del(&(lru)->q); \
-		--((qq)->size); \
+		--((qq)->size);       \
 	} while (0)
 
 #define LRU_ENTRY_L1_OR_L2(e) \
-	(((e)->lru.qid == LRU_ENTRY_L2) || \
-	 ((e)->lru.qid == LRU_ENTRY_L1))
+	(((e)->lru.qid == LRU_ENTRY_L2) || ((e)->lru.qid == LRU_ENTRY_L1))
 
-#define LRU_ENTRY_RECLAIMABLE(e, n) \
-	(LRU_ENTRY_L1_OR_L2(e) && \
-	((n) == LRU_SENTINEL_REFCOUNT+1) && \
+#define LRU_ENTRY_RECLAIMABLE(e, n)                                     \
+	(LRU_ENTRY_L1_OR_L2(e) && ((n) == LRU_SENTINEL_REFCOUNT + 1) && \
 	 ((e)->fh_hk.inavl))
 
 /**
@@ -216,16 +210,14 @@ static const uint32_t FD_FALLBACK_LIMIT = 0x400;
  * This function initializes a single queue partition (L1, L2,
  * etc)
  */
-static inline void
-lru_init_queue(struct lru_q *q, enum lru_q_id qid)
+static inline void lru_init_queue(struct lru_q *q, enum lru_q_id qid)
 {
 	glist_init(&q->q);
 	q->id = qid;
 	q->size = 0;
 }
 
-static inline void
-lru_init_queues(void)
+static inline void lru_init_queues(void)
 {
 	int ix;
 
@@ -257,8 +249,7 @@ lru_init_queues(void)
 	}
 }
 
-static inline void
-lru_destroy_queues(void)
+static inline void lru_destroy_queues(void)
 {
 	int ix;
 
@@ -287,8 +278,7 @@ lru_destroy_queues(void)
  *
  * @return A pointer to entry's current queue, NULL if none.
  */
-static inline struct lru_q *
-lru_queue_of(mdcache_entry_t *entry)
+static inline struct lru_q *lru_queue_of(mdcache_entry_t *entry)
 {
 	struct lru_q *q;
 
@@ -309,7 +299,7 @@ lru_queue_of(mdcache_entry_t *entry)
 		/* LRU_NO_LANE */
 		q = NULL;
 		break;
-	}			/* switch */
+	} /* switch */
 
 	return q;
 }
@@ -326,8 +316,7 @@ lru_queue_of(mdcache_entry_t *entry)
  *
  * @return A pointer to chunk's current queue, NULL if none.
  */
-static inline struct lru_q *
-chunk_lru_queue_of(struct dir_chunk *chunk)
+static inline struct lru_q *chunk_lru_queue_of(struct dir_chunk *chunk)
 {
 	struct lru_q *q;
 
@@ -349,7 +338,7 @@ chunk_lru_queue_of(struct dir_chunk *chunk)
 		/* LRU_NO_LANE */
 		q = NULL;
 		break;
-	}			/* switch */
+	} /* switch */
 
 	return q;
 }
@@ -364,11 +353,10 @@ chunk_lru_queue_of(struct dir_chunk *chunk)
  *
  * @return The LRU lane in which that entry should be stored.
  */
-static inline uint32_t
-lru_lane_of(void *entry)
+static inline uint32_t lru_lane_of(void *entry)
 {
-	return (uint32_t) ((((uintptr_t) entry) / 2*sizeof(uintptr_t))
-				% LRU_N_Q_LANES);
+	return (uint32_t)((((uintptr_t)entry) / 2 * sizeof(uintptr_t)) %
+			  LRU_N_Q_LANES);
 }
 
 /**
@@ -383,10 +371,9 @@ lru_lane_of(void *entry)
  * @param[in] lru    The LRU entry to insert
  * @param[in] q      The queue to insert on
  */
-static inline void
-lru_insert(mdcache_lru_t *lru, struct lru_q *q)
+static inline void lru_insert(mdcache_lru_t *lru, struct lru_q *q)
 {
-	lru->qid = q->id;	/* initial */
+	lru->qid = q->id; /* initial */
 	if (lru->qid == LRU_ENTRY_CLEANUP) {
 		atomic_set_uint32_t_bits(&lru->flags, LRU_CLEANUP);
 		/* Add to tail of cleanup queue */
@@ -409,8 +396,7 @@ lru_insert(mdcache_lru_t *lru, struct lru_q *q)
  * @param[in] lru    The LRU chunk to insert
  * @param[in] q      The queue to insert on
  */
-static inline void
-lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q)
+static inline void lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q)
 {
 	mdcache_lru_t *lru = &chunk->chunk_lru;
 	struct lru_q_lane *qlane = &CHUNK_LRU[lru->lane];
@@ -427,8 +413,7 @@ lru_insert_chunk(struct dir_chunk *chunk, struct lru_q *q)
  *
  * @param [in] entry  Entry to adjust.
  */
-static inline void
-make_active_lru(mdcache_entry_t *entry)
+static inline void make_active_lru(mdcache_entry_t *entry)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
@@ -459,7 +444,7 @@ make_active_lru(mdcache_entry_t *entry)
 	default:
 		/* do nothing */
 		break;
-	}	/* switch qid */
+	} /* switch qid */
 	QUNLOCK(qlane);
 }
 
@@ -472,8 +457,7 @@ make_active_lru(mdcache_entry_t *entry)
  *
  * @param [in] entry  Entry to adjust.
  */
-static inline void
-make_inactive_lru(mdcache_entry_t *entry)
+static inline void make_inactive_lru(mdcache_entry_t *entry)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
@@ -489,8 +473,8 @@ make_inactive_lru(mdcache_entry_t *entry)
 		q = lru_queue_of(entry);
 		LRU_DQ(&entry->lru, q);
 
-		if (atomic_fetch_uint32_t(&entry->lru.flags)
-		    & LRU_EVER_PROMOTED) {
+		if (atomic_fetch_uint32_t(&entry->lru.flags) &
+		    LRU_EVER_PROMOTED) {
 			/* If entry was ever promoted, insert into L1. */
 			q = &qlane->L1;
 		} else {
@@ -506,7 +490,7 @@ make_inactive_lru(mdcache_entry_t *entry)
 	default:
 		/* do nothing */
 		break;
-	}	/* switch qid */
+	} /* switch qid */
 }
 
 /**
@@ -516,10 +500,9 @@ make_inactive_lru(mdcache_entry_t *entry)
  *
  * @param[in] entry  The entry to clean
  */
-static inline void
-mdcache_lru_clean(mdcache_entry_t *entry)
+static inline void mdcache_lru_clean(mdcache_entry_t *entry)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 
 	/* Free SubFSAL resources */
 	if (entry->sub_handle) {
@@ -568,9 +551,9 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 		export_id = atomic_fetch_int32_t(&entry->first_export_id);
 
 		/* Check if we have a valid op_ctx */
-		if (export_id >= 0 && (op_ctx == NULL ||
-		    op_ctx->ctx_export == NULL ||
-		    op_ctx->ctx_export->export_id != export_id)) {
+		if (export_id >= 0 &&
+		    (op_ctx == NULL || op_ctx->ctx_export == NULL ||
+		     op_ctx->ctx_export->export_id != export_id)) {
 			/* If the entry's first_export_id is valid and does not
 			 * match the current op_ctx, set up a new context
 			 * using first_export_id to ensure the op_ctx export is
@@ -591,16 +574,17 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 				 * mdcache_lru_clean without the export still
 				 * being valid.
 				 */
-				LogFatal(COMPONENT_MDCACHE,
-					 "An entry (%p) having an unmappable export_id (%"
-					 PRIi32") is unexpected",
-					 entry, export_id);
+				LogFatal(
+					COMPONENT_MDCACHE,
+					"An entry (%p) having an unmappable export_id (%" PRIi32
+					") is unexpected",
+					entry, export_id);
 			}
 
-			LogFullDebug(COMPONENT_MDCACHE,
-				     "Creating a new context with export id%"
-				     PRIi32,
-				     export_id);
+			LogFullDebug(
+				COMPONENT_MDCACHE,
+				"Creating a new context with export id%" PRIi32,
+				export_id);
 
 			init_op_context_simple(&op_context, export,
 					       export->fsal_export);
@@ -614,7 +598,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 			assert(op_ctx);
 			assert(op_ctx->ctx_export);
 			LogFullDebug(COMPONENT_MDCACHE,
-				     "Trusting op_ctx export id %"PRIu16,
+				     "Trusting op_ctx export id %" PRIu16,
 				     op_ctx->ctx_export->export_id);
 		}
 
@@ -630,9 +614,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 				fsal_err_txt(status));
 		}
 
-		subcall(
-			entry->sub_handle->obj_ops->release(entry->sub_handle)
-		       );
+		subcall(entry->sub_handle->obj_ops->release(entry->sub_handle));
 		entry->sub_handle = NULL;
 
 		if (used_ctx) {
@@ -685,8 +667,7 @@ mdcache_lru_clean(mdcache_entry_t *entry)
 
 static uint32_t reap_lane;
 
-static inline mdcache_lru_t *
-lru_reap_impl(enum lru_q_id qid)
+static inline mdcache_lru_t *lru_reap_impl(enum lru_q_id qid)
 {
 	uint32_t lane;
 	struct lru_q_lane *qlane;
@@ -717,7 +698,8 @@ lru_reap_impl(enum lru_q_id qid)
 		entry = container_of(lru, mdcache_entry_t, lru);
 		const int32_t active_refcnt =
 			atomic_fetch_int32_t(&entry->lru.active_refcnt);
-		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
+		GSH_UNIQUE_AUTO_TRACEPOINT(
+			mdcache, mdc_lru_ref, TRACE_DEBUG,
 			"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
 			&entry->obj_handle, entry->sub_handle, refcnt,
 			active_refcnt);
@@ -744,16 +726,15 @@ lru_reap_impl(enum lru_q_id qid)
 			/* it worked */
 			struct lru_q *q = lru_queue_of(entry);
 
-			GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_reap,
-				TRACE_DEBUG,
-				"lru unref. handle: {}, refcnt: {}",
-				&entry->obj_handle, entry->lru.refcnt);
+			GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_reap, TRACE_DEBUG,
+					    "lru unref. handle: {}, refcnt: {}",
+					    &entry->obj_handle,
+					    entry->lru.refcnt);
 
 			LRU_DQ(lru, q);
 			entry->lru.qid = LRU_ENTRY_NONE;
 			QUNLOCK(qlane);
-			cih_remove_latched(entry, &latch,
-					   CIH_REMOVE_UNLOCK);
+			cih_remove_latched(entry, &latch, CIH_REMOVE_UNLOCK);
 			/* Note, we're not releasing our ref here.
 			 * cih_remove_latched() called
 			 * mdcache_lru_unref(), which released the
@@ -768,16 +749,15 @@ lru_reap_impl(enum lru_q_id qid)
 		/* return the ref we took above--unref deals
 		 * correctly with reclaim case */
 		mdcache_lru_unref(entry, LRU_TEMP_REF);
-	}			/* foreach lane */
+	} /* foreach lane */
 
 	/* ! reclaimable */
 	lru = NULL;
- out:
+out:
 	return lru;
 }
 
-static inline mdcache_lru_t *
-lru_try_reap_entry(uint32_t flags)
+static inline mdcache_lru_t *lru_try_reap_entry(uint32_t flags)
 {
 	mdcache_lru_t *lru;
 
@@ -817,8 +797,8 @@ lru_try_reap_entry(uint32_t flags)
 
 static uint32_t chunk_reap_lane;
 
-static inline mdcache_lru_t *
-lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
+static inline mdcache_lru_t *lru_reap_chunk_impl(enum lru_q_id qid,
+						 mdcache_entry_t *parent)
 {
 	uint32_t lane;
 	struct lru_q_lane *qlane;
@@ -831,10 +811,8 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 
 	lane = LRU_NEXT(chunk_reap_lane);
 
-	for (ix = 0;
-	     ix < LRU_N_Q_LANES;
+	for (ix = 0; ix < LRU_N_Q_LANES;
 	     ++ix, lane = LRU_NEXT(chunk_reap_lane)) {
-
 		qlane = &CHUNK_LRU[lane];
 		lq = (qid == LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
 
@@ -884,9 +862,9 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 			chunk->chunk_lru.qid = LRU_ENTRY_NONE;
 
 			GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_reap_chunk,
-				TRACE_DEBUG,
-				"lru unref. handle: {}, chunk: {}",
-				&entry->obj_handle, chunk);
+					    TRACE_DEBUG,
+					    "lru unref. handle: {}, chunk: {}",
+					    &entry->obj_handle, chunk);
 
 			/* Clean the chunk out and indicate the directory
 			 * is no longer completely populated.  We don't
@@ -914,7 +892,7 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 		 * eligible for reaping. Try the next lane...
 		 */
 		QUNLOCK(qlane);
-	}	/* foreach lane */
+	} /* foreach lane */
 
 	/* ! reclaimable */
 	return NULL;
@@ -949,8 +927,7 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 	if (lru_state.chunks_used >= lru_state.chunks_hiwat) {
 		lru = lru_reap_chunk_impl(LRU_ENTRY_L2, parent);
 		if (!lru)
-			lru = lru_reap_chunk_impl(
-					LRU_ENTRY_L1, parent);
+			lru = lru_reap_chunk_impl(LRU_ENTRY_L1, parent);
 	}
 
 	if (lru) {
@@ -958,15 +935,14 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 		 * The dirents list is effectively properly initialized.
 		 */
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
-		LogFullDebug(COMPONENT_MDCACHE,
-			     "Recycling chunk at %p.", chunk);
+		LogFullDebug(COMPONENT_MDCACHE, "Recycling chunk at %p.",
+			     chunk);
 	} else {
 		/* alloc chunk (if fails, aborts) */
 		chunk = gsh_calloc(1, sizeof(struct dir_chunk));
 		glist_init(&chunk->dirents);
-		LogFullDebug(COMPONENT_MDCACHE,
-			     "New chunk %p.", chunk);
-		(void) atomic_inc_int64_t(&lru_state.chunks_used);
+		LogFullDebug(COMPONENT_MDCACHE, "New chunk %p.", chunk);
+		(void)atomic_inc_int64_t(&lru_state.chunks_used);
 	}
 
 	/* Set the chunk's parent and insert */
@@ -975,7 +951,8 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 	if (prev_chunk) {
 		chunk->reload_ck = glist_last_entry(&prev_chunk->dirents,
 						    mdcache_dir_entry_t,
-						    chunk_list)->ck;
+						    chunk_list)
+					   ->ck;
 		/* unref prev_chunk as we had got a ref on prev_chunk
 		 * at the beginning of this function
 		 */
@@ -1017,8 +994,7 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
  *
  * @param[in] entry  The entry to clean
  */
-void
-mdcache_lru_cleanup_push(mdcache_entry_t *entry)
+void mdcache_lru_cleanup_push(mdcache_entry_t *entry)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
@@ -1057,8 +1033,7 @@ mdcache_lru_cleanup_push(mdcache_entry_t *entry)
  *
  * @param[in] entry  The entry to clean
  */
-void
-mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
+void mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 {
 	mdcache_lru_t *lru = &entry->lru;
 	struct lru_q_lane *qlane = &LRU[lru->lane];
@@ -1081,8 +1056,7 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 
 		LRU_DQ(lru, q);
 		entry->lru.qid = LRU_ENTRY_CLEANUP;
-		atomic_set_uint32_t_bits(&entry->lru.flags,
-					 LRU_CLEANUP);
+		atomic_set_uint32_t_bits(&entry->lru.flags, LRU_CLEANUP);
 		/* Note: we didn't take a ref here, so the only ref left
 		 * in this callpath is the one owned by
 		 * mdcache_unexport().  When it unref's, that may free
@@ -1123,14 +1097,14 @@ static inline int lru_run_lane(int lane)
 
 	q = &qlane->L1;
 
-	LogDebug(COMPONENT_MDCACHE_LRU,
-		 "Reaping up to %d entries from lane %d",
+	LogDebug(COMPONENT_MDCACHE_LRU, "Reaping up to %d entries from lane %d",
 		 lru_state.per_lane_work, lane);
 
 	/* ACTIVE */
 	QLOCK(qlane);
 
-	glist_for_each_safe(glist, glistn, &q->q) {
+	glist_for_each_safe(glist, glistn, &q->q)
+	{
 		/* The entry being examined */
 		mdcache_lru_t *lru = NULL;
 		/* a cache entry */
@@ -1152,7 +1126,8 @@ static inline int lru_run_lane(int lane)
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 		const int32_t active_refcnt =
 			atomic_fetch_int32_t(&entry->lru.active_refcnt);
-		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
+		GSH_UNIQUE_AUTO_TRACEPOINT(
+			mdcache, mdc_lru_ref, TRACE_DEBUG,
 			"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
 			&entry->obj_handle, entry->sub_handle, refcnt,
 			active_refcnt);
@@ -1172,8 +1147,7 @@ static inline int lru_run_lane(int lane)
 
 	QUNLOCK(qlane);
 	LogDebug(COMPONENT_MDCACHE_LRU,
-		 "Actually processed %zd entries on lane %d",
-		 workdone, lane);
+		 "Actually processed %zd entries on lane %d", workdone, lane);
 
 	return workdone;
 }
@@ -1228,8 +1202,7 @@ static inline int lru_run_lane(int lane)
  * @param[in] ctx Fridge context
  */
 
-static void
-lru_run(struct fridgethr_context *ctx)
+static void lru_run(struct fridgethr_context *ctx)
 {
 	/** @todo FSF - this could use some additional effort on finding a
 	 *              new scheduling algorithm and tracking progress.
@@ -1270,8 +1243,7 @@ lru_run(struct fridgethr_context *ctx)
 			 "Demoting up to %d entries from lane %d",
 			 lru_state.per_lane_work, lane);
 
-		LogFullDebug(COMPONENT_MDCACHE_LRU,
-			     "totalwork=%d", totalwork);
+		LogFullDebug(COMPONENT_MDCACHE_LRU, "totalwork=%d", totalwork);
 
 		totalwork += lru_run_lane(lane);
 	}
@@ -1287,18 +1259,20 @@ lru_run(struct fridgethr_context *ctx)
 		    lru_state.entries_hiwat) {
 			size_t released = 0;
 
-			LogFullDebug(COMPONENT_MDCACHE_LRU,
+			LogFullDebug(
+				COMPONENT_MDCACHE_LRU,
 				"Entries used is %" PRIu64
 				" and above water mark, LRU want release %d entries",
 				atomic_fetch_uint64_t(&lru_state.entries_used),
 				lru_state.entries_release_size);
 
 			released = mdcache_lru_release_entries(
-					lru_state.entries_release_size);
+				lru_state.entries_release_size);
 			LogFullDebug(COMPONENT_MDCACHE_LRU,
-				"Actually release %zd entries", released);
+				     "Actually release %zd entries", released);
 		} else {
-			LogFullDebug(COMPONENT_MDCACHE_LRU,
+			LogFullDebug(
+				COMPONENT_MDCACHE_LRU,
 				"Entries used is %" PRIu64
 				" and low water mark: not releasing",
 				atomic_fetch_uint64_t(&lru_state.entries_used));
@@ -1316,13 +1290,11 @@ lru_run(struct fridgethr_context *ctx)
 	fridgethr_setwait(ctx, threadwait);
 
 	LogDebug(COMPONENT_MDCACHE_LRU,
-		 "After work, count:%" PRIu64
-		 " new_thread_wait=%" PRIu64,
+		 "After work, count:%" PRIu64 " new_thread_wait=%" PRIu64,
 		 atomic_fetch_uint64_t(&lru_state.entries_used),
-		 ((uint64_t) threadwait));
-	LogFullDebug(COMPONENT_MDCACHE_LRU,
-		     "totalwork=%d lanes=%d",
-		     totalwork, LRU_N_Q_LANES);
+		 ((uint64_t)threadwait));
+	LogFullDebug(COMPONENT_MDCACHE_LRU, "totalwork=%d lanes=%d", totalwork,
+		     LRU_N_Q_LANES);
 }
 
 /**
@@ -1352,13 +1324,14 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 	q = &qlane->L1;
 
 	LogFullDebug(COMPONENT_MDCACHE_LRU,
-		 "Reaping up to %d chunks from lane %zd",
-		 lru_state.per_lane_work, lane);
+		     "Reaping up to %d chunks from lane %zd",
+		     lru_state.per_lane_work, lane);
 
 	/* ACTIVE */
 	QLOCK(qlane);
 
-	glist_for_each_safe(glist, glistn, &q->q) {
+	glist_for_each_safe(glist, glistn, &q->q)
+	{
 		struct lru_q *q;
 
 		/* check per-lane work */
@@ -1385,8 +1358,8 @@ static inline size_t chunk_lru_run_lane(size_t lane)
 
 	QUNLOCK(qlane);
 	LogFullDebug(COMPONENT_MDCACHE_LRU,
-		 "Actually processed %zd chunks on lane %zd",
-		 workdone, lane);
+		     "Actually processed %zd chunks on lane %zd", workdone,
+		     lane);
 
 	return workdone;
 }
@@ -1432,9 +1405,10 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 
 	/* Total chunks demoted to L2 between all lanes and all current runs. */
 	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
-		LogFullDebug(COMPONENT_MDCACHE_LRU,
-			 "Reaping up to %d chunks from lane %zd totalwork=%zd",
-			 lru_state.per_lane_work, lane, totalwork);
+		LogFullDebug(
+			COMPONENT_MDCACHE_LRU,
+			"Reaping up to %d chunks from lane %zd totalwork=%zd",
+			lru_state.per_lane_work, lane, totalwork);
 
 		totalwork += chunk_lru_run_lane(lane);
 	}
@@ -1485,8 +1459,8 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 		 * The dirents list is effectively properly initialized.
 		 */
 		chunk = container_of(lru, struct dir_chunk, chunk_lru);
-		LogFullDebug(COMPONENT_MDCACHE,
-			     "Releasing chunk at %p.", chunk);
+		LogFullDebug(COMPONENT_MDCACHE, "Releasing chunk at %p.",
+			     chunk);
 		mdcache_lru_unref_chunk(chunk);
 	}
 
@@ -1520,8 +1494,8 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 	LogDebug(COMPONENT_MDCACHE_LRU,
 		 "After work, threadwait=%" PRIu64
 		 " totalwork=%zd target_release = %zd actual_release = %zd",
-		 ((uint64_t) new_thread_wait), totalwork,
-		 target_release, actual_release);
+		 ((uint64_t)new_thread_wait), totalwork, target_release,
+		 actual_release);
 }
 
 /* @brief Release reapable entries until we are below the high-water mark
@@ -1577,7 +1551,7 @@ void init_fds_limit(void)
 	fd_lru_parameter.fd_lwmark_percent = mdcache_param.fd_lwmark_percent;
 	fd_lru_parameter.reaper_work = mdcache_param.reaper_work;
 	fd_lru_parameter.reaper_work_per_lane =
-					mdcache_param.reaper_work_per_lane;
+		mdcache_param.reaper_work_per_lane;
 	fd_lru_parameter.biggest_window = mdcache_param.biggest_window;
 	fd_lru_parameter.required_progress = mdcache_param.required_progress;
 	fd_lru_parameter.futility_count = mdcache_param.futility_count;
@@ -1589,8 +1563,7 @@ void init_fds_limit(void)
 /**
  * Initialize subsystem
  */
-fsal_status_t
-mdcache_lru_pkginit(void)
+fsal_status_t mdcache_lru_pkginit(void)
 {
 	/* Return code from system calls */
 	int code = 0;
@@ -1606,8 +1579,9 @@ mdcache_lru_pkginit(void)
 
 	if (mdcache_param.reaper_work) {
 		/* Backwards compatibility */
-		lru_state.per_lane_work = (mdcache_param.reaper_work +
-					   LRU_N_Q_LANES - 1) / LRU_N_Q_LANES;
+		lru_state.per_lane_work =
+			(mdcache_param.reaper_work + LRU_N_Q_LANES - 1) /
+			LRU_N_Q_LANES;
 	} else {
 		/* New parameter */
 		lru_state.per_lane_work = mdcache_param.reaper_work_per_lane;
@@ -1660,7 +1634,7 @@ mdcache_lru_pkginit(void)
 	fd_lru_parameter.fd_lwmark_percent = mdcache_param.fd_lwmark_percent;
 	fd_lru_parameter.reaper_work = mdcache_param.reaper_work;
 	fd_lru_parameter.reaper_work_per_lane =
-					mdcache_param.reaper_work_per_lane;
+		mdcache_param.reaper_work_per_lane;
 	fd_lru_parameter.biggest_window = mdcache_param.biggest_window;
 	fd_lru_parameter.required_progress = mdcache_param.required_progress;
 	fd_lru_parameter.futility_count = mdcache_param.futility_count;
@@ -1676,13 +1650,10 @@ mdcache_lru_pkginit(void)
  *
  * @return 0 on success, POSIX errors on failure.
  */
-fsal_status_t
-mdcache_lru_pkgshutdown(void)
+fsal_status_t mdcache_lru_pkgshutdown(void)
 {
 	fsal_status_t status;
-	int rc = fridgethr_sync_command(lru_fridge,
-					fridgethr_comm_stop,
-					120);
+	int rc = fridgethr_sync_command(lru_fridge, fridgethr_comm_stop, 120);
 
 	if (rc == ETIMEDOUT) {
 		LogMajor(COMPONENT_MDCACHE_LRU,
@@ -1719,7 +1690,7 @@ mdcache_entry_t *alloc_cache_entry(void)
 	/* Initialize the entry locks */
 	init_rw_locks(nentry);
 
-	(void) atomic_inc_int64_t(&lru_state.entries_used);
+	(void)atomic_inc_int64_t(&lru_state.entries_used);
 
 	return nentry;
 }
@@ -1783,9 +1754,9 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle,
 	}
 
 	GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_get, TRACE_DEBUG,
-		"lru unref. handle: {}, sub handle: {}, refcnt: {}",
-		&nentry->obj_handle, sub_handle,
-		nentry->lru.refcnt);
+			    "lru unref. handle: {}, sub handle: {}, refcnt: {}",
+			    &nentry->obj_handle, sub_handle,
+			    nentry->lru.refcnt);
 	return nentry;
 }
 
@@ -1841,10 +1812,10 @@ void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		active_refcnt = atomic_inc_int32_t(&entry->lru.active_refcnt);
 	}
 
-	GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
-			"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
-			&entry->obj_handle, entry->sub_handle, refcnt,
-			active_refcnt);
+	GSH_UNIQUE_AUTO_TRACEPOINT(
+		mdcache, mdc_lru_ref, TRACE_DEBUG,
+		"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
+		&entry->obj_handle, entry->sub_handle, refcnt, active_refcnt);
 
 	if (flags & LRU_PROMOTE) {
 		/* If entry is ever promoted, remember that. */
@@ -1875,9 +1846,8 @@ void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
  *                   NOTE: LRU_PROMOTE is ignored so safe to be set
  * @return true if entry freed, false otherwise
  */
-bool
-_mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
-		   int line)
+bool _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags,
+			const char *func, int line)
 {
 	bool do_cleanup = false;
 	uint32_t lane = entry->lru.lane;
@@ -1890,8 +1860,8 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		if (entry->lru.qid == LRU_ENTRY_CLEANUP) {
 			QLOCK(qlane);
 			/* Locked, check again with lock */
-			if (((atomic_fetch_uint32_t(&entry->lru.flags)
-			      & LRU_CLEANED) == 0) &&
+			if (((atomic_fetch_uint32_t(&entry->lru.flags) &
+			      LRU_CLEANED) == 0) &&
 			    (entry->lru.qid == LRU_ENTRY_CLEANUP)) {
 				do_cleanup = true;
 				atomic_set_uint32_t_bits(&entry->lru.flags,
@@ -1902,16 +1872,15 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 
 		if (do_cleanup) {
 			LogDebug(COMPONENT_MDCACHE,
-				 "LRU_ENTRY_CLEANUP of entry %p",
-				 entry);
+				 "LRU_ENTRY_CLEANUP of entry %p", entry);
 			state_wipe_file(&entry->obj_handle);
 		}
 	}
 
 	if (flags & LRU_FLAG_SENTINEL) {
 		/* Caller is intending to release the sentinel reference */
-		if ((atomic_fetch_uint32_t(&entry->lru.flags)
-		     & LRU_SENTINEL_HELD) == 0) {
+		if ((atomic_fetch_uint32_t(&entry->lru.flags) &
+		     LRU_SENTINEL_HELD) == 0) {
 			/* oops... */
 			LogFatal(COMPONENT_MDCACHE,
 				 "Sentinel reference already released");
@@ -1924,7 +1893,8 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 	const int32_t refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 	const int32_t active_refcnt =
 		atomic_fetch_int32_t(&entry->lru.active_refcnt);
-	GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
+	GSH_AUTO_TRACEPOINT(
+		mdcache, mdc_lru_ref, TRACE_DEBUG,
 		"lru unref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
 		&entry->obj_handle, entry->sub_handle, refcnt, active_refcnt);
 
@@ -1980,7 +1950,7 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		pool_free(mdcache_entry_pool, entry);
 		freed = true;
 
-		(void) atomic_dec_int64_t(&lru_state.entries_used);
+		(void)atomic_dec_int64_t(&lru_state.entries_used);
 	}
 
 	return freed;
@@ -2007,7 +1977,7 @@ static void lru_clean_chunk(struct dir_chunk *chunk)
 		CHUNK_LRU_DQ(&chunk->chunk_lru, lq);
 	}
 
-	(void) atomic_dec_int64_t(&lru_state.chunks_used);
+	(void)atomic_dec_int64_t(&lru_state.chunks_used);
 
 	/* Then do the actual cleaning work. */
 	mdcache_clean_dirent_chunk(chunk);
@@ -2122,8 +2092,8 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent)
 	node = avltree_lookup(&key.node, &exp->dirent_map.map);
 	if (node) {
 		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "Already map for %s -> %" PRIx64,
-			     dirent->name, dirent->ck);
+			     "Already map for %s -> %" PRIx64, dirent->name,
+			     dirent->ck);
 		/* Move to MRU */
 		dmap = avltree_container_of(node, mdcache_dmap_entry_t, node);
 		now(&dmap->timestamp);
@@ -2227,8 +2197,8 @@ static void dirmap_lru_run(struct fridgethr_context *ctx)
 			       lru_entry);
 	for (i = 0; i < DIRMAP_MAX_PER_SCAN && cur != NULL; ++i) {
 		next = glist_prev_entry(&exp->dirent_map.lru,
-					mdcache_dmap_entry_t,
-					lru_entry, &cur->lru_entry);
+					mdcache_dmap_entry_t, lru_entry,
+					&cur->lru_entry);
 		age = timespec_diff(&cur->timestamp, &curtime);
 		if (age < DIRMAP_KEEP_NS) {
 			/* LRU is in timestamp order; done */
@@ -2244,7 +2214,6 @@ out:
 	PTHREAD_MUTEX_unlock(&exp->dirent_map.dm_mtx);
 	fridgethr_setwait(ctx, mdcache_param.lru_run_interval);
 }
-
 
 fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp)
 {
@@ -2271,9 +2240,10 @@ fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp)
 
 	rc = fridgethr_init(&exp->dirmap_fridge, exp->name, &frp);
 	if (rc != 0) {
-		LogMajor(COMPONENT_NFS_READDIR,
-			 "Unable to initialize %s dirmap fridge, error code %d.",
-			 exp->name, rc);
+		LogMajor(
+			COMPONENT_NFS_READDIR,
+			"Unable to initialize %s dirmap fridge, error code %d.",
+			exp->name, rc);
 		return posix2fsal_status(rc);
 	}
 
@@ -2297,8 +2267,7 @@ void dirmap_lru_stop(struct mdcache_fsal_export *exp)
 		return;
 	}
 
-	int rc = fridgethr_sync_command(exp->dirmap_fridge,
-					fridgethr_comm_stop,
+	int rc = fridgethr_sync_command(exp->dirmap_fridge, fridgethr_comm_stop,
 					10);
 
 	if (rc == ETIMEDOUT) {

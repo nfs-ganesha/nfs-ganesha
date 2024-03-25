@@ -28,7 +28,6 @@
 
 #include <sys/quota.h>
 
-#define QUOTACTL(cmd, path, id, addr) \
-	quotactl((cmd), path, id, addr)
+#define QUOTACTL(cmd, path, id, addr) quotactl((cmd), path, id, addr)
 
 #endif /* QUOTA_LINUX_H */

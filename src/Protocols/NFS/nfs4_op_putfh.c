@@ -56,19 +56,19 @@ static int nfs4_ds_putfh(compound_data_t *data)
 	bool changed = true;
 
 	LogFullDebug(COMPONENT_FILEHANDLE, "NFS4 Handle 0x%X export id %d",
-		v4_handle->fhflags1, ntohs(v4_handle->id.exports));
+		     v4_handle->fhflags1, ntohs(v4_handle->id.exports));
 
 	/* Find any existing server by the "id" from the handle,
 	 * before releasing the old DS (to prevent thrashing).
 	 */
 	pds = pnfs_ds_get(ntohs(v4_handle->id.servers));
 	if (pds == NULL) {
-		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			   "NFS4 Request from client (%s) has invalid server identifier %d",
-			   op_ctx->client
-				?  op_ctx->client->hostaddr_str
-				: "unknown",
-			   ntohs(v4_handle->id.servers));
+		LogInfoAlt(
+			COMPONENT_DISPATCH, COMPONENT_EXPORT,
+			"NFS4 Request from client (%s) has invalid server identifier %d",
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown",
+			ntohs(v4_handle->id.servers));
 
 		return NFS4ERR_STALE;
 	}
@@ -77,8 +77,8 @@ static int nfs4_ds_putfh(compound_data_t *data)
 	 * the reference to the old fsal_pnfs_ds will be released below.
 	 */
 	if (op_ctx->ctx_pnfs_ds != NULL) {
-		changed = ntohs(v4_handle->id.servers)
-			!= op_ctx->ctx_pnfs_ds->id_servers;
+		changed = ntohs(v4_handle->id.servers) !=
+			  op_ctx->ctx_pnfs_ds->id_servers;
 	}
 
 	/* If old CurrentFH had a related export, note the change, the reference
@@ -134,8 +134,8 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	bool changed = true;
 
 	LogFullDebug(COMPONENT_FILEHANDLE,
-		     "NFS4 Handle flags 0x%X export id %d",
-		v4_handle->fhflags1, ntohs(v4_handle->id.exports));
+		     "NFS4 Handle flags 0x%X export id %d", v4_handle->fhflags1,
+		     ntohs(v4_handle->id.exports));
 	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "NFS4 FSAL Handle %s",
 			   LEN_FH_STR, v4_handle->fsopaque, v4_handle->fs_len);
 
@@ -147,12 +147,12 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	LOG_EXPORT(NIV_DEBUG, "PUTFH", exporting, false);
 
 	if (exporting == NULL) {
-		LogInfoAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			   "NFS4 Request from client (%s) has invalid export identifier %d",
-			   op_ctx->client
-				?  op_ctx->client->hostaddr_str
-				: "unknown",
-			   ntohs(v4_handle->id.exports));
+		LogInfoAlt(
+			COMPONENT_DISPATCH, COMPONENT_EXPORT,
+			"NFS4 Request from client (%s) has invalid export identifier %d",
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown",
+			ntohs(v4_handle->id.exports));
 
 		return NFS4ERR_STALE;
 	}
@@ -162,7 +162,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	 */
 	if (op_ctx->ctx_export != NULL) {
 		changed = ntohs(v4_handle->id.exports) !=
-				 op_ctx->ctx_export->export_id;
+			  op_ctx->ctx_export->export_id;
 	}
 
 	/* Clear out current entry for now */
@@ -198,23 +198,20 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	fh_desc.addr = fhbuf;
 
 	/* adjust the handle opaque into a cache key */
-	fsal_status = export->exp_ops.wire_to_host(export,
-						   FSAL_DIGEST_NFSV4,
-						   &fh_desc,
-						   v4_handle->fhflags1);
+	fsal_status = export->exp_ops.wire_to_host(
+		export, FSAL_DIGEST_NFSV4, &fh_desc, v4_handle->fhflags1);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogInfo(COMPONENT_FILEHANDLE,
-			     "wire_to_host failed %s",
-			     msg_fsal_err(fsal_status.major));
+		LogInfo(COMPONENT_FILEHANDLE, "wire_to_host failed %s",
+			msg_fsal_err(fsal_status.major));
 		return nfs4_Errno_status(fsal_status);
 	}
 
-	fsal_status = export->exp_ops.create_handle(export, &fh_desc,
-						    &new_hdl, NULL);
+	fsal_status =
+		export->exp_ops.create_handle(export, &fh_desc, &new_hdl, NULL);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogInfo(COMPONENT_FILEHANDLE,
-			 "could not get create_handle object error %s",
-			 msg_fsal_err(fsal_status.major));
+			"could not get create_handle object error %s",
+			msg_fsal_err(fsal_status.major));
 		return nfs4_Errno_status(fsal_status);
 	}
 
@@ -224,8 +221,7 @@ static int nfs4_mds_putfh(compound_data_t *data)
 	/* Put our ref */
 	new_hdl->obj_ops->put_ref(new_hdl);
 
-	LogFullDebug(COMPONENT_FILEHANDLE,
-		     "File handle is of type %s(%d)",
+	LogFullDebug(COMPONENT_FILEHANDLE, "File handle is of type %s(%d)",
 		     object_file_type_to_str(data->current_filetype),
 		     data->current_filetype);
 
@@ -251,9 +247,9 @@ enum nfs_req_result nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 				  struct nfs_resop4 *resp)
 {
 	/* Convenience alias for args */
-	PUTFH4args * const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
+	PUTFH4args *const arg_PUTFH4 = &op->nfs_argop4_u.opputfh;
 	/* Convenience alias for response */
-	PUTFH4res * const res_PUTFH4 = &resp->nfs_resop4_u.opputfh;
+	PUTFH4res *const res_PUTFH4 = &resp->nfs_resop4_u.opputfh;
 
 	resp->resop = NFS4_OP_PUTFH;
 
@@ -282,7 +278,7 @@ enum nfs_req_result nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 		res_PUTFH4->status = nfs4_mds_putfh(data);
 
 	return nfsstat4_to_nfs_req_result(res_PUTFH4->status);
-}				/* nfs4_op_putfh */
+} /* nfs4_op_putfh */
 
 /**
  * @brief Free memory allocated for PUTFH result

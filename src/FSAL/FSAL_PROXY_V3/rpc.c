@@ -77,8 +77,8 @@ bool proxyv3_rpc_init(const uint num_sockets)
 	if (rpc_initialised)
 		return true;
 
-	LogDebug(COMPONENT_FSAL,
-		 "Setting up connection pool with %u sockets", num_sockets);
+	LogDebug(COMPONENT_FSAL, "Setting up connection pool with %u sockets",
+		 num_sockets);
 	/* Cache our hostname for client auth later. */
 	if (gethostname(rpcMachineName, sizeof(rpcMachineName)) != 0) {
 		const char *kClientName = "127.0.0.1";
@@ -105,7 +105,6 @@ bool proxyv3_rpc_init(const uint num_sockets)
 	return rpc_initialised;
 }
 
-
 /**
  * @brief Given a host:port pair, try to open a socket.
  *
@@ -116,20 +115,15 @@ bool proxyv3_rpc_init(const uint num_sockets)
  * @return - A valid fd on success, -1 otherwise.
  */
 
-static int
-proxyv3_openfd(const struct sockaddr *host,
-	       const socklen_t socklen,
-	       uint16_t port)
+static int proxyv3_openfd(const struct sockaddr *host, const socklen_t socklen,
+			  uint16_t port)
 {
 	int rc;
 
-	LogDebug(COMPONENT_FSAL,
-		 "Opening a new socket");
+	LogDebug(COMPONENT_FSAL, "Opening a new socket");
 
-	if (host->sa_family != AF_INET &&
-	    host->sa_family != AF_INET6) {
-		LogCrit(COMPONENT_FSAL,
-			"passed a host with sa_family %u",
+	if (host->sa_family != AF_INET && host->sa_family != AF_INET6) {
+		LogCrit(COMPONENT_FSAL, "passed a host with sa_family %u",
 			host->sa_family);
 		return -1;
 	}
@@ -141,22 +135,20 @@ proxyv3_openfd(const struct sockaddr *host,
 	 * of the socket (perhaps it just uses the sa_family for socklen)
 	 */
 
-	if (!inet_ntop(host->sa_family, host,
-		       addrForErrors, INET6_ADDRSTRLEN)) {
+	if (!inet_ntop(host->sa_family, host, addrForErrors,
+		       INET6_ADDRSTRLEN)) {
 		LogCrit(COMPONENT_FSAL,
 			"Couldn't decode host socket for debugging");
 		return -1;
 	}
 
 	bool ipv6 = host->sa_family == AF_INET6;
-	size_t expected_len = (ipv6) ?
-		sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in);
+	size_t expected_len = (ipv6) ? sizeof(struct sockaddr_in6) :
+				       sizeof(struct sockaddr_in);
 	if (socklen != expected_len) {
 		LogCrit(COMPONENT_FSAL,
 			"Given an ipv%s sockaddr (%s) with len %u != %zu",
-			(ipv6) ? "6" : "4",
-			addrForErrors,
-			socklen,
+			(ipv6) ? "6" : "4", addrForErrors, socklen,
 			expected_len);
 		return -1;
 	}
@@ -167,14 +159,14 @@ proxyv3_openfd(const struct sockaddr *host,
 	/* Copy the input, and then override the port. */
 	memcpy(&hostAndPort, host, socklen);
 
-	struct sockaddr_in  *hostv4 = (struct sockaddr_in *) &hostAndPort;
-	struct sockaddr_in6 *hostv6 = (struct sockaddr_in6 *) &hostAndPort;
+	struct sockaddr_in *hostv4 = (struct sockaddr_in *)&hostAndPort;
+	struct sockaddr_in6 *hostv6 = (struct sockaddr_in6 *)&hostAndPort;
 
 	/* Check that the caller is letting us slip the port in. */
 	if ((ipv6 && hostv6->sin6_port != 0) ||
 	    (!ipv6 && hostv4->sin_port != 0)) {
-		unsigned int port = (ipv6) ?
-			hostv6->sin6_port : hostv4->sin_port;
+		unsigned int port = (ipv6) ? hostv6->sin6_port :
+					     hostv4->sin_port;
 		LogCrit(COMPONENT_FSAL,
 			"passed an address (%s) with non-zero port %u",
 			addrForErrors, port);
@@ -182,12 +174,10 @@ proxyv3_openfd(const struct sockaddr *host,
 	}
 
 	int fd = socket((ipv6) ? PF_INET6 /* IPv6 */ : PF_INET /* IPv4 */,
-			SOCK_STREAM /* TCP */,
-			0 /* Pick it up from TCP */);
+			SOCK_STREAM /* TCP */, 0 /* Pick it up from TCP */);
 
 	if (fd < 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Failed to create a socket. %d %s",
+		LogCrit(COMPONENT_FSAL, "Failed to create a socket. %d %s",
 			errno, strerror(errno));
 		return -1;
 	}
@@ -204,8 +194,7 @@ proxyv3_openfd(const struct sockaddr *host,
 	 */
 
 	if (pthread_mutex_lock(&rpcLock) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_lock failed %d %s",
+		LogCrit(COMPONENT_FSAL, "pthread_mutex_lock failed %d %s",
 			errno, strerror(errno));
 		close(fd);
 		return -1;
@@ -215,8 +204,7 @@ proxyv3_openfd(const struct sockaddr *host,
 
 	/* Unlock the rpclock before we exit, even if bindresvport_sa failed */
 	if (pthread_mutex_unlock(&rpcLock) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_unlock failed %d %s",
+		LogCrit(COMPONENT_FSAL, "pthread_mutex_unlock failed %d %s",
 			errno, strerror(errno));
 		close(fd);
 		return -1;
@@ -224,8 +212,8 @@ proxyv3_openfd(const struct sockaddr *host,
 
 	if (rc < 0) {
 		LogCrit(COMPONENT_FSAL,
-			"Failed to reserve a privileged port. %d %s",
-			errno, strerror(errno));
+			"Failed to reserve a privileged port. %d %s", errno,
+			strerror(errno));
 		close(fd);
 		return -1;
 	}
@@ -244,13 +232,11 @@ proxyv3_openfd(const struct sockaddr *host,
 		return -1;
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "Got a new socket (%d) open to host %s",
-		 fd, addrForErrors);
+	LogDebug(COMPONENT_FSAL, "Got a new socket (%d) open to host %s", fd,
+		 addrForErrors);
 
 	return fd;
 }
-
 
 /**
  * @brief Check that an fd (from a socket) is open and ready.
@@ -260,8 +246,7 @@ proxyv3_openfd(const struct sockaddr *host,
  * @return - True if the socket is open, false otherwise.
  */
 
-static bool
-proxyv3_fd_is_open(int fd)
+static bool proxyv3_fd_is_open(int fd)
 {
 	/*
 	 * If it's been a long time since we opened the socket, the
@@ -278,11 +263,9 @@ proxyv3_fd_is_open(int fd)
 	 * actually pull any data off.
 	 */
 
-	bytes_read = recv(fd, buf, sizeof(buf),
-			  MSG_DONTWAIT | MSG_PEEK);
+	bytes_read = recv(fd, buf, sizeof(buf), MSG_DONTWAIT | MSG_PEEK);
 
-	if (bytes_read == -1 &&
-	    ((errno == EAGAIN || errno == EWOULDBLOCK))) {
+	if (bytes_read == -1 && ((errno == EAGAIN || errno == EWOULDBLOCK))) {
 		/* We would block => the socket is open! */
 		LogFullDebug(COMPONENT_FSAL,
 			     "Socket %d was still open. Reusing.", fd);
@@ -296,11 +279,11 @@ proxyv3_fd_is_open(int fd)
 
 	if (bytes_read == 0) {
 		/* The other end closed at some point. */
-		LogDebug(COMPONENT_FSAL,
-			 "Socket %d was closed by the backend.", fd);
+		LogDebug(COMPONENT_FSAL, "Socket %d was closed by the backend.",
+			 fd);
 	} else if (bytes_read > 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Unexpected data left in socket %d.", fd);
+		LogCrit(COMPONENT_FSAL, "Unexpected data left in socket %d.",
+			fd);
 	} else {
 		/* Some other error. Log and exit. */
 		LogCrit(COMPONENT_FSAL,
@@ -318,8 +301,7 @@ proxyv3_fd_is_open(int fd)
  * @param capacity The desired capacity in bytes.
  */
 
-static void
-proxyv3_rpcBuf_create(struct rpc_buf *rpc_buf, size_t capacity)
+static void proxyv3_rpcBuf_create(struct rpc_buf *rpc_buf, size_t capacity)
 {
 	rpc_buf->buf = gsh_calloc(1, capacity);
 	rpc_buf->capacity = capacity;
@@ -334,8 +316,7 @@ proxyv3_rpcBuf_create(struct rpc_buf *rpc_buf, size_t capacity)
  *
  * @return - The underlying buffer pointer (potentially realloc'ed).
  */
-static char*
-proxyv3_rpcBuf_resize(struct rpc_buf *rpc_buf, size_t len)
+static char *proxyv3_rpcBuf_resize(struct rpc_buf *rpc_buf, size_t len)
 {
 	if (rpc_buf->capacity < len) {
 		/*
@@ -364,25 +345,21 @@ proxyv3_rpcBuf_resize(struct rpc_buf *rpc_buf, size_t len)
  * @return - A valid fd_entry on success, NULL otherwise.
  */
 
-static struct fd_entry*
-proxyv3_getfdentry(const struct sockaddr *host,
-		   const socklen_t socklen,
-		   uint16_t port,
-		   bool *retry)
+static struct fd_entry *proxyv3_getfdentry(const struct sockaddr *host,
+					   const socklen_t socklen,
+					   uint16_t port, bool *retry)
 {
 	/* In case we fail catastrophically, don't suggest a retry. */
 	*retry = false;
 
 	if (pthread_mutex_lock(&rpcLock) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_lock failed %d %s",
+		LogCrit(COMPONENT_FSAL, "pthread_mutex_lock failed %d %s",
 			errno, strerror(errno));
 		return NULL;
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Looking for an open socket for port %" PRIu16,
-		     port);
+		     "Looking for an open socket for port %" PRIu16, port);
 
 	/* Find the first free, preferably open socket */
 	struct fd_entry *first_free = NULL;
@@ -414,11 +391,11 @@ proxyv3_getfdentry(const struct sockaddr *host,
 			}
 		} else {
 			/* See if this open socket matches what we need. */
-			if (entry->socklen == socklen &&
-			    entry->port == port &&
+			if (entry->socklen == socklen && entry->port == port &&
 			    memcmp(&entry->socket, host, socklen) == 0) {
-				LogFullDebug(COMPONENT_FSAL,
-					     "Found an already open socket, will reuse that");
+				LogFullDebug(
+					COMPONENT_FSAL,
+					"Found an already open socket, will reuse that");
 				first_open = entry;
 				break;
 			}
@@ -432,8 +409,8 @@ proxyv3_getfdentry(const struct sockaddr *host,
 
 		if (pthread_mutex_unlock(&rpcLock) != 0) {
 			LogCrit(COMPONENT_FSAL,
-				"pthread_mutex_unlock failed %d %s",
-				errno, strerror(errno));
+				"pthread_mutex_unlock failed %d %s", errno,
+				strerror(errno));
 			return NULL;
 		}
 
@@ -447,8 +424,7 @@ proxyv3_getfdentry(const struct sockaddr *host,
 
 	/* Release the lock now that we got our entry. */
 	if (pthread_mutex_unlock(&rpcLock) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_unlock failed %d %s",
+		LogCrit(COMPONENT_FSAL, "pthread_mutex_unlock failed %d %s",
 			errno, strerror(errno));
 		/*
 		 * Return the entry to the list, since we aren't going to end up
@@ -531,10 +507,9 @@ proxyv3_getfdentry(const struct sockaddr *host,
  *         - NULL, otherwise.
  */
 
-static struct fd_entry*
-proxyv3_getfd_blocking(const struct sockaddr *host,
-		       const socklen_t socklen,
-		       uint16_t port)
+static struct fd_entry *proxyv3_getfd_blocking(const struct sockaddr *host,
+					       const socklen_t socklen,
+					       uint16_t port)
 {
 	const size_t kMaxIterations = 100;
 	/*
@@ -567,14 +542,13 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 		/* We were told to retry, let's wait. */
 		struct timespec how_long = {
 			/* 1M micros per second */
-			.tv_sec  = numMicros / 1000000,
+			.tv_sec = numMicros / 1000000,
 			/* Remainder => nanoseconds */
 			.tv_nsec = (numMicros % 1000000) * 1000
 		};
 
 		LogFullDebug(COMPONENT_FSAL,
-			     "Going to sleep for %zu microseconds",
-			     numMicros);
+			     "Going to sleep for %zu microseconds", numMicros);
 
 		if (nanosleep(&how_long, NULL) != 0) {
 			/*
@@ -597,8 +571,7 @@ proxyv3_getfd_blocking(const struct sockaddr *host,
 		}
 	}
 
-	LogCrit(COMPONENT_FSAL,
-		"Failed to ever acquire a new fd, dying");
+	LogCrit(COMPONENT_FSAL, "Failed to ever acquire a new fd, dying");
 	return NULL;
 }
 
@@ -619,8 +592,7 @@ static bool proxyv3_release_fdentry(struct fd_entry *entry, bool force_close)
 		     entry->fd, (force_close) ? "T" : "F");
 
 	if (pthread_mutex_lock(&rpcLock) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_lock failed %d %s",
+		LogCrit(COMPONENT_FSAL, "pthread_mutex_lock failed %d %s",
 			errno, strerror(errno));
 		return false;
 	}
@@ -650,8 +622,7 @@ static bool proxyv3_release_fdentry(struct fd_entry *entry, bool force_close)
 	}
 
 	if (pthread_mutex_unlock(&rpcLock) != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"pthread_mutex_unlock failed %d %s",
+		LogCrit(COMPONENT_FSAL, "pthread_mutex_unlock failed %d %s",
 			errno, strerror(errno));
 		return false;
 	}
@@ -685,15 +656,11 @@ static bool proxyv3_release_fdentry(struct fd_entry *entry, bool force_close)
  *         - False, with emitted warnings, otherwise.
  */
 
-bool proxyv3_call(const struct sockaddr *host,
-		  const socklen_t socklen,
-		  uint16_t port,
-		  const struct user_cred *creds,
-		  const rpcprog_t rpcProgram,
-		  const rpcvers_t rpcVersion,
-		  const rpcproc_t rpcProc,
-		  const xdrproc_t encodeFunc, void *args,
-		  const xdrproc_t decodeFunc, void *output)
+bool proxyv3_call(const struct sockaddr *host, const socklen_t socklen,
+		  uint16_t port, const struct user_cred *creds,
+		  const rpcprog_t rpcProgram, const rpcvers_t rpcVersion,
+		  const rpcproc_t rpcProc, const xdrproc_t encodeFunc,
+		  void *args, const xdrproc_t decodeFunc, void *output)
 {
 	XDR x;
 	struct rpc_msg rmsg;
@@ -705,10 +672,8 @@ bool proxyv3_call(const struct sockaddr *host,
 
 	/* Log on entry, so we know what we were doing before we open the fd. */
 	LogFullDebug(COMPONENT_FSAL,
-		     "Sending an RPC: Program = %" PRIu32
-		     ", Version = %" PRIu32
-		     ", Procedure = %" PRIu32
-		     ", XID = %" PRIx32,
+		     "Sending an RPC: Program = %" PRIu32 ", Version = %" PRIu32
+		     ", Procedure = %" PRIu32 ", XID = %" PRIx32,
 		     rpcProgram, rpcVersion, rpcProc, xid);
 
 	fd_entry = proxyv3_getfd_blocking(host, socklen, port);
@@ -728,9 +693,9 @@ bool proxyv3_call(const struct sockaddr *host,
 	AUTH *au;
 
 	if (creds != NULL) {
-		au = authunix_ncreate(rpcMachineName,
-				      creds->caller_uid, creds->caller_gid,
-				      creds->caller_glen, creds->caller_garray);
+		au = authunix_ncreate(rpcMachineName, creds->caller_uid,
+				      creds->caller_gid, creds->caller_glen,
+				      creds->caller_garray);
 	} else {
 		/*
 		 * Let ganesha do lots of syscalls to figure out our machiine
@@ -757,22 +722,18 @@ bool proxyv3_call(const struct sockaddr *host,
 	 * u_int recmark.
 	 */
 
-	xdrmem_create(&x,
-		      msgBuf + sizeof(u_int),
-		      bufSize - sizeof(u_int),
+	xdrmem_create(&x, msgBuf + sizeof(u_int), bufSize - sizeof(u_int),
 		      XDR_ENCODE);
 
 	if (!xdr_callmsg(&x, &rmsg)) {
-		LogCrit(COMPONENT_FSAL,
-			"Failed to Setup xdr_callmsg");
+		LogCrit(COMPONENT_FSAL, "Failed to Setup xdr_callmsg");
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
 		AUTH_DESTROY(au);
 		return false;
 	}
 
 	if (!encodeFunc(&x, args)) {
-		LogCrit(COMPONENT_FSAL,
-			"Failed to xdr-encode the args");
+		LogCrit(COMPONENT_FSAL, "Failed to xdr-encode the args");
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
 		AUTH_DESTROY(au);
 		return false;
@@ -800,10 +761,9 @@ bool proxyv3_call(const struct sockaddr *host,
 	}
 
 	/* Do the actual "resize". */
-	(void) proxyv3_rpcBuf_resize(&fd_entry->rpc_buf, bytes_to_send);
+	(void)proxyv3_rpcBuf_resize(&fd_entry->rpc_buf, bytes_to_send);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "Sending XID %" PRIu32 " with %zu bytes",
+	LogFullDebug(COMPONENT_FSAL, "Sending XID %" PRIu32 " with %zu bytes",
 		     rmsg.rm_xid, bytes_to_send);
 
 	size_t total_bytes_written = 0;
@@ -811,14 +771,12 @@ bool proxyv3_call(const struct sockaddr *host,
 	while (total_bytes_written < bytes_to_send) {
 		size_t remaining = bytes_to_send - total_bytes_written;
 		ssize_t bytes_written =
-			write(fd,
-			      msgBuf + total_bytes_written,
-			      remaining);
+			write(fd, msgBuf + total_bytes_written, remaining);
 		if (bytes_written < 0) {
 			LogCrit(COMPONENT_FSAL,
 				"Write at %zu failed (remaining was %zu). Errno %d (%s)",
-				total_bytes_written, remaining,
-				errno, strerror(errno));
+				total_bytes_written, remaining, errno,
+				strerror(errno));
 			proxyv3_release_fdentry(fd_entry,
 						true /* force close */);
 			AUTH_DESTROY(au);
@@ -833,8 +791,7 @@ bool proxyv3_call(const struct sockaddr *host,
 
 	/* Aww, short write. Exit. */
 	if (total_bytes_written != bytes_to_send) {
-		LogCrit(COMPONENT_FSAL,
-			"Only wrote %zu bytes out of %zu",
+		LogCrit(COMPONENT_FSAL, "Only wrote %zu bytes out of %zu",
 			total_bytes_written, bytes_to_send);
 		proxyv3_release_fdentry(fd_entry, true /* force close */);
 		return false;
@@ -846,8 +803,7 @@ bool proxyv3_call(const struct sockaddr *host,
 		uint xid;
 	} response_header;
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "Let's go ask for a response.");
+	LogFullDebug(COMPONENT_FSAL, "Let's go ask for a response.");
 
 	/* First try to read just the response "header". */
 	if (read(fd, &response_header, 8) != 8) {
@@ -900,15 +856,12 @@ bool proxyv3_call(const struct sockaddr *host,
 	/* Write the xid into the buffer. */
 	memcpy(msgBuf, &xid, sizeof(xid));
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "Going to read the remaining %zu bytes",
+	LogFullDebug(COMPONENT_FSAL, "Going to read the remaining %zu bytes",
 		     bytes_to_read - total_bytes_read);
 
 	while (total_bytes_read < bytes_to_read) {
-		ssize_t bytes_read =
-			read(fd,
-			     msgBuf + total_bytes_read,
-			     bytes_to_read - total_bytes_read);
+		ssize_t bytes_read = read(fd, msgBuf + total_bytes_read,
+					  bytes_to_read - total_bytes_read);
 
 		if (bytes_read < 0) {
 			LogCrit(COMPONENT_FSAL,
@@ -924,16 +877,13 @@ bool proxyv3_call(const struct sockaddr *host,
 
 	/* Aww, short read. Exit. */
 	if (total_bytes_read != bytes_to_read) {
-		LogCrit(COMPONENT_FSAL,
-			"Only read %zu bytes out of %zu",
+		LogCrit(COMPONENT_FSAL, "Only read %zu bytes out of %zu",
 			total_bytes_read, bytes_to_read);
-		proxyv3_release_fdentry(fd_entry,
-					true /* force close */);
+		proxyv3_release_fdentry(fd_entry, true /* force close */);
 		return false;
 	}
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "Got all the bytes, time to decode");
+	LogFullDebug(COMPONENT_FSAL, "Got all the bytes, time to decode");
 
 	/* Lets decode the reply. */
 	memset(&x, 0, sizeof(x));
@@ -945,15 +895,12 @@ bool proxyv3_call(const struct sockaddr *host,
 
 	bool decoded = xdr_replymsg(&x, &reply);
 
-	bool success =
-		decoded &&
-		reply.rm_reply.rp_stat == MSG_ACCEPTED &&
-		reply.rm_reply.rp_acpt.ar_stat == SUCCESS;
+	bool success = decoded && reply.rm_reply.rp_stat == MSG_ACCEPTED &&
+		       reply.rm_reply.rp_acpt.ar_stat == SUCCESS;
 
 	/* If we failed to decode, say so. */
 	if (!decoded) {
-		LogCrit(COMPONENT_FSAL,
-			"Failed to do xdr_replymsg");
+		LogCrit(COMPONENT_FSAL, "Failed to do xdr_replymsg");
 	}
 
 	/* Check that it was accepted, if not, say why not. */
@@ -975,20 +922,18 @@ bool proxyv3_call(const struct sockaddr *host,
 	 * the data in the output buffer.
 	 */
 
-	reply.RPCM_ack.ar_results.proc = (xdrproc_t) xdr_void;
+	reply.RPCM_ack.ar_results.proc = (xdrproc_t)xdr_void;
 	reply.RPCM_ack.ar_results.where = NULL;
-	xdr_free((xdrproc_t) xdr_replymsg, &reply);
+	xdr_free((xdrproc_t)xdr_replymsg, &reply);
 
 	/* Return our socket and buffer to the pool. */
-	proxyv3_release_fdentry(fd_entry,
-				false /* let's reuse the socket */);
+	proxyv3_release_fdentry(fd_entry, false /* let's reuse the socket */);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "RPC Completed %s: Program = %" PRIu32
-		     ", Version = %" PRIu32
-		     ", Procedure = %" PRIu32,
-		     (success) ? "SUCCESSFULLY" : " but FAILED",
-		     rpcProgram, rpcVersion, rpcProc);
+		     ", Version = %" PRIu32 ", Procedure = %" PRIu32,
+		     (success) ? "SUCCESSFULLY" : " but FAILED", rpcProgram,
+		     rpcVersion, rpcProc);
 
 	return success;
 }
@@ -996,58 +941,49 @@ bool proxyv3_call(const struct sockaddr *host,
 /**
  * @brief Wrapper around proxyv3_call for NFS v3.
  */
-bool proxyv3_nfs_call(const struct sockaddr *host,
-		      const socklen_t socklen,
-		      const uint nfsdPort,
-		      const struct user_cred *creds,
-		      const rpcproc_t nfsProc,
-		      const xdrproc_t encodeFunc, void *args,
-		      const xdrproc_t decodeFunc, void *output)
+bool proxyv3_nfs_call(const struct sockaddr *host, const socklen_t socklen,
+		      const uint nfsdPort, const struct user_cred *creds,
+		      const rpcproc_t nfsProc, const xdrproc_t encodeFunc,
+		      void *args, const xdrproc_t decodeFunc, void *output)
 {
 	const int kProgramNFS = NFS_PROGRAM;
 	const int kVersionNFSv3 = NFS_V3;
 
-	return proxyv3_call(host, socklen, nfsdPort, creds,
-			    kProgramNFS, kVersionNFSv3,
-			    nfsProc, encodeFunc, args, decodeFunc, output);
+	return proxyv3_call(host, socklen, nfsdPort, creds, kProgramNFS,
+			    kVersionNFSv3, nfsProc, encodeFunc, args,
+			    decodeFunc, output);
 }
 
 /**
  * @brief Wrapper around proxyv3_call for MOUNT v3.
  */
-bool proxyv3_mount_call(const struct sockaddr *host,
-			const socklen_t socklen,
-			const uint mountdPort,
-			const struct user_cred *creds,
-			const rpcproc_t mountProc,
-			const xdrproc_t encodeFunc, void *args,
-			const xdrproc_t decodeFunc, void *output)
+bool proxyv3_mount_call(const struct sockaddr *host, const socklen_t socklen,
+			const uint mountdPort, const struct user_cred *creds,
+			const rpcproc_t mountProc, const xdrproc_t encodeFunc,
+			void *args, const xdrproc_t decodeFunc, void *output)
 {
 	const int kProgramMount = MOUNTPROG;
 	const int kVersionMountv3 = MOUNT_V3;
 
-	return proxyv3_call(host, socklen, mountdPort, creds,
-			    kProgramMount, kVersionMountv3,
-			    mountProc, encodeFunc, args, decodeFunc, output);
+	return proxyv3_call(host, socklen, mountdPort, creds, kProgramMount,
+			    kVersionMountv3, mountProc, encodeFunc, args,
+			    decodeFunc, output);
 }
 
 /**
  * @brief Wrapper around proxyv3_call for NLM v4.
  */
-bool proxyv3_nlm_call(const struct sockaddr *host,
-		      const socklen_t socklen,
-		      const uint nlmPort,
-		      const struct user_cred *creds,
-		      const rpcproc_t nlmProc,
-		      const xdrproc_t encodeFunc, void *args,
-		      const xdrproc_t decodeFunc, void *output)
+bool proxyv3_nlm_call(const struct sockaddr *host, const socklen_t socklen,
+		      const uint nlmPort, const struct user_cred *creds,
+		      const rpcproc_t nlmProc, const xdrproc_t encodeFunc,
+		      void *args, const xdrproc_t decodeFunc, void *output)
 {
 	const int kProgramNLM = NLMPROG;
 	const int kVersionNLMv4 = NLM4_VERS;
 
-	return proxyv3_call(host, socklen, nlmPort, creds,
-			    kProgramNLM, kVersionNLMv4,
-			    nlmProc, encodeFunc, args, decodeFunc, output);
+	return proxyv3_call(host, socklen, nlmPort, creds, kProgramNLM,
+			    kVersionNLMv4, nlmProc, encodeFunc, args,
+			    decodeFunc, output);
 }
 
 /**
@@ -1062,11 +998,8 @@ bool proxyv3_nlm_call(const struct sockaddr *host,
  * @return - True, if no error.
  *         - False, with emitted warnings, otherwise.
  */
-bool proxyv3_find_ports(const struct sockaddr *host,
-			const socklen_t socklen,
-			u_int *mountd_port,
-			u_int *nfsd_port,
-			u_int *nlm_port)
+bool proxyv3_find_ports(const struct sockaddr *host, const socklen_t socklen,
+			u_int *mountd_port, u_int *nfsd_port, u_int *nlm_port)
 {
 	struct pmap mountd_query = {
 		.pm_prog = MOUNTPROG,
@@ -1102,24 +1035,22 @@ bool proxyv3_find_ports(const struct sockaddr *host,
 
 	size_t i;
 
-	for (i = 0; i < sizeof(queries)/sizeof(queries[0]); i++) {
+	for (i = 0; i < sizeof(queries) / sizeof(queries[0]); i++) {
 		LogDebug(COMPONENT_FSAL,
 			 "Asking portmap to tell us what the %s/tcp port is",
 			 queries[i].name);
 
 		if (!proxyv3_call(host, socklen, PMAPPORT,
-				  NULL /* no auth for portmapd */,
-				  PMAPPROG, PMAPVERS,
-				  PMAPPROC_GETPORT,
-				  (xdrproc_t) xdr_pmap, queries[i].input,
-				  (xdrproc_t) xdr_u_int, queries[i].port)) {
-			LogDebug(COMPONENT_FSAL,
-				 "Failed to find %s", queries[i].name);
+				  NULL /* no auth for portmapd */, PMAPPROG,
+				  PMAPVERS, PMAPPROC_GETPORT,
+				  (xdrproc_t)xdr_pmap, queries[i].input,
+				  (xdrproc_t)xdr_u_int, queries[i].port)) {
+			LogDebug(COMPONENT_FSAL, "Failed to find %s",
+				 queries[i].name);
 			return false;
 		}
 
-		LogDebug(COMPONENT_FSAL,
-			 "Got back %s port %" PRIu32,
+		LogDebug(COMPONENT_FSAL, "Got back %s port %" PRIu32,
 			 queries[i].name, *queries[i].port);
 	}
 

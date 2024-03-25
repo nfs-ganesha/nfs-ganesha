@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
- /*
+/*
   * vim:noexpandtab:shiftwidth=8:tabstop=8:
   *
   * Copyright CEA/DAM/DIF  (2011)
@@ -59,9 +59,9 @@ int _9p_version(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getstr(cursor, version_len, version_str);
 
 	LogDebug(COMPONENT_9P, "TVERSION: tag=%u msize=%u version='%.*s'",
-		 (u32) *msgtag, *msize, (int)*version_len, version_str);
+		 (u32)*msgtag, *msize, (int)*version_len, version_str);
 
-	if (*version_len < sizeof(version_9p200l)-1 ||
+	if (*version_len < sizeof(version_9p200l) - 1 ||
 	    strncmp(version_str, version_9p200l, *version_len)) {
 		LogEvent(COMPONENT_9P, "RVERSION: BAD VERSION");
 		return _9p_rerror(req9p, msgtag, ENOENT, plenout, preply);

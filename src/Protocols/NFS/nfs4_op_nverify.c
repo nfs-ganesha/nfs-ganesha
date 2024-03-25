@@ -58,8 +58,8 @@ enum nfs_req_result nfs4_op_nverify(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
-	NVERIFY4args * const arg_NVERIFY4 = &op->nfs_argop4_u.opnverify;
-	NVERIFY4res * const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
+	NVERIFY4args *const arg_NVERIFY4 = &op->nfs_argop4_u.opnverify;
+	NVERIFY4res *const res_NVERIFY4 = &resp->nfs_resop4_u.opnverify;
 	fattr4 file_attr4;
 	int rc = 0;
 	struct fsal_attrlist attrs;
@@ -88,9 +88,8 @@ enum nfs_req_result nfs4_op_nverify(struct nfs_argop4 *op,
 
 	fsal_prepare_attrs(&attrs, 0);
 
-	res_NVERIFY4->status =
-		bitmap4_to_attrmask_t(&arg_NVERIFY4->obj_attributes.attrmask,
-				      &attrs.request_mask);
+	res_NVERIFY4->status = bitmap4_to_attrmask_t(
+		&arg_NVERIFY4->obj_attributes.attrmask, &attrs.request_mask);
 
 	if (res_NVERIFY4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
@@ -118,7 +117,7 @@ enum nfs_req_result nfs4_op_nverify(struct nfs_argop4 *op,
 
 	nfs4_Fattr_Free(&file_attr4);
 	return nfsstat4_to_nfs_req_result(res_NVERIFY4->status);
-}				/* nfs4_op_nverify */
+} /* nfs4_op_nverify */
 
 /**
  * @brief Free memory allocated for NVERIFY result

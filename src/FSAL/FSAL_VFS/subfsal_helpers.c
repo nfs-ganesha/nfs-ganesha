@@ -38,8 +38,7 @@
 #include "nfs_core.h"
 #include "nfs_proto_tools.h"
 
-fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
-				   int fd,
+fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl, int fd,
 				   struct fsal_attrlist *attrs_out)
 {
 	char *xattr_content = NULL;
@@ -48,7 +47,7 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 	char readlink_buf[MAXPATHLEN];
 	char *spath;
 	ssize_t r;
-	fsal_status_t st = {ERR_FSAL_NO_ERROR, 0};
+	fsal_status_t st = { ERR_FSAL_NO_ERROR, 0 };
 	int local_fd = fd;
 
 	/* the real path of the referral directory is needed.
@@ -63,8 +62,7 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 		}
 	}
 
-	(void) snprintf(proclnk, sizeof(proclnk),
-			"/proc/self/fd/%d", local_fd);
+	(void)snprintf(proclnk, sizeof(proclnk), "/proc/self/fd/%d", local_fd);
 	r = readlink(proclnk, readlink_buf, sizeof(readlink_buf) - 1);
 	if (r < 0) {
 		st = posix2fsal_status(errno);
@@ -129,7 +127,7 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl,
 
 			attrs_out->fs_locations->nservers = 1;
 			utf8string_dup(&attrs_out->fs_locations->server[0],
-					server, path - server - 1);
+				       server, path - server - 1);
 
 			FSAL_SET_MASK(attrs_out->valid_mask,
 				      ATTR4_FS_LOCATIONS);

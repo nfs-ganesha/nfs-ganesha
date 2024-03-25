@@ -66,16 +66,14 @@ void log_sperror_gss(char *outmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 	gss_buffer_desc msg2;
 	int msg_ctx = 0;
 
-	if (gss_display_status
-	    (&smin, maj_stat, GSS_C_GSS_CODE, GSS_C_NULL_OID, &msg_ctx,
-	     &msg) != GSS_S_COMPLETE) {
+	if (gss_display_status(&smin, maj_stat, GSS_C_GSS_CODE, GSS_C_NULL_OID,
+			       &msg_ctx, &msg) != GSS_S_COMPLETE) {
 		sprintf(outmsg, "untranslatable error");
 		return;
 	}
 
-	if (gss_display_status
-	    (&smin, min_stat, GSS_C_MECH_CODE, GSS_C_NULL_OID, &msg_ctx,
-	     &msg2) != GSS_S_COMPLETE) {
+	if (gss_display_status(&smin, min_stat, GSS_C_MECH_CODE, GSS_C_NULL_OID,
+			       &msg_ctx, &msg2) != GSS_S_COMPLETE) {
 		gss_release_buffer(&smin, &msg);
 		sprintf(outmsg, "%s : untranslatable error", (char *)msg.value);
 		return;

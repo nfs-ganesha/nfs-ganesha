@@ -58,9 +58,8 @@
  * @return FSAL obj or NULL on failure
  *
  */
-struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
-				   nfsstat3 *status,
-				   int *rc)
+struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3, nfsstat3 *status,
+					    int *rc)
 {
 	fsal_status_t fsal_status;
 	file_handle_v3_t *v3_handle;
@@ -79,7 +78,7 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 		goto badhdl;
 
 	/* Cast the fh as a non opaque structure */
-	v3_handle = (file_handle_v3_t *) (fh3->data.data_val);
+	v3_handle = (file_handle_v3_t *)(fh3->data.data_val);
 
 	assert(ntohs(v3_handle->exportid) == op_ctx->ctx_export->export_id);
 
@@ -96,10 +95,8 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 	fh_desc.addr = fhbuf;
 
 	/* adjust the wire handle opaque into a host-handle */
-	fsal_status =
-	    export->exp_ops.wire_to_host(export, FSAL_DIGEST_NFSV3,
-					 &fh_desc,
-					 v3_handle->fhflags1);
+	fsal_status = export->exp_ops.wire_to_host(
+		export, FSAL_DIGEST_NFSV3, &fh_desc, v3_handle->fhflags1);
 
 	if (!FSAL_IS_ERROR(fsal_status))
 		fsal_status = export->exp_ops.create_handle(export, &fh_desc,
@@ -111,7 +108,7 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
 			*rc = NFS_REQ_DROP;
 	}
 
- badhdl:
+badhdl:
 	return obj;
 }
 #endif /* _USE_NFS3 */
@@ -124,8 +121,7 @@ struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *fh3,
  *
  * @return true if successful, false otherwise
  */
-bool nfs4_FSALToFhandle(bool allocate,
-			nfs_fh4 *fh4,
+bool nfs4_FSALToFhandle(bool allocate, nfs_fh4 *fh4,
 			const struct fsal_obj_handle *fsalhandle,
 			struct gsh_export *exp)
 {
@@ -141,15 +137,14 @@ bool nfs4_FSALToFhandle(bool allocate,
 		memset(fh4->nfs_fh4_val, 0, NFS4_FHSIZE);
 	}
 
-	file_handle = (file_handle_v4_t *) fh4->nfs_fh4_val;
+	file_handle = (file_handle_v4_t *)fh4->nfs_fh4_val;
 
 	/* Fill in the fs opaque part */
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = fh4->nfs_fh4_len - offsetof(file_handle_v4_t, fsopaque);
 
-	if (FSAL_IS_ERROR(fsalhandle->obj_ops->handle_to_wire(fsalhandle,
-							    FSAL_DIGEST_NFSV4,
-							    &fh_desc))) {
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops->handle_to_wire(
+		    fsalhandle, FSAL_DIGEST_NFSV4, &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,
 			 "handle_to_wire FSAL_DIGEST_NFSV4 failed");
 		if (allocate)
@@ -161,7 +156,7 @@ bool nfs4_FSALToFhandle(bool allocate,
 #if (BYTE_ORDER == BIG_ENDIAN)
 	file_handle->fhflags1 = FH_FSAL_BIG_ENDIAN;
 #endif
-	file_handle->fs_len = fh_desc.len;	/* set the actual size */
+	file_handle->fs_len = fh_desc.len; /* set the actual size */
 	/* keep track of the export id network byte order for nfs_fh4*/
 	file_handle->id.exports = htons(exp->export_id);
 
@@ -186,8 +181,7 @@ bool nfs4_FSALToFhandle(bool allocate,
  * @todo Do we have to worry about buffer alignment and memcpy to
  * compensate??
  */
-bool nfs3_FSALToFhandle(bool allocate,
-			nfs_fh3 *fh3,
+bool nfs3_FSALToFhandle(bool allocate, nfs_fh3 *fh3,
 			const struct fsal_obj_handle *fsalhandle,
 			struct gsh_export *exp)
 {
@@ -203,15 +197,14 @@ bool nfs3_FSALToFhandle(bool allocate,
 		memset(fh3->data.data_val, 0, NFS3_FHSIZE);
 	}
 
-	file_handle = (file_handle_v3_t *) fh3->data.data_val;
+	file_handle = (file_handle_v3_t *)fh3->data.data_val;
 
 	/* Fill in the fs opaque part */
 	fh_desc.addr = &file_handle->fsopaque;
 	fh_desc.len = NFS3_FHSIZE - offsetof(file_handle_v3_t, fsopaque);
 
-	if (FSAL_IS_ERROR(fsalhandle->obj_ops->handle_to_wire(fsalhandle,
-							    FSAL_DIGEST_NFSV3,
-							    &fh_desc))) {
+	if (FSAL_IS_ERROR(fsalhandle->obj_ops->handle_to_wire(
+		    fsalhandle, FSAL_DIGEST_NFSV3, &fh_desc))) {
 		LogDebug(COMPONENT_FILEHANDLE,
 			 "handle_to_wire FSAL_DIGEST_NFSV3 failed");
 		if (allocate)
@@ -223,7 +216,7 @@ bool nfs3_FSALToFhandle(bool allocate,
 #if (BYTE_ORDER == BIG_ENDIAN)
 	file_handle->fhflags1 = FH_FSAL_BIG_ENDIAN;
 #endif
-	file_handle->fs_len = fh_desc.len;	/* set the actual size */
+	file_handle->fs_len = fh_desc.len; /* set the actual size */
 	/* keep track of the export id in network byte order*/
 	file_handle->exportid = htons(exp->export_id);
 
@@ -236,8 +229,9 @@ bool nfs3_FSALToFhandle(bool allocate,
 
 	/* Check VMware NFSv3 client's 56 byte file handle size restriction */
 	if (nfs_param.core_param.short_file_handle && fh3->data.data_len > 56)
-		LogWarnOnce(COMPONENT_FILEHANDLE,
-			    "Short file handle option is enabled but file handle size computed is: %d",
+		LogWarnOnce(
+			COMPONENT_FILEHANDLE,
+			"Short file handle option is enabled but file handle size computed is: %d",
 			fh3->data.data_len);
 
 	return true;
@@ -261,7 +255,7 @@ int nfs4_Is_Fh_DSHandle(nfs_fh4 *fh)
 	if (fh == NULL)
 		return 0;
 
-	fhandle4 = (file_handle_v4_t *) (fh->nfs_fh4_val);
+	fhandle4 = (file_handle_v4_t *)(fh->nfs_fh4_val);
 
 	return (fhandle4->fhflags1 & FILE_HANDLE_V4_FLAG_DS) != 0;
 }
@@ -287,14 +281,13 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 			   fh->nfs_fh4_val, fh->nfs_fh4_len);
 
 	/* Cast the fh as a non opaque structure */
-	pfile_handle = (file_handle_v4_t *) (fh->nfs_fh4_val);
+	pfile_handle = (file_handle_v4_t *)(fh->nfs_fh4_val);
 
 	/* validate the filehandle  */
-	if (pfile_handle == NULL || fh->nfs_fh4_len == 0
-	    || pfile_handle->fhversion != GANESHA_FH_VERSION
-	    || fh->nfs_fh4_len < offsetof(struct file_handle_v4, fsopaque)
-	    || fh->nfs_fh4_len > NFS4_FHSIZE
-	    || !valid_Fh4_Len(fh, pfile_handle)) {
+	if (pfile_handle == NULL || fh->nfs_fh4_len == 0 ||
+	    pfile_handle->fhversion != GANESHA_FH_VERSION ||
+	    fh->nfs_fh4_len < offsetof(struct file_handle_v4, fsopaque) ||
+	    fh->nfs_fh4_len > NFS4_FHSIZE || !valid_Fh4_Len(fh, pfile_handle)) {
 		if (isInfo(COMPONENT_FILEHANDLE)) {
 			if (pfile_handle == NULL) {
 				LogInfo(COMPONENT_FILEHANDLE,
@@ -314,12 +307,10 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 					fh->nfs_fh4_len,
 					(int)offsetof(struct file_handle_v4,
 						      fsopaque));
-			} else if (fh->nfs_fh4_len >
-				   NFS4_FHSIZE) {
+			} else if (fh->nfs_fh4_len > NFS4_FHSIZE) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d is greater than %d",
-					fh->nfs_fh4_len,
-					(int)NFS4_FHSIZE);
+					fh->nfs_fh4_len, (int)NFS4_FHSIZE);
 			} else if (fh->nfs_fh4_len !=
 				   nfs4_sizeof_handle(pfile_handle)) {
 				LogInfo(COMPONENT_FILEHANDLE,
@@ -333,11 +324,11 @@ int nfs4_Is_Fh_Invalid(nfs_fh4 *fh)
 			}
 		}
 
-		return NFS4ERR_BADHANDLE;	/* Bad FH */
+		return NFS4ERR_BADHANDLE; /* Bad FH */
 	}
 
 	return NFS4_OK;
-}				/* nfs4_Is_Fh_Invalid */
+} /* nfs4_Is_Fh_Invalid */
 
 /**
  * @brief Test if a filehandle is invalid.
@@ -360,14 +351,14 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 			   fh3->data.data_val, fh3->data.data_len);
 
 	/* Cast the fh as a non opaque structure */
-	pfile_handle = (file_handle_v3_t *) (fh3->data.data_val);
+	pfile_handle = (file_handle_v3_t *)(fh3->data.data_val);
 
 	/* validate the filehandle  */
-	if (pfile_handle == NULL || fh3->data.data_len == 0
-	    || pfile_handle->fhversion != GANESHA_FH_VERSION
-	    || fh3->data.data_len < offsetof(file_handle_v3_t, fsopaque)
-	    || fh3->data.data_len > NFS3_FHSIZE
-	    || fh3->data.data_len != nfs3_sizeof_handle(pfile_handle)) {
+	if (pfile_handle == NULL || fh3->data.data_len == 0 ||
+	    pfile_handle->fhversion != GANESHA_FH_VERSION ||
+	    fh3->data.data_len < offsetof(file_handle_v3_t, fsopaque) ||
+	    fh3->data.data_len > NFS3_FHSIZE ||
+	    fh3->data.data_len != nfs3_sizeof_handle(pfile_handle)) {
 		if (isInfo(COMPONENT_FILEHANDLE)) {
 			if (pfile_handle == NULL) {
 				LogInfo(COMPONENT_FILEHANDLE,
@@ -387,12 +378,10 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 					fh3->data.data_len,
 					(int)offsetof(file_handle_v3_t,
 						      fsopaque));
-			} else if (fh3->data.data_len >
-				   NFS3_FHSIZE) {
+			} else if (fh3->data.data_len > NFS3_FHSIZE) {
 				LogInfo(COMPONENT_FILEHANDLE,
 					"INVALID HANDLE: data.data_len=%d is greater than %d",
-					fh3->data.data_len,
-					(int)NFS3_FHSIZE);
+					fh3->data.data_len, (int)NFS3_FHSIZE);
 			} else if (fh3->data.data_len !=
 				   nfs3_sizeof_handle(pfile_handle)) {
 				LogInfo(COMPONENT_FILEHANDLE,
@@ -402,11 +391,11 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
 			}
 		}
 
-		return NFS3ERR_BADHANDLE;	/* Bad FH */
+		return NFS3ERR_BADHANDLE; /* Bad FH */
 	}
 
 	return NFS3_OK;
-}				/* nfs3_Is_Fh_Invalid */
+} /* nfs3_Is_Fh_Invalid */
 
 /**
  * @brief Do basic checks on the CurrentFH
@@ -423,8 +412,7 @@ int nfs3_Is_Fh_Invalid(nfs_fh3 *fh3)
  */
 
 nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
-			      object_file_type_t required_type,
-			      bool ds_allowed)
+			      object_file_type_t required_type, bool ds_allowed)
 {
 	int fh_status;
 
@@ -442,7 +430,6 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 
 	if (fh_status != NFS4_OK)
 		return fh_status;
-
 
 	/* Check for the correct file type */
 	if (required_type != NO_FILE_TYPE &&
@@ -474,7 +461,7 @@ nfsstat4 nfs4_sanity_check_FH(compound_data_t *data,
 	}
 
 	return NFS4_OK;
-}				/* nfs4_sanity_check_FH */
+} /* nfs4_sanity_check_FH */
 
 /**
  * @brief Do basic checks on the SavedFH
@@ -517,20 +504,19 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 		if (-required_type == data->saved_filetype) {
 			LogDebug(COMPONENT_NFS_V4,
 				 "Wrong file type expected not to be %s was %s",
-				 object_file_type_to_str((object_file_type_t)
-							 -required_type),
 				 object_file_type_to_str(
-						data->current_filetype));
+					 (object_file_type_t)-required_type),
+				 object_file_type_to_str(
+					 data->current_filetype));
 			if (-required_type == DIRECTORY) {
 				return NFS4ERR_ISDIR;
 			}
 		}
 	} else if (required_type != NO_FILE_TYPE &&
 		   data->saved_filetype != required_type) {
-		LogDebug(COMPONENT_NFS_V4,
-			 "Wrong file type expected %s was %s",
-			 object_file_type_to_str((object_file_type_t)
-						 required_type),
+		LogDebug(COMPONENT_NFS_V4, "Wrong file type expected %s was %s",
+			 object_file_type_to_str(
+				 (object_file_type_t)required_type),
 			 object_file_type_to_str(data->current_filetype));
 
 		if (required_type == DIRECTORY) {
@@ -550,4 +536,4 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 	}
 
 	return NFS4_OK;
-}				/* nfs4_sanity_check_saved_FH */
+} /* nfs4_sanity_check_saved_FH */

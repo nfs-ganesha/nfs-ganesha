@@ -38,4 +38,4 @@ enum recovery_backend {
  */
 #define RECOVERY_BACKEND_DEFAULT RECOVERY_BACKEND_FS
 
-#endif				/* GSH_RECOVERY_H */
+#endif /* GSH_RECOVERY_H */

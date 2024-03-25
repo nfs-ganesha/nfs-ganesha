@@ -79,12 +79,12 @@ typedef uint16_t export_id_t;
 #define METRIC_UNIT_NANOSECOND ("ns")
 
 #define METRIC_METADATA(DESCRIPTION, UNIT) \
-	((metric_metadata_t) { .description = (DESCRIPTION), .unit = (UNIT) })
+	((metric_metadata_t){ .description = (DESCRIPTION), .unit = (UNIT) })
 
 /* Metric help description */
 typedef struct metric_metadata {
 	const char *description; /* Helper message */
-	const char *unit;        /* Units like: second, byte */
+	const char *unit; /* Units like: second, byte */
 } metric_metadata_t;
 
 /* Label is a dimension in the metric family, for example "operation=GETATTR" */
@@ -94,7 +94,7 @@ typedef struct metric_label {
 } metric_label_t;
 
 #define METRIC_LABEL(KEY, VALUE) \
-	((metric_label_t) { .key = (KEY), .value = (VALUE) })
+	((metric_label_t){ .key = (KEY), .value = (VALUE) })
 
 /* Buckets of (a,b,c) mean boundaries of: (-INF,a) [a,b) [b,c) [c, INF) */
 typedef struct histogram_buckets {
@@ -117,30 +117,25 @@ typedef struct histogram_metric_handle {
 	void *metric;
 } histogram_metric_handle_t;
 
-
 #ifdef USE_MONITORING
 
 /* Registers and initializes a new static counter metric. */
-counter_metric_handle_t monitoring__register_counter(
-	const char *name,
-	metric_metadata_t metadata,
-	const metric_label_t *labels,
-	uint16_t num_labels);
+counter_metric_handle_t
+monitoring__register_counter(const char *name, metric_metadata_t metadata,
+			     const metric_label_t *labels, uint16_t num_labels);
 
 /* Registers and initializes a new static gauge metric. */
-gauge_metric_handle_t monitoring__register_gauge(
-	const char *name,
-	metric_metadata_t metadata,
-	const metric_label_t *labels,
-	uint16_t num_labels);
+gauge_metric_handle_t monitoring__register_gauge(const char *name,
+						 metric_metadata_t metadata,
+						 const metric_label_t *labels,
+						 uint16_t num_labels);
 
 /* Registers and initializes a new static histogram metric. */
-histogram_metric_handle_t monitoring__register_histogram(
-	const char *name,
-	metric_metadata_t metadata,
-	const metric_label_t *labels,
-	uint16_t num_labels,
-	histogram_buckets_t buckets);
+histogram_metric_handle_t
+monitoring__register_histogram(const char *name, metric_metadata_t metadata,
+			       const metric_label_t *labels,
+			       uint16_t num_labels,
+			       histogram_buckets_t buckets);
 
 /* Increments counter metric by value. */
 void monitoring__counter_inc(counter_metric_handle_t, int64_t val);
@@ -184,34 +179,25 @@ void monitoring__init(uint16_t port, bool enable_dynamic_metrics);
  * - Latency in ms as histogram.
  */
 
+void monitoring__dynamic_observe_nfs_request(const char *operation,
+					     nsecs_elapsed_t request_time,
+					     const char *version,
+					     const char *status_label,
+					     export_id_t export_id,
+					     const char *client_ip);
 
-void monitoring__dynamic_observe_nfs_request(
-			      const char *operation,
-			      nsecs_elapsed_t request_time,
-			      const char *version,
-			      const char *status_label,
-			      export_id_t export_id,
-			      const char *client_ip);
-
-void monitoring__dynamic_observe_nfs_io(
-			size_t bytes_requested,
-			size_t bytes_transferred,
-			bool success,
-			bool is_write,
-			export_id_t export_id,
-			const char *client_ip);
+void monitoring__dynamic_observe_nfs_io(size_t bytes_requested,
+					size_t bytes_transferred, bool success,
+					bool is_write, export_id_t export_id,
+					const char *client_ip);
 
 /* MDCache hit rates. */
-void monitoring__dynamic_mdcache_cache_hit(
-				const char *operation,
-				export_id_t export_id);
-void monitoring__dynamic_mdcache_cache_miss(
-				const char *operation,
-				export_id_t export_id);
+void monitoring__dynamic_mdcache_cache_hit(const char *operation,
+					   export_id_t export_id);
+void monitoring__dynamic_mdcache_cache_miss(const char *operation,
+					    export_id_t export_id);
 
-
-#else  /* USE_MONITORING */
-
+#else /* USE_MONITORING */
 
 /** The empty implementations below enable using monitoring functions
  * conveniently without wrapping with USE_MONITORING condition each time. */
@@ -219,78 +205,96 @@ void monitoring__dynamic_mdcache_cache_miss(
 /* Wraps an expression to avoid *-unused warnings */
 #define UNUSED_EXPR(x) ((void)(x))
 
-#define monitoring__register_counter(			\
-	name, metadata, labels, num_labels)		\
-	({						\
-		UNUSED_EXPR(name);			\
-		UNUSED_EXPR(metadata);			\
-		UNUSED_EXPR(labels);			\
-		UNUSED_EXPR(num_labels);		\
-		(counter_metric_handle_t) { 0 };	\
+#define monitoring__register_counter(name, metadata, labels, num_labels) \
+	({                                                               \
+		UNUSED_EXPR(name);                                       \
+		UNUSED_EXPR(metadata);                                   \
+		UNUSED_EXPR(labels);                                     \
+		UNUSED_EXPR(num_labels);                                 \
+		(counter_metric_handle_t){ 0 };                          \
 	})
-#define monitoring__register_gauge(			\
-	name, metadata, labels, num_labels)		\
-	({						\
-		UNUSED_EXPR(name);			\
-		UNUSED_EXPR(metadata);			\
-		UNUSED_EXPR(labels);			\
-		UNUSED_EXPR(num_labels);		\
-		(gauge_metric_handle_t) { 0 };		\
+#define monitoring__register_gauge(name, metadata, labels, num_labels) \
+	({                                                             \
+		UNUSED_EXPR(name);                                     \
+		UNUSED_EXPR(metadata);                                 \
+		UNUSED_EXPR(labels);                                   \
+		UNUSED_EXPR(num_labels);                               \
+		(gauge_metric_handle_t){ 0 };                          \
 	})
-#define monitoring__register_histogram(			\
-	name, metadata, labels, num_labels, buckets)	\
-	({						\
-		UNUSED_EXPR(name);			\
-		UNUSED_EXPR(metadata);			\
-		UNUSED_EXPR(labels);			\
-		UNUSED_EXPR(num_labels);		\
-		UNUSED_EXPR(buckets);			\
-		(histogram_metric_handle_t) { 0 };	\
+#define monitoring__register_histogram(name, metadata, labels, num_labels, \
+				       buckets)                            \
+	({                                                                 \
+		UNUSED_EXPR(name);                                         \
+		UNUSED_EXPR(metadata);                                     \
+		UNUSED_EXPR(labels);                                       \
+		UNUSED_EXPR(num_labels);                                   \
+		UNUSED_EXPR(buckets);                                      \
+		(histogram_metric_handle_t){ 0 };                          \
 	})
-#define monitoring__counter_inc(metric, value)		\
-	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
-#define monitoring__gauge_inc(metric, value)		\
-	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
-#define monitoring__gauge_dec(metric, value)		\
-	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
-#define monitoring__gauge_set(metric, value)		\
-	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
-#define monitoring__histogram_observe(metric, value)	\
-	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
-#define monitoring__buckets_exp2()			\
-	((histogram_buckets_t) { 0 })
-#define monitoring__buckets_exp2_compact()		\
-	((histogram_buckets_t) { 0 })
+#define monitoring__counter_inc(metric, value) \
+	({                                     \
+		UNUSED_EXPR(metric);           \
+		UNUSED_EXPR(value);            \
+	})
+#define monitoring__gauge_inc(metric, value) \
+	({                                   \
+		UNUSED_EXPR(metric);         \
+		UNUSED_EXPR(value);          \
+	})
+#define monitoring__gauge_dec(metric, value) \
+	({                                   \
+		UNUSED_EXPR(metric);         \
+		UNUSED_EXPR(value);          \
+	})
+#define monitoring__gauge_set(metric, value) \
+	({                                   \
+		UNUSED_EXPR(metric);         \
+		UNUSED_EXPR(value);          \
+	})
+#define monitoring__histogram_observe(metric, value) \
+	({                                           \
+		UNUSED_EXPR(metric);                 \
+		UNUSED_EXPR(value);                  \
+	})
+#define monitoring__buckets_exp2() ((histogram_buckets_t){ 0 })
+#define monitoring__buckets_exp2_compact() ((histogram_buckets_t){ 0 })
 #define monitoring__init(port) ({ UNUSED_EXPR(port); })
 #define monitoring_register_export_label(export_id, label) \
-	({ UNUSED_EXPR(export_id); UNUSED_EXPR(label); })
-#define monitoring__dynamic_observe_nfs_request(	\
+	({                                                 \
+		UNUSED_EXPR(export_id);                    \
+		UNUSED_EXPR(label);                        \
+	})
+#define monitoring__dynamic_observe_nfs_request(                              \
 	operation, request_time, version, status_label, export_id, client_ip) \
-	({						\
-		UNUSED_EXPR(operation);			\
-		UNUSED_EXPR(request_time);		\
-		UNUSED_EXPR(version);			\
-		UNUSED_EXPR(status_label);		\
-		UNUSED_EXPR(export_id);			\
-		UNUSED_EXPR(client_ip);			\
+	({                                                                    \
+		UNUSED_EXPR(operation);                                       \
+		UNUSED_EXPR(request_time);                                    \
+		UNUSED_EXPR(version);                                         \
+		UNUSED_EXPR(status_label);                                    \
+		UNUSED_EXPR(export_id);                                       \
+		UNUSED_EXPR(client_ip);                                       \
 	})
-#define monitoring__dynamic_observe_nfs_io(		\
-	bytes_requested, bytes_transferred, success,	\
-	is_write, export_id, client_ip)			\
-	({						\
-		UNUSED_EXPR(bytes_requested);		\
-		UNUSED_EXPR(bytes_transferred);		\
-		UNUSED_EXPR(success);			\
-		UNUSED_EXPR(is_write);			\
-		UNUSED_EXPR(export_id);			\
-		UNUSED_EXPR(client_ip);			\
+#define monitoring__dynamic_observe_nfs_io(bytes_requested, bytes_transferred, \
+					   success, is_write, export_id,       \
+					   client_ip)                          \
+	({                                                                     \
+		UNUSED_EXPR(bytes_requested);                                  \
+		UNUSED_EXPR(bytes_transferred);                                \
+		UNUSED_EXPR(success);                                          \
+		UNUSED_EXPR(is_write);                                         \
+		UNUSED_EXPR(export_id);                                        \
+		UNUSED_EXPR(client_ip);                                        \
 	})
-#define monitoring__dynamic_mdcache_cache_hit(		\
-	operation, export_id)				\
-	({ UNUSED_EXPR(operation); UNUSED_EXPR(export_id); })
-#define monitoring__dynamic_mdcache_cache_miss(		\
-	operation, export_id)				\
-	({ UNUSED_EXPR(operation); UNUSED_EXPR(export_id); })
+#define monitoring__dynamic_mdcache_cache_hit(operation, export_id) \
+	({                                                          \
+		UNUSED_EXPR(operation);                             \
+		UNUSED_EXPR(export_id);                             \
+	})
+#define monitoring__dynamic_mdcache_cache_miss(operation, export_id) \
+	({                                                           \
+		UNUSED_EXPR(operation);                              \
+		UNUSED_EXPR(export_id);                              \
+	})
 
 #endif /* USE_MONITORING */
 
@@ -298,4 +302,4 @@ void monitoring__dynamic_mdcache_cache_miss(
 }
 #endif
 
-#endif   /* GANESHA_MONITORING_H */
+#endif /* GANESHA_MONITORING_H */

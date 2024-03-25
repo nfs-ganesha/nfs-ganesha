@@ -112,8 +112,7 @@ void setuser(uid_t uid)
 	int rc = syscall(SYS_setresuid, -1, uid, -1);
 
 	if (rc != 0)
-		LogCrit(COMPONENT_FSAL,
-			"Could not set user identity %s (%d)",
+		LogCrit(COMPONENT_FSAL, "Could not set user identity %s (%d)",
 			strerror(errno), errno);
 }
 
@@ -122,8 +121,7 @@ void setgroup(gid_t gid)
 	int rc = syscall(SYS_setresgid, -1, gid, -1);
 
 	if (rc != 0)
-		LogCrit(COMPONENT_FSAL,
-			"Could not set group identity %s (%d)",
+		LogCrit(COMPONENT_FSAL, "Could not set group identity %s (%d)",
 			strerror(errno), errno);
 }
 

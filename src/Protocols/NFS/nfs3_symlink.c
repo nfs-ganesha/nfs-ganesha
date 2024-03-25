@@ -81,22 +81,20 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	fsal_prepare_attrs(&parent_pre_attrs,
-		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+			   ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	memset(&sattr, 0, sizeof(sattr));
 
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_symlink3.where.dir,
-			  " name: %s target: %s",
-			  symlink_name, target_path);
+			  " name: %s target: %s", symlink_name, target_path);
 
 	/* to avoid setting it on each error case */
 	resfail->dir_wcc.before.attributes_follow = false;
 	resfail->dir_wcc.after.attributes_follow = false;
 
 	parent_obj = nfs3_FhandleToCache(&arg->arg_symlink3.where.dir,
-					   &res->res_symlink3.status,
-					   &rc);
+					 &res->res_symlink3.status, &rc);
 
 	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -115,9 +113,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * FSAL allows inode creation or not
 	 */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
-							op_ctx->fsal_export,
-							CTX_FULLPATH(op_ctx),
-							FSAL_QUOTA_INODES);
+		op_ctx->fsal_export, CTX_FULLPATH(op_ctx), FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_symlink3.status = NFS3ERR_DQUOT;
@@ -125,8 +121,8 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	if (symlink_name == NULL || *symlink_name == '\0' || target_path == NULL
-	    || *target_path == '\0') {
+	if (symlink_name == NULL || *symlink_name == '\0' ||
+	    target_path == NULL || *target_path == '\0') {
 		fsal_status = fsalstat(ERR_FSAL_INVAL, 0);
 		goto out_fail;
 	}
@@ -135,8 +131,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	 * attributes with the NFSPROC3_SYMLINK request
 	 */
 	if (!nfs3_Sattr_To_FSALattr(
-			&sattr,
-			&arg->arg_symlink3.symlink.symlink_attributes)) {
+		    &sattr, &arg->arg_symlink3.symlink.symlink_attributes)) {
 		res->res_symlink3.status = NFS3ERR_INVAL;
 		rc = NFS_REQ_OK;
 		goto out;
@@ -161,7 +156,6 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
 
-
 	if (!nfs3_FSALToFhandle(true, &resok->obj.post_op_fh3_u.handle,
 				symlink_obj, op_ctx->ctx_export)) {
 		res->res_symlink3.status = NFS3ERR_BADHANDLE;
@@ -178,23 +172,23 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Build Weak Cache Coherency data */
 	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
-		&resok->dir_wcc);
+		       &resok->dir_wcc);
 
 	res->res_symlink3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
 
 	goto out;
 
- out_fail:
+out_fail:
 	res->res_symlink3.status = nfs3_Errno_status(fsal_status);
 	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
-	nfs_SetWccData(&pre_parent, parent_obj,
-		&parent_post_attrs, &resfail->dir_wcc);
+	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
+		       &resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
- out:
+out:
 
 	/* Release the attributes. */
 	fsal_release_attrs(&attrs);
@@ -209,7 +203,7 @@ int nfs3_symlink(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		symlink_obj->obj_ops->put_ref(symlink_obj);
 
 	return rc;
-}				/* nfs3_symlink */
+} /* nfs3_symlink */
 
 /**
  * @brief Free the result structure allocated for nfs3_symlink.

@@ -31,12 +31,10 @@
 /* private helpers from export
  */
 
-
 /* method proto linkage to handle.c for export
  */
 
-fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl,
-			       const char *path,
+fsal_status_t gpfs_lookup_path(struct fsal_export *exp_hdl, const char *path,
 			       struct fsal_obj_handle **handle,
 			       struct fsal_attrlist *attrs_out);
 
@@ -105,45 +103,34 @@ struct gpfs_fsal_obj_handle {
 	} u;
 };
 
-	/* I/O management */
+/* I/O management */
 struct gpfs_fsal_obj_handle *alloc_handle(struct gpfs_file_handle *fh,
 					  struct fsal_filesystem *fs,
 					  struct fsal_attrlist *attributes,
 					  const char *link_content,
 					  struct fsal_export *exp_hdl);
-fsal_status_t gpfs_open2(struct fsal_obj_handle *obj_hdl,
-			 struct state_t *state,
-			 fsal_openflags_t openflags,
-			 enum fsal_create_mode createmode,
-			 const char *name,
-			 struct fsal_attrlist *attrib_set,
-			 fsal_verifier_t verifier,
-			 struct fsal_obj_handle **new_obj,
-			 struct fsal_attrlist *attrs_out,
-			 bool *caller_perm_check,
-			 struct fsal_attrlist *parent_pre_attrs_out,
-			 struct fsal_attrlist *parent_post_attrs_out);
+fsal_status_t
+gpfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	   fsal_openflags_t openflags, enum fsal_create_mode createmode,
+	   const char *name, struct fsal_attrlist *attrib_set,
+	   fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
+	   struct fsal_attrlist *attrs_out, bool *caller_perm_check,
+	   struct fsal_attrlist *parent_pre_attrs_out,
+	   struct fsal_attrlist *parent_post_attrs_out);
 fsal_openflags_t gpfs_status2(struct fsal_obj_handle *obj_hdl,
 			      struct state_t *state);
 fsal_status_t gpfs_reopen2(struct fsal_obj_handle *obj_hdl,
-			   struct state_t *state,
-			   fsal_openflags_t openflags);
-void gpfs_read2(struct fsal_obj_handle *obj_hdl,
-		bool bypass,
-		fsal_async_cb done_cb,
-		struct fsal_io_arg *read_arg,
+			   struct state_t *state, fsal_openflags_t openflags);
+void gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 		void *caller_arg);
-void gpfs_write2(struct fsal_obj_handle *obj_hdl,
-		 bool bypass,
-		 fsal_async_cb done_cb,
-		 struct fsal_io_arg *write_arg,
+void gpfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		 fsal_async_cb done_cb, struct fsal_io_arg *write_arg,
 		 void *caller_arg);
-fsal_status_t gpfs_commit2(struct fsal_obj_handle *obj_hdl,
-			   off_t offset,
+fsal_status_t gpfs_commit2(struct fsal_obj_handle *obj_hdl, off_t offset,
 			   size_t len);
 fsal_status_t gpfs_lock_op2(struct fsal_obj_handle *obj_hdl,
-			    struct state_t *state,
-			    void *owner,
+			    struct state_t *state, void *owner,
 			    fsal_lock_op_t lock_op,
 			    fsal_lock_param_t *request_lock,
 			    fsal_lock_param_t *conflicting_lock);
@@ -154,19 +141,17 @@ fsal_status_t gpfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 			       struct fsal_fd *fsal_fd);
 fsal_status_t gpfs_close_func(struct fsal_obj_handle *obj_hdl,
 			      struct fsal_fd *fd);
-fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl,
-			    bool bypass,
+fsal_status_t gpfs_setattr2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			    struct state_t *state,
 			    struct fsal_attrlist *attrib_set);
-fsal_status_t gpfs_read_plus_fd(int my_fs,
-			uint64_t offset,
-			size_t buffer_size, void *buffer, size_t *read_amount,
-			bool *end_of_file, struct io_info *info, int expfd);
-fsal_status_t gpfs_seek2(struct fsal_obj_handle *obj_hdl,
-			 struct state_t *state,
+fsal_status_t gpfs_read_plus_fd(int my_fs, uint64_t offset, size_t buffer_size,
+				void *buffer, size_t *read_amount,
+				bool *end_of_file, struct io_info *info,
+				int expfd);
+fsal_status_t gpfs_seek2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 			 struct io_info *info);
 fsal_status_t gpfs_io_advise(struct fsal_obj_handle *obj_hdl,
-			 struct io_hints *hints);
+			     struct io_hints *hints);
 fsal_status_t gpfs_share_op(struct fsal_obj_handle *obj_hdl, void *p_owner,
 			    fsal_share_param_t request_share);
 fsal_status_t gpfs_close(struct fsal_obj_handle *obj_hdl);
@@ -174,9 +159,8 @@ fsal_status_t gpfs_fallocate(struct fsal_obj_handle *obj_hdl, state_t *state,
 			     uint64_t offset, uint64_t length, bool allocate);
 
 /* Internal GPFS method linkage to export object */
-fsal_status_t
-gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
-		   struct config_error_type *err_type,
-		   const struct fsal_up_vector *up_ops);
+fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
+				 struct config_error_type *err_type,
+				 const struct fsal_up_vector *up_ops);
 
 #endif

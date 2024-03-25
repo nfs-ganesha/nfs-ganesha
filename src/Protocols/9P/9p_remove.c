@@ -43,14 +43,15 @@
 #include "fsal.h"
 #include "9p.h"
 
-#define FREE_FID(pfid, fid, req9p) do {                                 \
-	/* mark object no longer reachable */				\
-	pfid->pentry->obj_ops->put_ref(pfid->pentry);			\
-	pfid->pentry = NULL;						\
-	/* Free the fid */                                              \
-	free_fid(pfid);							\
-	req9p->pconn->fids[*fid] = NULL;                                \
-} while (0)
+#define FREE_FID(pfid, fid, req9p)                            \
+	do {                                                  \
+		/* mark object no longer reachable */         \
+		pfid->pentry->obj_ops->put_ref(pfid->pentry); \
+		pfid->pentry = NULL;                          \
+		/* Free the fid */                            \
+		free_fid(pfid);                               \
+		req9p->pconn->fids[*fid] = NULL;              \
+	} while (0)
 
 int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {
@@ -65,7 +66,7 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -85,25 +86,24 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	fsal_status = fsal_remove(pfid->ppentry, pfid->name, NULL, NULL);
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* If object is an opened file, close it */
 	if ((pfid->pentry->type == REGULAR_FILE) && pfid->opens) {
-		pfid->opens = 0;	/* dead */
+		pfid->opens = 0; /* dead */
 
 		/* Release the active reference */
 		pfid->ppentry->obj_ops->put_ref(pfid->ppentry);
 
 		fsal_status = pfid->pentry->obj_ops->close2(pfid->pentry,
-							   pfid->state);
+							    pfid->state);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			FREE_FID(pfid, fid, req9p);
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 		}
 	}
 
@@ -117,9 +117,8 @@ int _9p_remove(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TREMOVE: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	/* _9p_stat_update( *pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req); */
 	return 1;
-
 }

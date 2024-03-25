@@ -63,11 +63,11 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 				      compound_data_t *data,
 				      struct nfs_resop4 *resp)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 	struct fsal_obj_handle *file_obj;
 	struct gsh_export *root_export;
 
-	PUTROOTFH4res * const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
+	PUTROOTFH4res *const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
 
 	/* First of all, set the reply to zero to make sure
 	 * it contains no parasite information
@@ -122,8 +122,7 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	LogMidDebug(COMPONENT_EXPORT,
-		    "Root node %p", data->current_obj);
+	LogMidDebug(COMPONENT_EXPORT, "Root node %p", data->current_obj);
 
 	set_current_entry(data, file_obj);
 
@@ -132,8 +131,7 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 
 	/* Convert it to a file handle */
 	if (!nfs4_FSALToFhandle(data->currentFH.nfs_fh4_val == NULL,
-				&data->currentFH,
-				data->current_obj,
+				&data->currentFH, data->current_obj,
 				op_ctx->ctx_export)) {
 		LogCrit(COMPONENT_EXPORT,
 			"Could not get handle for Pseudo Root");
@@ -146,7 +144,7 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 
 	res_PUTROOTFH4->status = NFS4_OK;
 	return NFS_REQ_OK;
-}				/* nfs4_op_putrootfh */
+} /* nfs4_op_putrootfh */
 
 /**
  * @brief Free memory allocated for PUTROOTFH result

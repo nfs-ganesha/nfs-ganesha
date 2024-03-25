@@ -37,8 +37,8 @@ bool dbus_proc_property(const char *method, DBusMessage *msg,
 int dbus_append_signal_string(DBusMessageIter *args, void *sig_string);
 
 int dbus_send_signal(DBusConnection *conn, char *obj_name, char *int_name,
-		     char *sig_name, int (*payload) (DBusMessageIter *signal,
-						     void *args),
+		     char *sig_name,
+		     int (*payload)(DBusMessageIter *signal, void *args),
 		     void *sig_args);
 
-#endif				/* DBUS_PRIV_H */
+#endif /* DBUS_PRIV_H */

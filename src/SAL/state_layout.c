@@ -73,7 +73,7 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 
 	if (state->state_type != STATE_TYPE_LAYOUT) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_stateid(&dspbuf, state);
 
@@ -135,8 +135,7 @@ state_status_t state_delete_segment(state_layout_segment_t *segment)
  */
 
 state_status_t state_lookup_layout_state(struct fsal_obj_handle *obj,
-					 state_owner_t *owner,
-					 layouttype4 type,
+					 state_owner_t *owner, layouttype4 type,
 					 state_t **state)
 {
 	/* Pointer for iterating over the list of states on the file */
@@ -144,7 +143,8 @@ state_status_t state_lookup_layout_state(struct fsal_obj_handle *obj,
 	/* The state under inspection in the loop */
 	state_t *state_iter = NULL;
 
-	glist_for_each(glist_iter, &obj->state_hdl->file.list_of_states) {
+	glist_for_each(glist_iter, &obj->state_hdl->file.list_of_states)
+	{
 		state_iter = glist_entry(glist_iter, state_t, state_list);
 		if (state_iter->state_type == STATE_TYPE_LAYOUT &&
 		    state_same_owner(state_iter, owner) &&
@@ -173,19 +173,18 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 	struct glist_head *glist, *glistn;
 	bool so_mutex_held;
 
- again:
+again:
 	first = NULL;
 	PTHREAD_MUTEX_lock(&client_owner->so_mutex);
 	so_mutex_held = true;
 
 	glist_for_each_safe(glist, glistn,
-			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
+			    &client_owner->so_owner.so_nfs4_owner.so_state_list)
+	{
 		bool deleted = false;
-		struct pnfs_segment entire = {
-			.io_mode = LAYOUTIOMODE4_ANY,
-			.offset = 0,
-			.length = NFS4_UINT64_MAX
-		};
+		struct pnfs_segment entire = { .io_mode = LAYOUTIOMODE4_ANY,
+					       .offset = 0,
+					       .length = NFS4_UINT64_MAX };
 
 		state = glist_entry(glist, state_t, state_owner_list);
 
@@ -210,10 +209,9 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 		if (state->state_type != STATE_TYPE_LAYOUT)
 			continue;
 
-		if (!get_state_obj_export_owner_refs(state, &obj,
-						     &export, NULL)) {
-			LogDebug(COMPONENT_STATE,
-				 "Stale state or file");
+		if (!get_state_obj_export_owner_refs(state, &obj, &export,
+						     NULL)) {
+			LogDebug(COMPONENT_STATE, "Stale state or file");
 			continue;
 		}
 
@@ -228,14 +226,9 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 		STATELOCK_lock(obj);
 
-		(void) nfs4_return_one_state(obj,
-					     LAYOUTRETURN4_FILE,
-					     circumstance_revoke,
-					     state,
-					     entire,
-					     0,
-					     NULL,
-					     &deleted);
+		(void)nfs4_return_one_state(obj, LAYOUTRETURN4_FILE,
+					    circumstance_revoke, state, entire,
+					    0, NULL, &deleted);
 
 		if (!deleted) {
 			errcnt++;
@@ -266,13 +259,14 @@ void revoke_owner_layouts(state_owner_t *client_owner)
 
 	if (errcnt == STATE_ERR_MAX) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_owner(&dspbuf, client_owner);
 
-		LogFatal(COMPONENT_STATE,
-			 "Could not complete cleanup of layouts for client owner %s",
-			 str);
+		LogFatal(
+			COMPONENT_STATE,
+			"Could not complete cleanup of layouts for client owner %s",
+			str);
 	}
 }
 

@@ -47,9 +47,9 @@ extern "C" {
 
 typedef uint64_t nsecs_elapsed_t;
 
-#define NS_PER_USEC ((nsecs_elapsed_t) 1000)
-#define NS_PER_MSEC ((nsecs_elapsed_t) 1000000)
-#define NS_PER_SEC  ((nsecs_elapsed_t) 1000000000)
+#define NS_PER_USEC ((nsecs_elapsed_t)1000)
+#define NS_PER_MSEC ((nsecs_elapsed_t)1000000)
+#define NS_PER_SEC ((nsecs_elapsed_t)1000000000)
 
 /**
  * @brief Buffer descriptor
@@ -59,12 +59,12 @@ typedef uint64_t nsecs_elapsed_t;
  */
 
 struct gsh_buffdesc {
-	void *addr;		/*< First octet/byte of the buffer */
-	size_t len;		/*< Length of the buffer */
+	void *addr; /*< First octet/byte of the buffer */
+	size_t len; /*< Length of the buffer */
 };
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif				/* !GSH_TYPES_H */
+#endif /* !GSH_TYPES_H */

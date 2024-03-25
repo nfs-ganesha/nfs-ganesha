@@ -1,33 +1,55 @@
 #!/bin/bash
 # Ganesha pre-commit hook
 #
-# 1. Run checkpatch on the commit
+# 1. Run clang-format on the commit
 # 2. Check to see if a submodule is not being updated
 
-
 # define colors for use in output
+red='\033[0;31m'
 green='\033[0;32m'
 no_color='\033[0m'
 grey='\033[0;90m'
 
+#####################
+# Clang-Format Hook
+#####################
 
-if git rev-parse --verify HEAD 2>/dev/null >/dev/null
-then
-	against=HEAD
-else
-	# Initial commit: diff against an empty tree object
-	against=4b825dc642cb6eb9a060e54bf8d69288fbee4904
-fi
+function handle_unformatted_file() {
+    set -u
+    # If a rebase is in progress just show warning.
+    git rebase --show-current-patch 1> /dev/null 2> /dev/null
+    if [[ $? == 0 ]]; then
+        echo "[git-pre-commit warning] clang-format found formatting missing in commit."
+        echo "[git-pre-commit warning] In rebase so just printing the warning without failing the commit."
+    else
+        echo -e "${red}[git-pre-commit error]${no_color} clang-format found formatting missing in commit. commit aborted."
+        exit 1
+    fi
+}
 
-topdir=$(git rev-parse --show-toplevel)
-git diff --cached  $against | $topdir/src/scripts/checkpatch.pl \
-	      --no-signoff -q -
-if [ $? != 0 ]; then
-	exit 1
-fi
+function check_staged_files() {
+    set -u
+    local test_command="(cd src; clang-format -style=file --dry-run --Werror -)"
+    local retval=0
+    for file in $(git diff --cached --name-only --diff-filter=d -- 'src/*.c' 'src/*.h' 'src/*.cpp' 'src/*.hpp' 'src/*.cc')
+    do
+        git show :${file} | eval "${test_command}"
+        if [[ $? != 0 ]]; then
+            echo "ERROR: Staged file ${file} is not formatted correctly, please use clang-format to format it"
+            retval=1
+        fi
+    done
+    if [[ ${retval} != 0 ]]; then
+       handle_unformatted_file
+    fi
+}
 
+check_staged_files
+
+###############################################################
 # Check whether any submodule is about to be updated with the
 # commit. Ask the user for confirmation.
+###############################################################
 
 echo -e "Checking submodules ${grey}(pre-commit hook)${no_color} "
 

@@ -65,4 +65,4 @@ void dissociate_custom_data_from_xprt(SVCXPRT *);
 bool add_nfs41_session_to_xprt(SVCXPRT *, nfs41_session_t *);
 void remove_nfs41_session_from_xprt(SVCXPRT *, nfs41_session_t *);
 
-#endif				/* XPRT_HANDLER_H */
+#endif /* XPRT_HANDLER_H */

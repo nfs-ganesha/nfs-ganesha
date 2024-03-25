@@ -36,10 +36,8 @@
 
 /* Export */
 
-static struct config_item export_params[] = {
-	CONF_ITEM_NOOP("name"),
-	CONFIG_EOL
-};
+static struct config_item export_params[] = { CONF_ITEM_NOOP("name"),
+					      CONFIG_EOL };
 
 static struct config_block export_param_block = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.xfs-export%d",
@@ -59,7 +57,7 @@ void vfs_sub_fini(struct vfs_fsal_export *myself)
 }
 
 void vfs_sub_init_export_ops(struct vfs_fsal_export *myself,
-			      const char *export_path)
+			     const char *export_path)
 {
 }
 
@@ -72,18 +70,16 @@ struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
 {
 	struct vfs_fsal_obj_handle *hdl;
 
-	hdl = gsh_calloc(1,
-			 (sizeof(struct vfs_fsal_obj_handle) +
-			  sizeof(vfs_file_handle_t)));
+	hdl = gsh_calloc(1, (sizeof(struct vfs_fsal_obj_handle) +
+			     sizeof(vfs_file_handle_t)));
 
-	hdl->handle = (vfs_file_handle_t *) &hdl[1];
+	hdl->handle = (vfs_file_handle_t *)&hdl[1];
 
 	return hdl;
 }
 
 int vfs_sub_init_handle(struct vfs_fsal_export *myself,
-		struct vfs_fsal_obj_handle *hdl,
-		const char *path)
+			struct vfs_fsal_obj_handle *hdl, const char *path)
 {
 	return 0;
 }

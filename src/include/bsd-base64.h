@@ -58,4 +58,4 @@ int base64url_encode(u_char const *src, size_t srclength, char *target,
 #define __b64_ntop b64_ntop
 #define __b64_pton b64_pton
 
-#endif				/* _BSD_BINRESVPORT_H */
+#endif /* _BSD_BINRESVPORT_H */

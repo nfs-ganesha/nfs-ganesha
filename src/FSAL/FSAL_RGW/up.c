@@ -57,23 +57,23 @@
 
 void rgw_fs_invalidate(void *handle, struct rgw_fh_hk fh_hk)
 {
-	struct rgw_export *export = (struct rgw_export *) handle;
+	struct rgw_export *export = (struct rgw_export *)handle;
 	const struct fsal_up_vector *up_ops;
 
 	LogFullDebug(COMPONENT_FSAL_UP,
-		"%s: invalidate on fh_hk %" PRIu64 ":%" PRIu64 "\n",
-		__func__, fh_hk.bucket, fh_hk.object);
+		     "%s: invalidate on fh_hk %" PRIu64 ":%" PRIu64 "\n",
+		     __func__, fh_hk.bucket, fh_hk.object);
 
 	if (!export) {
 		LogMajor(COMPONENT_FSAL_UP,
-			"up/invalidate: called w/nil export");
+			 "up/invalidate: called w/nil export");
 		return;
 	}
 
 	up_ops = export->export.up_ops;
 	if (!up_ops) {
 		LogMajor(COMPONENT_FSAL_UP,
-			"up/invalidate: nil FSAL_UP ops vector");
+			 "up/invalidate: nil FSAL_UP ops vector");
 		return;
 	}
 
@@ -87,8 +87,8 @@ void rgw_fs_invalidate(void *handle, struct rgw_fh_hk fh_hk)
 	status = up_ops->invalidate(up_ops, &fh_desc, FSAL_UP_INVALIDATE_CACHE);
 	if (FSAL_IS_ERROR(status)) {
 		LogMajor(COMPONENT_FSAL_UP,
-			"up/invalidate: error invalidating fh_hk %"
-			PRIu64 ":%" PRIu64 "\n",
-			fh_hk.bucket, fh_hk.object);
+			 "up/invalidate: error invalidating fh_hk %" PRIu64
+			 ":%" PRIu64 "\n",
+			 fh_hk.bucket, fh_hk.object);
 	}
 }

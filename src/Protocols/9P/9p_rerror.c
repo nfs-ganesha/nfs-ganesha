@@ -41,8 +41,8 @@
 #include "log.h"
 #include "9p.h"
 
-int _9p_rerror(struct _9p_request_data *req9p, u16 *msgtag,
-	       u32 err, u32 *plenout, char *preply)
+int _9p_rerror(struct _9p_request_data *req9p, u16 *msgtag, u32 err,
+	       u32 *plenout, char *preply)
 {
 	char *cursor = req9p->_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE;
 	u8 msgtype = *(req9p->_9pmsg + _9P_HDR_SIZE);
@@ -56,8 +56,8 @@ int _9p_rerror(struct _9p_request_data *req9p, u16 *msgtag,
 	_9p_checkbound(cursor, preply, plenout);
 
 	/* Check boundaries. 0 is no_function fallback */
-	if (msgtype < _9P_TSTATFS || msgtype > _9P_TWSTAT
-	    || _9pfuncdesc[msgtype].service_function == NULL)
+	if (msgtype < _9P_TSTATFS || msgtype > _9P_TWSTAT ||
+	    _9pfuncdesc[msgtype].service_function == NULL)
 		msgtype = 0;
 
 	LogDebug(COMPONENT_9P, "RERROR(%s) tag=%u err=(%u|%s)",

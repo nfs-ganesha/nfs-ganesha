@@ -59,8 +59,8 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	fsal_status_t fsal_status;
 
-	char oldname[MAXNAMLEN+1];
-	char newname[MAXNAMLEN+1];
+	char oldname[MAXNAMLEN + 1];
+	char newname[MAXNAMLEN + 1];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -70,10 +70,11 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, newfid, u32);
 	_9p_getstr(cursor, newname_len, newname_str);
 
-	LogDebug(COMPONENT_9P,
-		 "TRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
-		 (u32) *msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
-		 *newname_len, newname_str);
+	LogDebug(
+		COMPONENT_9P,
+		"TRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
+		(u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
+		*newname_len, newname_str);
 
 	if (*oldfid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -115,8 +116,7 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*oldname_len >= sizeof(oldname)) {
 		LogDebug(COMPONENT_9P, "request with names too long (%u or %u)",
 			 *oldname_len, *newname_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(oldname, *oldname_len, oldname_str);
@@ -124,8 +124,7 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*newname_len >= sizeof(newname)) {
 		LogDebug(COMPONENT_9P, "request with names too long (%u or %u)",
 			 *oldname_len, *newname_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(newname, *newname_len, newname_str);
@@ -133,9 +132,8 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_status = fsal_rename(poldfid->pentry, oldname, pnewfid->pentry,
 				  newname, NULL, NULL, NULL, NULL);
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RRENAMEAT);
@@ -144,10 +142,11 @@ int _9p_renameat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
-		 (u32) *msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
-		 *newname_len, newname_str);
+	LogDebug(
+		COMPONENT_9P,
+		"RRENAMEAT: tag=%u oldfid=%u oldname=%.*s newfid=%u newname=%.*s",
+		(u32)*msgtag, *oldfid, *oldname_len, oldname_str, *newfid,
+		*newname_len, newname_str);
 
 	return 1;
 }

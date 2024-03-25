@@ -57,17 +57,18 @@ enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
 					      compound_data_t *data,
 					      struct nfs_resop4 *resp)
 {
-	RELEASE_LOCKOWNER4args * const arg_RELEASE_LOCKOWNER4 =
-	    &op->nfs_argop4_u.oprelease_lockowner;
-	RELEASE_LOCKOWNER4res * const res_RELEASE_LOCKOWNER4 =
-	    &resp->nfs_resop4_u.oprelease_lockowner;
+	RELEASE_LOCKOWNER4args *const arg_RELEASE_LOCKOWNER4 =
+		&op->nfs_argop4_u.oprelease_lockowner;
+	RELEASE_LOCKOWNER4res *const res_RELEASE_LOCKOWNER4 =
+		&resp->nfs_resop4_u.oprelease_lockowner;
 	nfs_client_id_t *nfs_client_id;
 	state_owner_t *lock_owner;
 	state_nfs4_owner_name_t owner_name;
 	int rc;
 
-	LogDebug(COMPONENT_NFS_V4_LOCK,
-		 "Entering NFS v4 RELEASE_LOCKOWNER handler ----------------------");
+	LogDebug(
+		COMPONENT_NFS_V4_LOCK,
+		"Entering NFS v4 RELEASE_LOCKOWNER handler ----------------------");
 
 	resp->resop = NFS4_OP_RELEASE_LOCKOWNER;
 	res_RELEASE_LOCKOWNER4->status = NFS4_OK;
@@ -100,12 +101,8 @@ enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
 	/* If this lock owner is not known yet, allocated
 	 * and set up a new one
 	 */
-	lock_owner = create_nfs4_owner(&owner_name,
-				       nfs_client_id,
-				       STATE_LOCK_OWNER_NFSV4,
-				       NULL,
-				       0,
-				       NULL,
+	lock_owner = create_nfs4_owner(&owner_name, nfs_client_id,
+				       STATE_LOCK_OWNER_NFSV4, NULL, 0, NULL,
 				       CARE_NOT, true);
 
 	if (lock_owner == NULL) {
@@ -122,7 +119,7 @@ enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
 	 */
 	dec_state_owner_ref(lock_owner);
 
- out1:
+out1:
 
 	/* Update the lease before exit */
 	PTHREAD_MUTEX_lock(&nfs_client_id->cid_mutex);
@@ -133,13 +130,14 @@ enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
 
 	dec_client_id_ref(nfs_client_id);
 
- out2:
+out2:
 
-	LogDebug(COMPONENT_NFS_V4_LOCK,
-		 "Leaving NFS v4 RELEASE_LOCKOWNER handler -----------------------");
+	LogDebug(
+		COMPONENT_NFS_V4_LOCK,
+		"Leaving NFS v4 RELEASE_LOCKOWNER handler -----------------------");
 
 	return nfsstat4_to_nfs_req_result(res_RELEASE_LOCKOWNER4->status);
-}				/* nfs4_op_release_lock_owner */
+} /* nfs4_op_release_lock_owner */
 
 /**
  * @brief Free memory allocated for REELASE_LOCKOWNER result

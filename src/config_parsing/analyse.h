@@ -44,27 +44,27 @@
  * TERM is a value/token terminal.
  */
 
-enum  node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT, TYPE_TERM};
+enum node_type { TYPE_ROOT = 1, TYPE_BLOCK, TYPE_STMT, TYPE_TERM };
 
 struct config_node {
 	struct glist_head node;
 	struct glist_head blocks;
-	char *filename;		/* pointer to filename in file list */
+	char *filename; /* pointer to filename in file list */
 	int linenumber;
-	bool found;		/* use accounting private in do_block_load */
-	enum node_type type;	/* switches union contents */
+	bool found; /* use accounting private in do_block_load */
+	enum node_type type; /* switches union contents */
 	struct config_node *parent;
-	union {			/* sub_nodes are always struct config_node */
-		struct {		/* TYPE_TERM */
+	union { /* sub_nodes are always struct config_node */
+		struct { /* TYPE_TERM */
 			enum term_type type;
 			char *op_code;
 			char *varvalue;
 		} term;
-		struct {		/* TYPE_BLOCK | TYPE_STMT */
-			char *name;	/* name */
+		struct { /* TYPE_BLOCK | TYPE_STMT */
+			char *name; /* name */
 			struct glist_head sub_nodes;
 		} nterm;
-	}u;
+	} u;
 };
 
 /*
@@ -98,7 +98,7 @@ struct token_tab {
  * All storage allocated into the parse tree is here
  */
 
-struct bufstack;  /* defined in conf_lex.l */
+struct bufstack; /* defined in conf_lex.l */
 
 struct config_root {
 	struct config_node root;
@@ -123,25 +123,24 @@ struct parser_state {
 
 char *save_token(char *token, bool esc, struct parser_state *st);
 int ganesha_yyparse(struct parser_state *st);
-int ganeshun_yy_init_parser(char *srcfile,
-			   struct parser_state *st);
+int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st);
 void ganeshun_yy_cleanup_parser(struct parser_state *st);
 
 /**
  * Error reporting
  */
 
-void config_error(FILE *fp, const char *filename, int linenum,
-		  char *format, va_list args);
+void config_error(FILE *fp, const char *filename, int linenum, char *format,
+		  va_list args);
 
 /**
  *  Displays the content of parse tree.
  */
-void print_parse_tree(FILE * output, struct config_root *tree);
+void print_parse_tree(FILE *output, struct config_root *tree);
 
 /**
  * Free resources of parse tree
  */
 void free_parse_tree(struct config_root *tree);
 
-#endif				/* CONFPARSER_H */
+#endif /* CONFPARSER_H */

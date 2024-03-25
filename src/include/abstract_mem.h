@@ -72,9 +72,8 @@
  *
  * @return Pointer to a block of memory.
  */
-static inline void *
-gsh_malloc__(size_t n,
-	     const char *file, int line, const char *function)
+static inline void *gsh_malloc__(size_t n, const char *file, int line,
+				 const char *function)
 {
 	void *p = malloc(n);
 
@@ -86,12 +85,13 @@ gsh_malloc__(size_t n,
 	return p;
 }
 
-#define gsh_malloc(n) ({ \
+#define gsh_malloc(n)                 \
+	({                            \
 		void *p_ = malloc(n); \
-		if (p_ == NULL) { \
-			abort(); \
-		} \
-		p_; \
+		if (p_ == NULL) {     \
+			abort();      \
+		}                     \
+		p_;                   \
 	})
 
 /**
@@ -109,9 +109,8 @@ gsh_malloc__(size_t n,
  *
  * @return Pointer to a block of memory or NULL.
  */
-static inline void *
-gsh_malloc_aligned__(size_t a, size_t n,
-		     const char *file, int line, const char *function)
+static inline void *gsh_malloc_aligned__(size_t a, size_t n, const char *file,
+					 int line, const char *function)
 {
 	void *p;
 
@@ -129,12 +128,13 @@ gsh_malloc_aligned__(size_t a, size_t n,
 	return p;
 }
 
-#define gsh_malloc_aligned(a, n) ({ \
-		void *p_; \
+#define gsh_malloc_aligned(a, n)                      \
+	({                                            \
+		void *p_;                             \
 		if (posix_memalign(&p_, a, n) != 0) { \
-			abort(); \
-		} \
-		p_; \
+			abort();                      \
+		}                                     \
+		p_;                                   \
 	})
 
 /**
@@ -150,9 +150,8 @@ gsh_malloc_aligned__(size_t a, size_t n,
  *
  * @return Pointer to a block of zeroed memory.
  */
-static inline void *
-gsh_calloc__(size_t n, size_t s,
-	     const char *file, int line, const char *function)
+static inline void *gsh_calloc__(size_t n, size_t s, const char *file, int line,
+				 const char *function)
 {
 	void *p = calloc(n, s);
 
@@ -164,12 +163,13 @@ gsh_calloc__(size_t n, size_t s,
 	return p;
 }
 
-#define gsh_calloc(n, s) ({ \
+#define gsh_calloc(n, s)                 \
+	({                               \
 		void *p_ = calloc(n, s); \
-		if (p_ == NULL) { \
-			abort(); \
-		} \
-		p_; \
+		if (p_ == NULL) {        \
+			abort();         \
+		}                        \
+		p_;                      \
 	})
 
 /**
@@ -189,9 +189,8 @@ gsh_calloc__(size_t n, size_t s,
  *
  * @return Pointer to the address of the resized block.
  */
-static inline void *
-gsh_realloc__(void *p, size_t n,
-	      const char *file, int line, const char *function)
+static inline void *gsh_realloc__(void *p, size_t n, const char *file, int line,
+				  const char *function)
 {
 	void *p2 = realloc(p, n);
 
@@ -203,44 +202,49 @@ gsh_realloc__(void *p, size_t n,
 	return p2;
 }
 
-#define gsh_realloc(p, n) ({ \
-		void *p2_ = realloc(p, n); \
+#define gsh_realloc(p, n)                    \
+	({                                   \
+		void *p2_ = realloc(p, n);   \
 		if (n != 0 && p2_ == NULL) { \
-			abort(); \
-		} \
-		p2_; \
+			abort();             \
+		}                            \
+		p2_;                         \
 	})
 
-#define gsh_strdup(s) ({ \
+#define gsh_strdup(s)                 \
+	({                            \
 		char *p_ = strdup(s); \
-		if (p_ == NULL) { \
-			abort(); \
-		} \
-		p_; \
+		if (p_ == NULL) {     \
+			abort();      \
+		}                     \
+		p_;                   \
 	})
 
-#define gsh_strldup(s, l, n) ({ \
-		char *p_ = (char *) gsh_malloc(l+1); \
-		memcpy(p_, s, l); \
-		p_[l] = '\0'; \
-		*n = l + 1; \
-		p_; \
+#define gsh_strldup(s, l, n)                          \
+	({                                            \
+		char *p_ = (char *)gsh_malloc(l + 1); \
+		memcpy(p_, s, l);                     \
+		p_[l] = '\0';                         \
+		*n = l + 1;                           \
+		p_;                                   \
 	})
 
 #if defined(__GLIBC__) && defined(_GNU_SOURCE)
 #define gsh_strdupa(src) strdupa(src)
 #else
-#define gsh_strdupa(src) ({\
+#define gsh_strdupa(src)                              \
+	({                                            \
 		char *dest = alloca(strlen(src) + 1); \
-		strcpy(dest, src); \
-		dest; \
+		strcpy(dest, src);                    \
+		dest;                                 \
 	})
 #endif
 
-#define gsh_memdup(s, l) ({ \
+#define gsh_memdup(s, l)                  \
+	({                                \
 		void *p_ = gsh_malloc(l); \
-		memcpy(p_, s, l); \
-		p_; \
+		memcpy(p_, s, l);         \
+		p_;                       \
 	})
 
 /**
@@ -251,8 +255,7 @@ gsh_realloc__(void *p, size_t n,
  *
  * @param[in] p Block of memory to free.
  */
-static inline void
-gsh_free(void *p)
+static inline void gsh_free(void *p)
 {
 	free(p);
 }
@@ -267,8 +270,7 @@ gsh_free(void *p)
  * @param[in] p  Block of memory to free.
  * @param[in] n  Size of block (unused)
  */
-static inline void
-gsh_free_size(void *p, size_t n __attribute__ ((unused)))
+static inline void gsh_free_size(void *p, size_t n __attribute__((unused)))
 {
 	free(p);
 }
@@ -315,10 +317,9 @@ typedef struct pool {
  *         pool_destroy.
  */
 
-static inline pool_t *
-pool_basic_init(const char *name, size_t object_size)
+static inline pool_t *pool_basic_init(const char *name, size_t object_size)
 {
-	pool_t *pool = (pool_t *) gsh_malloc(sizeof(pool_t));
+	pool_t *pool = (pool_t *)gsh_malloc(sizeof(pool_t));
 
 	pool->object_size = object_size;
 
@@ -339,8 +340,7 @@ pool_basic_init(const char *name, size_t object_size)
  * @param[in] pool The pool to be destroyed.
  */
 
-static inline void
-pool_destroy(pool_t *pool)
+static inline void pool_destroy(pool_t *pool)
 {
 	gsh_free(pool->name);
 	gsh_free(pool);
@@ -388,8 +388,7 @@ pool_destroy(pool_t *pool)
  *                   specific type (and omitting the pool parameter.)
  */
 
-static inline void
-pool_free(pool_t *pool, void *object)
+static inline void pool_free(pool_t *pool, void *object)
 {
 	gsh_free(object);
 }

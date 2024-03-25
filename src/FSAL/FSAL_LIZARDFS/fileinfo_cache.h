@@ -93,8 +93,8 @@ void liz_fileinfo_cache_erase(liz_fileinfo_cache_t *cache,
 * afterwards with
 * liz_fileinfo_entry_free
 */
-liz_fileinfo_entry_t *liz_fileinfo_cache_pop_expired(
-						liz_fileinfo_cache_t *cache);
+liz_fileinfo_entry_t *
+liz_fileinfo_cache_pop_expired(liz_fileinfo_cache_t *cache);
 
 /*!
  * \brief Free unused fileinfo cache entry
@@ -114,8 +114,7 @@ liz_fileinfo_t *liz_extract_fileinfo(liz_fileinfo_entry_t *entry);
 * \param entry The entry to be modified
 * \param fileinfoThe  fileinfo to be attached to entry
 */
-void liz_attach_fileinfo(liz_fileinfo_entry_t *entry,
-			 liz_fileinfo_t *fileinfo);
+void liz_attach_fileinfo(liz_fileinfo_entry_t *entry, liz_fileinfo_t *fileinfo);
 
 #ifdef __cplusplus
 }

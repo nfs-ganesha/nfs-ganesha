@@ -59,9 +59,7 @@ static bool fsal_not_in_group_list(gid_t gid)
 	int i;
 
 	if (op_ctx->creds.caller_gid == gid) {
-
-		LogDebug(COMPONENT_FSAL,
-			 "User %u is has active group %u",
+		LogDebug(COMPONENT_FSAL, "User %u is has active group %u",
 			 op_ctx->creds.caller_uid, gid);
 		return false;
 	}
@@ -74,8 +72,7 @@ static bool fsal_not_in_group_list(gid_t gid)
 		}
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "User %u IS NOT member of group %u",
+	LogDebug(COMPONENT_FSAL, "User %u IS NOT member of group %u",
 		 op_ctx->creds.caller_uid, gid);
 	return true;
 }
@@ -92,10 +89,9 @@ static bool fsal_not_in_group_list(gid_t gid)
  */
 static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 					   fsal_openflags_t openflags,
-					   bool exclusive_create,
-					   char **reason)
+					   bool exclusive_create, char **reason)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 	fsal_accessflags_t access_mask = 0;
 
 	if (openflags & FSAL_O_READ)
@@ -109,18 +105,16 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 	 * open("foo", O_RDWR | O_CREAT | O_EXCL, 0) to succeed).
 	 * For open reclaims ask for owner_skip.
 	 */
-	status = obj->obj_ops->test_access(obj, access_mask,
-					   NULL, NULL, exclusive_create ||
-					   (openflags & FSAL_O_RECLAIM));
+	status = obj->obj_ops->test_access(
+		obj, access_mask, NULL, NULL,
+		exclusive_create || (openflags & FSAL_O_RECLAIM));
 
 	if (!FSAL_IS_ERROR(status)) {
 		*reason = "";
 		return status;
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		 "test_access got %s",
-		 fsal_err_txt(status));
+	LogDebug(COMPONENT_FSAL, "test_access got %s", fsal_err_txt(status));
 
 	/* If non-permission error, return it. */
 	if (status.major != ERR_FSAL_ACCESS) {
@@ -147,9 +141,7 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
 	 */
 	status = fsal_access(obj, FSAL_EXECUTE_ACCESS);
 
-	LogDebug(COMPONENT_FSAL,
-		 "fsal_access got %s",
-		 fsal_err_txt(status));
+	LogDebug(COMPONENT_FSAL, "fsal_access got %s", fsal_err_txt(status));
 
 	if (!FSAL_IS_ERROR(status))
 		*reason = "";
@@ -164,13 +156,13 @@ static fsal_status_t check_open_permission(struct fsal_obj_handle *obj,
  */
 static fsal_status_t fsal_check_create_owner(struct fsal_attrlist *attr)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "attr->owner %"PRIu64" caller_uid %"PRIu64
-		     " attr->group %"PRIu64" caller_gid %"PRIu64"",
-		     attr->owner, (uint64_t) op_ctx->creds.caller_uid,
-		     attr->group, (uint64_t) op_ctx->creds.caller_gid);
+		     "attr->owner %" PRIu64 " caller_uid %" PRIu64
+		     " attr->group %" PRIu64 " caller_gid %" PRIu64 "",
+		     attr->owner, (uint64_t)op_ctx->creds.caller_uid,
+		     attr->group, (uint64_t)op_ctx->creds.caller_gid);
 
 	if (op_ctx->creds.caller_uid == 0) {
 		/* No check for root. */
@@ -190,8 +182,9 @@ static fsal_status_t fsal_check_create_owner(struct fsal_attrlist *attr)
 
 		if (not_in_group) {
 			status = fsalstat(ERR_FSAL_PERM, 0);
-			LogDebug(COMPONENT_FSAL,
-				 "Access check failed (user is not member of specified GROUP)");
+			LogDebug(
+				COMPONENT_FSAL,
+				"Access check failed (user is not member of specified GROUP)");
 		}
 	}
 
@@ -214,7 +207,7 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 					      struct fsal_attrlist *attr,
 					      struct fsal_attrlist *current)
 {
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 	fsal_accessflags_t access_check = 0;
 	bool not_owner;
 	char *note = "";
@@ -229,8 +222,8 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 
 	fsal_prepare_attrs(current,
 			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
-							op_ctx->fsal_export)
-			   & (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
+				   op_ctx->fsal_export) &
+				   (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
 
 	status = obj->obj_ops->getattrs(obj, current);
 
@@ -252,9 +245,10 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		 * himself. */
 		if (not_owner) {
 			access_check |=
-			    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
-			LogDebug(COMPONENT_FSAL,
-				    "Change OWNER requires FSAL_ACE_PERM_WRITE_OWNER");
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Change OWNER requires FSAL_ACE_PERM_WRITE_OWNER");
 		}
 	}
 	/* Check if we are changing the owner_group, if owner_group is passed,
@@ -277,9 +271,10 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		 */
 		if (not_owner) {
 			access_check |=
-			    FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
-			LogDebug(COMPONENT_FSAL,
-				    "Change GROUP requires FSAL_ACE_PERM_WRITE_OWNER");
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_OWNER);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Change GROUP requires FSAL_ACE_PERM_WRITE_OWNER");
 		}
 	}
 
@@ -294,27 +289,27 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		goto out;
 	}
 
-	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE)
-	    || FSAL_TEST_MASK(attr->valid_mask, ATTR_ACL)) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE) ||
+	    FSAL_TEST_MASK(attr->valid_mask, ATTR_ACL)) {
 		/* Changing mode or ACL requires ACE4_WRITE_ACL */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ACL);
 		LogDebug(COMPONENT_FSAL,
-			    "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
+			 "Change MODE or ACL requires FSAL_ACE_PERM_WRITE_ACL");
 	}
 
 	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE)) {
 		/* Changing size requires owner or write permission */
-	  /** @todo: does FSAL_ACE_PERM_APPEND_DATA allow enlarging the file? */
+		/** @todo: does FSAL_ACE_PERM_APPEND_DATA allow enlarging the file? */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
 		LogDebug(COMPONENT_FSAL,
-			    "Change SIZE requires FSAL_ACE_PERM_WRITE_DATA");
+			 "Change SIZE requires FSAL_ACE_PERM_WRITE_DATA");
 	}
 
 	/* Check if just setting atime and mtime to "now" */
-	if ((FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME_SERVER)
-	     || FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER))
-	    && !FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME)
-	    && !FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)) {
+	if ((FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME_SERVER) ||
+	     FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER)) &&
+	    !FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME) &&
+	    !FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)) {
 		/* If either atime and/or mtime are set to "now" then need only
 		 * have write permission.
 		 *
@@ -322,12 +317,13 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		 * they really do, we'll let them to make the perm check a bit
 		 * simpler. */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_DATA);
-		LogDebug(COMPONENT_FSAL,
-			    "Change ATIME and MTIME to NOW requires FSAL_ACE_PERM_WRITE_DATA");
-	} else if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME_SERVER)
-		   || FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER)
-		   || FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME)
-		   || FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)) {
+		LogDebug(
+			COMPONENT_FSAL,
+			"Change ATIME and MTIME to NOW requires FSAL_ACE_PERM_WRITE_DATA");
+	} else if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME_SERVER) ||
+		   FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME_SERVER) ||
+		   FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME) ||
+		   FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)) {
 		/* Any other changes to atime or mtime require owner, root, or
 		 * ACES4_WRITE_ATTRIBUTES.
 		 *
@@ -336,8 +332,9 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		 * the reasons clients should not do atime updates.
 		 */
 		access_check |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_WRITE_ATTR);
-		LogDebug(COMPONENT_FSAL,
-			    "Change ATIME and/or MTIME requires FSAL_ACE_PERM_WRITE_ATTR");
+		LogDebug(
+			COMPONENT_FSAL,
+			"Change ATIME and/or MTIME requires FSAL_ACE_PERM_WRITE_ATTR");
 	}
 
 	if (isDebug(COMPONENT_FSAL) || isDebug(COMPONENT_NFS_V4_ACL)) {
@@ -358,14 +355,13 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 		if (access_check & FSAL_ACE_PERM_WRITE_ATTR)
 			need_write_attr = " WRITE_ATTR";
 
-		LogDebug(COMPONENT_FSAL,
-			    "Requires %s%s%s%s", need_write_owner,
-			    need_write_acl, need_write_data, need_write_attr);
+		LogDebug(COMPONENT_FSAL, "Requires %s%s%s%s", need_write_owner,
+			 need_write_acl, need_write_data, need_write_attr);
 	}
 
 	if (current->acl) {
 		status = obj->obj_ops->test_access(obj, access_check, NULL,
-						  NULL, false);
+						   NULL, false);
 		note = " (checked ACL)";
 		goto out;
 	}
@@ -381,25 +377,22 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 
 	note = " (checked mode)";
 
- out:
+out:
 
 	if (FSAL_IS_ERROR(status)) {
 		/* Done with the current attrs, caller will not expect them. */
 		fsal_release_attrs(current);
 	}
 
-	LogDebug(COMPONENT_FSAL,
-		    "Access check returned %s%s", fsal_err_txt(status),
-		    note);
+	LogDebug(COMPONENT_FSAL, "Access check returned %s%s",
+		 fsal_err_txt(status), note);
 
 	return status;
 }
 
 fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
-			    struct state_t *state,
-			    fsal_openflags_t openflags,
-			    enum fsal_create_mode createmode,
-			    const char *name,
+			    struct state_t *state, fsal_openflags_t openflags,
+			    enum fsal_create_mode createmode, const char *name,
 			    struct fsal_attrlist *attr,
 			    fsal_verifier_t verifier,
 			    struct fsal_obj_handle **obj,
@@ -426,8 +419,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 	if (in_obj->type != DIRECTORY)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
-	if (strcmp(name, ".") == 0 ||
-	    strcmp(name, "..") == 0) {
+	if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
 		/* Can't open "." or ".."... */
 		return fsalstat(ERR_FSAL_ISDIR, 0);
 	}
@@ -437,30 +429,20 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-	status = in_obj->obj_ops->open2(in_obj,
-				       state,
-				       openflags,
-				       createmode,
-				       name,
-				       attr,
-				       verifier,
-				       obj,
-				       attrs_out,
-				       &caller_perm_check,
-				       parent_pre_attrs_out,
-				       parent_post_attrs_out);
+	status = in_obj->obj_ops->open2(in_obj, state, openflags, createmode,
+					name, attr, verifier, obj, attrs_out,
+					&caller_perm_check,
+					parent_pre_attrs_out,
+					parent_post_attrs_out);
 	if (FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL %d %s returned %s",
-			     (int) op_ctx->ctx_export->export_id,
-			     CTX_FULLPATH(op_ctx),
-			     fsal_err_txt(status));
+		LogFullDebug(COMPONENT_FSAL, "FSAL %d %s returned %s",
+			     (int)op_ctx->ctx_export->export_id,
+			     CTX_FULLPATH(op_ctx), fsal_err_txt(status));
 		return status;
 	}
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "Created entry %p FSAL %s for %s",
-		     *obj, (*obj)->fsal->name, name);
+	LogFullDebug(COMPONENT_FSAL, "Created entry %p FSAL %s for %s", *obj,
+		     (*obj)->fsal->name, name);
 
 	if (!caller_perm_check)
 		return status;
@@ -473,8 +455,8 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		return status;
 
 	LogDebug(COMPONENT_FSAL,
-		 "Closing file check_open_permission failed %s-%s",
-		 reason, fsal_err_txt(status));
+		 "Closing file check_open_permission failed %s-%s", reason,
+		 fsal_err_txt(status));
 
 	if (state != NULL)
 		close_status = (*obj)->obj_ops->close2(*obj, state);
@@ -485,8 +467,7 @@ fsal_status_t open2_by_name(struct fsal_obj_handle *in_obj,
 		/* Just log but don't return this error (we want to
 		 * preserve the error that got us here).
 		 */
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL close2 failed with %s",
+		LogDebug(COMPONENT_FSAL, "FSAL close2 failed with %s",
 			 fsal_err_txt(close_status));
 	}
 
@@ -515,8 +496,8 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	struct fsal_attrlist current;
 	bool is_superuser;
 
-	if ((attr->valid_mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED))
-	     && (obj->type != REGULAR_FILE)) {
+	if ((attr->valid_mask & (ATTR_SIZE | ATTR4_SPACE_RESERVED)) &&
+	    (obj->type != REGULAR_FILE)) {
 		LogWarn(COMPONENT_FSAL,
 			"Attempt to truncate non-regular file: type=%d",
 			obj->type);
@@ -531,9 +512,8 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	/* Is it allowed to change times ? */
 	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
 						      fso_cansettime) &&
-	    (FSAL_TEST_MASK
-	     (attr->valid_mask,
-	      (ATTR_ATIME | ATTR_CREATION | ATTR_CTIME | ATTR_MTIME))))
+	    (FSAL_TEST_MASK(attr->valid_mask, (ATTR_ATIME | ATTR_CREATION |
+					       ATTR_CTIME | ATTR_MTIME))))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	/* Do permission checks, which returns with the attributes for the
@@ -545,7 +525,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		return status;
 
 	is_superuser = op_ctx->fsal_export->exp_ops.is_superuser(
-					op_ctx->fsal_export, &op_ctx->creds);
+		op_ctx->fsal_export, &op_ctx->creds);
 	/* Test for the following condition from chown(2):
 	 *
 	 *     When the owner or group of an executable file are changed by an
@@ -595,8 +575,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 	 * We test the actual mode being set before testing for group
 	 * membership since that is a bit more expensive.
 	 */
-	if (!is_superuser &&
-	    FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE) &&
+	if (!is_superuser && FSAL_TEST_MASK(attr->valid_mask, ATTR_MODE) &&
 	    (attr->mode & S_ISGID) != 0 &&
 	    fsal_not_in_group_list(current.group)) {
 		/* Clear S_ISGID */
@@ -612,7 +591,7 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
 		return status;
 	}
 
-	if (!is_superuser)  {
+	if (!is_superuser) {
 		/* Done with the current attrs */
 		fsal_release_attrs(&current);
 	}
@@ -657,8 +636,7 @@ fsal_status_t fsal_readlink(struct fsal_obj_handle *obj,
  *                                  in destination.
  */
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
-			struct fsal_obj_handle *dest_dir,
-			const char *name,
+			struct fsal_obj_handle *dest_dir, const char *name,
 			struct fsal_attrlist *destdir_pre_attrs_out,
 			struct fsal_attrlist *destdir_post_attrs_out)
 {
@@ -677,13 +655,13 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 		return fsalstat(ERR_FSAL_XDEV, 0);
 
 	if (!op_ctx->fsal_export->exp_ops.fs_supports(
-			op_ctx->fsal_export,
-			fso_link_supports_permission_checks)) {
-		status = fsal_access(dest_dir,
+		    op_ctx->fsal_export, fso_link_supports_permission_checks)) {
+		status = fsal_access(
+			dest_dir,
 			FSAL_MODE_MASK_SET(FSAL_W_OK) |
-			FSAL_MODE_MASK_SET(FSAL_X_OK) |
-			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE) |
-			FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
+				FSAL_MODE_MASK_SET(FSAL_X_OK) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE) |
+				FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_ADD_FILE));
 
 		if (FSAL_IS_ERROR(status))
 			return status;
@@ -691,14 +669,14 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 
 	if (state_deleg_conflict(obj, true)) {
 		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
-			  name);
+			 name);
 		return fsalstat(ERR_FSAL_DELAY, 0);
 	}
 
 	/* Rather than performing a lookup first, just try to make the
 	   link and return the FSAL's error if it fails. */
 	status = obj->obj_ops->link(obj, dest_dir, name, destdir_pre_attrs_out,
-		destdir_post_attrs_out);
+				    destdir_post_attrs_out);
 	return status;
 }
 
@@ -714,15 +692,14 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
  * @return FSAL status
  */
 
-fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
-			  const char *name,
+fsal_status_t fsal_lookup(struct fsal_obj_handle *parent, const char *name,
 			  struct fsal_obj_handle **obj,
 			  struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t fsal_status = { 0, 0 };
 	fsal_accessflags_t access_mask =
-	    (FSAL_MODE_MASK_SET(FSAL_X_OK) |
-	     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
+		(FSAL_MODE_MASK_SET(FSAL_X_OK) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 
 	*obj = NULL;
 
@@ -741,7 +718,6 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
 		return get_optional_attrs(*obj, attrs_out);
 	} else if (strcmp(name, "..") == 0)
 		return fsal_lookupp(parent, obj, attrs_out);
-
 
 	return parent->obj_ops->lookup(parent, name, obj, attrs_out);
 }
@@ -803,8 +779,7 @@ fsal_status_t fsal_lookup_path(const char *path,
 	len = strlen(start);
 
 	if (len > MAXPATHLEN) {
-		LogDebug(COMPONENT_FSAL,
-			 "Failed due path %s is too long",
+		LogDebug(COMPONENT_FSAL, "Failed due path %s is too long",
 			 path);
 		return posix2fsal_status(EINVAL);
 	}
@@ -816,15 +791,15 @@ fsal_status_t fsal_lookup_path(const char *path,
 		return fsal_status;
 
 	/* Strip terminating '/' by shrinking length */
-	while (len > 0 && start[len-1] == '/')
+	while (len > 0 && start[len - 1] == '/')
 		len--;
 
 	if (len == 0) {
 		/* The path we were passed is effectively the export path, so
 		 * just return the export root object with a reference.
 		 */
-		LogDebug(COMPONENT_FSAL,
-			 "Returning root of export %s", exppath);
+		LogDebug(COMPONENT_FSAL, "Returning root of export %s",
+			 exppath);
 		*dirobj = parent;
 		return fsal_status;
 	}
@@ -862,8 +837,7 @@ fsal_status_t fsal_lookup_path(const char *path,
 		if (strcmp(rest, "..") == 0) {
 			parent->obj_ops->put_ref(parent);
 			LogInfo(COMPONENT_FSAL,
-				"Failed due to '..' element in path %s",
-				path);
+				"Failed due to '..' element in path %s", path);
 			return posix2fsal_status(EACCES);
 		}
 
@@ -872,10 +846,7 @@ fsal_status_t fsal_lookup_path(const char *path,
 			goto skip;
 
 		/* Open the next directory in the path */
-		fsal_status = parent->obj_ops->lookup(parent,
-						      rest,
-						      &obj,
-						      NULL);
+		fsal_status = parent->obj_ops->lookup(parent, rest, &obj, NULL);
 
 		/* No matter what, we're done with the parent reference */
 		parent->obj_ops->put_ref(parent);
@@ -889,9 +860,10 @@ fsal_status_t fsal_lookup_path(const char *path,
 
 		if (obj->type != DIRECTORY) {
 			obj->obj_ops->put_ref(obj);
-			LogDebug(COMPONENT_FSAL,
-				 "Failed due to %s element in path %s not a directory",
-				 rest, path);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Failed due to %s element in path %s not a directory",
+				rest, path);
 			return posix2fsal_status(ENOTDIR);
 		}
 
@@ -933,7 +905,7 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 	/* Never even think of calling FSAL_lookup on root/.. */
 
 	if (obj->type == DIRECTORY) {
-		fsal_status_t status = {0, 0};
+		fsal_status_t status = { 0, 0 };
 		struct fsal_obj_handle *root_obj = NULL;
 
 		status = nfs_export_get_root_entry(op_ctx->ctx_export,
@@ -978,9 +950,8 @@ fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
  * @param[in] verf_lo Low long of verifier
  *
  */
-void
-fsal_create_set_verifier(struct fsal_attrlist *sattr, uint32_t verf_hi,
-			 uint32_t verf_lo)
+void fsal_create_set_verifier(struct fsal_attrlist *sattr, uint32_t verf_hi,
+			      uint32_t verf_lo)
 {
 	sattr->atime.tv_sec = verf_hi;
 	sattr->atime.tv_nsec = 0;
@@ -1022,10 +993,8 @@ fsal_create_set_verifier(struct fsal_attrlist *sattr, uint32_t verf_hi,
  * @return FSAL status
  */
 
-fsal_status_t fsal_create(struct fsal_obj_handle *parent,
-			  const char *name,
-			  object_file_type_t type,
-			  struct fsal_attrlist *attrs,
+fsal_status_t fsal_create(struct fsal_obj_handle *parent, const char *name,
+			  object_file_type_t type, struct fsal_attrlist *attrs,
 			  const char *link_content,
 			  struct fsal_obj_handle **obj,
 			  struct fsal_attrlist *attrs_out,
@@ -1070,27 +1039,26 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 		break;
 
 	case DIRECTORY:
-		status = parent->obj_ops->mkdir(parent, name, attrs,
-					       obj, attrs_out,
-					       parent_pre_attrs_out,
-					       parent_post_attrs_out);
+		status = parent->obj_ops->mkdir(parent, name, attrs, obj,
+						attrs_out, parent_pre_attrs_out,
+						parent_post_attrs_out);
 		break;
 
 	case SYMBOLIC_LINK:
 		status = parent->obj_ops->symlink(parent, name, link_content,
-						 attrs, obj, attrs_out,
-						 parent_pre_attrs_out,
-						 parent_post_attrs_out);
+						  attrs, obj, attrs_out,
+						  parent_pre_attrs_out,
+						  parent_post_attrs_out);
 		break;
 
 	case SOCKET_FILE:
 	case FIFO_FILE:
 	case BLOCK_FILE:
 	case CHARACTER_FILE:
-		status = parent->obj_ops->mknode(parent, name, type,
-						attrs, obj, attrs_out,
-						parent_pre_attrs_out,
-						parent_post_attrs_out);
+		status = parent->obj_ops->mknode(parent, name, type, attrs, obj,
+						 attrs_out,
+						 parent_pre_attrs_out,
+						 parent_post_attrs_out);
 		break;
 
 	case NO_FILE_TYPE:
@@ -1113,8 +1081,9 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 			status = fsal_lookup(parent, name, obj, attrs_out);
 			if (*obj != NULL) {
 				status = fsalstat(ERR_FSAL_EXIST, 0);
-				LogFullDebug(COMPONENT_FSAL,
-					     "create failed because it already exists");
+				LogFullDebug(
+					COMPONENT_FSAL,
+					"create failed because it already exists");
 				if ((*obj)->type != type) {
 					/* Incompatible types, returns NULL */
 					(*obj)->obj_ops->put_ref((*obj));
@@ -1134,7 +1103,7 @@ fsal_status_t fsal_create(struct fsal_obj_handle *parent,
 		goto out;
 	}
 
- out:
+out:
 
 	/* Restore original mask so caller isn't bamboozled... */
 	attrs->valid_mask = orig_mask;
@@ -1168,10 +1137,9 @@ bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 	fsal_prepare_attrs(&attrs, ATTR_ATIME | ATTR_MTIME);
 
 	obj->obj_ops->getattrs(obj, &attrs);
-	if (FSAL_TEST_MASK(attrs.valid_mask, ATTR_ATIME)
-	    && FSAL_TEST_MASK(attrs.valid_mask, ATTR_MTIME)
-	    && attrs.atime.tv_sec == verf_hi
-	    && attrs.mtime.tv_sec == verf_lo)
+	if (FSAL_TEST_MASK(attrs.valid_mask, ATTR_ATIME) &&
+	    FSAL_TEST_MASK(attrs.valid_mask, ATTR_MTIME) &&
+	    attrs.atime.tv_sec == verf_hi && attrs.mtime.tv_sec == verf_lo)
 		verified = true;
 
 	/* Done with the attrs */
@@ -1191,16 +1159,15 @@ struct fsal_populate_cb_state {
 	struct fsal_readdir_cb_parms cb_parms;
 };
 
-static enum fsal_dir_result
-populate_dirent(const char *name,
-		struct fsal_obj_handle *obj,
-		struct fsal_attrlist *attrs,
-		void *dir_state,
-		fsal_cookie_t cookie)
+static enum fsal_dir_result populate_dirent(const char *name,
+					    struct fsal_obj_handle *obj,
+					    struct fsal_attrlist *attrs,
+					    void *dir_state,
+					    fsal_cookie_t cookie)
 {
 	struct fsal_populate_cb_state *state =
-	    (struct fsal_populate_cb_state *)dir_state;
-	fsal_status_t status = {0, 0};
+		(struct fsal_populate_cb_state *)dir_state;
+	fsal_status_t status = { 0, 0 };
 	enum fsal_dir_result retval;
 
 	retval = DIR_CONTINUE;
@@ -1238,37 +1205,36 @@ populate_dirent(const char *name,
 
 				rcu_read_lock();
 
-				ref_fullpath = gsh_refstr_get(
-				    rcu_dereference(junction_export->fullpath));
+				ref_fullpath = gsh_refstr_get(rcu_dereference(
+					junction_export->fullpath));
 
 				rcu_read_unlock();
 
-				LogMajor(COMPONENT_FSAL,
-					 "Failed to get root for %s, id=%d, status = %s",
-					 ref_fullpath
-						? ref_fullpath->gr_val
-						: "",
-					 junction_export->export_id,
-					 fsal_err_txt(status));
+				LogMajor(
+					COMPONENT_FSAL,
+					"Failed to get root for %s, id=%d, status = %s",
+					ref_fullpath ? ref_fullpath->gr_val :
+						       "",
+					junction_export->export_id,
+					fsal_err_txt(status));
 
 				gsh_refstr_put(ref_fullpath);
 
 				/* Need to signal problem to callback */
 				state->cb_state = CB_PROBLEM;
-				(void) state->cb(&state->cb_parms, NULL, NULL,
-						 0, cookie, state->cb_state);
+				(void)state->cb(&state->cb_parms, NULL, NULL, 0,
+						cookie, state->cb_state);
 				/* Protocol layers NEVER do readahead. */
 				retval = DIR_TERMINATE;
 				put_gsh_export(junction_export);
 				goto out;
 			}
 		} else {
-			LogMajor(COMPONENT_FSAL,
-				 "A junction became stale");
+			LogMajor(COMPONENT_FSAL, "A junction became stale");
 			/* Need to signal problem to callback */
 			state->cb_state = CB_PROBLEM;
-			(void) state->cb(&state->cb_parms, NULL, NULL, 0,
-					 cookie, state->cb_state);
+			(void)state->cb(&state->cb_parms, NULL, NULL, 0, cookie,
+					state->cb_state);
 			/* Protocol layers NEVER do readahead. */
 			retval = DIR_TERMINATE;
 			goto out;
@@ -1277,23 +1243,21 @@ populate_dirent(const char *name,
 		/* Now we need to get the cross-junction attributes. */
 		save_op_context_export_and_set_export(&saved, junction_export);
 
-		fsal_prepare_attrs(&attrs2,
-				   op_ctx->fsal_export->exp_ops
-					.fs_supported_attrs(op_ctx->fsal_export)
-					| ATTR_RDATTR_ERR);
+		fsal_prepare_attrs(
+			&attrs2,
+			op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+				op_ctx->fsal_export) |
+				ATTR_RDATTR_ERR);
 
 		status = junction_obj->obj_ops->getattrs(junction_obj, &attrs2);
 
 		if (!FSAL_IS_ERROR(status)) {
 			/* Now call the callback again with that. */
 			state->cb_state = CB_JUNCTION;
-			status.major = state->cb(&state->cb_parms,
-						 junction_obj,
-						 &attrs2,
-						 junction_export
-						     ->exp_mounted_on_file_id,
-						 cookie,
-						 state->cb_state);
+			status.major = state->cb(
+				&state->cb_parms, junction_obj, &attrs2,
+				junction_export->exp_mounted_on_file_id, cookie,
+				state->cb_state);
 
 			state->cb_state = CB_ORIGINAL;
 		}
@@ -1307,8 +1271,7 @@ populate_dirent(const char *name,
 		/* state->cb (nfs4_readdir_callback) saved op_ctx
 		 * ctx_export and fsal_export. Restore them here
 		 */
-		(void)state->cb(&state->cb_parms, NULL, NULL,
-				 0, 0, CB_PROBLEM);
+		(void)state->cb(&state->cb_parms, NULL, NULL, 0, 0, CB_PROBLEM);
 	}
 
 	if (!state->cb_parms.in_result) {
@@ -1346,16 +1309,13 @@ out:
  * @return FSAL status
  */
 
-fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
-		    uint64_t cookie,
-		    unsigned int *nbfound,
-		    bool *eod_met,
-		    attrmask_t attrmask,
-		    helper_readdir_cb cb,
-		    void *opaque)
+fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
+			   unsigned int *nbfound, bool *eod_met,
+			   attrmask_t attrmask, helper_readdir_cb cb,
+			   void *opaque)
 {
-	fsal_status_t fsal_status = {0, 0};
-	fsal_status_t cb_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
+	fsal_status_t cb_status = { 0, 0 };
 	struct fsal_populate_cb_state state;
 
 	*nbfound = 0;
@@ -1363,12 +1323,12 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 	/* The access mask corresponding to permission to list directory
 	   entries */
 	fsal_accessflags_t access_mask =
-	    (FSAL_MODE_MASK_SET(FSAL_R_OK) |
-	     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
+		(FSAL_MODE_MASK_SET(FSAL_R_OK) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
 	fsal_accessflags_t access_mask_attr =
-	    (FSAL_MODE_MASK_SET(FSAL_R_OK) | FSAL_MODE_MASK_SET(FSAL_X_OK) |
-	     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR) |
-	     FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
+		(FSAL_MODE_MASK_SET(FSAL_R_OK) | FSAL_MODE_MASK_SET(FSAL_X_OK) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 
 	/* readdir can be done only with a directory */
 	if (directory->type != DIRECTORY) {
@@ -1393,8 +1353,8 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 	}
 	if (attrmask != 0) {
 		/* Check for access permission to get attributes */
-		fsal_status_t attr_status = fsal_access(directory,
-							access_mask_attr);
+		fsal_status_t attr_status =
+			fsal_access(directory, access_mask_attr);
 		if (FSAL_IS_ERROR(attr_status))
 			LogDebug(COMPONENT_NFS_READDIR,
 				 "permission check for attributes status=%s",
@@ -1416,11 +1376,9 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
 	state.cb_nfound = nbfound;
 	state.attrmask = attrmask;
 
-	fsal_status = directory->obj_ops->readdir(directory, &cookie,
-						 (void *)&state,
-						 populate_dirent,
-						 attrmask,
-						 eod_met);
+	fsal_status =
+		directory->obj_ops->readdir(directory, &cookie, (void *)&state,
+					    populate_dirent, attrmask, eod_met);
 
 	return fsal_status;
 }
@@ -1440,10 +1398,9 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory,
  * @retval fsal_status_t
  */
 
-fsal_status_t
-fsal_remove(struct fsal_obj_handle *parent, const char *name,
-	    struct fsal_attrlist *parent_pre_attrs_out,
-	    struct fsal_attrlist *parent_post_attrs_out)
+fsal_status_t fsal_remove(struct fsal_obj_handle *parent, const char *name,
+			  struct fsal_attrlist *parent_pre_attrs_out,
+			  struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct fsal_obj_handle *to_remove_obj = NULL;
 	fsal_status_t status = { 0, 0 };
@@ -1456,8 +1413,8 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name,
 	/* Looks up for the entry to remove */
 	status = fsal_lookup(parent, name, &to_remove_obj, NULL);
 	if (FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_FSAL, "lookup %s failure %s",
-			     name, fsal_err_txt(status));
+		LogFullDebug(COMPONENT_FSAL, "lookup %s failure %s", name,
+			     fsal_err_txt(status));
 		return status;
 	}
 
@@ -1470,7 +1427,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name,
 
 	if (state_deleg_conflict(to_remove_obj, true)) {
 		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
-			  name);
+			 name);
 		status = fsalstat(ERR_FSAL_DELAY, 0);
 		goto out;
 	}
@@ -1484,8 +1441,7 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name,
 
 	if (FSAL_IS_ERROR(status)) {
 		/* non-fatal error. log the warning and move on */
-		LogCrit(COMPONENT_FSAL,
-			"Error closing %s before unlink: %s.",
+		LogCrit(COMPONENT_FSAL, "Error closing %s before unlink: %s.",
 			name, fsal_err_txt(status));
 	}
 
@@ -1497,11 +1453,12 @@ fsal_remove(struct fsal_obj_handle *parent, const char *name,
 #endif /* ENABLE_RFC_ACL */
 
 	status = parent->obj_ops->unlink(parent, to_remove_obj, name,
-		parent_pre_attrs_out, parent_post_attrs_out);
+					 parent_pre_attrs_out,
+					 parent_post_attrs_out);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogFullDebug(COMPONENT_FSAL, "unlink %s failure %s",
-			     name, fsal_err_txt(status));
+		LogFullDebug(COMPONENT_FSAL, "unlink %s failure %s", name,
+			     fsal_err_txt(status));
 		goto out;
 	}
 
@@ -1535,10 +1492,8 @@ out_no_obj:
  *
  * @return FSAL status
  */
-fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
-			  const char *oldname,
-			  struct fsal_obj_handle *dir_dest,
-			  const char *newname,
+fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src, const char *oldname,
+			  struct fsal_obj_handle *dir_dest, const char *newname,
 			  struct fsal_attrlist *olddir_pre_attrs_out,
 			  struct fsal_attrlist *olddir_post_attrs_out,
 			  struct fsal_attrlist *newdir_pre_attrs_out,
@@ -1551,9 +1506,9 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 	/* Check for . and .. on oldname and newname. */
-	if (oldname[0] == '\0' || newname[0] == '\0'
-	    || !strcmp(oldname, ".") || !strcmp(oldname, "..")
-	    || !strcmp(newname, ".") || !strcmp(newname, "..")) {
+	if (oldname[0] == '\0' || newname[0] == '\0' || !strcmp(oldname, ".") ||
+	    !strcmp(oldname, "..") || !strcmp(newname, ".") ||
+	    !strcmp(newname, "..")) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
@@ -1584,26 +1539,22 @@ fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
 	 */
 	if (state_deleg_conflict(lookup_src, true)) {
 		LogDebug(COMPONENT_FSAL, "Found an existing delegation for %s",
-			  oldname);
+			 oldname);
 		fsal_status = fsalstat(ERR_FSAL_DELAY, 0);
 		goto out;
 	}
 
 	LogFullDebug(COMPONENT_FSAL, "about to call FSAL rename");
 
-	fsal_status = dir_src->obj_ops->rename(lookup_src, dir_src, oldname,
-					      dir_dest, newname,
-					      olddir_pre_attrs_out,
-					      olddir_post_attrs_out,
-					      newdir_pre_attrs_out,
-					      newdir_post_attrs_out);
+	fsal_status = dir_src->obj_ops->rename(
+		lookup_src, dir_src, oldname, dir_dest, newname,
+		olddir_pre_attrs_out, olddir_post_attrs_out,
+		newdir_pre_attrs_out, newdir_post_attrs_out);
 
 	LogFullDebug(COMPONENT_FSAL, "returned from FSAL rename");
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-
-		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL rename failed with %s",
+		LogFullDebug(COMPONENT_FSAL, "FSAL rename failed with %s",
 			     fsal_err_txt(fsal_status));
 
 		goto out;
@@ -1658,13 +1609,10 @@ out:
  * @return FSAL status
  */
 
-fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
-			 struct state_t *state,
+fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj, struct state_t *state,
 			 fsal_openflags_t openflags,
-			 enum fsal_create_mode createmode,
-			 const char *name,
-			 struct fsal_attrlist *attr,
-			 fsal_verifier_t verifier,
+			 enum fsal_create_mode createmode, const char *name,
+			 struct fsal_attrlist *attr, fsal_verifier_t verifier,
 			 struct fsal_obj_handle **obj,
 			 struct fsal_attrlist *attrs_out,
 			 struct fsal_attrlist *parent_pre_attrs_out,
@@ -1683,14 +1631,13 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 		parent_post_attrs_out->valid_mask = 0;
 
 	if (attr != NULL) {
-		LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG,
-			    "attrs ", attr, false);
+		LogAttrlist(COMPONENT_FSAL, NIV_FULL_DEBUG, "attrs ", attr,
+			    false);
 
 		status = fsal_check_create_owner(attr);
 
 		if (FSAL_IS_ERROR(status)) {
-			LogDebug(COMPONENT_FSAL,
-				 "Not opening file - %s",
+			LogDebug(COMPONENT_FSAL, "Not opening file - %s",
 				 fsal_err_txt(status));
 			return status;
 		}
@@ -1699,8 +1646,7 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 	/* Handle attribute size = 0 here, normalize to FSAL_O_TRUNC
 	 * instead of setting ATTR_SIZE.
 	 */
-	if (attr != NULL &&
-	    FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE) &&
+	if (attr != NULL && FSAL_TEST_MASK(attr->valid_mask, ATTR_SIZE) &&
 	    attr->filesize == 0) {
 		LogFullDebug(COMPONENT_FSAL, "Truncate");
 		/* Handle truncate to zero on open */
@@ -1712,8 +1658,8 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 	if (createmode >= FSAL_EXCLUSIVE && verifier == NULL)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	if (name)
-		return open2_by_name(in_obj, state, openflags, createmode,
-				     name, attr, verifier, obj, attrs_out,
+		return open2_by_name(in_obj, state, openflags, createmode, name,
+				     attr, verifier, obj, attrs_out,
 				     parent_pre_attrs_out,
 				     parent_post_attrs_out);
 
@@ -1733,9 +1679,8 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 				       createmode >= FSAL_EXCLUSIVE, &reason);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "Not opening file %s%s",
-			 reason, fsal_err_txt(status));
+		LogDebug(COMPONENT_FSAL, "Not opening file %s%s", reason,
+			 fsal_err_txt(status));
 		return status;
 	}
 
@@ -1744,18 +1689,11 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
 	 * might be an exclusive recreate replay and we want the FSAL to
 	 * check the verifier.
 	 */
-	status = in_obj->obj_ops->open2(in_obj,
-				       state,
-				       openflags,
-				       createmode,
-				       NULL,
-				       attr,
-				       verifier,
-				       obj,
-				       attrs_out,
-				       &caller_perm_check,
-				       parent_pre_attrs_out,
-				       parent_post_attrs_out);
+	status = in_obj->obj_ops->open2(in_obj, state, openflags, createmode,
+					NULL, attr, verifier, obj, attrs_out,
+					&caller_perm_check,
+					parent_pre_attrs_out,
+					parent_post_attrs_out);
 
 	if (!FSAL_IS_ERROR(status)) {
 		/* Get a reference to the entry. */
@@ -1780,10 +1718,8 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
  * @return FSAL status
  */
 
-fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
-			   struct state_t *state,
-			   fsal_openflags_t openflags,
-			   bool check_permission)
+fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj, struct state_t *state,
+			   fsal_openflags_t openflags, bool check_permission)
 {
 	fsal_status_t status = { 0, 0 };
 	char *reason = "FSAL reopen failed - ";
@@ -1799,17 +1735,15 @@ fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
 	 */
 	status = obj->obj_ops->reopen2(obj, state, openflags);
 
- out:
+out:
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "Not re-opening file %s%s",
-			 reason, fsal_err_txt(status));
+		LogDebug(COMPONENT_FSAL, "Not re-opening file %s%s", reason,
+			 fsal_err_txt(status));
 	}
 
 	return status;
 }
-
 
 fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
 			  fsal_dynamicfsinfo_t *dynamicinfo)
@@ -1820,15 +1754,15 @@ fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
 	export = op_ctx->ctx_export->fsal_export;
 	/* Get FSAL to get dynamic info */
 	fsal_status =
-	    export->exp_ops.get_fs_dynamic_info(export, obj, dynamicinfo);
+		export->exp_ops.get_fs_dynamic_info(export, obj, dynamicinfo);
 	LogFullDebug(COMPONENT_FSAL,
 		     "dynamicinfo: {total_bytes = %" PRIu64
 		     ", free_bytes = %" PRIu64 ", avail_bytes = %" PRIu64
 		     ", total_files = %" PRIu64 ", free_files = %" PRIu64
-		     ", avail_files = %" PRIu64 "}", dynamicinfo->total_bytes,
-		     dynamicinfo->free_bytes, dynamicinfo->avail_bytes,
-		     dynamicinfo->total_files, dynamicinfo->free_files,
-		     dynamicinfo->avail_files);
+		     ", avail_files = %" PRIu64 "}",
+		     dynamicinfo->total_bytes, dynamicinfo->free_bytes,
+		     dynamicinfo->avail_bytes, dynamicinfo->total_files,
+		     dynamicinfo->free_files, dynamicinfo->avail_files);
 	return fsal_status;
 }
 
@@ -1924,10 +1858,8 @@ static void fsal_iov_release(void *release_data)
  * @return Nothing; results are in callback
  */
 
-void fsal_read2(struct fsal_obj_handle *obj_hdl,
-		bool bypass,
-		fsal_async_cb done_cb,
-		struct fsal_io_arg *read_arg,
+void fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 		void *caller_arg)
 {
 	assert(read_arg->iov_count > 0);
@@ -1942,9 +1874,8 @@ void fsal_read2(struct fsal_obj_handle *obj_hdl,
 	assert(read_arg->iov_count == 1);
 
 	/* Check if someone else want's to allocate the buffer */
-	read_arg->iov[0].iov_base =
-			get_buffer_for_io_response(read_arg->iov[0].iov_len,
-			    read_arg->last_iov_buf_size);
+	read_arg->iov[0].iov_base = get_buffer_for_io_response(
+		read_arg->iov[0].iov_len, read_arg->last_iov_buf_size);
 
 	if (read_arg->iov[0].iov_base != NULL) {
 		/* Someone wanted to allocate the buffer, use it. */
@@ -1953,11 +1884,10 @@ void fsal_read2(struct fsal_obj_handle *obj_hdl,
 
 	/* Check if FSAL will allocate the buffer */
 	if (!op_ctx->fsal_export->exp_ops.fs_supports(
-						op_ctx->fsal_export,
-						fso_allocate_own_read_buffer)) {
+		    op_ctx->fsal_export, fso_allocate_own_read_buffer)) {
 		/* FSAL will not allocate a buffer, so allocate one. */
 		read_arg->iov[0].iov_base =
-					gsh_malloc(read_arg->iov[0].iov_len);
+			gsh_malloc(read_arg->iov[0].iov_len);
 		/* Set up release function */
 		read_arg->iov_release = fsal_iov_release;
 		read_arg->release_data = read_arg->iov[0].iov_base;
@@ -1965,8 +1895,8 @@ void fsal_read2(struct fsal_obj_handle *obj_hdl,
 
 call_read2:
 
-	return obj_hdl->obj_ops->read2(obj_hdl, bypass, done_cb,
-				       read_arg, caller_arg);
+	return obj_hdl->obj_ops->read2(obj_hdl, bypass, done_cb, read_arg,
+				       caller_arg);
 }
 
 /**
@@ -1977,8 +1907,8 @@ call_read2:
  * @param[in] args		Args for read call
  * @param[in] caller_data	Data for caller
  */
-static void sync_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
-			 void *args, void *caller_data)
+static void sync_cb(struct fsal_obj_handle *obj, fsal_status_t ret, void *args,
+		    void *caller_data)
 {
 	struct async_process_data *data = caller_data;
 
@@ -1999,10 +1929,8 @@ static void sync_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	PTHREAD_MUTEX_unlock(data->fsa_mutex);
 }
 
-void fsal_read(struct fsal_obj_handle *obj_hdl,
-	       bool bypass,
-	       struct fsal_io_arg *arg,
-	       struct async_process_data *data)
+void fsal_read(struct fsal_obj_handle *obj_hdl, bool bypass,
+	       struct fsal_io_arg *arg, struct async_process_data *data)
 {
 again:
 
@@ -2024,10 +1952,8 @@ again:
 	}
 }
 
-void fsal_write(struct fsal_obj_handle *obj_hdl,
-		bool bypass,
-		struct fsal_io_arg *arg,
-		struct async_process_data *data)
+void fsal_write(struct fsal_obj_handle *obj_hdl, bool bypass,
+		struct fsal_io_arg *arg, struct async_process_data *data)
 {
 again:
 
@@ -2049,8 +1975,8 @@ again:
 	}
 }
 
-#define XATTR_USER_PREFIX	"user."
-#define XATTR_USER_PREFIX_LEN	(sizeof(XATTR_USER_PREFIX) - 1)
+#define XATTR_USER_PREFIX "user."
+#define XATTR_USER_PREFIX_LEN (sizeof(XATTR_USER_PREFIX) - 1)
 
 /**
  * @brief Convert a flat list of xattr names to xattrlist4
@@ -2067,12 +1993,9 @@ again:
  * an xattrlist4, and handles the gory details of vetting the cookie and size
  * limits.
  */
-fsal_status_t fsal_listxattr_helper(const char *buf,
-			     size_t listlen,
-			     uint32_t maxbytes,
-			     nfs_cookie4 *lxa_cookie,
-			     bool_t *lxr_eof,
-			     xattrlist4 *lxr_names)
+fsal_status_t fsal_listxattr_helper(const char *buf, size_t listlen,
+				    uint32_t maxbytes, nfs_cookie4 *lxa_cookie,
+				    bool_t *lxr_eof, xattrlist4 *lxr_names)
 {
 	int i, count = 0;
 	uint64_t cookie = 0;

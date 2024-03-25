@@ -45,52 +45,47 @@ static const char *module_name = "RGW";
 /**
  * RGW global module object.
  */
-struct rgw_fsal_module RGWFSM = {
-	.fsal = {
-		.fs_info = {
-			.maxfilesize = INT64_MAX,
-			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = 1024,
-			.maxpathlen = 1024,
-			.no_trunc = true,
-			.chown_restricted = false,
-			.case_insensitive = false,
-			.case_preserving = true,
-			.link_support = false,
-			.symlink_support = false,
-			.lock_support = false,
-			.lock_support_async_block = false,
-			.named_attr = true, /* XXX */
-			.unique_handles = true,
-			.acl_support = 0,
-			.cansettime = true,
-			.homogenous = true,
-			.supported_attrs = RGW_SUPPORTED_ATTRIBUTES,
-			.maxread = FSAL_MAXIOSIZE,
-			.maxwrite = FSAL_MAXIOSIZE,
-			.umask = 0,
-			.rename_changes_key = true,
-			.compute_readdir_cookie = true,
-			.whence_is_name = true,
-			.expire_time_parent = -1,
+struct rgw_fsal_module
+	RGWFSM = { .fsal = {
+			   .fs_info = {
+				   .maxfilesize = INT64_MAX,
+				   .maxlink = _POSIX_LINK_MAX,
+				   .maxnamelen = 1024,
+				   .maxpathlen = 1024,
+				   .no_trunc = true,
+				   .chown_restricted = false,
+				   .case_insensitive = false,
+				   .case_preserving = true,
+				   .link_support = false,
+				   .symlink_support = false,
+				   .lock_support = false,
+				   .lock_support_async_block = false,
+				   .named_attr = true, /* XXX */
+				   .unique_handles = true,
+				   .acl_support = 0,
+				   .cansettime = true,
+				   .homogenous = true,
+				   .supported_attrs = RGW_SUPPORTED_ATTRIBUTES,
+				   .maxread = FSAL_MAXIOSIZE,
+				   .maxwrite = FSAL_MAXIOSIZE,
+				   .umask = 0,
+				   .rename_changes_key = true,
+				   .compute_readdir_cookie = true,
+				   .whence_is_name = true,
+				   .expire_time_parent = -1,
 #ifdef USE_FSAL_RGW_XATTRS
-			.xattr_support = true,
+				   .xattr_support = true,
 #endif
-		}
-	}
-};
+			   } } };
 
 static struct config_item rgw_items[] = {
-	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
-		rgw_fsal_module, conf_path),
-	CONF_ITEM_STR("name", 1, MAXPATHLEN, NULL,
-		rgw_fsal_module, name),
-	CONF_ITEM_STR("cluster", 1, MAXPATHLEN, NULL,
-		rgw_fsal_module, cluster),
-	CONF_ITEM_STR("init_args", 1, MAXPATHLEN, NULL,
-		rgw_fsal_module, init_args),
-	CONF_ITEM_MODE("umask", 0,
-			rgw_fsal_module, fsal.fs_info.umask),
+	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL, rgw_fsal_module,
+		       conf_path),
+	CONF_ITEM_STR("name", 1, MAXPATHLEN, NULL, rgw_fsal_module, name),
+	CONF_ITEM_STR("cluster", 1, MAXPATHLEN, NULL, rgw_fsal_module, cluster),
+	CONF_ITEM_STR("init_args", 1, MAXPATHLEN, NULL, rgw_fsal_module,
+		      init_args),
+	CONF_ITEM_MODE("umask", 0, rgw_fsal_module, fsal.fs_info.umask),
 	CONFIG_EOL
 };
 
@@ -98,7 +93,7 @@ struct config_block rgw_block = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.rgw",
 	.blk_desc.name = "RGW",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = rgw_items,
 	.blk_desc.u.blk.commit = noop_conf_commit
@@ -114,20 +109,16 @@ static pthread_mutex_t init_mtx;
  */
 
 static fsal_status_t init_config(struct fsal_module *module_in,
-				config_file_t config_struct,
-				struct config_error_type *err_type)
+				 config_file_t config_struct,
+				 struct config_error_type *err_type)
 {
 	struct rgw_fsal_module *myself =
-	    container_of(module_in, struct rgw_fsal_module, fsal);
+		container_of(module_in, struct rgw_fsal_module, fsal);
 
-	LogDebug(COMPONENT_FSAL,
-		 "RGW module setup.");
+	LogDebug(COMPONENT_FSAL, "RGW module setup.");
 
-	(void) load_config_from_parse(config_struct,
-				      &rgw_block,
-				      myself,
-				      true,
-				      err_type);
+	(void)load_config_from_parse(config_struct, &rgw_block, myself, true,
+				     err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
@@ -158,12 +149,11 @@ static fsal_status_t init_config(struct fsal_module *module_in,
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_MAND_STR("user_id", 0, MAXUIDLEN, NULL,
-		      rgw_export, rgw_user_id),
-	CONF_MAND_STR("access_key_id", 0, MAXKEYLEN, NULL,
-		      rgw_export, rgw_access_key_id),
-	CONF_MAND_STR("secret_access_key", 0, MAXSECRETLEN, NULL,
-		      rgw_export, rgw_secret_access_key),
+	CONF_MAND_STR("user_id", 0, MAXUIDLEN, NULL, rgw_export, rgw_user_id),
+	CONF_MAND_STR("access_key_id", 0, MAXKEYLEN, NULL, rgw_export,
+		      rgw_access_key_id),
+	CONF_MAND_STR("secret_access_key", 0, MAXSECRETLEN, NULL, rgw_export,
+		      rgw_secret_access_key),
 	CONFIG_EOL
 };
 
@@ -205,37 +195,37 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			char *cluster = NULL;
 
 			int argc = 1;
-			char *argv[5] = { "nfs-ganesha",
-					  NULL, NULL, NULL, NULL };
+			char *argv[5] = { "nfs-ganesha", NULL, NULL, NULL,
+					  NULL };
 			int clen;
 
 			if (RGWFSM.conf_path) {
 				if (access(RGWFSM.conf_path, F_OK)) {
 					LogCrit(COMPONENT_FSAL,
-					"ceph.conf path does not exist");
+						"ceph.conf path does not exist");
 				}
 				clen = strlen(RGWFSM.conf_path) + 8;
-				conf_path = (char *) gsh_malloc(clen);
-				(void) sprintf(conf_path, "--conf=%s",
-					       RGWFSM.conf_path);
+				conf_path = (char *)gsh_malloc(clen);
+				(void)sprintf(conf_path, "--conf=%s",
+					      RGWFSM.conf_path);
 				argv[argc] = conf_path;
 				++argc;
 			}
 
 			if (RGWFSM.name) {
 				clen = strlen(RGWFSM.name) + 8;
-				inst_name = (char *) gsh_malloc(clen);
-				(void) sprintf(inst_name, "--name=%s",
-					       RGWFSM.name);
+				inst_name = (char *)gsh_malloc(clen);
+				(void)sprintf(inst_name, "--name=%s",
+					      RGWFSM.name);
 				argv[argc] = inst_name;
 				++argc;
 			}
 
 			if (RGWFSM.cluster) {
 				clen = strlen(RGWFSM.cluster) + 8;
-				cluster = (char *) gsh_malloc(clen);
-				(void) sprintf(cluster, "--cluster=%s",
-					       RGWFSM.cluster);
+				cluster = (char *)gsh_malloc(clen);
+				(void)sprintf(cluster, "--cluster=%s",
+					      RGWFSM.cluster);
 				argv[argc] = cluster;
 				++argc;
 			}
@@ -270,11 +260,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	/* get params for this export, if any */
 	if (parse_node) {
-		rc = load_config_from_node(parse_node,
-					   &export_param_block,
-					   export,
-					   true,
-					   err_type);
+		rc = load_config_from_node(parse_node, &export_param_block,
+					   export, true, err_type);
 
 		if (rc != 0) {
 			gsh_free(export);
@@ -285,63 +272,55 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	initialized = true;
 
 #ifndef USE_FSAL_RGW_MOUNT2
-	rgw_status = rgw_mount(RGWFSM.rgw,
-			       export->rgw_user_id,
+	rgw_status = rgw_mount(RGWFSM.rgw, export->rgw_user_id,
 			       export->rgw_access_key_id,
-			       export->rgw_secret_access_key,
-			       &export->rgw_fs,
+			       export->rgw_secret_access_key, &export->rgw_fs,
 			       RGW_MOUNT_FLAG_NONE);
 #else
 	const char *rgw_fullpath = CTX_FULLPATH(op_ctx);
 
 	if (strcmp(rgw_fullpath, "/") && strchr(rgw_fullpath, '/') &&
-		(strchr(rgw_fullpath, '/') - rgw_fullpath) > 1) {
+	    (strchr(rgw_fullpath, '/') - rgw_fullpath) > 1) {
 		/* case : "bucket_name/dir" */
-		rgw_status = rgw_mount(RGWFSM.rgw,
-					export->rgw_user_id,
-					export->rgw_access_key_id,
-					export->rgw_secret_access_key,
-					&export->rgw_fs,
-					RGW_MOUNT_FLAG_NONE);
+		rgw_status = rgw_mount(RGWFSM.rgw, export->rgw_user_id,
+				       export->rgw_access_key_id,
+				       export->rgw_secret_access_key,
+				       &export->rgw_fs, RGW_MOUNT_FLAG_NONE);
 	} else {
 		/* case : "/" of "bucket_name" or "/bucket_name" */
 		if (strcmp(rgw_fullpath, "/") && strchr(rgw_fullpath, '/') &&
-			(strchr(rgw_fullpath, '/') - rgw_fullpath) == 0) {
+		    (strchr(rgw_fullpath, '/') - rgw_fullpath) == 0) {
 			rgw_fullpath = rgw_fullpath + 1;
 		}
-	  rgw_status = rgw_mount2(RGWFSM.rgw,
-					export->rgw_user_id,
+		rgw_status = rgw_mount2(RGWFSM.rgw, export->rgw_user_id,
 					export->rgw_access_key_id,
 					export->rgw_secret_access_key,
-					rgw_fullpath,
-					&export->rgw_fs,
+					rgw_fullpath, &export->rgw_fs,
 					RGW_MOUNT_FLAG_NONE);
 	}
 #endif
 	if (rgw_status != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to mount RGW cluster for %s.",
+		LogCrit(COMPONENT_FSAL, "Unable to mount RGW cluster for %s.",
 			CTX_FULLPATH(op_ctx));
 		if (rgw_status == -EINVAL) {
 			LogCrit(COMPONENT_FSAL,
-			"Authorization Failed for user %s ",
-			export->rgw_user_id);
+				"Authorization Failed for user %s ",
+				export->rgw_user_id);
 		}
 		goto error;
 	}
 
 	if (fsal_attach_export(module_in, &export->export.exports) != 0) {
 		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to attach export for %s.",
+		LogCrit(COMPONENT_FSAL, "Unable to attach export for %s.",
 			CTX_FULLPATH(op_ctx));
 		goto error;
 	}
 
 	if (rgw_register_invalidate(export->rgw_fs, rgw_fs_invalidate,
-					up_ops->up_fsal_export,
-					RGW_REG_INVALIDATE_FLAG_NONE) != 0) {
+				    up_ops->up_fsal_export,
+				    RGW_REG_INVALIDATE_FLAG_NONE) != 0) {
 		LogCrit(COMPONENT_FSAL,
 			"Unable to register invalidates for %s.",
 			CTX_FULLPATH(op_ctx));
@@ -350,12 +329,10 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	export->export.fsal = module_in;
 
-	LogDebug(COMPONENT_FSAL,
-		 "RGW module export %s.",
-		 CTX_FULLPATH(op_ctx));
+	LogDebug(COMPONENT_FSAL, "RGW module export %s.", CTX_FULLPATH(op_ctx));
 
 	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh, &st,
-			RGW_GETATTR_FLAG_NONE);
+			 RGW_GETATTR_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
@@ -372,7 +349,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 	return status;
 
- error:
+error:
 	gsh_free(export);
 
 	if (initialized)
@@ -396,15 +373,13 @@ MODULE_INIT void init(void)
 
 	PTHREAD_MUTEX_init(&init_mtx, NULL);
 
-	LogDebug(COMPONENT_FSAL,
-		 "RGW module registering.");
+	LogDebug(COMPONENT_FSAL, "RGW module registering.");
 
 	if (register_fsal(myself, module_name, FSAL_MAJOR_VERSION,
 			  FSAL_MINOR_VERSION, FSAL_ID_RGW) != 0) {
 		/* The register_fsal function prints its own log
 		   message if it fails */
-		LogCrit(COMPONENT_FSAL,
-			"RGW module failed to register.");
+		LogCrit(COMPONENT_FSAL, "RGW module failed to register.");
 	}
 
 	/* Set up module operations */
@@ -427,13 +402,12 @@ MODULE_FINI void finish(void)
 {
 	int ret;
 
-	LogDebug(COMPONENT_FSAL,
-		 "RGW module finishing.");
+	LogDebug(COMPONENT_FSAL, "RGW module finishing.");
 
 	ret = unregister_fsal(&RGWFSM.fsal);
 	if (ret != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"RGW: unregister_fsal failed (%d)", ret);
+		LogCrit(COMPONENT_FSAL, "RGW: unregister_fsal failed (%d)",
+			ret);
 	}
 
 	/* release the library */

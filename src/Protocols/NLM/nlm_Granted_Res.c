@@ -54,24 +54,25 @@ int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		 "REQUEST PROCESSING: Calling nlm_Granted_Res cookie=%s",
 		 buffer);
 
-	state_status = state_find_grant(arg->cookie.n_bytes,
-					arg->cookie.n_len,
+	state_status = state_find_grant(arg->cookie.n_bytes, arg->cookie.n_len,
 					&cookie_entry);
 
 	if (state_status != STATE_SUCCESS) {
 		/* This must be an old NLM_GRANTED_RES */
-		LogFullDebug(COMPONENT_NLM,
-			     "Could not find cookie=%s (must be an old NLM_GRANTED_RES)",
-			     buffer);
+		LogFullDebug(
+			COMPONENT_NLM,
+			"Could not find cookie=%s (must be an old NLM_GRANTED_RES)",
+			buffer);
 		return NFS_REQ_OK;
 	}
 
-	if (cookie_entry->sce_lock_entry == NULL
-	    || cookie_entry->sce_lock_entry->sle_block_data == NULL) {
+	if (cookie_entry->sce_lock_entry == NULL ||
+	    cookie_entry->sce_lock_entry->sle_block_data == NULL) {
 		/* This must be an old NLM_GRANTED_RES */
-		LogFullDebug(COMPONENT_NLM,
-			     "Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
-			     buffer);
+		LogFullDebug(
+			COMPONENT_NLM,
+			"Could not find block data for cookie=%s (must be an old NLM_GRANTED_RES)",
+			buffer);
 		return NFS_REQ_OK;
 	}
 
@@ -86,16 +87,14 @@ int nlm4_Granted_Res(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * release the grant to properly clean up cookie_entry.
 	 */
 	if (arg->stat.stat != NLM4_GRANTED ||
-		!export_ready(op_ctx->ctx_export)) {
+	    !export_ready(op_ctx->ctx_export)) {
 		LogEvent(COMPONENT_NLM,
 			 "Granted call failed due to %s, releasing lock",
-			 arg->stat.stat != NLM4_GRANTED
-				? "client error"
-				: "export stale");
+			 arg->stat.stat != NLM4_GRANTED ? "client error" :
+							  "export stale");
 		state_status = state_release_grant(cookie_entry);
 		if (state_status != STATE_SUCCESS) {
-			LogDebug(COMPONENT_NLM,
-				 "state_release_grant failed");
+			LogDebug(COMPONENT_NLM, "state_release_grant failed");
 		}
 	} else {
 		state_complete_grant(cookie_entry);

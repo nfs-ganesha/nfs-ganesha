@@ -56,15 +56,15 @@
 
 /* If not otherwise defined, define OFD locks */
 #ifndef F_OFD_GETLK
-#define F_OFD_GETLK	36
+#define F_OFD_GETLK 36
 #endif
 
 #ifndef F_OFD_SETLK
-#define F_OFD_SETLK	37
+#define F_OFD_SETLK 37
 #endif
 
 #ifndef F_OFD_SETLKW
-#define F_OFD_SETLKW	38
+#define F_OFD_SETLKW 38
 #endif
 
 enum lock_mode {
@@ -123,7 +123,7 @@ struct client {
 	struct client *c_prev;
 	int c_socket;
 	struct sockaddr c_addr;
-	char c_name[MAXSTR+1];
+	char c_name[MAXSTR + 1];
 	FILE *c_input;
 	FILE *c_output;
 	int c_refcount;
@@ -140,7 +140,7 @@ enum status {
 	STATUS_COMPLETED,
 	STATUS_ERRNO,
 	STATUS_PARSE_ERROR,
-	STATUS_ERROR		/* must be last */
+	STATUS_ERROR /* must be last */
 };
 
 extern char errdetail[MAXSTR * 2 + 1];
@@ -160,60 +160,60 @@ struct response;
 
 long get_global_tag(bool increment);
 
-#define array_strcpy(dest, src)				\
-	do {						\
-		strncpy(dest, src, sizeof(dest) - 1);	\
-		dest[sizeof(dest) - 1] = '\0';		\
+#define array_strcpy(dest, src)                       \
+	do {                                          \
+		strncpy(dest, src, sizeof(dest) - 1); \
+		dest[sizeof(dest) - 1] = '\0';        \
 	} while (0)
 
-#define array_strncpy(dest, src, len)			\
-	do {						\
-		if (len >= sizeof(dest))		\
-			len = sizeof(dest) - 1;		\
-							\
-		memcpy(dest, src, len);			\
-		dest[len] = '\0';			\
+#define array_strncpy(dest, src, len)           \
+	do {                                    \
+		if (len >= sizeof(dest))        \
+			len = sizeof(dest) - 1; \
+                                                \
+		memcpy(dest, src, len);         \
+		dest[len] = '\0';               \
 	} while (0)
 
-#define array_sprintf(buf, fmt, args...)		\
-	do {							\
-		int left = sizeof(buf);				\
-		int lx = snprintf(buf, left, fmt, ## args);	\
-								\
-		left -= lx;					\
+#define array_sprintf(buf, fmt, args...)                   \
+	do {                                               \
+		int left = sizeof(buf);                    \
+		int lx = snprintf(buf, left, fmt, ##args); \
+                                                           \
+		left -= lx;                                \
 	} while (0)
 
-#define sprint_left(buf, left, fmt, args...)			\
-	do {							\
-		int lx = snprintf(buf, left, fmt, ## args);	\
-		buf += lx;					\
-		left -= lx;					\
+#define sprint_left(buf, left, fmt, args...)               \
+	do {                                               \
+		int lx = snprintf(buf, left, fmt, ##args); \
+		buf += lx;                                 \
+		left -= lx;                                \
 	} while (0)
 
-#define fprintf_stderr(fmt, args...)			\
-	do {						\
-		if (duperrors && output != NULL)	\
-			fprintf(output, fmt, ## args);	\
-		fprintf(stderr, fmt, ## args);		\
+#define fprintf_stderr(fmt, args...)                  \
+	do {                                          \
+		if (duperrors && output != NULL)      \
+			fprintf(output, fmt, ##args); \
+		fprintf(stderr, fmt, ##args);         \
 	} while (0)
 
-#define fatal(str, args...)			\
-	do {					\
-		fprintf_stderr(str, ## args);	\
-		fprintf_stderr("FAIL\n");	\
-		if (output != NULL)		\
-			fflush(output);		\
-		fflush(stderr);			\
-		exit(1);			\
+#define fatal(str, args...)                  \
+	do {                                 \
+		fprintf_stderr(str, ##args); \
+		fprintf_stderr("FAIL\n");    \
+		if (output != NULL)          \
+			fflush(output);      \
+		fflush(stderr);              \
+		exit(1);                     \
 	} while (0)
 
-#define show_usage(ret, fmt, args...)		\
-	do {					\
-		fprintf_stderr(fmt, ## args);	\
-		fprintf_stderr("%s", usage);	\
-		fflush(stderr);			\
-		fflush(stdout);			\
-		exit(ret);			\
+#define show_usage(ret, fmt, args...)        \
+	do {                                 \
+		fprintf_stderr(fmt, ##args); \
+		fprintf_stderr("%s", usage); \
+		fflush(stderr);              \
+		fflush(stdout);              \
+		exit(ret);                   \
 	} while (0)
 
 char *get_command(char *line, enum commands *cmd);
@@ -347,4 +347,4 @@ extern struct command_def commands[NUM_COMMANDS + 1];
  * tag QUIT    OK
  */
 
-#endif				/* _MULTILOCK_H */
+#endif /* _MULTILOCK_H */

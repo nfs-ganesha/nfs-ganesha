@@ -166,17 +166,23 @@ typedef union nfs_res__ {
 /* flags related to the behaviour of the requests
  * (to be stored in the dispatch behaviour field)
  */
-#define NOTHING_SPECIAL 0x0000	/* Nothing to be done for this kind of
+#define NOTHING_SPECIAL \
+	0x0000 /* Nothing to be done for this kind of
 				   request */
-#define MAKES_WRITE	0x0001	/* The function modifyes the FSAL
+#define MAKES_WRITE \
+	0x0001 /* The function modifyes the FSAL
 				   (not permitted for RO FS) */
-#define NEEDS_CRED	0x0002	/* A credential is needed for this
+#define NEEDS_CRED \
+	0x0002 /* A credential is needed for this
 				   operation */
-#define CAN_BE_DUP	0x0004	/* Handling of dup request can be done
+#define CAN_BE_DUP \
+	0x0004 /* Handling of dup request can be done
 				   for this request */
-#define SUPPORTS_GSS	0x0008	/* Request may be authenticated by
+#define SUPPORTS_GSS \
+	0x0008 /* Request may be authenticated by
 				   RPCSEC_GSS */
-#define MAKES_IO	0x0010	/* Request may do I/O
+#define MAKES_IO \
+	0x0010 /* Request may do I/O
 				   (not allowed on MD ONLY exports */
 
 enum nfs_req_result {
@@ -195,9 +201,8 @@ enum nfs_req_result {
 #define ASYNC_PROC_DONE 1
 #define ASYNC_PROC_EXIT 2
 
-typedef int (*nfs_protocol_function_t) (nfs_arg_t *,
-					struct svc_req *,
-					nfs_res_t *);
+typedef int (*nfs_protocol_function_t)(nfs_arg_t *, struct svc_req *,
+				       nfs_res_t *);
 
 typedef struct compound_data compound_data_t;
 
@@ -205,10 +210,10 @@ typedef enum nfs_req_result (*nfs4_function_t)(struct nfs_argop4 *,
 					       compound_data_t *,
 					       struct nfs_resop4 *);
 
-typedef int (*nfsremote_protocol_function_t) (CLIENT *, nfs_arg_t *,
-					      nfs_res_t *);
+typedef int (*nfsremote_protocol_function_t)(CLIENT *, nfs_arg_t *,
+					     nfs_res_t *);
 
-typedef void (*nfs_protocol_free_t) (nfs_res_t *);
+typedef void (*nfs_protocol_free_t)(nfs_res_t *);
 
 typedef struct nfs_function_desc__ {
 	nfs_protocol_function_t service_function;
@@ -233,10 +238,7 @@ typedef struct nfs_request {
 	TAILQ_ENTRY(nfs_request) dupes;
 } nfs_request_t;
 
-enum rpc_chan_type {
-	RPC_CHAN_V40,
-	RPC_CHAN_V41
-};
+enum rpc_chan_type { RPC_CHAN_V40, RPC_CHAN_V41 };
 
 typedef struct rpc_call_channel {
 	enum rpc_chan_type type;
@@ -327,59 +329,59 @@ typedef struct nfs_client_cred__ {
  * of a V4 compound request.
  */
 struct compound_data {
-	nfs_fh4 currentFH;	/*< Current filehandle */
-	nfs_fh4 savedFH;	/*< Saved filehandle */
-	stateid4 current_stateid;	/*< Current stateid */
-	bool current_stateid_valid;	/*< Current stateid is valid */
-	stateid4 saved_stateid;	/*< Saved stateid */
-	bool saved_stateid_valid;	/*< Saved stateid is valid */
-	unsigned int minorversion;	/*< NFSv4 minor version */
-	struct fsal_obj_handle *current_obj;	/*< Current object handle */
-	struct fsal_obj_handle *saved_obj;	/*< saved object handle */
-	struct fsal_ds_handle *current_ds;	/*< current ds handle */
-	struct fsal_ds_handle *saved_ds;	/*< Saved DS handle */
-	object_file_type_t current_filetype;    /*< File type of current obj */
-	object_file_type_t saved_filetype;	/*< File type of saved entry */
+	nfs_fh4 currentFH; /*< Current filehandle */
+	nfs_fh4 savedFH; /*< Saved filehandle */
+	stateid4 current_stateid; /*< Current stateid */
+	bool current_stateid_valid; /*< Current stateid is valid */
+	stateid4 saved_stateid; /*< Saved stateid */
+	bool saved_stateid_valid; /*< Saved stateid is valid */
+	unsigned int minorversion; /*< NFSv4 minor version */
+	struct fsal_obj_handle *current_obj; /*< Current object handle */
+	struct fsal_obj_handle *saved_obj; /*< saved object handle */
+	struct fsal_ds_handle *current_ds; /*< current ds handle */
+	struct fsal_ds_handle *saved_ds; /*< Saved DS handle */
+	object_file_type_t current_filetype; /*< File type of current obj */
+	object_file_type_t saved_filetype; /*< File type of saved entry */
 	struct gsh_export *saved_export; /*< Export entry related to the
 					     savedFH */
 	struct fsal_pnfs_ds *saved_pnfs_ds; /*< DS related to the savedFH */
 	struct export_perms saved_export_perms; /*< Permissions for export for
 					       savedFH */
-	struct svc_req *req;	/*< RPC Request related to the compound */
+	struct svc_req *req; /*< RPC Request related to the compound */
 	struct timespec op_start_time;
 	nfs_argop4 *argarray;
 	nfs_res_t *res;
 	nfs_resop4 *resarray;
 	uint32_t argarray_len;
-	nfs_client_cred_t credential;	/*< Raw RPC credentials */
-	nfs_client_id_t *preserved_clientid;	/*< clientid that has lease
+	nfs_client_cred_t credential; /*< Raw RPC credentials */
+	nfs_client_id_t *preserved_clientid; /*< clientid that has lease
 						   reserved, if any */
-	struct nfs41_session_slot__ *slot;	/*< NFv41: pointer to the
+	struct nfs41_session_slot__ *slot; /*< NFv41: pointer to the
 							session's slot */
 	nfsstat4 cached_result_status; /* <NFv41: save the
 	    slot->cached_result->status for reply request */
-	bool sa_cachethis;	/*< True if cachethis was specified in
+	bool sa_cachethis; /*< True if cachethis was specified in
 				    SEQUENCE op. */
-	nfs_opnum4 opcode;	/*< Current NFS4 OP */
-	uint32_t oppos;		/*< Position of the operation within the
+	nfs_opnum4 opcode; /*< Current NFS4 OP */
+	uint32_t oppos; /*< Position of the operation within the
 				    request processed  */
-	const char *opname;	/*< Name of the operation */
+	const char *opname; /*< Name of the operation */
 	char *tagname;
-	void *op_data;		/*< operation specific data for resume */
-	nfs41_session_t *session;	/*< Related session
+	void *op_data; /*< operation specific data for resume */
+	nfs41_session_t *session; /*< Related session
 					   (found by OP_SEQUENCE) */
-	sequenceid4 sequence;	/*< Sequence ID of the current compound
+	sequenceid4 sequence; /*< Sequence ID of the current compound
 				   (if applicable) */
-	slotid4 slotid;		/*< Slot ID of the current compound
+	slotid4 slotid; /*< Slot ID of the current compound
 				   (if applicable) */
-	uint32_t resp_size;	/*< Running total response size. */
-	uint32_t op_resp_size;	/*< Current op's response size. */
+	uint32_t resp_size; /*< Running total response size. */
+	uint32_t op_resp_size; /*< Current op's response size. */
 };
 
 #define VARIABLE_RESP_SIZE (0)
 
-typedef int (*nfs4_op_function_t) (struct nfs_argop4 *, compound_data_t *,
-				   struct nfs_resop4 *);
+typedef int (*nfs4_op_function_t)(struct nfs_argop4 *, compound_data_t *,
+				  struct nfs_resop4 *);
 
 /**
  * @brief Set the current entry in the context
@@ -431,5 +433,5 @@ static inline void set_current_entry(compound_data_t *data,
 
 void set_saved_entry(compound_data_t *data, struct fsal_obj_handle *obj);
 
-#endif				/* NFS_PROTO_DATA_H */
+#endif /* NFS_PROTO_DATA_H */
 /** @} */

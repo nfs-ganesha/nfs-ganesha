@@ -108,29 +108,27 @@ iterators invalidated are those referring to the deleted node.
  * For RBT_HEAD_INIT, RBT_COUNT, RBT_RIGHTMOST and RBT_LEFTMOST :
  *   __header is the header
  */
-#define RBT_HEAD_INIT(__header)						\
-	((__header)->root = 0,						\
-	 (__header)->leftmost = 0,					\
-	 (__header)->rightmost = 0,					\
-	 (__header)->rbt_num_node = 0)
+#define RBT_HEAD_INIT(__header)                          \
+	((__header)->root = 0, (__header)->leftmost = 0, \
+	 (__header)->rightmost = 0, (__header)->rbt_num_node = 0)
 
-#define RBT_COUNT(__header)	((__header)->rbt_num_node)
+#define RBT_COUNT(__header) ((__header)->rbt_num_node)
 
-#define RBT_RIGHTMOST(__header)	((__header)->rightmost)
+#define RBT_RIGHTMOST(__header) ((__header)->rightmost)
 
-#define RBT_LEFTMOST(__header)	((__header)->leftmost)
+#define RBT_LEFTMOST(__header) ((__header)->leftmost)
 
 /*
  * For RBT_VALUE :
  *   __node is any node
  */
-#define RBT_VALUE(__node)	((__node)->rbt_value)
+#define RBT_VALUE(__node) ((__node)->rbt_value)
 
 /*
  * For RBT_OPAQ :
  *   __node is any node
  */
-#define RBT_OPAQ(__node)	((__node)->rbt_opaq)
+#define RBT_OPAQ(__node) ((__node)->rbt_opaq)
 
 /*
  * For RBT_INCREMENT and RBT_DECREMENT :
@@ -138,34 +136,35 @@ iterators invalidated are those referring to the deleted node.
  *   __x is a temporary variable
  *   __node is modified to point to the next/previous node
  */
-#define RBT_INCREMENT(__node) ({					\
-	if ((__node)->next) {						\
-		__node = (__node)->next;				\
-		while ((__node)->left)					\
-			(__node) = (__node)->left;			\
-	} else {							\
-		struct rbt_node *__x;					\
-		do {							\
-			__x = (__node);					\
-		} while ((((__node) = (__node)->parent)) &&		\
-			 ((__node)->next == __x));			\
-	}								\
-})
+#define RBT_INCREMENT(__node)                                       \
+	({                                                          \
+		if ((__node)->next) {                               \
+			__node = (__node)->next;                    \
+			while ((__node)->left)                      \
+				(__node) = (__node)->left;          \
+		} else {                                            \
+			struct rbt_node *__x;                       \
+			do {                                        \
+				__x = (__node);                     \
+			} while ((((__node) = (__node)->parent)) && \
+				 ((__node)->next == __x));          \
+		}                                                   \
+	})
 
-
-#define RBT_DECREMENT(__node) ({					\
-	if ((__node)->left) {						\
-		__node = (__node)->left;				\
-		while ((__node)->next)					\
-			(__node) = (__node)->next;			\
-	} else {							\
-		struct rbt_node *__x;					\
-		do {							\
-			__x = (__node);					\
-		} while ((((__node) = (__node)->parent)) &&		\
-			 ((__node)->left == __x));			\
-	}								\
-})
+#define RBT_DECREMENT(__node)                                       \
+	({                                                          \
+		if ((__node)->left) {                               \
+			__node = (__node)->left;                    \
+			while ((__node)->next)                      \
+				(__node) = (__node)->next;          \
+		} else {                                            \
+			struct rbt_node *__x;                       \
+			do {                                        \
+				__x = (__node);                     \
+			} while ((((__node) = (__node)->parent)) && \
+				 ((__node)->left == __x));          \
+		}                                                   \
+	})
 
 /*
  * For RBT_LOOP and RBT_LOOP_REVERSE :
@@ -175,10 +174,9 @@ iterators invalidated are those referring to the deleted node.
  * These macros must be used with, respectively,
  * RBT_INCREMENT and RBT_DECREMENT.
  */
-#define RBT_LOOP(__header, __it)					\
-	for ((__it) = (__header)->leftmost; (__it);)
+#define RBT_LOOP(__header, __it) for ((__it) = (__header)->leftmost; (__it);)
 
-#define RBT_LOOP_REVERSE(__header, __it)				\
+#define RBT_LOOP_REVERSE(__header, __it) \
 	for ((__it) = (__header)->rightmost; (__it);)
 
 /*
@@ -189,37 +187,39 @@ iterators invalidated are those referring to the deleted node.
  * For RBT_ROTATE_LEFT, (__xx)->next must not be zero.
  * For RBT_ROTATE_RIGHT, (__xx)->left must not be zero.
  */
-#define RBT_ROTATE_LEFT(__xx) ({					\
-	struct rbt_node *__yy;						\
-	__yy = (__xx)->next;						\
-	(__xx)->next = __yy->left;					\
-		if (((__xx)->next)) {					\
-			__yy->left->parent = (__xx);			\
-			__yy->left->anchor = &(__xx)->next;		\
-		}							\
-	__yy->parent = (__xx)->parent;					\
-	__yy->left = (__xx);						\
-	__yy->anchor = (__xx)->anchor;					\
-	(__xx)->parent = __yy;						\
-	(__xx)->anchor = &__yy->left;					\
-	*__yy->anchor = __yy;						\
-})
+#define RBT_ROTATE_LEFT(__xx)                               \
+	({                                                  \
+		struct rbt_node *__yy;                      \
+		__yy = (__xx)->next;                        \
+		(__xx)->next = __yy->left;                  \
+		if (((__xx)->next)) {                       \
+			__yy->left->parent = (__xx);        \
+			__yy->left->anchor = &(__xx)->next; \
+		}                                           \
+		__yy->parent = (__xx)->parent;              \
+		__yy->left = (__xx);                        \
+		__yy->anchor = (__xx)->anchor;              \
+		(__xx)->parent = __yy;                      \
+		(__xx)->anchor = &__yy->left;               \
+		*__yy->anchor = __yy;                       \
+	})
 
-#define RBT_ROTATE_RIGHT(__xx) ({					\
-	struct rbt_node *__yy;						\
-	__yy = (__xx)->left;						\
-	(__xx)->left = __yy->next;					\
-	if ((__xx)->left) {						\
-		__yy->next->parent = (__xx);				\
-		__yy->next->anchor = &(__xx)->left;			\
-	}								\
-	__yy->parent = (__xx)->parent;					\
-	__yy->next = (__xx);						\
-	__yy->anchor = (__xx)->anchor;					\
-	(__xx)->parent = __yy;						\
-	(__xx)->anchor = &__yy->next;					\
-	*__yy->anchor = __yy;						\
-})
+#define RBT_ROTATE_RIGHT(__xx)                              \
+	({                                                  \
+		struct rbt_node *__yy;                      \
+		__yy = (__xx)->left;                        \
+		(__xx)->left = __yy->next;                  \
+		if ((__xx)->left) {                         \
+			__yy->next->parent = (__xx);        \
+			__yy->next->anchor = &(__xx)->left; \
+		}                                           \
+		__yy->parent = (__xx)->parent;              \
+		__yy->next = (__xx);                        \
+		__yy->anchor = (__xx)->anchor;              \
+		(__xx)->parent = __yy;                      \
+		(__xx)->anchor = &__yy->next;               \
+		*__yy->anchor = __yy;                       \
+	})
 
 /*
  * For RBT_INSERT :
@@ -245,80 +245,81 @@ iterators invalidated are those referring to the deleted node.
  * If this insertion unbalances the tree, __node may end in a different
  * position.
  */
-#define RBT_INSERT(__header, __node, __par) ({				\
-	struct rbt_node *__x, *__y;					\
-	(__header)->rbt_num_node++;					\
-	__y = (__par);							\
-	if (__y == 0) {							\
-		(__node)->anchor = &(__header)->root;			\
-		(__header)->root = (__node);				\
-		(__header)->rightmost = (__node);			\
-		(__header)->leftmost = (__node);			\
-	} else if (((__node)->rbt_value == __y->rbt_value) &&		\
-		   __y->next && __y->left) {				\
-		__y = __y->left;					\
-		while (__y->next)					\
-			__y = __y->next;				\
-		__y->next = (__node);					\
-		(__node)->anchor = &__y->next;				\
-	} else if (((__node)->rbt_value > __y->rbt_value) ||		\
-		   (((__node)->rbt_value == __y->rbt_value)		\
-		    && __y->left)) {					\
-		__y->next = (__node);					\
-		(__node)->anchor = &__y->next;				\
-		if (__y == (__header)->rightmost) {			\
-			(__header)->rightmost = (__node);		\
-		}							\
-	} else {							\
-		__y->left = (__node);					\
-		(__node)->anchor = &__y->left;				\
-		if (__y == (__header)->leftmost) {			\
-			(__header)->leftmost = (__node);		\
-		}							\
-	}								\
-	(__node)->rbt_flags = 0;					\
-	(__node)->parent = __y;						\
-	(__node)->left = 0;						\
-	(__node)->next = 0;						\
-	__x = (__node);							\
-	while (__x->parent) {						\
-		__x->rbt_flags |= RBT_RED;				\
-		if ((__x->parent->rbt_flags & RBT_RED) == 0)		\
-			break;						\
-		if (__x->parent == __x->parent->parent->left) {		\
-			__y = __x->parent->parent->next;		\
-			if ((__y == 0) || ((__y->rbt_flags & RBT_RED)	\
-					   == 0)) {			\
-				if (__x == __x->parent->next) {		\
-					__x = __x->parent;		\
-					RBT_ROTATE_LEFT(__x);		\
-				}					\
-				__x->parent->rbt_flags &= ~RBT_RED;	\
-				__x = __x->parent->parent;		\
-				__x->rbt_flags |= RBT_RED;		\
-				RBT_ROTATE_RIGHT(__x);			\
-				break;					\
-			}						\
-		} else {						\
-			__y = __x->parent->parent->left;		\
-			if ((__y == 0) || ((__y->rbt_flags & RBT_RED)	\
-					   == 0)) {			\
-				if (__x == __x->parent->left) {		\
-					__x = __x->parent;		\
-					RBT_ROTATE_RIGHT(__x);		\
-				}					\
-				__x->parent->rbt_flags &= ~RBT_RED;	\
-				__x = __x->parent->parent;		\
-				__x->rbt_flags |= RBT_RED;		\
-				RBT_ROTATE_LEFT(__x);			\
-				break;					\
-			}						\
-		}							\
-		__x->parent->rbt_flags &= ~RBT_RED;			\
-		__y->rbt_flags &= ~RBT_RED;				\
-		__x = __x->parent->parent;				\
-	}								\
-})
+#define RBT_INSERT(__header, __node, __par)                                 \
+	({                                                                  \
+		struct rbt_node *__x, *__y;                                 \
+		(__header)->rbt_num_node++;                                 \
+		__y = (__par);                                              \
+		if (__y == 0) {                                             \
+			(__node)->anchor = &(__header)->root;               \
+			(__header)->root = (__node);                        \
+			(__header)->rightmost = (__node);                   \
+			(__header)->leftmost = (__node);                    \
+		} else if (((__node)->rbt_value == __y->rbt_value) &&       \
+			   __y->next && __y->left) {                        \
+			__y = __y->left;                                    \
+			while (__y->next)                                   \
+				__y = __y->next;                            \
+			__y->next = (__node);                               \
+			(__node)->anchor = &__y->next;                      \
+		} else if (((__node)->rbt_value > __y->rbt_value) ||        \
+			   (((__node)->rbt_value == __y->rbt_value) &&      \
+			    __y->left)) {                                   \
+			__y->next = (__node);                               \
+			(__node)->anchor = &__y->next;                      \
+			if (__y == (__header)->rightmost) {                 \
+				(__header)->rightmost = (__node);           \
+			}                                                   \
+		} else {                                                    \
+			__y->left = (__node);                               \
+			(__node)->anchor = &__y->left;                      \
+			if (__y == (__header)->leftmost) {                  \
+				(__header)->leftmost = (__node);            \
+			}                                                   \
+		}                                                           \
+		(__node)->rbt_flags = 0;                                    \
+		(__node)->parent = __y;                                     \
+		(__node)->left = 0;                                         \
+		(__node)->next = 0;                                         \
+		__x = (__node);                                             \
+		while (__x->parent) {                                       \
+			__x->rbt_flags |= RBT_RED;                          \
+			if ((__x->parent->rbt_flags & RBT_RED) == 0)        \
+				break;                                      \
+			if (__x->parent == __x->parent->parent->left) {     \
+				__y = __x->parent->parent->next;            \
+				if ((__y == 0) ||                           \
+				    ((__y->rbt_flags & RBT_RED) == 0)) {    \
+					if (__x == __x->parent->next) {     \
+						__x = __x->parent;          \
+						RBT_ROTATE_LEFT(__x);       \
+					}                                   \
+					__x->parent->rbt_flags &= ~RBT_RED; \
+					__x = __x->parent->parent;          \
+					__x->rbt_flags |= RBT_RED;          \
+					RBT_ROTATE_RIGHT(__x);              \
+					break;                              \
+				}                                           \
+			} else {                                            \
+				__y = __x->parent->parent->left;            \
+				if ((__y == 0) ||                           \
+				    ((__y->rbt_flags & RBT_RED) == 0)) {    \
+					if (__x == __x->parent->left) {     \
+						__x = __x->parent;          \
+						RBT_ROTATE_RIGHT(__x);      \
+					}                                   \
+					__x->parent->rbt_flags &= ~RBT_RED; \
+					__x = __x->parent->parent;          \
+					__x->rbt_flags |= RBT_RED;          \
+					RBT_ROTATE_LEFT(__x);               \
+					break;                              \
+				}                                           \
+			}                                                   \
+			__x->parent->rbt_flags &= ~RBT_RED;                 \
+			__y->rbt_flags &= ~RBT_RED;                         \
+			__x = __x->parent->parent;                          \
+		}                                                           \
+	})
 
 /*
  * For RBT_UNLINK :
@@ -329,152 +330,161 @@ iterators invalidated are those referring to the deleted node.
  *   otherwise, __node is not modified
  */
 
-#define RBT_UNLINK(__header, __node) ({					\
-	struct rbt_node *__x, *__y, *__z;				\
-	(__header)->rbt_num_node--;					\
-	if ((__node)->left && (__node)->next) {				\
-		__y = (__node)->next;					\
-		while (__y->left)					\
-			__y = __y->left;				\
-		if (((__node)->rbt_flags & RBT_RED) !=			\
-		    (__y->rbt_flags & RBT_RED)) {			\
-			(__node)->rbt_flags ^= RBT_RED;			\
-			__y->rbt_flags ^= RBT_RED;			\
-		}							\
-		__x = __y->next;					\
-		(__node)->left->parent = __y;				\
-		(__node)->left->anchor = &__y->left;			\
-		__y->left = (__node)->left;				\
-		if (__y == (__node)->next) {				\
-			__z = __y;					\
-		} else {						\
-			__z = __y->parent;				\
-			if (__x) {					\
-				__x->parent = __z;			\
-				__x->anchor = &__z->left;		\
-			}						\
-			__z->left = __x;  /* __y was a child of left */	\
-			__y->next = (__node)->next;			\
-			(__node)->next->parent = __y;			\
-			(__node)->next->anchor = &__y->next;		\
-		}							\
-		__y->parent = (__node)->parent;				\
-		__y->anchor = (__node)->anchor;				\
-		*(__node)->anchor = __y;				\
-	} else {							\
-		__z = (__node)->parent;					\
-		__x = (__node)->next;     /* __x might be NULL */	\
-		if (__x == 0)						\
-			__x = (__node)->left;				\
-		if (__x) {						\
-			__x->parent = __z;				\
-			__x->anchor = (__node)->anchor;			\
-		}							\
-		if ((__header)->leftmost == (__node)) {			\
-			if (__x) {					\
-				__y = __x;				\
-				while (__y->left)			\
-					__y = __y->left;		\
-				(__header)->leftmost = __y;		\
-			} else {					\
-				(__header)->leftmost = __z;		\
-			}						\
-		}							\
-		if ((__header)->rightmost == (__node)) {		\
-			if (__x) {					\
-				__y = __x;				\
-				while (__y->next)			\
-					__y = __y->next;		\
-				(__header)->rightmost = __y;		\
-			} else {					\
-				(__header)->rightmost = __z;		\
-			}						\
-		}							\
-		*(__node)->anchor = __x;				\
-	}								\
-	if (!((__node)->rbt_flags & RBT_RED)) {				\
-		while ((__z) &&						\
-		       ((__x == 0) || !(__x->rbt_flags & RBT_RED))) {	\
-			if (__x == __z->left) {				\
-				__y = __z->next;			\
-				if (__y->rbt_flags & RBT_RED) {		\
-					__y->rbt_flags &= ~RBT_RED;	\
-					__z->rbt_flags |= RBT_RED;	\
-					RBT_ROTATE_LEFT(__z);		\
-					__y = __z->next;		\
-				}					\
-				if ((__y->left == 0 ||			\
-				     !(__y->left->rbt_flags & RBT_RED)) \
-				    && (__y->next == 0 ||		\
-					!(__y->next->rbt_flags &	\
-					  RBT_RED))) {			\
-					__y->rbt_flags |= RBT_RED;	\
-					__x = __z;			\
-					__z = __z->parent;		\
-				} else {				\
-					if (__y->next == 0 ||		\
-					    !(__y->next->rbt_flags &	\
-					      RBT_RED)) {		\
-						if (__y->left)		\
-							__y->left->rbt_flags \
-								&= ~RBT_RED; \
-						__y->rbt_flags |= RBT_RED; \
-						RBT_ROTATE_RIGHT(__y);	\
-						__y = __z->next;	\
-					}				\
-					__y->rbt_flags &= ~RBT_RED;	\
-					__y->rbt_flags |=		\
-						__z->rbt_flags & RBT_RED; \
-					__z->rbt_flags &= ~RBT_RED;	\
-					if (__y->next)			\
-						__y->next->rbt_flags	\
-							&= ~RBT_RED;	\
-					RBT_ROTATE_LEFT(__z);		\
-					break;				\
-				}					\
-			} else {					\
-				__y = __z->left;			\
-				if (__y->rbt_flags & RBT_RED) {		\
-					__y->rbt_flags &= ~RBT_RED;	\
-					__z->rbt_flags |= RBT_RED;	\
-					RBT_ROTATE_RIGHT(__z);		\
-					__y = __z->left;		\
-				}					\
-				if ((__y->left == 0 ||			\
-				     !(__y->left->rbt_flags & RBT_RED)) \
-				    && (__y->next == 0 ||		\
-					!(__y->next->rbt_flags &	\
-					  RBT_RED))) {			\
-					__y->rbt_flags |= RBT_RED;	\
-					__x = __z;			\
-					__z = __z->parent;		\
-				} else {				\
-					if (__y->left == 0 ||		\
-					    !(__y->left->rbt_flags &	\
-					      RBT_RED)) {		\
-						if (__y->next)		\
-							__y->next->rbt_flags \
-								&= ~RBT_RED; \
-						__y->rbt_flags |= RBT_RED; \
-						RBT_ROTATE_LEFT(__y);	\
-						__y = __z->left;	\
-					}				\
-					__y->rbt_flags &= ~RBT_RED;	\
-					__y->rbt_flags |= __z->rbt_flags\
-						& RBT_RED;		\
-					__z->rbt_flags &= ~RBT_RED;	\
-					if (__y->left)			\
-						__y->left->rbt_flags	\
-							&= ~RBT_RED;	\
-					RBT_ROTATE_RIGHT(__z);		\
-					break;				\
-			}					\
-			}						\
-		}							\
-		if (__x)						\
-			__x->rbt_flags &= ~RBT_RED;			\
-	}								\
-})
+#define RBT_UNLINK(__header, __node)                                                   \
+	({                                                                             \
+		struct rbt_node *__x, *__y, *__z;                                      \
+		(__header)->rbt_num_node--;                                            \
+		if ((__node)->left && (__node)->next) {                                \
+			__y = (__node)->next;                                          \
+			while (__y->left)                                              \
+				__y = __y->left;                                       \
+			if (((__node)->rbt_flags & RBT_RED) !=                         \
+			    (__y->rbt_flags & RBT_RED)) {                              \
+				(__node)->rbt_flags ^= RBT_RED;                        \
+				__y->rbt_flags ^= RBT_RED;                             \
+			}                                                              \
+			__x = __y->next;                                               \
+			(__node)->left->parent = __y;                                  \
+			(__node)->left->anchor = &__y->left;                           \
+			__y->left = (__node)->left;                                    \
+			if (__y == (__node)->next) {                                   \
+				__z = __y;                                             \
+			} else {                                                       \
+				__z = __y->parent;                                     \
+				if (__x) {                                             \
+					__x->parent = __z;                             \
+					__x->anchor = &__z->left;                      \
+				}                                                      \
+				__z->left = __x; /* __y was a child of left */         \
+				__y->next = (__node)->next;                            \
+				(__node)->next->parent = __y;                          \
+				(__node)->next->anchor = &__y->next;                   \
+			}                                                              \
+			__y->parent = (__node)->parent;                                \
+			__y->anchor = (__node)->anchor;                                \
+			*(__node)->anchor = __y;                                       \
+		} else {                                                               \
+			__z = (__node)->parent;                                        \
+			__x = (__node)->next; /* __x might be NULL */                  \
+			if (__x == 0)                                                  \
+				__x = (__node)->left;                                  \
+			if (__x) {                                                     \
+				__x->parent = __z;                                     \
+				__x->anchor = (__node)->anchor;                        \
+			}                                                              \
+			if ((__header)->leftmost == (__node)) {                        \
+				if (__x) {                                             \
+					__y = __x;                                     \
+					while (__y->left)                              \
+						__y = __y->left;                       \
+					(__header)->leftmost = __y;                    \
+				} else {                                               \
+					(__header)->leftmost = __z;                    \
+				}                                                      \
+			}                                                              \
+			if ((__header)->rightmost == (__node)) {                       \
+				if (__x) {                                             \
+					__y = __x;                                     \
+					while (__y->next)                              \
+						__y = __y->next;                       \
+					(__header)->rightmost = __y;                   \
+				} else {                                               \
+					(__header)->rightmost = __z;                   \
+				}                                                      \
+			}                                                              \
+			*(__node)->anchor = __x;                                       \
+		}                                                                      \
+		if (!((__node)->rbt_flags & RBT_RED)) {                                \
+			while ((__z) &&                                                \
+			       ((__x == 0) || !(__x->rbt_flags & RBT_RED))) {          \
+				if (__x == __z->left) {                                \
+					__y = __z->next;                               \
+					if (__y->rbt_flags & RBT_RED) {                \
+						__y->rbt_flags &= ~RBT_RED;            \
+						__z->rbt_flags |= RBT_RED;             \
+						RBT_ROTATE_LEFT(__z);                  \
+						__y = __z->next;                       \
+					}                                              \
+					if ((__y->left == 0 ||                         \
+					     !(__y->left->rbt_flags &                  \
+					       RBT_RED)) &&                            \
+					    (__y->next == 0 ||                         \
+					     !(__y->next->rbt_flags &                  \
+					       RBT_RED))) {                            \
+						__y->rbt_flags |= RBT_RED;             \
+						__x = __z;                             \
+						__z = __z->parent;                     \
+					} else {                                       \
+						if (__y->next == 0 ||                  \
+						    !(__y->next->rbt_flags &           \
+						      RBT_RED)) {                      \
+							if (__y->left)                 \
+								__y->left              \
+									->rbt_flags &= \
+									~RBT_RED;      \
+							__y->rbt_flags |=              \
+								RBT_RED;               \
+							RBT_ROTATE_RIGHT(__y);         \
+							__y = __z->next;               \
+						}                                      \
+						__y->rbt_flags &= ~RBT_RED;            \
+						__y->rbt_flags |=                      \
+							__z->rbt_flags &               \
+							RBT_RED;                       \
+						__z->rbt_flags &= ~RBT_RED;            \
+						if (__y->next)                         \
+							__y->next->rbt_flags &=        \
+								~RBT_RED;              \
+						RBT_ROTATE_LEFT(__z);                  \
+						break;                                 \
+					}                                              \
+				} else {                                               \
+					__y = __z->left;                               \
+					if (__y->rbt_flags & RBT_RED) {                \
+						__y->rbt_flags &= ~RBT_RED;            \
+						__z->rbt_flags |= RBT_RED;             \
+						RBT_ROTATE_RIGHT(__z);                 \
+						__y = __z->left;                       \
+					}                                              \
+					if ((__y->left == 0 ||                         \
+					     !(__y->left->rbt_flags &                  \
+					       RBT_RED)) &&                            \
+					    (__y->next == 0 ||                         \
+					     !(__y->next->rbt_flags &                  \
+					       RBT_RED))) {                            \
+						__y->rbt_flags |= RBT_RED;             \
+						__x = __z;                             \
+						__z = __z->parent;                     \
+					} else {                                       \
+						if (__y->left == 0 ||                  \
+						    !(__y->left->rbt_flags &           \
+						      RBT_RED)) {                      \
+							if (__y->next)                 \
+								__y->next              \
+									->rbt_flags &= \
+									~RBT_RED;      \
+							__y->rbt_flags |=              \
+								RBT_RED;               \
+							RBT_ROTATE_LEFT(__y);          \
+							__y = __z->left;               \
+						}                                      \
+						__y->rbt_flags &= ~RBT_RED;            \
+						__y->rbt_flags |=                      \
+							__z->rbt_flags &               \
+							RBT_RED;                       \
+						__z->rbt_flags &= ~RBT_RED;            \
+						if (__y->left)                         \
+							__y->left->rbt_flags &=        \
+								~RBT_RED;              \
+						RBT_ROTATE_RIGHT(__z);                 \
+						break;                                 \
+					}                                              \
+				}                                                      \
+			}                                                              \
+			if (__x)                                                       \
+				__x->rbt_flags &= ~RBT_RED;                            \
+		}                                                                      \
+	})
 
 /*
  * For RBT_FIND
@@ -498,21 +508,22 @@ iterators invalidated are those referring to the deleted node.
  *
  * RBT_FIND must be called before inserting a node using RBT_INSERT.
  */
-#define RBT_FIND(__header, __node, __val) ({				\
-	struct rbt_node *__x;						\
-	(__node) = (__header)->root;					\
-	__x = (__header)->root;						\
-	while (__x) {							\
-		(__node) = __x;						\
-		if (__x->rbt_value > (__val)) {				\
-			__x = __x->left;				\
-		} else if (__x->rbt_value < (__val)) {			\
-			__x = __x->next;				\
-		} else {						\
-			break;						\
-		}							\
-	}								\
-})
+#define RBT_FIND(__header, __node, __val)                      \
+	({                                                     \
+		struct rbt_node *__x;                          \
+		(__node) = (__header)->root;                   \
+		__x = (__header)->root;                        \
+		while (__x) {                                  \
+			(__node) = __x;                        \
+			if (__x->rbt_value > (__val)) {        \
+				__x = __x->left;               \
+			} else if (__x->rbt_value < (__val)) { \
+				__x = __x->next;               \
+			} else {                               \
+				break;                         \
+			}                                      \
+		}                                              \
+	})
 
 /*
  * For RBT_FIND_LEFT
@@ -535,145 +546,153 @@ iterators invalidated are those referring to the deleted node.
  *     ...
  *   }
  */
-#define RBT_FIND_LEFT(__header, __node, __val) ({			\
-	struct rbt_node *__x;						\
-	(__node) = 0;							\
-	__x = (__header)->root;						\
-	while (__x) {							\
-		if (__x->rbt_value > (__val)) {				\
-			__x = __x->left;				\
-		} else if (__x->rbt_value < (__val)) {			\
-			__x = __x->next;				\
-		} else {						\
-			(__node) = __x;					\
-			while (__x) {					\
-				while ((__x = __x->left)) {		\
-					if (__x->rbt_value < (__val))	\
-						break;			\
-					(__node) = __x;			\
-				}					\
-				if (__x == 0)				\
-					break;				\
-				while ((__x = __x->next)) {		\
-					if (__x->rbt_value ==		\
-					    (__val)) {			\
-						(__node) = __x;		\
-						break;			\
-					}				\
-				}					\
-			}						\
-			break;						\
-		}							\
-	}								\
-})
+#define RBT_FIND_LEFT(__header, __node, __val)                                \
+	({                                                                    \
+		struct rbt_node *__x;                                         \
+		(__node) = 0;                                                 \
+		__x = (__header)->root;                                       \
+		while (__x) {                                                 \
+			if (__x->rbt_value > (__val)) {                       \
+				__x = __x->left;                              \
+			} else if (__x->rbt_value < (__val)) {                \
+				__x = __x->next;                              \
+			} else {                                              \
+				(__node) = __x;                               \
+				while (__x) {                                 \
+					while ((__x = __x->left)) {           \
+						if (__x->rbt_value < (__val)) \
+							break;                \
+						(__node) = __x;               \
+					}                                     \
+					if (__x == 0)                         \
+						break;                        \
+					while ((__x = __x->next)) {           \
+						if (__x->rbt_value ==         \
+						    (__val)) {                \
+							(__node) = __x;       \
+							break;                \
+						}                             \
+					}                                     \
+				}                                             \
+				break;                                        \
+			}                                                     \
+		}                                                             \
+	})
 
 /*
  * RBT_BLACK_COUNT counts the number of black nodes in the parents of a node
  */
-#define RBT_BLACK_COUNT(__node, __sum) ({				\
-	for ((__sum) = 0; (__node); (__node) = (__node)->parent) {	\
-		if (!((__node)->rbt_flags & RBT_RED))			\
-			++(__sum);					\
-	}								\
-})
+#define RBT_BLACK_COUNT(__node, __sum)                                     \
+	({                                                                 \
+		for ((__sum) = 0; (__node); (__node) = (__node)->parent) { \
+			if (!((__node)->rbt_flags & RBT_RED))              \
+				++(__sum);                                 \
+		}                                                          \
+	})
 
-#define RBT_VERIFY(__header, __it, __error) ({				\
-	int __len, __num, __sum;					\
-	struct rbt_node *__L, *__R;					\
-	(__error) = 0;							\
-	if ((__header)->rbt_num_node == 0) {				\
-		if (((__header)->leftmost) ||				\
-		    ((__header)->rightmost) ||				\
-		    ((__header)->root)) {				\
-			(__error) = 1;					\
-			(__it) = 0;					\
-		}							\
-	} else {							\
-		__L = (__header)->leftmost;				\
-		RBT_BLACK_COUNT(__L, __len)				\
-			__num = 0;					\
-		RBT_LOOP((__header), (__it)) {				\
-			if ((__it)->parent == 0) {			\
-				if (((__it) != (__header)->root) ||	\
-				    ((__it)->anchor !=			\
-				     &(__header)->root)) {		\
-					(__error) = 2;			\
-					break;				\
-				}					\
-			} else {					\
-				if ((((__it) == (__it)->parent->next) && \
-				     ((__it)->anchor !=			\
-				      &(__it)->parent->next)) ||	\
-				    (((__it) == (__it)->parent->left) && \
-				     ((__it)->anchor !=			\
-				      &(__it)->parent->left))) {	\
-					(__error) = 2;			\
-					break;				\
-				}					\
-			}						\
-			__L = (__it)->left;				\
-			__R = (__it)->next;				\
-			if (((__it)->rbt_flags & RBT_RED) &&		\
-			    ((__L && (__L->rbt_flags & RBT_RED)) ||	\
-			     (__R && (__R->rbt_flags & RBT_RED)))) {	\
-				(__error) = 3;				\
-				break;					\
-			}						\
-			if (__L && (__L->rbt_value > (__it)->rbt_value)) { \
-				(__error) = 4;				\
-				break;					\
-			}						\
-			if (__R && (__R->rbt_value < (__it)->rbt_value)) { \
-				(__error) = 5;				\
-				break;					\
-			}						\
-			if (!__L && !__R) {				\
-				__L = (__it);				\
-				RBT_BLACK_COUNT(__L, __sum)		\
-					if (__sum != __len) {		\
-						(__error) = 6;		\
-						break;			\
-					}				\
-			}						\
-			__num++;					\
-			RBT_INCREMENT(__it)				\
-				}					\
-		if (((__error) == 0) && (__num !=			\
-					 (__header)->rbt_num_node)) {	\
-			(__error) = 7;					\
-			(__it) = 0;					\
-		}							\
-		/* test RBT_DECREMENT */				\
-		__num = 0;						\
-		RBT_LOOP_REVERSE(__header, __it) {			\
-			__num++;					\
-			RBT_DECREMENT(__it)				\
-				}					\
-		if (((__error) == 0) && (__num !=			\
-					 (__header)->rbt_num_node)) {	\
-			(__error) = 8;					\
-			(__it) = 0;					\
-		}							\
-		if ((__error) == 0) {					\
-			__L = (__header)->root;				\
-			while ((__L)->left)				\
-				(__L) = (__L)->left;			\
-			__R = (__header)->root;				\
-			while ((__R)->next)				\
-				(__R) = (__R)->next;			\
-			if ((__L != (__header)->leftmost) ||		\
-			    (__R != (__header)->rightmost)) {		\
-				(__error) = 9;				\
-				(__it) = 0;				\
-			}						\
-		}							\
-		if (((__error) == 0) && ((__header)->root) &&		\
-		    !((__header)->root->parent == 0)) {			\
-			(__error) = 10;					\
-			(__it) = 0;					\
-		}							\
-	}								\
-})
+#define RBT_VERIFY(__header, __it, __error)                                  \
+	({                                                                   \
+		int __len, __num, __sum;                                     \
+		struct rbt_node *__L, *__R;                                  \
+		(__error) = 0;                                               \
+		if ((__header)->rbt_num_node == 0) {                         \
+			if (((__header)->leftmost) ||                        \
+			    ((__header)->rightmost) || ((__header)->root)) { \
+				(__error) = 1;                               \
+				(__it) = 0;                                  \
+			}                                                    \
+		} else {                                                     \
+			__L = (__header)->leftmost;                          \
+			RBT_BLACK_COUNT(__L, __len)                          \
+			__num = 0;                                           \
+			RBT_LOOP((__header), (__it))                         \
+			{                                                    \
+				if ((__it)->parent == 0) {                   \
+					if (((__it) != (__header)->root) ||  \
+					    ((__it)->anchor !=               \
+					     &(__header)->root)) {           \
+						(__error) = 2;               \
+						break;                       \
+					}                                    \
+				} else {                                     \
+					if ((((__it) ==                      \
+					      (__it)->parent->next) &&       \
+					     ((__it)->anchor !=              \
+					      &(__it)->parent->next)) ||     \
+					    (((__it) ==                      \
+					      (__it)->parent->left) &&       \
+					     ((__it)->anchor !=              \
+					      &(__it)->parent->left))) {     \
+						(__error) = 2;               \
+						break;                       \
+					}                                    \
+				}                                            \
+				__L = (__it)->left;                          \
+				__R = (__it)->next;                          \
+				if (((__it)->rbt_flags & RBT_RED) &&         \
+				    ((__L && (__L->rbt_flags & RBT_RED)) ||  \
+				     (__R && (__R->rbt_flags & RBT_RED)))) { \
+					(__error) = 3;                       \
+					break;                               \
+				}                                            \
+				if (__L &&                                   \
+				    (__L->rbt_value > (__it)->rbt_value)) {  \
+					(__error) = 4;                       \
+					break;                               \
+				}                                            \
+				if (__R &&                                   \
+				    (__R->rbt_value < (__it)->rbt_value)) {  \
+					(__error) = 5;                       \
+					break;                               \
+				}                                            \
+				if (!__L && !__R) {                          \
+					__L = (__it);                        \
+					RBT_BLACK_COUNT(__L, __sum)          \
+					if (__sum != __len) {                \
+						(__error) = 6;               \
+						break;                       \
+					}                                    \
+				}                                            \
+				__num++;                                     \
+				RBT_INCREMENT(__it)                          \
+			}                                                    \
+			if (((__error) == 0) &&                              \
+			    (__num != (__header)->rbt_num_node)) {           \
+				(__error) = 7;                               \
+				(__it) = 0;                                  \
+			}                                                    \
+			/* test RBT_DECREMENT */                             \
+			__num = 0;                                           \
+			RBT_LOOP_REVERSE(__header, __it)                     \
+			{                                                    \
+				__num++;                                     \
+				RBT_DECREMENT(__it)                          \
+			}                                                    \
+			if (((__error) == 0) &&                              \
+			    (__num != (__header)->rbt_num_node)) {           \
+				(__error) = 8;                               \
+				(__it) = 0;                                  \
+			}                                                    \
+			if ((__error) == 0) {                                \
+				__L = (__header)->root;                      \
+				while ((__L)->left)                          \
+					(__L) = (__L)->left;                 \
+				__R = (__header)->root;                      \
+				while ((__R)->next)                          \
+					(__R) = (__R)->next;                 \
+				if ((__L != (__header)->leftmost) ||         \
+				    (__R != (__header)->rightmost)) {        \
+					(__error) = 9;                       \
+					(__it) = 0;                          \
+				}                                            \
+			}                                                    \
+			if (((__error) == 0) && ((__header)->root) &&        \
+			    !((__header)->root->parent == 0)) {              \
+				(__error) = 10;                              \
+				(__it) = 0;                                  \
+			}                                                    \
+		}                                                            \
+	})
 
 #endif /* RBT_TREE_H */
 

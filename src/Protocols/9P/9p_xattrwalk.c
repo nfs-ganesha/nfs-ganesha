@@ -58,7 +58,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	size_t attrsize = 0;
 
 	fsal_status_t fsal_status;
-	char name[MAXNAMLEN+1];
+	char name[MAXNAMLEN + 1];
 	fsal_xattrent_t xattrs_arr[XATTRS_ARRAY_LEN];
 	int eod_met = false;
 	unsigned int nb_xattrs_read = 0;
@@ -75,18 +75,20 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, attrfid, u32);
 
 	LogDebug(COMPONENT_9P, "TXATTRWALK: tag=%u fid=%u attrfid=%u",
-		 (u32) *msgtag, *fid, *attrfid);
+		 (u32)*msgtag, *fid, *attrfid);
 
 	_9p_getstr(cursor, name_len, name_str);
 
 	if (*name_len == 0)
-		LogDebug(COMPONENT_9P,
-			 "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=(LIST XATTR)",
-			 (u32) *msgtag, *fid, *attrfid);
+		LogDebug(
+			COMPONENT_9P,
+			"TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=(LIST XATTR)",
+			(u32)*msgtag, *fid, *attrfid);
 	else
-		LogDebug(COMPONENT_9P,
-			 "TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=%.*s",
-			 (u32) *msgtag, *fid, *attrfid, *name_len, name_str);
+		LogDebug(
+			COMPONENT_9P,
+			"TXATTRWALK (component): tag=%u fid=%u attrfid=%u name=%.*s",
+			(u32)*msgtag, *fid, *attrfid, *name_len, name_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -104,8 +106,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len >= sizeof(name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	pxattrfid = gsh_calloc(1, sizeof(struct _9p_fid));
@@ -121,20 +122,19 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	_9p_get_fname(name, *name_len, name_str);
 
-	pxattrfid->xattr = gsh_malloc(sizeof(*pxattrfid->xattr) +
-				      XATTR_BUFFERSIZE);
+	pxattrfid->xattr =
+		gsh_malloc(sizeof(*pxattrfid->xattr) + XATTR_BUFFERSIZE);
 
 	if (*name_len == 0) {
 		/* xattrwalk is used with an empty name,
 		 * this is a listxattr request */
 		fsal_status = pxattrfid->pentry->obj_ops->list_ext_attrs(
 			pxattrfid->pentry,
-			FSAL_XATTR_RW_COOKIE,	/* Start with RW cookie,
+			FSAL_XATTR_RW_COOKIE, /* Start with RW cookie,
 						 * hiding RO ones */
 			xattrs_arr,
 			XATTRS_ARRAY_LEN, /** @todo fix static length */
-			&nb_xattrs_read,
-			&eod_met);
+			&nb_xattrs_read, &eod_met);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->xattr);
@@ -149,8 +149,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		if (eod_met != true) {
 			gsh_free(pxattrfid->xattr);
 			gsh_free(pxattrfid);
-			return _9p_rerror(req9p, msgtag, ERANGE,
-					  plenout, preply);
+			return _9p_rerror(req9p, msgtag, ERANGE, plenout,
+					  preply);
 		}
 
 		xattr_cursor = pxattrfid->xattr->xattr_content;
@@ -171,25 +171,24 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			/* +1 for trailing '\0' */
 			xattr_cursor += tmplen + 1;
 			attrsize += tmplen + 1;
-
 		}
 	} else {
 		/* xattrwalk has a non-empty name, use regular getxattr */
 		fsal_status =
-		    pxattrfid->pentry->obj_ops->getextattr_value_by_name(
-					     pxattrfid->pentry, name,
-					     pxattrfid->xattr->xattr_content,
-					     XATTR_BUFFERSIZE,
-					     &attrsize);
+			pxattrfid->pentry->obj_ops->getextattr_value_by_name(
+				pxattrfid->pentry, name,
+				pxattrfid->xattr->xattr_content,
+				XATTR_BUFFERSIZE, &attrsize);
 
 		if (fsal_status.minor == ERANGE) {
 			/* we need a bigger buffer, do one more request with
 			 * 0-size to get length and reallocate/try again */
 			fsal_status =
-			   pxattrfid->pentry->obj_ops->getextattr_value_by_name(
-					     pxattrfid->pentry, name,
-					     pxattrfid->xattr->xattr_content,
-					     0, &attrsize);
+				pxattrfid->pentry->obj_ops
+					->getextattr_value_by_name(
+						pxattrfid->pentry, name,
+						pxattrfid->xattr->xattr_content,
+						0, &attrsize);
 			if (FSAL_IS_ERROR(fsal_status)) {
 				gsh_free(pxattrfid->xattr);
 				gsh_free(pxattrfid);
@@ -205,18 +204,20 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				gsh_free(pxattrfid->xattr);
 				gsh_free(pxattrfid);
 
-				return _9p_rerror(req9p, msgtag, E2BIG,
-						  plenout, preply);
+				return _9p_rerror(req9p, msgtag, E2BIG, plenout,
+						  preply);
 			}
 
-			pxattrfid->xattr = gsh_realloc(pxattrfid->xattr,
-					sizeof(*pxattrfid->xattr) + attrsize);
+			pxattrfid->xattr = gsh_realloc(
+				pxattrfid->xattr,
+				sizeof(*pxattrfid->xattr) + attrsize);
 
 			fsal_status =
-			   pxattrfid->pentry->obj_ops->getextattr_value_by_name(
-					     pxattrfid->pentry, name,
-					     pxattrfid->xattr->xattr_content,
-					     attrsize, &attrsize);
+				pxattrfid->pentry->obj_ops
+					->getextattr_value_by_name(
+						pxattrfid->pentry, name,
+						pxattrfid->xattr->xattr_content,
+						attrsize, &attrsize);
 		}
 		if (FSAL_IS_ERROR(fsal_status)) {
 			gsh_free(pxattrfid->xattr);
@@ -228,8 +229,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 						  plenout, preply);
 
 			/* fsal_status.minor is a valid errno code */
-			return _9p_rerror(req9p, msgtag,
-					  fsal_status.minor, plenout, preply);
+			return _9p_rerror(req9p, msgtag, fsal_status.minor,
+					  plenout, preply);
 		}
 	}
 	pxattrfid->xattr->xattr_size = attrsize;
@@ -262,8 +263,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	LogDebug(COMPONENT_9P,
 		 "RXATTRWALK: tag=%u fid=%u attrfid=%u name=%.*s size=%llu",
-		 (u32) *msgtag, *fid, *attrfid, *name_len, name_str,
+		 (u32)*msgtag, *fid, *attrfid, *name_len, name_str,
 		 (unsigned long long)attrsize);
 
 	return 1;
-}				/* _9p_xattrwalk */
+} /* _9p_xattrwalk */

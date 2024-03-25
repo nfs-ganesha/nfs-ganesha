@@ -92,11 +92,10 @@ static bool proc_export(struct gsh_export *export, void *arg)
 	if (glist_empty(clients))
 		clients = &export_opt.clients;
 
-	glist_for_each(glist_item, clients) {
-		struct base_client_entry *client =
-					glist_entry(glist_item,
-						    struct base_client_entry,
-						    cle_list);
+	glist_for_each(glist_item, clients)
+	{
+		struct base_client_entry *client = glist_entry(
+			glist_item, struct base_client_entry, cle_list);
 
 		group = gsh_calloc(1, sizeof(struct groupnode));
 
@@ -110,7 +109,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		switch (client->type) {
 		case NETWORK_CLIENT:
 			grp_name = cidr_to_str(client->client.network.cidr,
-						CIDR_NOFLAGS);
+					       CIDR_NOFLAGS);
 			if (grp_name == NULL) {
 				state->retval = errno;
 				grp_name = "Invalid Network Address";
@@ -133,8 +132,7 @@ static bool proc_export(struct gsh_export *export, void *arg)
 		default:
 			grp_name = "<unknown>";
 		}
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Export %s client %s",
+		LogFullDebug(COMPONENT_NFSPROTO, "Export %s client %s",
 			     ctx_export_path(op_ctx), grp_name);
 		group->gr_name = gsh_strdup(grp_name);
 		if (free_grp_name)
@@ -194,7 +192,7 @@ int mnt_Export(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 	res->res_mntexport = proc_state.head;
 	return NFS_REQ_OK;
-}				/* mnt_Export */
+} /* mnt_Export */
 
 /**
  * mnt_Export_Free: Frees the result structure allocated for mnt_Export.
@@ -225,4 +223,4 @@ void mnt_Export_Free(nfs_res_t *res)
 		gsh_free(exp);
 		exp = next_exp;
 	}
-}				/* mnt_Export_Free */
+} /* mnt_Export_Free */

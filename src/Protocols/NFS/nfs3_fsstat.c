@@ -34,7 +34,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "gsh_rpc.h"
@@ -75,11 +75,10 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* to avoid setting it on each error case */
 	res->res_fsstat3.FSSTAT3res_u.resfail.obj_attributes.attributes_follow =
-	    FALSE;
+		FALSE;
 
 	obj = nfs3_FhandleToCache(&arg->arg_fsstat3.fsroot,
-				    &res->res_fsstat3.status,
-				    &rc);
+				  &res->res_fsstat3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -100,7 +99,7 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			rc = NFS_REQ_DROP;
 		} else {
 			res->res_fsstat3.status =
-						nfs3_Errno_status(fsal_status);
+				nfs3_Errno_status(fsal_status);
 			rc = NFS_REQ_OK;
 		}
 
@@ -120,9 +119,8 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		     dynamicinfo.total_files, dynamicinfo.free_files,
 		     dynamicinfo.avail_files);
 
-	nfs_SetPostOpAttr(obj,
-			  &res->res_fsstat3.FSSTAT3res_u.resok.obj_attributes,
-			  NULL);
+	nfs_SetPostOpAttr(
+		obj, &res->res_fsstat3.FSSTAT3res_u.resok.obj_attributes, NULL);
 
 	res->res_fsstat3.FSSTAT3res_u.resok.tbytes = dynamicinfo.total_bytes;
 	res->res_fsstat3.FSSTAT3res_u.resok.fbytes = dynamicinfo.free_bytes;
@@ -136,27 +134,27 @@ int nfs3_fsstat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_fsstat3.status = NFS3_OK;
 
 	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> tbytes=%"PRIu64" fbytes=%"PRIu64
-		     " abytes=%"PRIu64,
+		     "nfs_Fsstat --> tbytes=%" PRIu64 " fbytes=%" PRIu64
+		     " abytes=%" PRIu64,
 		     res->res_fsstat3.FSSTAT3res_u.resok.tbytes,
 		     res->res_fsstat3.FSSTAT3res_u.resok.fbytes,
 		     res->res_fsstat3.FSSTAT3res_u.resok.abytes);
 
 	LogFullDebug(COMPONENT_NFSPROTO,
-		     "nfs_Fsstat --> tfiles=%"PRIu64" fffiles=%"PRIu64
-		     " afiles=%"PRIu64,
+		     "nfs_Fsstat --> tfiles=%" PRIu64 " fffiles=%" PRIu64
+		     " afiles=%" PRIu64,
 		     res->res_fsstat3.FSSTAT3res_u.resok.tfiles,
 		     res->res_fsstat3.FSSTAT3res_u.resok.ffiles,
 		     res->res_fsstat3.FSSTAT3res_u.resok.afiles);
 
 	rc = NFS_REQ_OK;
 
- out:
+out:
 	/* return references */
 	obj->obj_ops->put_ref(obj);
 
 	return rc;
-}				/* nfs3_fsstat */
+} /* nfs3_fsstat */
 
 /**
  * @brief Free the result structure allocated for nfs3_fsstat

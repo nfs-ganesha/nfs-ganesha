@@ -56,26 +56,26 @@
  */
 
 typedef enum protos {
-	P_NFS,			/*< NFS, of course. */
+	P_NFS, /*< NFS, of course. */
 #ifdef _USE_NFS3
-	P_MNT,			/*< Mount (for v3) */
+	P_MNT, /*< Mount (for v3) */
 #endif
 #ifdef _USE_NLM
-	P_NLM,			/*< NLM (for v3) */
+	P_NLM, /*< NLM (for v3) */
 #endif
 #ifdef _USE_RQUOTA
-	P_RQUOTA,		/*< RQUOTA (for v3) */
+	P_RQUOTA, /*< RQUOTA (for v3) */
 #endif
 #ifdef USE_NFSACL3
-	P_NFSACL,		/*< NFSACL (for v3) */
+	P_NFSACL, /*< NFSACL (for v3) */
 #endif
 #ifdef RPC_VSOCK
-	P_NFS_VSOCK,		/*< NFS over vmware, qemu vmci sockets */
+	P_NFS_VSOCK, /*< NFS over vmware, qemu vmci sockets */
 #endif
 #ifdef _USE_NFS_RDMA
-	P_NFS_RDMA,		/*< NFS over RPC/RDMA */
+	P_NFS_RDMA, /*< NFS over RPC/RDMA */
 #endif
-	P_COUNT			/*< Number of protocols */
+	P_COUNT /*< Number of protocols */
 } protos;
 
 /**
@@ -122,12 +122,12 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.drc.tcp.cachesz
  */
-#define DRC_TCP_CACHESZ 127	/* make prime */
+#define DRC_TCP_CACHESZ 127 /* make prime */
 
 /**
  * @brief Default value for core_param.drc.tcp.hiwat
  */
-#define DRC_TCP_HIWAT 64	/* 1/2(size) */
+#define DRC_TCP_HIWAT 64 /* 1/2(size) */
 
 /**
  * @brief Default value for core_param.drc.tcp.recycle_npart
@@ -137,7 +137,7 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.drc.tcp.expire_s
  */
-#define DRC_TCP_RECYCLE_EXPIRE_S 600	/* 10m */
+#define DRC_TCP_RECYCLE_EXPIRE_S 600 /* 10m */
 
 /**
  * @brief Default value for core_param.drc.tcp.checksum
@@ -157,12 +157,12 @@ typedef enum protos {
 /**
  * @brief Default value for core_param.drc.udp.cachesz
  */
-#define DRC_UDP_CACHESZ 599	/* make prime */
+#define DRC_UDP_CACHESZ 599 /* make prime */
 
 /**
  * @brief Default value for core_param.drc.udp.hiwat
  */
-#define DRC_UDP_HIWAT 16384	/* 1/2(size) */
+#define DRC_UDP_HIWAT 16384 /* 1/2(size) */
 
 /**
  * @brief Default value for core_param.drc.udp.checksum
@@ -188,23 +188,23 @@ typedef enum protos {
  * @brief Turn off all protocols
  */
 
-#define CORE_OPTION_NONE 0x00000000	/*< No operations are supported */
+#define CORE_OPTION_NONE 0x00000000 /*< No operations are supported */
 
 /**
  * @brief Support NFSv3
  */
 
-#define CORE_OPTION_NFSV3 0x00000001	/*< NFSv3 operations are supported */
+#define CORE_OPTION_NFSV3 0x00000001 /*< NFSv3 operations are supported */
 
 /**
  * @brief Support NFSv4
  */
-#define CORE_OPTION_NFSV4 0x00000002	/*< NFSv4 operations are supported */
+#define CORE_OPTION_NFSV4 0x00000002 /*< NFSv4 operations are supported */
 
 /**
  * @brief Support 9p
  */
-#define CORE_OPTION_9P 0x00000004	/*< 9P operations are supported */
+#define CORE_OPTION_9P 0x00000004 /*< 9P operations are supported */
 
 /**
  * @brief NFS AF_VSOCK
@@ -225,22 +225,22 @@ typedef enum protos {
 #define CORE_OPTION_ALL_NFS_VERS CORE_OPTION_NFSV4
 #endif
 
-#define UDP_LISTENER_NONE	0
-#define UDP_LISTENER_ALL	0x00000001
-#define UDP_LISTENER_MOUNT	0x00000002
+#define UDP_LISTENER_NONE 0
+#define UDP_LISTENER_ALL 0x00000001
+#define UDP_LISTENER_MOUNT 0x00000002
 #define UDP_LISTENER_MASK (UDP_LISTENER_ALL | UDP_LISTENER_MOUNT)
 
 #ifdef _USE_NFS_RDMA
-#define NFS_RDMA_ENABLE_FOR_NONE	0
-#define NFS_RDMA_ENABLE_FOR_NFSV3	0x00000001
+#define NFS_RDMA_ENABLE_FOR_NONE 0
+#define NFS_RDMA_ENABLE_FOR_NFSV3 0x00000001
 /* Validations for V4.x happens based on below values being 2 << x */
-#define NFS_RDMA_ENABLE_FOR_NFSV40	0x00000002
-#define NFS_RDMA_ENABLE_FOR_NFSV41	0x00000004
-#define NFS_RDMA_ENABLE_FOR_NFSV42	0x00000008
+#define NFS_RDMA_ENABLE_FOR_NFSV40 0x00000002
+#define NFS_RDMA_ENABLE_FOR_NFSV41 0x00000004
+#define NFS_RDMA_ENABLE_FOR_NFSV42 0x00000008
 
-#define NFS_RDMA_ENABLE_FOR_ALL		(NFS_RDMA_ENABLE_FOR_NFSV3 | \
-					 NFS_RDMA_ENABLE_FOR_NFSV40)
-#define NFS_RDMA_ENABLE_BY_DEFAULT	NFS_RDMA_ENABLE_FOR_NFSV40
+#define NFS_RDMA_ENABLE_FOR_ALL \
+	(NFS_RDMA_ENABLE_FOR_NFSV3 | NFS_RDMA_ENABLE_FOR_NFSV40)
+#define NFS_RDMA_ENABLE_BY_DEFAULT NFS_RDMA_ENABLE_FOR_NFSV40
 #endif
 
 typedef struct nfs_core_param {
@@ -579,12 +579,12 @@ typedef struct nfs_core_param {
 /**
  * @brief NFSv4 minor versions
  */
-#define NFSV4_MINOR_VERSION_ZERO	(1 << 0)
-#define NFSV4_MINOR_VERSION_ONE	(1 << 1)
-#define NFSV4_MINOR_VERSION_TWO	(1 << 2)
-#define NFSV4_MINOR_VERSION_ALL	(NFSV4_MINOR_VERSION_ZERO | \
-					 NFSV4_MINOR_VERSION_ONE | \
-					 NFSV4_MINOR_VERSION_TWO)
+#define NFSV4_MINOR_VERSION_ZERO (1 << 0)
+#define NFSV4_MINOR_VERSION_ONE (1 << 1)
+#define NFSV4_MINOR_VERSION_TWO (1 << 2)
+#define NFSV4_MINOR_VERSION_ALL                               \
+	(NFSV4_MINOR_VERSION_ZERO | NFSV4_MINOR_VERSION_ONE | \
+	 NFSV4_MINOR_VERSION_TWO)
 
 typedef struct nfs_version4_parameter {
 	/** Whether to disable the NFSv4 grace period.  Defaults to
@@ -708,7 +708,7 @@ typedef struct nfs_param {
 #ifdef _HAVE_GSSAPI
 	/** kerberos configuration.  Settable in the NFS_KRB5 stanza. */
 	nfs_krb5_parameter_t krb5_param;
-#endif				/* _HAVE_GSSAPI */
+#endif /* _HAVE_GSSAPI */
 	/** Directory_services configuration, settable in the
 	    DIRECTORY_SERVICES stanza. */
 	directory_services_param_t directory_services_param;
@@ -716,6 +716,6 @@ typedef struct nfs_param {
 
 extern nfs_parameter_t nfs_param;
 
-#endif				/* GSH_CONFIG_H */
+#endif /* GSH_CONFIG_H */
 
 /** @} */

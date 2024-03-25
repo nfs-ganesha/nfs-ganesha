@@ -35,7 +35,7 @@
 
 #include "fsal.h"
 #include "fsal_handle_syscalls.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -45,16 +45,15 @@
 #include "vfs_methods.h"
 #include <os/subr.h>
 
-int vfs_readlink(struct vfs_fsal_obj_handle *myself,
-		 fsal_errors_t *fsal_error)
+int vfs_readlink(struct vfs_fsal_obj_handle *myself, fsal_errors_t *fsal_error)
 {
 	int retval = 0;
 	int fd = -1;
 	ssize_t retlink;
 	struct stat st;
-	#ifndef __FreeBSD__
+#ifndef __FreeBSD__
 	int flags = O_PATH | O_NOACCESS | O_NOFOLLOW;
-	#endif
+#endif
 
 	if (myself->u.symlink.link_content != NULL) {
 		gsh_free(myself->u.symlink.link_content);
@@ -62,7 +61,7 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself,
 		myself->u.symlink.link_size = 0;
 	}
 
-	#ifndef __FreeBSD__
+#ifndef __FreeBSD__
 	fd = vfs_fsal_open(myself, flags, fsal_error);
 	if (fd < 0)
 		return fd;
@@ -70,37 +69,36 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself,
 	retval = vfs_stat_by_handle(fd, &st);
 	if (retval < 0)
 		goto error;
-	#else
+#else
 	struct fhandle *handle = v_to_fhandle(myself->handle->handle_data);
 
 	retval = fhstat(handle, &st);
 	if (retval < 0)
 		goto error;
-	#endif
+#endif
 
 	myself->u.symlink.link_size = st.st_size + 1;
 	myself->u.symlink.link_content =
-	    gsh_malloc(myself->u.symlink.link_size);
+		gsh_malloc(myself->u.symlink.link_size);
 
-	retlink =
-	    vfs_readlink_by_handle(myself->handle, fd, "",
-				   myself->u.symlink.link_content,
-				   myself->u.symlink.link_size);
+	retlink = vfs_readlink_by_handle(myself->handle, fd, "",
+					 myself->u.symlink.link_content,
+					 myself->u.symlink.link_size);
 	if (retlink < 0)
 		goto error;
 	myself->u.symlink.link_content[retlink] = '\0';
-	#ifndef __FreeBSD__
+#ifndef __FreeBSD__
 	close(fd);
-	#endif
+#endif
 
 	return retval;
 
- error:
+error:
 	retval = -errno;
 	*fsal_error = posix2fsal_error(errno);
-	#ifndef __FreeBSD__
+#ifndef __FreeBSD__
 	close(fd);
-	#endif
+#endif
 	if (myself->u.symlink.link_content != NULL) {
 		gsh_free(myself->u.symlink.link_content);
 		myself->u.symlink.link_content = NULL;
@@ -109,8 +107,7 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself,
 	return retval;
 }
 
-int vfs_get_root_handle(struct fsal_filesystem *fs,
-			struct vfs_fsal_export *exp,
+int vfs_get_root_handle(struct fsal_filesystem *fs, struct vfs_fsal_export *exp,
 			int *root_fd)
 {
 	int retval = 0;
@@ -133,18 +130,17 @@ int vfs_get_root_handle(struct fsal_filesystem *fs,
 			LogCrit(COMPONENT_FSAL,
 				"Can not change fsid type of %s to %d, error %s",
 				fs->path, exp->fsid_type, strerror(retval));
-			(void) close(*root_fd);
+			(void)close(*root_fd);
 			*root_fd = -1;
 			return retval;
 		}
 
 		LogInfo(COMPONENT_FSAL,
-			"Reindexed filesystem %s to fsid=0x%016"
-			PRIx64".0x%016"PRIx64,
+			"Reindexed filesystem %s to fsid=0x%016" PRIx64
+			".0x%016" PRIx64,
 			fs->path, fs->fsid.major, fs->fsid.minor);
 	}
 
 	/* May reindex for some platforms */
 	return vfs_re_index(fs, exp);
 }
-

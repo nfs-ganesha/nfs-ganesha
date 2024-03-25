@@ -39,7 +39,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#define get16bits(d) (*((const uint16_t *) (d)))
+#define get16bits(d) (*((const uint16_t *)(d)))
 #define MAX_DS_COUNT 100
 
 /**
@@ -123,9 +123,8 @@ size_t fs_da_addr_size(struct fsal_module *fsal_hdl)
 	return 0x1400;
 }
 
-
 int glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object,
-			uint32_t *ds_addr);
+		     uint32_t *ds_addr);
 /**
  * @brief Grant a layout segment.
  *
@@ -141,31 +140,28 @@ int glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object,
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 
-static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
-				XDR                             *loc_body,
+static nfsstat4 pnfs_layout_get(struct fsal_obj_handle *obj_pub, XDR *loc_body,
 				const struct fsal_layoutget_arg *arg,
-				struct fsal_layoutget_res       *res)
+				struct fsal_layoutget_res *res)
 {
-
-	struct glusterfs_export *export =
-		container_of(op_ctx->fsal_export,
-			     struct glusterfs_export, export);
+	struct glusterfs_export *export = container_of(
+		op_ctx->fsal_export, struct glusterfs_export, export);
 
 	struct glusterfs_handle *handle =
 		container_of(obj_pub, struct glusterfs_handle, handle);
-	int    rc = 0;
+	int rc = 0;
 	/* Structure containing the storage parameters of the file within
 	   glusterfs. */
 	struct glfs_file_layout file_layout;
 	/* Utility parameter */
-	nfl_util4               util = 0;
+	nfl_util4 util = 0;
 	/* Stores Data server address */
-	struct pnfs_deviceid    deviceid = DEVICE_ID_INIT_ZERO(FSAL_ID_GLUSTER);
-	nfsstat4                nfs_status = NFS4_OK;
+	struct pnfs_deviceid deviceid = DEVICE_ID_INIT_ZERO(FSAL_ID_GLUSTER);
+	nfsstat4 nfs_status = NFS4_OK;
 	/* Descriptor for DS handle */
-	struct gsh_buffdesc     ds_desc;
+	struct gsh_buffdesc ds_desc;
 	/* DS wire handle send to client */
-	struct glfs_ds_wire     ds_wire;
+	struct glfs_ds_wire ds_wire;
 
 	/* Supports only LAYOUT4_NFSV4_1_FILES layouts */
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
@@ -186,7 +182,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 	 * write.
 	 */
 
-	file_layout.stripe_type  = NFL4_UFLG_DENSE;
+	file_layout.stripe_type = NFL4_UFLG_DENSE;
 
 	file_layout.stripe_length = 0x100000;
 
@@ -194,7 +190,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 
 	/* @todo need to handle IPv6 here */
 	rc = glfs_get_ds_addr(export->gl_fs->fs, handle->glhandle,
-				&deviceid.device_id4);
+			      &deviceid.device_id4);
 
 	if (rc) {
 		LogMajor(COMPONENT_PNFS, "Invalid hostname for DS");
@@ -207,8 +203,6 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 	 *       the previous ones, the MDS should intelligently deal
 	 *       those scenarios
 	 */
-
-
 
 	/* We return exactly one wirehandle, filling in the necessary
 	 * information for the DS server to speak to the gluster bricks
@@ -223,23 +217,23 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle          *obj_pub,
 		return posix2nfs4_error(rc);
 	}
 
-	ds_wire.layout   = file_layout;
-	ds_desc.addr     = &ds_wire;
-	ds_desc.len      = sizeof(struct glfs_ds_wire);
+	ds_wire.layout = file_layout;
+	ds_desc.addr = &ds_wire;
+	ds_desc.len = sizeof(struct glfs_ds_wire);
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
 					     &op_ctx->ctx_export->export_id, 1,
 					     &ds_desc);
 	if (nfs_status) {
 		LogMajor(COMPONENT_PNFS,
-			  "Failed to encode nfsv4_1_file_layout.");
+			 "Failed to encode nfsv4_1_file_layout.");
 		goto out;
 	}
 
 	/* We grant only one segment, and we want it back
 	 * when the file is closed.
 	 */
-	res->return_on_close    = true;
-	res->last_segment       = true;
+	res->return_on_close = true;
+	res->last_segment = true;
 
 out:
 	return nfs_status;
@@ -262,10 +256,9 @@ static nfsstat4 pnfs_layout_return(struct fsal_obj_handle *obj_pub,
 				   XDR *lrf_body,
 				   const struct fsal_layoutreturn_arg *arg)
 {
-
 	if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
 		LogDebug(COMPONENT_PNFS, "Unsupported layout type: %x",
-				  arg->lo_type);
+			 arg->lo_type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
@@ -296,25 +289,24 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 	struct stat old_stat;
 	/* new stat to set time and size */
 	struct stat new_stat;
-	struct glusterfs_export *glfs_export =
-		container_of(op_ctx->fsal_export,
-				struct glusterfs_export, export);
-	struct glusterfs_handle *objhandle   =
+	struct glusterfs_export *glfs_export = container_of(
+		op_ctx->fsal_export, struct glusterfs_export, export);
+	struct glusterfs_handle *objhandle =
 		container_of(obj_pub, struct glusterfs_handle, handle);
 	/* Mask to determine exactly what gets set */
-	int   mask                           = 0;
-	int   rc                             = 0;
+	int mask = 0;
+	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
 		LogMajor(COMPONENT_PNFS, "Unsupported layout type: %x",
-					   arg->type);
+			 arg->type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
 	/* Gets previous status of file in the MDS */
-	rc = glfs_h_stat(glfs_export->gl_fs->fs,
-			 objhandle->glhandle, &old_stat);
+	rc = glfs_h_stat(glfs_export->gl_fs->fs, objhandle->glhandle,
+			 &old_stat);
 
 	if (rc != 0) {
 		LogMajor(COMPONENT_PNFS,
@@ -332,28 +324,25 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
 					     objhandle->glhandle,
 					     res->new_size);
 			if (rc != 0) {
-				LogMajor(COMPONENT_PNFS,
-					 "Commit layout, size change unsuccessfully completed");
+				LogMajor(
+					COMPONENT_PNFS,
+					"Commit layout, size change unsuccessfully completed");
 				return NFS4ERR_INVAL;
 			}
 		}
 	}
 
-	if ((arg->time_changed) &&
-		(arg->new_time.seconds > old_stat.st_mtime))
+	if ((arg->time_changed) && (arg->new_time.seconds > old_stat.st_mtime))
 		new_stat.st_mtime = arg->new_time.seconds;
 	else
 		new_stat.st_mtime = time(NULL);
-
 
 	mask |= GLAPI_SET_ATTR_MTIME;
 
 	SET_GLUSTER_CREDS_OP_CTX(glfs_export);
 
-	rc = glfs_h_setattrs(glfs_export->gl_fs->fs,
-			     objhandle->glhandle,
-			     &new_stat,
-			     mask);
+	rc = glfs_h_setattrs(glfs_export->gl_fs->fs, objhandle->glhandle,
+			     &new_stat, mask);
 
 	RESET_GLUSTER_CREDS(glfs_export);
 
@@ -377,13 +366,13 @@ static nfsstat4 pnfs_layout_commit(struct fsal_obj_handle *obj_pub,
  *
  * @return Valid error codes in RFC 5661, p. 365.
  */
-nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
-		       XDR *da_addr_body, const layouttype4 type,
+nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
+		       const layouttype4 type,
 		       const struct pnfs_deviceid *deviceid)
 {
-	nfsstat4                    nfs_status = 0;
+	nfsstat4 nfs_status = 0;
 	/* Stores IP address of DS */
-	fsal_multipath_member_t     host;
+	fsal_multipath_member_t host;
 
 	/* Entire file layout will be situated inside ONE DS
 	 * And whole file is provided to the DS, so the starting
@@ -393,30 +382,32 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	uint32_t stripes = 1;
 	uint32_t stripe_ind = 0;
 
-
 	if (type != LAYOUT4_NFSV4_1_FILES) {
 		LogMajor(COMPONENT_PNFS, "Unsupported layout type: %x", type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &stripes)) {
-		LogMajor(COMPONENT_PNFS,
-			 "Failed to encode length of stripe_indices array: %"
-			  PRIu32 ".", stripes);
+		LogMajor(
+			COMPONENT_PNFS,
+			"Failed to encode length of stripe_indices array: %" PRIu32
+			".",
+			stripes);
 		return NFS4ERR_SERVERFAULT;
 	}
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &stripe_ind)) {
 		LogMajor(COMPONENT_PNFS,
-			 "Failed to encode ds for the stripe:  %"
-			 PRIu32 ".", stripe_ind);
+			 "Failed to encode ds for the stripe:  %" PRIu32 ".",
+			 stripe_ind);
 		return NFS4ERR_SERVERFAULT;
 	}
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &num_ds)) {
-		LogMajor(COMPONENT_PNFS,
-			 "Failed to encode length of multipath_ds_list array: %u",
-			 num_ds);
+		LogMajor(
+			COMPONENT_PNFS,
+			"Failed to encode length of multipath_ds_list array: %u",
+			num_ds);
 		return NFS4ERR_SERVERFAULT;
 	}
 	memset(&host, 0, sizeof(fsal_multipath_member_t));
@@ -428,7 +419,7 @@ nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl,
 	if (nfs_status != NFS4_OK) {
 		LogMajor(COMPONENT_PNFS,
 			 "Failed to encode data server address");
-	return nfs_status;
+		return nfs_status;
 	}
 
 	/** @todo: Here information about Data-Server where file resides
@@ -464,12 +455,11 @@ static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
 	return NFS4_OK;
 }
 
-
 void handle_ops_pnfs(struct fsal_obj_ops *ops)
 {
-	ops->layoutget     = pnfs_layout_get;
-	ops->layoutreturn  = pnfs_layout_return;
-	ops->layoutcommit  = pnfs_layout_commit;
+	ops->layoutget = pnfs_layout_get;
+	ops->layoutreturn = pnfs_layout_return;
+	ops->layoutcommit = pnfs_layout_commit;
 }
 
 void fsal_ops_pnfs(struct fsal_ops *ops)
@@ -480,11 +470,11 @@ void fsal_ops_pnfs(struct fsal_ops *ops)
 
 void export_ops_pnfs(struct export_ops *ops)
 {
-	ops->getdevicelist              = getdevicelist;
-	ops->fs_layouttypes             = fs_layouttypes;
-	ops->fs_layout_blocksize        = fs_layout_blocksize;
-	ops->fs_maximum_segments        = fs_maximum_segments;
-	ops->fs_loc_body_size           = fs_loc_body_size;
+	ops->getdevicelist = getdevicelist;
+	ops->fs_layouttypes = fs_layouttypes;
+	ops->fs_layout_blocksize = fs_layout_blocksize;
+	ops->fs_maximum_segments = fs_maximum_segments;
+	ops->fs_loc_body_size = fs_loc_body_size;
 }
 
 /* *
@@ -500,11 +490,11 @@ uint32_t superfasthash(const unsigned char *data, uint32_t len)
 
 	/* Main loop */
 	for (; len > 0; len--) {
-		hash  += get16bits(data);
-		tmp    = (get16bits(data+2) << 11) ^ hash;
-		hash   = (hash << 16) ^ tmp;
-		data  += 2*sizeof(uint16_t);
-		hash  += hash >> 11;
+		hash += get16bits(data);
+		tmp = (get16bits(data + 2) << 11) ^ hash;
+		hash = (hash << 16) ^ tmp;
+		data += 2 * sizeof(uint16_t);
+		hash += hash >> 11;
 	}
 
 	/* Handle end cases */
@@ -547,26 +537,25 @@ uint32_t superfasthash(const unsigned char *data, uint32_t len)
  * Returns zero and valid hostname on success
  */
 
-int
-select_ds(struct glfs_object *object, char *pathinfo, char *hostname,
-	  size_t size)
+int select_ds(struct glfs_object *object, char *pathinfo, char *hostname,
+	      size_t size)
 {
 	/* Represents starting of each server in the list*/
-	static const char posix[10]    = "POSIX";
+	static const char posix[10] = "POSIX";
 	/* Array of pathinfo of available dses */
-	char	*ds_path_info[MAX_DS_COUNT];
+	char *ds_path_info[MAX_DS_COUNT];
 	/* Key for hashing */
 	unsigned char key[16];
 	/* Starting of first brick path in the pathinfo */
-	char	*tmp		= NULL;
+	char *tmp = NULL;
 	/* Stores starting of hostname */
-	char    *start          = NULL;
+	char *start = NULL;
 	/* Stores ending of hostname */
-	char    *end            = NULL;
-	int     ret             = -1;
-	int     i               = 0;
+	char *end = NULL;
+	int ret = -1;
+	int i = 0;
 	/* counts no of available ds */
-	int	no_of_ds	= 0;
+	int no_of_ds = 0;
 
 	if (!pathinfo || !size)
 		goto out;
@@ -631,15 +620,21 @@ out:
  * On success, returns zero with ip address of
  * the server will be send
  */
-int
-glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
+int glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object,
+		     uint32_t *ds_addr)
 {
-	int             ret                    = 0;
-	char            pathinfo[1024]         = {0, };
-	char            hostname[256]          = {0, };
-	struct addrinfo hints                  = {0, };
-	struct addrinfo *res                   = NULL;
-	const char      *pathinfokey           = "trusted.glusterfs.pathinfo";
+	int ret = 0;
+	char pathinfo[1024] = {
+		0,
+	};
+	char hostname[256] = {
+		0,
+	};
+	struct addrinfo hints = {
+		0,
+	};
+	struct addrinfo *res = NULL;
+	const char *pathinfokey = "trusted.glusterfs.pathinfo";
 
 	ret = glfs_h_getxattrs(fs, object, pathinfokey, pathinfo,
 			       sizeof(pathinfo));
@@ -664,8 +659,8 @@ glfs_get_ds_addr(struct glfs *fs, struct glfs_object *object, uint32_t *ds_addr)
 
 	if (isDebug(COMPONENT_PNFS)) {
 		char scratch[SOCK_NAME_MAX];
-		struct display_buffer dspbuf = {
-					sizeof(scratch), scratch, scratch};
+		struct display_buffer dspbuf = { sizeof(scratch), scratch,
+						 scratch };
 
 		display_sockip(&dspbuf, (sockaddr_t *)res->ai_addr);
 		LogDebug(COMPONENT_PNFS, "ip address : %s", scratch);

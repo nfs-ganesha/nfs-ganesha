@@ -37,7 +37,7 @@
 #ifndef _FSAL_INTERNAL_H
 #define _FSAL_INTERNAL_H
 
-#include  "fsal.h"
+#include "fsal.h"
 #include <kvsns/kvsns.h>
 
 /* linkage to the exports and handle ops initializers
@@ -60,17 +60,14 @@ struct kvsfs_ds {
 #define KVSNS_DEFAULT_CONFIG "/etc/kvsns.d/kvsns.ini"
 
 /* defined the set of attributes supported with POSIX */
-#define KVSFS_SUPPORTED_ATTRIBUTES (					\
-		ATTR_TYPE     | ATTR_SIZE     |				\
-		ATTR_FSID     | ATTR_FILEID   |				\
-		ATTR_MODE     | ATTR_NUMLINKS | ATTR_OWNER     |	\
-		ATTR_GROUP    | ATTR_ATIME    | ATTR_RAWDEV    |	\
-		ATTR_CTIME    | ATTR_MTIME    | ATTR_SPACEUSED |	\
-		ATTR_CHANGE)
+#define KVSFS_SUPPORTED_ATTRIBUTES                                            \
+	(ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID | ATTR_MODE |        \
+	 ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_RAWDEV | \
+	 ATTR_CTIME | ATTR_MTIME | ATTR_SPACEUSED | ATTR_CHANGE)
 
 static inline size_t kvsfs_sizeof_handle(struct kvsfs_file_handle *hdl)
 {
-	return (size_t) sizeof(struct kvsfs_file_handle);
+	return (size_t)sizeof(struct kvsfs_file_handle);
 }
 
 /* the following variables must not be defined in fsal_internal.c */
@@ -84,10 +81,9 @@ extern struct fsal_staticfsinfo_t global_fs_info;
 /* KVSFS methods for pnfs
  */
 
-nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl,
-			      XDR *da_addr_body,
-			      const layouttype4 type,
-			      const struct pnfs_deviceid *deviceid);
+nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
+			     const layouttype4 type,
+			     const struct pnfs_deviceid *deviceid);
 
 size_t kvsfs_fs_da_addr_size(struct fsal_module *fsal_hdl);
 void export_ops_pnfs(struct export_ops *ops);

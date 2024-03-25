@@ -57,7 +57,7 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *ptargetfid = NULL;
 
 	fsal_status_t fsal_status;
-	char link_name[MAXNAMLEN+1];
+	char link_name[MAXNAMLEN + 1];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -67,7 +67,7 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getstr(cursor, name_len, name_str);
 
 	LogDebug(COMPONENT_9P, "TLINK: tag=%u dfid=%u targetfid=%u name=%.*s",
-		 (u32) *msgtag, *dfid, *targetfid, *name_len, name_str);
+		 (u32)*msgtag, *dfid, *targetfid, *name_len, name_str);
 
 	if (*dfid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -109,14 +109,13 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len >= sizeof(link_name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(link_name, *name_len, name_str);
 
 	fsal_status = fsal_link(ptargetfid->pentry, pdfid->pentry, link_name,
-		NULL, NULL);
+				NULL, NULL);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
@@ -130,7 +129,7 @@ int _9p_link(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "TLINK: tag=%u dfid=%u targetfid=%u name=%.*s",
-		 (u32) *msgtag, *dfid, *targetfid, *name_len, name_str);
+		 (u32)*msgtag, *dfid, *targetfid, *name_len, name_str);
 
 	return 1;
 }

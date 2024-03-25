@@ -34,65 +34,65 @@
 #include "gsh_config.h"
 #include "xprt_handler.h"
 
-#define LogDebugClient(client, format, args...)                                \
-	LogDebug(COMPONENT_XPRT, "%s: " format,                                \
+#define LogDebugClient(client, format, args...) \
+	LogDebug(COMPONENT_XPRT, "%s: " format, \
+		 get_client_address_for_debugging(client), ##args)
+#define LogWarnClient(client, format, args...) \
+	LogWarn(COMPONENT_XPRT, "%s: " format, \
 		get_client_address_for_debugging(client), ##args)
-#define LogWarnClient(client, format, args...)                                 \
-	LogWarn(COMPONENT_XPRT, "%s: " format,                                 \
-		get_client_address_for_debugging(client), ##args)
-#define LogFatalClient(client, format, args...)                                \
-	do {                                                                   \
-		LogFatal(COMPONENT_XPRT, "%s: " format,                        \
-			get_client_address_for_debugging(client), ##args);     \
-		abort();                                                       \
+#define LogFatalClient(client, format, args...)                             \
+	do {                                                                \
+		LogFatal(COMPONENT_XPRT, "%s: " format,                     \
+			 get_client_address_for_debugging(client), ##args); \
+		abort();                                                    \
 	} while (0)
-#define LogDebugConnection(connection, format, args...)                        \
-	LogDebugClient(&(connection)->gsh_client->connection_manager,          \
-	"fd %d: " format, (connection)->xprt->xp_fd, ##args)
-#define LogWarnConnection(connection, format, args...)                         \
-	LogWarnClient(&(connection)->gsh_client->connection_manager,           \
-	"fd %d: " format, (connection)->xprt->xp_fd, ##args)
-#define LogFatalConnection(connection, format, args...)                        \
-	LogFatalClient(&(connection)->gsh_client->connection_manager,          \
-	"fd %d: " format, (connection)->xprt->xp_fd, ##args)
+#define LogDebugConnection(connection, format, args...)               \
+	LogDebugClient(&(connection)->gsh_client->connection_manager, \
+		       "fd %d: " format, (connection)->xprt->xp_fd, ##args)
+#define LogWarnConnection(connection, format, args...)               \
+	LogWarnClient(&(connection)->gsh_client->connection_manager, \
+		      "fd %d: " format, (connection)->xprt->xp_fd, ##args)
+#define LogFatalConnection(connection, format, args...)               \
+	LogFatalClient(&(connection)->gsh_client->connection_manager, \
+		       "fd %d: " format, (connection)->xprt->xp_fd, ##args)
 
-
-static inline const char *get_client_address_for_debugging(
-	const connection_manager__client_t *client)
+static inline const char *
+get_client_address_for_debugging(const connection_manager__client_t *client)
 {
-	const struct gsh_client *const gsh_client = container_of(
-		client, struct gsh_client, connection_manager);
+	const struct gsh_client *const gsh_client =
+		container_of(client, struct gsh_client, connection_manager);
 	return gsh_client->hostaddr_str;
 }
 
-static inline const sockaddr_t *get_client_address(
-	const connection_manager__client_t *client)
+static inline const sockaddr_t *
+get_client_address(const connection_manager__client_t *client)
 {
-	const struct gsh_client *const gsh_client = container_of(
-		client, struct gsh_client, connection_manager);
+	const struct gsh_client *const gsh_client =
+		container_of(client, struct gsh_client, connection_manager);
 	return &gsh_client->cl_addrbuf;
 }
 
 static inline struct timespec timeout_seconds(uint32_t seconds)
 {
-	return (struct timespec){.tv_sec = time(NULL) + seconds, .tv_nsec = 0};
+	return (struct timespec){ .tv_sec = time(NULL) + seconds,
+				  .tv_nsec = 0 };
 }
 
-static inline bool is_transition_valid(
-	enum connection_manager__client_state_t from,
-	enum connection_manager__client_state_t to)
+static inline bool
+is_transition_valid(enum connection_manager__client_state_t from,
+		    enum connection_manager__client_state_t to)
 {
 	switch (from) {
 	case CONNECTION_MANAGER__CLIENT_STATE__DRAINED:
 		return to == CONNECTION_MANAGER__CLIENT_STATE__ACTIVATING;
 	case CONNECTION_MANAGER__CLIENT_STATE__ACTIVATING:
 		return to == CONNECTION_MANAGER__CLIENT_STATE__ACTIVE ||
-			to == CONNECTION_MANAGER__CLIENT_STATE__DRAINED;
+		       to == CONNECTION_MANAGER__CLIENT_STATE__DRAINED;
 	case CONNECTION_MANAGER__CLIENT_STATE__ACTIVE:
 		return to == CONNECTION_MANAGER__CLIENT_STATE__DRAINING;
 	case CONNECTION_MANAGER__CLIENT_STATE__DRAINING:
 		return to == CONNECTION_MANAGER__CLIENT_STATE__ACTIVE ||
-			to == CONNECTION_MANAGER__CLIENT_STATE__DRAINED;
+		       to == CONNECTION_MANAGER__CLIENT_STATE__DRAINED;
 	default:
 		return false;
 	}
@@ -141,8 +141,7 @@ condition_timedwait(connection_manager__client_t *client,
 }
 
 /* Assumes the client mutex is held */
-static inline void wait_for_state_change(
-	connection_manager__client_t *client)
+static inline void wait_for_state_change(connection_manager__client_t *client)
 {
 	const enum connection_manager__client_state_t initial_state =
 		client->state;
@@ -153,10 +152,8 @@ static inline void wait_for_state_change(
 }
 
 static enum connection_manager__drain_t callback_default_drain_other_servers(
-	void *context,
-	const sockaddr_t *client_address,
-	const char *client_address_str,
-	const struct timespec *timeout)
+	void *context, const sockaddr_t *client_address,
+	const char *client_address_str, const struct timespec *timeout)
 {
 	LogWarn(COMPONENT_XPRT,
 		"%s: Client connected before Connection Manager callback was registered",
@@ -166,12 +163,12 @@ static enum connection_manager__drain_t callback_default_drain_other_servers(
 
 static pthread_rwlock_t callback_lock = RWLOCK_INITIALIZER;
 static const connection_manager__callback_context_t callback_default = {
-	/*user_context=*/NULL, callback_default_drain_other_servers};
+	/*user_context=*/NULL, callback_default_drain_other_servers
+};
 static connection_manager__callback_context_t callback_context =
 	callback_default;
 
-void connection_manager__callback_set(
-	connection_manager__callback_context_t new)
+void connection_manager__callback_set(connection_manager__callback_context_t new)
 {
 	PTHREAD_RWLOCK_wrlock(&callback_lock);
 	assert(callback_context.drain_and_disconnect_other_servers ==
@@ -223,7 +220,7 @@ update_socket_linger(const connection_manager__connection_t *connection)
 	 * we want the connection to close quickly.
 	 * Linger is still enabled, so close() will block until the connection
 	 * is closed. */
-	const struct linger linger = {.l_onoff = 1, .l_linger = 0};
+	const struct linger linger = { .l_onoff = 1, .l_linger = 0 };
 
 	if (setsockopt(connection->xprt->xp_fd, SOL_SOCKET, SO_LINGER, &linger,
 		       sizeof(linger)) < 0) {
@@ -234,8 +231,8 @@ update_socket_linger(const connection_manager__connection_t *connection)
 }
 
 /* Assumes the client mutex is held */
-static enum connection_manager__drain_t try_drain_self(
-	connection_manager__client_t *client, uint32_t timeout_sec)
+static enum connection_manager__drain_t
+try_drain_self(connection_manager__client_t *client, uint32_t timeout_sec)
 {
 	assert(client->state == CONNECTION_MANAGER__CLIENT_STATE__ACTIVE);
 	change_state(client, CONNECTION_MANAGER__CLIENT_STATE__DRAINING);
@@ -244,7 +241,8 @@ static enum connection_manager__drain_t try_drain_self(
 
 	const struct glist_head *node;
 
-	glist_for_each(node, &client->connections) {
+	glist_for_each(node, &client->connections)
+	{
 		const connection_manager__connection_t *const connection =
 			glist_entry(node, connection_manager__connection_t,
 				    node);
@@ -284,19 +282,19 @@ static enum connection_manager__drain_t try_drain_self(
 		 * and then restarted by a third thread. */
 		if (client->connections_count == 0) {
 			change_state(client,
-				CONNECTION_MANAGER__CLIENT_STATE__DRAINED);
+				     CONNECTION_MANAGER__CLIENT_STATE__DRAINED);
 		} else {
 			change_state(client,
-				CONNECTION_MANAGER__CLIENT_STATE__ACTIVE);
+				     CONNECTION_MANAGER__CLIENT_STATE__ACTIVE);
 		}
 	}
 
 	if (client->state == CONNECTION_MANAGER__CLIENT_STATE__DRAINED) {
 		return CONNECTION_MANAGER__DRAIN__SUCCESS;
 	} else {
-		return wait_result == CONDITION_WAIT__TIMEOUT
-			? CONNECTION_MANAGER__DRAIN__FAILED_TIMEOUT
-			: CONNECTION_MANAGER__DRAIN__FAILED;
+		return wait_result == CONDITION_WAIT__TIMEOUT ?
+				     CONNECTION_MANAGER__DRAIN__FAILED_TIMEOUT :
+				     CONNECTION_MANAGER__DRAIN__FAILED;
 	}
 }
 
@@ -308,12 +306,12 @@ connection_manager__drain_and_disconnect_local(sockaddr_t *client_address)
 
 	now(&start_time);
 	struct gsh_client *const gsh_client =
-			get_gsh_client(client_address, /*lookup_only=*/true);
+		get_gsh_client(client_address, /*lookup_only=*/true);
 	if (gsh_client == NULL) {
 		char address_for_debugging[SOCK_NAME_MAX];
 
 		sprint_sockip(client_address, address_for_debugging,
-			sizeof(address_for_debugging));
+			      sizeof(address_for_debugging));
 		LogDebug(COMPONENT_XPRT, "Client not found: %s",
 			 address_for_debugging);
 		result = CONNECTION_MANAGER__DRAIN__SUCCESS_NO_CONNECTIONS;
@@ -345,14 +343,13 @@ connection_manager__drain_and_disconnect_local(sockaddr_t *client_address)
 		LogDebugClient(client, "Already self draining, waiting");
 		wait_for_state_change(client);
 		result = (client->state ==
-			CONNECTION_MANAGER__CLIENT_STATE__DRAINED) ?
-			CONNECTION_MANAGER__DRAIN__SUCCESS :
-			CONNECTION_MANAGER__DRAIN__FAILED;
+			  CONNECTION_MANAGER__CLIENT_STATE__DRAINED) ?
+				       CONNECTION_MANAGER__DRAIN__SUCCESS :
+				       CONNECTION_MANAGER__DRAIN__FAILED;
 		break;
 	}
 	default: {
-		LogFatalClient(client,
-			       "Unexpected connection manager state %d",
+		LogFatalClient(client, "Unexpected connection manager state %d",
 			       client->state);
 	}
 	}
@@ -376,8 +373,8 @@ connection_manager__drain_and_disconnect_local(sockaddr_t *client_address)
 	}
 
 out:
-	connection_manager_metrics__drain_local_client_done(
-		result, &start_time);
+	connection_manager_metrics__drain_local_client_done(result,
+							    &start_time);
 	return result;
 }
 
@@ -389,21 +386,20 @@ xprt_to_connection(const SVCXPRT *xprt)
 			 xprt->xp_fd);
 		return NULL;
 	}
-	xprt_custom_data_t *const xprt_data =
-		(xprt_custom_data_t *)xprt->xp_u1;
+	xprt_custom_data_t *const xprt_data = (xprt_custom_data_t *)xprt->xp_u1;
 	return &xprt_data->managed_connection;
 }
 
 static inline bool should_manage_connection(sockaddr_t *client_address)
 {
-	return nfs_param.core_param.enable_connection_manager
-		&& !is_loopback(client_address);
+	return nfs_param.core_param.enable_connection_manager &&
+	       !is_loopback(client_address);
 }
 
 static inline bool is_drain_success(enum connection_manager__drain_t result)
 {
 	return result == CONNECTION_MANAGER__DRAIN__SUCCESS ||
-		result == CONNECTION_MANAGER__DRAIN__SUCCESS_NO_CONNECTIONS;
+	       result == CONNECTION_MANAGER__DRAIN__SUCCESS_NO_CONNECTIONS;
 }
 
 /**
@@ -413,8 +409,8 @@ static inline bool is_drain_success(enum connection_manager__drain_t result)
  *
  * Assumes the client mutex is held.
  */
-static void try_activate_client_if_needed(
-	connection_manager__connection_t *connection)
+static void
+try_activate_client_if_needed(connection_manager__connection_t *connection)
 {
 	connection_manager__client_t *const client =
 		&connection->gsh_client->connection_manager;
@@ -434,9 +430,10 @@ static void try_activate_client_if_needed(
 		PTHREAD_RWLOCK_rdlock(&callback_lock);
 		const enum connection_manager__drain_t drain_result =
 			callback_context.drain_and_disconnect_other_servers(
-			callback_context.user_context,
-			get_client_address(client),
-			get_client_address_for_debugging(client), &timeout);
+				callback_context.user_context,
+				get_client_address(client),
+				get_client_address_for_debugging(client),
+				&timeout);
 		PTHREAD_RWLOCK_unlock(&callback_lock);
 
 		PTHREAD_MUTEX_lock(&client->mutex);
@@ -445,15 +442,16 @@ static void try_activate_client_if_needed(
 
 		if (is_drain_success(drain_result)) {
 			change_state(client,
-				CONNECTION_MANAGER__CLIENT_STATE__ACTIVE);
+				     CONNECTION_MANAGER__CLIENT_STATE__ACTIVE);
 		} else {
 			change_state(client,
-				CONNECTION_MANAGER__CLIENT_STATE__DRAINED);
+				     CONNECTION_MANAGER__CLIENT_STATE__DRAINED);
 		}
 		break;
 	}
 	case CONNECTION_MANAGER__CLIENT_STATE__ACTIVATING: {
-		LogDebugConnection(connection,
+		LogDebugConnection(
+			connection,
 			"Client is activating in another thread, waiting");
 		wait_for_state_change(client);
 		break;
@@ -482,7 +480,8 @@ void connection_manager__connection_init(SVCXPRT *xprt)
 	connection_manager__connection_t *const connection =
 		xprt_to_connection(xprt);
 	if (!connection) {
-		LogFatal(COMPONENT_XPRT,
+		LogFatal(
+			COMPONENT_XPRT,
 			"fd %d: Must call nfs_rpc_alloc_user_data before calling %s",
 			xprt->xp_fd, __func__);
 	}
@@ -520,15 +519,17 @@ connection_manager__connection_started(SVCXPRT *xprt)
 	connection_manager__connection_t *const connection =
 		xprt_to_connection(xprt);
 	if (!connection) {
-		LogFatalClient(client,
-		"fd %d: Must call nfs_rpc_alloc_user_data before calling %s",
-		xprt->xp_fd, __func__);
+		LogFatalClient(
+			client,
+			"fd %d: Must call nfs_rpc_alloc_user_data before calling %s",
+			xprt->xp_fd, __func__);
 	}
 
 	/* assert that connecton_init function was called before.
 	 * The init function should have set the xprt in the connection. */
 	if (connection->xprt != xprt) {
-		LogFatalClient(client,
+		LogFatalClient(
+			client,
 			"found connection xprt %p is differnet from given xprt %p ",
 			connection->xprt, xprt);
 	}
@@ -540,7 +541,8 @@ connection_manager__connection_started(SVCXPRT *xprt)
 
 	connection->is_managed = should_manage_connection(client_address);
 	if (!connection->is_managed) {
-		LogDebugConnection(connection,
+		LogDebugConnection(
+			connection,
 			"Connection is not managed by connection manager");
 		connection->gsh_client = NULL;
 		put_gsh_client(gsh_client);
@@ -570,8 +572,8 @@ connection_manager__connection_started(SVCXPRT *xprt)
 	result = CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW;
 
 out:
-	connection_manager_metrics__connection_started_done(
-		result, &start_time);
+	connection_manager_metrics__connection_started_done(result,
+							    &start_time);
 	return result;
 }
 
@@ -580,8 +582,7 @@ void connection_manager__connection_finished(const SVCXPRT *xprt)
 	connection_manager__connection_t *const connection =
 		xprt_to_connection(xprt);
 	if (!connection || !connection->is_managed) {
-		LogDebug(COMPONENT_XPRT,
-			 "fd %d: Connection is not managed",
+		LogDebug(COMPONENT_XPRT, "fd %d: Connection is not managed",
 			 xprt->xp_fd);
 		return;
 	}

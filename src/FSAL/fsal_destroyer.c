@@ -59,12 +59,11 @@ static void shutdown_handles(struct fsal_module *fsal)
 		return;
 
 	LogDebug(COMPONENT_FSAL, "Extra file handles hanging around.");
-	glist_for_each_safe(hi, hn, &fsal->handles) {
-		struct fsal_obj_handle *h = glist_entry(hi,
-							struct fsal_obj_handle,
-							handles);
-		LogDebug(COMPONENT_FSAL,
-			 "Releasing handle");
+	glist_for_each_safe(hi, hn, &fsal->handles)
+	{
+		struct fsal_obj_handle *h =
+			glist_entry(hi, struct fsal_obj_handle, handles);
+		LogDebug(COMPONENT_FSAL, "Releasing handle");
 		h->obj_ops->release(h);
 	}
 }
@@ -86,17 +85,17 @@ static void shutdown_pnfs_ds(struct fsal_module *fsal)
 		return;
 
 	LogDebug(COMPONENT_FSAL, "Extra pNFS Data Servers hanging around.");
-	glist_for_each_safe(glist, glistn, &fsal->servers) {
-		struct fsal_pnfs_ds *ds = glist_entry(glist,
-						      struct fsal_pnfs_ds,
-						      server);
+	glist_for_each_safe(glist, glistn, &fsal->servers)
+	{
+		struct fsal_pnfs_ds *ds =
+			glist_entry(glist, struct fsal_pnfs_ds, server);
 		int32_t refcount;
 
 		refcount = atomic_fetch_int32_t(&ds->ds_refcount);
 
 		if (refcount != 0) {
 			LogDebug(COMPONENT_FSAL,
-				 "Extra ds refs (%"PRIi32") hanging around.",
+				 "Extra ds refs (%" PRIi32 ") hanging around.",
 				 refcount);
 			atomic_store_int32_t(&ds->ds_refcount, 0);
 		}
@@ -114,16 +113,13 @@ static void shutdown_export(struct fsal_export *export)
 {
 	struct fsal_module *fsal = export->fsal;
 
-	LogDebug(COMPONENT_FSAL,
-		 "Releasing export");
+	LogDebug(COMPONENT_FSAL, "Releasing export");
 
 	export->exp_ops.release(export);
 	fsal_put(fsal);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s fsal_refcount %"PRIu32,
-		     fsal->name,
-		     atomic_fetch_int32_t(&fsal->refcount));
+	LogFullDebug(COMPONENT_FSAL, "FSAL %s fsal_refcount %" PRIu32,
+		     fsal->name, atomic_fetch_int32_t(&fsal->refcount));
 }
 
 /**
@@ -137,11 +133,11 @@ void destroy_fsals(void)
 	/* Next module */
 	struct glist_head *mn = NULL;
 
-	glist_for_each_safe(mi, mn, &fsal_list) {
+	glist_for_each_safe(mi, mn, &fsal_list)
+	{
 		/* The module to destroy */
-		struct fsal_module *m = glist_entry(mi,
-						    struct fsal_module,
-						    fsals);
+		struct fsal_module *m =
+			glist_entry(mi, struct fsal_module, fsals);
 		/* Iterator over exports */
 		struct glist_head *ei = NULL;
 		/* Next export */
@@ -159,11 +155,11 @@ void destroy_fsals(void)
 		LogEvent(COMPONENT_FSAL, "Shutting down exports for FSAL %s",
 			 m->name);
 
-		glist_for_each_safe(ei, en, &m->exports) {
+		glist_for_each_safe(ei, en, &m->exports)
+		{
 			/* The module to destroy */
-			struct fsal_export *e = glist_entry(ei,
-							    struct fsal_export,
-							    exports);
+			struct fsal_export *e =
+				glist_entry(ei, struct fsal_export, exports);
 			shutdown_export(e);
 		}
 
@@ -172,7 +168,7 @@ void destroy_fsals(void)
 
 		if (refcount != 0) {
 			LogCrit(COMPONENT_FSAL,
-				"Extra fsal references (%"PRIi32
+				"Extra fsal references (%" PRIi32
 				") hanging around to FSAL %s",
 				refcount, m->name);
 			/**
@@ -219,11 +215,11 @@ void emergency_cleanup_fsals(void)
 	/* Next module */
 	struct glist_head *mn = NULL;
 
-	glist_for_each_safe(mi, mn, &fsal_list) {
+	glist_for_each_safe(mi, mn, &fsal_list)
+	{
 		/* The module to destroy */
-		struct fsal_module *m = glist_entry(mi,
-						    struct fsal_module,
-						    fsals);
+		struct fsal_module *m =
+			glist_entry(mi, struct fsal_module, fsals);
 		m->m_ops.emergency_cleanup();
 	}
 }

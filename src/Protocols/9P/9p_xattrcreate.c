@@ -61,7 +61,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 
 	fsal_status_t fsal_status = { .major = ERR_FSAL_NO_ERROR, .minor = 0 };
-	char name[MAXNAMLEN+1];
+	char name[MAXNAMLEN + 1];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -72,7 +72,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	LogDebug(COMPONENT_9P,
 		 "TXATTRCREATE: tag=%u fid=%u name=%.*s size=%llu flag=%u",
-		 (u32) *msgtag, *fid, *name_len, name_str,
+		 (u32)*msgtag, *fid, *name_len, name_str,
 		 (unsigned long long)*size, *flag);
 
 	if (*fid >= _9P_FID_PER_CONN)
@@ -98,8 +98,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len >= sizeof(name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(name, *name_len, name_str);
@@ -108,11 +107,10 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* Size == 0 : this is in fact a call to removexattr */
 		LogDebug(COMPONENT_9P,
 			 "TXATTRCREATE: tag=%u fid=%u : will remove xattr %s",
-			 (u32) *msgtag, *fid, name);
+			 (u32)*msgtag, *fid, name);
 
-		fsal_status =
-		    pfid->pentry->obj_ops->remove_extattr_by_name(pfid->pentry,
-								 name);
+		fsal_status = pfid->pentry->obj_ops->remove_extattr_by_name(
+			pfid->pentry, name);
 
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
@@ -127,10 +125,9 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		pfid->xattr->xattr_offset = 0LL;
 		pfid->xattr->xattr_write = _9P_XATTR_CAN_WRITE;
 
-
 		if (strlcpy(pfid->xattr->xattr_name, name,
-			    sizeof(pfid->xattr->xattr_name))
-		    >= sizeof(pfid->xattr->xattr_name))
+			    sizeof(pfid->xattr->xattr_name)) >=
+		    sizeof(pfid->xattr->xattr_name))
 			goto skip_create;
 
 		/* /!\  POSIX_ACL RELATED HOOK
@@ -147,19 +144,17 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		else
 			create = false;
 
-		fsal_status =
-		    pfid->pentry->obj_ops->setextattr_value(pfid->pentry, name,
-				pfid->xattr->xattr_content,
-				*size, create);
+		fsal_status = pfid->pentry->obj_ops->setextattr_value(
+			pfid->pentry, name, pfid->xattr->xattr_content, *size,
+			create);
 
 		/* Try again with create = false if flag was set to 0
 		 * and create failed because attribute already exists */
-		if (FSAL_IS_ERROR(fsal_status)
-		    && fsal_status.major == ERR_FSAL_EXIST && (*flag == 0)) {
+		if (FSAL_IS_ERROR(fsal_status) &&
+		    fsal_status.major == ERR_FSAL_EXIST && (*flag == 0)) {
 			fsal_status = pfid->pentry->obj_ops->setextattr_value(
-						pfid->pentry, name,
-						pfid->xattr->xattr_content,
-						*size, false);
+				pfid->pentry, name, pfid->xattr->xattr_content,
+				*size, false);
 		}
 
 		if (FSAL_IS_ERROR(fsal_status)) {
@@ -181,8 +176,8 @@ skip_create:
 
 	LogDebug(COMPONENT_9P,
 		 "RXATTRCREATE: tag=%u fid=%u name=%.*s size=%llu flag=%u",
-		 (u32) *msgtag, *fid, *name_len, name_str,
+		 (u32)*msgtag, *fid, *name_len, name_str,
 		 (unsigned long long)*size, *flag);
 
 	return 1;
-}				/* _9p_xattrcreate */
+} /* _9p_xattrcreate */

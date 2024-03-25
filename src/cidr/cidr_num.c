@@ -40,7 +40,6 @@
 /* Number of total addresses in a given prefix length */
 const char *cidr_numaddr_pflen(int pflen)
 {
-
 	if (pflen < 0 || pflen > 128) {
 		errno = EINVAL;
 		return (NULL);
@@ -49,7 +48,7 @@ const char *cidr_numaddr_pflen(int pflen)
 }
 
 /* Addresses in a CIDR block */
-const char *cidr_numaddr(const CIDR * addr)
+const char *cidr_numaddr(const CIDR *addr)
 {
 	int pflen;
 
@@ -63,7 +62,6 @@ const char *cidr_numaddr(const CIDR * addr)
 /* Hosts in a prefix length */
 const char *cidr_numhost_pflen(int pflen)
 {
-
 	if (pflen < 0 || pflen > 128) {
 		errno = EINVAL;
 		return (NULL);
@@ -72,7 +70,7 @@ const char *cidr_numhost_pflen(int pflen)
 }
 
 /* Addresses in a CIDR block */
-const char *cidr_numhost(const CIDR * addr)
+const char *cidr_numhost(const CIDR *addr)
 {
 	int pflen;
 

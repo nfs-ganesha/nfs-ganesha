@@ -84,7 +84,7 @@ void dbus_client_init(void);
 #endif
 struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only);
 void put_gsh_client(struct gsh_client *client);
-int foreach_gsh_client(bool(*cb) (struct gsh_client *cl, void *state),
+int foreach_gsh_client(bool (*cb)(struct gsh_client *cl, void *state),
 		       void *state);
 
 enum exportlist_client_type {
@@ -118,42 +118,34 @@ struct base_client_entry {
 
 int StrClient(struct display_buffer *dspbuf, struct base_client_entry *client);
 
-void LogClientListEntry(enum log_components component,
-			log_levels_t level,
-			int line,
-			const char *func,
-			const char *tag,
+void LogClientListEntry(enum log_components component, log_levels_t level,
+			int line, const char *func, const char *tag,
 			struct base_client_entry *entry);
 
-#define LogMidDebug_ClientListEntry(component, tag, cli) \
-	LogClientListEntry(component, NIV_MID_DEBUG, \
-			   __LINE__, (char *) __func__, tag, cli)
+#define LogMidDebug_ClientListEntry(component, tag, cli)       \
+	LogClientListEntry(component, NIV_MID_DEBUG, __LINE__, \
+			   (char *)__func__, tag, cli)
 
-typedef void (client_free_func) (struct base_client_entry *client);
+typedef void(client_free_func)(struct base_client_entry *client);
 
 void FreeClientList(struct glist_head *clients, client_free_func free_func);
 
 struct base_client_entry *client_match(enum log_components component,
-				       const char *str,
-				       sockaddr_t *hostaddr,
+				       const char *str, sockaddr_t *hostaddr,
 				       struct glist_head *clients);
 
-typedef void * (client_list_entry_allocator_t) (void);
+typedef void *(client_list_entry_allocator_t)(void);
 
-typedef void (client_list_entry_filler_t) (struct base_client_entry *client,
-					   void *private_data);
+typedef void(client_list_entry_filler_t)(struct base_client_entry *client,
+					 void *private_data);
 
-int add_client(enum log_components component,
-	       struct glist_head *client_list,
-	       const char *client_tok,
-	       enum term_type type_hint,
-	       void *cnode,
+int add_client(enum log_components component, struct glist_head *client_list,
+	       const char *client_tok, enum term_type type_hint, void *cnode,
 	       struct config_error_type *err_type,
 	       client_list_entry_allocator_t cle_allocator,
-	       client_list_entry_filler_t cle_filler,
-	       void *private_data);
+	       client_list_entry_filler_t cle_filler, void *private_data);
 
 bool haproxy_match(SVCXPRT *xprt);
 
-#endif				/* !CLIENT_MGR_H */
+#endif /* !CLIENT_MGR_H */
 /** @} */

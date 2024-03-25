@@ -66,10 +66,10 @@ enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
 					 compound_data_t *data,
 					 struct nfs_resop4 *resp)
 {
-	TEST_STATEID4args * const arg_TEST_STATEID4 =
-	    &op->nfs_argop4_u.optest_stateid;
-	TEST_STATEID4res * const res_TEST_STATEID4 =
-	    &resp->nfs_resop4_u.optest_stateid;
+	TEST_STATEID4args *const arg_TEST_STATEID4 =
+		&op->nfs_argop4_u.optest_stateid;
+	TEST_STATEID4res *const res_TEST_STATEID4 =
+		&resp->nfs_resop4_u.optest_stateid;
 	u_int nr_stateids, i;
 	state_t *state;
 	nfsstat4 ret;
@@ -92,8 +92,8 @@ enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
 	for (i = 0; i < nr_stateids; i++) {
 		ret = nfs4_Check_Stateid(
 			&arg_TEST_STATEID4->ts_stateids.ts_stateids_val[i],
-			NULL, &state, data, STATEID_NO_SPECIAL,
-			0, false, "TEST_STATEID");
+			NULL, &state, data, STATEID_NO_SPECIAL, 0, false,
+			"TEST_STATEID");
 		if (state != NULL)
 			dec_state_t_ref(state);
 
@@ -103,7 +103,7 @@ enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
 	res->tsr_status_codes.tsr_status_codes_len = nr_stateids;
 
 	return NFS_REQ_OK;
-}				/* nfs41_op_lock */
+} /* nfs41_op_lock */
 
 /**
  * @brief Free memory allocated for TEST_STATEID result
@@ -115,10 +115,10 @@ enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
  */
 void nfs4_op_test_stateid_Free(nfs_resop4 *resp)
 {
-	TEST_STATEID4res * const res_TEST_STATEID4 =
-	    &resp->nfs_resop4_u.optest_stateid;
+	TEST_STATEID4res *const res_TEST_STATEID4 =
+		&resp->nfs_resop4_u.optest_stateid;
 	TEST_STATEID4resok *res =
-	    &res_TEST_STATEID4->TEST_STATEID4res_u.tsr_resok4;
+		&res_TEST_STATEID4->TEST_STATEID4res_u.tsr_resok4;
 
 	if (res_TEST_STATEID4->tsr_status == NFS4_OK) {
 		gsh_free(res->tsr_status_codes.tsr_status_codes_val);

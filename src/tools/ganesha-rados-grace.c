@@ -39,9 +39,9 @@
 #include <getopt.h>
 #include <rados_grace.h>
 
-static int
-cluster_connect(rados_ioctx_t *io_ctx, const char *id, const char *cephconf,
-		const char *pool, const char *ns, bool create)
+static int cluster_connect(rados_ioctx_t *io_ctx, const char *id,
+			   const char *cephconf, const char *pool,
+			   const char *ns, bool create)
 {
 	int ret;
 	rados_t clnt;
@@ -83,35 +83,32 @@ cluster_connect(rados_ioctx_t *io_ctx, const char *id, const char *cephconf,
 }
 
 static const struct option long_options[] = {
-	{"cephconf", 1, NULL, 'c'},
-	{"ns", 1, NULL, 'n'},
-	{"oid", 1, NULL, 'o'},
-	{"pool", 1, NULL, 'p'},
-	{"userid", 1, NULL, 'u' },
-	{NULL, 0, NULL, 0}
+	{ "cephconf", 1, NULL, 'c' }, { "ns", 1, NULL, 'n' },
+	{ "oid", 1, NULL, 'o' },      { "pool", 1, NULL, 'p' },
+	{ "userid", 1, NULL, 'u' },   { NULL, 0, NULL, 0 }
 };
 
-static void usage(char * const *argv)
+static void usage(char *const *argv)
 {
 	fprintf(stderr,
 		"Usage:\n%s [ --userid ceph_user ] [ --cephconf /path/to/ceph.conf ] [ --ns namespace ] [ --oid obj_id ] [ --pool pool_id ] dump|add|start|join|lift|remove|enforce|noenforce|member [ nodeid ... ]\n",
 		argv[0]);
 }
 
-int main(int argc, char * const *argv)
+int main(int argc, char *const *argv)
 {
-	int			ret, nodes = 0;
-	rados_ioctx_t		io_ctx;
-	const char		*cmd = "dump";
-	uint64_t		cur, rec;
-	char			*userid = NULL;
-	char			*cephconf = NULL;
-	char			*pool = DEFAULT_RADOS_GRACE_POOL;
-	char			*oid = DEFAULT_RADOS_GRACE_OID;
-	char			*ns = NULL;
-	int			c;
-	const char * const	*nodeids = NULL;
-	bool			do_add;
+	int ret, nodes = 0;
+	rados_ioctx_t io_ctx;
+	const char *cmd = "dump";
+	uint64_t cur, rec;
+	char *userid = NULL;
+	char *cephconf = NULL;
+	char *pool = DEFAULT_RADOS_GRACE_POOL;
+	char *oid = DEFAULT_RADOS_GRACE_OID;
+	char *ns = NULL;
+	int c;
+	const char *const *nodeids = NULL;
+	bool do_add;
 
 	while ((c = getopt_long(argc, argv, "c:n:o:p:u:", long_options,
 				NULL)) != -1) {
@@ -141,7 +138,7 @@ int main(int argc, char * const *argv)
 		cmd = argv[optind];
 		++optind;
 		nodes = argc - optind;
-		nodeids = (const char * const *)&argv[optind];
+		nodeids = (const char *const *)&argv[optind];
 	}
 
 	do_add = !strcmp(cmd, "add");

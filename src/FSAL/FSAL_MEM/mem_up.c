@@ -51,8 +51,8 @@ static struct fridgethr *mem_up_fridge;
  * @param[in] mfe	MEM export owning handle
  * @param[in] hdl	Handle to invalidate
  */
-static void
-mem_invalidate(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
+static void mem_invalidate(struct mem_fsal_export *mfe,
+			   struct mem_fsal_obj_handle *hdl)
 {
 	const struct fsal_up_vector *up_ops = mfe->export.up_ops;
 	fsal_status_t status;
@@ -79,9 +79,8 @@ mem_invalidate(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
  * @param[in] mfe	MEM export owning handle
  * @param[in] hdl	Handle to invalidate
  */
-static void
-mem_invalidate_close(struct mem_fsal_export *mfe,
-		     struct mem_fsal_obj_handle *hdl)
+static void mem_invalidate_close(struct mem_fsal_export *mfe,
+				 struct mem_fsal_obj_handle *hdl)
 {
 	const struct fsal_up_vector *up_ops = mfe->export.up_ops;
 	fsal_status_t status;
@@ -108,8 +107,8 @@ mem_invalidate_close(struct mem_fsal_export *mfe,
  * @param[in] mfe	MEM export owning handle
  * @param[in] hdl	Handle to update
  */
-static void
-mem_update(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
+static void mem_update(struct mem_fsal_export *mfe,
+		       struct mem_fsal_obj_handle *hdl)
 {
 	const struct fsal_up_vector *up_ops = mfe->export.up_ops;
 	fsal_status_t status;
@@ -144,8 +143,7 @@ mem_update(struct mem_fsal_export *mfe, struct mem_fsal_obj_handle *hdl)
  * @param[in] mfe	Export to select from
  * @return Obj on success, NULL on failure
  */
-struct mem_fsal_obj_handle *
-mem_rand_obj(struct mem_fsal_export *mfe)
+struct mem_fsal_obj_handle *mem_rand_obj(struct mem_fsal_export *mfe)
 {
 	struct mem_fsal_obj_handle *res = NULL;
 	struct glist_head *glist, *glistn;
@@ -155,7 +153,8 @@ mem_rand_obj(struct mem_fsal_export *mfe)
 		return NULL;
 
 	PTHREAD_RWLOCK_rdlock(&mfe->mfe_exp_lock);
-	glist_for_each_safe(glist, glistn, &mfe->mfe_objs) {
+	glist_for_each_safe(glist, glistn, &mfe->mfe_objs)
+	{
 		if (res == NULL) {
 			/* Grab first entry */
 			res = glist_entry(glist, struct mem_fsal_obj_handle,
@@ -186,12 +185,12 @@ mem_rand_obj(struct mem_fsal_export *mfe)
  * @param[in] ctx	Thread fridge context
  * @return Return description
  */
-static void
-mem_up_run(struct fridgethr_context *ctx)
+static void mem_up_run(struct fridgethr_context *ctx)
 {
 	struct glist_head *glist, *glistn;
 
-	glist_for_each_safe(glist, glistn, &MEM.mem_exports) {
+	glist_for_each_safe(glist, glistn, &MEM.mem_exports)
+	{
 		struct mem_fsal_export *mfe;
 		struct mem_fsal_obj_handle *hdl;
 
@@ -217,8 +216,7 @@ mem_up_run(struct fridgethr_context *ctx)
 /**
  * Initialize subsystem
  */
-fsal_status_t
-mem_up_pkginit(void)
+fsal_status_t mem_up_pkginit(void)
 {
 	/* Return code from system calls */
 	int code = 0;
@@ -264,17 +262,15 @@ mem_up_pkginit(void)
  *
  * @return FSAL status
  */
-fsal_status_t
-mem_up_pkgshutdown(void)
+fsal_status_t mem_up_pkgshutdown(void)
 {
 	if (!mem_up_fridge) {
 		/* Interval wasn't configured */
 		return fsalstat(ERR_FSAL_NO_ERROR, 0);
 	}
 
-	int rc = fridgethr_sync_command(mem_up_fridge,
-					fridgethr_comm_stop,
-					120);
+	int rc =
+		fridgethr_sync_command(mem_up_fridge, fridgethr_comm_stop, 120);
 
 	if (rc == ETIMEDOUT) {
 		LogMajor(COMPONENT_FSAL_UP,

@@ -65,8 +65,7 @@ extern pthread_rwlock_t idmapper_negative_cache_group_lock;
 
 void idmapper_cache_init(void);
 void idmapper_cache_reap(void);
-bool idmapper_add_user(const struct gsh_buffdesc *, uid_t, const gid_t *,
-		       bool);
+bool idmapper_add_user(const struct gsh_buffdesc *, uid_t, const gid_t *, bool);
 bool idmapper_add_group(const struct gsh_buffdesc *, gid_t);
 bool idmapper_lookup_by_uname(const struct gsh_buffdesc *, uid_t *,
 			      const gid_t **, bool);
@@ -115,5 +114,5 @@ extern struct gsh_dbus_method cachemgr_show_idmapper;
 extern struct gsh_dbus_method auth_statistics;
 #endif
 
-#endif				/* IDMAPPER_H */
+#endif /* IDMAPPER_H */
 /** @} */

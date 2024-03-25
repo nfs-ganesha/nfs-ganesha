@@ -141,7 +141,10 @@ struct pnfs_deviceid {
 	uint64_t devid;
 };
 
-#define DEVICE_ID_INIT_ZERO(fsal_id) {fsal_id, 0, 0, 0, 0}
+#define DEVICE_ID_INIT_ZERO(fsal_id) \
+	{                            \
+		fsal_id, 0, 0, 0, 0  \
+	}
 
 /******************************************************
  *	   FSAL MDS function argument structs
@@ -337,5 +340,5 @@ struct fsal_getdevicelist_res {
 	bool eof;
 };
 
-#endif				/* !FSAL_PNFS_H */
+#endif /* !FSAL_PNFS_H */
 /** @} */

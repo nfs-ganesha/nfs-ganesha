@@ -33,16 +33,16 @@
 #include "config.h"
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h> /* for having isalnum */
+#include <stdlib.h> /* for having atoi */
+#include <dirent.h> /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #include "log.h"
@@ -61,19 +61,16 @@
 #include "idmapper_monitoring.h"
 
 /* Export permissions for root op context */
-uint32_t root_op_export_options = EXPORT_OPTION_ROOT |
-				  EXPORT_OPTION_ACCESS_MASK |
-				  EXPORT_OPTION_AUTH_TYPES |
-				  EXPORT_OPTION_PROTOCOLS |
-				  EXPORT_OPTION_TRANSPORTS;
+uint32_t root_op_export_options =
+	EXPORT_OPTION_ROOT | EXPORT_OPTION_ACCESS_MASK |
+	EXPORT_OPTION_AUTH_TYPES | EXPORT_OPTION_PROTOCOLS |
+	EXPORT_OPTION_TRANSPORTS;
 
-uint32_t root_op_export_set = EXPORT_OPTION_SQUASH_TYPES |
-			      EXPORT_OPTION_ANON_UID_SET |
-			      EXPORT_OPTION_ANON_GID_SET |
-			      EXPORT_OPTION_ACCESS_MASK |
-			      EXPORT_OPTION_AUTH_TYPES |
-			      EXPORT_OPTION_PROTOCOLS |
-			      EXPORT_OPTION_TRANSPORTS;
+uint32_t root_op_export_set =
+	EXPORT_OPTION_SQUASH_TYPES | EXPORT_OPTION_ANON_UID_SET |
+	EXPORT_OPTION_ANON_GID_SET | EXPORT_OPTION_ACCESS_MASK |
+	EXPORT_OPTION_AUTH_TYPES | EXPORT_OPTION_PROTOCOLS |
+	EXPORT_OPTION_TRANSPORTS;
 
 void squash_setattr(struct fsal_attrlist *attr)
 {
@@ -84,9 +81,9 @@ void squash_setattr(struct fsal_attrlist *attr)
 		else if (((op_ctx->export_perms.options &
 			   EXPORT_OPTION_ROOT_SQUASH) ||
 			  (op_ctx->export_perms.options &
-			   EXPORT_OPTION_ROOT_ID_SQUASH))
-			 && (attr->owner == 0)
-			 && ((op_ctx->cred_flags & UID_SQUASHED) != 0))
+			   EXPORT_OPTION_ROOT_ID_SQUASH)) &&
+			 (attr->owner == 0) &&
+			 ((op_ctx->cred_flags & UID_SQUASHED) != 0))
 			attr->owner = op_ctx->export_perms.anonymous_uid;
 	}
 
@@ -103,10 +100,10 @@ void squash_setattr(struct fsal_attrlist *attr)
 		else if (((op_ctx->export_perms.options &
 			   EXPORT_OPTION_ROOT_SQUASH) ||
 			  (op_ctx->export_perms.options &
-			   EXPORT_OPTION_ROOT_ID_SQUASH))
-			 && (attr->group == 0)
-			 && ((op_ctx->cred_flags & (GID_SQUASHED |
-						     GARRAY_SQUASHED)) != 0))
+			   EXPORT_OPTION_ROOT_ID_SQUASH)) &&
+			 (attr->group == 0) &&
+			 ((op_ctx->cred_flags &
+			   (GID_SQUASHED | GARRAY_SQUASHED)) != 0))
 			attr->group = op_ctx->export_perms.anonymous_gid;
 	}
 }
@@ -119,8 +116,7 @@ void squash_setattr(struct fsal_attrlist *attr)
  *
  * @return true if same, false otherwise
  */
-bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
-			    nfs_client_cred_t *cred2)
+bool nfs_compare_clientcred(nfs_client_cred_t *cred1, nfs_client_cred_t *cred2)
 {
 #ifdef _HAVE_GSSAPI
 	gss_name_t cred1_cred_name;
@@ -128,7 +124,6 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 	OM_uint32 maj_stat, min_stat;
 	int status;
 #endif
-
 
 	if (cred1 == NULL)
 		return false;
@@ -150,16 +145,16 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
-		maj_stat = gss_inquire_context(&min_stat,
-			cred1->auth_union.auth_gss.gd->ctx,
+		maj_stat = gss_inquire_context(
+			&min_stat, cred1->auth_union.auth_gss.gd->ctx,
 			&cred1_cred_name, NULL, NULL, NULL, NULL, NULL, NULL);
 
 		if (maj_stat != GSS_S_COMPLETE &&
 		    maj_stat != GSS_S_CONTEXT_EXPIRED)
 			return false;
 
-		 maj_stat = gss_inquire_context(&min_stat,
-			cred2->auth_union.auth_gss.gd->ctx,
+		maj_stat = gss_inquire_context(
+			&min_stat, cred2->auth_union.auth_gss.gd->ctx,
 			&cred2_cred_name, NULL, NULL, NULL, NULL, NULL, NULL);
 
 		if (maj_stat != GSS_S_COMPLETE &&
@@ -184,8 +179,8 @@ bool nfs_compare_clientcred(nfs_client_cred_t *cred1,
 #endif
 
 	default:
-		if (memcmp
-		    (&cred1->auth_union, &cred2->auth_union, cred1->length))
+		if (memcmp(&cred1->auth_union, &cred2->auth_union,
+			   cred1->length))
 			return false;
 		break;
 	}
@@ -251,18 +246,18 @@ static void rpcsec_gss_fetch_managed_groups(char *principal)
 
 	if (nfs_param.nfsv4_param.use_getpwnam) {
 		if (!uid2grp(op_ctx->original_creds.caller_uid,
-			&op_ctx->caller_gdata)) {
+			     &op_ctx->caller_gdata)) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Attempt to fetch managed groups failed");
-			idmapper_monitoring__failure(
-				IDMAPPING_UID_TO_GROUPLIST, IDMAPPING_PWUTILS);
+			idmapper_monitoring__failure(IDMAPPING_UID_TO_GROUPLIST,
+						     IDMAPPING_PWUTILS);
 			op_ctx->creds.caller_glen = 0;
 		}
 	} else {
 #ifdef USE_NFSIDMAP
 		if (!principal2grp(principal, &op_ctx->caller_gdata,
-				op_ctx->original_creds.caller_uid,
-				op_ctx->original_creds.caller_gid)) {
+				   op_ctx->original_creds.caller_uid,
+				   op_ctx->original_creds.caller_gid)) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Attempt to fetch managed groups failed");
 			idmapper_monitoring__failure(
@@ -316,8 +311,9 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 
 	case AUTH_SYS:
 		if ((op_ctx->cred_flags & CREDS_LOADED) == 0) {
-			struct authunix_parms *creds = (struct authunix_parms *)
-				req->rq_msg.rq_cred_body;
+			struct authunix_parms *creds =
+				(struct authunix_parms *)
+					req->rq_msg.rq_cred_body;
 
 			/* We map the rq_cred to Authunix_parms */
 			op_ctx->original_creds.caller_uid = creds->aup_uid;
@@ -331,8 +327,8 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		op_ctx->creds = op_ctx->original_creds;
 
 		/* Do we trust AUTH_SYS creds for groups or not ? */
-		if ((op_ctx->export_perms.options & EXPORT_OPTION_MANAGE_GIDS)
-		    != 0) {
+		if ((op_ctx->export_perms.options &
+		     EXPORT_OPTION_MANAGE_GIDS) != 0) {
 			op_ctx->cred_flags |= MANAGED_GIDS;
 			garray_copy = &op_ctx->managed_garray_copy;
 		}
@@ -352,38 +348,35 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 			 * existing anon flag
 			 */
 			auth_label = (op_ctx->cred_flags & CREDS_ANON) ?
-				"RPCSEC_GSS (no mapping)" : "RPCSEC_GSS";
+					     "RPCSEC_GSS (no mapping)" :
+					     "RPCSEC_GSS";
 			break;
 		}
 
 		LogMidDebug(COMPONENT_DISPATCH,
-			     "Mapping RPCSEC_GSS principal %s to uid/gid",
-			     principal);
+			    "Mapping RPCSEC_GSS principal %s to uid/gid",
+			    principal);
 
 		/* Convert to uid */
 #if _MSPAC_SUPPORT
 		if (!principal2uid(principal,
 				   &op_ctx->original_creds.caller_uid,
-				   &op_ctx->original_creds.caller_gid,
-				   gd)) {
+				   &op_ctx->original_creds.caller_gid, gd)) {
 			idmapper_monitoring__failure(
 				IDMAPPING_PRINCIPAL_TO_UIDGID,
 				IDMAPPING_WINBIND);
 #else
 		if (!principal2uid(principal,
 				   &op_ctx->original_creds.caller_uid,
-				   &op_ctx->original_creds.caller_gid)
-		   ) {
+				   &op_ctx->original_creds.caller_gid)) {
 #endif
 			LogInfo(COMPONENT_IDMAPPER,
-				"Could not map principal %s to uid",
-				principal);
+				"Could not map principal %s to uid", principal);
 			/* For compatibility with Linux knfsd, we set
 			 * the uid/gid to anonymous when a name->uid
 			 * mapping can't be found.
 			 */
-			op_ctx->cred_flags |= CREDS_ANON |
-					       CREDS_LOADED;
+			op_ctx->cred_flags |= CREDS_ANON | CREDS_LOADED;
 			auth_label = "RPCSEC_GSS (no mapping)";
 			break;
 		}
@@ -394,14 +387,13 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		/* Fetch extended groups */
 		rpcsec_gss_fetch_managed_groups(principal);
 		break;
-#endif				/* _USE_GSSRPC */
+#endif /* _USE_GSSRPC */
 
 	default:
 		LogMidDebug(COMPONENT_DISPATCH,
-			     "FAILURE: Request xid=%" PRIu32
-			     ", has unsupported authentication %" PRIu32,
-			     req->rq_msg.rm_xid,
-			     req->rq_msg.cb_cred.oa_flavor);
+			    "FAILURE: Request xid=%" PRIu32
+			    ", has unsupported authentication %" PRIu32,
+			    req->rq_msg.rm_xid, req->rq_msg.cb_cred.oa_flavor);
 		/* Reject the request for weak authentication and
 		 * return to worker
 		 */
@@ -414,26 +406,25 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 	/* Now check for anon creds or id squashing			*/
 	/****************************************************************/
 	if ((op_ctx->cred_flags & CREDS_ANON) != 0 ||
-	    ((op_ctx->export_perms.options & EXPORT_OPTION_ALL_ANONYMOUS) != 0)
-	    ||
+	    ((op_ctx->export_perms.options & EXPORT_OPTION_ALL_ANONYMOUS) !=
+	     0) ||
 	    ((op_ctx->export_perms.options & EXPORT_OPTION_ROOT_SQUASH) != 0 &&
-	      op_ctx->fsal_export->exp_ops.is_superuser(op_ctx->fsal_export,
-					      &op_ctx->original_creds))) {
+	     op_ctx->fsal_export->exp_ops.is_superuser(
+		     op_ctx->fsal_export, &op_ctx->original_creds))) {
 		/* Squash uid, gid, and discard groups */
 		op_ctx->creds.caller_uid = op_ctx->export_perms.anonymous_uid;
 		op_ctx->creds.caller_gid = op_ctx->export_perms.anonymous_gid;
 		op_ctx->creds.caller_glen = 0;
 		LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-			    "%s creds squashed to uid=%u, gid=%u",
-			    auth_label,
-			    op_ctx->creds.caller_uid,
-			    op_ctx->creds.caller_gid);
+			       "%s creds squashed to uid=%u, gid=%u",
+			       auth_label, op_ctx->creds.caller_uid,
+			       op_ctx->creds.caller_gid);
 		op_ctx->cred_flags |= UID_SQUASHED | GID_SQUASHED;
 		return NFS4_OK;
 	} else if ((op_ctx->export_perms.options &
 		    EXPORT_OPTION_ROOT_ID_SQUASH) != 0 &&
 		   op_ctx->fsal_export->exp_ops.is_superuser(
-			op_ctx->fsal_export, &op_ctx->original_creds)) {
+			   op_ctx->fsal_export, &op_ctx->original_creds)) {
 		/* Only squash root id, leave gid and groups alone for now */
 		op_ctx->creds.caller_uid = op_ctx->export_perms.anonymous_uid;
 		op_ctx->cred_flags |= UID_SQUASHED;
@@ -446,8 +437,9 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 	/* Now sqush group or use original_creds gid			*/
 	/****************************************************************/
 	if (((op_ctx->export_perms.options & EXPORT_OPTION_ROOT_SQUASH) != 0 ||
-	     (op_ctx->export_perms.options & EXPORT_OPTION_ROOT_ID_SQUASH) != 0)
-	     && op_ctx->original_creds.caller_gid == 0) {
+	     (op_ctx->export_perms.options & EXPORT_OPTION_ROOT_ID_SQUASH) !=
+		     0) &&
+	    op_ctx->original_creds.caller_gid == 0) {
 		/* Squash gid */
 		op_ctx->creds.caller_gid = op_ctx->export_perms.anonymous_gid;
 		op_ctx->cred_flags |= GID_SQUASHED;
@@ -464,8 +456,8 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		if (op_ctx->caller_gdata == NULL &&
 		    !uid2grp(op_ctx->original_creds.caller_uid,
 			     &op_ctx->caller_gdata)) {
-			idmapper_monitoring__failure(
-				IDMAPPING_UID_TO_GROUPLIST, IDMAPPING_PWUTILS);
+			idmapper_monitoring__failure(IDMAPPING_UID_TO_GROUPLIST,
+						     IDMAPPING_PWUTILS);
 			/** @todo: do we really want to bail here? */
 			if (nfs_param.core_param.enable_rpc_cred_fallback) {
 				LogInfo(COMPONENT_DISPATCH,
@@ -493,7 +485,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		/* Use the original_creds group list */
 		op_ctx->creds.caller_glen = op_ctx->original_creds.caller_glen;
 		op_ctx->creds.caller_garray =
-					op_ctx->original_creds.caller_garray;
+			op_ctx->original_creds.caller_garray;
 	}
 
 	/****************************************************************/
@@ -517,7 +509,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 				memcpy((*garray_copy),
 				       op_ctx->creds.caller_garray,
 				       op_ctx->creds.caller_glen *
-				       sizeof(gid_t));
+					       sizeof(gid_t));
 			}
 
 			/* Now squash the root id. Since the original copy is
@@ -538,25 +530,21 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 
 out:
 
-	LogMidDebugAlt(COMPONENT_DISPATCH, COMPONENT_EXPORT,
-		    "%s creds mapped to uid=%u%s, gid=%u%s, glen=%d%s",
-		    auth_label,
-		    op_ctx->creds.caller_uid,
-		    (op_ctx->cred_flags & UID_SQUASHED) != 0
-			? " (squashed)"
-			: "",
-		    op_ctx->creds.caller_gid,
-		    (op_ctx->cred_flags & GID_SQUASHED) != 0
-			? " (squashed)"
-			: "",
-		    op_ctx->creds.caller_glen,
-		    (op_ctx->cred_flags & MANAGED_GIDS) != 0
-			? ((op_ctx->cred_flags & GARRAY_SQUASHED) != 0
-				? " (managed and squashed)"
-				: " (managed)")
-			: ((op_ctx->cred_flags & GARRAY_SQUASHED) != 0
-				? " (squashed)"
-				: ""));
+	LogMidDebugAlt(
+		COMPONENT_DISPATCH, COMPONENT_EXPORT,
+		"%s creds mapped to uid=%u%s, gid=%u%s, glen=%d%s", auth_label,
+		op_ctx->creds.caller_uid,
+		(op_ctx->cred_flags & UID_SQUASHED) != 0 ? " (squashed)" : "",
+		op_ctx->creds.caller_gid,
+		(op_ctx->cred_flags & GID_SQUASHED) != 0 ? " (squashed)" : "",
+		op_ctx->creds.caller_glen,
+		(op_ctx->cred_flags & MANAGED_GIDS) != 0 ?
+			((op_ctx->cred_flags & GARRAY_SQUASHED) != 0 ?
+				 " (managed and squashed)" :
+				 " (managed)") :
+			((op_ctx->cred_flags & GARRAY_SQUASHED) != 0 ?
+				 " (squashed)" :
+				 ""));
 
 	return NFS4_OK;
 }
@@ -618,67 +606,63 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 
 	/* Check if any access at all */
 	if ((op_ctx->export_perms.options & EXPORT_OPTION_ACCESS_MASK) == 0) {
-		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+		LogInfoAlt(
+			COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Access not allowed on Export_Id %d %s for client %s",
-			op_ctx->ctx_export->export_id,
-			CTX_PSEUDOPATH(op_ctx),
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+			op_ctx->ctx_export->export_id, CTX_PSEUDOPATH(op_ctx),
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check protocol version */
 	if ((op_ctx->export_perms.options & EXPORT_OPTION_NFSV4) == 0) {
 		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
-			"NFS4 not allowed on Export_Id %d %s for client %s",
-			op_ctx->ctx_export->export_id,
-			CTX_PSEUDOPATH(op_ctx),
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+			   "NFS4 not allowed on Export_Id %d %s for client %s",
+			   op_ctx->ctx_export->export_id,
+			   CTX_PSEUDOPATH(op_ctx),
+			   op_ctx->client ? op_ctx->client->hostaddr_str :
+					    "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check transport type */
 	if (((xprt_type == XPRT_UDP) &&
-	    ((op_ctx->export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
+	     ((op_ctx->export_perms.options & EXPORT_OPTION_UDP) == 0)) ||
 	    ((xprt_type == XPRT_TCP) &&
-	    ((op_ctx->export_perms.options & EXPORT_OPTION_TCP) == 0))) {
-		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+	     ((op_ctx->export_perms.options & EXPORT_OPTION_TCP) == 0))) {
+		LogInfoAlt(
+			COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 over %s not allowed on Export_Id %d %s for client %s",
 			xprt_type_to_str(xprt_type),
-			op_ctx->ctx_export->export_id,
-			CTX_PSEUDOPATH(op_ctx),
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+			op_ctx->ctx_export->export_id, CTX_PSEUDOPATH(op_ctx),
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Check if client is using a privileged port. */
-	if (((op_ctx->export_perms.options &
-	      EXPORT_OPTION_PRIVILEGED_PORT) != 0)
-	    && (port >= IPPORT_RESERVED)) {
-		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+	if (((op_ctx->export_perms.options & EXPORT_OPTION_PRIVILEGED_PORT) !=
+	     0) &&
+	    (port >= IPPORT_RESERVED)) {
+		LogInfoAlt(
+			COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"Non-reserved Port %d is not allowed on Export_Id %d %s for client %s",
 			port, op_ctx->ctx_export->export_id,
 			CTX_PSEUDOPATH(op_ctx),
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 		return NFS4ERR_ACCESS;
 	}
 
 	/* Test if export allows the authentication provided */
 	if (export_check_security(req) == false) {
-		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+		LogInfoAlt(
+			COMPONENT_NFS_V4, COMPONENT_EXPORT,
 			"NFS4 auth not allowed on Export_Id %d %s for client %s",
-			op_ctx->ctx_export->export_id,
-			CTX_PSEUDOPATH(op_ctx),
-			op_ctx->client
-				? op_ctx->client->hostaddr_str
-				: "unknown client");
+			op_ctx->ctx_export->export_id, CTX_PSEUDOPATH(op_ctx),
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 		return NFS4ERR_WRONGSEC;
 	}
 
@@ -707,9 +691,8 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
  */
 
 fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
-				   uint32_t requested_access,
-				   uint32_t *granted_access,
-				   uint32_t *supported_access)
+			    uint32_t requested_access, uint32_t *granted_access,
+			    uint32_t *supported_access)
 {
 	fsal_status_t fsal_status;
 	fsal_accessflags_t access_mask;
@@ -720,20 +703,20 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 	access_mask = 0;
 	*granted_access = 0;
 
-	LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_V4_ACL,
-		    "Requested ACCESS=%s,%s,%s,%s,%s,%s",
-		    FSAL_TEST_MASK(requested_access,
-				   ACCESS3_READ) ? "READ" : "-",
-		    FSAL_TEST_MASK(requested_access,
-				   ACCESS3_LOOKUP) ? "LOOKUP" : "-",
-		    FSAL_TEST_MASK(requested_access,
-				   ACCESS3_MODIFY) ? "MODIFY" : "-",
-		    FSAL_TEST_MASK(requested_access,
-				   ACCESS3_EXTEND) ? "EXTEND" : "-",
-		    FSAL_TEST_MASK(requested_access,
-				   ACCESS3_DELETE) ? "DELETE" : "-",
-		    FSAL_TEST_MASK(requested_access,
-				   ACCESS3_EXECUTE) ? "EXECUTE" : "-");
+	LogDebugAlt(
+		COMPONENT_NFSPROTO, COMPONENT_NFS_V4_ACL,
+		"Requested ACCESS=%s,%s,%s,%s,%s,%s",
+		FSAL_TEST_MASK(requested_access, ACCESS3_READ) ? "READ" : "-",
+		FSAL_TEST_MASK(requested_access, ACCESS3_LOOKUP) ? "LOOKUP" :
+								   "-",
+		FSAL_TEST_MASK(requested_access, ACCESS3_MODIFY) ? "MODIFY" :
+								   "-",
+		FSAL_TEST_MASK(requested_access, ACCESS3_EXTEND) ? "EXTEND" :
+								   "-",
+		FSAL_TEST_MASK(requested_access, ACCESS3_DELETE) ? "DELETE" :
+								   "-",
+		FSAL_TEST_MASK(requested_access, ACCESS3_EXECUTE) ? "EXECUTE" :
+								    "-");
 
 	/* Set mode for read.
 	 * NOTE: FSAL_ACE_PERM_LIST_DIR and FSAL_ACE_PERM_READ_DATA have
@@ -758,9 +741,8 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 
 	if (requested_access & ACCESS3_EXTEND) {
 		if (obj->type == DIRECTORY)
-			access_mask |=
-			    FSAL_W_OK | FSAL_ACE_PERM_ADD_FILE |
-			    FSAL_ACE_PERM_ADD_SUBDIRECTORY;
+			access_mask |= FSAL_W_OK | FSAL_ACE_PERM_ADD_FILE |
+				       FSAL_ACE_PERM_ADD_SUBDIRECTORY;
 		else
 			access_mask |= FSAL_W_OK | FSAL_ACE_PERM_APPEND_DATA;
 	}
@@ -780,47 +762,43 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 	}
 
 	if (access_mask != 0)
-		access_mask |=
-		    FSAL_MODE_MASK_FLAG | FSAL_ACE4_MASK_FLAG |
-		    FSAL_ACE4_PERM_CONTINUE;
+		access_mask |= FSAL_MODE_MASK_FLAG | FSAL_ACE4_MASK_FLAG |
+			       FSAL_ACE4_PERM_CONTINUE;
 
-	LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_V4_ACL,
-		    "access_mask = mode(%c%c%c) ACL(%s,%s,%s,%s,%s)",
-		    FSAL_TEST_MASK(access_mask, FSAL_R_OK) ? 'r' : '-',
-		    FSAL_TEST_MASK(access_mask, FSAL_W_OK) ? 'w' : '-',
-		    FSAL_TEST_MASK(access_mask, FSAL_X_OK) ? 'x' : '-',
-		    FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_READ_DATA) ?
-			obj->type == DIRECTORY ?
-			"list_dir" : "read_data" : "-",
-		    FSAL_TEST_MASK(access_mask,
-				   FSAL_ACE_PERM_WRITE_DATA) ?
-			obj->type == DIRECTORY ?
-			"add_file" : "write_data" : "-",
-		    FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_EXECUTE) ?
-			"execute" : "-",
-		    FSAL_TEST_MASK(access_mask,
-				   FSAL_ACE_PERM_ADD_SUBDIRECTORY) ?
-			"add_subdirectory" : "-",
-		    FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_DELETE_CHILD) ?
-			"delete_child" : "-");
+	LogDebugAlt(
+		COMPONENT_NFSPROTO, COMPONENT_NFS_V4_ACL,
+		"access_mask = mode(%c%c%c) ACL(%s,%s,%s,%s,%s)",
+		FSAL_TEST_MASK(access_mask, FSAL_R_OK) ? 'r' : '-',
+		FSAL_TEST_MASK(access_mask, FSAL_W_OK) ? 'w' : '-',
+		FSAL_TEST_MASK(access_mask, FSAL_X_OK) ? 'x' : '-',
+		FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_READ_DATA) ?
+			obj->type == DIRECTORY ? "list_dir" : "read_data" :
+			"-",
+		FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_WRITE_DATA) ?
+			obj->type == DIRECTORY ? "add_file" : "write_data" :
+			"-",
+		FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_EXECUTE) ? "execute" :
+								     "-",
+		FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_ADD_SUBDIRECTORY) ?
+			"add_subdirectory" :
+			"-",
+		FSAL_TEST_MASK(access_mask, FSAL_ACE_PERM_DELETE_CHILD) ?
+			"delete_child" :
+			"-");
 
-	fsal_status = obj->obj_ops->test_access(obj, access_mask,
-					       &access_allowed,
-					       &access_denied, false);
+	fsal_status = obj->obj_ops->test_access(
+		obj, access_mask, &access_allowed, &access_denied, false);
 	if (fsal_status.major == ERR_FSAL_NO_ERROR ||
 	    fsal_status.major == ERR_FSAL_ACCESS) {
 		/* Define granted access based on granted mode bits. */
 		if (access_allowed & FSAL_R_OK) {
-			*granted_access |= ACCESS3_READ |
-					   ACCESS4_XAREAD |
+			*granted_access |= ACCESS3_READ | ACCESS4_XAREAD |
 					   ACCESS4_XALIST;
 		}
 
 		if (access_allowed & FSAL_W_OK) {
-			*granted_access |= ACCESS3_MODIFY |
-					   ACCESS3_EXTEND |
-					   ACCESS3_DELETE |
-					   ACCESS4_XAWRITE;
+			*granted_access |= ACCESS3_MODIFY | ACCESS3_EXTEND |
+					   ACCESS3_DELETE | ACCESS4_XAWRITE;
 		}
 
 		if (access_allowed & FSAL_X_OK)
@@ -828,8 +806,7 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 
 		/* Define granted access based on granted ACL bits. */
 		if (access_allowed & FSAL_ACE_PERM_READ_DATA)
-			*granted_access |= ACCESS3_READ |
-					   ACCESS4_XAREAD |
+			*granted_access |= ACCESS3_READ | ACCESS4_XAREAD |
 					   ACCESS4_XALIST;
 
 		if (obj->type == DIRECTORY) {
@@ -862,11 +839,9 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 		 * on this share.
 		 */
 		if (!(op_ctx->export_perms.options &
-		    EXPORT_OPTION_WRITE_ACCESS))
-			*granted_access &= ~(ACCESS3_EXTEND |
-					     ACCESS3_MODIFY |
-					     ACCESS3_DELETE |
-					     ACCESS4_XAWRITE);
+		      EXPORT_OPTION_WRITE_ACCESS))
+			*granted_access &= ~(ACCESS3_EXTEND | ACCESS3_MODIFY |
+					     ACCESS3_DELETE | ACCESS4_XAWRITE);
 
 		/* Don't allow any bits that weren't set on request or
 		 * allowed by the file type.
@@ -878,33 +853,45 @@ fsal_status_t nfs_access_op(struct fsal_obj_handle *obj,
 
 		LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_V4_ACL,
 			    "Supported ACCESS=%s,%s,%s,%s,%s,%s",
-			    FSAL_TEST_MASK(granted_mask,
-					   ACCESS3_READ) ? "READ" : "-",
-			    FSAL_TEST_MASK(granted_mask,
-					   ACCESS3_LOOKUP) ? "LOOKUP" : "-",
-			    FSAL_TEST_MASK(granted_mask,
-					   ACCESS3_MODIFY) ? "MODIFY" : "-",
-			    FSAL_TEST_MASK(granted_mask,
-					   ACCESS3_EXTEND) ? "EXTEND" : "-",
-			    FSAL_TEST_MASK(granted_mask,
-					   ACCESS3_DELETE) ? "DELETE" : "-",
-			    FSAL_TEST_MASK(granted_mask,
-					   ACCESS3_EXECUTE) ? "EXECUTE" : "-");
+			    FSAL_TEST_MASK(granted_mask, ACCESS3_READ) ?
+				    "READ" :
+				    "-",
+			    FSAL_TEST_MASK(granted_mask, ACCESS3_LOOKUP) ?
+				    "LOOKUP" :
+				    "-",
+			    FSAL_TEST_MASK(granted_mask, ACCESS3_MODIFY) ?
+				    "MODIFY" :
+				    "-",
+			    FSAL_TEST_MASK(granted_mask, ACCESS3_EXTEND) ?
+				    "EXTEND" :
+				    "-",
+			    FSAL_TEST_MASK(granted_mask, ACCESS3_DELETE) ?
+				    "DELETE" :
+				    "-",
+			    FSAL_TEST_MASK(granted_mask, ACCESS3_EXECUTE) ?
+				    "EXECUTE" :
+				    "-");
 
 		LogDebugAlt(COMPONENT_NFSPROTO, COMPONENT_NFS_V4_ACL,
 			    "Granted ACCESS=%s,%s,%s,%s,%s,%s",
-			    FSAL_TEST_MASK(*granted_access,
-					   ACCESS3_READ) ? "READ" : "-",
-			    FSAL_TEST_MASK(*granted_access,
-					   ACCESS3_LOOKUP) ? "LOOKUP" : "-",
-			    FSAL_TEST_MASK(*granted_access,
-					   ACCESS3_MODIFY) ? "MODIFY" : "-",
-			    FSAL_TEST_MASK(*granted_access,
-					   ACCESS3_EXTEND) ? "EXTEND" : "-",
-			    FSAL_TEST_MASK(*granted_access,
-					   ACCESS3_DELETE) ? "DELETE" : "-",
-			    FSAL_TEST_MASK(*granted_access,
-					   ACCESS3_EXECUTE) ? "EXECUTE" : "-");
+			    FSAL_TEST_MASK(*granted_access, ACCESS3_READ) ?
+				    "READ" :
+				    "-",
+			    FSAL_TEST_MASK(*granted_access, ACCESS3_LOOKUP) ?
+				    "LOOKUP" :
+				    "-",
+			    FSAL_TEST_MASK(*granted_access, ACCESS3_MODIFY) ?
+				    "MODIFY" :
+				    "-",
+			    FSAL_TEST_MASK(*granted_access, ACCESS3_EXTEND) ?
+				    "EXTEND" :
+				    "-",
+			    FSAL_TEST_MASK(*granted_access, ACCESS3_DELETE) ?
+				    "DELETE" :
+				    "-",
+			    FSAL_TEST_MASK(*granted_access, ACCESS3_EXECUTE) ?
+				    "EXECUTE" :
+				    "-");
 	}
 
 	return fsal_status;

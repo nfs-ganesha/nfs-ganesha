@@ -5,7 +5,7 @@
  */
 
 #ifndef _MOUNT_H_RPCGEN
-#define	_MOUNT_H_RPCGEN
+#define _MOUNT_H_RPCGEN
 
 #include "gsh_refstr.h"
 
@@ -13,15 +13,15 @@
 extern "C" {
 #endif
 
-#define	MNTPATHLEN 1024
-#define	MNTNAMLEN 255
+#define MNTPATHLEN 1024
+#define MNTNAMLEN 255
 
 #define NB_AUTH_FLAVOR 10
 
 /* RPCSEC_GSS flavor, for MOUNT */
-#define MNT_RPC_GSS_NONE      390003
+#define MNT_RPC_GSS_NONE 390003
 #define MNT_RPC_GSS_INTEGRITY 390004
-#define MNT_RPC_GSS_PRIVACY   390005
+#define MNT_RPC_GSS_PRIVACY 390005
 
 enum mountstat3 {
 	MNT3_OK = 0,
@@ -96,21 +96,21 @@ struct mountres3 {
 };
 typedef struct mountres3 mountres3;
 
-#define	MOUNTPROG	100005
-#define	MOUNT_V1	1
-#define	MOUNTPROC2_NULL	0
-#define	MOUNTPROC2_MNT	1
-#define	MOUNTPROC2_DUMP	2
-#define	MOUNTPROC2_UMNT	3
-#define	MOUNTPROC2_UMNTALL	4
-#define	MOUNTPROC2_EXPORT	5
-#define	MOUNT_V3	3
-#define	MOUNTPROC3_NULL	0
-#define	MOUNTPROC3_MNT	1
-#define	MOUNTPROC3_DUMP	2
-#define	MOUNTPROC3_UMNT	3
-#define	MOUNTPROC3_UMNTALL	4
-#define	MOUNTPROC3_EXPORT	5
+#define MOUNTPROG 100005
+#define MOUNT_V1 1
+#define MOUNTPROC2_NULL 0
+#define MOUNTPROC2_MNT 1
+#define MOUNTPROC2_DUMP 2
+#define MOUNTPROC2_UMNT 3
+#define MOUNTPROC2_UMNTALL 4
+#define MOUNTPROC2_EXPORT 5
+#define MOUNT_V3 3
+#define MOUNTPROC3_NULL 0
+#define MOUNTPROC3_MNT 1
+#define MOUNTPROC3_DUMP 2
+#define MOUNTPROC3_UMNT 3
+#define MOUNTPROC3_UMNTALL 4
+#define MOUNTPROC3_EXPORT 5
 
 /* Number of mount v3 commands. */
 #define MNT_V3_NB_COMMAND (MOUNTPROC3_EXPORT + 1)
@@ -130,4 +130,4 @@ extern bool xdr_mountres3(XDR *, mountres3 *);
 }
 #endif
 
-#endif				/* !_MOUNT_H_RPCGEN */
+#endif /* !_MOUNT_H_RPCGEN */

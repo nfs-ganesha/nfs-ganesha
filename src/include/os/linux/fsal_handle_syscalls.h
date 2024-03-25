@@ -28,7 +28,7 @@
 #define HANDLE_LINUX_H
 
 #ifndef AT_EMPTY_PATH
-#define AT_EMPTY_PATH           0x1000
+#define AT_EMPTY_PATH 0x1000
 #endif
 
 /*
@@ -55,17 +55,17 @@ struct file_handle {
 };
 
 #if defined(__aarch64__)
-#define __NR_name_to_handle_at  264
-#define __NR_open_by_handle_at  265
+#define __NR_name_to_handle_at 264
+#define __NR_open_by_handle_at 265
 #elif defined(__i386__)
-#define __NR_name_to_handle_at  341
-#define __NR_open_by_handle_at  342
+#define __NR_name_to_handle_at 341
+#define __NR_open_by_handle_at 342
 #elif defined(__x86_64__)
-#define __NR_name_to_handle_at  303
-#define __NR_open_by_handle_at  304
+#define __NR_name_to_handle_at 303
+#define __NR_open_by_handle_at 304
 #elif defined(__PPC64__)
-#define __NR_name_to_handle_at  345
-#define __NR_open_by_handle_at  346
+#define __NR_name_to_handle_at 345
+#define __NR_open_by_handle_at 346
 #endif
 
 static inline int name_to_handle_at(int mdirfd, const char *name,
@@ -81,7 +81,7 @@ static inline int open_by_handle_at(int mdirfd, struct file_handle *handle,
 {
 	return syscall(__NR_open_by_handle_at, mdirfd, handle, flags);
 }
-#endif				/* MAX_HANDLE_SZ */
+#endif /* MAX_HANDLE_SZ */
 
 #ifndef O_PATH
 #define O_PATH 010000000
@@ -103,10 +103,8 @@ static inline int vfs_stat_by_handle(int mountfd, struct stat *buf)
 	return fstatat(mountfd, "", buf, AT_EMPTY_PATH);
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
-				     int srcfd,
-				     int destdirfd,
-				     const char *dname)
+static inline int vfs_link_by_handle(vfs_file_handle_t *fh, int srcfd,
+				     int destdirfd, const char *dname)
 {
 	return linkat(srcfd, "", destdirfd, dname, AT_EMPTY_PATH);
 }
@@ -120,16 +118,16 @@ static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,
 
 /* If not otherwise defined, define OFD locks */
 #ifndef F_OFD_GETLK
-#define F_OFD_GETLK	36
+#define F_OFD_GETLK 36
 #endif
 
 #ifndef F_OFD_SETLK
-#define F_OFD_SETLK	37
+#define F_OFD_SETLK 37
 #endif
 
 #ifndef F_OFD_SETLKW
-#define F_OFD_SETLKW	38
+#define F_OFD_SETLKW 38
 #endif
 
-#endif				/* HANDLE_LINUX_H */
+#endif /* HANDLE_LINUX_H */
 /** @} */

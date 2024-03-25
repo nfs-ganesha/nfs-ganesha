@@ -65,11 +65,11 @@
 enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 				 struct nfs_resop4 *resp)
 {
-	LINK4args * const arg_LINK4 = &op->nfs_argop4_u.oplink;
-	LINK4res * const res_LINK4 = &resp->nfs_resop4_u.oplink;
+	LINK4args *const arg_LINK4 = &op->nfs_argop4_u.oplink;
+	LINK4res *const res_LINK4 = &resp->nfs_resop4_u.oplink;
 	struct fsal_obj_handle *dir_obj = NULL;
 	struct fsal_obj_handle *file_obj = NULL;
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 	struct fsal_attrlist destdir_pre_attrs, destdir_post_attrs;
 	bool is_destdir_pre_attrs_valid, is_destdir_post_attrs_valid;
 
@@ -104,8 +104,8 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 
 	/* Validate and convert the UFT8 objname to a regular string */
-	res_LINK4->status = nfs4_utf8string_scan(&arg_LINK4->newname,
-						 UTF8_SCAN_PATH_COMP);
+	res_LINK4->status =
+		nfs4_utf8string_scan(&arg_LINK4->newname, UTF8_SCAN_PATH_COMP);
 
 	if (res_LINK4->status != NFS4_OK)
 		goto out;
@@ -118,8 +118,7 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	file_obj = data->saved_obj;
 
 	/* make the link */
-	status = fsal_link(file_obj, dir_obj,
-			   arg_LINK4->newname.utf8string_val,
+	status = fsal_link(file_obj, dir_obj, arg_LINK4->newname.utf8string_val,
 			   &destdir_pre_attrs, &destdir_post_attrs);
 
 	if (FSAL_IS_ERROR(status)) {
@@ -131,31 +130,32 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 		FSAL_TEST_MASK(destdir_pre_attrs.valid_mask, ATTR_CHANGE);
 	if (is_destdir_pre_attrs_valid) {
 		res_LINK4->LINK4res_u.resok4.cinfo.before =
-			(changeid4) destdir_pre_attrs.change;
+			(changeid4)destdir_pre_attrs.change;
 	}
 
 	is_destdir_post_attrs_valid =
 		FSAL_TEST_MASK(destdir_post_attrs.valid_mask, ATTR_CHANGE);
 	if (is_destdir_post_attrs_valid) {
 		res_LINK4->LINK4res_u.resok4.cinfo.after =
-			(changeid4) destdir_post_attrs.change;
+			(changeid4)destdir_post_attrs.change;
 	} else {
 		res_LINK4->LINK4res_u.resok4.cinfo.after =
-		fsal_get_changeid4(dir_obj);
+			fsal_get_changeid4(dir_obj);
 	}
 
 	res_LINK4->LINK4res_u.resok4.cinfo.atomic =
 		is_destdir_pre_attrs_valid && is_destdir_post_attrs_valid ?
-		TRUE : FALSE;
+			TRUE :
+			FALSE;
 
 	res_LINK4->status = NFS4_OK;
 
- out:
+out:
 	fsal_release_attrs(&destdir_pre_attrs);
 	fsal_release_attrs(&destdir_post_attrs);
 
 	return nfsstat4_to_nfs_req_result(res_LINK4->status);
-}				/* nfs4_op_link */
+} /* nfs4_op_link */
 
 /**
  * @brief Free memory allocated for LINK result

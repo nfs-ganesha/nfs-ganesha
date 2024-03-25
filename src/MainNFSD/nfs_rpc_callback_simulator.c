@@ -99,13 +99,13 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].ht_lock));
 
 		/* go through all entries in the red-black-tree */
-		RBT_LOOP(head_rbt, pn) {
+		RBT_LOOP(head_rbt, pn)
+		{
 			pdata = RBT_OPAQ(pn);
 			pclientid = pdata->val.addr;
 			clientid = pclientid->cid_clientid;
-			dbus_message_iter_append_basic(&sub_iter,
-						       DBUS_TYPE_UINT64,
-						       &clientid);
+			dbus_message_iter_append_basic(
+				&sub_iter, DBUS_TYPE_UINT64, &clientid);
 			RBT_INCREMENT(pn);
 		}
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
@@ -120,17 +120,9 @@ static bool nfs_rpc_cbsim_get_v40_client_ids(DBusMessageIter *args,
 static struct gsh_dbus_method cbsim_get_client_ids = {
 	.name = "get_client_ids",
 	.method = nfs_rpc_cbsim_get_v40_client_ids,
-	.args = {
-			{
-				.name = "time",
-				.type = "(tt)",
-				.direction = "out"},
-			{
-				.name = "clientids",
-				.type = "at",
-				.direction = "out"},
-			{NULL, NULL, NULL}
-		}
+	.args = { { .name = "time", .type = "(tt)", .direction = "out" },
+		  { .name = "clientids", .type = "at", .direction = "out" },
+		  { NULL, NULL, NULL } }
 };
 
 /**
@@ -141,8 +133,7 @@ static struct gsh_dbus_method cbsim_get_client_ids = {
  */
 
 static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
-					  DBusMessage *reply,
-					  DBusError *error)
+					  DBusMessage *reply, DBusError *error)
 {
 	uint32_t i;
 	hash_table_t *ht = ht_session_id;
@@ -170,16 +161,16 @@ static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
 		PTHREAD_RWLOCK_wrlock(&(ht->partitions[i].ht_lock));
 
 		/* go through all entries in the red-black-tree */
-		RBT_LOOP(head_rbt, pn) {
+		RBT_LOOP(head_rbt, pn)
+		{
 			pdata = RBT_OPAQ(pn);
 			session_data = pdata->val.addr;
 			/* format */
 			b64_ntop((unsigned char *)session_data->session_id,
 				 NFS4_SESSIONID_SIZE, session_id,
 				 (2 * NFS4_SESSIONID_SIZE));
-			dbus_message_iter_append_basic(&sub_iter,
-						       DBUS_TYPE_STRING,
-						       &session_id);
+			dbus_message_iter_append_basic(
+				&sub_iter, DBUS_TYPE_STRING, &session_id);
 			RBT_INCREMENT(pn);
 		}
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
@@ -194,17 +185,9 @@ static bool nfs_rpc_cbsim_get_session_ids(DBusMessageIter *args,
 static struct gsh_dbus_method cbsim_get_session_ids = {
 	.name = "get_session_ids",
 	.method = nfs_rpc_cbsim_get_session_ids,
-	.args = {
-			{
-				.name = "time",
-				.type = "(tt)",
-				.direction = "out"},
-			{
-				.name = "sessionids",
-				.type = "at",
-				.direction = "out"},
-			{NULL, NULL, NULL}
-		}
+	.args = { { .name = "time", .type = "(tt)", .direction = "out" },
+		  { .name = "sessionids", .type = "at", .direction = "out" },
+		  { NULL, NULL, NULL } }
 };
 
 static int cbsim_test_bchan(clientid4 clientid)
@@ -216,7 +199,7 @@ static int cbsim_test_bchan(clientid4 clientid)
 	if (code != CLIENT_ID_SUCCESS) {
 		LogCrit(COMPONENT_NFS_CB,
 			"No clid record for %" PRIx64 " (%d) code %d", clientid,
-			(int32_t) clientid, code);
+			(int32_t)clientid, code);
 		return EINVAL;
 	}
 
@@ -228,7 +211,7 @@ static int cbsim_test_bchan(clientid4 clientid)
 /**
  * Demonstration callback invocation.
  */
-static void cbsim_free_compound(nfs4_compound_t *cbt) __attribute__ ((unused));
+static void cbsim_free_compound(nfs4_compound_t *cbt) __attribute__((unused));
 
 static void cbsim_free_compound(nfs4_compound_t *cbt)
 {
@@ -265,8 +248,7 @@ static void cbsim_completion_func(rpc_call_t *call)
 		LogMidDebug(COMPONENT_NFS_CB, "call result: %d",
 			    call->call_req.cc_error.re_status);
 	} else {
-		LogDebug(COMPONENT_NFS_CB,
-			 "Aborted: %d",
+		LogDebug(COMPONENT_NFS_CB, "Aborted: %d",
 			 call->call_req.cc_error.re_status);
 	}
 }
@@ -285,7 +267,7 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
 	if (code != CLIENT_ID_SUCCESS) {
 		LogCrit(COMPONENT_NFS_CB,
 			"No clid record for %" PRIx64 " (%d) code %d", clientid,
-			(int32_t) clientid, code);
+			(int32_t)clientid, code);
 		code = EINVAL;
 		goto out;
 	}
@@ -329,7 +311,7 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 11;
 	/* leaks, sorry */
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val =
-	    gsh_strdup("0xabadcafe");
+		gsh_strdup("0xabadcafe");
 
 	/* add ops, till finished (dont exceed count) */
 	cb_compound_add_op(&call->cbt, argop);
@@ -343,7 +325,7 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
 	if (code)
 		free_rpc_call(call);
 
- out:
+out:
 	return code;
 }
 
@@ -357,11 +339,10 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
  * @param reply   the message reply (empty)
  */
 
-static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter *args,
-				      DBusMessage *reply,
+static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter *args, DBusMessage *reply,
 				      DBusError *error)
 {
-	clientid4 clientid = 9315;	/* XXX ew! */
+	clientid4 clientid = 9315; /* XXX ew! */
 
 	LogDebug(COMPONENT_NFS_CB, "called!");
 
@@ -387,24 +368,16 @@ static bool nfs_rpc_cbsim_fake_recall(DBusMessageIter *args,
 static struct gsh_dbus_method cbsim_fake_recall = {
 	.name = "fake_recall",
 	.method = nfs_rpc_cbsim_fake_recall,
-	.args = {
-			{
-				.name = "clientid",
-				.type = "t",
-				.direction = "in"},
-			{NULL, NULL, NULL}
-		}
+	.args = { { .name = "clientid", .type = "t", .direction = "in" },
+		  { NULL, NULL, NULL } }
 };
 
 /* DBUS org.ganesha.nfsd.cbsim methods list
  */
 
-static struct gsh_dbus_method *cbsim_methods[] = {
-	&cbsim_get_client_ids,
-	&cbsim_get_session_ids,
-	&cbsim_fake_recall,
-	NULL
-};
+static struct gsh_dbus_method *cbsim_methods[] = { &cbsim_get_client_ids,
+						   &cbsim_get_session_ids,
+						   &cbsim_fake_recall, NULL };
 
 static struct gsh_dbus_interface cbsim_interface = {
 	.name = "org.ganesha.nfsd.cbsim",
@@ -416,10 +389,8 @@ static struct gsh_dbus_interface cbsim_interface = {
 /* DBUS list of interfaces on /org/ganesha/nfsd/CBSIM
  */
 
-static struct gsh_dbus_interface *cbsim_interfaces[] = {
-	&cbsim_interface,
-	NULL
-};
+static struct gsh_dbus_interface *cbsim_interfaces[] = { &cbsim_interface,
+							 NULL };
 
 /**
  * @brief Initialize subsystem

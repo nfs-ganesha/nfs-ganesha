@@ -28,7 +28,7 @@
  * @{
  */
 
- /**
+/**
   * @file nlm_state.c
   * @brief The management of the NLM state caches.
   */
@@ -104,8 +104,8 @@ int compare_nlm_state(state_t *state1, state_t *state2)
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		char str1[LOG_BUFF_LEN / 2] = "\0";
 		char str2[LOG_BUFF_LEN / 2] = "\0";
-		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
-		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+		struct display_buffer dspbuf1 = { sizeof(str1), str1, str1 };
+		struct display_buffer dspbuf2 = { sizeof(str2), str2, str2 };
 
 		display_nlm_state(&dspbuf1, state1);
 		display_nlm_state(&dspbuf2, state2);
@@ -137,7 +137,6 @@ int compare_nlm_state_key(struct gsh_buffdesc *buff1,
 			  struct gsh_buffdesc *buff2)
 {
 	return compare_nlm_state(buff1->addr, buff2->addr);
-
 }
 
 /**
@@ -159,14 +158,14 @@ uint32_t nlm_state_value_hash_func(hash_parameter_t *hparam,
 
 	/* We hash based on the owner pointer, and the object key.  This depends
 	 * on them being sequential in memory. */
-	hk = CityHash64WithSeed(addr, sizeof(pkey->state_owner)
-				+ sizeof(pkey->state_obj), 557);
+	hk = CityHash64WithSeed(
+		addr, sizeof(pkey->state_owner) + sizeof(pkey->state_obj), 557);
 
 	if (pkey->state_type == STATE_TYPE_NLM_SHARE)
 		hk = ~hk;
 
 	if (isDebug(COMPONENT_HASHTABLE))
-		LogFullDebug(COMPONENT_STATE, "value = %"PRIx32,
+		LogFullDebug(COMPONENT_STATE, "value = %" PRIx32,
 			     (uint32_t)(hk % hparam->index_size));
 
 	return hk % hparam->index_size;
@@ -191,14 +190,14 @@ uint64_t nlm_state_rbt_hash_func(hash_parameter_t *hparam,
 
 	/* We hash based on the owner pointer, and the object key.  This depends
 	 * on them being sequential in memory. */
-	hk = CityHash64WithSeed(addr, sizeof(pkey->state_owner) +
-				sizeof(pkey->state_obj), 557);
+	hk = CityHash64WithSeed(
+		addr, sizeof(pkey->state_owner) + sizeof(pkey->state_obj), 557);
 
 	if (pkey->state_type == STATE_TYPE_NLM_SHARE)
 		hk = ~hk;
 
 	if (isDebug(COMPONENT_HASHTABLE))
-		LogFullDebug(COMPONENT_STATE, "value = %"PRIx64,
+		LogFullDebug(COMPONENT_STATE, "value = %" PRIx64,
 			     hk % hparam->index_size);
 
 	return hk % hparam->index_size;
@@ -239,7 +238,7 @@ int Init_nlm_state_hash(void)
 void dec_nlm_state_ref(state_t *state)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	struct hash_latch latch;
 	hash_error_t rc;
@@ -283,8 +282,8 @@ void dec_nlm_state_ref(state_t *state)
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
 		if (old_value.addr == state) { /* our own state */
-			hashtable_deletelatched(ht_nlm_states, &buffkey,
-						&latch, NULL, NULL);
+			hashtable_deletelatched(ht_nlm_states, &buffkey, &latch,
+						NULL, NULL);
 		}
 		break;
 
@@ -311,11 +310,10 @@ void dec_nlm_state_ref(state_t *state)
 	obj = get_state_obj_ref(state);
 
 	if (obj == NULL) {
-		LogDebug(COMPONENT_STATE,
-			 "Entry for state is stale");
+		LogDebug(COMPONENT_STATE, "Entry for state is stale");
 	} else {
 		/* We need to close the state before freeing the state. */
-		(void) obj->obj_ops->close2(obj, state);
+		(void)obj->obj_ops->close2(obj, state);
 
 		/* Release the reference just taken */
 		obj->obj_ops->put_ref(obj);
@@ -345,17 +343,14 @@ void dec_nlm_state_ref(state_t *state)
  *
  * @return NLM Status code or 0 if no special return
  */
-int get_nlm_state(enum state_type state_type,
-		  struct fsal_obj_handle *state_obj,
-		  state_owner_t *state_owner,
-		  care_t care,
-		  uint32_t nsm_state,
+int get_nlm_state(enum state_type state_type, struct fsal_obj_handle *state_obj,
+		  state_owner_t *state_owner, care_t care, uint32_t nsm_state,
 		  state_t **pstate)
 {
 	state_t key;
 	state_t *state;
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	struct hash_latch latch;
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
@@ -392,8 +387,8 @@ int get_nlm_state(enum state_type state_type,
 			 * Keep the latch after the delete to proceed with
 			 * the new insert.
 			 */
-			hashtable_deletelatched(ht_nlm_states, &buffkey,
-						&latch, NULL, NULL);
+			hashtable_deletelatched(ht_nlm_states, &buffkey, &latch,
+						NULL, NULL);
 			break;
 		}
 
@@ -402,8 +397,8 @@ int get_nlm_state(enum state_type state_type,
 			 * deleted. Delete from the hashtable and
 			 * pretend as though we didn't find it.
 			 */
-			hashtable_deletelatched(ht_nlm_states, &buffkey,
-						&latch, NULL, NULL);
+			hashtable_deletelatched(ht_nlm_states, &buffkey, &latch,
+						NULL, NULL);
 			break;
 		}
 
@@ -441,8 +436,7 @@ int get_nlm_state(enum state_type state_type,
 	}
 
 	state = op_ctx->fsal_export->exp_ops.alloc_state(op_ctx->fsal_export,
-							 state_type,
-							 NULL);
+							 state_type, NULL);
 
 	/* Copy everything over */
 	state->state_obj = state_obj;

@@ -50,7 +50,7 @@ char pathdotdot[] = "..";
 struct _9p_cb_entry {
 	u64 qid_path;
 	u8 *qid_type;
-	char d_type;	/* Attention, this is a VFS d_type, not a 9P type */
+	char d_type; /* Attention, this is a VFS d_type, not a 9P type */
 	const char *name_str;
 	u16 name_len;
 	uint64_t cookie;
@@ -66,7 +66,7 @@ static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie,
 			     u8 d_type, u16 name_len, const char *name_str)
 {
 	/* qid in 3 parts */
-	_9p_setvalue(cursor, qid_type, u8);	/* 9P entry type */
+	_9p_setvalue(cursor, qid_type, u8); /* 9P entry type */
 	/* qid_version set to 0 to prevent the client from caching */
 	_9p_setvalue(cursor, 0, u32);
 	_9p_setvalue(cursor, qid_path, u64);
@@ -84,11 +84,11 @@ static inline u8 *fill_entry(u8 *cursor, u8 qid_type, u64 qid_path, u64 cookie,
 }
 
 static fsal_errors_t _9p_readdir_callback(void *opaque,
-					 struct fsal_obj_handle *obj,
-					 const struct fsal_attrlist *attr,
-					 uint64_t mounted_on_fileid,
-					 uint64_t cookie,
-					 enum cb_state cb_state)
+					  struct fsal_obj_handle *obj,
+					  const struct fsal_attrlist *attr,
+					  uint64_t mounted_on_fileid,
+					  uint64_t cookie,
+					  enum cb_state cb_state)
 {
 	struct fsal_readdir_cb_parms *cb_parms = opaque;
 	struct _9p_cb_data *tracker = cb_parms->opaque;
@@ -150,9 +150,8 @@ static fsal_errors_t _9p_readdir_callback(void *opaque,
 	 * + 2 for strlen = 24 bytes */
 	tracker->count += 24 + name_len;
 
-	tracker->cursor =
-	    fill_entry(tracker->cursor, qid_type, obj->fileid,
-		       cookie, d_type, name_len, cb_parms->name);
+	tracker->cursor = fill_entry(tracker->cursor, qid_type, obj->fileid,
+				     cookie, d_type, name_len, cb_parms->name);
 
 	cb_parms->in_result = true;
 	return ERR_FSAL_NO_ERROR;
@@ -188,7 +187,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, count, u32);
 
 	LogDebug(COMPONENT_9P, "TREADDIR: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32)*msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -216,7 +215,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	 * -------------------
 	 * total   = ~40 bytes (average size) per dentry */
 
-	if (*count < 52)	/* require room for . and .. */
+	if (*count < 52) /* require room for . and .. */
 		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 
 	/* Build the reply - it'll just be overwritten if error */
@@ -232,19 +231,17 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		fsal_status = fsal_lookupp(pfid->pentry, &pentry_dot_dot, NULL);
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 
 		/* Deal with "." and ".." */
-		cursor = fill_entry(cursor, _9P_QTDIR,
-			       pfid->pentry->fileid, 1LL,
-			       DT_DIR, strlen(pathdot), pathdot);
+		cursor = fill_entry(cursor, _9P_QTDIR, pfid->pentry->fileid,
+				    1LL, DT_DIR, strlen(pathdot), pathdot);
 		dcount += 24 + strlen(pathdot);
 
-		cursor =
-		    fill_entry(cursor, _9P_QTDIR,
-			       pentry_dot_dot->fileid,
-			       2LL, DT_DIR, strlen(pathdotdot), pathdotdot);
+		cursor = fill_entry(cursor, _9P_QTDIR, pentry_dot_dot->fileid,
+				    2LL, DT_DIR, strlen(pathdotdot),
+				    pathdotdot);
 		dcount += 24 + strlen(pathdotdot);
 
 		/* put the parent */
@@ -256,13 +253,12 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		fsal_status = fsal_lookupp(pfid->pentry, &pentry_dot_dot, NULL);
 		if (FSAL_IS_ERROR(fsal_status))
 			return _9p_rerror(req9p, msgtag,
-					  _9p_tools_errno(fsal_status),
-					  plenout, preply);
+					  _9p_tools_errno(fsal_status), plenout,
+					  preply);
 
-		cursor =
-		    fill_entry(cursor, _9P_QTDIR,
-			       pentry_dot_dot->fileid,
-			       2LL, DT_DIR, strlen(pathdotdot), pathdotdot);
+		cursor = fill_entry(cursor, _9P_QTDIR, pentry_dot_dot->fileid,
+				    2LL, DT_DIR, strlen(pathdotdot),
+				    pathdotdot);
 		dcount += 24 + strlen(pathdotdot);
 
 		/* put the parent */
@@ -272,7 +268,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	} else if (*offset == 2LL) {
 		cookie = 0LL;
 	} else {
-		cookie = (uint64_t) (*offset);
+		cookie = (uint64_t)(*offset);
 	}
 
 	tracker.cursor = cursor;
@@ -286,8 +282,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		 * If none is found ERR_FSAL_NOENT is returned
 		 * In the 9P logic, this situation just mean
 		 * "end of directory reached" */
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status),
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
 				  plenout, preply);
 	}
 
@@ -300,7 +295,7 @@ int _9p_readdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RREADDIR: tag=%u fid=%u dcount=%u",
-		 (u32) *msgtag, *fid, dcount);
+		 (u32)*msgtag, *fid, dcount);
 
 	return 1;
 }

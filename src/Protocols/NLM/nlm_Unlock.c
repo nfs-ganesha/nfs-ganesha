@@ -66,40 +66,30 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	netobj_to_string(&arg->cookie, buffer, sizeof(buffer));
 
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling NLM4_UNLOCK svid=%d off=%llx len=%llx cookie=%s",
-		 (int)arg->alock.svid,
-		 (unsigned long long)arg->alock.l_offset,
-		 (unsigned long long)arg->alock.l_len, buffer);
+	LogDebug(
+		COMPONENT_NLM,
+		"REQUEST PROCESSING: Calling NLM4_UNLOCK svid=%d off=%llx len=%llx cookie=%s",
+		(int)arg->alock.svid, (unsigned long long)arg->alock.l_offset,
+		(unsigned long long)arg->alock.l_len, buffer);
 
 	copy_netobj(&res->res_nlm4test.cookie, &arg->cookie);
 
 	/* unlock doesn't care if owner is found */
-	rc = nlm_process_parameters(req,
-				    false,
-				    &arg->alock,
-				    &lock,
-				    &obj,
-				    CARE_NOT,
-				    &nsm_client,
-				    &nlm_client,
-				    &nlm_owner,
-				    NULL,
-				    0,
-				    &state);
+	rc = nlm_process_parameters(req, false, &arg->alock, &lock, &obj,
+				    CARE_NOT, &nsm_client, &nlm_client,
+				    &nlm_owner, NULL, 0, &state);
 
 	if (rc >= 0) {
 		/* resent the error back to the client */
-		res->res_nlm4.stat.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: NLM4_UNLOCK %s",
+		res->res_nlm4.stat.stat = (nlm4_stats)rc;
+		LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_UNLOCK %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
 	if (state != NULL)
 		state_status =
-		  state_unlock(obj, state, nlm_owner, false, 0, &lock);
+			state_unlock(obj, state, nlm_owner, false, 0, &lock);
 
 	if (state_status != STATE_SUCCESS) {
 		/* Unlock could fail in the FSAL and make a bit of a mess,
@@ -107,7 +97,7 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		 * error is already logged.
 		 */
 		res->res_nlm4test.test_stat.stat =
-		    nlm_convert_state_error(state_status);
+			nlm_convert_state_error(state_status);
 	} else {
 		res->res_nlm4.stat.stat = NLM4_GRANTED;
 	}
@@ -128,7 +118,7 @@ int nlm4_Unlock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 static void nlm4_unlock_message_resp(state_async_queue_t *arg)
 {
 	state_nlm_async_data_t *nlm_arg =
-	    &arg->state_async_data.state_nlm_async_data;
+		&arg->state_async_data.state_nlm_async_data;
 	nfs_res_t *res = &nlm_arg->nlm_async_args.nlm_async_res;
 
 	if (isFullDebug(COMPONENT_NLM)) {
@@ -138,8 +128,7 @@ static void nlm4_unlock_message_resp(state_async_queue_t *arg)
 
 		LogFullDebug(COMPONENT_NLM,
 			     "Calling nlm_send_async cookie=%s status=%s",
-			     buffer,
-			     lock_result_str(res->res_nlm4.stat.stat));
+			     buffer, lock_result_str(res->res_nlm4.stat.stat));
 	}
 
 	nlm_send_async(NLMPROC4_UNLOCK_RES, nlm_arg->nlm_async_host, res, NULL);
@@ -171,9 +160,8 @@ int nlm4_Unlock_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	nsm_client = get_nsm_client(CARE_NO_MONITOR, arg->alock.caller_name);
 
 	if (nsm_client != NULL)
-		nlm_client = get_nlm_client(CARE_NO_MONITOR,
-					    req->rq_xprt, nsm_client,
-					    arg->alock.caller_name);
+		nlm_client = get_nlm_client(CARE_NO_MONITOR, req->rq_xprt,
+					    nsm_client, arg->alock.caller_name);
 
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
@@ -182,8 +170,7 @@ int nlm4_Unlock_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,
-					     nlm4_unlock_message_resp,
-					     res);
+					     nlm4_unlock_message_resp, res);
 
 	if (rc == NFS_REQ_DROP) {
 		if (nsm_client != NULL)

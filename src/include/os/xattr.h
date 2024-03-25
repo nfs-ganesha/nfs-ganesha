@@ -35,4 +35,4 @@
 #include <os/freebsd/xattr.h>
 #endif
 
-#endif				/* _XATTR_OS_H */
+#endif /* _XATTR_OS_H */

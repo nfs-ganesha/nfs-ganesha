@@ -45,17 +45,17 @@
 #include "FSAL/fsal_commonlib.h"
 #include <stdbool.h>
 
-typedef int (*xattr_getfunc_t) (struct fsal_obj_handle *, /* object handle */
-				caddr_t,	/* output buff */
-				size_t,	/* output buff size */
-				size_t *,	/* output size */
-				void *arg);	/* optional argument */
+typedef int (*xattr_getfunc_t)(struct fsal_obj_handle *, /* object handle */
+			       caddr_t, /* output buff */
+			       size_t, /* output buff size */
+			       size_t *, /* output size */
+			       void *arg); /* optional argument */
 
-typedef int (*xattr_setfunc_t) (struct fsal_obj_handle *, /* object handle */
-				caddr_t,	/* input buff */
-				size_t,	/* input size */
-				int,	/* creation flag */
-				void *arg);	/* optional argument */
+typedef int (*xattr_setfunc_t)(struct fsal_obj_handle *, /* object handle */
+			       caddr_t, /* input buff */
+			       size_t, /* input size */
+			       int, /* creation flag */
+			       void *arg); /* optional argument */
 
 typedef struct fsal_xattr_def__ {
 	char xattr_name[MAXNAMLEN + 1];
@@ -72,76 +72,76 @@ typedef struct fsal_xattr_def__ {
 int print_vfshandle(struct fsal_obj_handle *obj_hdl, caddr_t buffer_addr,
 		    size_t buffer_size, size_t *p_output_size, void *arg)
 {
-	*p_output_size = snprintf(buffer_addr, buffer_size,
-				  "(not yet implemented)");
+	*p_output_size =
+		snprintf(buffer_addr, buffer_size, "(not yet implemented)");
 
 	return 0;
-}				/* print_fid */
+} /* print_fid */
 
-fsal_status_t kvsfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl,
-				  unsigned int argcookie,
-				  fsal_xattrent_t *xattrs_tab,
-				  unsigned int xattrs_tabsize,
-				  unsigned int *p_nb_returned, int *end_of_list)
+fsal_status_t
+kvsfs_list_ext_attrs(struct fsal_obj_handle *obj_hdl, unsigned int argcookie,
+		     fsal_xattrent_t *xattrs_tab, unsigned int xattrs_tabsize,
+		     unsigned int *p_nb_returned, int *end_of_list)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_getextattr_id_by_name(struct fsal_obj_handle *obj_hdl,
-					 const char *xattr_name,
-					 unsigned int *pxattr_id)
+					  const char *xattr_name,
+					  unsigned int *pxattr_id)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_getextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					  unsigned int xattr_id,
-					  caddr_t buffer_addr,
-					  size_t buffer_size,
-					  size_t *p_output_size)
+					   unsigned int xattr_id,
+					   caddr_t buffer_addr,
+					   size_t buffer_size,
+					   size_t *p_output_size)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_getextattr_value_by_name(struct fsal_obj_handle *obj_hdl,
-					    const char *xattr_name,
-					    caddr_t buffer_addr,
-					    size_t buffer_size,
-					    size_t *p_output_size)
+					     const char *xattr_name,
+					     caddr_t buffer_addr,
+					     size_t buffer_size,
+					     size_t *p_output_size)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_setextattr_value(struct fsal_obj_handle *obj_hdl,
-				    const char *xattr_name, caddr_t buffer_addr,
-				    size_t buffer_size, int create)
+				     const char *xattr_name,
+				     caddr_t buffer_addr, size_t buffer_size,
+				     int create)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_setextattr_value_by_id(struct fsal_obj_handle *obj_hdl,
-					  unsigned int xattr_id,
-					  caddr_t buffer_addr,
-					  size_t buffer_size)
+					   unsigned int xattr_id,
+					   caddr_t buffer_addr,
+					   size_t buffer_size)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_getextattr_attrs(struct fsal_obj_handle *obj_hdl,
-				    unsigned int xattr_id,
-				    struct fsal_attrlist *p_attrs)
+				     unsigned int xattr_id,
+				     struct fsal_attrlist *p_attrs)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_remove_extattr_by_id(struct fsal_obj_handle *obj_hdl,
-					unsigned int xattr_id)
+					 unsigned int xattr_id)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
 fsal_status_t kvsfs_remove_extattr_by_name(struct fsal_obj_handle *obj_hdl,
-					  const char *xattr_name)
+					   const char *xattr_name)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

@@ -54,19 +54,19 @@
 #define HANDLE_DUMMY 0x20
 
 struct v_fid {
-	u_short fid_len;		/* length of data in bytes */
-	u_short fid_reserved;		/* force longword alignment */
-	char fid_data[MAXFIDSZ];	/* data (variable length) */
+	u_short fid_len; /* length of data in bytes */
+	u_short fid_reserved; /* force longword alignment */
+	char fid_data[MAXFIDSZ]; /* data (variable length) */
 };
 
 struct v_fhandle {
-	uint8_t fh_flags;		/* Handle flags */
-	fsid_t fh_fsid;			/* Filesystem id of mount point */
-	struct v_fid fh_fid;		/* Filesys specific id */
+	uint8_t fh_flags; /* Handle flags */
+	fsid_t fh_fsid; /* Filesystem id of mount point */
+	struct v_fid fh_fid; /* Filesys specific id */
 };
 
-#define v_to_fhandle(hdl) ((struct fhandle *) \
-			  ((char *)hdl + offsetof(struct v_fhandle, fh_fsid)))
+#define v_to_fhandle(hdl) \
+	((struct fhandle *)((char *)hdl + offsetof(struct v_fhandle, fh_fsid)))
 
 static inline int vfs_stat_by_handle(int mountfd, struct stat *buf)
 {
@@ -76,10 +76,8 @@ static inline int vfs_stat_by_handle(int mountfd, struct stat *buf)
 	return ret;
 }
 
-static inline int vfs_link_by_handle(vfs_file_handle_t *fh,
-				     int srcfd,
-				     int destdirfd,
-				     const char *dname)
+static inline int vfs_link_by_handle(vfs_file_handle_t *fh, int srcfd,
+				     int destdirfd, const char *dname)
 {
 	struct fhandle *handle = v_to_fhandle(fh->handle_data);
 
@@ -95,5 +93,5 @@ static inline int vfs_readlink_by_handle(vfs_file_handle_t *fh, int srcfd,
 	return fhreadlink(handle, buf, bufsize);
 }
 
-#endif				/* HANDLE_FREEBSD_H */
+#endif /* HANDLE_FREEBSD_H */
 /** @} */

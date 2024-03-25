@@ -52,8 +52,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	count = atoi(argv[2])
-	if (count == 0) {
+	count = atoi(argv[2]) if (count == 0)
+	{
 		LogTest("usage: test_handle_mapping <db_dir> <db_count>");
 		exit(1);
 	}
@@ -120,7 +120,6 @@ int main(int argc, char **argv)
 			LogTest("Error %d deleting handle !", rc);
 			exit(rc);
 		}
-
 	}
 
 	gettimeofday(&tv3, NULL);
@@ -139,5 +138,4 @@ int main(int argc, char **argv)
 		(int)tvdiff.tv_sec, (int)tvdiff.tv_usec);
 
 	exit(0);
-
 }

@@ -85,8 +85,6 @@ struct proxyv3_export {
 	size_t root_handle_len;
 };
 
-
-
 bool proxyv3_rpc_init(const uint num_sockets);
 bool proxyv3_nlm_init(void);
 
@@ -94,36 +92,23 @@ const struct sockaddr *proxyv3_sockaddr(void);
 const socklen_t proxyv3_socklen(void);
 const uint proxyv3_nlm_port(void);
 
+bool proxyv3_find_ports(const struct sockaddr *host, const socklen_t socklen,
+			u_int *mountd_port, u_int *nfsd_port, u_int *nlm_port);
 
-bool proxyv3_find_ports(const struct sockaddr *host,
-			const socklen_t socklen,
-			u_int *mountd_port,
-			u_int *nfsd_port,
-			u_int *nlm_port);
+bool proxyv3_nfs_call(const struct sockaddr *host, const socklen_t socklen,
+		      const uint nfsdPort, const struct user_cred *creds,
+		      const rpcproc_t nfsProc, const xdrproc_t encodeFunc,
+		      void *args, const xdrproc_t decodeFunc, void *output);
 
-bool proxyv3_nfs_call(const struct sockaddr *host,
-		      const socklen_t socklen,
-		      const uint nfsdPort,
-		      const struct user_cred *creds,
-		      const rpcproc_t nfsProc,
-		      const xdrproc_t encodeFunc, void *args,
-		      const xdrproc_t decodeFunc, void *output);
+bool proxyv3_mount_call(const struct sockaddr *host, const socklen_t socklen,
+			const uint mountdPort, const struct user_cred *creds,
+			const rpcproc_t mountProc, const xdrproc_t encodeFunc,
+			void *args, const xdrproc_t decodeFunc, void *output);
 
-bool proxyv3_mount_call(const struct sockaddr *host,
-			const socklen_t socklen,
-			const uint mountdPort,
-			const struct user_cred *creds,
-			const rpcproc_t mountProc,
-			const xdrproc_t encodeFunc, void *args,
-			const xdrproc_t decodeFunc, void *output);
-
-bool proxyv3_nlm_call(const struct sockaddr *host,
-		      const socklen_t socklen,
-		      const uint nlmPort,
-		      const struct user_cred *creds,
-		      const rpcproc_t nlmProc,
-		      const xdrproc_t encodeFunc, void *args,
-		      const xdrproc_t decodeFunc, void *output);
+bool proxyv3_nlm_call(const struct sockaddr *host, const socklen_t socklen,
+		      const uint nlmPort, const struct user_cred *creds,
+		      const rpcproc_t nlmProc, const xdrproc_t encodeFunc,
+		      void *args, const xdrproc_t decodeFunc, void *output);
 
 /*
  * All the NLM operations funnel through lock_op2, and it's complicated enough
@@ -131,13 +116,10 @@ bool proxyv3_nlm_call(const struct sockaddr *host,
  */
 
 fsal_status_t proxyv3_lock_op2(struct fsal_obj_handle *obj_hdl,
-			       struct state_t *state,
-			       void *owner,
+			       struct state_t *state, void *owner,
 			       fsal_lock_op_t lock_op,
 			       fsal_lock_param_t *request_lock,
 			       fsal_lock_param_t *conflicting_lock);
-
-
 
 /*
  * Helpers for translating from nfsv3 structs to Ganesha data. These could go in
@@ -151,8 +133,7 @@ bool attrmask_is_posix(attrmask_t mask);
 bool fattr3_to_fsalattr(const fattr3 *attrs,
 			struct fsal_attrlist *fsal_attrs_out);
 bool fsalattr_to_sattr3(const struct fsal_attrlist *fsal_attrs,
-			const bool allow_rawdev,
-			sattr3 *attrs_out);
+			const bool allow_rawdev, sattr3 *attrs_out);
 void pre_attrs_to_fsalattr(const pre_op_attr *pre_attrs,
 			   struct fsal_attrlist *out_attrs);
 void post_attrs_to_fsalattr(const post_op_attr *post_attrs,

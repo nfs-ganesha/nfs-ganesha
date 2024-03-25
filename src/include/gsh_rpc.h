@@ -59,7 +59,7 @@ extern "C" {
 #include <rpc/svc_auth.h>
 #ifdef _HAVE_GSSAPI
 #include <rpc/auth_gss.h>
-#include <rpc/gss_internal.h>	/* XXX */
+#include <rpc/gss_internal.h> /* XXX */
 #endif
 #include <rpc/svc_rqst.h>
 #include <rpc/rpc_msg.h>
@@ -89,7 +89,7 @@ extern "C" {
 #define NFS_LOOKAHEAD_LAYOUTCOMMIT 0x0040
 #define NFS_LOOKAHEAD_SETATTR 0x0080
 #define NFS_LOOKAHEAD_SETCLIENTID 0x0100
-#define NFS_LOOKAHEAD_SETCLIENTID_CONFIRM  0x0200
+#define NFS_LOOKAHEAD_SETCLIENTID_CONFIRM 0x0200
 #define NFS_LOOKAHEAD_LOOKUP 0x0400
 #define NFS_LOOKAHEAD_READLINK 0x0800
 /* ... */
@@ -100,18 +100,15 @@ struct nfs_request_lookahead {
 	uint16_t write;
 };
 
-#define NFS_LOOKAHEAD_HIGH_LATENCY(lkhd)		\
-	(((lkhd).flags & (NFS_LOOKAHEAD_READ |		\
-			  NFS_LOOKAHEAD_WRITE |		\
-			  NFS_LOOKAHEAD_COMMIT |	\
-			  NFS_LOOKAHEAD_LAYOUTCOMMIT |	\
-			  NFS_LOOKAHEAD_READDIR)))
-
+#define NFS_LOOKAHEAD_HIGH_LATENCY(lkhd)                                     \
+	(((lkhd).flags &                                                     \
+	  (NFS_LOOKAHEAD_READ | NFS_LOOKAHEAD_WRITE | NFS_LOOKAHEAD_COMMIT | \
+	   NFS_LOOKAHEAD_LAYOUTCOMMIT | NFS_LOOKAHEAD_READDIR)))
 
 #define XDR_ARRAY_MAXLEN 1024
-#define XDR_BYTES_MAXLEN (1024*1024)
-#define XDR_BYTES_MAXLEN_IO (64*1024*1024)
-#define XDR_STRING_MAXLEN (8*1024)
+#define XDR_BYTES_MAXLEN (1024 * 1024)
+#define XDR_BYTES_MAXLEN_IO (64 * 1024 * 1024)
+#define XDR_STRING_MAXLEN (8 * 1024)
 
 typedef struct sockaddr_storage sockaddr_t;
 
@@ -185,17 +182,17 @@ const char *str_gc_proc(rpc_gss_proc_t);
 
 void copy_xprt_addr(sockaddr_t *, SVCXPRT *);
 
-int display_sockaddr_port(struct display_buffer *dspbuf,
-			  const sockaddr_t *addr, bool ignore_port);
+int display_sockaddr_port(struct display_buffer *dspbuf, const sockaddr_t *addr,
+			  bool ignore_port);
 
-static inline
-int display_sockaddr(struct display_buffer *dspbuf, const sockaddr_t *addr)
+static inline int display_sockaddr(struct display_buffer *dspbuf,
+				   const sockaddr_t *addr)
 {
 	return display_sockaddr_port(dspbuf, addr, false);
 }
 
-static inline
-int display_sockip(struct display_buffer *dspbuf, const sockaddr_t *addr)
+static inline int display_sockip(struct display_buffer *dspbuf,
+				 const sockaddr_t *addr)
 {
 	return display_sockaddr_port(dspbuf, addr, true);
 }
@@ -203,8 +200,8 @@ int display_sockip(struct display_buffer *dspbuf, const sockaddr_t *addr)
 /* Displays xprt's remote address if non-empty. Otherwise displays
  * local address.
  */
-static inline
-int display_xprt_sockaddr(struct display_buffer *db, const SVCXPRT *xprt)
+static inline int display_xprt_sockaddr(struct display_buffer *db,
+					const SVCXPRT *xprt)
 {
 	const sockaddr_t *addr;
 	const struct netbuf *hostaddr = svc_getcaller_netbuf(xprt);
@@ -212,13 +209,12 @@ int display_xprt_sockaddr(struct display_buffer *db, const SVCXPRT *xprt)
 	if (hostaddr->len == 0)
 		hostaddr = svc_getlocal_netbuf(xprt);
 	assert(hostaddr->len <= sizeof(sockaddr_t) && hostaddr->buf != NULL);
-	addr = (const sockaddr_t *) hostaddr->buf;
+	addr = (const sockaddr_t *)hostaddr->buf;
 
 	return display_sockaddr(db, addr);
 }
 
-static inline
-void *socket_addr(sockaddr_t *addr)
+static inline void *socket_addr(sockaddr_t *addr)
 {
 	switch (addr->ss_family) {
 	case AF_INET:
@@ -234,8 +230,7 @@ void *socket_addr(sockaddr_t *addr)
 	}
 }
 
-static inline
-size_t socket_addr_len(sockaddr_t *addr)
+static inline size_t socket_addr_len(sockaddr_t *addr)
 {
 	switch (addr->ss_family) {
 	case AF_INET:
@@ -251,8 +246,7 @@ size_t socket_addr_len(sockaddr_t *addr)
 	}
 }
 
-static inline
-bool sprint_sockip(sockaddr_t *addr, char *buf, int len)
+static inline bool sprint_sockip(sockaddr_t *addr, char *buf, int len)
 {
 #ifdef RPC_VSOCK
 	if (addr->ss_family == AF_VSOCK) {

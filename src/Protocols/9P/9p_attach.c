@@ -61,7 +61,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 
 	fsal_status_t fsal_status;
-	char exppath[MAXPATHLEN+1];
+	char exppath[MAXPATHLEN + 1];
 	int port;
 	struct gsh_export *export;
 
@@ -73,10 +73,11 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getstr(cursor, aname_len, aname_str);
 	_9p_getptr(cursor, n_uname, u32);
 
-	LogDebug(COMPONENT_9P,
-		 "TATTACH: tag=%u fid=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d",
-		 (u32) *msgtag, *fid, *afid, (int) *uname_len, uname_str,
-		 (int) *aname_len, aname_str, *n_uname);
+	LogDebug(
+		COMPONENT_9P,
+		"TATTACH: tag=%u fid=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d",
+		(u32)*msgtag, *fid, *afid, (int)*uname_len, uname_str,
+		(int)*aname_len, aname_str, *n_uname);
 
 	if (*fid >= _9P_FID_PER_CONN) {
 		err = ERANGE;
@@ -98,19 +99,16 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/*  Find the export for the dirname (using as well Path, Pseudo, or Tag)
 	 */
 	if (exppath[0] != '/') {
-		LogFullDebug(COMPONENT_9P,
-			     "Searching for export by tag for %s",
+		LogFullDebug(COMPONENT_9P, "Searching for export by tag for %s",
 			     exppath);
 		export = get_gsh_export_by_tag(exppath);
 	} else if (nfs_param.core_param.mount_path_pseudo) {
 		LogFullDebug(COMPONENT_9P,
-			     "Searching for export by pseudo for %s",
-			     exppath);
+			     "Searching for export by pseudo for %s", exppath);
 		export = get_gsh_export_by_pseudo(exppath, false);
 	} else {
 		LogFullDebug(COMPONENT_9P,
-			     "Searching for export by path for %s",
-			     exppath);
+			     "Searching for export by path for %s", exppath);
 		export = get_gsh_export_by_path(exppath, false);
 	}
 
@@ -199,17 +197,15 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	 * to one to represent the state_t being embedded in the fid. This
 	 * prevents it from ever being reduced to zero by dec_state_t_ref.
 	 */
-	pfid->state =
-		op_ctx->fsal_export->exp_ops.alloc_state(op_ctx->fsal_export,
-							 STATE_TYPE_9P_FID,
-							 NULL);
+	pfid->state = op_ctx->fsal_export->exp_ops.alloc_state(
+		op_ctx->fsal_export, STATE_TYPE_9P_FID, NULL);
 
 	glist_init(&pfid->state->state_data.fid.state_locklist);
 	pfid->state->state_refcount = 1;
 
 	/* Compute the qid */
 	pfid->qid.type = _9P_QTDIR;
-	pfid->qid.version = 0;	/* No cache, we want the client
+	pfid->qid.version = 0; /* No cache, we want the client
 				 * to stay synchronous with the server */
 	pfid->qid.path = pfid->pentry->fileid;
 	pfid->xattr = NULL;
@@ -225,7 +221,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	LogDebug(COMPONENT_9P,
 		 "RATTACH: tag=%u fid=%u qid=(type=%u,version=%u,path=%llu)",
-		 *msgtag, *fid, (u32) pfid->qid.type, pfid->qid.version,
+		 *msgtag, *fid, (u32)pfid->qid.type, pfid->qid.version,
 		 (unsigned long long)pfid->qid.path);
 
 	return 1;

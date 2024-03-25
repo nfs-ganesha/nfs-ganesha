@@ -61,8 +61,8 @@
 enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 				   struct nfs_resop4 *resp)
 {
-	RENAME4args * const arg_RENAME4 = &op->nfs_argop4_u.oprename;
-	RENAME4res * const res_RENAME4 = &resp->nfs_resop4_u.oprename;
+	RENAME4args *const arg_RENAME4 = &op->nfs_argop4_u.oprename;
+	RENAME4res *const res_RENAME4 = &resp->nfs_resop4_u.oprename;
 	struct fsal_obj_handle *dst_obj = NULL;
 	struct fsal_obj_handle *src_obj = NULL;
 	struct fsal_attrlist olddir_pre_attrs_out, olddir_post_attrs_out,
@@ -119,10 +119,10 @@ enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 	src_obj = data->saved_obj;
 
 	res_RENAME4->RENAME4res_u.resok4.source_cinfo.before =
-						fsal_get_changeid4(src_obj);
+		fsal_get_changeid4(src_obj);
 
 	res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
-						fsal_get_changeid4(dst_obj);
+		fsal_get_changeid4(dst_obj);
 
 	res_RENAME4->status = nfs4_Errno_status(
 		fsal_rename(src_obj, arg_RENAME4->oldname.utf8string_val,
@@ -134,47 +134,47 @@ enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 		FSAL_TEST_MASK(olddir_pre_attrs_out.valid_mask, ATTR_CHANGE);
 	if (is_olddir_pre_attrs_valid) {
 		res_RENAME4->RENAME4res_u.resok4.source_cinfo.before =
-			(changeid4) olddir_pre_attrs_out.change;
+			(changeid4)olddir_pre_attrs_out.change;
 	}
 
 	is_olddir_post_attrs_valid =
 		FSAL_TEST_MASK(olddir_post_attrs_out.valid_mask, ATTR_CHANGE);
 	if (is_olddir_post_attrs_valid) {
 		res_RENAME4->RENAME4res_u.resok4.source_cinfo.after =
-			(changeid4) olddir_post_attrs_out.change;
+			(changeid4)olddir_post_attrs_out.change;
 	} else {
 		res_RENAME4->RENAME4res_u.resok4.source_cinfo.after =
-		fsal_get_changeid4(src_obj);
+			fsal_get_changeid4(src_obj);
 	}
 
 	is_newdir_pre_attrs_valid =
 		FSAL_TEST_MASK(newdir_pre_attrs_out.valid_mask, ATTR_CHANGE);
 	if (is_newdir_pre_attrs_valid) {
 		res_RENAME4->RENAME4res_u.resok4.target_cinfo.before =
-			(changeid4) newdir_pre_attrs_out.change;
+			(changeid4)newdir_pre_attrs_out.change;
 	}
 
 	is_newdir_post_attrs_valid =
 		FSAL_TEST_MASK(newdir_post_attrs_out.valid_mask, ATTR_CHANGE);
 	if (is_newdir_post_attrs_valid) {
 		res_RENAME4->RENAME4res_u.resok4.target_cinfo.after =
-			(changeid4) newdir_post_attrs_out.change;
+			(changeid4)newdir_post_attrs_out.change;
 	} else {
 		res_RENAME4->RENAME4res_u.resok4.target_cinfo.after =
-		fsal_get_changeid4(dst_obj);
+			fsal_get_changeid4(dst_obj);
 	}
 
 	res_RENAME4->RENAME4res_u.resok4.source_cinfo.atomic =
-		is_olddir_pre_attrs_valid && is_olddir_post_attrs_valid ?
-		TRUE : FALSE;
+		is_olddir_pre_attrs_valid && is_olddir_post_attrs_valid ? TRUE :
+									  FALSE;
 
 	res_RENAME4->RENAME4res_u.resok4.target_cinfo.atomic =
-		is_newdir_pre_attrs_valid && is_newdir_post_attrs_valid ?
-		TRUE : FALSE;
+		is_newdir_pre_attrs_valid && is_newdir_post_attrs_valid ? TRUE :
+									  FALSE;
 
 	nfs_put_grace_status();
 
- out:
+out:
 	fsal_release_attrs(&olddir_pre_attrs_out);
 	fsal_release_attrs(&olddir_post_attrs_out);
 

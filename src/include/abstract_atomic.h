@@ -1677,8 +1677,7 @@ static inline int64_t atomic_fetch_int64_t(int64_t *var)
  * @return true if the addition occurred
  */
 
-static inline bool atomic_add_unless_int64_t(int64_t *var,
-					     int64_t addend,
+static inline bool atomic_add_unless_int64_t(int64_t *var, int64_t addend,
 					     int64_t unless)
 {
 	int64_t cur, newv;
@@ -1740,8 +1739,7 @@ static inline uint64_t atomic_fetch_uint64_t(uint64_t *var)
  * @return true if the addition occurred
  */
 
-static inline bool atomic_add_unless_uint64_t(uint64_t *var,
-					      uint64_t addend,
+static inline bool atomic_add_unless_uint64_t(uint64_t *var, uint64_t addend,
 					      uint64_t unless)
 {
 	uint64_t cur, newv;
@@ -1803,8 +1801,7 @@ static inline int32_t atomic_fetch_int32_t(int32_t *var)
  * @return true if the addition occurred
  */
 
-static inline bool atomic_add_unless_int32_t(int32_t *var,
-					     int32_t addend,
+static inline bool atomic_add_unless_int32_t(int32_t *var, int32_t addend,
 					     int32_t unless)
 {
 	int32_t cur, newv;
@@ -1894,8 +1891,7 @@ static inline uint32_t atomic_fetch_uint32_t(uint32_t *var)
  * @return true if the addition occurred
  */
 
-static inline bool atomic_add_unless_uint32_t(uint32_t *var,
-					      uint32_t addend,
+static inline bool atomic_add_unless_uint32_t(uint32_t *var, uint32_t addend,
 					      uint32_t unless)
 {
 	uint32_t cur, newv;
@@ -2051,4 +2047,4 @@ static inline void atomic_store_uint8_t(uint8_t *var, uint8_t val)
 {
 	__atomic_store_n(var, val, __ATOMIC_SEQ_CST);
 }
-#endif				/* !_ABSTRACT_ATOMIC_H */
+#endif /* !_ABSTRACT_ATOMIC_H */

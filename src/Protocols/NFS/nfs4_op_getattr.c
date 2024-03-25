@@ -63,8 +63,8 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
-	GETATTR4args * const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
-	GETATTR4res * const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
+	GETATTR4args *const arg_GETATTR4 = &op->nfs_argop4_u.opgetattr;
+	GETATTR4res *const res_GETATTR4 = &resp->nfs_resop4_u.opgetattr;
 	attrmask_t mask;
 	struct fsal_attrlist attrs;
 	bool current_obj_is_referral = false;
@@ -120,11 +120,10 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		 */
 		STATELOCK_lock(obj);
 
-		if (is_write_delegated(obj, &deleg_client) &&
-		    deleg_client &&
+		if (is_write_delegated(obj, &deleg_client) && deleg_client &&
 		    (deleg_client->gsh_client != op_ctx->client)) {
 			res_GETATTR4->status =
-					handle_deleg_getattr(obj, deleg_client);
+				handle_deleg_getattr(obj, deleg_client);
 
 			if (res_GETATTR4->status != NFS4_OK) {
 				STATELOCK_unlock(obj);
@@ -145,28 +144,23 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		STATELOCK_unlock(obj);
 	}
 
-	res_GETATTR4->status = file_To_Fattr(
-			data, mask, &attrs,
-			obj_attributes,
-			&arg_GETATTR4->attr_request);
+	res_GETATTR4->status = file_To_Fattr(data, mask, &attrs, obj_attributes,
+					     &arg_GETATTR4->attr_request);
 
-	current_obj_is_referral = obj->obj_ops->is_referral(
-					obj, &attrs, false);
+	current_obj_is_referral = obj->obj_ops->is_referral(obj, &attrs, false);
 
 	/*
 	 * If it is a referral point, return the FATTR4_RDATTR_ERROR if
 	 * requested along with the requested restricted attrs.
 	 */
-	if (res_GETATTR4->status == NFS4_OK &&
-	    current_obj_is_referral) {
+	if (res_GETATTR4->status == NFS4_OK && current_obj_is_referral) {
 		bool fill_rdattr_error = true;
 		bool fslocations_requested = attribute_is_set(
-						&arg_GETATTR4->attr_request,
-						FATTR4_FS_LOCATIONS);
+			&arg_GETATTR4->attr_request, FATTR4_FS_LOCATIONS);
 
 		if (!fslocations_requested) {
 			if (!attribute_is_set(&arg_GETATTR4->attr_request,
-						FATTR4_RDATTR_ERROR)) {
+					      FATTR4_RDATTR_ERROR)) {
 				fill_rdattr_error = false;
 			}
 		}
@@ -179,11 +173,9 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 			args.fsid = data->current_obj->fsid;
 			get_mounted_on_fileid(data, &args.mounted_on_fileid);
 
-			if (nfs4_Fattr_Fill_Error(data, obj_attributes,
-						  NFS4ERR_MOVED,
-						  &arg_GETATTR4->attr_request,
-						  &args)
-			    != 0) {
+			if (nfs4_Fattr_Fill_Error(
+				    data, obj_attributes, NFS4ERR_MOVED,
+				    &arg_GETATTR4->attr_request, &args) != 0) {
 				/* Report an error. */
 				res_GETATTR4->status = NFS4ERR_SERVERFAULT;
 			}
@@ -198,9 +190,10 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 
 	if (res_GETATTR4->status == NFS4_OK) {
 		/* Fill in and check response size and make sure it fits. */
-		data->op_resp_size = sizeof(nfsstat4) +
+		data->op_resp_size =
+			sizeof(nfsstat4) +
 			res_GETATTR4->GETATTR4res_u.resok4.obj_attributes
-			.attr_vals.attrlist4_len;
+				.attr_vals.attrlist4_len;
 
 		res_GETATTR4->status =
 			check_resp_room(data, data->op_resp_size);
@@ -223,7 +216,7 @@ out:
 	}
 
 	return nfsstat4_to_nfs_req_result(res_GETATTR4->status);
-}				/* nfs4_op_getattr */
+} /* nfs4_op_getattr */
 
 /**
  * @brief Free memory allocated for GETATTR result
@@ -239,4 +232,4 @@ void nfs4_op_getattr_Free(nfs_resop4 *res)
 
 	if (resp->status == NFS4_OK)
 		nfs4_Fattr_Free(&resp->GETATTR4res_u.resok4.obj_attributes);
-}				/* nfs4_op_getattr_Free */
+} /* nfs4_op_getattr_Free */

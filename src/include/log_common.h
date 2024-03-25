@@ -51,9 +51,9 @@ typedef enum log_levels {
  * Log components used throughout the code.
  */
 typedef enum log_components {
-	COMPONENT_ALL = 0,	/* Used for changing logging for all
+	COMPONENT_ALL = 0, /* Used for changing logging for all
 				 * components */
-	COMPONENT_LOG,		/* Keep this first, some code depends on it
+	COMPONENT_LOG, /* Keep this first, some code depends on it
 				 * being the first component */
 	COMPONENT_MEM_ALLOC,
 	COMPONENT_MEMLEAKS,

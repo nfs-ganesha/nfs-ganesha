@@ -61,10 +61,8 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 	struct ceph_handle *handle = (struct ceph_handle *)opaque;
 	/* Return code from upcall operation */
 	state_status_t status = STATE_SUCCESS;
-	struct gsh_buffdesc key = {
-		.addr = &handle->vi,
-		.len = sizeof(vinodeno_t)
-	};
+	struct gsh_buffdesc key = { .addr = &handle->vi,
+				    .len = sizeof(vinodeno_t) };
 	struct pnfs_segment segment = {
 		.offset = 0,
 		.length = UINT64_MAX,
@@ -94,8 +92,8 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
  * @return Valid error codes in RFC 5661, p. 365.
  */
 
-static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
-			      XDR *da_addr_body, const layouttype4 type,
+static nfsstat4 getdeviceinfo(struct fsal_export *export_pub, XDR *da_addr_body,
+			      const layouttype4 type,
 			      const struct pnfs_deviceid *deviceid)
 {
 	/* Full 'private' export */
@@ -143,21 +141,19 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &stripes)) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode length of stripe_indices array: %"
-			PRIu32 ".", stripes);
+			"Failed to encode length of stripe_indices array: %" PRIu32
+			".",
+			stripes);
 		return NFS4ERR_SERVERFAULT;
 	}
 
 	for (stripe = 0; stripe < stripes; stripe++) {
-		uint32_t stripe_osd = stripe_osd =
-		    ceph_ll_get_stripe_osd(export->cmount,
-					   vinode,
-					   stripe,
-					   &file_layout);
+		uint32_t stripe_osd = stripe_osd = ceph_ll_get_stripe_osd(
+			export->cmount, vinode, stripe, &file_layout);
 		if (stripe_osd < 0) {
 			LogCrit(COMPONENT_PNFS,
-				"Failed to retrieve OSD for stripe %lu of file %"
-				PRIu64 ".  Error: %u",
+				"Failed to retrieve OSD for stripe %lu of file %" PRIu64
+				".  Error: %u",
 				stripe, deviceid->devid, -stripe_osd);
 			return NFS4ERR_SERVERFAULT;
 		}
@@ -215,8 +211,8 @@ static nfsstat4 getdeviceinfo(struct fsal_export *export_pub,
  */
 
 static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
-			      void *opaque, bool(*cb) (void *opaque,
-						       const uint64_t id),
+			      void *opaque,
+			      bool (*cb)(void *opaque, const uint64_t id),
 			      struct fsal_getdevicelist_res *res)
 {
 	res->eof = true;
@@ -328,8 +324,7 @@ void export_ops_pnfs(struct export_ops *ops)
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 
-static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
-			  XDR *loc_body,
+static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub, XDR *loc_body,
 			  const struct fsal_layoutget_arg *arg,
 			  struct fsal_layoutget_res *res)
 {
@@ -355,19 +350,16 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	/* DS wire handle */
 	struct ds_wire ds_wire;
 	/* Descriptor for DS handle */
-	struct gsh_buffdesc ds_desc = {.addr = &ds_wire,
-		.len = sizeof(struct ds_wire)
-	};
+	struct gsh_buffdesc ds_desc = { .addr = &ds_wire,
+					.len = sizeof(struct ds_wire) };
 	/* The smallest layout the client will accept */
 	struct pnfs_segment smallest_acceptable = {
 		.io_mode = res->segment.io_mode,
 		.offset = res->segment.offset,
 		.length = arg->minlength
 	};
-	struct pnfs_segment forbidden_area = {
-		.io_mode = res->segment.io_mode,
-		.length = NFS4_UINT64_MAX
-	};
+	struct pnfs_segment forbidden_area = { .io_mode = res->segment.io_mode,
+					       .length = NFS4_UINT64_MAX };
 
 	/* We support only LAYOUT4_NFSV4_1_FILES layouts */
 
@@ -394,14 +386,13 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 	   Otherwise, make sure the required layout doesn't go beyond
 	   what can be accessed through pNFS. This is a preliminary
 	   check before even talking to Ceph. */
-	if (!
-	    ((res->segment.offset == 0)
-	     && (res->segment.length == NFS4_UINT64_MAX))) {
-		if (pnfs_segments_overlap
-		    (&smallest_acceptable, &forbidden_area)) {
+	if (!((res->segment.offset == 0) &&
+	      (res->segment.length == NFS4_UINT64_MAX))) {
+		if (pnfs_segments_overlap(&smallest_acceptable,
+					  &forbidden_area)) {
 			LogCrit(COMPONENT_PNFS,
-				"Required layout extends beyond allowed region. offset: %"
-				PRIu64 ", minlength: %" PRIu64 ".",
+				"Required layout extends beyond allowed region. offset: %" PRIu64
+				", minlength: %" PRIu64 ".",
 				res->segment.offset, arg->minlength);
 			return NFS4ERR_BADLAYOUT;
 		}
@@ -420,8 +411,9 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 
 	if ((stripe_width & ~NFL4_UFLG_STRIPE_UNIT_SIZE_MASK) != 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Ceph returned stripe width that is disallowed by NFS: %"
-			PRIu32 ".", stripe_width);
+			"Ceph returned stripe width that is disallowed by NFS: %" PRIu32
+			".",
+			stripe_width);
 		return NFS4ERR_SERVERFAULT;
 	}
 	util = stripe_width;
@@ -462,14 +454,14 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 			}
 		}
 		forbidden_area.offset = handle->rw_max_len;
-		if (pnfs_segments_overlap
-		    (&smallest_acceptable, &forbidden_area)) {
+		if (pnfs_segments_overlap(&smallest_acceptable,
+					  &forbidden_area)) {
 			PTHREAD_RWLOCK_unlock(&handle->handle.obj_lock);
 			return NFS4ERR_BADLAYOUT;
 		}
-#if CLIENTS_WILL_ACCEPT_SEGMENTED_LAYOUTS	/* sigh */
+#if CLIENTS_WILL_ACCEPT_SEGMENTED_LAYOUTS /* sigh */
 		res->segment.length =
-		    (handle->rw_max_len - res->segment.offset);
+			(handle->rw_max_len - res->segment.offset);
 #endif
 		++handle->rw_issued;
 	}
@@ -507,7 +499,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
 
 	return NFS4_OK;
 
- relinquish:
+relinquish:
 
 	/* If we failed in encoding the lo_content, relinquish what we
 	   reserved for it. */
@@ -550,8 +542,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_pub,
  * @return Valid error codes in RFC 5661, p. 367.
  */
 
-static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
-			     XDR *lrf_body,
+static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub, XDR *lrf_body,
 			     const struct fsal_layoutreturn_arg *arg)
 {
 	/* The private 'full' export */
@@ -610,8 +601,7 @@ static nfsstat4 layoutreturn(struct fsal_obj_handle *obj_pub,
  * @return Valid error codes in RFC 5661, p. 366.
  */
 
-static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
-			     XDR *lou_body,
+static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub, XDR *lou_body,
 			     const struct fsal_layoutcommit_arg *arg,
 			     struct fsal_layoutcommit_res *res)
 {
@@ -641,12 +631,14 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 	   Ceph caps, but we need to hack at the client to expose
 	   those before it can work. */
 	ceph_status = fsal_ceph_ll_getattr(export->cmount, handle->wire.vi,
-			&stxold, CEPH_STATX_SIZE|CEPH_STATX_MTIME,
-			op_ctx->creds);
+					   &stxold,
+					   CEPH_STATX_SIZE | CEPH_STATX_MTIME,
+					   op_ctx->creds);
 	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Error %d in attempt to get attributes of file %"
-			PRIu64 ".", -ceph_status, handle->wire.vi.ino.val);
+			"Error %d in attempt to get attributes of file %" PRIu64
+			".",
+			-ceph_status, handle->wire.vi.ino.val);
 		return posix2nfs4_error(-ceph_status);
 	}
 
@@ -679,11 +671,12 @@ static nfsstat4 layoutcommit(struct fsal_obj_handle *obj_pub,
 	attrmask |= CEPH_SETATTR_MTIME;
 
 	ceph_status = fsal_ceph_ll_setattr(export->cmount, handle->wire.vi,
-					&stxnew, attrmask, op_ctx->creds);
+					   &stxnew, attrmask, op_ctx->creds);
 	if (ceph_status < 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Error %d in attempt to get attributes of file %"
-			PRIu64 ".", -ceph_status, handle->wire.vi.ino.val);
+			"Error %d in attempt to get attributes of file %" PRIu64
+			".",
+			-ceph_status, handle->wire.vi.ino.val);
 		return posix2nfs4_error(-ceph_status);
 	}
 
@@ -701,4 +694,4 @@ void handle_ops_pnfs(struct fsal_obj_ops *ops)
 	ops->layoutcommit = layoutcommit;
 }
 
-#endif				/* CEPH_PNFS */
+#endif /* CEPH_PNFS */

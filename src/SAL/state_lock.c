@@ -104,14 +104,11 @@ state_owner_t unknown_owner = {
 	.so_lock_list = GLIST_HEAD_INIT(unknown_owner.so_lock_list),
 };
 
-static state_status_t do_lock_op(struct fsal_obj_handle *obj,
-				 state_t *state,
-				 fsal_lock_op_t lock_op,
-				 state_owner_t *owner,
+static state_status_t do_lock_op(struct fsal_obj_handle *obj, state_t *state,
+				 fsal_lock_op_t lock_op, state_owner_t *owner,
 				 fsal_lock_param_t *lock,
 				 state_owner_t **holder,
-				 fsal_lock_param_t *conflict,
-				 bool overlap);
+				 fsal_lock_param_t *conflict, bool overlap);
 /**
  * @brief Blocking lock cookies
  */
@@ -252,9 +249,9 @@ const char *str_block_type(state_block_type_t btype)
 static inline bool different_lock(fsal_lock_param_t *lock1,
 				  fsal_lock_param_t *lock2)
 {
-	return (lock1->lock_type != lock2->lock_type)
-	    || (lock1->lock_start != lock2->lock_start)
-	    || (lock1->lock_length != lock2->lock_length);
+	return (lock1->lock_type != lock2->lock_type) ||
+	       (lock1->lock_start != lock2->lock_start) ||
+	       (lock1->lock_length != lock2->lock_length);
 }
 
 /******************************************************************************
@@ -269,42 +266,39 @@ static inline bool different_lock(fsal_lock_param_t *lock1,
  * @param[in] reason Arbitrary string
  * @param[in] le     Entry to log
  */
-static void
-log_entry_ref_count(const char *reason, state_lock_entry_t *le,
-		    int32_t refcount, char *file, int line, char *function)
+static void log_entry_ref_count(const char *reason, state_lock_entry_t *le,
+				int32_t refcount, char *file, int line,
+				char *function)
 {
 	if (isFullDebug(COMPONENT_STATE)) {
 		char owner[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(owner), owner, owner};
+		struct display_buffer dspbuf = { sizeof(owner), owner, owner };
 
 		display_owner(&dspbuf, le->sle_owner);
 
-		DisplayLogComponentLevel(COMPONENT_STATE, file, line, function,
-			NIV_FULL_DEBUG,
+		DisplayLogComponentLevel(
+			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
 			"%s Entry: %p obj=%p, fileid=%" PRIu64
-			", export=%u, type=%s, start=0x%"PRIx64
-			", end=0x%"PRIx64
-			", protocol %s, blocked=%s/%p/%s"
-			", state=%p, sle_refcount=%"PRIu32
-			", owner={%s}",
-			reason, le, le->sle_obj,
-			(uint64_t) le->sle_obj->fileid,
+			", export=%u, type=%s, start=0x%" PRIx64
+			", end=0x%" PRIx64 ", protocol %s, blocked=%s/%p/%s"
+			", state=%p, sle_refcount=%" PRIu32 ", owner={%s}",
+			reason, le, le->sle_obj, (uint64_t)le->sle_obj->fileid,
 			(unsigned int)le->sle_export->export_id,
 			str_lockt(le->sle_lock.lock_type),
-			le->sle_lock.lock_start,
-			lock_end(&le->sle_lock),
+			le->sle_lock.lock_start, lock_end(&le->sle_lock),
 			str_protocol(le->sle_protocol),
 			str_blocked(le->sle_blocked), le->sle_block_data,
-			le->sle_block_data
-			    ? str_block_type(le->sle_block_data->sbd_block_type)
-			    : str_block_type(STATE_BLOCK_NONE),
+			le->sle_block_data ?
+				str_block_type(
+					le->sle_block_data->sbd_block_type) :
+				str_block_type(STATE_BLOCK_NONE),
 			le->sle_state, refcount, owner);
 	}
 }
 
-#define LogEntryRefCount(reason, le, refcount) \
-	log_entry_ref_count(reason, le, refcount, \
-	(char *) __FILE__, __LINE__, (char *) __func__)
+#define LogEntryRefCount(reason, le, refcount)                                \
+	log_entry_ref_count(reason, le, refcount, (char *)__FILE__, __LINE__, \
+			    (char *)__func__)
 
 /**
  * @brief Log a lock entry
@@ -312,10 +306,10 @@ log_entry_ref_count(const char *reason, state_lock_entry_t *le,
  * @param[in] reason Arbitrary string
  * @param[in] le     Entry to log
  */
-#define LogEntry(reason, le) \
-	log_entry_ref_count(reason, le, \
-	atomic_fetch_int32_t(&le->sle_ref_count), \
-	(char *) __FILE__, __LINE__, (char *) __func__)
+#define LogEntry(reason, le)                                          \
+	log_entry_ref_count(reason, le,                               \
+			    atomic_fetch_int32_t(&le->sle_ref_count), \
+			    (char *)__FILE__, __LINE__, (char *)__func__)
 
 /**
  * @brief Log a list of locks
@@ -337,17 +331,16 @@ static bool LogList(const char *reason, struct fsal_obj_handle *obj,
 		if (glist_empty(list)) {
 			if (obj != NULL)
 				LogFullDebug(COMPONENT_STATE,
-					     "%s for %p is empty", reason,
-					     obj);
+					     "%s for %p is empty", reason, obj);
 			else
 				LogFullDebug(COMPONENT_STATE, "%s is empty",
 					     reason);
 			return true;
 		}
 
-		glist_for_each(glist, list) {
-			found_entry = glist_entry(glist,
-						  state_lock_entry_t,
+		glist_for_each(glist, list)
+		{
+			found_entry = glist_entry(glist, state_lock_entry_t,
 						  sle_list);
 
 			LogEntry(reason, found_entry);
@@ -382,17 +375,17 @@ static bool LogBlockedList(const char *reason, struct fsal_obj_handle *obj,
 		if (glist_empty(list)) {
 			if (obj != NULL)
 				LogFullDebug(COMPONENT_STATE,
-					     "%s for %p is empty", reason,
-					     obj);
+					     "%s for %p is empty", reason, obj);
 			else
 				LogFullDebug(COMPONENT_STATE, "%s is empty",
 					     reason);
 			return true;
 		}
 
-		glist_for_each(glist, list) {
-			block_entry =
-			    glist_entry(glist, state_block_data_t, sbd_list);
+		glist_for_each(glist, list)
+		{
+			block_entry = glist_entry(glist, state_block_data_t,
+						  sbd_list);
 
 			found_entry = block_entry->sbd_lock_entry;
 			LogEntry(reason, found_entry);
@@ -414,19 +407,14 @@ static bool LogBlockedList(const char *reason, struct fsal_obj_handle *obj,
  * @param[in] owner     Lock owner
  * @param[in] lock      Lock description
  */
-void log_lock(log_components_t component,
-	      log_levels_t debug,
-	      const char *reason,
-	      struct fsal_obj_handle *obj,
-	      state_owner_t *owner,
-	      fsal_lock_param_t *lock,
-	      char *file,
-	      int line,
-	      char *function)
+void log_lock(log_components_t component, log_levels_t debug,
+	      const char *reason, struct fsal_obj_handle *obj,
+	      state_owner_t *owner, fsal_lock_param_t *lock, char *file,
+	      int line, char *function)
 {
 	if (isLevel(component, debug)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		if (owner != NULL)
 			display_owner(&dspbuf, owner);
@@ -434,14 +422,12 @@ void log_lock(log_components_t component,
 			display_cat(&dspbuf, "NONE");
 
 		DisplayLogComponentLevel(component, file, line, function, debug,
-			"%s Lock: obj=%p, fileid=%" PRIu64
-			", type=%s, start=0x%"PRIx64", end=0x%"PRIx64
-			", owner={%s}",
-			reason, obj,
-			(uint64_t) obj->fileid,
-			str_lockt(lock->lock_type),
-			lock->lock_start,
-			lock_end(lock), str);
+					 "%s Lock: obj=%p, fileid=%" PRIu64
+					 ", type=%s, start=0x%" PRIx64
+					 ", end=0x%" PRIx64 ", owner={%s}",
+					 reason, obj, (uint64_t)obj->fileid,
+					 str_lockt(lock->lock_type),
+					 lock->lock_start, lock_end(lock), str);
 	}
 }
 
@@ -461,7 +447,8 @@ void log_lock_desc(log_components_t component, log_levels_t debug,
 		   char *function)
 {
 	if (isLevel(component, debug)) {
-		DisplayLogComponentLevel(component, file, line, function, debug,
+		DisplayLogComponentLevel(
+			component, file, line, function, debug,
 			"%s Lock: obj=%p, owner=%p, type=%s, start=0x%llx, end=0x%llx",
 			reason, obj, owner, str_lockt(lock->lock_type),
 			(unsigned long long)lock->lock_start,
@@ -469,9 +456,9 @@ void log_lock_desc(log_components_t component, log_levels_t debug,
 	}
 }
 
-#define LogLockDesc(component, debug, reason, obj, owner, lock) \
+#define LogLockDesc(component, debug, reason, obj, owner, lock)   \
 	log_lock_desc(component, debug, reason, obj, owner, lock, \
-		      (char *) __FILE__, __LINE__, (char *) __func__)
+		      (char *)__FILE__, __LINE__, (char *)__func__)
 
 /**
  * @brief Log all locks
@@ -491,9 +478,8 @@ void dump_all_locks(const char *label)
 		return;
 	}
 
-	glist_for_each(glist, &state_all_locks)
-	    LogEntry(label,
-		     glist_entry(glist, state_lock_entry_t, sle_all_locks));
+	glist_for_each(glist, &state_all_locks) LogEntry(
+		label, glist_entry(glist, state_lock_entry_t, sle_all_locks));
 
 	PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #else
@@ -520,13 +506,11 @@ void dump_all_locks(const char *label)
  *
  * @return The new entry.
  */
-static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
-						   struct gsh_export *export,
-						   state_blocking_t blocked,
-						   lock_protocol_t protocol,
-						   state_owner_t *owner,
-						   state_t *state,
-						   fsal_lock_param_t *lock)
+static state_lock_entry_t *
+create_state_lock_entry(struct fsal_obj_handle *obj, struct gsh_export *export,
+			state_blocking_t blocked, lock_protocol_t protocol,
+			state_owner_t *owner, state_t *state,
+			fsal_lock_param_t *lock)
 {
 	state_lock_entry_t *new_entry;
 
@@ -611,13 +595,11 @@ static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 static inline state_lock_entry_t *
 state_lock_entry_t_dup(state_lock_entry_t *orig_entry)
 {
-	return create_state_lock_entry(orig_entry->sle_obj,
-				       orig_entry->sle_export,
-				       orig_entry->sle_blocked,
-				       orig_entry->sle_protocol,
-				       orig_entry->sle_owner,
-				       orig_entry->sle_state,
-				       &orig_entry->sle_lock);
+	return create_state_lock_entry(
+		orig_entry->sle_obj, orig_entry->sle_export,
+		orig_entry->sle_blocked, orig_entry->sle_protocol,
+		orig_entry->sle_owner, orig_entry->sle_state,
+		&orig_entry->sle_lock);
 }
 
 /**
@@ -641,9 +623,8 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 {
 	int32_t refcount = atomic_dec_int32_t(&lock_entry->sle_ref_count);
 
-	LogEntryRefCount(refcount != 0
-			 ? "Decrement sle_ref_count"
-			 : "Decrement sle_ref_count and freeing",
+	LogEntryRefCount(refcount != 0 ? "Decrement sle_ref_count" :
+					 "Decrement sle_ref_count and freeing",
 			 lock_entry, refcount);
 
 	assert(refcount >= 0);
@@ -658,7 +639,7 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 			 * might have increased, and so we can't release the
 			 * lock entry */
 			refcount = atomic_fetch_int32_t(
-					&lock_entry->sle_ref_count);
+				&lock_entry->sle_ref_count);
 			if (refcount != 0) {
 				LogEntryRefCount(
 					"Refcount not zero after acquiring lock. Not freeing entry",
@@ -725,7 +706,7 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 			glist_del(&lock_entry->sle_client_locks);
 
 			PTHREAD_MUTEX_unlock(
-					&client->slc_nsm_client->ssc_mutex);
+				&client->slc_nsm_client->ssc_mutex);
 
 			dec_nsm_client_ref(client->slc_nsm_client);
 		}
@@ -780,38 +761,39 @@ static state_lock_entry_t *get_overlapping_entry(struct state_hdl *ostate,
 	uint64_t found_entry_end, range_end = lock_end(lock);
 
 recheck_for_conflicting_entries:
-	glist_for_each_safe(glist, glist_n, &ostate->file.lock_list) {
+	glist_for_each_safe(glist, glist_n, &ostate->file.lock_list)
+	{
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		LogEntry("Checking", found_entry);
 
 		/* Skip blocked or cancelled locks */
-		if (found_entry->sle_blocked == STATE_BLOCKING
-		    || found_entry->sle_blocked == STATE_CANCELED)
+		if (found_entry->sle_blocked == STATE_BLOCKING ||
+		    found_entry->sle_blocked == STATE_CANCELED)
 			continue;
 
 		found_entry_end = lock_end(&found_entry->sle_lock);
 
-		if ((found_entry_end >= lock->lock_start)
-		    && (found_entry->sle_lock.lock_start <= range_end)) {
+		if ((found_entry_end >= lock->lock_start) &&
+		    (found_entry->sle_lock.lock_start <= range_end)) {
 			/* lock overlaps see if we can allow:
 			 * allow if neither lock is exclusive or
 			 * the owner is the same
 			 */
-			if ((found_entry->sle_lock.lock_type == FSAL_LOCK_W
-			     || lock->lock_type == FSAL_LOCK_W)
-			    && different_owners(found_entry->sle_owner, owner)
-			    ) {
+			if ((found_entry->sle_lock.lock_type == FSAL_LOCK_W ||
+			     lock->lock_type == FSAL_LOCK_W) &&
+			    different_owners(found_entry->sle_owner, owner)) {
 				/* Recheck for expiry */
 				state_owner_t *cf_own = found_entry->sle_owner;
 				nfs_client_id_t *client_id =
-				    cf_own->so_owner.so_nfs4_owner.so_clientrec;
+					cf_own->so_owner.so_nfs4_owner
+						.so_clientrec;
 
 				if ((atomic_fetch_uint32_t(
-					&num_of_curr_expired_clients))
-				    && (cf_own->so_type
-					>= STATE_OPEN_OWNER_NFSV4)
-				    && client_id->marked_for_delayed_cleanup) {
+					    &num_of_curr_expired_clients)) &&
+				    (cf_own->so_type >=
+				     STATE_OPEN_OWNER_NFSV4) &&
+				    client_id->marked_for_delayed_cleanup) {
 					/* Release the state lock, to clean */
 					ostate->no_cleanup = false;
 					PTHREAD_MUTEX_unlock(&ostate->st_lock);
@@ -857,15 +839,16 @@ static void merge_lock_entry(struct state_hdl *ostate,
 
 	/* lock_entry might be STATE_NON_BLOCKING */
 
-	glist_for_each_safe(glist, glistn, &ostate->file.lock_list) {
+	glist_for_each_safe(glist, glistn, &ostate->file.lock_list)
+	{
 		check_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		/* Skip entry being merged - it could be in the list */
 		if (check_entry == lock_entry)
 			continue;
 
-		if (different_owners
-		    (check_entry->sle_owner, lock_entry->sle_owner))
+		if (different_owners(check_entry->sle_owner,
+				     lock_entry->sle_owner))
 			continue;
 
 		/* Only merge fully granted locks */
@@ -889,16 +872,16 @@ static void merge_lock_entry(struct state_hdl *ostate,
 		 * to be done.
 		 */
 		if ((check_entry->sle_lock.lock_type !=
-		     lock_entry->sle_lock.lock_type)
-		    && ((lock_entry_end < check_entry_end)
-			|| (check_entry->sle_lock.lock_start <
-			    lock_entry->sle_lock.lock_start))) {
-			if (lock_entry_end < check_entry_end
-			    && check_entry->sle_lock.lock_start <
-			    lock_entry->sle_lock.lock_start) {
+		     lock_entry->sle_lock.lock_type) &&
+		    ((lock_entry_end < check_entry_end) ||
+		     (check_entry->sle_lock.lock_start <
+		      lock_entry->sle_lock.lock_start))) {
+			if (lock_entry_end < check_entry_end &&
+			    check_entry->sle_lock.lock_start <
+				    lock_entry->sle_lock.lock_start) {
 				/* Need to split old lock */
 				check_entry_right =
-				    state_lock_entry_t_dup(check_entry);
+					state_lock_entry_t_dup(check_entry);
 				glist_add_tail(&ostate->file.lock_list,
 					       &(check_entry_right->sle_list));
 			} else {
@@ -914,9 +897,9 @@ static void merge_lock_entry(struct state_hdl *ostate,
 				LogEntry("Merge shrinking right",
 					 check_entry_right);
 				check_entry_right->sle_lock.lock_start =
-				    lock_entry_end + 1;
+					lock_entry_end + 1;
 				check_entry_right->sle_lock.lock_length =
-				    check_entry_end - lock_entry_end;
+					check_entry_end - lock_entry_end;
 				LogEntry("Merge shrunk right",
 					 check_entry_right);
 			}
@@ -927,8 +910,8 @@ static void merge_lock_entry(struct state_hdl *ostate,
 				 */
 				LogEntry("Merge shrinking left", check_entry);
 				check_entry->sle_lock.lock_length =
-				    lock_entry->sle_lock.lock_start -
-				    check_entry->sle_lock.lock_start;
+					lock_entry->sle_lock.lock_start -
+					check_entry->sle_lock.lock_start;
 				LogEntry("Merge shrunk left", check_entry);
 			}
 			/* Done splitting/shrinking old lock */
@@ -946,11 +929,11 @@ static void merge_lock_entry(struct state_hdl *ostate,
 		    lock_entry->sle_lock.lock_start)
 			/* Expand start of lock_entry */
 			lock_entry->sle_lock.lock_start =
-			    check_entry->sle_lock.lock_start;
+				check_entry->sle_lock.lock_start;
 
 		/* Compute new lock length */
 		lock_entry->sle_lock.lock_length =
-		    lock_entry_end - lock_entry->sle_lock.lock_start + 1;
+			lock_entry_end - lock_entry->sle_lock.lock_start + 1;
 
 		/* Remove merged entry */
 		LogEntry("Merged", lock_entry);
@@ -969,7 +952,8 @@ static void free_list(struct glist_head *list)
 	state_lock_entry_t *found_entry;
 	struct glist_head *glist, *glistn;
 
-	glist_for_each_safe(glist, glistn, list) {
+	glist_for_each_safe(glist, glistn, list)
+	{
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		remove_from_locklist(found_entry);
@@ -1013,8 +997,8 @@ static state_status_t subtract_lock_from_entry(state_lock_entry_t *found_entry,
 		return status;
 	}
 
-	if ((lock->lock_start <= found_entry->sle_lock.lock_start)
-	    && range_end >= found_entry_end) {
+	if ((lock->lock_start <= found_entry->sle_lock.lock_start) &&
+	    range_end >= found_entry_end) {
 		/* Fully overlap */
 		LogEntry("Remove Complete", found_entry);
 		goto complete_remove;
@@ -1027,7 +1011,7 @@ static state_status_t subtract_lock_from_entry(state_lock_entry_t *found_entry,
 		found_entry_left = state_lock_entry_t_dup(found_entry);
 
 		found_entry_left->sle_lock.lock_length =
-		    lock->lock_start - found_entry->sle_lock.lock_start;
+			lock->lock_start - found_entry->sle_lock.lock_start;
 		LogEntry("Left split", found_entry_left);
 		glist_add_tail(split_list, &(found_entry_left->sle_list));
 	}
@@ -1046,12 +1030,12 @@ static state_status_t subtract_lock_from_entry(state_lock_entry_t *found_entry,
 			found_entry_right->sle_lock.lock_length = 0;
 		else
 			found_entry_right->sle_lock.lock_length =
-			    found_entry_end - range_end;
+				found_entry_end - range_end;
 		LogEntry("Right split", found_entry_right);
 		glist_add_tail(split_list, &(found_entry_right->sle_list));
 	}
 
- complete_remove:
+complete_remove:
 
 	/* Remove the lock from the list it's
 	 * on and put it on the remove_list
@@ -1076,8 +1060,7 @@ static state_status_t subtract_lock_from_entry(state_lock_entry_t *found_entry,
  * @return State status.
  */
 static state_status_t subtract_lock_from_list(state_owner_t *owner,
-					      bool state_applies,
-					      int32_t state,
+					      bool state_applies, int32_t state,
 					      fsal_lock_param_t *lock,
 					      bool *removed,
 					      struct glist_head *list)
@@ -1093,11 +1076,12 @@ static state_status_t subtract_lock_from_list(state_owner_t *owner,
 	glist_init(&split_lock_list);
 	glist_init(&remove_list);
 
-	glist_for_each_safe(glist, glistn, list) {
+	glist_for_each_safe(glist, glistn, list)
+	{
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
-		if (owner != NULL
-		    && different_owners(found_entry->sle_owner, owner))
+		if (owner != NULL &&
+		    different_owners(found_entry->sle_owner, owner))
 			continue;
 
 		/* Only care about granted locks */
@@ -1116,10 +1100,9 @@ static state_status_t subtract_lock_from_list(state_owner_t *owner,
 		 * to found_entry, we don't inc the ref count because we want
 		 * to drop the lock entry.
 		 */
-		status =
-		    subtract_lock_from_entry(found_entry, lock,
-					     &split_lock_list, &remove_list,
-					     &removed_one);
+		status = subtract_lock_from_entry(found_entry, lock,
+						  &split_lock_list,
+						  &remove_list, &removed_one);
 		*removed |= removed_one;
 
 		if (status != STATE_SUCCESS) {
@@ -1136,9 +1119,10 @@ static state_status_t subtract_lock_from_list(state_owner_t *owner,
 		 * it back on the list.
 		 */
 		LogDebug(COMPONENT_STATE, "Failed %s", state_err_str(status));
-		glist_for_each_safe(glist, glistn, &remove_list) {
-			found_entry =
-			    glist_entry(glist, state_lock_entry_t, sle_list);
+		glist_for_each_safe(glist, glistn, &remove_list)
+		{
+			found_entry = glist_entry(glist, state_lock_entry_t,
+						  sle_list);
 			glist_move_tail(list, &(found_entry->sle_list));
 		}
 	} else {
@@ -1198,8 +1182,7 @@ int display_lock_cookie_entry(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_opaque_value(dspbuf,
-				      he->sce_cookie,
+	b_left = display_opaque_value(dspbuf, he->sce_cookie,
 				      he->sce_cookie_size);
 
 	if (b_left <= 0)
@@ -1225,8 +1208,8 @@ int display_lock_cookie_entry(struct display_buffer *dspbuf,
 
 		b_left = display_printf(
 			dspbuf,
-			"} type=%s start=0x%"PRIx64" end=0x%"
-			PRIx64" protocol=%s, blocked=%s}",
+			"} type=%s start=0x%" PRIx64 " end=0x%" PRIx64
+			" protocol=%s, blocked=%s}",
 			str_lockt(he->sce_lock_entry->sle_lock.lock_type),
 			he->sce_lock_entry->sle_lock.lock_start,
 			lock_end(&he->sce_lock_entry->sle_lock),
@@ -1266,8 +1249,8 @@ int compare_lock_cookie_key(struct gsh_buffdesc *buff1,
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		char str1[LOG_BUFF_LEN / 2] = "\0";
 		char str2[LOG_BUFF_LEN / 2] = "\0";
-		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
-		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+		struct display_buffer dspbuf1 = { sizeof(str1), str1, str1 };
+		struct display_buffer dspbuf2 = { sizeof(str2), str2, str2 };
 
 		display_lock_cookie(&dspbuf1, buff1);
 		display_lock_cookie(&dspbuf2, buff2);
@@ -1356,7 +1339,7 @@ uint64_t lock_cookie_rbt_hash_func(hash_parameter_t *hparam,
 void free_cookie(state_cookie_entry_t *cookie_entry, bool unblock)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	void *cookie = cookie_entry->sce_cookie;
 	state_lock_entry_t *lock_entry = cookie_entry->sce_lock_entry;
@@ -1416,22 +1399,22 @@ static hash_table_t *ht_lock_cookies;
  *
  * @return State status.
  */
-state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
-				      void *cookie, int cookie_size,
+state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj, void *cookie,
+				      int cookie_size,
 				      state_lock_entry_t *lock_entry,
 				      state_cookie_entry_t **cookie_entry)
 {
 	struct gsh_buffdesc buffkey, buffval;
 	state_cookie_entry_t *hash_entry;
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	state_status_t status = 0;
 
 	*cookie_entry = NULL;
 
-	if (lock_entry->sle_block_data == NULL || cookie == NULL
-	    || cookie_size == 0) {
+	if (lock_entry->sle_block_data == NULL || cookie == NULL ||
+	    cookie_size == 0) {
 		/* Something's wrong with this entry */
 		status = STATE_INCONSISTENT_ENTRY;
 		return status;
@@ -1461,11 +1444,9 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		str_valid = true;
 	}
 
-	if (hashtable_test_and_set(ht_lock_cookies,
-				   &buffkey,
-				   &buffval,
-				   HASHTABLE_SET_HOW_SET_NO_OVERWRITE)
-	    != HASHTABLE_SUCCESS) {
+	if (hashtable_test_and_set(ht_lock_cookies, &buffkey, &buffval,
+				   HASHTABLE_SET_HOW_SET_NO_OVERWRITE) !=
+	    HASHTABLE_SUCCESS) {
 		gsh_free(hash_entry);
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,
@@ -1491,24 +1472,18 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		 * Now that we are sure we can continue, acquire the FSAL lock.
 		 * If we get STATE_LOCK_BLOCKED we need to return...
 		 */
-		status = do_lock_op(obj,
-				    lock_entry->sle_state,
-				    FSAL_OP_LOCKB,
+		status = do_lock_op(obj, lock_entry->sle_state, FSAL_OP_LOCKB,
 				    lock_entry->sle_owner,
-				    &lock_entry->sle_lock,
-				    NULL, NULL, false);
+				    &lock_entry->sle_lock, NULL, NULL, false);
 		break;
 
 	case STATE_GRANT_INTERNAL:
 		/* Now that we are sure we can continue, acquire the FSAL lock.
 		 * If we get STATE_LOCK_BLOCKED we need to return...
 		 */
-		status = do_lock_op(obj,
-				    lock_entry->sle_state,
-				    FSAL_OP_LOCK,
+		status = do_lock_op(obj, lock_entry->sle_state, FSAL_OP_LOCK,
 				    lock_entry->sle_owner,
-				    &lock_entry->sle_lock,
-				    NULL, NULL, false);
+				    &lock_entry->sle_lock, NULL, NULL, false);
 		break;
 
 	case STATE_GRANT_FSAL:
@@ -1546,8 +1521,8 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 
 		if (err != HASHTABLE_SUCCESS) {
 			LogCrit(COMPONENT_STATE,
-				 "Failure to delete lock cookie %s",
-				 hash_table_err_to_str(err));
+				"Failure to delete lock cookie %s",
+				hash_table_err_to_str(err));
 		}
 
 		/* And release the cookie without unblocking the lock.
@@ -1585,14 +1560,14 @@ state_status_t state_cancel_grant(state_cookie_entry_t *cookie_entry)
 			    FSAL_OP_UNLOCK,
 			    cookie_entry->sce_lock_entry->sle_owner,
 			    &cookie_entry->sce_lock_entry->sle_lock,
-			    NULL,	/* no conflict expected */
-			    NULL,
-			    false);
+			    NULL, /* no conflict expected */
+			    NULL, false);
 
 	if (status != STATE_SUCCESS)
-		LogMajor(COMPONENT_STATE,
-			 "Unable to unlock FSAL for canceled GRANTED lock, error=%s",
-			 state_err_str(status));
+		LogMajor(
+			COMPONENT_STATE,
+			"Unable to unlock FSAL for canceled GRANTED lock, error=%s",
+			state_err_str(status));
 
 	/* And release the cookie and unblock lock
 	 * (because lock will be removed)
@@ -1618,7 +1593,7 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 	struct gsh_buffdesc buffval;
 	struct gsh_buffdesc buffused_key;
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	state_status_t status = 0;
 
@@ -1633,13 +1608,10 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 		str_valid = true;
 	}
 
-	if (HashTable_Del(ht_lock_cookies,
-			  &buffkey,
-			  &buffused_key,
-			  &buffval) != HASHTABLE_SUCCESS) {
+	if (HashTable_Del(ht_lock_cookies, &buffkey, &buffused_key, &buffval) !=
+	    HASHTABLE_SUCCESS) {
 		if (str_valid)
-			LogFullDebug(COMPONENT_STATE,
-				     "KEY {%s} NOTFOUND", str);
+			LogFullDebug(COMPONENT_STATE, "KEY {%s} NOTFOUND", str);
 		status = STATE_BAD_COOKIE;
 		return status;
 	}
@@ -1648,8 +1620,7 @@ state_status_t state_find_grant(void *cookie, int cookie_size,
 
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		display_lock_cookie_entry(&dspbuf, *cookie_entry);
-		LogFullDebug(COMPONENT_STATE,
-			     "Found Lock Cookie {%s}", str);
+		LogFullDebug(COMPONENT_STATE, "Found Lock Cookie {%s}", str);
 	}
 
 	status = STATE_SUCCESS;
@@ -1713,15 +1684,12 @@ void grant_blocked_lock_immediate(struct state_hdl *ostate,
 }
 
 static void grant_nfsv4_blocking_lock(struct fsal_obj_handle *obj,
-		  state_lock_entry_t *lock_entry)
+				      state_lock_entry_t *lock_entry)
 {
 	state_status_t status = do_lock_op(obj, lock_entry->sle_state,
-			FSAL_OP_LOCKB,
-			lock_entry->sle_owner,
-			&lock_entry->sle_lock,
-			NULL,
-			NULL,
-			false);
+					   FSAL_OP_LOCKB, lock_entry->sle_owner,
+					   &lock_entry->sle_lock, NULL, NULL,
+					   false);
 	if (status != STATE_SUCCESS) {
 		LogMajor(COMPONENT_STATE,
 			 "Unable to lock a granted lock, error=%s",
@@ -1829,7 +1797,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 		if (lock_entry->sle_block_data->sbd_grant_type ==
 		    STATE_GRANT_NONE)
 			lock_entry->sle_block_data->sbd_grant_type =
-			    STATE_GRANT_INTERNAL;
+				STATE_GRANT_INTERNAL;
 
 		status = call_back(lock_entry->sle_obj, lock_entry);
 
@@ -1839,7 +1807,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 			 */
 			lock_entry->sle_blocked = blocked;
 			lock_entry->sle_block_data->sbd_grant_type =
-							STATE_GRANT_NONE;
+				STATE_GRANT_NONE;
 			LogEntry("Granting callback left lock still blocked",
 				 lock_entry);
 			return;
@@ -1887,13 +1855,13 @@ void process_blocked_lock_upcall(state_lock_entry_t *lock_entry)
 	if (glist_null(&lock_entry->sle_list)) {
 		LogEntry(
 			"Received up-call for lock entry that was already removed from the lock list. Ignoring",
-			 lock_entry);
+			lock_entry);
 		goto out_upcall;
 	}
 
 	try_to_grant_lock(lock_entry);
 
- out_upcall:
+out_upcall:
 	STATELOCK_unlock(lock_entry->sle_obj);
 }
 
@@ -1918,7 +1886,8 @@ static void grant_blocked_locks(struct state_hdl *ostate)
 	if (export->exp_ops.fs_supports(export, fso_lock_support_async_block))
 		return;
 
-	glist_for_each_safe(glist, glistn, &ostate->file.lock_list) {
+	glist_for_each_safe(glist, glistn, &ostate->file.lock_list)
+	{
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		if (found_entry->sle_blocked != STATE_BLOCKING)
@@ -1944,9 +1913,8 @@ static void grant_blocked_locks(struct state_hdl *ostate)
  *
  * @return State status.
  */
-static
-void cancel_blocked_lock(struct fsal_obj_handle *obj,
-			 state_lock_entry_t *lock_entry)
+static void cancel_blocked_lock(struct fsal_obj_handle *obj,
+				state_lock_entry_t *lock_entry)
 {
 	state_cookie_entry_t *cookie = NULL;
 	state_status_t state_status;
@@ -1961,14 +1929,13 @@ void cancel_blocked_lock(struct fsal_obj_handle *obj,
 	 */
 
 	/* Try to clean up blocked lock if a cookie is present */
-	if (lock_entry->sle_block_data != NULL
-	    && lock_entry->sle_block_data->sbd_blocked_cookie != NULL) {
+	if (lock_entry->sle_block_data != NULL &&
+	    lock_entry->sle_block_data->sbd_blocked_cookie != NULL) {
 		/* Cookie is attached, try to get it */
 		cookie = lock_entry->sle_block_data->sbd_blocked_cookie;
 
-		state_status = state_find_grant(cookie->sce_cookie,
-						cookie->sce_cookie_size,
-						&cookie);
+		state_status = state_find_grant(
+			cookie->sce_cookie, cookie->sce_cookie_size, &cookie);
 
 		if (state_status == STATE_SUCCESS) {
 			/* We've got the cookie,
@@ -1990,14 +1957,11 @@ void cancel_blocked_lock(struct fsal_obj_handle *obj,
 		/* Since a cookie was not found,
 		 * the lock must still be in a state of needing cancelling.
 		 */
-		state_status = do_lock_op(obj,
-					  lock_entry->sle_state,
-					  FSAL_OP_CANCEL,
-					  lock_entry->sle_owner,
-					  &lock_entry->sle_lock,
-					  NULL,	/* no conflict expected */
-					  NULL,
-					  false); /* overlap not relevant */
+		state_status =
+			do_lock_op(obj, lock_entry->sle_state, FSAL_OP_CANCEL,
+				   lock_entry->sle_owner, &lock_entry->sle_lock,
+				   NULL, /* no conflict expected */
+				   NULL, false); /* overlap not relevant */
 
 		if (state_status != STATE_SUCCESS) {
 			/* Unable to cancel,
@@ -2020,20 +1984,17 @@ void cancel_blocked_lock(struct fsal_obj_handle *obj,
 		 * @todo: Maybe an issue if this was a lock upgrade?
 		 */
 		if (lock_entry->sle_protocol == LOCK_NLM) {
-			state_status =
-				do_lock_op(obj,
-					  lock_entry->sle_state,
-					  FSAL_OP_UNLOCK,
-					  lock_entry->sle_owner,
-					  &lock_entry->sle_lock,
-					  NULL,	/* no conflict expected */
-					  NULL,
-					  false); /* overlap not relevant */
+			state_status = do_lock_op(
+				obj, lock_entry->sle_state, FSAL_OP_UNLOCK,
+				lock_entry->sle_owner, &lock_entry->sle_lock,
+				NULL, /* no conflict expected */
+				NULL, false); /* overlap not relevant */
 			if (state_status != STATE_SUCCESS) {
 				/* lock was probably not granted */
-				LogFullDebug(COMPONENT_STATE,
-					     "Unable to unlock a blocked lock %d",
-					     state_status);
+				LogFullDebug(
+					COMPONENT_STATE,
+					"Unable to unlock a blocked lock %d",
+					state_status);
 			}
 		}
 	}
@@ -2068,22 +2029,21 @@ void cancel_blocked_lock(struct fsal_obj_handle *obj,
  * @param[in]     state  Associated state
  * @param[in]     lock   Lock description
  */
-void cancel_blocked_locks_range(struct state_hdl *ostate,
-				state_owner_t *owner,
-				bool state_applies,
-				int32_t state,
+void cancel_blocked_locks_range(struct state_hdl *ostate, state_owner_t *owner,
+				bool state_applies, int32_t state,
 				fsal_lock_param_t *lock)
 {
 	struct glist_head *glist, *glistn;
 	state_lock_entry_t *found_entry = NULL;
 	uint64_t found_entry_end, range_end = lock_end(lock);
 
-	glist_for_each_safe(glist, glistn, &ostate->file.lock_list) {
+	glist_for_each_safe(glist, glistn, &ostate->file.lock_list)
+	{
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		/* Skip locks not owned by owner */
-		if (owner != NULL
-		    && different_owners(found_entry->sle_owner, owner))
+		if (owner != NULL &&
+		    different_owners(found_entry->sle_owner, owner))
 			continue;
 
 		/* Skip locks owned by this NLM state.
@@ -2102,8 +2062,8 @@ void cancel_blocked_locks_range(struct state_hdl *ostate,
 
 		found_entry_end = lock_end(&found_entry->sle_lock);
 
-		if ((found_entry_end >= lock->lock_start)
-		    && (found_entry->sle_lock.lock_start <= range_end)) {
+		if ((found_entry_end >= lock->lock_start) &&
+		    (found_entry->sle_lock.lock_start <= range_end)) {
 			/* lock overlaps, cancel it. */
 			cancel_blocked_lock(ostate->file.obj, found_entry);
 		}
@@ -2137,19 +2097,17 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 		lock_entry->sle_blocked = STATE_CANCELED;
 
 		/* We had acquired an FSAL lock, need to release it. */
-		status = do_lock_op(obj,
-				    lock_entry->sle_state,
-				    FSAL_OP_UNLOCK,
+		status = do_lock_op(obj, lock_entry->sle_state, FSAL_OP_UNLOCK,
 				    lock_entry->sle_owner,
 				    &lock_entry->sle_lock,
 				    NULL, /* no conflict expected */
-				    NULL,
-				    false);
+				    NULL, false);
 
 		if (status != STATE_SUCCESS)
-			LogMajor(COMPONENT_STATE,
-				 "Unable to unlock FSAL for released GRANTED lock, error=%s",
-				 state_err_str(status));
+			LogMajor(
+				COMPONENT_STATE,
+				"Unable to unlock FSAL for released GRANTED lock, error=%s",
+				state_err_str(status));
 		else {
 			/* Remove the lock from the lock list.
 			 * Will not free yet because of cookie reference to
@@ -2223,14 +2181,10 @@ static inline const char *fsal_lock_op_str(fsal_lock_op_t op)
  *
  * @return State status.
  */
-state_status_t do_lock_op(struct fsal_obj_handle *obj,
-			  state_t *state,
-			  fsal_lock_op_t lock_op,
-			  state_owner_t *owner,
-			  fsal_lock_param_t *lock,
-			  state_owner_t **holder,
-			  fsal_lock_param_t *conflict,
-			  bool overlap)
+state_status_t do_lock_op(struct fsal_obj_handle *obj, state_t *state,
+			  fsal_lock_op_t lock_op, state_owner_t *owner,
+			  fsal_lock_param_t *lock, state_owner_t **holder,
+			  fsal_lock_param_t *conflict, bool overlap)
 {
 	fsal_status_t fsal_status;
 	state_status_t status = STATE_SUCCESS;
@@ -2259,23 +2213,26 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 	 * supported and there is an overlap because we won't get here if
 	 * the overlap includes a write lock (which would cause a block).
 	 */
-	LogFullDebug(COMPONENT_STATE,
-		     "Reasons to quick exit fso_lock_support=%s fso_lock_support_async_block=%s overlap=%s",
-		     fsal_export->exp_ops.fs_supports(
-				fsal_export, fso_lock_support)
-				? "yes" : "no",
-		     fsal_export->exp_ops.fs_supports(
-				fsal_export, fso_lock_support_async_block)
-				? "yes" : "no",
-		     overlap ? "yes" : "no");
-	if (!fsal_export->exp_ops.fs_supports(fsal_export, fso_lock_support)
-	    || (!fsal_export->exp_ops.fs_supports(fsal_export,
-						  fso_lock_support_async_block)
-	    && lock_op == FSAL_OP_CANCEL))
+	LogFullDebug(
+		COMPONENT_STATE,
+		"Reasons to quick exit fso_lock_support=%s fso_lock_support_async_block=%s overlap=%s",
+		fsal_export->exp_ops.fs_supports(fsal_export,
+						 fso_lock_support) ?
+			"yes" :
+			"no",
+		fsal_export->exp_ops.fs_supports(fsal_export,
+						 fso_lock_support_async_block) ?
+			"yes" :
+			"no",
+		overlap ? "yes" : "no");
+	if (!fsal_export->exp_ops.fs_supports(fsal_export, fso_lock_support) ||
+	    (!fsal_export->exp_ops.fs_supports(fsal_export,
+					       fso_lock_support_async_block) &&
+	     lock_op == FSAL_OP_CANCEL))
 		return STATE_SUCCESS;
 
-	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, fsal_lock_op_str(lock_op),
-		obj, owner, lock);
+	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, fsal_lock_op_str(lock_op), obj,
+		owner, lock);
 
 	memset(&conflicting_lock, 0, sizeof(conflicting_lock));
 
@@ -2304,8 +2261,7 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 		 * op_ctx->client because it doesn't set it...
 		 * They will crash soon enough...
 		 */
-		LogDebug(COMPONENT_STATE,
-			 "9P doesn't set op_ctx->client...");
+		LogDebug(COMPONENT_STATE, "9P doesn't set op_ctx->client...");
 		break;
 #endif
 
@@ -2317,13 +2273,13 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 		break;
 	}
 
-	if (fsal_lock_op == FSAL_OP_UNLOCK
-	    && nfs4_clientid != NULL
-	    && nfs4_clientid->cid_confirmed == STALE_CLIENT_ID
-	    && fsal_export->exp_ops.fs_supports(
-			  fsal_export, fso_lock_full_control)) {
-		LogDebug(COMPONENT_STATE,
-			 "skip unlock of stale nfs4_clientid. FSAL need the lock record to check lock reclaim");
+	if (fsal_lock_op == FSAL_OP_UNLOCK && nfs4_clientid != NULL &&
+	    nfs4_clientid->cid_confirmed == STALE_CLIENT_ID &&
+	    fsal_export->exp_ops.fs_supports(fsal_export,
+					     fso_lock_full_control)) {
+		LogDebug(
+			COMPONENT_STATE,
+			"skip unlock of stale nfs4_clientid. FSAL need the lock record to check lock reclaim");
 		return STATE_SUCCESS;
 	}
 
@@ -2334,9 +2290,8 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 		op_ctx->client = owner_client;
 
 	/* Perform this lock operation using the support_ex lock op. */
-	fsal_status = obj->obj_ops->lock_op2(obj, state, owner,
-					    fsal_lock_op, lock,
-					    &conflicting_lock);
+	fsal_status = obj->obj_ops->lock_op2(obj, state, owner, fsal_lock_op,
+					     lock, &conflicting_lock);
 
 	op_ctx->client = saved_client;
 
@@ -2345,16 +2300,14 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 	LogFullDebug(COMPONENT_STATE, "FSAL_lock_op returned %s",
 		     state_err_str(status));
 
-	if (status == STATE_LOCK_BLOCKED
-	    && fsal_lock_op != FSAL_OP_LOCKB) {
+	if (status == STATE_LOCK_BLOCKED && fsal_lock_op != FSAL_OP_LOCKB) {
 		/* This is an unexpected return code,
 		 * make sure caller reports an error
 		 */
 		LogMajor(COMPONENT_STATE,
 			 "FSAL returned unexpected STATE_LOCK_BLOCKED result");
 		status = STATE_FSAL_ERROR;
-	} else if (status == STATE_LOCK_CONFLICT
-		   && lock_op == FSAL_OP_LOCKB) {
+	} else if (status == STATE_LOCK_CONFLICT && lock_op == FSAL_OP_LOCKB) {
 		/* This must be a non-async blocking lock that was
 		 * blocked, where we actually made a non-blocking
 		 * call. In that case, actually return
@@ -2420,11 +2373,9 @@ void copy_conflict(state_lock_entry_t *found_entry, state_owner_t **holder,
  *
  * @return State status.
  */
-state_status_t state_test(struct fsal_obj_handle *obj,
-			  state_t *state,
-			  state_owner_t *owner,
-			  fsal_lock_param_t *lock, state_owner_t **holder,
-			  fsal_lock_param_t *conflict)
+state_status_t state_test(struct fsal_obj_handle *obj, state_t *state,
+			  state_owner_t *owner, fsal_lock_param_t *lock,
+			  state_owner_t **holder, fsal_lock_param_t *conflict)
 {
 	state_lock_entry_t *found_entry;
 	state_status_t status = 0;
@@ -2442,8 +2393,8 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 		status = STATE_LOCK_CONFLICT;
 	} else {
 		/* Prepare to make call to FSAL for this lock */
-		status = do_lock_op(obj, state, FSAL_OP_LOCKT, owner,
-				    lock, holder, conflict, false);
+		status = do_lock_op(obj, state, FSAL_OP_LOCKT, owner, lock,
+				    holder, conflict, false);
 
 		switch (status) {
 		case STATE_SUCCESS:
@@ -2452,8 +2403,8 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 		case STATE_LOCK_CONFLICT:
 			if (holder != NULL && conflict != NULL) {
 				LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
-					"Conflict from FSAL",
-					obj, *holder, conflict);
+					"Conflict from FSAL", obj, *holder,
+					conflict);
 			}
 			break;
 		case STATE_ESTALE:
@@ -2485,7 +2436,7 @@ state_status_t state_test(struct fsal_obj_handle *obj,
  * @param[in]  lock	Lock description
  */
 static void state_cancel_internal(struct fsal_obj_handle *obj,
-	    state_owner_t *owner, fsal_lock_param_t *lock)
+				  state_owner_t *owner, fsal_lock_param_t *lock)
 {
 	struct glist_head *glist;
 	state_lock_entry_t *found_entry;
@@ -2498,7 +2449,8 @@ static void state_cancel_internal(struct fsal_obj_handle *obj,
 		return;
 	}
 
-	glist_for_each(glist, &obj->state_hdl->file.lock_list) {
+	glist_for_each(glist, &obj->state_hdl->file.lock_list)
+	{
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
 		if (different_owners(found_entry->sle_owner, owner))
@@ -2537,17 +2489,12 @@ static void state_cancel_internal(struct fsal_obj_handle *obj,
  * @param[out] lock_granted	Was lock granted from cache
  * @param[out] lock_cancel	Was request treated as a lock cancel
  */
-static void handle_contained_range_if_present(struct fsal_obj_handle *obj,
-				      state_owner_t *owner,
-				      state_t *state,
-				      state_blocking_t blocking,
-				      fsal_lock_param_t *lock,
-				      state_lock_entry_t *found_entry,
-				      uint64_t found_entry_end,
-				      uint64_t range_end,
-				      bool *overlap,
-				      bool *lock_granted,
-				      bool *lock_cancel)
+static void handle_contained_range_if_present(
+	struct fsal_obj_handle *obj, state_owner_t *owner, state_t *state,
+	state_blocking_t blocking, fsal_lock_param_t *lock,
+	state_lock_entry_t *found_entry, uint64_t found_entry_end,
+	uint64_t range_end, bool *overlap, bool *lock_granted,
+	bool *lock_cancel)
 {
 	*lock_granted = false;
 	*lock_cancel = false;
@@ -2588,9 +2535,9 @@ static void handle_contained_range_if_present(struct fsal_obj_handle *obj,
 			grant_nfsv4_blocking_lock(obj, found_entry);
 		}
 	} else if ((found_entry->sle_blocked == STATE_BLOCKING) &&
-		    (found_entry->sle_protocol == LOCK_NFSv4) &&
-		    (blocking == STATE_NON_BLOCKING) &&
-		    (!different_lock(&found_entry->sle_lock, lock))) {
+		   (found_entry->sle_protocol == LOCK_NFSv4) &&
+		   (blocking == STATE_NON_BLOCKING) &&
+		   (!different_lock(&found_entry->sle_lock, lock))) {
 		/* In Nfsv4 when client sends same lock but changes from
 		 * blocking to non blocking we need to remove the lock from
 		 * non blocking list, and return the lock result */
@@ -2613,14 +2560,13 @@ static void handle_contained_range_if_present(struct fsal_obj_handle *obj,
 	 */
 	*lock_granted = true;
 
-
 	LogEntry("Found existing", found_entry);
 
 	if (found_entry->sle_state != state) {
 		state_t *old_state = NULL;
 
 		LogFullDebug(COMPONENT_STATE,
-		"Existing lock entry has old state");
+			     "Existing lock entry has old state");
 
 		old_state = found_entry->sle_state;
 		found_entry->sle_state = state;
@@ -2629,14 +2575,12 @@ static void handle_contained_range_if_present(struct fsal_obj_handle *obj,
 		if (old_state != NULL)
 			dec_state_t_ref(old_state);
 
-		glist_add_tail(
-		 &state->state_data.lock.state_locklist,
-		 &found_entry->sle_state_locks);
+		glist_add_tail(&state->state_data.lock.state_locklist,
+			       &found_entry->sle_state_locks);
 
 		LogEntry("sle after state change", found_entry);
 	}
 }
-
 
 /**
  * @brief Attempt to acquire a lock
@@ -2654,14 +2598,10 @@ static void handle_contained_range_if_present(struct fsal_obj_handle *obj,
  *
  * @return State status.
  */
-state_status_t state_lock(struct fsal_obj_handle *obj,
-			  state_owner_t *owner,
-			  state_t *state,
-			  state_blocking_t blocking,
-			  lock_protocol_t protocol,
-			  state_block_data_t **bdata,
-			  fsal_lock_param_t *lock,
-			  state_owner_t **holder,
+state_status_t state_lock(struct fsal_obj_handle *obj, state_owner_t *owner,
+			  state_t *state, state_blocking_t blocking,
+			  lock_protocol_t protocol, state_block_data_t **bdata,
+			  fsal_lock_param_t *lock, state_owner_t **holder,
 			  fsal_lock_param_t *conflict)
 {
 	bool allow = true, overlap = false;
@@ -2685,10 +2625,10 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		 * and again. So if we have a mapping blocked request return
 		 * that
 		 */
-		glist_for_each(glist, &obj->state_hdl->file.lock_list) {
-			found_entry =
-				glist_entry(glist, state_lock_entry_t,
-						sle_list);
+		glist_for_each(glist, &obj->state_hdl->file.lock_list)
+		{
+			found_entry = glist_entry(glist, state_lock_entry_t,
+						  sle_list);
 
 			if (different_owners(found_entry->sle_owner, owner))
 				continue;
@@ -2698,17 +2638,18 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			 * export.
 			 */
 			if (found_entry->sle_export != op_ctx->ctx_export) {
-				struct tmp_export_paths tmp = {NULL, NULL};
+				struct tmp_export_paths tmp = { NULL, NULL };
 
 				tmp_get_exp_paths(&tmp,
 						  found_entry->sle_export);
 
-				LogEvent(COMPONENT_STATE,
-					 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-					 found_entry->sle_export->export_id,
-					 op_ctx_tmp_export_path(op_ctx, &tmp),
-					 op_ctx->ctx_export->export_id,
-					 op_ctx_export_path(op_ctx));
+				LogEvent(
+					COMPONENT_STATE,
+					"Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
+					found_entry->sle_export->export_id,
+					op_ctx_tmp_export_path(op_ctx, &tmp),
+					op_ctx->ctx_export->export_id,
+					op_ctx_export_path(op_ctx));
 				LogEntry(
 					"Found lock entry belonging to another export",
 					found_entry);
@@ -2736,23 +2677,25 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	}
 
 recheck_for_conflicting_entries:
-	glist_for_each_safe(glist, glist_n, &obj->state_hdl->file.lock_list) {
+	glist_for_each_safe(glist, glist_n, &obj->state_hdl->file.lock_list)
+	{
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 		/* Need to reject lock request if this lock owner already has
 		 * a lock on this file via a different export.
 		 */
-		if (found_entry->sle_export != op_ctx->ctx_export
-			&& !different_owners(found_entry->sle_owner, owner)) {
-			struct tmp_export_paths tmp = {NULL, NULL};
+		if (found_entry->sle_export != op_ctx->ctx_export &&
+		    !different_owners(found_entry->sle_owner, owner)) {
+			struct tmp_export_paths tmp = { NULL, NULL };
 
 			tmp_get_exp_paths(&tmp, found_entry->sle_export);
 
-			LogEvent(COMPONENT_STATE,
-				 "Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
-				 found_entry->sle_export->export_id,
-				 op_ctx_tmp_export_path(op_ctx, &tmp),
-				 op_ctx->ctx_export->export_id,
-				 op_ctx_export_path(op_ctx));
+			LogEvent(
+				COMPONENT_STATE,
+				"Lock Owner Export Conflict, Lock held for export %d (%s), request for export %d (%s)",
+				found_entry->sle_export->export_id,
+				op_ctx_tmp_export_path(op_ctx, &tmp),
+				op_ctx->ctx_export->export_id,
+				op_ctx_export_path(op_ctx));
 
 			LogEntry("Found lock entry belonging to another export",
 				 found_entry);
@@ -2766,18 +2709,16 @@ recheck_for_conflicting_entries:
 		/* Don't skip blocked locks for fairness */
 		found_entry_end = lock_end(&found_entry->sle_lock);
 
-		if (!(lock->lock_reclaim)
-			&& (found_entry_end >= lock->lock_start)
-			&& (found_entry->sle_lock.lock_start <= range_end)
-			&& allow) {
+		if (!(lock->lock_reclaim) &&
+		    (found_entry_end >= lock->lock_start) &&
+		    (found_entry->sle_lock.lock_start <= range_end) && allow) {
 			/* lock overlaps see if we can allow:
 			 * allow if neither lock is exclusive or
 			 * the owner is the same
 			 */
-			if ((found_entry->sle_lock.lock_type == FSAL_LOCK_W
-				 || lock->lock_type == FSAL_LOCK_W)
-				&& different_owners(found_entry->sle_owner,
-						owner)) {
+			if ((found_entry->sle_lock.lock_type == FSAL_LOCK_W ||
+			     lock->lock_type == FSAL_LOCK_W) &&
+			    different_owners(found_entry->sle_owner, owner)) {
 				/* Found a conflicting lock, break out of loop.
 				 * Also indicate overlap hint.
 				 */
@@ -2786,15 +2727,14 @@ recheck_for_conflicting_entries:
 					&obj->state_hdl->file.lock_list);
 				state_owner_t *cf_own = found_entry->sle_owner;
 				state_nfs4_owner_t *owner =
-						&cf_own->so_owner.so_nfs4_owner;
-				nfs_client_id_t *c_id =
-						owner->so_clientrec;
+					&cf_own->so_owner.so_nfs4_owner;
+				nfs_client_id_t *c_id = owner->so_clientrec;
 
 				if ((atomic_fetch_uint32_t(
-					&num_of_curr_expired_clients))
-					&& (cf_own->so_type
-					>= STATE_OPEN_OWNER_NFSV4)
-					&& c_id->marked_for_delayed_cleanup) {
+					    &num_of_curr_expired_clients)) &&
+				    (cf_own->so_type >=
+				     STATE_OPEN_OWNER_NFSV4) &&
+				    c_id->marked_for_delayed_cleanup) {
 					/* Release the state lock, to clean */
 					STATELOCK_unlock(obj);
 					reap_expired_client_list(c_id);
@@ -2807,7 +2747,7 @@ recheck_for_conflicting_entries:
 
 				if (blocking != STATE_BLOCKING) {
 					copy_conflict(found_entry, holder,
-							  conflict);
+						      conflict);
 				}
 				allow = false;
 				overlap = true;
@@ -2818,9 +2758,11 @@ recheck_for_conflicting_entries:
 			}
 		}
 
-		handle_contained_range_if_present(obj, owner, state,
-			blocking, lock, found_entry, found_entry_end,
-			range_end, &overlap, &lock_granted, &lock_cancel);
+		handle_contained_range_if_present(obj, owner, state, blocking,
+						  lock, found_entry,
+						  found_entry_end, range_end,
+						  &overlap, &lock_granted,
+						  &lock_cancel);
 
 		if (lock_granted) {
 			status = STATE_SUCCESS;
@@ -2900,13 +2842,9 @@ recheck_for_conflicting_entries:
 	/* Create the new lock entry.
 	 * Provisionally mark this lock as granted.
 	 */
-	new_entry = create_state_lock_entry(obj,
-					op_ctx->ctx_export,
-					STATE_NON_BLOCKING,
-					protocol,
-					owner,
-					state,
-					lock);
+	new_entry = create_state_lock_entry(obj, op_ctx->ctx_export,
+					    STATE_NON_BLOCKING, protocol, owner,
+					    state, lock);
 
 	/* Check for async blocking lock support. */
 	async = fsal_export->exp_ops.fs_supports(fsal_export,
@@ -2917,14 +2855,9 @@ recheck_for_conflicting_entries:
 	 */
 	if (allow || async) {
 		/* Prepare to make call to FSAL for this lock */
-		status = do_lock_op(obj,
-					state,
-					lock_op,
-					owner,
-					lock,
-					allow ? holder : NULL,
-					allow ? conflict : NULL,
-					overlap);
+		status = do_lock_op(obj, state, lock_op, owner, lock,
+				    allow ? holder : NULL,
+				    allow ? conflict : NULL, overlap);
 	} else {
 		/* FSAL does not support async blocking locks and we have
 		 * a blocking lock within Ganesha, no need to make an
@@ -2935,8 +2868,7 @@ recheck_for_conflicting_entries:
 
 	if (status == STATE_SUCCESS) {
 		/* Merge any touching or overlapping locks into this one */
-		LogEntry("FSAL lock acquired, merging locks for",
-				new_entry);
+		LogEntry("FSAL lock acquired, merging locks for", new_entry);
 
 		merge_lock_entry(obj->state_hdl, new_entry);
 
@@ -2944,7 +2876,7 @@ recheck_for_conflicting_entries:
 		LogEntry("New lock", new_entry);
 
 		glist_add_tail(&obj->state_hdl->file.lock_list,
-				   &new_entry->sle_list);
+			       &new_entry->sle_list);
 
 		/* A lock downgrade could unblock blocked locks */
 		grant_blocked_locks(obj->state_hdl);
@@ -2972,7 +2904,8 @@ recheck_for_conflicting_entries:
 		} else if (allow) {
 			/* Actively poll for the lock only for nlm locks. */
 			block_data->sbd_block_type = (protocol == LOCK_NLM) ?
-					STATE_BLOCK_ASYNC : STATE_BLOCK_POLL;
+							     STATE_BLOCK_ASYNC :
+							     STATE_BLOCK_POLL;
 		} else {
 			/* Ganesha will attempt to grant the lock when
 			 * a conflicting lock is released.
@@ -2984,7 +2917,7 @@ recheck_for_conflicting_entries:
 		LogEntry("FSAL block for", new_entry);
 
 		glist_add_tail(&obj->state_hdl->file.lock_list,
-				   &new_entry->sle_list);
+			       &new_entry->sle_list);
 
 		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
@@ -3009,12 +2942,10 @@ recheck_for_conflicting_entries:
 }
 
 /* Like state_unlock- but assumes obj state lock is taken */
-static state_status_t state_unlock_internal(struct fsal_obj_handle *obj,
-					state_t *state,
-					state_owner_t *owner,
-					bool state_applies,
-					int32_t nsm_state,
-					fsal_lock_param_t *lock)
+static state_status_t
+state_unlock_internal(struct fsal_obj_handle *obj, state_t *state,
+		      state_owner_t *owner, bool state_applies,
+		      int32_t nsm_state, fsal_lock_param_t *lock)
 {
 	bool empty = false;
 	bool removed = false;
@@ -3035,12 +2966,14 @@ static state_status_t state_unlock_internal(struct fsal_obj_handle *obj,
 		goto out_unlock;
 	}
 
-	LogFullDebug(COMPONENT_STATE,
-		     "----------------------------------------------------------------------");
+	LogFullDebug(
+		COMPONENT_STATE,
+		"----------------------------------------------------------------------");
 	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, "Subtracting", obj, owner,
 		lock);
-	LogFullDebug(COMPONENT_STATE,
-		     "----------------------------------------------------------------------");
+	LogFullDebug(
+		COMPONENT_STATE,
+		"----------------------------------------------------------------------");
 
 	/* First cancel any blocking locks that might
 	 * overlap the unlocked range.
@@ -3068,38 +3001,34 @@ static state_status_t state_unlock_internal(struct fsal_obj_handle *obj,
 	 * whether from fully granted locks, or from blocking locks that were
 	 * in the process of being granted.
 	 */
-	status = do_lock_op(obj,
-			    state,
-			    FSAL_OP_UNLOCK,
-			    owner,
-			    lock,
+	status = do_lock_op(obj, state, FSAL_OP_UNLOCK, owner, lock,
 			    NULL, /* no conflict expected */
-			    NULL,
-			    false);
+			    NULL, false);
 
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
 			 state_err_str(status));
 
-	LogFullDebug(COMPONENT_STATE,
-		     "----------------------------------------------------------------------");
+	LogFullDebug(
+		COMPONENT_STATE,
+		"----------------------------------------------------------------------");
 	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, "Done", obj, owner, lock);
-	LogFullDebug(COMPONENT_STATE,
-		     "----------------------------------------------------------------------");
+	LogFullDebug(
+		COMPONENT_STATE,
+		"----------------------------------------------------------------------");
 
-	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)
-	    && lock->lock_start == 0 && lock->lock_length == 0)
-		empty =
-		    LogList("Lock List", obj, &obj->state_hdl->file.lock_list);
+	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS) &&
+	    lock->lock_start == 0 && lock->lock_length == 0)
+		empty = LogList("Lock List", obj,
+				&obj->state_hdl->file.lock_list);
 
 	grant_blocked_locks(obj->state_hdl);
 
-
-	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)
-	    && lock->lock_start == 0 && lock->lock_length == 0 && empty)
+	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS) &&
+	    lock->lock_start == 0 && lock->lock_length == 0 && empty)
 		dump_all_locks("All locks (after unlock)");
 
- out_unlock:
+out_unlock:
 	return status;
 }
 
@@ -3113,19 +3042,16 @@ static state_status_t state_unlock_internal(struct fsal_obj_handle *obj,
  * @param[in] nsm_state     NSM state number
  * @param[in] lock          Lock description
  */
-state_status_t state_unlock(struct fsal_obj_handle *obj,
-			    state_t *state,
-			    state_owner_t *owner,
-			    bool state_applies,
-			    int32_t nsm_state,
-			    fsal_lock_param_t *lock)
+state_status_t state_unlock(struct fsal_obj_handle *obj, state_t *state,
+			    state_owner_t *owner, bool state_applies,
+			    int32_t nsm_state, fsal_lock_param_t *lock)
 {
 	state_status_t status;
 
 	STATELOCK_lock(obj);
 
 	status = state_unlock_internal(obj, state, owner, state_applies,
-			nsm_state, lock);
+				       nsm_state, lock);
 
 	STATELOCK_unlock(obj);
 
@@ -3156,10 +3082,9 @@ void state_unlock_all(struct fsal_obj_handle *obj, state_t *state)
 	while (true) {
 		PTHREAD_MUTEX_lock(&state->state_mutex);
 
-		lock_entry = glist_first_entry(
-				&locks->state_locklist,
-				struct state_lock_entry_t,
-				sle_state_locks);
+		lock_entry = glist_first_entry(&locks->state_locklist,
+					       struct state_lock_entry_t,
+					       sle_state_locks);
 
 		if (lock_entry == NULL) {
 			PTHREAD_MUTEX_unlock(&state->state_mutex);
@@ -3177,8 +3102,8 @@ void state_unlock_all(struct fsal_obj_handle *obj, state_t *state)
 		PTHREAD_MUTEX_unlock(&state->state_mutex);
 
 		status = state_unlock_internal(state->state_obj, state,
-					       state->state_owner,
-					       false, 0, &lock_entry->sle_lock);
+					       state->state_owner, false, 0,
+					       &lock_entry->sle_lock);
 
 		lock_entry_dec_ref(lock_entry);
 
@@ -3200,13 +3125,12 @@ void state_unlock_all(struct fsal_obj_handle *obj, state_t *state)
  *
  * @return State status.
  */
-state_status_t state_cancel(struct fsal_obj_handle *obj,
-			    state_owner_t *owner, fsal_lock_param_t *lock)
+state_status_t state_cancel(struct fsal_obj_handle *obj, state_owner_t *owner,
+			    fsal_lock_param_t *lock)
 {
 	if (obj->type != REGULAR_FILE) {
-		LogLock(COMPONENT_STATE, NIV_DEBUG,
-			"Bad Cancel",
-			obj, owner, lock);
+		LogLock(COMPONENT_STATE, NIV_DEBUG, "Bad Cancel", obj, owner,
+			lock);
 		return STATE_BAD_TYPE;
 	}
 
@@ -3252,7 +3176,7 @@ state_status_t state_cancel_blocked(state_lock_entry_t *lock_entry)
 
 		default:
 			LogFatal(COMPONENT_STATE, "Got an protocol type %s",
-					str_protocol(lock_entry->sle_blocked));
+				 str_protocol(lock_entry->sle_blocked));
 		}
 		break;
 
@@ -3266,7 +3190,7 @@ state_status_t state_cancel_blocked(state_lock_entry_t *lock_entry)
 
 	default:
 		LogFatal(COMPONENT_STATE, "Got an unexpected block type %s",
-				str_blocked(lock_entry->sle_blocked));
+			 str_blocked(lock_entry->sle_blocked));
 	}
 
 	STATELOCK_unlock(lock_entry->sle_obj);
@@ -3287,8 +3211,7 @@ state_status_t state_cancel_blocked(state_lock_entry_t *lock_entry)
  * @return State status.
  */
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-				bool state_applies,
-				int32_t nsm_state)
+				bool state_applies, int32_t nsm_state)
 {
 	state_owner_t *owner;
 	state_lock_entry_t *found_entry;
@@ -3307,7 +3230,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_nsm_client(&dspbuf, nsmclient);
 
@@ -3459,8 +3382,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		 * We pick the first lock the client holds, and use it's file.
 		 */
 		found_share =
-			glist_first_entry(&nsmclient->ssc_share_list,
-					  state_t,
+			glist_first_entry(&nsmclient->ssc_share_list, state_t,
 					  state_data.nlm_share.share_perclient);
 
 		/* If we don't find any entries, then we are done. */
@@ -3476,8 +3398,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		obj = get_state_obj_ref(found_share);
 
 		if (obj == NULL) {
-			LogDebug(COMPONENT_STATE,
-				 "Entry for state is stale");
+			LogDebug(COMPONENT_STATE, "Entry for state is stale");
 			PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 			break;
 		}
@@ -3502,7 +3423,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 		/* Move this entry to the end of the list
 		 * (this will help if errors occur)
 		 */
-		glist_move_tail(&nsmclient->ssc_share_list,
+		glist_move_tail(
+			&nsmclient->ssc_share_list,
 			&found_share->state_data.nlm_share.share_perclient);
 
 		PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
@@ -3511,13 +3433,9 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			/* Remove all shares held by this NSM Client and
 			 * Owner on the file (on all exports)
 			 */
-			status = state_nlm_share(obj,
-						 OPEN4_SHARE_ACCESS_ALL,
-						 OPEN4_SHARE_DENY_ALL,
-						 owner,
-						 found_share,
-						 false,
-						 true);
+			status = state_nlm_share(obj, OPEN4_SHARE_ACCESS_ALL,
+						 OPEN4_SHARE_DENY_ALL, owner,
+						 found_share, false, true);
 		} else {
 			/* The export is being removed, we didn't bother
 			 * calling state_unlock() because export cleanup
@@ -3547,13 +3465,12 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 	if (errcnt == STATE_ERR_MAX) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_nsm_client(&dspbuf, nsmclient);
 
 		LogFatal(COMPONENT_STATE,
-			 "Could not complete NLM notify for %s",
-			 str);
+			 "Could not complete NLM notify for %s", str);
 	}
 
 	/* Put locks from current client incarnation onto end of list.
@@ -3599,9 +3516,8 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 		 * We pick the first lock the owner holds, and use it's file.
 		 */
 		state = glist_first_entry(
-				&owner->so_owner.so_nfs4_owner.so_state_list,
-				state_t,
-				state_owner_list);
+			&owner->so_owner.so_nfs4_owner.so_state_list, state_t,
+			state_owner_list);
 
 		/* If we don't find any entries, then we are done. */
 		if (state == NULL) {
@@ -3665,13 +3581,14 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 
 	if (errcnt == STATE_ERR_MAX) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_owner(&dspbuf, owner);
 
-		LogFatal(COMPONENT_STATE,
-			 "Could not complete cleanup of lock state for lock owner %s",
-			 str);
+		LogFatal(
+			COMPONENT_STATE,
+			"Could not complete cleanup of lock state for lock owner %s",
+			str);
 	}
 }
 
@@ -3697,10 +3614,9 @@ void state_export_unlock_all(void)
 		/* We just need to find any file this owner has locks on.
 		 * We pick the first lock the owner holds, and use it's file.
 		 */
-		found_entry = glist_first_entry(
-			&op_ctx->ctx_export->exp_lock_list,
-			state_lock_entry_t,
-			sle_export_locks);
+		found_entry =
+			glist_first_entry(&op_ctx->ctx_export->exp_lock_list,
+					  state_lock_entry_t, sle_export_locks);
 
 		/* If we don't find any entries, then we are done. */
 		if (found_entry == NULL) {
@@ -3786,7 +3702,7 @@ void state_export_unlock_all(void)
  */
 
 static void handle_nlm_lock(state_block_data_t *pblock,
-		state_lock_entry_t *found_entry)
+			    state_lock_entry_t *found_entry)
 {
 	/* Check if right type */
 	if (pblock->sbd_block_type != STATE_BLOCK_POLL)
@@ -3829,7 +3745,8 @@ static void handle_nlm_lock(state_block_data_t *pblock,
  */
 
 static void handle_nfsv4_lock(state_block_data_t *pblock,
-		state_lock_entry_t *found_entry, time_t check_time)
+			      state_lock_entry_t *found_entry,
+			      time_t check_time)
 {
 	assert(found_entry->sle_protocol == LOCK_NFSv4);
 	if (found_entry->sle_blocked == STATE_AVAILABLE) {
@@ -3868,14 +3785,13 @@ static void handle_nfsv4_lock(state_block_data_t *pblock,
 
 		lock_entry_inc_ref(found_entry);
 		if (test_blocking_lock_eligibility_schedule(found_entry) !=
-				STATE_SUCCESS) {
+		    STATE_SUCCESS) {
 			LogMajor(COMPONENT_STATE,
-				"Unable to schedule lock elgibility test.");
+				 "Unable to schedule lock elgibility test.");
 			lock_entry_dec_ref(found_entry);
 		}
 	}
 }
-
 
 /**
  * @brief Poll any blocked locks of type STATE_BLOCK_POLL
@@ -3895,10 +3811,10 @@ void blocked_lock_polling(struct fridgethr_context *ctx)
 	time_t check_time = time(NULL);
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
-		LogBlockedList("Blocked Lock List",
-			       NULL, &state_blocked_locks);
+		LogBlockedList("Blocked Lock List", NULL, &state_blocked_locks);
 
-	glist_for_each(glist, &state_blocked_locks) {
+	glist_for_each(glist, &state_blocked_locks)
+	{
 		pblock = glist_entry(glist, state_block_data_t, sbd_list);
 
 		found_entry = pblock->sbd_lock_entry;
@@ -3913,7 +3829,7 @@ void blocked_lock_polling(struct fridgethr_context *ctx)
 		else
 			handle_nlm_lock(pblock, found_entry);
 
-	}			/* glist_for_each_safe */
+	} /* glist_for_each_safe */
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 }
@@ -3927,8 +3843,8 @@ void blocked_lock_polling(struct fridgethr_context *ctx)
  * @param[in] grant_type Grant type
  */
 static void find_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
-			      fsal_lock_param_t *lock,
-			      state_grant_type_t grant_type)
+				     fsal_lock_param_t *lock,
+				     state_grant_type_t grant_type)
 {
 	state_lock_entry_t *found_entry;
 	struct glist_head *glist;
@@ -3936,7 +3852,8 @@ static void find_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 
 	PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
-	glist_for_each(glist, &state_blocked_locks) {
+	glist_for_each(glist, &state_blocked_locks)
+	{
 		pblock = glist_entry(glist, state_block_data_t, sbd_list);
 
 		found_entry = pblock->sbd_lock_entry;
@@ -3984,11 +3901,10 @@ static void find_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
 		return;
-	}			/* glist_for_each_safe */
+	} /* glist_for_each_safe */
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
-		LogBlockedList("Blocked Lock List",
-			       NULL, &state_blocked_locks);
+		LogBlockedList("Blocked Lock List", NULL, &state_blocked_locks);
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
 
@@ -4018,8 +3934,8 @@ static void find_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 void grant_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 			       fsal_lock_param_t *lock)
 {
-	LogLockDesc(COMPONENT_STATE, NIV_DEBUG, "Grant Upcall for", obj,
-		    owner, lock);
+	LogLockDesc(COMPONENT_STATE, NIV_DEBUG, "Grant Upcall for", obj, owner,
+		    lock);
 
 	find_blocked_lock_upcall(obj, owner, lock, STATE_GRANT_FSAL);
 }
@@ -4037,8 +3953,7 @@ void available_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 	LogLockDesc(COMPONENT_STATE, NIV_DEBUG, "Available Upcall for", obj,
 		    owner, lock);
 
-	find_blocked_lock_upcall(obj, owner, lock,
-				 STATE_GRANT_FSAL_AVAILABLE);
+	find_blocked_lock_upcall(obj, owner, lock, STATE_GRANT_FSAL_AVAILABLE);
 }
 
 /**
@@ -4067,8 +3982,7 @@ void cancel_all_nlm_blocked(void)
 
 	PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
-	pblock = glist_first_entry(&state_blocked_locks,
-				   state_block_data_t,
+	pblock = glist_first_entry(&state_blocked_locks, state_block_data_t,
 				   sbd_list);
 
 	if (pblock == NULL) {
@@ -4109,8 +4023,7 @@ void cancel_all_nlm_blocked(void)
 
 		/* Get next item off list */
 		pblock = glist_first_entry(&state_blocked_locks,
-					   state_block_data_t,
-					   sbd_list);
+					   state_block_data_t, sbd_list);
 	}
 
 out:

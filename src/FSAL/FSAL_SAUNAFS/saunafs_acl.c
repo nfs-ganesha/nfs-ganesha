@@ -204,8 +204,8 @@ fsal_status_t getACL(struct SaunaFSExport *export, uint32_t inode,
 	if (*acl == NULL) {
 		LogFullDebug(
 			COMPONENT_FSAL,
-			"Failed to convert saunafs acl to nfs4 acl, export=%"
-			PRIu16 " inode=%" PRIu32,
+			"Failed to convert saunafs acl to nfs4 acl, export=%" PRIu16
+			" inode=%" PRIu32,
 			export->export.export_id, inode);
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	}

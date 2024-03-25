@@ -69,7 +69,7 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 	len = strlen(path);
 
 	/* Strip terminating '/' by shrinking length */
-	while (path[len-1] == '/' && len > 1)
+	while (path[len - 1] == '/' && len > 1)
 		len--;
 
 	/* Allocate space for duplicate */
@@ -87,8 +87,7 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 	if (first_fd == -1) {
 		if (name[0] != '/') {
 			LogInfo(COMPONENT_FSAL,
-				"Absolute path %s must start with '/'",
-				path);
+				"Absolute path %s must start with '/'", path);
 			return -EINVAL;
 		}
 		rest = name + 1;
@@ -124,8 +123,7 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 		if (strcmp(rest, "..") == 0) {
 			close(fd);
 			LogInfo(COMPONENT_FSAL,
-				"Failed due to '..' element in path %s",
-				path);
+				"Failed due to '..' element in path %s", path);
 			return -EACCES;
 		}
 
@@ -137,8 +135,8 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 
 		if (rc == -1) {
 			LogDebug(COMPONENT_FSAL,
-				 "openat(%s) in path %s failed with %s",
-				 rest, path, strerror(err));
+				 "openat(%s) in path %s failed with %s", rest,
+				 path, strerror(err));
 			return -err;
 		}
 
@@ -149,7 +147,7 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 			break;
 
 		/* Skip the '/' */
-		rest = p+1;
+		rest = p + 1;
 	}
 
 	rc = fstat(fd, stat);
@@ -157,17 +155,14 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 
 	if (rc == -1) {
 		close(fd);
-		LogDebug(COMPONENT_FSAL,
-			 "fstat %s failed with %s",
-			 path, strerror(err));
+		LogDebug(COMPONENT_FSAL, "fstat %s failed with %s", path,
+			 strerror(err));
 		return -err;
 	}
 
 	if (!S_ISDIR(stat->st_mode)) {
 		close(fd);
-		LogInfo(COMPONENT_FSAL,
-			"Path %s is not a directory",
-			path);
+		LogInfo(COMPONENT_FSAL, "Path %s is not a directory", path);
 		return -ENOTDIR;
 	}
 
@@ -176,32 +171,30 @@ int open_dir_by_path_walk(int first_fd, const char *path, struct stat *stat)
 
 pthread_rwlock_t fs_lock;
 
-static struct glist_head posix_file_systems = {
-	&posix_file_systems, &posix_file_systems
-};
+static struct glist_head posix_file_systems = { &posix_file_systems,
+						&posix_file_systems };
 
 static bool fs_initialized;
 static struct avltree avl_fsid;
 static struct avltree avl_dev;
 
-static inline int
-fsal_fs_cmpf_fsid(const struct avltree_node *lhs,
-		  const struct avltree_node *rhs)
+static inline int fsal_fs_cmpf_fsid(const struct avltree_node *lhs,
+				    const struct avltree_node *rhs)
 {
 	struct fsal_filesystem *lk, *rk;
 
 	lk = avltree_container_of(lhs, struct fsal_filesystem, avl_fsid);
 	rk = avltree_container_of(rhs, struct fsal_filesystem, avl_fsid);
 
-	return fsal_fs_compare_fsid(lk->fsid_type, &lk->fsid,
-				    rk->fsid_type, &rk->fsid);
+	return fsal_fs_compare_fsid(lk->fsid_type, &lk->fsid, rk->fsid_type,
+				    &rk->fsid);
 }
 
 static inline struct fsal_filesystem *
 avltree_inline_fsid_lookup(const struct avltree_node *key)
 {
-	struct avltree_node *node = avltree_inline_lookup(key, &avl_fsid,
-							  fsal_fs_cmpf_fsid);
+	struct avltree_node *node =
+		avltree_inline_lookup(key, &avl_fsid, fsal_fs_cmpf_fsid);
 
 	if (node != NULL)
 		return avltree_container_of(node, struct fsal_filesystem,
@@ -210,9 +203,8 @@ avltree_inline_fsid_lookup(const struct avltree_node *key)
 		return NULL;
 }
 
-static inline int
-fsal_fs_cmpf_dev(const struct avltree_node *lhs,
-		 const struct avltree_node *rhs)
+static inline int fsal_fs_cmpf_dev(const struct avltree_node *lhs,
+				   const struct avltree_node *rhs)
 {
 	struct fsal_filesystem *lk, *rk;
 
@@ -237,8 +229,8 @@ fsal_fs_cmpf_dev(const struct avltree_node *lhs,
 static inline struct fsal_filesystem *
 avltree_inline_dev_lookup(const struct avltree_node *key)
 {
-	struct avltree_node *node = avltree_inline_lookup(key, &avl_dev,
-							  fsal_fs_cmpf_dev);
+	struct avltree_node *node =
+		avltree_inline_lookup(key, &avl_dev, fsal_fs_cmpf_dev);
 
 	if (node != NULL)
 		return avltree_container_of(node, struct fsal_filesystem,
@@ -267,8 +259,7 @@ static void free_fs(struct fsal_filesystem *fs)
 	gsh_free(fs);
 }
 
-int re_index_fs_fsid(struct fsal_filesystem *fs,
-		     enum fsid_type fsid_type,
+int re_index_fs_fsid(struct fsal_filesystem *fs, enum fsid_type fsid_type,
 		     struct fsal_fsid__ *fsid)
 {
 	struct avltree_node *node;
@@ -276,11 +267,10 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 	enum fsid_type old_fsid_type = fs->fsid_type;
 
 	LogDebug(COMPONENT_FSAL,
-		 "Reindex %s from 0x%016"PRIx64".0x%016"PRIx64
-		 " to 0x%016"PRIx64".0x%016"PRIx64,
-		 fs->path,
-		 fs->fsid.major, fs->fsid.minor,
-		 fsid->major, fsid->minor);
+		 "Reindex %s from 0x%016" PRIx64 ".0x%016" PRIx64
+		 " to 0x%016" PRIx64 ".0x%016" PRIx64,
+		 fs->path, fs->fsid.major, fs->fsid.minor, fsid->major,
+		 fsid->minor);
 
 	/* It is not valid to use this routine to
 	 * remove fs from index.
@@ -318,8 +308,7 @@ int re_index_fs_fsid(struct fsal_filesystem *fs,
 	return 0;
 }
 
-int re_index_fs_dev(struct fsal_filesystem *fs,
-		    struct fsal_dev__ *dev)
+int re_index_fs_dev(struct fsal_filesystem *fs, struct fsal_dev__ *dev)
 {
 	struct avltree_node *node;
 	struct fsal_dev__ old_dev = fs->dev;
@@ -357,12 +346,11 @@ int re_index_fs_dev(struct fsal_filesystem *fs,
 	return 0;
 }
 
-#define MASK_32 ((uint64_t) UINT32_MAX)
+#define MASK_32 ((uint64_t)UINT32_MAX)
 
-int change_fsid_type(struct fsal_filesystem *fs,
-		     enum fsid_type fsid_type)
+int change_fsid_type(struct fsal_filesystem *fs, enum fsid_type fsid_type)
 {
-	struct fsal_fsid__ fsid = {0};
+	struct fsal_fsid__ fsid = { 0 };
 	bool valid = false;
 
 	if (fs->fsid_type == fsid_type)
@@ -378,8 +366,7 @@ int change_fsid_type(struct fsal_filesystem *fs,
 			/* Put major in the high order 32 bits and minor
 			 * in the low order 32 bits.
 			 */
-			fsid.major = fs->fsid.major << 32 |
-				     fs->fsid.minor;
+			fsid.major = fs->fsid.major << 32 | fs->fsid.minor;
 			valid = true;
 		}
 		fsid.minor = 0;
@@ -461,8 +448,8 @@ static bool posix_get_fsid(struct fsal_filesystem *fs, struct stat *mnt_stat)
 
 	if (statfs(fs->path, &stat_fs) != 0)
 		LogCrit(COMPONENT_FSAL,
-			"stat_fs of %s resulted in error %s(%d)",
-			fs->path, strerror(errno), errno);
+			"stat_fs of %s resulted in error %s(%d)", fs->path,
+			strerror(errno), errno);
 
 #if __FreeBSD__
 	fs->namelen = stat_fs.f_namemax;
@@ -495,8 +482,8 @@ static bool posix_get_fsid(struct fsal_filesystem *fs, struct stat *mnt_stat)
 
 	if (blkid_get_dev(cache, dev_name, BLKID_DEV_NORMAL) == NULL) {
 		LogInfo(COMPONENT_FSAL,
-			"blkid_get_dev of %s failed for devname %s",
-			fs->path, dev_name);
+			"blkid_get_dev of %s failed for devname %s", fs->path,
+			dev_name);
 		free(dev_name);
 		goto out;
 	}
@@ -504,13 +491,13 @@ static bool posix_get_fsid(struct fsal_filesystem *fs, struct stat *mnt_stat)
 	uuid_str = blkid_get_tag_value(cache, "UUID", dev_name);
 	free(dev_name);
 
-	if  (uuid_str == NULL) {
+	if (uuid_str == NULL) {
 		LogInfo(COMPONENT_FSAL, "blkid_get_tag_value of %s failed",
 			fs->path);
 		goto out;
 	}
 
-	if (uuid_parse(uuid_str, (char *) &fs->fsid) == -1) {
+	if (uuid_parse(uuid_str, (char *)&fs->fsid) == -1) {
 		LogInfo(COMPONENT_FSAL, "uuid_parse of %s failed for uuid %s",
 			fs->path, uuid_str);
 		free(uuid_str);
@@ -526,11 +513,11 @@ out:
 #endif
 	fs->fsid_type = FSID_TWO_UINT32;
 #if __FreeBSD__
-	fs->fsid.major = (unsigned int) stat_fs.f_fsid.val[0];
-	fs->fsid.minor = (unsigned int) stat_fs.f_fsid.val[1];
+	fs->fsid.major = (unsigned int)stat_fs.f_fsid.val[0];
+	fs->fsid.minor = (unsigned int)stat_fs.f_fsid.val[1];
 #else
-	fs->fsid.major = (unsigned int) stat_fs.f_fsid.__val[0];
-	fs->fsid.minor = (unsigned int) stat_fs.f_fsid.__val[1];
+	fs->fsid.major = (unsigned int)stat_fs.f_fsid.__val[0];
+	fs->fsid.minor = (unsigned int)stat_fs.f_fsid.__val[1];
 #endif
 	if ((fs->fsid.major == 0) && (fs->fsid.minor == 0)) {
 		fs->fsid.major = fs->dev.major;
@@ -569,8 +556,7 @@ static void posix_create_fs_btrfs_subvols(struct fsal_filesystem *fs)
 	err = btrfs_util_subvolume_id(fs->path, &id);
 
 	if (err != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"btrfs_util_subvolume_id err %s",
+		LogCrit(COMPONENT_FSAL, "btrfs_util_subvolume_id err %s",
 			btrfs_util_strerror(err));
 		return;
 	}
@@ -586,10 +572,8 @@ static void posix_create_fs_btrfs_subvols(struct fsal_filesystem *fs)
 
 	err = btrfs_util_sync_fd(btrfs_util_subvolume_iterator_fd(iter));
 
-
 	if (err != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"btrfs_util_sync_fd err %s",
+		LogCrit(COMPONENT_FSAL, "btrfs_util_sync_fd err %s",
 			btrfs_util_strerror(err));
 		goto out;
 	}
@@ -607,8 +591,7 @@ static void posix_create_fs_btrfs_subvols(struct fsal_filesystem *fs)
 
 			if (stat(mnt.mnt_dir, &st) >= 0) {
 				LogInfo(COMPONENT_FSAL,
-					"Adding btrfs subvol %s",
-					mnt.mnt_dir);
+					"Adding btrfs subvol %s", mnt.mnt_dir);
 
 				posix_create_file_system(&mnt, &st);
 			} else {
@@ -636,8 +619,7 @@ out:
 	btrfs_util_destroy_subvolume_iterator(iter);
 #else
 	LogWarn(COMPONENT_FSAL,
-		"btrfs filesystem %s may have unsupported subvols",
-		fs->path);
+		"btrfs filesystem %s may have unsupported subvols", fs->path);
 #endif
 }
 
@@ -666,22 +648,22 @@ static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 		/* This is a duplicate file system. */
 		struct fsal_filesystem *fs1;
 
-		fs1 = avltree_container_of(node,
-					   struct fsal_filesystem,
+		fs1 = avltree_container_of(node, struct fsal_filesystem,
 					   avl_fsid);
 
 		LogDebug(COMPONENT_FSAL,
-			 "Skipped duplicate %s namelen=%d fsid=0x%016"PRIx64
-			 ".0x%016"PRIx64" %"PRIu64".%"PRIu64" type=%s",
-			 fs->path, (int) fs->namelen,
-			 fs->fsid.major, fs->fsid.minor,
-			 fs->fsid.major, fs->fsid.minor, fs->type);
+			 "Skipped duplicate %s namelen=%d fsid=0x%016" PRIx64
+			 ".0x%016" PRIx64 " %" PRIu64 ".%" PRIu64 " type=%s",
+			 fs->path, (int)fs->namelen, fs->fsid.major,
+			 fs->fsid.minor, fs->fsid.major, fs->fsid.minor,
+			 fs->type);
 
 		if (fs1->device[0] != '/' && fs->device[0] == '/') {
-			LogDebug(COMPONENT_FSAL,
-				 "Switching device for %s from %s to %s type from %s to %s",
-				 fs->path, fs1->device, fs->device,
-				 fs1->type, fs->type);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Switching device for %s from %s to %s type from %s to %s",
+				fs->path, fs1->device, fs->device, fs1->type,
+				fs->type);
 			gsh_free(fs1->device);
 			fs1->device = fs->device;
 			fs->device = NULL;
@@ -702,21 +684,21 @@ static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 		/* This is a duplicate file system. */
 		struct fsal_filesystem *fs1;
 
-		fs1 = avltree_container_of(node,
-					   struct fsal_filesystem,
+		fs1 = avltree_container_of(node, struct fsal_filesystem,
 					   avl_dev);
 
 		LogDebug(COMPONENT_FSAL,
-			 "Skipped duplicate %s namelen=%d dev=%"
-			 PRIu64".%"PRIu64" type=%s",
-			 fs->path, (int) fs->namelen,
-			 fs->dev.major, fs->dev.minor, fs->type);
+			 "Skipped duplicate %s namelen=%d dev=%" PRIu64
+			 ".%" PRIu64 " type=%s",
+			 fs->path, (int)fs->namelen, fs->dev.major,
+			 fs->dev.minor, fs->type);
 
 		if (fs1->device[0] != '/' && fs->device[0] == '/') {
-			LogDebug(COMPONENT_FSAL,
-				 "Switching device for %s from %s to %s type from %s to %s",
-				 fs->path, fs1->device, fs->device,
-				 fs1->type, fs->type);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Switching device for %s from %s to %s type from %s to %s",
+				fs->path, fs1->device, fs->device, fs1->type,
+				fs->type);
 			gsh_free(fs1->device);
 			fs1->device = fs->device;
 			fs->device = NULL;
@@ -736,13 +718,12 @@ static void posix_create_file_system(struct mntent *mnt, struct stat *mnt_stat)
 	glist_init(&fs->children);
 
 	LogInfo(COMPONENT_FSAL,
-		"Added filesystem %p %s namelen=%d dev=%"PRIu64".%"PRIu64
-		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64
+		"Added filesystem %p %s namelen=%d dev=%" PRIu64 ".%" PRIu64
+		" fsid=0x%016" PRIx64 ".0x%016" PRIx64 " %" PRIu64 ".%" PRIu64
 		" type=%s",
-		fs, fs->path, (int) fs->namelen,
-		fs->dev.major, fs->dev.minor,
-		fs->fsid.major, fs->fsid.minor,
-		fs->fsid.major, fs->fsid.minor, fs->type);
+		fs, fs->path, (int)fs->namelen, fs->dev.major, fs->dev.minor,
+		fs->fsid.major, fs->fsid.minor, fs->fsid.major, fs->fsid.minor,
+		fs->type);
 
 	if (strcasecmp(mnt->mnt_type, "btrfs") == 0)
 		posix_create_fs_btrfs_subvols(fs);
@@ -762,15 +743,15 @@ static void posix_find_parent(struct fsal_filesystem *this)
 	if (this->pathlen == 1 && this->path[0] == '/')
 		return;
 
-	glist_for_each(glist, &posix_file_systems) {
+	glist_for_each(glist, &posix_file_systems)
+	{
 		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
 
 		/* If this path is longer than this path, then it
 		 * can't be a parent, or if it's shorter than the
 		 * current match;
 		 */
-		if (fs->pathlen >= this->pathlen ||
-		    fs->pathlen < plen)
+		if (fs->pathlen >= this->pathlen || fs->pathlen < plen)
 			continue;
 
 		/* Check for sub-string match */
@@ -781,8 +762,7 @@ static void posix_find_parent(struct fsal_filesystem *this)
 		 * /fs10/fs2, however, if fs->path is "/", we need to
 		 * special case.
 		 */
-		if (fs->pathlen != 1 &&
-		    this->path[fs->pathlen] != '/')
+		if (fs->pathlen != 1 && this->path[fs->pathlen] != '/')
 			continue;
 
 		this->parent = fs;
@@ -790,17 +770,15 @@ static void posix_find_parent(struct fsal_filesystem *this)
 	}
 
 	if (this->parent == NULL) {
-		LogInfo(COMPONENT_FSAL,
-			"Unattached file system %s",
+		LogInfo(COMPONENT_FSAL, "Unattached file system %s",
 			this->path);
 		return;
 	}
 
 	/* Add to parent's list of children */
 	glist_add_tail(&this->parent->children, &this->siblings);
-	LogInfo(COMPONENT_FSAL,
-		"File system %s is a child of %s",
-		this->path, this->parent->path);
+	LogInfo(COMPONENT_FSAL, "File system %s is a child of %s", this->path,
+		this->parent->path);
 }
 
 static bool path_is_subset(const char *path, const char *of)
@@ -815,7 +793,6 @@ static bool path_is_subset(const char *path, const char *of)
 		/* One of the paths is "/" so subset MUST be true */
 		return true;
 	}
-
 
 	if (len_path != len_of &&
 	    ((len_cmp != len_path && path[len_cmp] != '/') ||
@@ -875,9 +852,7 @@ int populate_posix_file_systems(const char *path)
 	 *       release fs or it's descendants.
 	 */
 	while (glist != &posix_file_systems) {
-		fs = glist_entry(glist,
-				 struct fsal_filesystem,
-				 filesystems);
+		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
 
 		if (fs->parent == NULL) {
 			/* Top level file system done */
@@ -894,8 +869,7 @@ int populate_posix_file_systems(const char *path)
 		glistn = glist->next;
 
 		while (glistn != &posix_file_systems) {
-			fsn = glist_entry(glistn,
-					  struct fsal_filesystem,
+			fsn = glist_entry(glistn, struct fsal_filesystem,
 					  filesystems);
 			if (fsn->parent == NULL) {
 				/* Top level file system done */
@@ -912,7 +886,7 @@ int populate_posix_file_systems(const char *path)
 		 * release this file system or it's descendants.
 		 */
 
-		(void) release_posix_file_system(fs, UNCLAIM_SKIP);
+		(void)release_posix_file_system(fs, UNCLAIM_SKIP);
 
 		/* Now ready to start processing the next top level
 		 * file system that is not claimed.
@@ -941,9 +915,10 @@ int populate_posix_file_systems(const char *path)
 			continue;
 
 		if (!path_is_subset(path, mnt->mnt_dir)) {
-			LogDebug(COMPONENT_FSAL,
-				 "Ignoring %s because it is not a subset or superset of path %s",
-				 mnt->mnt_dir, path);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Ignoring %s because it is not a subset or superset of path %s",
+				mnt->mnt_dir, path);
 			continue;
 		}
 
@@ -973,10 +948,8 @@ int populate_posix_file_systems(const char *path)
 		    strcasecmp(mnt->mnt_type, "rpc_pipefs") == 0 ||
 		    strcasecmp(mnt->mnt_type, "vboxsf") == 0 ||
 		    strcasecmp(mnt->mnt_type, "tmpfs") == 0) {
-			LogDebug(COMPONENT_FSAL,
-				 "Ignoring %s because type %s",
-				 mnt->mnt_dir,
-				 mnt->mnt_type);
+			LogDebug(COMPONENT_FSAL, "Ignoring %s because type %s",
+				 mnt->mnt_dir, mnt->mnt_type);
 			continue;
 		}
 
@@ -997,17 +970,15 @@ int populate_posix_file_systems(const char *path)
 	endmntent(fp);
 
 	/* build tree of POSIX file systems */
-	glist_for_each(glist, &posix_file_systems)
-		posix_find_parent(glist_entry(glist, struct fsal_filesystem,
-					      filesystems));
+	glist_for_each(glist, &posix_file_systems) posix_find_parent(
+		glist_entry(glist, struct fsal_filesystem, filesystems));
 
- out:
+out:
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 	return retval;
 }
 
-int resolve_posix_filesystem(const char *path,
-			     struct fsal_module *fsal,
+int resolve_posix_filesystem(const char *path, struct fsal_module *fsal,
 			     struct fsal_export *exp,
 			     claim_filesystem_cb claimfs,
 			     unclaim_filesystem_cb unclaim,
@@ -1020,10 +991,11 @@ int resolve_posix_filesystem(const char *path,
 	while (retval == EAGAIN && retries_left > 0) {
 		struct timespec how_long = {
 			/* 1M micros per second */
-			.tv_sec  = nfs_param.core_param.resolve_fs_delay / 1000,
+			.tv_sec = nfs_param.core_param.resolve_fs_delay / 1000,
 			/* Remainder => nanoseconds */
-			.tv_nsec = (nfs_param.core_param.resolve_fs_delay %
-				    1000) * 1000000
+			.tv_nsec =
+				(nfs_param.core_param.resolve_fs_delay % 1000) *
+				1000000
 		};
 
 		/* Need to retry stat on path until we don't get EAGAIN in case
@@ -1035,10 +1007,11 @@ int resolve_posix_filesystem(const char *path,
 			break;
 
 		retval = errno;
-		LogDebug(COMPONENT_FSAL,
-			 "stat returned %s (%d) while resolving export path %s %s",
-			 strerror(retval), retval, path,
-			 retval == EAGAIN ? "(may retry)" : "(failed)");
+		LogDebug(
+			COMPONENT_FSAL,
+			"stat returned %s (%d) while resolving export path %s %s",
+			strerror(retval), retval, path,
+			retval == EAGAIN ? "(may retry)" : "(failed)");
 
 		retries_left--;
 
@@ -1058,7 +1031,7 @@ int resolve_posix_filesystem(const char *path,
 			if (errno != EINTR) {
 				retval = errno;
 				LogCrit(COMPONENT_FSAL,
-					"nanosleep failed. Asked for %"PRIu32
+					"nanosleep failed. Asked for %" PRIu32
 					" msec. Errno %d (%s)",
 					nfs_param.core_param.resolve_fs_delay,
 					retval, strerror(retval));
@@ -1086,8 +1059,8 @@ int resolve_posix_filesystem(const char *path,
 		return retval;
 	}
 
-	retval = claim_posix_filesystems(path, fsal, exp,
-					 claimfs, unclaim, root_fs, &statbuf);
+	retval = claim_posix_filesystems(path, fsal, exp, claimfs, unclaim,
+					 root_fs, &statbuf);
 
 	return retval;
 }
@@ -1114,7 +1087,8 @@ bool release_posix_file_system(struct fsal_filesystem *fs,
 	 *       thus release any descendants that are not claimed.
 	 */
 
-	glist_for_each_safe(glist, glistn, &fs->children) {
+	glist_for_each_safe(glist, glistn, &fs->children)
+	{
 		struct fsal_filesystem *child_fs;
 
 		child_fs = glist_entry(glist, struct fsal_filesystem, siblings);
@@ -1128,12 +1102,10 @@ bool release_posix_file_system(struct fsal_filesystem *fs,
 	if (fs->unclaim != NULL) {
 		if (release_claims == UNCLAIM_WARN)
 			LogWarn(COMPONENT_FSAL,
-				"Filesystem %s is still claimed",
-				fs->path);
+				"Filesystem %s is still claimed", fs->path);
 		else
 			LogDebug(COMPONENT_FSAL,
-				 "Filesystem %s is still claimed",
-				 fs->path);
+				 "Filesystem %s is still claimed", fs->path);
 		return true;
 	}
 
@@ -1143,19 +1115,20 @@ bool release_posix_file_system(struct fsal_filesystem *fs,
 				"Filesystem %s had at least one child still claimed",
 				fs->path);
 		else
-			LogDebug(COMPONENT_FSAL,
-				 "Filesystem %s had at least one child still claimed",
-				 fs->path);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Filesystem %s had at least one child still claimed",
+				fs->path);
 		return true;
 	}
 
 	LogFilesystem("REMOVE", "", fs);
 
 	LogInfo(COMPONENT_FSAL,
-		"Removed filesystem %p %s namelen=%d dev=%"PRIu64".%"PRIu64
-		" fsid=0x%016"PRIx64".0x%016"PRIx64" %"PRIu64".%"PRIu64
+		"Removed filesystem %p %s namelen=%d dev=%" PRIu64 ".%" PRIu64
+		" fsid=0x%016" PRIx64 ".0x%016" PRIx64 " %" PRIu64 ".%" PRIu64
 		" type=%s",
-		fs, fs->path, (int) fs->namelen, fs->dev.major, fs->dev.minor,
+		fs, fs->path, (int)fs->namelen, fs->dev.major, fs->dev.minor,
 		fs->fsid.major, fs->fsid.minor, fs->fsid.major, fs->fsid.minor,
 		fs->type);
 	remove_fs(fs);
@@ -1172,7 +1145,7 @@ void release_posix_file_systems(void)
 
 	while ((fs = glist_first_entry(&posix_file_systems,
 				       struct fsal_filesystem, filesystems))) {
-		(void) release_posix_file_system(fs, UNCLAIM_WARN);
+		(void)release_posix_file_system(fs, UNCLAIM_WARN);
 	}
 
 	PTHREAD_RWLOCK_unlock(&fs_lock);
@@ -1258,8 +1231,7 @@ void unclaim_child_map(struct fsal_filesystem_export_map *this)
 	}
 
 	LogFilesystem("Unclaim Child Map for Claim Type ",
-		      str_claim_type(this->claim_type),
-		      this->fs);
+		      str_claim_type(this->claim_type), this->fs);
 
 	/* Remove this file system from mapping */
 	glist_del(&this->on_filesystems);
@@ -1320,8 +1292,7 @@ void get_fs_first_export_ref(struct fsal_filesystem *this,
 	PTHREAD_RWLOCK_wrlock(&fs_lock);
 
 	map = glist_first_entry(&this->exports,
-				struct fsal_filesystem_export_map,
-				on_exports);
+				struct fsal_filesystem_export_map, on_exports);
 
 	if (map != NULL) {
 		*fsal_export = map->exp;
@@ -1361,7 +1332,7 @@ void unclaim_all_export_maps(struct fsal_export *exp)
 		 * will still be claimed. The nested exports will at least still
 		 * be mountable via NFS v3.
 		 */
-		(void) release_posix_file_system(exp->root_fs, UNCLAIM_SKIP);
+		(void)release_posix_file_system(exp->root_fs, UNCLAIM_SKIP);
 	}
 
 	PTHREAD_RWLOCK_unlock(&fs_lock);
@@ -1372,9 +1343,9 @@ void unclaim_all_export_maps(struct fsal_export *exp)
 	(this->claims[CLAIM_ROOT] != 0 || this->claims[CLAIM_SUBTREE] != 0)
 
 static inline bool is_path_child(const char *possible_path,
-				 int possible_pathlen,
-				 const char *compare_path,
-				 int compare_pathlen) {
+				 int possible_pathlen, const char *compare_path,
+				 int compare_pathlen)
+{
 	/* For a possible_path to represent a child of compare_path:
 	 * possible_pathlen MUST be longer (otherwise it can't be a child
 	 * the portion of possible_path up to compare_pathlen must be the same
@@ -1402,19 +1373,18 @@ static inline bool is_filesystem_child(struct fsal_filesystem *fs,
  *
  * @note Must hold fs_lock
  */
-bool is_filesystem_exported(struct fsal_filesystem *fs,
-			    struct fsal_export *exp)
+bool is_filesystem_exported(struct fsal_filesystem *fs, struct fsal_export *exp)
 {
 	struct glist_head *glist, *glistn;
 	struct fsal_filesystem_export_map *map;
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "Checking if FileSystem %s belongs to export %"PRIu16,
+		     "Checking if FileSystem %s belongs to export %" PRIu16,
 		     fs->path, exp->export_id);
 
-	glist_for_each_safe(glist, glistn, &fs->exports) {
-		map = glist_entry(glist,
-				  struct fsal_filesystem_export_map,
+	glist_for_each_safe(glist, glistn, &fs->exports)
+	{
+		map = glist_entry(glist, struct fsal_filesystem_export_map,
 				  on_exports);
 
 		if (map->exp == exp) {
@@ -1424,19 +1394,16 @@ bool is_filesystem_exported(struct fsal_filesystem *fs,
 	}
 
 	LogInfo(COMPONENT_FSAL,
-		 "FileSystem %s does not belong to export %"PRIu16,
-		 fs->path, exp->export_id);
+		"FileSystem %s does not belong to export %" PRIu16, fs->path,
+		exp->export_id);
 
 	return false;
 }
 
-static int process_claim(const char *path,
-			 int pathlen,
+static int process_claim(const char *path, int pathlen,
 			 struct fsal_filesystem_export_map *parent_map,
-			 struct fsal_filesystem *this,
-			 struct fsal_module *fsal,
-			 struct fsal_export *exp,
-			 claim_filesystem_cb claimfs,
+			 struct fsal_filesystem *this, struct fsal_module *fsal,
+			 struct fsal_export *exp, claim_filesystem_cb claimfs,
 			 unclaim_filesystem_cb unclaim)
 {
 	struct glist_head *export_glist, *child_glist;
@@ -1513,13 +1480,11 @@ static int process_claim(const char *path,
 	this->claims[CLAIM_TEMP]++;
 
 	if (already_claimed) {
-		LogDebug(COMPONENT_FSAL,
-			 "FSAL %s Repeat Claiming %p %s",
+		LogDebug(COMPONENT_FSAL, "FSAL %s Repeat Claiming %p %s",
 			 fsal->name, this, this->path);
 	} else {
-		LogInfo(COMPONENT_FSAL,
-			"FSAL %s Claiming %p %s",
-			fsal->name, this, this->path);
+		LogInfo(COMPONENT_FSAL, "FSAL %s Claiming %p %s", fsal->name,
+			this, this->path);
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
@@ -1531,9 +1496,10 @@ static int process_claim(const char *path,
 	 */
 	if (HAS_CHILD_CLAIMS(this) &&
 	    (this->fsal != fsal || claim_type == CLAIM_ROOT)) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL %s trying to claim filesystem %s from FSAL %s",
-			     fsal->name, this->path, this->fsal->name);
+		LogFullDebug(
+			COMPONENT_FSAL,
+			"FSAL %s trying to claim filesystem %s from FSAL %s",
+			fsal->name, this->path, this->fsal->name);
 
 		if (claim_type == CLAIM_SUBTREE) {
 			/* Warn about situation where the claim directory
@@ -1564,8 +1530,8 @@ static int process_claim(const char *path,
 			 */
 			LogWarn(COMPONENT_FSAL,
 				"FSAL %s export path %s includes filesystem %s which had a subtree export from FSAL %s - unclaiming filesystem from FSAL %s",
-				fsal->name, path, this->path,
-				this->fsal->name, this->fsal->name);
+				fsal->name, path, this->path, this->fsal->name,
+				this->fsal->name);
 		}
 
 		/* Walk the child maps and unclaim them all */
@@ -1636,7 +1602,8 @@ static int process_claim(const char *path,
 		 * are children of our subtree. Such child claims must be
 		 * removed (they will become child claims of this claim).
 		 */
-		glist_for_each(export_glist, &this->exports) {
+		glist_for_each(export_glist, &this->exports)
+		{
 			struct glist_head *glist, *glistn;
 			struct fsal_filesystem_export_map *other_map;
 			struct gsh_refstr *map_fullpath;
@@ -1644,9 +1611,8 @@ static int process_claim(const char *path,
 			bool child;
 
 			other_map = glist_entry(
-					export_glist,
-					struct fsal_filesystem_export_map,
-					on_exports);
+				export_glist, struct fsal_filesystem_export_map,
+				on_exports);
 
 			if (glist_empty(&other_map->child_maps)) {
 				/* This map has no child claims under it, so
@@ -1684,7 +1650,8 @@ static int process_claim(const char *path,
 			}
 
 			glist_for_each_safe(glist, glistn,
-					    &other_map->child_maps) {
+					    &other_map->child_maps)
+			{
 				struct fsal_filesystem_export_map *child_map;
 
 				child_map = glist_entry(
@@ -1693,8 +1660,8 @@ static int process_claim(const char *path,
 					on_parent);
 
 				if (is_path_child(child_map->fs->path,
-						  child_map->fs->pathlen,
-						  path, pathlen)) {
+						  child_map->fs->pathlen, path,
+						  pathlen)) {
 					/* filesystem is a child of our
 					 * subtree, now we need to remove this
 					 * map's child_maps on the filesystem.
@@ -1706,11 +1673,12 @@ static int process_claim(const char *path,
 	}
 
 	/* Claim the children now */
-	glist_for_each(child_glist, &this->children) {
+	glist_for_each(child_glist, &this->children)
+	{
 		struct fsal_filesystem *child_fs;
 
-		child_fs = glist_entry(
-			child_glist, struct fsal_filesystem, siblings);
+		child_fs = glist_entry(child_glist, struct fsal_filesystem,
+				       siblings);
 
 		/* Any child filesystem can not have child claims from another
 		 * FSAL since that FSAL would have to have a claim on this
@@ -1740,8 +1708,8 @@ static int process_claim(const char *path,
 		if (child_fs->claims[CLAIM_SUBTREE] && child_fs->fsal != fsal) {
 			LogWarn(COMPONENT_FSAL,
 				"FSAL %s export path %s includes filesystem %s which has subtree exports from FSAL %s - not exporting it as a child filesystem",
-				fsal->name, path,
-				child_fs->path, child_fs->fsal->name);
+				fsal->name, path, child_fs->path,
+				child_fs->fsal->name);
 			continue;
 		}
 
@@ -1759,7 +1727,8 @@ static int process_claim(const char *path,
 			 * that export is a subtree of this export and thus
 			 * that export gets the child claims).
 			 */
-			glist_for_each(export_glist, &child_fs->exports) {
+			glist_for_each(export_glist, &child_fs->exports)
+			{
 				struct fsal_filesystem_export_map *other_map;
 				struct gsh_refstr *map_fullpath;
 				size_t map_pathlen;
@@ -1785,7 +1754,8 @@ static int process_claim(const char *path,
 				assert(other_map->claim_type == CLAIM_CHILD);
 
 				map_fullpath = gsh_refstr_get(rcu_dereference(
-				      other_map->exp->owning_export->fullpath));
+					other_map->exp->owning_export
+						->fullpath));
 
 				map_pathlen = strlen(map_fullpath->gr_val);
 
@@ -1832,8 +1802,8 @@ static int process_claim(const char *path,
 		 * there might be some other problem, but it shouldn't cause
 		 * failure of the export as a whole.
 		 */
-		(void) process_claim(NULL, 0, map, child_fs, fsal,
-				     exp, claimfs, unclaim);
+		(void)process_claim(NULL, 0, map, child_fs, fsal, exp, claimfs,
+				    unclaim);
 	}
 
 account:
@@ -1863,8 +1833,7 @@ account:
 	return retval;
 }
 
-int claim_posix_filesystems(const char *path,
-			    struct fsal_module *fsal,
+int claim_posix_filesystems(const char *path, struct fsal_module *fsal,
 			    struct fsal_export *exp,
 			    claim_filesystem_cb claimfs,
 			    unclaim_filesystem_cb unclaim,
@@ -1881,7 +1850,8 @@ int claim_posix_filesystems(const char *path,
 	dev = posix2fsal_devt(statbuf->st_dev);
 
 	/* Scan POSIX file systems to find export root fs */
-	glist_for_each(glist, &posix_file_systems) {
+	glist_for_each(glist, &posix_file_systems)
+	{
 		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
 		if (fs->dev.major == dev.major && fs->dev.minor == dev.minor) {
 			root = fs;
@@ -1896,13 +1866,12 @@ int claim_posix_filesystems(const char *path,
 	}
 
 	/* Claim this file system and it's children */
-	retval = process_claim(path, strlen(path), NULL, root, fsal,
-			       exp, claimfs, unclaim);
+	retval = process_claim(path, strlen(path), NULL, root, fsal, exp,
+			       claimfs, unclaim);
 
 	if (retval == 0) {
-		LogInfo(COMPONENT_FSAL,
-			"Root fs for export %s is %s",
-			path, root->path);
+		LogInfo(COMPONENT_FSAL, "Root fs for export %s is %s", path,
+			root->path);
 		*root_fs = root;
 	}
 
@@ -1914,14 +1883,13 @@ out:
 
 #ifdef USE_DBUS
 
- /**
+/**
  *@brief Dbus method for showing dev ids of mounted POSIX filesystems
  *
  *@param[in]  args
  *@param[out] reply
  **/
-static bool posix_showfs(DBusMessageIter *args,
-			 DBusMessage *reply,
+static bool posix_showfs(DBusMessageIter *args, DBusMessage *reply,
 			 DBusError *error)
 {
 	struct fsal_filesystem *fs;
@@ -1935,32 +1903,31 @@ static bool posix_showfs(DBusMessageIter *args,
 	now(&timestamp);
 	gsh_dbus_append_timestamp(&iter, &timestamp);
 
-	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
-					 "(stt)",
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "(stt)",
 					 &sub_iter);
 
 	PTHREAD_RWLOCK_rdlock(&fs_lock);
 	/* Traverse POSIX file systems to display dev ids */
-	glist_for_each(glist, &posix_file_systems) {
+	glist_for_each(glist, &posix_file_systems)
+	{
 		fs = glist_entry(glist, struct fsal_filesystem, filesystems);
 
-		dbus_message_iter_open_container(&sub_iter,
-			DBUS_TYPE_STRUCT, NULL, &fs_iter);
+		dbus_message_iter_open_container(&sub_iter, DBUS_TYPE_STRUCT,
+						 NULL, &fs_iter);
 
 		path = (fs->path != NULL) ? fs->path : "";
-		dbus_message_iter_append_basic(&fs_iter,
-			DBUS_TYPE_STRING, &path);
+		dbus_message_iter_append_basic(&fs_iter, DBUS_TYPE_STRING,
+					       &path);
 
 		val = fs->dev.major;
 		dbus_message_iter_append_basic(&fs_iter, DBUS_TYPE_UINT64,
-			&val);
+					       &val);
 
 		val = fs->dev.minor;
 		dbus_message_iter_append_basic(&fs_iter, DBUS_TYPE_UINT64,
-			&val);
+					       &val);
 
-		dbus_message_iter_close_container(&sub_iter,
-			&fs_iter);
+		dbus_message_iter_close_container(&sub_iter, &fs_iter);
 	}
 	PTHREAD_RWLOCK_unlock(&fs_lock);
 	dbus_message_iter_close_container(&iter, &sub_iter);
@@ -1970,19 +1937,14 @@ static bool posix_showfs(DBusMessageIter *args,
 static struct gsh_dbus_method cachemgr_show_fs = {
 	.name = "showfs",
 	.method = posix_showfs,
-	.args = {TIMESTAMP_REPLY,
-		{
-		  .name = "fss",
-		  .type = "a(stt)",
-		  .direction = "out"},
-		END_ARG_LIST}
+	.args = { TIMESTAMP_REPLY,
+		  { .name = "fss", .type = "a(stt)", .direction = "out" },
+		  END_ARG_LIST }
 };
 
-static struct gsh_dbus_method *cachemgr_methods[] = {
-	&cachemgr_show_fs,
-	&cachemgr_show_idmapper,
-	NULL
-};
+static struct gsh_dbus_method *cachemgr_methods[] = { &cachemgr_show_fs,
+						      &cachemgr_show_idmapper,
+						      NULL };
 
 static struct gsh_dbus_interface cachemgr_table = {
 	.name = "org.ganesha.nfsd.cachemgr",
@@ -1995,14 +1957,12 @@ static struct gsh_dbus_interface cachemgr_table = {
  * Intended for showing different caches
  */
 
-static struct gsh_dbus_interface *cachemgr_interfaces[] = {
-	&cachemgr_table,
-	NULL
-};
+static struct gsh_dbus_interface *cachemgr_interfaces[] = { &cachemgr_table,
+							    NULL };
 
 void dbus_cache_init(void)
 {
 	gsh_dbus_register_path("CacheMgr", cachemgr_interfaces);
 }
 
-#endif                          /* USE_DBUS */
+#endif /* USE_DBUS */

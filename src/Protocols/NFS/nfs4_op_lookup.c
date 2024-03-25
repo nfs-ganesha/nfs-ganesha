@@ -58,20 +58,19 @@
  *
  */
 
-enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
-				   compound_data_t *data,
+enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 				   struct nfs_resop4 *resp)
 {
 	/* Convenient alias for the arguments */
-	LOOKUP4args * const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
+	LOOKUP4args *const arg_LOOKUP4 = &op->nfs_argop4_u.oplookup;
 	/* Convenient alias for the response  */
-	LOOKUP4res * const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
+	LOOKUP4res *const res_LOOKUP4 = &resp->nfs_resop4_u.oplookup;
 	/* The directory in which to look up the name */
 	struct fsal_obj_handle *dir_obj = NULL;
 	/* The name found */
 	struct fsal_obj_handle *file_obj = NULL;
 	/* Status code from fsal */
-	fsal_status_t status = {0, 0};
+	fsal_status_t status = { 0, 0 };
 
 	resp->resop = NFS4_OP_LOOKUP;
 	res_LOOKUP4->status = NFS4_OK;
@@ -82,8 +81,8 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 		/* for some reason lookup is picky.  Just not being
 		 * dir is not enough.  We want to know it is a symlink
 		 */
-		if (res_LOOKUP4->status == NFS4ERR_NOTDIR
-		    && data->current_filetype == SYMBOLIC_LINK)
+		if (res_LOOKUP4->status == NFS4ERR_NOTDIR &&
+		    data->current_filetype == SYMBOLIC_LINK)
 			res_LOOKUP4->status = NFS4ERR_SYMLINK;
 		goto out;
 	}
@@ -123,7 +122,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 			 * junction.
 			 */
 			if (!export_ready(
-				file_obj->state_hdl->dir.junction_export)) {
+				    file_obj->state_hdl->dir.junction_export)) {
 				/* If we could not get a reference, return
 				 * stale.  Release jct_lock
 				 */
@@ -158,7 +157,8 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 				 * NFS4ERR_NOENT to hide it. It was not visible
 				 * in READDIR response.
 				 */
-				LogDebug(COMPONENT_EXPORT,
+				LogDebug(
+					COMPONENT_EXPORT,
 					"NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
 					op_ctx->ctx_export->export_id,
 					CTX_PSEUDOPATH(op_ctx));
@@ -176,7 +176,8 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 				 * nfs4_export_check_access can only return
 				 * NFS4_OK, NFS4ERR_ACCESS or NFS4ERR_WRONGSEC.
 				 */
-				LogMajor(COMPONENT_EXPORT,
+				LogMajor(
+					COMPONENT_EXPORT,
 					"PSEUDO FS JUNCTION TRAVERSAL: Failed with %s for %s, id=%d",
 					nfsstat4_to_str(res_LOOKUP4->status),
 					CTX_PSEUDOPATH(op_ctx),
@@ -188,7 +189,8 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 							   &obj);
 
 			if (FSAL_IS_ERROR(status)) {
-				LogMajor(COMPONENT_EXPORT,
+				LogMajor(
+					COMPONENT_EXPORT,
 					"PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
 					CTX_PSEUDOPATH(op_ctx),
 					op_ctx->ctx_export->export_id,
@@ -198,7 +200,8 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 				goto out;
 			}
 
-			LogDebug(COMPONENT_EXPORT,
+			LogDebug(
+				COMPONENT_EXPORT,
 				"PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
 				CTX_PSEUDOPATH(op_ctx),
 				op_ctx->ctx_export->export_id,
@@ -213,7 +216,7 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 
 	/* Convert it to a file handle */
 	if (!nfs4_FSALToFhandle(false, &data->currentFH, file_obj,
-					op_ctx->ctx_export)) {
+				op_ctx->ctx_export)) {
 		res_LOOKUP4->status = NFS4ERR_SERVERFAULT;
 		goto out;
 	}
@@ -228,13 +231,13 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op,
 	/* Return successfully */
 	res_LOOKUP4->status = NFS4_OK;
 
- out:
+out:
 	/* Release reference on file_obj if we didn't utilze it. */
 	if (file_obj)
 		file_obj->obj_ops->put_ref(file_obj);
 
 	return nfsstat4_to_nfs_req_result(res_LOOKUP4->status);
-}				/* nfs4_op_lookup */
+} /* nfs4_op_lookup */
 
 /**
  * @brief Free memory allocated for LOOKUP result

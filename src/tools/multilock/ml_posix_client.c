@@ -36,11 +36,13 @@ char options[] = "c:qdx:s:n:p:h?";
 char usage[] =
 	"Usage: ml_posix_client -s server -p port -n name [-q] [-d] [-c path]\n"
 	"       ml_posix_client -x script [-q] [-d] [-c path]\n"
-	"       ml_posix_client [-q] [-d] [-c path]\n" "\n"
+	"       ml_posix_client [-q] [-d] [-c path]\n"
+	"\n"
 	"  ml_posix_client may be run in three modes\n"
 	"  - In the first mode, the client will be driven by a console.\n"
 	"  - In the second mode, the client is driven by a script.\n"
-	"  - In the third mode, the client interractive.\n" "\n"
+	"  - In the third mode, the client interractive.\n"
+	"\n"
 	"  -s server - specify the console's hostname or IP address\n"
 	"  -p port   - specify the console's port number\n"
 	"  -n name   - specify the client's name\n"
@@ -127,16 +129,14 @@ void openserver(void)
 	input = fdopen(sock, "r");
 
 	if (input == NULL)
-		fatal(
-		     "Could not create input stream from socket ERROr %d \"%s\"\n",
-		     errno, strerror(errno));
+		fatal("Could not create input stream from socket ERROr %d \"%s\"\n",
+		      errno, strerror(errno));
 
 	output = fdopen(sock, "w");
 
 	if (output == NULL)
-		fatal(
-		     "Could not create output stream from socket ERROr %d \"%s\"\n",
-		     errno, strerror(errno));
+		fatal("Could not create output stream from socket ERROr %d \"%s\"\n",
+		      errno, strerror(errno));
 
 	if (!quiet)
 		fprintf(stdout, "connected to server %s:%d\n", server, port);
@@ -166,7 +166,7 @@ bool do_fork(struct response *resp, bool use_server)
 
 		if (!quiet)
 			fprintf(stdout, "fork failed %d (%s)\n",
-				(int) resp->r_errno, strerror(resp->r_errno));
+				(int)resp->r_errno, strerror(resp->r_errno));
 
 		return true;
 	} else if (forked == 0) {
@@ -269,7 +269,7 @@ void do_open(struct response *resp)
 	}
 
 	/* Test lock mode */
-	switch ((enum lock_mode) resp->r_lock_type) {
+	switch ((enum lock_mode)resp->r_lock_type) {
 	case LOCK_MODE_POSIX:
 		break;
 
@@ -294,7 +294,7 @@ void do_open(struct response *resp)
 	}
 
 	fno[resp->r_fpos] = fd;
-	lock_mode[resp->r_fpos] = (enum lock_mode) resp->r_lock_type;
+	lock_mode[resp->r_fpos] = (enum lock_mode)resp->r_lock_type;
 	resp->r_fno = fd;
 	resp->r_status = STATUS_OK;
 }
@@ -441,7 +441,8 @@ void cancel_work(struct response *req)
 	while (start_over) {
 		start_over = false;
 
-		glist_for_each(glist, fno_work + req->r_fpos) {
+		glist_for_each(glist, fno_work + req->r_fpos)
+		{
 			work = glist_entry(glist, struct work_item, fno_work);
 			if (work->resp.r_start >= req->r_start &&
 			    lock_end(&work->resp) <= lock_end(req)) {
@@ -535,8 +536,8 @@ bool do_lock(struct response *resp, enum thread_type thread_type)
 
 	rc = fcntl(fno[resp->r_fpos], cmd, &lock);
 
-	if (rc == -1 && errno == EAGAIN &&
-	    retry && thread_type == THREAD_MAIN) {
+	if (rc == -1 && errno == EAGAIN && retry &&
+	    thread_type == THREAD_MAIN) {
 		/* We need to schedule OFD blocked lock */
 		rc = schedule_work(resp);
 
@@ -549,7 +550,7 @@ bool do_lock(struct response *resp, enum thread_type thread_type)
 		/* If a conflicting lock is held, F_SETLK returns -1
 		   and sets errno to EACCES or EAGAIN */
 		if ((errno == EAGAIN) ||
-		   ((errno == EACCES) && (cmd == F_SETLK))) {
+		    ((errno == EACCES) && (cmd == F_SETLK))) {
 			if (retry) {
 				/* Let caller know we didn't complete */
 				return false;
@@ -617,7 +618,7 @@ void do_hop(struct response *resp)
 			/* If a conflicting lock is held, F_SETLK returns -1
 			   and sets errno to EACCES or EAGAIN */
 			if ((errno == EAGAIN) ||
-			   ((errno == EACCES) && (cmd == F_SETLK))) {
+			    ((errno == EACCES) && (cmd == F_SETLK))) {
 				resp->r_start = lock.l_start;
 				resp->r_length = 1;
 				resp->r_status = STATUS_DENIED;
@@ -807,8 +808,8 @@ void do_test(struct response *resp)
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Test failed");
 		array_sprintf(badtoken, "%s %llu %llu",
-			      str_lock_type(lock.l_type),
-			      resp->r_start, resp->r_length);
+			      str_lock_type(lock.l_type), resp->r_start,
+			      resp->r_length);
 		return;
 	}
 
@@ -918,8 +919,8 @@ int list_locks(long long start, long long end, struct response *resp)
 		resp->r_errno = errno;
 		array_strcpy(errdetail, "Test failed");
 		array_sprintf(badtoken, "%s %llu %llu",
-			      str_lock_type(lock.l_type),
-			      resp->r_start, resp->r_length);
+			      str_lock_type(lock.l_type), resp->r_start,
+			      resp->r_length);
 		respond(resp);
 		return false;
 	}
@@ -967,7 +968,7 @@ void do_list(struct response *resp)
 
 	while (tl_head != NULL) {
 		conflict |=
-		    list_locks(tl_head->tl_start, tl_head->tl_end, resp);
+			list_locks(tl_head->tl_start, tl_head->tl_end, resp);
 		remove_test_list_head();
 	}
 
@@ -994,12 +995,10 @@ struct work_item *get_work(enum thread_type thread_type)
 		 * thread and the work on the poll list isn't due for polling
 		 * yet, then look for work on the work list.
 		 */
-		if (work == NULL ||
-		    (thread_type == THREAD_POLL &&
-		     work->next_poll > time(NULL))) {
+		if (work == NULL || (thread_type == THREAD_POLL &&
+				     work->next_poll > time(NULL))) {
 			/* Check work list now */
-			work = glist_first_entry(&work_queue,
-						 struct work_item,
+			work = glist_first_entry(&work_queue, struct work_item,
 						 queue);
 		}
 
@@ -1018,12 +1017,10 @@ struct work_item *get_work(enum thread_type thread_type)
 			/* Since there is polling work to do, determine next
 			 * time to poll and wait that long for signal.
 			 */
-			struct timespec twait = {poll->next_poll - time(NULL),
-						 0};
+			struct timespec twait = { poll->next_poll - time(NULL),
+						  0 };
 
-			pthread_cond_timedwait(&work_cond,
-					       &work_mutex,
-					       &twait);
+			pthread_cond_timedwait(&work_cond, &work_mutex, &twait);
 		} else {
 			/* Wait for signal */
 			pthread_cond_wait(&work_cond, &work_mutex);
@@ -1035,7 +1032,7 @@ void *worker(void *t_type)
 {
 	struct work_item *work = NULL;
 	bool complete, cancelled = false;
-	enum thread_type thread_type = *((enum thread_type *) t_type);
+	enum thread_type thread_type = *((enum thread_type *)t_type);
 
 	pthread_mutex_lock(&work_mutex);
 
@@ -1125,13 +1122,10 @@ int main(int argc, char **argv)
 
 	/* Start the worker and polling threads */
 	for (i = 0; i <= NUM_WORKER; i++) {
-		rc = pthread_create(&threads[i],
-				    NULL,
-				    worker,
+		rc = pthread_create(&threads[i], NULL, worker,
 				    i == 0 ? &a_poller : &a_worker);
 		if (rc == -1) {
-			fprintf(stderr,
-				"pthread_create failed %s\n",
+			fprintf(stderr, "pthread_create failed %s\n",
 				strerror(errno));
 			exit(1);
 		}
@@ -1266,8 +1260,8 @@ int main(int argc, char **argv)
 
 				if (*rest != '\0' && *rest != '#')
 					fprintf_stderr(
-					     "Command line not consumed, rest=\"%s\"\n",
-					     rest);
+						"Command line not consumed, rest=\"%s\"\n",
+						rest);
 
 				switch (resp.r_cmd) {
 				case CMD_OPEN:

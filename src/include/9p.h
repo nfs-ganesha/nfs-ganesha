@@ -47,24 +47,24 @@
 #endif
 
 #define NB_PREALLOC_HASH_9P 100
-#define NB_PREALLOC_FID_9P  100
+#define NB_PREALLOC_FID_9P 100
 #define PRIME_9P 17
 
 #define _9P_LOCK_CLIENT_LEN 64
 
-#define _9P_FID_PER_CONN        1024
+#define _9P_FID_PER_CONN 1024
 
 /* _9P_MSG_SIZE: maximum message size for 9P/TCP */
 #define _9P_MSG_SIZE 70000
 
-#define _9P_HDR_SIZE  4
+#define _9P_HDR_SIZE 4
 #define _9P_TYPE_SIZE 1
-#define _9P_TAG_SIZE  2
+#define _9P_TAG_SIZE 2
 #define _9P_STD_HDR_SIZE (_9P_HDR_SIZE + _9P_TYPE_SIZE + _9P_TAG_SIZE)
 
 /* _9P_BLK_SIZE: (fake) filesystem block size that we return in getattr() */
 #define _9P_BLK_SIZE 4096
-#define _9P_IOUNIT   0
+#define _9P_IOUNIT 0
 
 /**
  * enum _9p_msg_t - 9P message types
@@ -236,10 +236,10 @@ enum _9p_qid__ {
 };
 
 /* 9P Magic Numbers */
-#define _9P_NOTAG	((u16)(~0))
-#define _9P_NOFID	((u32)(~0))
-#define _9P_NONUNAME	((u32)(~0))
-#define _9P_MAXWELEM	16
+#define _9P_NOTAG ((u16)(~0))
+#define _9P_NOFID ((u32)(~0))
+#define _9P_NONUNAME ((u32)(~0))
+#define _9P_MAXWELEM 16
 
 /* Various header lengths to check message sizes: */
 
@@ -261,8 +261,8 @@ enum _9p_qid__ {
  */
 
 struct _9p_str {
-	u16 len;		/*< Length of the string */
-	char *str;		/*< The string */
+	u16 len; /*< Length of the string */
+	char *str; /*< The string */
 };
 
 /**
@@ -283,9 +283,9 @@ struct _9p_str {
  */
 
 struct _9p_qid {
-	u8 type;		/*< Type */
-	u32 version;		/*< Monotonically incrementing version number */
-	u64 path;		/*< Per-server-unique ID
+	u8 type; /*< Type */
+	u32 version; /*< Monotonically incrementing version number */
+	u64 path; /*< Per-server-unique ID
 				 *  for a file system element */
 };
 
@@ -326,15 +326,12 @@ struct _9p_fid {
 	struct _9p_qid qid;
 	struct state_t *state;
 	struct fsal_obj_handle *ppentry;
-	char name[MAXNAMLEN+1];
+	char name[MAXNAMLEN + 1];
 	u32 opens;
 	struct _9p_xattr_desc *xattr;
 };
 
-enum _9p_trans_type {
-	_9P_TCP,
-	_9P_RDMA
-};
+enum _9p_trans_type { _9P_TCP, _9P_RDMA };
 
 struct flush_condition;
 
@@ -373,7 +370,7 @@ struct _9p_conn {
 	enum _9p_trans_type trans_type;
 	uint32_t refcount;
 	struct gsh_client *client;
-	struct timeval birth;	/* This is useful if same sockfd is
+	struct timeval birth; /* This is useful if same sockfd is
 				   reused on socket's close/open */
 	struct _9p_fid *fids[_9P_FID_PER_CONN];
 	struct _9p_flush_bucket flush_buckets[FLUSH_BUCKETS];
@@ -406,7 +403,7 @@ struct _9p_rdma_priv {
 #endif
 
 struct _9p_request_data {
-	struct glist_head req_q;	/* chaining of pending requests */
+	struct glist_head req_q; /* chaining of pending requests */
 	char *_9pmsg;
 	struct _9p_conn *pconn;
 #ifdef _USE_9P_RDMA
@@ -417,8 +414,8 @@ struct _9p_request_data {
 	pthread_cond_t *_9prq_cond;
 };
 
-typedef int (*_9p_function_t) (struct _9p_request_data *req9p,
-			       u32 *plenout, char *preply);
+typedef int (*_9p_function_t)(struct _9p_request_data *req9p, u32 *plenout,
+			      char *preply);
 
 struct _9p_function_desc {
 	_9p_function_t service_function;
@@ -428,144 +425,145 @@ struct _9p_function_desc {
 extern const struct _9p_function_desc _9pfuncdesc[];
 
 #define _9p_getptr(__cursor, __pvar, __type) \
-do {                                         \
-	__pvar = (__type *)__cursor;         \
-	__cursor += sizeof(__type);          \
-} while (0)
+	do {                                 \
+		__pvar = (__type *)__cursor; \
+		__cursor += sizeof(__type);  \
+	} while (0)
 
 #define _9p_getstr(__cursor, __len, __str) \
-do {                                       \
-	__len = (u16 *)__cursor;           \
-	__cursor += sizeof(u16);           \
-	__str = __cursor;                  \
-	__cursor += *__len;                \
-} while (0)
+	do {                               \
+		__len = (u16 *)__cursor;   \
+		__cursor += sizeof(u16);   \
+		__str = __cursor;          \
+		__cursor += *__len;        \
+	} while (0)
 
-#define _9p_setptr(__cursor, __pvar, __type) \
-do {                                         \
-	*((__type *)__cursor) = *__pvar;     \
-	__cursor += sizeof(__type);          \
-} while (0)
+#define _9p_setptr(__cursor, __pvar, __type)     \
+	do {                                     \
+		*((__type *)__cursor) = *__pvar; \
+		__cursor += sizeof(__type);      \
+	} while (0)
 
-#define _9p_setvalue(__cursor, __var, __type) \
-do {                                          \
-	*((__type *)__cursor) = __var;        \
-	__cursor += sizeof(__type);           \
-} while (0)
+#define _9p_setvalue(__cursor, __var, __type)  \
+	do {                                   \
+		*((__type *)__cursor) = __var; \
+		__cursor += sizeof(__type);    \
+	} while (0)
 
 #define _9p_savepos(__cursor, __savedpos, __type) \
-do {                                              \
-	__savedpos = __cursor;                    \
-	__cursor += sizeof(__type);               \
-} while (0)
+	do {                                      \
+		__savedpos = __cursor;            \
+		__cursor += sizeof(__type);       \
+	} while (0)
 
 /* Insert a qid */
-#define _9p_setqid(__cursor, __qid)         \
-do {                                        \
-	*((u8 *)__cursor) = __qid.type;     \
-	__cursor += sizeof(u8);             \
-	*((u32 *)__cursor) = __qid.version; \
-	__cursor += sizeof(u32);            \
-	*((u64 *)__cursor) = __qid.path;    \
-	__cursor += sizeof(u64);            \
-} while (0)
+#define _9p_setqid(__cursor, __qid)                 \
+	do {                                        \
+		*((u8 *)__cursor) = __qid.type;     \
+		__cursor += sizeof(u8);             \
+		*((u32 *)__cursor) = __qid.version; \
+		__cursor += sizeof(u32);            \
+		*((u64 *)__cursor) = __qid.path;    \
+		__cursor += sizeof(u64);            \
+	} while (0)
 
 /* Insert a non-null terminated string */
-#define _9p_setstr(__cursor, __len, __str) \
-do {                                       \
-	*((u16 *)__cursor) = __len;        \
-	__cursor += sizeof(u16);           \
-	memcpy(__cursor, __str, __len);    \
-	__cursor += __len;                 \
-} while (0)
+#define _9p_setstr(__cursor, __len, __str)      \
+	do {                                    \
+		*((u16 *)__cursor) = __len;     \
+		__cursor += sizeof(u16);        \
+		memcpy(__cursor, __str, __len); \
+		__cursor += __len;              \
+	} while (0)
 
 /* _9p_setbuffer:
  * Copy data from __buffer into the reply,
  * with a length u32 header.
  */
-#define _9p_setbuffer(__cursor, __len, __buffer) \
-do {                                             \
-	*((u32 *)__cursor) = __len;              \
-	__cursor += sizeof(u32);                 \
-	memcpy(__cursor, __buffer, __len);       \
-	__cursor += __len;                       \
-} while (0)
+#define _9p_setbuffer(__cursor, __len, __buffer)   \
+	do {                                       \
+		*((u32 *)__cursor) = __len;        \
+		__cursor += sizeof(u32);           \
+		memcpy(__cursor, __buffer, __len); \
+		__cursor += __len;                 \
+	} while (0)
 
 /* _9p_setfilledbuffer:
  * Data has already been copied into the reply.
  * Only move the cursor and set the length.
  */
-#define _9p_setfilledbuffer(__cursor, __len) \
-do {                                         \
-	*((u32 *)__cursor) = __len;          \
-	__cursor += sizeof(u32) + __len;     \
-} while (0)
+#define _9p_setfilledbuffer(__cursor, __len)     \
+	do {                                     \
+		*((u32 *)__cursor) = __len;      \
+		__cursor += sizeof(u32) + __len; \
+	} while (0)
 
 /* _9p_getbuffertofill:
  * Get a pointer where to copy data in the reply.
  * This leaves room in the reply for a u32 len header
  */
-#define _9p_getbuffertofill(__cursor) (((char *) (__cursor)) + sizeof(u32))
+#define _9p_getbuffertofill(__cursor) (((char *)(__cursor)) + sizeof(u32))
 
 #define _9p_setinitptr(__cursor, __start, __reqtype) \
-do {                                                 \
-	__cursor = __start + _9P_HDR_SIZE;           \
-	*((u8 *)__cursor) = __reqtype;               \
-	__cursor += sizeof(u8);                      \
-} while (0)
+	do {                                         \
+		__cursor = __start + _9P_HDR_SIZE;   \
+		*((u8 *)__cursor) = __reqtype;       \
+		__cursor += sizeof(u8);              \
+	} while (0)
 
 /* _9p_setendptr:
  * Calculate message size, and write this value in the
  * header of the 9p message.
  */
-#define _9p_setendptr(__cursor, __start)               \
+#define _9p_setendptr(__cursor, __start) \
 	(*((u32 *)__start) = (u32)(__cursor - __start))
 
 /* _9p_checkbound:
  * Check that the message size is less than *__maxlen,
  * AND set *__maxlen to actual message size.
  */
-#define _9p_checkbound(__cursor, __start, __maxlen)    \
-do {                                                   \
-	if ((u32)(__cursor - __start) > *__maxlen)     \
-		return -1;                             \
-	else                                           \
-		*__maxlen = (u32)(__cursor - __start); \
-} while (0)
+#define _9p_checkbound(__cursor, __start, __maxlen)            \
+	do {                                                   \
+		if ((u32)(__cursor - __start) > *__maxlen)     \
+			return -1;                             \
+		else                                           \
+			*__maxlen = (u32)(__cursor - __start); \
+	} while (0)
 
 /* Bit values for getattr valid field.
  */
-#define _9P_GETATTR_MODE	0x00000001ULL
-#define _9P_GETATTR_NLINK	0x00000002ULL
-#define _9P_GETATTR_UID		0x00000004ULL
-#define _9P_GETATTR_GID		0x00000008ULL
-#define _9P_GETATTR_RDEV	0x00000010ULL
-#define _9P_GETATTR_ATIME	0x00000020ULL
-#define _9P_GETATTR_MTIME	0x00000040ULL
-#define _9P_GETATTR_CTIME	0x00000080ULL
-#define _9P_GETATTR_INO		0x00000100ULL
-#define _9P_GETATTR_SIZE	0x00000200ULL
-#define _9P_GETATTR_BLOCKS	0x00000400ULL
+#define _9P_GETATTR_MODE 0x00000001ULL
+#define _9P_GETATTR_NLINK 0x00000002ULL
+#define _9P_GETATTR_UID 0x00000004ULL
+#define _9P_GETATTR_GID 0x00000008ULL
+#define _9P_GETATTR_RDEV 0x00000010ULL
+#define _9P_GETATTR_ATIME 0x00000020ULL
+#define _9P_GETATTR_MTIME 0x00000040ULL
+#define _9P_GETATTR_CTIME 0x00000080ULL
+#define _9P_GETATTR_INO 0x00000100ULL
+#define _9P_GETATTR_SIZE 0x00000200ULL
+#define _9P_GETATTR_BLOCKS 0x00000400ULL
 
-#define _9P_GETATTR_BTIME	0x00000800ULL
-#define _9P_GETATTR_GEN		0x00001000ULL
-#define _9P_GETATTR_DATA_VERSION	0x00002000ULL
+#define _9P_GETATTR_BTIME 0x00000800ULL
+#define _9P_GETATTR_GEN 0x00001000ULL
+#define _9P_GETATTR_DATA_VERSION 0x00002000ULL
 
-#define _9P_GETATTR_BASIC	0x000007ffULL	/* Mask for fields
+#define _9P_GETATTR_BASIC \
+	0x000007ffULL /* Mask for fields
 						 * up to BLOCKS */
-#define _9P_GETATTR_ALL		0x00003fffULL	/* Mask for all fields above */
+#define _9P_GETATTR_ALL 0x00003fffULL /* Mask for all fields above */
 
 /* Bit values for setattr valid field from <linux/fs.h>.
  */
-#define _9P_SETATTR_MODE	0x00000001UL
-#define _9P_SETATTR_UID		0x00000002UL
-#define _9P_SETATTR_GID		0x00000004UL
-#define _9P_SETATTR_SIZE	0x00000008UL
-#define _9P_SETATTR_ATIME	0x00000010UL
-#define _9P_SETATTR_MTIME	0x00000020UL
-#define _9P_SETATTR_CTIME	0x00000040UL
-#define _9P_SETATTR_ATIME_SET	0x00000080UL
-#define _9P_SETATTR_MTIME_SET	0x00000100UL
+#define _9P_SETATTR_MODE 0x00000001UL
+#define _9P_SETATTR_UID 0x00000002UL
+#define _9P_SETATTR_GID 0x00000004UL
+#define _9P_SETATTR_SIZE 0x00000008UL
+#define _9P_SETATTR_ATIME 0x00000010UL
+#define _9P_SETATTR_MTIME 0x00000020UL
+#define _9P_SETATTR_CTIME 0x00000040UL
+#define _9P_SETATTR_ATIME_SET 0x00000080UL
+#define _9P_SETATTR_MTIME_SET 0x00000100UL
 
 /* Bit values for lock type.
  */
@@ -584,7 +582,6 @@ do {                                                   \
  */
 #define _9P_LOCK_FLAGS_BLOCK 1
 #define _9P_LOCK_FLAGS_RECLAIM 2
-
 
 /**
  * @defgroup config_9p Structure and defaults for _9P
@@ -631,7 +628,6 @@ do {                                                   \
  */
 #define _9P_RDMA_BACKLOG 10
 
-
 /**
  * @brief 9p configuration
  */
@@ -663,9 +659,7 @@ struct _9p_param {
 	    Defaults to _9P_RDMA_OUTPOOL_SIZE,
 	    settable by _9P_RDMA_OutPool_Size */
 	uint16_t _9p_rdma_outpool_size;
-
 };
-
 
 /** @} */
 
@@ -834,4 +828,4 @@ static inline void _9p_get_fname(char *name, int len, const char *str)
 	name[len] = '\0';
 }
 
-#endif				/* _9P_H */
+#endif /* _9P_H */

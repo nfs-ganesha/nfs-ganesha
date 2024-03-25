@@ -57,11 +57,10 @@ enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *op,
 					    compound_data_t *data,
 					    struct nfs_resop4 *resp)
 {
-
-	DESTROY_SESSION4args * const arg_DESTROY_SESSION4 =
-	    &op->nfs_argop4_u.opdestroy_session;
-	DESTROY_SESSION4res * const res_DESTROY_SESSION4 =
-	    &resp->nfs_resop4_u.opdestroy_session;
+	DESTROY_SESSION4args *const arg_DESTROY_SESSION4 =
+		&op->nfs_argop4_u.opdestroy_session;
+	DESTROY_SESSION4res *const res_DESTROY_SESSION4 =
+		&resp->nfs_resop4_u.opdestroy_session;
 	nfs41_session_t *session;
 
 	resp->resop = NFS4_OP_DESTROY_SESSION;
@@ -83,7 +82,7 @@ enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *op,
 	 */
 	if (!check_session_conn(session, data, false)) {
 		res_DESTROY_SESSION4->dsr_status =
-		    NFS4ERR_CONN_NOT_BOUND_TO_SESSION;
+			NFS4ERR_CONN_NOT_BOUND_TO_SESSION;
 		dec_session_ref(session);
 		return NFS_REQ_ERROR;
 	}
@@ -97,7 +96,7 @@ enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *op,
 	dec_session_ref(session);
 
 	return nfsstat4_to_nfs_req_result(res_DESTROY_SESSION4->dsr_status);
-}				/* nfs41_op_destroy_session */
+} /* nfs41_op_destroy_session */
 
 /**
  * @brief Free memory allocated for result of nfs41_op_destroy_session

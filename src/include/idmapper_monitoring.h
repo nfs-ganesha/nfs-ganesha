@@ -93,9 +93,10 @@ void idmapper_monitoring__init(void);
 /**
  * @brief Updates idmapping external latency metric
  */
-void idmapper_monitoring__external_request(
-	idmapping_op_t, idmapping_utility_t, bool is_success,
-	const struct timespec *start, const struct timespec *end);
+void idmapper_monitoring__external_request(idmapping_op_t, idmapping_utility_t,
+					   bool is_success,
+					   const struct timespec *start,
+					   const struct timespec *end);
 
 /**
  * @brief Updates idmapping cache usage metric
@@ -116,8 +117,8 @@ void idmapper_monitoring__user_groups(int num_groups);
  * @brief Updates idmapping metric to record cached-duration of the
  * cache-evicted entries
  */
-void idmapper_monitoring__evicted_cache_entity(
-	idmapping_cache_entity_t, time_t cached_duration_in_sec);
+void idmapper_monitoring__evicted_cache_entity(idmapping_cache_entity_t,
+					       time_t cached_duration_in_sec);
 
-#endif				/* IDMAPPER_MONITORING_H */
+#endif /* IDMAPPER_MONITORING_H */
 /** @} */

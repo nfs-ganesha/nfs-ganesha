@@ -43,17 +43,17 @@
  * READDIR response between calls to nfs4_readdir_callback.
  */
 struct nfs4_readdir_cb_data {
-	XDR xdr;	/*< The xdrmem to serialize the entries */
-	uint8_t *entries;	/*< The array holding individual entries */
-	size_t mem_avail;	/*< The amount of memory remaining before we
+	XDR xdr; /*< The xdrmem to serialize the entries */
+	uint8_t *entries; /*< The array holding individual entries */
+	size_t mem_avail; /*< The amount of memory remaining before we
 				   hit maxcount */
-	int count;		/*< Number of entries accumulated so far. */
-	uint32_t max_count;	/*< Maximum number of entries allowed. */
-	bool has_entries;	/*< Track if at least one entry fit  */
-	nfsstat4 error;		/*< Set to a value other than NFS4_OK if the
+	int count; /*< Number of entries accumulated so far. */
+	uint32_t max_count; /*< Maximum number of entries allowed. */
+	bool has_entries; /*< Track if at least one entry fit  */
+	nfsstat4 error; /*< Set to a value other than NFS4_OK if the
 				   callback function finds a fatal error. */
-	struct bitmap4 *req_attr;	/*< The requested attributes */
-	compound_data_t *data;	/*< The compound data, so we can produce
+	struct bitmap4 *req_attr; /*< The requested attributes */
+	compound_data_t *data; /*< The compound data, so we can produce
 				   nfs_fh4s. */
 	struct saved_export_context saved;
 };
@@ -70,8 +70,7 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 
 	/* Restore creds */
 	if (nfs_req_creds(tracker->data->req) != NFS4_OK) {
-		LogCrit(COMPONENT_EXPORT,
-			"Failure to restore creds");
+		LogCrit(COMPONENT_EXPORT, "Failure to restore creds");
 	}
 }
 
@@ -95,20 +94,15 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
  * @param[in]     cookie The readdir cookie for the current entry
  */
 
-fsal_errors_t nfs4_readdir_callback(void *opaque,
-				    struct fsal_obj_handle *obj,
+fsal_errors_t nfs4_readdir_callback(void *opaque, struct fsal_obj_handle *obj,
 				    const struct fsal_attrlist *attr,
-				    uint64_t mounted_on_fileid,
-				    uint64_t cookie,
+				    uint64_t mounted_on_fileid, uint64_t cookie,
 				    enum cb_state cb_state)
 {
 	struct fsal_readdir_cb_parms *cb_parms = opaque;
 	struct nfs4_readdir_cb_data *tracker = cb_parms->opaque;
 	char val_fh[NFS4_FHSIZE];
-	nfs_fh4 entryFH = {
-		.nfs_fh4_len = 0,
-		.nfs_fh4_val = val_fh
-	};
+	nfs_fh4 entryFH = { .nfs_fh4_len = 0, .nfs_fh4_val = val_fh };
 	struct xdr_attrs_args args;
 	compound_data_t *data = tracker->data;
 	fsal_status_t fsal_status;
@@ -120,9 +114,8 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 	bool_t lock_dir = false;
 	struct fsal_obj_handle *saved_current_obj = NULL;
 
-	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "Entry %s pos %d mem_left %d",
-		     cb_parms->name, (int) pos_start, (int) mem_left);
+	LogFullDebug(COMPONENT_NFS_READDIR, "Entry %s pos %d mem_left %d",
+		     cb_parms->name, (int)pos_start, (int)mem_left);
 
 	memset(&args, 0, sizeof(args));
 
@@ -159,11 +152,12 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 		 * this. Now we go to the junction to get the
 		 * attributes.
 		 */
-		LogDebugAlt(COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
-			    "Offspring DIR %s is a junction Export_id %d Pseudo %s",
-			    cb_parms->name,
-			    obj->state_hdl->dir.junction_export->export_id,
-			    JCT_PSEUDOPATH(obj->state_hdl));
+		LogDebugAlt(
+			COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
+			"Offspring DIR %s is a junction Export_id %d Pseudo %s",
+			cb_parms->name,
+			obj->state_hdl->dir.junction_export->export_id,
+			JCT_PSEUDOPATH(obj->state_hdl));
 
 		/* Get a reference to the export and stash it in
 		 * compound data.
@@ -189,10 +183,11 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			 * doesn't have access to this export, quietly
 			 * skip the export.
 			 */
-			LogDebugAlt(COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
-				    "NFS4ERR_ACCESS Skipping Export_Id %d Pseudo %s",
-				    op_ctx->ctx_export->export_id,
-				    CTX_PSEUDOPATH(op_ctx));
+			LogDebugAlt(
+				COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
+				"NFS4ERR_ACCESS Skipping Export_Id %d Pseudo %s",
+				op_ctx->ctx_export->export_id,
+				CTX_PSEUDOPATH(op_ctx));
 
 			/* Restore export and creds */
 			restore_data(tracker);
@@ -219,11 +214,11 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 				/* Client is requesting attr that are allowed
 				 * when NFS4ERR_WRONGSEC occurs.
 				 */
-				LogDebugAlt(COMPONENT_EXPORT,
-					    COMPONENT_NFS_READDIR,
-					    "Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
-					    op_ctx->ctx_export->export_id,
-					    CTX_PSEUDOPATH(op_ctx));
+				LogDebugAlt(
+					COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
+					"Ignoring NFS4ERR_WRONGSEC (only asked for MOUNTED_IN_FILEID) On ReadDir Export_Id %d Path %s",
+					op_ctx->ctx_export->export_id,
+					CTX_PSEUDOPATH(op_ctx));
 
 				/* Because we are not asking for any attributes
 				 * which are a property of the exported file
@@ -246,11 +241,11 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 				 * We will report it below, but we need to get
 				 * the name into the entry.
 				 */
-				LogDebugAlt(COMPONENT_EXPORT,
-					    COMPONENT_NFS_READDIR,
-					    "NFS4ERR_WRONGSEC On ReadDir Export_Id %d Pseudo %s",
-					    op_ctx->ctx_export->export_id,
-					    CTX_PSEUDOPATH(op_ctx));
+				LogDebugAlt(
+					COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
+					"NFS4ERR_WRONGSEC On ReadDir Export_Id %d Pseudo %s",
+					op_ctx->ctx_export->export_id,
+					CTX_PSEUDOPATH(op_ctx));
 			}
 		} else if (args.rdattr_error == NFS4_OK) {
 			/* Now we must traverse the junction to get the
@@ -261,10 +256,11 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 			 * signal to ourselves that the call back will be
 			 * across the junction.
 			 */
-			LogDebugAlt(COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
-				    "Need to cross junction to Export_Id %d Pseudo %s",
-				    op_ctx->ctx_export->export_id,
-				    CTX_PSEUDOPATH(op_ctx));
+			LogDebugAlt(
+				COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
+				"Need to cross junction to Export_Id %d Pseudo %s",
+				op_ctx->ctx_export->export_id,
+				CTX_PSEUDOPATH(op_ctx));
 			PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
 			return ERR_FSAL_CROSS_JUNCTION;
 		}
@@ -274,10 +270,10 @@ fsal_errors_t nfs4_readdir_callback(void *opaque,
 		 *
 		 * Restore export and creds.
 		 */
-		LogDebugAlt(COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
-			    "Need to report error for junction to Export_Id %d Pseudo %s",
-			    op_ctx->ctx_export->export_id,
-			    CTX_PSEUDOPATH(op_ctx));
+		LogDebugAlt(
+			COMPONENT_EXPORT, COMPONENT_NFS_READDIR,
+			"Need to report error for junction to Export_Id %d Pseudo %s",
+			op_ctx->ctx_export->export_id, CTX_PSEUDOPATH(op_ctx));
 		restore_data(tracker);
 	}
 
@@ -310,7 +306,7 @@ not_junction:
 		}
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because too small for BASE_ENTRY_SIZE %d",
-			 (int) BASE_ENTRY_SIZE);
+			 (int)BASE_ENTRY_SIZE);
 		goto failure;
 	}
 
@@ -321,7 +317,7 @@ not_junction:
 	 * destination.
 	 */
 	name.utf8string_len = strlen(cb_parms->name);
-	name.utf8string_val = (char *) cb_parms->name;
+	name.utf8string_val = (char *)cb_parms->name;
 
 	if (mem_left < RNDUP(name.utf8string_len)) {
 		if (!tracker->has_entries) {
@@ -329,18 +325,16 @@ not_junction:
 		}
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because of name %s too long %d",
-			 (char *) cb_parms->name, (int) name.utf8string_len);
+			 (char *)cb_parms->name, (int)name.utf8string_len);
 		goto failure;
 	}
-
 
 	/* If we carried an error from above, now that we have
 	 * the name set up, go ahead and try and put error in
 	 * results.
 	 */
 	if (args.rdattr_error != NFS4_OK) {
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "Skipping because of %s",
+		LogDebug(COMPONENT_NFS_READDIR, "Skipping because of %s",
 			 nfsstat4_to_str(args.rdattr_error));
 		goto skip;
 	}
@@ -359,8 +353,7 @@ not_junction:
 		 * attributes, but must indicate NFS4ERR_ACCESS.
 		 */
 		args.rdattr_error = NFS4ERR_ACCESS;
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "Skipping because of %s",
+		LogDebug(COMPONENT_NFS_READDIR, "Skipping because of %s",
 			 nfsstat4_to_str(args.rdattr_error));
 		goto skip;
 	}
@@ -373,15 +366,14 @@ not_junction:
 
 	/* Attrs were refreshed before call */
 	fsal_status = obj->obj_ops->test_access(obj, access_mask_attr, NULL,
-					       NULL, false);
+						NULL, false);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "permission check for attributes status=%s",
 			 msg_fsal_err(fsal_status.major));
 
 		args.rdattr_error = nfs4_Errno_status(fsal_status);
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "Skipping because of %s",
+		LogDebug(COMPONENT_NFS_READDIR, "Skipping because of %s",
 			 nfsstat4_to_str(args.rdattr_error));
 		goto skip;
 	}
@@ -389,11 +381,10 @@ not_junction:
 	/* Tell is_referral to not cache attrs as it will affect readdir
 	 * performance
 	 */
-	if (obj->obj_ops->is_referral(obj, (struct fsal_attrlist *) attr,
+	if (obj->obj_ops->is_referral(obj, (struct fsal_attrlist *)attr,
 				      false)) {
 		args.rdattr_error = NFS4ERR_MOVED;
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "Skipping because of %s",
+		LogDebug(COMPONENT_NFS_READDIR, "Skipping because of %s",
 			 nfsstat4_to_str(args.rdattr_error));
 		goto skip;
 	}
@@ -413,43 +404,42 @@ not_junction:
 	 */
 	saved_current_obj = data->current_obj;
 	data->current_obj = obj;
-	if (!xdr_encode_entry4(&tracker->xdr, &args, tracker->req_attr,
-			       cookie, &name) ||
-	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)
-	    >= tracker->mem_avail) {
+	if (!xdr_encode_entry4(&tracker->xdr, &args, tracker->req_attr, cookie,
+			       &name) ||
+	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) >=
+		    tracker->mem_avail) {
 		/* We had an overflow */
-		LogFullDebug(COMPONENT_NFS_READDIR,
-			     "Overflow of buffer after xdr_encode_entry4 - pos = %d",
-			     xdr_getpos(&tracker->xdr));
+		LogFullDebug(
+			COMPONENT_NFS_READDIR,
+			"Overflow of buffer after xdr_encode_entry4 - pos = %d",
+			xdr_getpos(&tracker->xdr));
 		data->current_obj = saved_current_obj;
 		goto failure;
 	}
 	data->current_obj = saved_current_obj;
 
- skip:
+skip:
 
 	if (args.rdattr_error != NFS4_OK) {
-		if (!attribute_is_set(tracker->req_attr,
-			FATTR4_RDATTR_ERROR) &&
-		    !attribute_is_set(tracker->req_attr,
-			FATTR4_FS_LOCATIONS)) {
-
+		if (!attribute_is_set(tracker->req_attr, FATTR4_RDATTR_ERROR) &&
+		    !attribute_is_set(tracker->req_attr, FATTR4_FS_LOCATIONS)) {
 			tracker->error = args.rdattr_error;
-			LogDebug(COMPONENT_NFS_READDIR,
-				 "Skipping because of %s and didn't ask for FATTR4_RDATTR_ERROR or FATTR4_FS_LOCATIONS",
-				 nfsstat4_to_str(args.rdattr_error));
+			LogDebug(
+				COMPONENT_NFS_READDIR,
+				"Skipping because of %s and didn't ask for FATTR4_RDATTR_ERROR or FATTR4_FS_LOCATIONS",
+				nfsstat4_to_str(args.rdattr_error));
 			goto failure;
 		}
 
-		if (!xdr_nfs4_fattr_fill_error(&tracker->xdr,
-					       tracker->req_attr,
+		if (!xdr_nfs4_fattr_fill_error(&tracker->xdr, tracker->req_attr,
 					       cookie, &name, &args) ||
-		    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT)
-		    >= tracker->mem_avail) {
+		    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) >=
+			    tracker->mem_avail) {
 			/* We had an overflow */
-			LogFullDebug(COMPONENT_NFS_READDIR,
-				     "Overflow of buffer after xdr_nfs4_fattr_fill_error - pos = %d",
-				     xdr_getpos(&tracker->xdr));
+			LogFullDebug(
+				COMPONENT_NFS_READDIR,
+				"Overflow of buffer after xdr_nfs4_fattr_fill_error - pos = %d",
+				xdr_getpos(&tracker->xdr));
 			goto failure;
 		}
 	}
@@ -459,11 +449,11 @@ not_junction:
 	tracker->count++;
 	goto out;
 
- server_fault:
+server_fault:
 
 	tracker->error = NFS4ERR_SERVERFAULT;
 
- failure:
+failure:
 
 	/* Reset to where we started this entry and encode a boolean
 	 * false instead (entry_follows is false).
@@ -478,7 +468,7 @@ not_junction:
 
 	cb_parms->in_result = false;
 
- out:
+out:
 
 	return ERR_FSAL_NO_ERROR;
 }
@@ -488,8 +478,8 @@ void xdr_dirlist4_uio_release(struct xdr_uio *uio, u_int flags)
 	int ix;
 
 	LogFullDebug(COMPONENT_NFS_V4,
-		     "Releasing %p, references %"PRIi32", count %d",
-		     uio, uio->uio_references, (int) uio->uio_count);
+		     "Releasing %p, references %" PRIi32 ", count %d", uio,
+		     uio->uio_references, (int)uio->uio_count);
 
 	if (!(--uio->uio_references)) {
 		if (!(op_ctx && op_ctx->is_rdma_buff_used)) {
@@ -503,8 +493,8 @@ void xdr_dirlist4_uio_release(struct xdr_uio *uio, u_int flags)
 /* Base response size includes nfsstat4, eof, verifier and termination of
  * entries list.
  */
-#define READDIR_RESP_BASE_SIZE (sizeof(nfsstat4) + sizeof(verifier4) + \
-				2 * BYTES_PER_XDR_UNIT)
+#define READDIR_RESP_BASE_SIZE \
+	(sizeof(nfsstat4) + sizeof(verifier4) + 2 * BYTES_PER_XDR_UNIT)
 
 /**
  * @brief NFS4_OP_READDIR
@@ -523,7 +513,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
-	READDIR4args * const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
+	READDIR4args *const arg_READDIR4 = &op->nfs_argop4_u.opreaddir;
 	READDIR4res *res_READDIR4 = &resp->nfs_resop4_u.opreaddir;
 	READDIR4resok *resok = &res_READDIR4->READDIR4res_u.resok4;
 	struct fsal_obj_handle *dir_obj = NULL;
@@ -534,10 +524,10 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	uint64_t cookie = 0;
 	unsigned int num_entries = 0;
 	struct nfs4_readdir_cb_data tracker;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	attrmask_t attrmask;
-	bool use_cookie_verifier = op_ctx_export_has_option(
-					EXPORT_OPTION_USE_COOKIE_VERIFIER);
+	bool use_cookie_verifier =
+		op_ctx_export_has_option(EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
 	resp->resop = NFS4_OP_READDIR;
 	res_READDIR4->status = NFS4_OK;
@@ -571,8 +561,8 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		dircount = nfs_param.core_param.readdir_max_count;
 
 	LogDebug(COMPONENT_NFS_READDIR,
-		 "dircount=%lu maxcount=%lu cookie=%" PRIu64,
-		 dircount, maxcount, cookie);
+		 "dircount=%lu maxcount=%lu cookie=%" PRIu64, dircount,
+		 maxcount, cookie);
 
 	/* Since we never send a cookie of 1 or 2, we shouldn't ever get
 	 * them back.
@@ -585,7 +575,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 
 	/* Make sure requested attributes are valid and initialize attrmask */
 	res_READDIR4->status =
-	    bitmap4_to_attrmask_t(&arg_READDIR4->attr_request, &attrmask);
+		bitmap4_to_attrmask_t(&arg_READDIR4->attr_request, &attrmask);
 	if (res_READDIR4->status != NFS4_OK) {
 		LogDebug(COMPONENT_NFS_READDIR, "Requested invalid attributes");
 		goto out;
@@ -593,8 +583,8 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 
 	/* Make sure the FSAL supports all the requested attributes */
 	attrmask_t supported_attrs =
-	    op_ctx->fsal_export->exp_ops.fs_supported_attrs(
-		op_ctx->fsal_export);
+		op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+			op_ctx->fsal_export);
 	if ((attrmask & ~supported_attrs) != 0) {
 		res_READDIR4->status = NFS4ERR_INVAL;
 		LogDebug(COMPONENT_NFS_READDIR, "Requested invalid attributes");
@@ -602,8 +592,8 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	}
 
 	/* Get only attributes that are allowed to be read */
-	if (!nfs4_Fattr_Check_Access_Bitmap
-	    (&arg_READDIR4->attr_request, FATTR4_ATTR_READ)) {
+	if (!nfs4_Fattr_Check_Access_Bitmap(&arg_READDIR4->attr_request,
+					    FATTR4_ATTR_READ)) {
 		res_READDIR4->status = NFS4ERR_INVAL;
 		LogDebug(COMPONENT_NFS_READDIR, "Requested invalid attributes");
 		goto out;
@@ -614,7 +604,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		res_READDIR4->status = NFS4ERR_TOOSMALL;
 		LogInfo(COMPONENT_NFS_READDIR,
 			"Response too small maxcount = %lu need at least %llu",
-			maxcount, (unsigned long long) READDIR_RESP_BASE_SIZE);
+			maxcount, (unsigned long long)READDIR_RESP_BASE_SIZE);
 		goto out;
 	}
 
@@ -632,12 +622,11 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		fsal_prepare_attrs(&attrs, ATTR_CHANGE);
 
 		fsal_status = data->current_obj->obj_ops->getattrs(
-						data->current_obj, &attrs);
+			data->current_obj, &attrs);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
 			res_READDIR4->status = nfs4_Errno_status(fsal_status);
-			LogDebug(COMPONENT_NFS_READDIR,
-				 "getattrs returned %s",
+			LogDebug(COMPONENT_NFS_READDIR, "getattrs returned %s",
 				 msg_fsal_err(fsal_status.major));
 			goto out;
 		}
@@ -661,8 +650,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	 */
 
 	if (cookie != 0 && use_cookie_verifier) {
-		if (memcmp(cookie_verifier,
-			   arg_READDIR4->cookieverf,
+		if (memcmp(cookie_verifier, arg_READDIR4->cookieverf,
 			   NFS4_VERIFIER_SIZE) != 0) {
 			res_READDIR4->status = NFS4ERR_BAD_COOKIE;
 			LogDebug(COMPONENT_NFS_READDIR, "Bad cookie");
@@ -700,24 +688,17 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	}
 
 	/* Perform the readdir operation */
-	fsal_status = fsal_readdir(dir_obj,
-				   cookie,
-				   &num_entries,
-				   &eod_met,
-				   attrmask,
-				   nfs4_readdir_callback,
-				   &tracker);
+	fsal_status = fsal_readdir(dir_obj, cookie, &num_entries, &eod_met,
+				   attrmask, nfs4_readdir_callback, &tracker);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_READDIR4->status = nfs4_Errno_status(fsal_status);
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "fsal_readdir returned %s",
+		LogDebug(COMPONENT_NFS_READDIR, "fsal_readdir returned %s",
 			 msg_fsal_err(fsal_status.major));
 		goto out_destroy;
 	}
 
-	LogDebug(COMPONENT_NFS_READDIR,
-		 "fsal_readdir returned %s",
+	LogDebug(COMPONENT_NFS_READDIR, "fsal_readdir returned %s",
 		 msg_fsal_err(fsal_status.major));
 
 	res_READDIR4->status = tracker.error;
@@ -764,8 +745,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		tmp = eod_met;
 		if (!xdr_bool(&tracker.xdr, &tmp)) {
 			/* Oops... */
-			LogCrit(COMPONENT_NFS_READDIR,
-				"Encode of EOD failed.");
+			LogCrit(COMPONENT_NFS_READDIR, "Encode of EOD failed.");
 			res_READDIR4->status = NFS4ERR_SERVERFAULT;
 			goto out_destroy;
 		}
@@ -773,8 +753,8 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		pos_end = xdr_getpos(&tracker.xdr);
 
 		/* Get an xdr_uio and fill it in */
-		uio = gsh_calloc(
-			1, sizeof(struct xdr_uio) + sizeof(struct xdr_uio));
+		uio = gsh_calloc(1, sizeof(struct xdr_uio) +
+					    sizeof(struct xdr_uio));
 		uio->uio_release = xdr_dirlist4_uio_release;
 		uio->uio_count = 1;
 		uio->uio_vio[0].vio_base = tracker.entries;
@@ -808,23 +788,22 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 
 	res_READDIR4->status = NFS4_OK;
 
- out_destroy:
+out_destroy:
 
 	xdr_destroy(&tracker.xdr);
 
- out:
+out:
 
 	/* If we allocated but didn't consume entries, free it now. */
 	if (!op_ctx->is_rdma_buff_used)
 		gsh_free(tracker.entries);
 	tracker.entries = NULL;
 
-	LogDebug(COMPONENT_NFS_READDIR,
-		 "Returning %s",
+	LogDebug(COMPONENT_NFS_READDIR, "Returning %s",
 		 nfsstat4_to_str(res_READDIR4->status));
 
 	return nfsstat4_to_nfs_req_result(res_READDIR4->status);
-}				/* nfs4_op_readdir */
+} /* nfs4_op_readdir */
 
 /**
  * @brief Free memory allocated for READDIR result

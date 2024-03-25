@@ -86,7 +86,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	memset(&lock, 0, sizeof(lock));
 
-	char name[MAXNAMLEN+1];
+	char name[MAXNAMLEN + 1];
 
 	struct addrinfo hints, *result;
 	sockaddr_t client_addr;
@@ -104,11 +104,12 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, proc_id, u32);
 	_9p_getstr(cursor, client_id_len, client_id_str);
 
-	LogDebug(COMPONENT_9P,
-		 "TLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s",
-		 (u32) *msgtag, *fid, *type, strtype[*type], *flags,
-		 (unsigned long long)*start, (unsigned long long)*length,
-		 *proc_id, *client_id_len, client_id_str);
+	LogDebug(
+		COMPONENT_9P,
+		"TLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s",
+		(u32)*msgtag, *fid, *type, strtype[*type], *flags,
+		(unsigned long long)*start, (unsigned long long)*length,
+		*proc_id, *client_id_len, client_id_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -128,8 +129,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*client_id_len >= sizeof(name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *client_id_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(name, *client_id_len, client_id_str);
@@ -139,8 +139,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (getaddrinfo(name, NULL, &hints, &result))
 		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
 
-	memcpy((char *)&client_addr,
-	       (char *)result->ai_addr,
+	memcpy((char *)&client_addr, (char *)result->ai_addr,
 	       result->ai_addrlen);
 
 	/* variable result is not needed anymore, let's free it */
@@ -155,8 +154,8 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	case _9P_LOCK_TYPE_RDLCK:
 	case _9P_LOCK_TYPE_WRLCK:
 		/* Fill in plock */
-		lock.lock_type =
-		    (*type == _9P_LOCK_TYPE_WRLCK) ? FSAL_LOCK_W : FSAL_LOCK_R;
+		lock.lock_type = (*type == _9P_LOCK_TYPE_WRLCK) ? FSAL_LOCK_W :
+								  FSAL_LOCK_R;
 		lock.lock_start = *start;
 		lock.lock_length = *length;
 
@@ -172,9 +171,9 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 							   pfid->state);
 
 		if ((*type == _9P_LOCK_TYPE_RDLCK &&
-					((openflags & FSAL_O_READ) == 0)) ||
+		     ((openflags & FSAL_O_READ) == 0)) ||
 		    (*type == _9P_LOCK_TYPE_WRLCK &&
-					((openflags & FSAL_O_WRITE) == 0))) {
+		     ((openflags & FSAL_O_WRITE) == 0))) {
 			/* Open in wrong mode - return error */
 			STATELOCK_unlock(pfid->pentry);
 			nfs_put_grace_status();
@@ -204,8 +203,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	case _9P_LOCK_TYPE_UNLCK:
 		if (state_unlock(pfid->pentry, pfid->state, powner, false, 0,
-				 &lock)
-			    != STATE_SUCCESS)
+				 &lock) != STATE_SUCCESS)
 			status = _9P_LOCK_ERROR;
 		else
 			status = _9P_LOCK_SUCCESS;
@@ -214,7 +212,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	default:
 		return _9p_rerror(req9p, msgtag, EINVAL, plenout, preply);
-	}			/* switch( *type ) */
+	} /* switch( *type ) */
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RLOCK);
@@ -225,12 +223,13 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s status=%u|%s",
-		 (u32) *msgtag, *fid, *type, strtype[*type], *flags,
-		 (unsigned long long) *start, (unsigned long long) *length,
-		 *proc_id, *client_id_len, client_id_str, status,
-		 strstatus[status]);
+	LogDebug(
+		COMPONENT_9P,
+		"RLOCK: tag=%u fid=%u type=%u|%s flags=0x%x start=%llu length=%llu proc_id=%u client=%.*s status=%u|%s",
+		(u32)*msgtag, *fid, *type, strtype[*type], *flags,
+		(unsigned long long)*start, (unsigned long long)*length,
+		*proc_id, *client_id_len, client_id_str, status,
+		strstatus[status]);
 
 	return 1;
 }

@@ -78,7 +78,7 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	if (isDebug(COMPONENT_NLM)) {
 		char str[LEN_FH_STR];
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 		char oh[MAXNETOBJ_SZ * 2] = "\0";
 
 		display_opaque_bytes(&dspbuf, arg->share.fh.n_bytes,
@@ -86,46 +86,33 @@ int nlm4_Unshare(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 		netobj_to_string(&arg->share.oh, oh, 1024);
 
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST PROCESSING: Calling NLM4_UNSHARE File Handle V3: Len=%u %s, cookie=%s, reclaim=%s, owner=%s, access=%d, deny=%d",
-			 arg->share.fh.n_len, str, buffer,
-			 arg->reclaim ? "yes" : "no", oh,
-			 arg->share.access,
-			 arg->share.mode);
+		LogDebug(
+			COMPONENT_NLM,
+			"REQUEST PROCESSING: Calling NLM4_UNSHARE File Handle V3: Len=%u %s, cookie=%s, reclaim=%s, owner=%s, access=%d, deny=%d",
+			arg->share.fh.n_len, str, buffer,
+			arg->reclaim ? "yes" : "no", oh, arg->share.access,
+			arg->share.mode);
 	}
 
 	copy_netobj(&res->res_nlm4share.cookie, &arg->cookie);
 
-	rc = nlm_process_share_parms(req,
-				     &arg->share,
-				     op_ctx->fsal_export,
-				     &obj,
-				     CARE_NOT,
-				     &nsm_client,
-				     &nlm_client,
-				     &nlm_owner,
-				     &nlm_state);
+	rc = nlm_process_share_parms(req, &arg->share, op_ctx->fsal_export,
+				     &obj, CARE_NOT, &nsm_client, &nlm_client,
+				     &nlm_owner, &nlm_state);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
-		res->res_nlm4share.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: NLM4_UNSHARE %s",
+		res->res_nlm4share.stat = (nlm4_stats)rc;
+		LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_UNSHARE %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		return NFS_REQ_OK;
 	}
 
-	state_status = state_nlm_share(obj,
-				       arg->share.access,
-				       arg->share.mode,
-				       nlm_owner,
-				       nlm_state,
-				       false,
-				       true);
+	state_status = state_nlm_share(obj, arg->share.access, arg->share.mode,
+				       nlm_owner, nlm_state, false, true);
 
 	if (state_status != STATE_SUCCESS) {
-		res->res_nlm4share.stat =
-		    nlm_convert_state_error(state_status);
+		res->res_nlm4share.stat = nlm_convert_state_error(state_status);
 	} else {
 		res->res_nlm4share.stat = NLM4_GRANTED;
 	}

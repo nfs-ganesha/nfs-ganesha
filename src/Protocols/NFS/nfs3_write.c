@@ -96,8 +96,7 @@ static int nfs3_complete_write(struct nfs3_write_data *data)
 	data->obj->obj_ops->put_ref(data->obj);
 
 	server_stats_io_done(write_arg->iov[0].iov_len, write_arg->io_amount,
-			     (data->rc == NFS_REQ_OK) ? true : false,
-			     true);
+			     (data->rc == NFS_REQ_OK) ? true : false, true);
 
 	return data->rc;
 }
@@ -117,9 +116,8 @@ static enum xprt_stat nfs3_write_resume(struct svc_req *req)
 
 	if (data->write_arg.fsal_resume) {
 		/* FSAL is requesting another write2 call on resume */
-		atomic_postclear_uint32_t_bits(&data->flags,
-					       ASYNC_PROC_EXIT |
-					       ASYNC_PROC_DONE);
+		atomic_postclear_uint32_t_bits(
+			&data->flags, ASYNC_PROC_EXIT | ASYNC_PROC_DONE);
 
 		data->obj->obj_ops->write2(data->obj, true, nfs3_write_cb,
 					   &data->write_arg, data);
@@ -127,8 +125,8 @@ static enum xprt_stat nfs3_write_resume(struct svc_req *req)
 		/* Only atomically set the flags if we actually call write2,
 		 * otherwise we will have indicated as having been DONE.
 		 */
-		flags =
-		    atomic_postset_uint32_t_bits(&data->flags, ASYNC_PROC_EXIT);
+		flags = atomic_postset_uint32_t_bits(&data->flags,
+						     ASYNC_PROC_EXIT);
 
 		if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
 			/* The write was not finished before we got here. When
@@ -170,14 +168,12 @@ static void nfs3_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	struct nfs3_write_data *data = caller_data;
 	uint32_t flags;
 
-
 	if (ret.major == ERR_FSAL_SHARE_DENIED) {
 		/* Fixup FSAL_SHARE_DENIED status */
 		ret = fsalstat(ERR_FSAL_LOCKED, 0);
 	}
 
-	LogFullDebug(COMPONENT_NFSPROTO,
-		     "write fsal_status=%s",
+	LogFullDebug(COMPONENT_NFSPROTO, "write fsal_status=%s",
 		     fsal_err_txt(ret));
 
 	if (FSAL_IS_SUCCESS(ret)) {
@@ -225,10 +221,8 @@ static void nfs3_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *obj;
-	pre_op_attr pre_attr = {
-		.attributes_follow = false
-	};
-	fsal_status_t fsal_status = {0, 0};
+	pre_op_attr pre_attr = { .attributes_follow = false };
+	fsal_status_t fsal_status = { 0, 0 };
 	uint64_t offset = arg->arg_write3.offset;
 	size_t size = arg->arg_write3.count;
 	uint64_t MaxWrite =
@@ -247,19 +241,17 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	rc = NFS_REQ_OK;
 
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_write3.file,
-		" start: %"PRIx64 " len: %zu %s",
-		offset, size,
-			arg->arg_write3.stable == UNSTABLE ? "UNSTABLE"
-			: arg->arg_write3.stable == UNSTABLE ? "DATA_SYNC"
-			: "FILE_SYNC");
+			  " start: %" PRIx64 " len: %zu %s", offset, size,
+			  arg->arg_write3.stable == UNSTABLE ? "UNSTABLE" :
+			  arg->arg_write3.stable == UNSTABLE ? "DATA_SYNC" :
+							       "FILE_SYNC");
 
 	/* to avoid setting it on each error case */
 	resfail->file_wcc.before.attributes_follow = false;
 	resfail->file_wcc.after.attributes_follow = false;
 
 	obj = nfs3_FhandleToCache(&arg->arg_write3.file,
-				    &res->res_write3.status,
-				    &rc);
+				  &res->res_write3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -268,8 +260,8 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	nfs_SetPreOpAttr(obj, &pre_attr);
 
-	fsal_status =
-	    obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS, NULL, NULL, true);
+	fsal_status = obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS, NULL,
+						NULL, true);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = nfs3_Errno_status(fsal_status);
@@ -289,9 +281,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
-							op_ctx->fsal_export,
-							CTX_FULLPATH(op_ctx),
-							FSAL_QUOTA_INODES);
+		op_ctx->fsal_export, CTX_FULLPATH(op_ctx), FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_write3.status = NFS3ERR_DQUOT;
@@ -307,16 +297,16 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Do not exceed maximum WRITE offset if set */
 	if (MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFSPROTO,
-			     "Write offset=%" PRIu64 " size=%zu MaxOffSet=%"
-			     PRIu64,
+			     "Write offset=%" PRIu64
+			     " size=%zu MaxOffSet=%" PRIu64,
 			     offset, size, MaxOffsetWrite);
 
 		if ((offset + size) > MaxOffsetWrite) {
-			LogEvent(COMPONENT_NFSPROTO,
-				 "A client tried to violate max file size %"
-				 PRIu64 " for exportid #%hu",
-				 MaxOffsetWrite,
-				 op_ctx->ctx_export->export_id);
+			LogEvent(
+				COMPONENT_NFSPROTO,
+				"A client tried to violate max file size %" PRIu64
+				" for exportid #%hu",
+				MaxOffsetWrite, op_ctx->ctx_export->export_id);
 
 			res->res_write3.status = NFS3ERR_FBIG;
 
@@ -381,8 +371,8 @@ again:
 	/* Only atomically set the flags if we actually call write2, otherwise
 	 * we will have indicated as having been DONE.
 	 */
-	flags =
-	    atomic_postset_uint32_t_bits(&write_data->flags, ASYNC_PROC_EXIT);
+	flags = atomic_postset_uint32_t_bits(&write_data->flags,
+					     ASYNC_PROC_EXIT);
 
 	if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
 		/* The write was not finished before we got here. When the
@@ -396,9 +386,8 @@ again:
 
 	if (write_arg->fsal_resume) {
 		/* FSAL is requesting another write2 call */
-		atomic_postclear_uint32_t_bits(&write_data->flags,
-					       ASYNC_PROC_EXIT |
-					       ASYNC_PROC_DONE);
+		atomic_postclear_uint32_t_bits(
+			&write_data->flags, ASYNC_PROC_EXIT | ASYNC_PROC_DONE);
 		/* Make the call with the same params, though the FSAL will be
 		 * signaled by fsal_resume being set.
 		 */
@@ -414,7 +403,7 @@ again:
 
 	return rc;
 
- return_ok:
+return_ok:
 
 	/* return references */
 	obj->obj_ops->put_ref(obj);
@@ -422,7 +411,7 @@ again:
 	server_stats_io_done(size, 0, true, true);
 
 	return NFS_REQ_OK;
-}				/* nfs3_write */
+} /* nfs3_write */
 
 /**
  * @brief Frees the result structure allocated for nfs3_write.

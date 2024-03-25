@@ -32,11 +32,11 @@
 #include "config.h"
 
 #include <sys/ioctl.h>
-#include  "fsal.h"
+#include "fsal.h"
 #include "fsal_internal.h"
 #include "gpfs_methods.h"
 #include "fsal_convert.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include "abstract_mem.h"
 
 #include <pthread.h>
@@ -45,15 +45,16 @@
 
 #include "include/gpfs.h"
 
-#define FSAL_INTERNAL_ERROR(__error, __msg)				      \
-({									      \
-	if ((__error) == EUNATCH)					      \
-		LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");	      \
-									      \
-	LogFullDebug(COMPONENT_FSAL, "%s returned errno=%d", __msg, __error); \
-									      \
-	fsalstat(posix2fsal_error(__error), __error);			      \
-})
+#define FSAL_INTERNAL_ERROR(__error, __msg)                                 \
+	({                                                                  \
+		if ((__error) == EUNATCH)                                   \
+			LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");  \
+                                                                            \
+		LogFullDebug(COMPONENT_FSAL, "%s returned errno=%d", __msg, \
+			     __error);                                      \
+                                                                            \
+		fsalstat(posix2fsal_error(__error), __error);               \
+	})
 
 /*********************************************************************
  *
@@ -100,11 +101,11 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
-			int *fd, int oflags)
+fsal_status_t fsal_internal_handle2fd(int dirfd,
+				      struct gpfs_file_handle *gpfs_fh, int *fd,
+				      int oflags)
 {
-	struct open_arg oarg = {0};
+	struct open_arg oarg = { 0 };
 	int rc;
 
 	oarg.mountdirfd = dirfd;
@@ -135,10 +136,9 @@ fsal_internal_handle2fd(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_get_handle_at(int dfd, const char *fs_name,
-			    struct gpfs_file_handle *gpfs_fh,
-			    int expfd)
+fsal_status_t fsal_internal_get_handle_at(int dfd, const char *fs_name,
+					  struct gpfs_file_handle *gpfs_fh,
+					  int expfd)
 {
 	struct name_handle_arg harg;
 
@@ -182,9 +182,9 @@ fsal_internal_get_handle_at(int dfd, const char *fs_name,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_get_fh(int dirfd, struct gpfs_file_handle *gpfs_fh,
-		     const char *fs_name, struct gpfs_file_handle *gpfs_fh_out)
+fsal_status_t fsal_internal_get_fh(int dirfd, struct gpfs_file_handle *gpfs_fh,
+				   const char *fs_name,
+				   struct gpfs_file_handle *gpfs_fh_out)
 {
 	struct get_handle_arg harg;
 
@@ -216,10 +216,9 @@ fsal_internal_get_fh(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh)
+fsal_status_t fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh)
 {
-	struct name_handle_arg harg = {0};
+	struct name_handle_arg harg = { 0 };
 
 	if (!gpfs_fh)
 		return fsalstat(ERR_FSAL_FAULT, 0);
@@ -248,9 +247,10 @@ fsal_internal_fd2handle(int fd, struct gpfs_file_handle *gpfs_fh)
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_link_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_tgt,
-		      struct gpfs_file_handle *gpfs_fh, const char *link_name)
+fsal_status_t fsal_internal_link_fh(int dirfd,
+				    struct gpfs_file_handle *gpfs_fh_tgt,
+				    struct gpfs_file_handle *gpfs_fh,
+				    const char *link_name)
 {
 	struct link_fh_arg linkarg;
 
@@ -270,7 +270,6 @@ fsal_internal_link_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_tgt,
 		return FSAL_INTERNAL_ERROR(errno, "OPENHANDLE_LINK_BY_FH");
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
 }
 
 /**
@@ -283,9 +282,9 @@ fsal_internal_link_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_tgt,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_stat_name(int dirfd, struct gpfs_file_handle *gpfs_fh,
-			const char *stat_name, struct stat *buf)
+fsal_status_t fsal_internal_stat_name(int dirfd,
+				      struct gpfs_file_handle *gpfs_fh,
+				      const char *stat_name, struct stat *buf)
 {
 	struct stat_name_arg statarg;
 
@@ -317,9 +316,8 @@ fsal_internal_stat_name(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
-		     const char *stat_name, struct stat *buf)
+fsal_status_t fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
+				   const char *stat_name, struct stat *buf)
 {
 	struct stat_name_arg statarg;
 	int rc, errsv;
@@ -361,14 +359,14 @@ fsal_internal_unlink(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
-		     mode_t mode, int posix_flags, struct gpfs_file_handle *fh,
-		     struct stat *buf)
+fsal_status_t fsal_internal_create(struct fsal_obj_handle *dir_hdl,
+				   const char *stat_name, mode_t mode,
+				   int posix_flags, struct gpfs_file_handle *fh,
+				   struct stat *buf)
 {
-	struct create_name_arg crarg = {0};
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct create_name_arg crarg = { 0 };
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	if (!stat_name)
@@ -384,8 +382,9 @@ fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
 	crarg.new_fh->handle_version = OPENHANDLE_VERSION;
 	crarg.buf = buf;
-	crarg.dir_fh = container_of(dir_hdl, struct gpfs_fsal_obj_handle,
-				    obj_handle)->handle;
+	crarg.dir_fh =
+		container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle)
+			->handle;
 	crarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		crarg.cli_ip = op_ctx->client->hostaddr_str;
@@ -396,14 +395,14 @@ fsal_internal_create(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-fsal_status_t
-fsal_internal_mknode(struct fsal_obj_handle *dir_hdl, const char *stat_name,
-		     mode_t mode, dev_t dev, struct gpfs_file_handle *fh,
-		     struct stat *buf)
+fsal_status_t fsal_internal_mknode(struct fsal_obj_handle *dir_hdl,
+				   const char *stat_name, mode_t mode,
+				   dev_t dev, struct gpfs_file_handle *fh,
+				   struct stat *buf)
 {
-	struct create_name_arg crarg = {0};
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct create_name_arg crarg = { 0 };
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	if (!stat_name)
@@ -419,8 +418,9 @@ fsal_internal_mknode(struct fsal_obj_handle *dir_hdl, const char *stat_name,
 	crarg.new_fh->handle_key_size = OPENHANDLE_KEY_LEN;
 	crarg.new_fh->handle_version = OPENHANDLE_VERSION;
 	crarg.buf = buf;
-	crarg.dir_fh = container_of(dir_hdl, struct gpfs_fsal_obj_handle,
-				    obj_handle)->handle;
+	crarg.dir_fh =
+		container_of(dir_hdl, struct gpfs_fsal_obj_handle, obj_handle)
+			->handle;
 	crarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		crarg.cli_ip = op_ctx->client->hostaddr_str;
@@ -442,10 +442,11 @@ fsal_internal_mknode(struct fsal_obj_handle *dir_hdl, const char *stat_name,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_internal_rename_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_old,
-			struct gpfs_file_handle *gpfs_fh_new,
-			const char *old_name, const char *new_name)
+fsal_status_t fsal_internal_rename_fh(int dirfd,
+				      struct gpfs_file_handle *gpfs_fh_old,
+				      struct gpfs_file_handle *gpfs_fh_new,
+				      const char *old_name,
+				      const char *new_name)
 {
 	struct rename_fh_arg renamearg;
 	int rc, errsv;
@@ -487,9 +488,9 @@ fsal_internal_rename_fh(int dirfd, struct gpfs_file_handle *gpfs_fh_old,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_readlink_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh, char *buf,
-			size_t maxlen)
+fsal_status_t fsal_readlink_by_handle(int dirfd,
+				      struct gpfs_file_handle *gpfs_fh,
+				      char *buf, size_t maxlen)
 {
 	struct readlink_fh_arg readlinkarg;
 	int rc;
@@ -552,7 +553,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 			 unsigned int acl_buflen, uint32_t *expire_time_attr,
 			 bool expire, bool use_acl)
 {
-	struct xstat_arg xstatarg = {0};
+	struct xstat_arg xstatarg = { 0 };
 	int errsv;
 	int rc;
 
@@ -588,8 +589,7 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 
 	rc = gpfs_ganesha(OPENHANDLE_GET_XSTAT, &xstatarg);
 	errsv = errno;
-	LogDebug(COMPONENT_FSAL,
-		 "GET_XSTAT returned, fd %d rc %d fh_size %d",
+	LogDebug(COMPONENT_FSAL, "GET_XSTAT returned, fd %d rc %d fh_size %d",
 		 dirfd, rc, gpfs_fh->handle_size);
 
 	if (rc < 0) {
@@ -612,7 +612,8 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 			 * Return success and let the caller check the length
 			 */
 			if (use_acl && acl_buf->acl_len > acl_buflen) {
-				LogFullDebug(COMPONENT_FSAL,
+				LogFullDebug(
+					COMPONENT_FSAL,
 					"GET_XSTAT returned buffer too small, passed len: %u, required len: %u, ",
 					acl_buflen, acl_buf->acl_len);
 				errno = 0;
@@ -627,18 +628,19 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
 		default:
 			/* Handle other errors. */
 			LogFullDebug(COMPONENT_FSAL,
-				     "GET_XSTAT returned errno:%d -- %s",
-				     errsv, strerror(errsv));
+				     "GET_XSTAT returned errno:%d -- %s", errsv,
+				     strerror(errsv));
 			if (errsv == EUNATCH)
 				LogFatal(COMPONENT_FSAL,
-					"GPFS Returned EUNATCH");
+					 "GPFS Returned EUNATCH");
 			return fsalstat(posix2fsal_error(errsv), errsv);
 		}
 	}
 
 	if (use_acl) {
 		if (acl_buf->acl_nace > GPFS_ACL_MAX_NACES) {
-			LogEvent(COMPONENT_FSAL,
+			LogEvent(
+				COMPONENT_FSAL,
 				"No. of ACE's:%d higher than supported by GPFS",
 				acl_buf->acl_nace);
 			/* Fail the request if ACL is invalid*/
@@ -663,13 +665,13 @@ fsal_get_xstat_by_handle(int dirfd, struct gpfs_file_handle *gpfs_fh,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_set_xstat_by_handle(int dirfd,
-			 struct gpfs_file_handle *gpfs_fh, int attr_valid,
-			 int attr_changed, gpfsfsal_xstat_t *buffxstat,
-			 gpfs_acl_t *acl_buf)
+fsal_status_t fsal_set_xstat_by_handle(int dirfd,
+				       struct gpfs_file_handle *gpfs_fh,
+				       int attr_valid, int attr_changed,
+				       gpfsfsal_xstat_t *buffxstat,
+				       gpfs_acl_t *acl_buf)
 {
-	struct xstat_arg xstatarg = {0};
+	struct xstat_arg xstatarg = { 0 };
 	int errsv;
 	int rc;
 
@@ -717,19 +719,19 @@ fsal_set_xstat_by_handle(int dirfd,
  *
  *  @return status of operation
  */
-fsal_status_t
-fsal_trucate_by_handle(int dirfd,
-		       struct gpfs_file_handle *gpfs_fh, u_int64_t size)
+fsal_status_t fsal_trucate_by_handle(int dirfd,
+				     struct gpfs_file_handle *gpfs_fh,
+				     u_int64_t size)
 {
-	gpfsfsal_xstat_t buffxstat = {0};
+	gpfsfsal_xstat_t buffxstat = { 0 };
 
 	if (!gpfs_fh || !op_ctx)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
 	buffxstat.buffstat.st_size = size;
 
-	return fsal_set_xstat_by_handle(dirfd, gpfs_fh, XATTR_STAT,
-					XATTR_SIZE, &buffxstat, NULL);
+	return fsal_set_xstat_by_handle(dirfd, gpfs_fh, XATTR_STAT, XATTR_SIZE,
+					&buffxstat, NULL);
 }
 
 /**
@@ -741,9 +743,7 @@ fsal_trucate_by_handle(int dirfd,
  */
 bool fsal_error_is_event(fsal_status_t status)
 {
-
 	switch (status.major) {
-
 	case ERR_FSAL_IO:
 	case ERR_FSAL_STALE:
 		return true;

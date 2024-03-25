@@ -33,7 +33,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "fsal.h"
@@ -53,8 +53,8 @@
  *
  *  @return nfsstat3
  */
-static enum nfsstat3
-nfs3_verify_exportid(struct LINK3args *l3_arg, struct svc_req *req)
+static enum nfsstat3 nfs3_verify_exportid(struct LINK3args *l3_arg,
+					  struct svc_req *req)
 {
 	const int to_exportid = nfs3_FhandleToExportId(&l3_arg->link.dir);
 	const int from_exportid = nfs3_FhandleToExportId(&l3_arg->file);
@@ -63,9 +63,8 @@ nfs3_verify_exportid(struct LINK3args *l3_arg, struct svc_req *req)
 		LogInfo(COMPONENT_DISPATCH,
 			"NFS%d LINK Request from client %s has badly formed handle for link dir",
 			req->rq_msg.cb_vers,
-			op_ctx->client ?
-					op_ctx->client->hostaddr_str :
-					"unknown client");
+			op_ctx->client ? op_ctx->client->hostaddr_str :
+					 "unknown client");
 		return NFS3ERR_BADHANDLE;
 	}
 
@@ -98,17 +97,16 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	const char *link_name = l3_arg->link.name;
 	struct fsal_obj_handle *target_obj = NULL;
 	struct fsal_obj_handle *parent_obj = NULL;
-	pre_op_attr pre_parent = {0};
-	fsal_status_t fsal_status = {0, 0};
+	pre_op_attr pre_parent = { 0 };
+	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_attrlist destdir_pre_attrs, destdir_post_attrs;
 	int rc = NFS_REQ_OK;
 
-	LogNFS3_Operation2(COMPONENT_NFSPROTO, req,
-			   &l3_arg->file, NULL,
+	LogNFS3_Operation2(COMPONENT_NFSPROTO, req, &l3_arg->file, NULL,
 			   &l3_arg->link.dir, link_name);
 
 	fsal_prepare_attrs(&destdir_pre_attrs,
-		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+			   ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 	fsal_prepare_attrs(&destdir_post_attrs, ATTRS_NFS3);
 
 	/* to avoid setting it on each error case */
@@ -120,17 +118,17 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (l3_res->status != NFS3_OK)
 		return rc;
 
-	parent_obj = nfs3_FhandleToCache(&l3_arg->link.dir, &l3_res->status,
-					 &rc);
+	parent_obj =
+		nfs3_FhandleToCache(&l3_arg->link.dir, &l3_res->status, &rc);
 	if (parent_obj == NULL)
-		return rc;  /* Status and rc are set by nfs3_FhandleToCache */
+		return rc; /* Status and rc are set by nfs3_FhandleToCache */
 
 	nfs_SetPreOpAttr(parent_obj, &pre_parent);
 
 	target_obj = nfs3_FhandleToCache(&l3_arg->file, &l3_res->status, &rc);
 	if (target_obj == NULL) {
 		parent_obj->obj_ops->put_ref(parent_obj);
-		return rc;  /* Status and rc are set by nfs3_FhandleToCache */
+		return rc; /* Status and rc are set by nfs3_FhandleToCache */
 	}
 
 	if (parent_obj->type != DIRECTORY) {
@@ -144,12 +142,11 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	fsal_status = fsal_link(target_obj, parent_obj, link_name,
-		&destdir_pre_attrs, &destdir_post_attrs);
+				&destdir_pre_attrs, &destdir_post_attrs);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		/* If we are here, there was an error */
-		LogFullDebug(COMPONENT_NFSPROTO,
-			     "failed link: fsal_status=%s",
+		LogFullDebug(COMPONENT_NFSPROTO, "failed link: fsal_status=%s",
 			     fsal_err_txt(fsal_status));
 
 		if (nfs_RetryableError(fsal_status.major)) {
@@ -178,7 +175,7 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		l3_res->status = NFS3_OK;
 	}
 
- out:
+out:
 	fsal_release_attrs(&destdir_pre_attrs);
 	fsal_release_attrs(&destdir_post_attrs);
 
@@ -187,7 +184,7 @@ int nfs3_link(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	parent_obj->obj_ops->put_ref(parent_obj);
 
 	return rc;
-}				/* nfs3_link */
+} /* nfs3_link */
 
 /**
  * @brief Free the result structure allocated for nfs3_link

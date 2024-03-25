@@ -33,7 +33,7 @@
 
 #include "config.h"
 
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
@@ -48,9 +48,9 @@
 
 /* defined the set of attributes supported with POSIX */
 #ifndef ENABLE_VFS_ACL
-#define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX))
+#define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t)(ATTRS_POSIX))
 #else
-#define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t) (ATTRS_POSIX | ATTR_ACL))
+#define XFS_SUPPORTED_ATTRIBUTES ((const attrmask_t)(ATTRS_POSIX | ATTR_ACL))
 #endif
 
 static const char myname[] = "XFS";
@@ -96,12 +96,10 @@ static struct config_item xfs_params[] = {
 		       vfs_fsal_module, module.fs_info.maxread),
 	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE, FSAL_MAXIOSIZE,
 		       vfs_fsal_module, module.fs_info.maxwrite),
-	CONF_ITEM_MODE("umask", 0, vfs_fsal_module,
-		       module.fs_info.umask),
+	CONF_ITEM_MODE("umask", 0, vfs_fsal_module, module.fs_info.umask),
 	CONF_ITEM_BOOL("auth_xdev_export", false, vfs_fsal_module,
 		       module.fs_info.auth_exportpath_xdev),
-	CONF_ITEM_BOOL("only_one_user", false, vfs_fsal_module,
-		       only_one_user),
+	CONF_ITEM_BOOL("only_one_user", false, vfs_fsal_module, only_one_user),
 	CONFIG_EOL
 };
 
@@ -109,12 +107,11 @@ struct config_block xfs_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.xfs",
 	.blk_desc.name = "XFS",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = xfs_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
-
 
 /* Module methods
  */
@@ -128,7 +125,7 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 				 struct config_error_type *err_type)
 {
 	struct vfs_fsal_module *xfs_module =
-	    container_of(xfs_fsal_module, struct vfs_fsal_module, module);
+		container_of(xfs_fsal_module, struct vfs_fsal_module, module);
 
 #ifdef F_OFD_GETLK
 	int fd, rc;
@@ -173,14 +170,11 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 		LogInfo(COMPONENT_FSAL, "FSAL_XFS disabling lock support");
 
 	LogFullDebug(COMPONENT_FSAL,
-		"Supported attributes default = 0x%" PRIx64,
-		xfs_module->module.fs_info.supported_attrs);
+		     "Supported attributes default = 0x%" PRIx64,
+		     xfs_module->module.fs_info.supported_attrs);
 
-	(void) load_config_from_parse(config_struct,
-				      &xfs_param,
-				      xfs_module,
-				      true,
-				      err_type);
+	(void)load_config_from_parse(config_struct, &xfs_param, xfs_module,
+				     true, err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	display_fsinfo(&xfs_module->module);

@@ -38,30 +38,28 @@
 #include "FSAL/fsal_init.h"
 #include "proxyv4_fsal_methods.h"
 
-#define PROXY_V4_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX))
+#define PROXY_V4_SUPPORTED_ATTRS ((const attrmask_t)(ATTRS_POSIX))
 
 /* filesystem info for PROXY_V4 */
-struct proxyv4_fsal_module PROXY_V4 = {
-	.module = {
-		.fs_info = {
-			.maxfilesize = INT64_MAX,
-			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = 1024,
-			.maxpathlen = 1024,
-			.no_trunc = true,
-			.chown_restricted = true,
-			.case_preserving = true,
-			.lock_support = false,
-			.named_attr = true,
-			.unique_handles = true,
-			.acl_support = FSAL_ACLSUPPORT_ALLOW,
-			.homogenous = true,
-			.supported_attrs = PROXY_V4_SUPPORTED_ATTRS,
-			.link_supports_permission_checks = true,
-			.expire_time_parent = -1,
-		}
-	}
-};
+struct proxyv4_fsal_module
+	PROXY_V4 = { .module = {
+			     .fs_info = {
+				     .maxfilesize = INT64_MAX,
+				     .maxlink = _POSIX_LINK_MAX,
+				     .maxnamelen = 1024,
+				     .maxpathlen = 1024,
+				     .no_trunc = true,
+				     .chown_restricted = true,
+				     .case_preserving = true,
+				     .lock_support = false,
+				     .named_attr = true,
+				     .unique_handles = true,
+				     .acl_support = FSAL_ACLSUPPORT_ALLOW,
+				     .homogenous = true,
+				     .supported_attrs = PROXY_V4_SUPPORTED_ATTRS,
+				     .link_supports_permission_checks = true,
+				     .expire_time_parent = -1,
+			     } } };
 
 /**
  * @brief Validate and commit the proxy params
@@ -73,31 +71,21 @@ struct proxyv4_fsal_module PROXY_V4 = {
  */
 
 static struct config_item proxyv4_params[] = {
-	CONF_ITEM_BOOL("link_support", true,
-				proxyv4_fsal_module,
-				module.fs_info.link_support),
-	CONF_ITEM_BOOL("symlink_support", true,
-				proxyv4_fsal_module,
-				module.fs_info.symlink_support),
-	CONF_ITEM_BOOL("cansettime", true,
-				proxyv4_fsal_module,
-				module.fs_info.cansettime),
-	CONF_ITEM_UI64("maxread", 512,
-		       FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
-		       DEFAULT_MAX_WRITE_READ,
-					 proxyv4_fsal_module,
-					 module.fs_info.maxread),
-	CONF_ITEM_UI64("maxwrite", 512,
-		       FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
-		       DEFAULT_MAX_WRITE_READ,
-		       proxyv4_fsal_module,
+	CONF_ITEM_BOOL("link_support", true, proxyv4_fsal_module,
+		       module.fs_info.link_support),
+	CONF_ITEM_BOOL("symlink_support", true, proxyv4_fsal_module,
+		       module.fs_info.symlink_support),
+	CONF_ITEM_BOOL("cansettime", true, proxyv4_fsal_module,
+		       module.fs_info.cansettime),
+	CONF_ITEM_UI64("maxread", 512, FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		       DEFAULT_MAX_WRITE_READ, proxyv4_fsal_module,
+		       module.fs_info.maxread),
+	CONF_ITEM_UI64("maxwrite", 512, FSAL_MAXIOSIZE - SEND_RECV_HEADER_SPACE,
+		       DEFAULT_MAX_WRITE_READ, proxyv4_fsal_module,
 		       module.fs_info.maxwrite),
-	CONF_ITEM_MODE("umask", 0,
-				proxyv4_fsal_module,
-				module.fs_info.umask),
-	CONF_ITEM_BOOL("auth_xdev_export", false,
-				proxyv4_fsal_module,
-				module.fs_info.auth_exportpath_xdev),
+	CONF_ITEM_MODE("umask", 0, proxyv4_fsal_module, module.fs_info.umask),
+	CONF_ITEM_BOOL("auth_xdev_export", false, proxyv4_fsal_module,
+		       module.fs_info.auth_exportpath_xdev),
 
 	CONFIG_EOL
 };
@@ -106,28 +94,23 @@ struct config_block proxy_param_v4 = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.proxy",
 	.blk_desc.name = "PROXY_V4",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = proxyv4_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
-
 
 static fsal_status_t proxyv4_init_config(struct fsal_module *fsal_hdl,
 					 config_file_t config_struct,
 					 struct config_error_type *err_type)
 {
 	struct proxyv4_fsal_module *proxyv4 =
-	    container_of(fsal_hdl, struct proxyv4_fsal_module, module);
+		container_of(fsal_hdl, struct proxyv4_fsal_module, module);
 
-	(void) load_config_from_parse(config_struct,
-				      &proxy_param_v4,
-				      proxyv4,
-				      true,
-				      err_type);
+	(void)load_config_from_parse(config_struct, &proxy_param_v4, proxyv4,
+				     true, err_type);
 	if (!config_error_is_harmless(err_type))
 		return fsalstat(ERR_FSAL_INVAL, 0);
-
 
 	display_fsinfo(&proxyv4->module);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);

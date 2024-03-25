@@ -62,17 +62,17 @@ enum nfs_req_result nfs4_op_delegpurge(struct nfs_argop4 *op,
 {
 	/* Unused for now, but when we actually implement this function it
 	   won't be, so remove the attribute. */
-	DELEGPURGE4args * const arg_DELEGPURGE4 __attribute__ ((unused))
-	    = &op->nfs_argop4_u.opdelegpurge;
-	DELEGPURGE4res * const res_DELEGPURGE4 =
-	    &resp->nfs_resop4_u.opdelegpurge;
+	DELEGPURGE4args *const arg_DELEGPURGE4
+		__attribute__((unused)) = &op->nfs_argop4_u.opdelegpurge;
+	DELEGPURGE4res *const res_DELEGPURGE4 =
+		&resp->nfs_resop4_u.opdelegpurge;
 
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_DELEGPURGE;
 	res_DELEGPURGE4->status = NFS4ERR_NOTSUPP;
 
 	return NFS_REQ_ERROR;
-}				/* nfs4_op_delegpurge */
+} /* nfs4_op_delegpurge */
 
 /**
  * @brief Free memory allocated for DELEGPURGE result

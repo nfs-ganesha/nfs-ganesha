@@ -170,8 +170,8 @@ static const char *__cidr_pow2[] = {
 
 /* Powers of 2 minus two; hosts in a subnet with this many host bit */
 static const char *__cidr_pow2m2[] = {
-	"1",			/* Special */
-	"2",			/* Special */
+	"1", /* Special */
+	"2", /* Special */
 	"2",
 	"6",
 	"14",
@@ -301,4 +301,4 @@ static const char *__cidr_pow2m2[] = {
 	"340,282,366,920,938,463,463,374,607,431,768,211,454"
 };
 
-#endif				/* __LIBCIDR__POW2_P_H */
+#endif /* __LIBCIDR__POW2_P_H */

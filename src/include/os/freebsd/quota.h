@@ -28,8 +28,7 @@
 
 #include <ufs/ufs/quota.h>
 
-#define QUOTACTL(cmd, path, id, addr) \
-	quotactl(path, (cmd), id, (void *)addr)
+#define QUOTACTL(cmd, path, id, addr) quotactl(path, (cmd), id, (void *)addr)
 
 /*
  * kludge to account for differently named member variable
@@ -37,14 +36,14 @@
  * FreeBSD platforms
  */
 struct dqblk_os {
-	u_int64_t dqb_bhardlimit;	/* absolute limit on disk blks alloc */
-	u_int64_t dqb_bsoftlimit;	/* preferred limit on disk blks */
-	u_int64_t dqb_curspace;	/* current block count */
-	u_int64_t dqb_ihardlimit;	/* maximum # allocated inodes + 1 */
-	u_int64_t dqb_isoftlimit;	/* preferred inode limit */
-	u_int64_t dqb_curinodes;	/* current # allocated inodes */
-	int64_t dqb_btime;	/* time limit for excessive disk use */
-	int64_t dqb_itime;	/* time limit for excessive files */
+	u_int64_t dqb_bhardlimit; /* absolute limit on disk blks alloc */
+	u_int64_t dqb_bsoftlimit; /* preferred limit on disk blks */
+	u_int64_t dqb_curspace; /* current block count */
+	u_int64_t dqb_ihardlimit; /* maximum # allocated inodes + 1 */
+	u_int64_t dqb_isoftlimit; /* preferred inode limit */
+	u_int64_t dqb_curinodes; /* current # allocated inodes */
+	int64_t dqb_btime; /* time limit for excessive disk use */
+	int64_t dqb_itime; /* time limit for excessive files */
 };
 
 #if __FreeBSD_cc_version >= 800001

@@ -128,7 +128,7 @@ struct dupreq_entry {
 		uint32_t rq_vers;
 		uint32_t rq_proc;
 	} hin;
-	uint64_t hk;		/* hash key */
+	uint64_t hk; /* hash key */
 	bool complete;
 	uint32_t refcnt;
 	nfs_res_t *res;
@@ -175,8 +175,8 @@ void drc_release_tcp_drc(drc_t *);
 void nfs_dupreq_put_drc(drc_t *drc);
 
 dupreq_status_t nfs_dupreq_start(nfs_request_t *);
-void nfs_dupreq_finish(nfs_request_t *,  enum nfs_req_result);
-void nfs_dupreq_delete(nfs_request_t *,  enum nfs_req_result);
+void nfs_dupreq_finish(nfs_request_t *, enum nfs_req_result);
+void nfs_dupreq_delete(nfs_request_t *, enum nfs_req_result);
 void nfs_dupreq_rele(nfs_request_t *);
 
 #endif /* NFS_DUPREQ_H */

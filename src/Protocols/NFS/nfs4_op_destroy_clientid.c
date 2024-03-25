@@ -55,10 +55,10 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 					     compound_data_t *data,
 					     struct nfs_resop4 *resp)
 {
-	DESTROY_CLIENTID4args * const arg_DESTROY_CLIENTID4 =
-	    &op->nfs_argop4_u.opdestroy_clientid;
-	DESTROY_CLIENTID4res * const res_DESTROY_CLIENTID4 =
-	    &resp->nfs_resop4_u.opdestroy_clientid;
+	DESTROY_CLIENTID4args *const arg_DESTROY_CLIENTID4 =
+		&op->nfs_argop4_u.opdestroy_clientid;
+	DESTROY_CLIENTID4res *const res_DESTROY_CLIENTID4 =
+		&resp->nfs_resop4_u.opdestroy_clientid;
 	nfs_client_record_t *client_record = NULL;
 	nfs_client_id_t *conf = NULL, *unconf = NULL, *found = NULL;
 	clientid4 clientid;
@@ -70,12 +70,11 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 
 	if (isDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_clientid(&dspbuf, clientid);
 
-		LogDebug(COMPONENT_CLIENTID,
-			 "DESTROY_CLIENTID clientid=%s",
+		LogDebug(COMPONENT_CLIENTID, "DESTROY_CLIENTID clientid=%s",
 			 str);
 	}
 
@@ -115,21 +114,21 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 		goto out;
 	}
 
-	(void) inc_client_record_ref(client_record);
+	(void)inc_client_record_ref(client_record);
 
 	PTHREAD_MUTEX_lock(&client_record->cr_mutex);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_client_record(&dspbuf, client_record);
 
-		LogFullDebug(COMPONENT_CLIENTID,
-			     "Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
-			     str,
-			     client_record->cr_confirmed_rec,
-			     client_record->cr_unconfirmed_rec);
+		LogFullDebug(
+			COMPONENT_CLIENTID,
+			"Client Record %s cr_confirmed_rec=%p cr_unconfirmed_rec=%p",
+			str, client_record->cr_confirmed_rec,
+			client_record->cr_unconfirmed_rec);
 	}
 
 	/* per Frank, we must check the confirmed and unconfirmed
@@ -152,7 +151,7 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 		PTHREAD_MUTEX_lock(&conf->cid_mutex);
 		if (!glist_empty(&conf->cid_cb.v41.cb_session_list)) {
 			res_DESTROY_CLIENTID4->dcr_status =
-							NFS4ERR_CLIENTID_BUSY;
+				NFS4ERR_CLIENTID_BUSY;
 			PTHREAD_MUTEX_unlock(&conf->cid_mutex);
 			goto cleanup;
 		}
@@ -164,7 +163,8 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 		 */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, conf);
 
@@ -186,7 +186,8 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 		 */
 		if (isFullDebug(COMPONENT_CLIENTID)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
 			display_client_id_rec(&dspbuf, unconf);
 
@@ -198,15 +199,15 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 		(void)remove_unconfirmed_client_id(unconf);
 	}
 
- cleanup:
+cleanup:
 
 	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
-	dec_client_record_ref(client_record);	/* ref +0 */
+	dec_client_record_ref(client_record); /* ref +0 */
 
 	if (found != NULL)
 		dec_client_id_ref(found);
 
- out:
+out:
 
 	return nfsstat4_to_nfs_req_result(res_DESTROY_CLIENTID4->dcr_status);
 }

@@ -24,7 +24,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "gsh_rpc.h"
@@ -57,7 +57,7 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_attrlist setacl;
 	struct fsal_attrlist *attrs;
 	struct fsal_obj_handle *obj = NULL;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	int rc = NFS_REQ_OK;
 	int ret = 0;
 	bool is_dir = FALSE;
@@ -70,17 +70,15 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	memset(&setacl, 0, sizeof(setacl));
 
 	LogNFSACL_Operation(COMPONENT_NFSPROTO, req, &arg->arg_setacl.fhandle,
-			  "");
+			    "");
 
 	fsal_prepare_attrs(attrs, ATTRS_NFS3);
 
 	obj = nfs3_FhandleToCache(&arg->arg_setacl.fhandle,
-					&res->res_setacl.status,
-					&rc);
+				  &res->res_setacl.status, &rc);
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
-		LogFullDebug(COMPONENT_NFSPROTO,
-				 "nfs3_FhandleToCache failed");
+		LogFullDebug(COMPONENT_NFSPROTO, "nfs3_FhandleToCache failed");
 		goto out;
 	}
 
@@ -88,26 +86,23 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (obj->type == DIRECTORY)
 		is_dir = TRUE;
 
-	if (arg->arg_setacl.acl_access == NULL
-		&& (!is_dir || arg->arg_setacl.acl_default == NULL)) {
+	if (arg->arg_setacl.acl_access == NULL &&
+	    (!is_dir || arg->arg_setacl.acl_default == NULL)) {
 		res->res_setacl.status = NFS3ERR_INVAL;
 		rc = NFS_REQ_OK;
 		LogFullDebug(COMPONENT_FSAL,
-					"nfs3 setacl failed for invalid parameter");
+			     "nfs3 setacl failed for invalid parameter");
 		goto out;
 	}
 
 	/* Conversion to FSAL ACL */
-	ret = nfs3_acl_2_fsal_acl(&setacl,
-				arg->arg_setacl.mask,
-				arg->arg_setacl.acl_access,
-				arg->arg_setacl.acl_default,
-				is_dir);
+	ret = nfs3_acl_2_fsal_acl(&setacl, arg->arg_setacl.mask,
+				  arg->arg_setacl.acl_access,
+				  arg->arg_setacl.acl_default, is_dir);
 	if (ret) {
 		res->res_setacl.status = NFS3ERR_INVAL;
 		rc = NFS_REQ_OK;
-		LogFullDebug(COMPONENT_FSAL,
-				 "nfs3_acl_2_fsal_acl failed");
+		LogFullDebug(COMPONENT_FSAL, "nfs3_acl_2_fsal_acl failed");
 		goto out;
 	}
 
@@ -121,7 +116,7 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			res->res_setacl.status = NFS3ERR_JUKEBOX;
 			rc = NFS_REQ_OK;
 			LogFullDebug(COMPONENT_NFSPROTO,
-					 "nfs_in_grace is true");
+				     "nfs_in_grace is true");
 			goto out;
 		}
 
@@ -132,10 +127,8 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		nfs_put_grace_status();
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			res->res_setacl.status =
-				nfs3_Errno_status(fsal_status);
-			LogFullDebug(COMPONENT_NFSPROTO,
-					 "fsal_setacl failed");
+			res->res_setacl.status = nfs3_Errno_status(fsal_status);
+			LogFullDebug(COMPONENT_NFSPROTO, "fsal_setacl failed");
 			goto out_fail;
 		}
 	}
@@ -146,7 +139,7 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_setacl.status = nfs3_Errno_status(fsal_status);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			 "nfsacl_Setacl get attr failed");
+			     "nfsacl_Setacl get attr failed");
 
 		rc = NFS_REQ_OK;
 		goto out;
@@ -156,10 +149,10 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_setacl.status = NFS3_OK;
 	res->res_getacl.getaclres_u.resok.attr.attributes_follow = TRUE;
 	LogFullDebug(COMPONENT_NFSPROTO,
-		"nfsacl_Setacl set attributes_follow to TRUE");
+		     "nfsacl_Setacl set attributes_follow to TRUE");
 	rc = NFS_REQ_OK;
 
- out:
+out:
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&setacl);
@@ -168,13 +161,12 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (obj)
 		obj->obj_ops->put_ref(obj);
 
-	LogDebug(COMPONENT_NFSPROTO,
-		 "Set acl Result %s%s",
+	LogDebug(COMPONENT_NFSPROTO, "Set acl Result %s%s",
 		 nfsstat3_to_str(res->res_setacl.status),
 		 rc == NFS_REQ_DROP ? " Dropping response" : "");
 	return rc;
 
- out_fail:
+out_fail:
 
 	if (nfs_RetryableError(fsal_status.major)) {
 		/* Drop retryable request. */
@@ -184,8 +176,7 @@ int nfsacl_setacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	goto out;
 #else
 	return 0;
-#endif				/* USE_NFSACL3 */
-
+#endif /* USE_NFSACL3 */
 }
 
 /**
@@ -198,4 +189,3 @@ void nfsacl_setacl_Free(nfs_res_t *res)
 {
 	/* Nothing to do */
 }
-

@@ -103,13 +103,12 @@ static struct fsal_module *new_fsal;
  */
 
 static enum load_state {
-	init,		/*< In server start state. .init sections can run */
-	idle,		/*< Switch from init->idle early in main() */
-	loading,	/*< In dlopen(). set by load_fsal() just prior */
-	registered,	/*< signal by registration that all is well */
-	error		/*< signal by registration that all is not well */
+	init, /*< In server start state. .init sections can run */
+	idle, /*< Switch from init->idle early in main() */
+	loading, /*< In dlopen(). set by load_fsal() just prior */
+	registered, /*< signal by registration that all is well */
+	error /*< signal by registration that all is not well */
 } load_state = init;
-
 
 /**
  * @brief Start a static FSAL
@@ -149,7 +148,7 @@ static void load_fsal_static(const char *name, void (*init)(void))
 
 	/* we now finish things up, doing things the module can't see */
 
-	fsal = new_fsal;   /* recover handle from .ctor and poison again */
+	fsal = new_fsal; /* recover handle from .ctor and poison again */
 	new_fsal = NULL;
 	fsal->path = dl_path;
 	fsal->dl_handle = NULL;
@@ -175,9 +174,7 @@ static void *fsal_dummy_init(void *link_mem, void *self_struct)
 	}
 }
 
-static struct config_item fsal_dummy_params[] = {
-	CONFIG_EOL
-};
+static struct config_item fsal_dummy_params[] = { CONFIG_EOL };
 
 struct config_block fsal_dummy_block = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal",
@@ -189,12 +186,9 @@ struct config_block fsal_dummy_block = {
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
-static int fsal_name_adder(const char *token,
-			   enum term_type type_hint,
-			   struct config_item *item,
-			   void *param_addr,
-			   void *cnode,
-			   struct config_error_type *err_type)
+static int fsal_name_adder(const char *token, enum term_type type_hint,
+			   struct config_item *item, void *param_addr,
+			   void *cnode, struct config_error_type *err_type)
 {
 	int rc;
 	config_file_t myconfig = get_parse_root(cnode);
@@ -203,18 +197,15 @@ static int fsal_name_adder(const char *token,
 
 	fsal_dummy_block.blk_desc.name = (char *)token;
 
-	rc = load_config_from_parse(myconfig,
-				    &fsal_dummy_block,
-				    &dummy,
-				    false,
+	rc = load_config_from_parse(myconfig, &fsal_dummy_block, &dummy, false,
 				    err_type);
 
 	return rc < 0 ? rc : 0;
 }
 
 static struct config_item fsal_params[] = {
-	CONF_ITEM_PROC_MULT("Name", noop_conf_init, fsal_name_adder,
-			    dummy_fsal, dummy),
+	CONF_ITEM_PROC_MULT("Name", noop_conf_init, fsal_name_adder, dummy_fsal,
+			    dummy),
 	CONFIG_EOL
 };
 
@@ -222,7 +213,7 @@ struct config_block fsal_block = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal",
 	.blk_desc.name = "FSAL_LIST",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = fsal_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
@@ -235,18 +226,14 @@ struct config_block fsal_block = {
  * at this point as a check on dynamic loading not starting too early.
  */
 
-int start_fsals(config_file_t in_config,
-		struct config_error_type *err_type)
+int start_fsals(config_file_t in_config, struct config_error_type *err_type)
 {
 	int rc;
 
 	initialize_fsal_lock();
 	init_ctx_refstr();
 
-	rc = load_config_from_parse(in_config,
-				    &fsal_block,
-				    &dummy,
-				    false,
+	rc = load_config_from_parse(in_config, &fsal_block, &dummy, false,
 				    err_type);
 
 	if (rc < 0) {
@@ -293,22 +280,20 @@ static const char *pathfmt = "%s/libfsal%s.so";
  * @retval other general dlopen errors are possible, all of them bad
  */
 
-int load_fsal(const char *name,
-	      struct fsal_module **fsal_hdl_p)
+int load_fsal(const char *name, struct fsal_module **fsal_hdl_p)
 {
 	void *dl = NULL;
-	int retval = EBUSY;	/* already loaded */
+	int retval = EBUSY; /* already loaded */
 	char *dl_path;
 	struct fsal_module *fsal;
 	char *bp;
 	struct stat statbuf;
-	size_t size = strlen(nfs_param.core_param.ganesha_modules_loc)
-		      + strlen(name)
-		      + strlen(pathfmt) + 1;
+	size_t size = strlen(nfs_param.core_param.ganesha_modules_loc) +
+		      strlen(name) + strlen(pathfmt) + 1;
 	char *path = alloca(size);
 
-	(void) snprintf(path, size, pathfmt,
-			nfs_param.core_param.ganesha_modules_loc, name);
+	(void)snprintf(path, size, pathfmt,
+		       nfs_param.core_param.ganesha_modules_loc, name);
 	bp = rindex(path, '/');
 	bp++; /* now it is the basename, lcase it */
 	while (*bp != '\0') {
@@ -348,14 +333,14 @@ int load_fsal(const char *name,
 	PTHREAD_MUTEX_lock(&fsal_lock);
 	if (dl == NULL) {
 		dl_error = dlerror();
-		LogFatal(COMPONENT_INIT,
-			 "Could not dlopen module: %s Error: %s. You might want to install the nfs-ganesha-%s package",
-			 path, dl_error, name);
+		LogFatal(
+			COMPONENT_INIT,
+			"Could not dlopen module: %s Error: %s. You might want to install the nfs-ganesha-%s package",
+			path, dl_error, name);
 	}
-	dlerror();	/* clear it */
+	dlerror(); /* clear it */
 
-/* now it is the module's turn to register itself */
-
+	/* now it is the module's turn to register itself */
 
 	if (load_state == loading) {
 		/* constructor didn't fire */
@@ -381,12 +366,12 @@ int load_fsal(const char *name,
 		}
 		PTHREAD_MUTEX_unlock(&fsal_lock);
 
-		(*module_init) ();	/* try registering by hand this time */
+		(*module_init)(); /* try registering by hand this time */
 
 		PTHREAD_MUTEX_lock(&fsal_lock);
 	}
-	if (load_state == error) {	/* we are in registration hell */
-		retval = so_error;	/* this is the registration error */
+	if (load_state == error) { /* we are in registration hell */
+		retval = so_error; /* this is the registration error */
 		LogCrit(COMPONENT_INIT,
 			"Could not execute symbol fsal_init from module:%s Error:%s",
 			path, dl_error);
@@ -400,17 +385,16 @@ int load_fsal(const char *name,
 		goto dlerr;
 	}
 
-/* we now finish things up, doing things the module can't see */
+	/* we now finish things up, doing things the module can't see */
 
-	fsal = new_fsal;   /* recover handle from .ctor and poison again */
+	fsal = new_fsal; /* recover handle from .ctor and poison again */
 	new_fsal = NULL;
 
 	/* take initial ref so we can pass it back... */
 	fsal_get(fsal);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s fsal_refcount %"PRIu32,
-		     name, atomic_fetch_int32_t(&fsal->refcount));
+	LogFullDebug(COMPONENT_FSAL, "FSAL %s fsal_refcount %" PRIu32, name,
+		     atomic_fetch_int32_t(&fsal->refcount));
 
 	fsal->path = dl_path;
 	fsal->dl_handle = dl;
@@ -425,8 +409,7 @@ dlerr:
 errout:
 	load_state = idle;
 	PTHREAD_MUTEX_unlock(&fsal_lock);
-	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s",
-		 path,
+	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s", path,
 		 strerror(retval));
 	gsh_free(dl_path);
 	return retval;
@@ -450,15 +433,15 @@ struct fsal_module *lookup_fsal(const char *name)
 	struct glist_head *entry;
 
 	PTHREAD_MUTEX_lock(&fsal_lock);
-	glist_for_each(entry, &fsal_list) {
+	glist_for_each(entry, &fsal_list)
+	{
 		fsal = glist_entry(entry, struct fsal_module, fsals);
 		if (strcasecmp(name, fsal->name) == 0) {
 			fsal_get(fsal);
 			PTHREAD_MUTEX_unlock(&fsal_lock);
 			op_ctx->fsal_module = fsal;
 			LogFullDebug(COMPONENT_FSAL,
-				     "FSAL %s fsal_refcount %"PRIu32,
-				     name,
+				     "FSAL %s fsal_refcount %" PRIu32, name,
 				     atomic_fetch_int32_t(&fsal->refcount));
 			return fsal;
 		}
@@ -499,14 +482,13 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 		  uint8_t fsal_id)
 {
 	PTHREAD_MUTEX_lock(&fsal_lock);
-	if ((major_version != FSAL_MAJOR_VERSION)
-	    || (minor_version > FSAL_MINOR_VERSION)) {
+	if ((major_version != FSAL_MAJOR_VERSION) ||
+	    (minor_version > FSAL_MINOR_VERSION)) {
 		so_error = EINVAL;
 		LogCrit(COMPONENT_INIT,
 			"FSAL \"%s\" failed to register because of version mismatch core = %d.%d, fsal = %d.%d",
-			name,
-			FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION, major_version,
-			minor_version);
+			name, FSAL_MAJOR_VERSION, FSAL_MINOR_VERSION,
+			major_version, minor_version);
 		load_state = error;
 		goto errout;
 	}
@@ -540,7 +522,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 	return 0;
 
- errout:
+errout:
 
 	gsh_free(fsal_hdl->path);
 	gsh_free(fsal_hdl->name);
@@ -602,8 +584,7 @@ void *fsal_init(void *link_mem, void *self_struct)
 	} else if (self_struct == NULL) {
 		void *args = gsh_calloc(1, sizeof(struct fsal_args));
 
-		LogFullDebug(COMPONENT_CONFIG,
-			     "Allocating args %p/%p",
+		LogFullDebug(COMPONENT_CONFIG, "Allocating args %p/%p",
 			     link_mem, args);
 		return args;
 	} else {
@@ -637,8 +618,7 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 	fsal_status_t status;
 
 	if (name == NULL || strlen(name) == 0) {
-		config_proc_error(node, err_type,
-				  "Name of FSAL is missing");
+		config_proc_error(node, err_type, "Name of FSAL is missing");
 		err_type->missing = true;
 		return 1;
 	}
@@ -650,39 +630,38 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 
 		retval = load_fsal(name, fsal_hdl);
 		if (retval != 0) {
-			config_proc_error(node, err_type,
-					  "Failed to load FSAL (%s) because: %s",
-					  name,	strerror(retval));
+			config_proc_error(
+				node, err_type,
+				"Failed to load FSAL (%s) because: %s", name,
+				strerror(retval));
 			err_type->fsal = true;
 			return 1;
 		}
 		op_ctx->fsal_module = *fsal_hdl;
 		myconfig = get_parse_root(node);
-		status = (*fsal_hdl)->m_ops.init_config(*fsal_hdl,
-							myconfig, err_type);
+		status = (*fsal_hdl)->m_ops.init_config(*fsal_hdl, myconfig,
+							err_type);
 		if (FSAL_IS_ERROR(status)) {
 			config_proc_error(node, err_type,
 					  "Failed to initialize FSAL (%s)",
 					  name);
 			fsal_put(*fsal_hdl);
 			err_type->fsal = true;
-			LogFullDebug(COMPONENT_FSAL,
-				     "FSAL %s fsal_refcount %"PRIu32,
-				     name,
-				     atomic_fetch_int32_t(
-						&(*fsal_hdl)->refcount));
+			LogFullDebug(
+				COMPONENT_FSAL,
+				"FSAL %s fsal_refcount %" PRIu32, name,
+				atomic_fetch_int32_t(&(*fsal_hdl)->refcount));
 			return 1;
 		}
 	} else {
 		config_file_t myconfig;
 
 		myconfig = get_parse_root(node);
-		status = (*fsal_hdl)->m_ops.update_config(*fsal_hdl,
-							myconfig, err_type);
+		status = (*fsal_hdl)->m_ops.update_config(*fsal_hdl, myconfig,
+							  err_type);
 		if (FSAL_IS_ERROR(status)) {
 			config_proc_error(node, err_type,
-					  "Failed to update FSAL (%s)",
-					  name);
+					  "Failed to update FSAL (%s)", name);
 			return 0;
 		}
 	}

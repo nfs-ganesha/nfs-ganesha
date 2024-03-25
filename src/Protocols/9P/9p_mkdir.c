@@ -58,7 +58,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_qid qid_newdir;
 
 	struct fsal_obj_handle *pentry_newdir = NULL;
-	char dir_name[MAXNAMLEN+1];
+	char dir_name[MAXNAMLEN + 1];
 	fsal_status_t fsal_status;
 	struct fsal_attrlist sattr;
 
@@ -72,7 +72,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	LogDebug(COMPONENT_9P,
 		 "TMKDIR: tag=%u fid=%u name=%.*s mode=0%o gid=%u",
-		 (u32) *msgtag, *fid, *name_len, name_str, *mode, *gid);
+		 (u32)*msgtag, *fid, *name_len, name_str, *mode, *gid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -93,8 +93,7 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len >= sizeof(dir_name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(dir_name, *name_len, name_str);
@@ -113,9 +112,8 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_release_attrs(&sattr);
 
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	pentry_newdir->obj_ops->put_ref(pentry_newdir);
 
@@ -133,10 +131,11 @@ int _9p_mkdir(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
-		 (u32) *msgtag, *fid, *name_len, name_str, qid_newdir.type,
-		 qid_newdir.version, (unsigned long long)qid_newdir.path);
+	LogDebug(
+		COMPONENT_9P,
+		"RMKDIR: tag=%u fid=%u name=%.*s qid=(type=%u,version=%u,path=%llu)",
+		(u32)*msgtag, *fid, *name_len, name_str, qid_newdir.type,
+		qid_newdir.version, (unsigned long long)qid_newdir.path);
 
 	return 1;
 }

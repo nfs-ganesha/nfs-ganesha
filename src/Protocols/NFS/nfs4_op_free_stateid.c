@@ -67,10 +67,10 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 					 compound_data_t *data,
 					 struct nfs_resop4 *resp)
 {
-	FREE_STATEID4args * const arg_FREE_STATEID4 __attribute__ ((unused))
-	    = &op->nfs_argop4_u.opfree_stateid;
-	FREE_STATEID4res * const res_FREE_STATEID4 =
-	    &resp->nfs_resop4_u.opfree_stateid;
+	FREE_STATEID4args *const arg_FREE_STATEID4
+		__attribute__((unused)) = &op->nfs_argop4_u.opfree_stateid;
+	FREE_STATEID4res *const res_FREE_STATEID4 =
+		&resp->nfs_resop4_u.opfree_stateid;
 	state_t *state;
 	struct saved_export_context saved;
 	struct gsh_export *export;
@@ -83,15 +83,9 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	res_FREE_STATEID4->fsr_status =
-	    nfs4_Check_Stateid(&arg_FREE_STATEID4->fsa_stateid,
-			       NULL,
-			       &state,
-			       data,
-			       STATEID_SPECIAL_CURRENT,
-			       0,
-			       false,
-			       "FREE_STATEID");
+	res_FREE_STATEID4->fsr_status = nfs4_Check_Stateid(
+		&arg_FREE_STATEID4->fsa_stateid, NULL, &state, data,
+		STATEID_SPECIAL_CURRENT, 0, false, "FREE_STATEID");
 
 	if (res_FREE_STATEID4->fsr_status != NFS4_OK)
 		return NFS_REQ_ERROR;
@@ -129,7 +123,7 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 
 	return nfsstat4_to_nfs_req_result(res_FREE_STATEID4->fsr_status);
 
-}				/* nfs41_op_free_stateid */
+} /* nfs41_op_free_stateid */
 
 /**
  * @brief free memory allocated for FREE_STATEID result

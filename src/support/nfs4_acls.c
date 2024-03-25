@@ -171,14 +171,14 @@ fsal_acl_t *nfs4_acl_new_entry(fsal_acl_data_t *acldata,
 	acl = nfs4_acl_alloc();
 	acl->naces = acldata->naces;
 	acl->aces = acldata->aces;
-	acl->ref = 1;		/* We give out one reference */
+	acl->ref = 1; /* We give out one reference */
 
 	/* Build the value */
 	value.addr = acl;
 	value.len = sizeof(fsal_acl_t);
 
-	rc = hashtable_setlatched(fsal_acl_hash, &key, &value, &latch,
-				  false, NULL, NULL);
+	rc = hashtable_setlatched(fsal_acl_hash, &key, &value, &latch, false,
+				  NULL, NULL);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		/* Put the entry back in its pool */
@@ -236,8 +236,8 @@ void nfs4_acl_release_entry(fsal_acl_t *acl)
 		}
 
 		/* use the key to delete the entry */
-		hashtable_deletelatched(fsal_acl_hash, &key, &latch,
-					&old_key, &old_value);
+		hashtable_deletelatched(fsal_acl_hash, &key, &latch, &old_key,
+					&old_value);
 
 		/* Release the latch */
 		hashtable_releaselatched(fsal_acl_hash, &latch);

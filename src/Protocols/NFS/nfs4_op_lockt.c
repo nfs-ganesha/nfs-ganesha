@@ -62,9 +62,9 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 				  struct nfs_resop4 *resp)
 {
 	/* Alias for arguments */
-	LOCKT4args * const arg_LOCKT4 = &op->nfs_argop4_u.oplockt;
+	LOCKT4args *const arg_LOCKT4 = &op->nfs_argop4_u.oplockt;
 	/* Alias for response */
-	LOCKT4res * const res_LOCKT4 = &resp->nfs_resop4_u.oplockt;
+	LOCKT4res *const res_LOCKT4 = &resp->nfs_resop4_u.oplockt;
 	/* Return code from state calls */
 	state_status_t state_status = STATE_SUCCESS;
 	/* Client id record */
@@ -76,16 +76,16 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	/* Owner of conflicting lock */
 	state_owner_t *conflict_owner = NULL;
 	/* Description of lock to test */
-	fsal_lock_param_t lock_desc = {
-				FSAL_POSIX_LOCK, FSAL_NO_LOCK, 0, 0, false };
+	fsal_lock_param_t lock_desc = { FSAL_POSIX_LOCK, FSAL_NO_LOCK, 0, 0,
+					false };
 	/* Description of conflicting lock */
 	fsal_lock_param_t conflict_desc;
 	/* return code from id confirm calls */
 	int rc;
 	/* stateid if available matching owner and entry */
 	state_t *state;
-	uint64_t maxfilesize =
-	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
+	uint64_t maxfilesize = op_ctx->fsal_export->exp_ops.fs_maxfilesize(
+		op_ctx->fsal_export);
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCKT handler ----------------------------");
@@ -97,7 +97,6 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (res_LOCKT4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
-
 
 	/* Lock length should not be 0 */
 	if (arg_LOCKT4->length == 0LL) {
@@ -122,8 +121,7 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		lock_desc.lock_type = FSAL_LOCK_W;
 		break;
 	default:
-		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "Invalid lock type");
+		LogDebug(COMPONENT_NFS_V4_LOCK, "Invalid lock type");
 		res_LOCKT4->status = NFS4ERR_INVAL;
 		goto out;
 	}
@@ -144,8 +142,8 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	    (STATE_LOCK_OFFSET_EOF - lock_desc.lock_start)) {
 		res_LOCKT4->status = NFS4ERR_INVAL;
 		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "LOCK failed length overflow start %"PRIx64
-			 " length %"PRIx64,
+			 "LOCK failed length overflow start %" PRIx64
+			 " length %" PRIx64,
 			 lock_desc.lock_start, lock_desc.lock_length);
 		goto out;
 	}
@@ -158,17 +156,17 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (lock_desc.lock_length > (maxfilesize - lock_desc.lock_start)) {
 		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "LOCK past maxfilesize %"PRIx64" start %"PRIx64
-			 " length %"PRIx64,
-			 maxfilesize,
-			 lock_desc.lock_start, lock_desc.lock_length);
+			 "LOCK past maxfilesize %" PRIx64 " start %" PRIx64
+			 " length %" PRIx64,
+			 maxfilesize, lock_desc.lock_start,
+			 lock_desc.lock_length);
 		lock_desc.lock_length = 0;
 	}
 
 	/* Check clientid */
 	rc = nfs_client_id_get_confirmed(data->minorversion == 0 ?
-						arg_LOCKT4->owner.clientid :
-						data->session->clientid,
+						 arg_LOCKT4->owner.clientid :
+						 data->session->clientid,
 					 &clientid);
 
 	if (rc != CLIENT_ID_SUCCESS) {
@@ -186,12 +184,8 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	convert_nfs4_lock_owner(&arg_LOCKT4->owner, &owner_name);
 
 	/* This lock owner is not known yet, allocated and set up a new one */
-	lock_owner = create_nfs4_owner(&owner_name,
-				       clientid,
-				       STATE_LOCK_OWNER_NFSV4,
-				       NULL,
-				       0,
-				       NULL,
+	lock_owner = create_nfs4_owner(&owner_name, clientid,
+				       STATE_LOCK_OWNER_NFSV4, NULL, 0, NULL,
 				       CARE_ALWAYS, true);
 
 	LogStateOwner("Lock: ", lock_owner);
@@ -208,7 +202,7 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		op_ctx->clientid =
-		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
+			&lock_owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
 	/* Get the stateid, if any, related to this entry and owner */
@@ -218,12 +212,8 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	 * the lock in SAL (and FSAL).
 	 */
 
-	state_status = state_test(data->current_obj,
-				  state,
-				  lock_owner,
-				  &lock_desc,
-				  &conflict_owner,
-				  &conflict_desc);
+	state_status = state_test(data->current_obj, state, lock_owner,
+				  &lock_desc, &conflict_owner, &conflict_desc);
 
 	if (state_status == STATE_LOCK_CONFLICT) {
 		/* A conflicting lock from a different lock_owner,
@@ -232,10 +222,8 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 		LogStateOwner("Conflict: ", conflict_owner);
 
 		res_LOCKT4->status = Process_nfs4_conflict(
-						&res_LOCKT4->LOCKT4res_u.denied,
-						conflict_owner,
-						&conflict_desc,
-						data);
+			&res_LOCKT4->LOCKT4res_u.denied, conflict_owner,
+			&conflict_desc, data);
 	} else {
 		/* Return result */
 		res_LOCKT4->status = nfs4_Errno_state(state_status);
@@ -265,7 +253,7 @@ out_clientid:
 out:
 	nfs_put_grace_status();
 	return nfsstat4_to_nfs_req_result(res_LOCKT4->status);
-}				/* nfs4_op_lockt */
+} /* nfs4_op_lockt */
 
 /**
  * @brief Free memory allocated for LOCKT result
@@ -281,4 +269,4 @@ void nfs4_op_lockt_Free(nfs_resop4 *res)
 
 	if (resp->status == NFS4ERR_DENIED)
 		Release_nfs4_denied(&resp->LOCKT4res_u.denied);
-}				/* nfs4_op_lockt_Free */
+} /* nfs4_op_lockt_Free */

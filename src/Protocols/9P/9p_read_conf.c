@@ -38,12 +38,12 @@
 struct _9p_param _9p_param;
 
 static struct config_item _9p_params[] = {
-	CONF_ITEM_UI32("Nb_Worker", 1, 1024*128, NB_WORKER_THREAD_DEFAULT,
+	CONF_ITEM_UI32("Nb_Worker", 1, 1024 * 128, NB_WORKER_THREAD_DEFAULT,
 		       _9p_param, nb_worker),
-	CONF_ITEM_UI16("_9P_TCP_Port", 1, UINT16_MAX, _9P_TCP_PORT,
-		       _9p_param, _9p_tcp_port),
-	CONF_ITEM_UI16("_9P_RDMA_Port", 1, UINT16_MAX, _9P_RDMA_PORT,
-		       _9p_param, _9p_rdma_port),
+	CONF_ITEM_UI16("_9P_TCP_Port", 1, UINT16_MAX, _9P_TCP_PORT, _9p_param,
+		       _9p_tcp_port),
+	CONF_ITEM_UI16("_9P_RDMA_Port", 1, UINT16_MAX, _9P_RDMA_PORT, _9p_param,
+		       _9p_rdma_port),
 	CONF_ITEM_UI32("_9P_TCP_Msize", 1024, UINT32_MAX, _9P_TCP_MSIZE,
 		       _9p_param, _9p_tcp_msize),
 	CONF_ITEM_UI32("_9P_RDMA_Msize", 1024, UINT32_MAX, _9P_RDMA_MSIZE,
@@ -53,8 +53,7 @@ static struct config_item _9p_params[] = {
 	CONF_ITEM_UI16("_9P_RDMA_Inpool_size", 1, UINT16_MAX,
 		       _9P_RDMA_INPOOL_SIZE, _9p_param, _9p_rdma_inpool_size),
 	CONF_ITEM_UI16("_9P_RDMA_Outpool_Size", 1, UINT16_MAX,
-		       _9P_RDMA_OUTPOOL_SIZE,
-		       _9p_param, _9p_rdma_outpool_size),
+		       _9P_RDMA_OUTPOOL_SIZE, _9p_param, _9p_rdma_outpool_size),
 	CONFIG_EOL
 };
 
@@ -70,7 +69,7 @@ struct config_block _9p_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.9p",
 	.blk_desc.name = "_9P",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = _9p_param_init,
 	.blk_desc.u.blk.params = _9p_params,
 	.blk_desc.u.blk.commit = noop_conf_commit

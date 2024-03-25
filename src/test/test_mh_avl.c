@@ -51,7 +51,7 @@ typedef struct avl_unit_val {
 	struct avltree_node node_hk;
 	struct {
 		uint64_t k;
-		uint32_t p;	/* nprobes , eff. metric */
+		uint32_t p; /* nprobes , eff. metric */
 	} hk;
 	char *name;
 	uint64_t fsal_cookie;
@@ -167,32 +167,93 @@ static avl_unit_val_t *qp_avl_lookup_s(struct avltree *t, avl_unit_val_t *v,
 
 static struct dir_data {
 	char *name;
-} dir_data[] = {
-	{ ".gitignore" }, { "Makefile" }, { "Makefile.gate" }, { "acpi-ext.c" },
-	{ "acpi-processor.c" }, { "acpi.c" }, { "asm-offsets.c" },
-	{ "audit.c" }, { "brl_emu.c" }, { "cpufreq" }, { "crash.c" },
-	{ "crash_dump.c" }, { "cyclone.c" }, { "dma-mapping.c" }, { "efi.c" },
-	{ "efi_stub.S" }, { "entry.S" }, { "entry.h" }, { "err_inject.c" },
-	{ "esi.c" }, { "esi_stub.S" }, { "fsys.S" },
-	{ "fsyscall_gtod_data.h" }, { "ftrace.c" }, { "gate-data.S" },
-	{ "gate.S" }, { "gate.lds.S" }, { "head.S" }, { "ia64_ksyms.c" },
-	{ "init_task.c" }, { "iosapic.c" }, { "irq.c" }, { "irq_ia64.c" },
-	{ "irq_lsapic.c" }, { "ivt.S" }, { "jprobes.S" }, { "kprobes.c" },
-	{ "machine_kexec.c" }, { "machvec.c" }, { "mca.c" }, { "mca_asm.S" },
-	{ "mca_drv.c" }, { "mca_drv.h" }, { "mca_drv_asm.S" }, { "minstate.h" },
-	{ "module.c" }, { "msi_ia64.c" }, { "nr-irqs.c" }, { "numa.c" },
-	{ "pal.S" }, { "palinfo.c" }, { "paravirt.c" }, { "paravirt_inst.h" },
-	{ "paravirt_patch.c" }, { "paravirt_patchlist.c" },
-	{ "paravirt_patchlist.h" }, { "paravirtentry.S" }, { "patch.c" },
-	{ "pci-dma.c" }, { "pci-swiotlb.c" }, { "perfmon.c" },
-	{ "perfmon_default_smpl.c" }, { "perfmon_generic.h" },
-	{ "perfmon_itanium.h" }, { "perfmon_mckinley.h" },
-	{ "perfmon_montecito.h" }, { "process.c" }, { "ptrace.c" },
-	{ "relocate_kernel.S" }, { "sal.c" }, { "salinfo.c" }, { "setup.c" },
-	{ "sigframe.h" }, { "signal.c" }, { "smp.c" }, { "smpboot.c" },
-	{ "sys_ia64.c" }, { "time.c" }, { "topology.c" }, { "traps.c" },
-	{ "unaligned.c" }, { "uncached.c" }, { "unwind.c" },
-	{ "unwind_decoder.c" }, { "unwind_i.h" }, { "vmlinux.lds.S" }, { 0 } };
+} dir_data[] = { { ".gitignore" },
+		 { "Makefile" },
+		 { "Makefile.gate" },
+		 { "acpi-ext.c" },
+		 { "acpi-processor.c" },
+		 { "acpi.c" },
+		 { "asm-offsets.c" },
+		 { "audit.c" },
+		 { "brl_emu.c" },
+		 { "cpufreq" },
+		 { "crash.c" },
+		 { "crash_dump.c" },
+		 { "cyclone.c" },
+		 { "dma-mapping.c" },
+		 { "efi.c" },
+		 { "efi_stub.S" },
+		 { "entry.S" },
+		 { "entry.h" },
+		 { "err_inject.c" },
+		 { "esi.c" },
+		 { "esi_stub.S" },
+		 { "fsys.S" },
+		 { "fsyscall_gtod_data.h" },
+		 { "ftrace.c" },
+		 { "gate-data.S" },
+		 { "gate.S" },
+		 { "gate.lds.S" },
+		 { "head.S" },
+		 { "ia64_ksyms.c" },
+		 { "init_task.c" },
+		 { "iosapic.c" },
+		 { "irq.c" },
+		 { "irq_ia64.c" },
+		 { "irq_lsapic.c" },
+		 { "ivt.S" },
+		 { "jprobes.S" },
+		 { "kprobes.c" },
+		 { "machine_kexec.c" },
+		 { "machvec.c" },
+		 { "mca.c" },
+		 { "mca_asm.S" },
+		 { "mca_drv.c" },
+		 { "mca_drv.h" },
+		 { "mca_drv_asm.S" },
+		 { "minstate.h" },
+		 { "module.c" },
+		 { "msi_ia64.c" },
+		 { "nr-irqs.c" },
+		 { "numa.c" },
+		 { "pal.S" },
+		 { "palinfo.c" },
+		 { "paravirt.c" },
+		 { "paravirt_inst.h" },
+		 { "paravirt_patch.c" },
+		 { "paravirt_patchlist.c" },
+		 { "paravirt_patchlist.h" },
+		 { "paravirtentry.S" },
+		 { "patch.c" },
+		 { "pci-dma.c" },
+		 { "pci-swiotlb.c" },
+		 { "perfmon.c" },
+		 { "perfmon_default_smpl.c" },
+		 { "perfmon_generic.h" },
+		 { "perfmon_itanium.h" },
+		 { "perfmon_mckinley.h" },
+		 { "perfmon_montecito.h" },
+		 { "process.c" },
+		 { "ptrace.c" },
+		 { "relocate_kernel.S" },
+		 { "sal.c" },
+		 { "salinfo.c" },
+		 { "setup.c" },
+		 { "sigframe.h" },
+		 { "signal.c" },
+		 { "smp.c" },
+		 { "smpboot.c" },
+		 { "sys_ia64.c" },
+		 { "time.c" },
+		 { "topology.c" },
+		 { "traps.c" },
+		 { "unaligned.c" },
+		 { "uncached.c" },
+		 { "unwind.c" },
+		 { "unwind_decoder.c" },
+		 { "unwind_i.h" },
+		 { "vmlinux.lds.S" },
+		 { 0 } };
 
 void avl_unit_free_val(avl_unit_val_t *v)
 {
@@ -257,7 +318,6 @@ void avl_unit_PkgInit(void)
  */
 int init_suite1(void)
 {
-
 	avltree_init(&avl_tree_1, avl_unit_hk_cmpf, 0 /* flags */);
 
 	return 0;
@@ -409,29 +469,20 @@ int main(int argc, char *argv[])
 
 	/* General avl_tree test. */
 	CU_TestInfo avl_tree_unit_1_arr[] = {
-		{"Tree insertions 1.", inserts_tree_1}
-		,
-		{"Tree check 1.", check_tree_1}
-		,
-		{"Tree lookups 1.", lookups_tree_1}
-		,
-		{"Tree deletes 1.", deletes_tree_1}
-		,
-		{"Tree insertions 2.", inserts_tree_2}
-		,
-		{"Tree check 2.", check_tree_2}
-		,
-		{"Tree lookups 2.", lookups_tree_2}
-		,
-		{"Tree deletes 2.", deletes_tree_2}
-		,
+		{ "Tree insertions 1.", inserts_tree_1 },
+		{ "Tree check 1.", check_tree_1 },
+		{ "Tree lookups 1.", lookups_tree_1 },
+		{ "Tree deletes 1.", deletes_tree_1 },
+		{ "Tree insertions 2.", inserts_tree_2 },
+		{ "Tree check 2.", check_tree_2 },
+		{ "Tree lookups 2.", lookups_tree_2 },
+		{ "Tree deletes 2.", deletes_tree_2 },
 		CU_TEST_INFO_NULL,
 	};
 
 	CU_SuiteInfo suites[] = {
-		{"Rb tree operations 1", init_suite1, clean_suite1,
-		 avl_setup, avl_teardown, avl_tree_unit_1_arr}
-		,
+		{ "Rb tree operations 1", init_suite1, clean_suite1, avl_setup,
+		  avl_teardown, avl_tree_unit_1_arr },
 		CU_SUITE_INFO_NULL,
 	};
 

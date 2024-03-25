@@ -154,7 +154,7 @@ static void ng_remove(struct ng_cache_info *info, bool negative)
 	}
 }
 
- /* The caller must hold ng_lock for write */
+/* The caller must hold ng_lock for write */
 static void ng_add(const char *group, const char *host, bool negative)
 {
 	struct ng_cache_info *info;
@@ -166,9 +166,9 @@ static void ng_add(const char *group, const char *host, bool negative)
 		LogFatal(COMPONENT_IDMAPPER, "memory alloc failed");
 
 	info->ng_group.addr = gsh_strdup(group);
-	info->ng_group.len = strlen(group)+1;
+	info->ng_group.len = strlen(group) + 1;
 	info->ng_host.addr = gsh_strdup(host);
-	info->ng_host.len = strlen(host)+1;
+	info->ng_host.len = strlen(host) + 1;
 	info->ng_epoch = time(NULL);
 
 	if (negative) {
@@ -179,8 +179,8 @@ static void ng_add(const char *group, const char *host, bool negative)
 		 * entry, and free the current entry
 		 */
 		if (found_node) {
-			found_info = avltree_container_of(found_node,
-					struct ng_cache_info, ng_node);
+			found_info = avltree_container_of(
+				found_node, struct ng_cache_info, ng_node);
 			found_info->ng_epoch = info->ng_epoch;
 			ng_free(info);
 		}
@@ -192,8 +192,8 @@ static void ng_add(const char *group, const char *host, bool negative)
 		 * entry, and free the current entry
 		 */
 		if (found_node) {
-			found_info = avltree_container_of(found_node,
-					struct ng_cache_info, ng_node);
+			found_info = avltree_container_of(
+				found_node, struct ng_cache_info, ng_node);
 			ng_cache[ng_hash_key(found_info)] = found_node;
 			found_info->ng_epoch = info->ng_epoch;
 			ng_free(info);
@@ -206,12 +206,10 @@ static void ng_add(const char *group, const char *host, bool negative)
 /* The caller must hold ng_lock for read */
 static bool ng_lookup(const char *group, const char *host, bool negative)
 {
-	struct ng_cache_info prototype = {
-		.ng_group.addr = (char *)group,
-		.ng_group.len = strlen(group)+1,
-		.ng_host.addr = (char *)host,
-		.ng_host.len = strlen(host)+1
-	};
+	struct ng_cache_info prototype = { .ng_group.addr = (char *)group,
+					   .ng_group.len = strlen(group) + 1,
+					   .ng_host.addr = (char *)host,
+					   .ng_host.len = strlen(host) + 1 };
 	struct avltree_node *node;
 	struct ng_cache_info *info;
 	void **cache_slot;
@@ -303,9 +301,9 @@ bool ng_innetgr(const char *group, const char *host)
 	PTHREAD_RWLOCK_wrlock(&ng_lock);
 	rc = innetgr(group, host, NULL, NULL);
 	if (rc)
-		ng_add(group, host, false);	/* positive lookup */
+		ng_add(group, host, false); /* positive lookup */
 	else
-		ng_add(group, host, true);	/* negative lookup */
+		ng_add(group, host, true); /* negative lookup */
 	PTHREAD_RWLOCK_unlock(&ng_lock);
 
 	return rc;

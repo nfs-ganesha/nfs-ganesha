@@ -103,18 +103,13 @@ static inline int avl_dirent_sorted_cmpf(const struct avltree_node *lhs,
 	/* On create a dirent will not yet belong to a chunk, but only
 	 * one of the two nodes in comparison can not belong to a chunk.
 	 */
-	subcall(
-		if (lk->chunk != NULL)
+	subcall(if (lk->chunk != NULL)
 			rc = lk->chunk->parent->sub_handle->obj_ops->dirent_cmp(
-				lk->chunk->parent->sub_handle,
-				lk->name, lk->ck,
+				lk->chunk->parent->sub_handle, lk->name, lk->ck,
 				rk->name, rk->ck);
-		else
-			rc = rk->chunk->parent->sub_handle->obj_ops->dirent_cmp(
-				rk->chunk->parent->sub_handle,
-				lk->name, lk->ck,
-				rk->name, rk->ck)
-	       );
+		else rc = rk->chunk->parent->sub_handle->obj_ops->dirent_cmp(
+			rk->chunk->parent->sub_handle, lk->name, lk->ck,
+			rk->name, rk->ck));
 
 	return rc;
 }
@@ -132,6 +127,6 @@ mdcache_dir_entry_t *mdcache_avl_lookup(mdcache_entry_t *entry,
 void mdcache_avl_clean_trees(mdcache_entry_t *parent);
 
 void unchunk_dirent(mdcache_dir_entry_t *dirent);
-#endif				/* MDCACHE_AVL_H */
+#endif /* MDCACHE_AVL_H */
 
 /** @} */

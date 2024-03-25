@@ -58,7 +58,6 @@ fsal_status_t rgw2fsal_error(const int rgw_errorcode)
 	status.minor = -rgw_errorcode;
 
 	switch (-rgw_errorcode) {
-
 	case 0:
 		status.major = ERR_FSAL_NO_ERROR;
 		break;
@@ -186,10 +185,8 @@ fsal_status_t rgw2fsal_error(const int rgw_errorcode)
  * @return 0 on success, negative error codes on failure.
  */
 
-int construct_handle(struct rgw_export *export,
-		     struct rgw_file_handle *rgw_fh,
-		     struct stat *st,
-		     struct rgw_handle **obj)
+int construct_handle(struct rgw_export *export, struct rgw_file_handle *rgw_fh,
+		     struct stat *st, struct rgw_handle **obj)
 
 {
 	/* Pointer to the handle under construction */

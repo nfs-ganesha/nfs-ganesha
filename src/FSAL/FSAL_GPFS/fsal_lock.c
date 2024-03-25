@@ -37,10 +37,11 @@
 #include "fsal_convert.h"
 #include "gpfs_methods.h"
 
-fsal_status_t
-GPFSFSAL_lock_op(struct fsal_export *export, fsal_lock_op_t lock_op,
-		 fsal_lock_param_t *req_lock, fsal_lock_param_t *confl_lock,
-		 struct set_get_lock_arg *sg_lock_arg)
+fsal_status_t GPFSFSAL_lock_op(struct fsal_export *export,
+			       fsal_lock_op_t lock_op,
+			       fsal_lock_param_t *req_lock,
+			       fsal_lock_param_t *confl_lock,
+			       struct set_get_lock_arg *sg_lock_arg)
 {
 	struct glock *glock = sg_lock_arg->lock;
 	int retval;
@@ -101,8 +102,8 @@ err_out:
 	}
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "GPFS lock operation failed error %d %d (%s)",
-		     retval, errsv, strerror(errsv));
+		     "GPFS lock operation failed error %d %d (%s)", retval,
+		     errsv, strerror(errsv));
 
 	if (errsv == EUNATCH)
 		LogFatal(COMPONENT_FSAL, "GPFS Returned EUNATCH");

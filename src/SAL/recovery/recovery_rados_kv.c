@@ -35,7 +35,7 @@
 #include "recovery_rados.h"
 #include <urcu-bp.h>
 
-#define MAX_ITEMS		1024		/* relaxed */
+#define MAX_ITEMS 1024 /* relaxed */
 
 static rados_t clnt;
 rados_ioctx_t rados_recov_io_ctx;
@@ -45,18 +45,18 @@ struct gsh_refstr *rados_recov_old_oid;
 struct rados_kv_parameter rados_kv_param;
 
 static struct config_item rados_kv_params[] = {
-	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
-		       rados_kv_parameter, ceph_conf),
-	CONF_ITEM_STR("userid", 1, MAXPATHLEN, NULL,
-		       rados_kv_parameter, userid),
+	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL, rados_kv_parameter,
+		       ceph_conf),
+	CONF_ITEM_STR("userid", 1, MAXPATHLEN, NULL, rados_kv_parameter,
+		      userid),
 	CONF_ITEM_STR("pool", 1, MAXPATHLEN, DEFAULT_RADOS_GRACE_POOL,
-		       rados_kv_parameter, pool),
-	CONF_ITEM_STR("namespace", 1, NI_MAXHOST, NULL,
-			rados_kv_parameter, namespace),
+		      rados_kv_parameter, pool),
+	CONF_ITEM_STR("namespace", 1, NI_MAXHOST, NULL, rados_kv_parameter,
+		      namespace),
 	CONF_ITEM_STR("grace_oid", 1, NI_MAXHOST, DEFAULT_RADOS_GRACE_OID,
-		       rados_kv_parameter, grace_oid),
+		      rados_kv_parameter, grace_oid),
 	CONF_ITEM_STR("nodeid", 1, NI_MAXHOST, NULL, rados_kv_parameter,
-			nodeid),
+		      nodeid),
 	CONFIG_EOL
 };
 
@@ -72,16 +72,14 @@ struct config_block rados_kv_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.rados_kv",
 	.blk_desc.name = "RADOS_KV",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = rados_kv_param_init,
 	.blk_desc.u.blk.params = rados_kv_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
 };
 
-static int convert_opaque_val(struct display_buffer *dspbuf,
-			      void *value,
-			      int len,
-			      int max)
+static int convert_opaque_val(struct display_buffer *dspbuf, void *value,
+			      int len, int max)
 {
 	unsigned int i = 0;
 	int b_left = display_start(dspbuf);
@@ -128,7 +126,7 @@ char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 	int src_len = clientid->cid_client_record->cr_client_val_len;
 	const char *str_client_addr = "(unknown)";
 	char cidstr[PATH_MAX] = { 0, }, *val;
-	struct display_buffer dspbuf = {sizeof(cidstr), cidstr, cidstr};
+	struct display_buffer dspbuf = { sizeof(cidstr), cidstr, cidstr };
 	char cidstr_lenx[5];
 	int total_len, cidstr_len, cidstr_lenx_len, str_client_addr_len;
 	int ret;
@@ -145,8 +143,8 @@ char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 
 	cidstr_len = display_buffer_len(&dspbuf);
 
-	cidstr_lenx_len = snprintf(cidstr_lenx, sizeof(cidstr_lenx), "%d",
-				   cidstr_len);
+	cidstr_lenx_len =
+		snprintf(cidstr_lenx, sizeof(cidstr_lenx), "%d", cidstr_len);
 
 	if (unlikely(cidstr_lenx_len >= sizeof(cidstr_lenx) ||
 		     cidstr_lenx_len < 0)) {
@@ -154,8 +152,8 @@ char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *size)
 		 * 4 characters plus NUL are necessary, so we won't
 		 * overrun, nor can we get a -1 with EOVERFLOW or EINVAL
 		 */
-		LogFatal(COMPONENT_CLIENTID,
-			 "snprintf returned unexpected %d", cidstr_lenx_len);
+		LogFatal(COMPONENT_CLIENTID, "snprintf returned unexpected %d",
+			 cidstr_lenx_len);
 	}
 
 	lsize = str_client_addr_len + 2 + cidstr_lenx_len + 1 + cidstr_len + 2;
@@ -195,14 +193,14 @@ int rados_kv_put(char *key, char *val, char *object)
 	lens[0] = strlen(val);
 	write_op = rados_create_write_op();
 
-	rados_write_op_omap_set(write_op, (const char * const*)keys,
-					  (const char * const*)vals, lens, 1);
-	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object,
-				     NULL, 0);
+	rados_write_op_omap_set(write_op, (const char *const *)keys,
+				(const char *const *)vals, lens, 1);
+	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object, NULL,
+				     0);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to put kv ret=%d, key=%s, val=%s",
-			 ret, key, val);
+			 "Failed to put kv ret=%d, key=%s, val=%s", ret, key,
+			 val);
 	}
 	rados_release_write_op(write_op);
 
@@ -222,26 +220,24 @@ int rados_kv_get(char *key, char *val, char *object)
 	keys[0] = key;
 	read_op = rados_create_read_op();
 
-	rados_read_op_omap_get_vals_by_keys(read_op, (const char * const*)keys,
+	rados_read_op_omap_get_vals_by_keys(read_op, (const char *const *)keys,
 					    1, &iter_vals, NULL);
 	ret = rados_read_op_operate(read_op, rados_recov_io_ctx, object, 0);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to get kv ret=%d, key=%s",
+		LogEvent(COMPONENT_CLIENTID, "Failed to get kv ret=%d, key=%s",
 			 ret, key);
 		goto out;
 	}
 
 	ret = rados_omap_get_next(iter_vals, &key_out, &val_out, &val_len_out);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to get kv ret=%d, key=%s",
+		LogEvent(COMPONENT_CLIENTID, "Failed to get kv ret=%d, key=%s",
 			 ret, key);
 		goto out;
 	}
 
 	/* All internal so buffer length is known to be ok */
-	memcpy(val, val_out, val_len_out+1);
+	memcpy(val, val_out, val_len_out + 1);
 	LogDebug(COMPONENT_CLIENTID, "%s: key=%s val=%s", __func__, key, val);
 	rados_omap_get_end(iter_vals);
 out:
@@ -258,12 +254,11 @@ static int rados_kv_del(char *key, char *object)
 	keys[0] = key;
 	write_op = rados_create_write_op();
 
-	rados_write_op_omap_rm_keys(write_op, (const char * const*)keys, 1);
-	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object,
-				     NULL, 0);
+	rados_write_op_omap_rm_keys(write_op, (const char *const *)keys, 1);
+	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object, NULL,
+				     0);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to del kv ret=%d, key=%s",
+		LogEvent(COMPONENT_CLIENTID, "Failed to del kv ret=%d, key=%s",
 			 ret, key);
 	}
 	rados_release_write_op(write_op);
@@ -272,7 +267,7 @@ static int rados_kv_del(char *key, char *object)
 }
 
 int rados_kv_traverse(pop_clid_entry_t callback, struct pop_args *args,
-			const char *object)
+		      const char *object)
 {
 	int ret;
 	char *key_out = NULL;
@@ -289,8 +284,7 @@ again:
 				     (unsigned char *)&pmore, NULL);
 	ret = rados_read_op_operate(read_op, rados_recov_io_ctx, object, 0);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to lst kv ret=%d", ret);
+		LogEvent(COMPONENT_CLIENTID, "Failed to lst kv ret=%d", ret);
 		goto out;
 	}
 
@@ -334,11 +328,8 @@ static void rados_kv_append_val_rdfh(char *val, char *rdfh, int rdfh_len)
 int rados_load_config_from_parse(config_file_t parse_tree,
 				 struct config_error_type *err_type)
 {
-	(void) load_config_from_parse(parse_tree,
-				      &rados_kv_param_blk,
-				      NULL,
-				      true,
-				      err_type);
+	(void)load_config_from_parse(parse_tree, &rados_kv_param_blk, NULL,
+				     true, err_type);
 	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing RadosKV specific configuration");
@@ -349,7 +340,7 @@ int rados_load_config_from_parse(config_file_t parse_tree,
 }
 
 int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
-			const char *conf, const char *pool, const char *ns)
+		     const char *conf, const char *pool, const char *ns)
 {
 	int ret;
 
@@ -419,8 +410,8 @@ int rados_kv_init(void)
 		ret = snprintf(host, sizeof(host), "node%d", g_nodeid);
 
 		if (unlikely(ret >= sizeof(host))) {
-			LogCrit(COMPONENT_CLIENTID,
-				"node%d too long", g_nodeid);
+			LogCrit(COMPONENT_CLIENTID, "node%d too long",
+				g_nodeid);
 			return -ENAMETOOLONG;
 		} else if (unlikely(ret < 0)) {
 			ret = errno;
@@ -447,7 +438,7 @@ int rados_kv_init(void)
 	gsh_refstr_get(recov_oid);
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(recov_oid->gr_val, len, "%s_recov", host);
+	(void)snprintf(recov_oid->gr_val, len, "%s_recov", host);
 	rcu_set_pointer(&rados_recov_oid, recov_oid);
 
 	len = host_len + 4 + 1;
@@ -455,23 +446,23 @@ int rados_kv_init(void)
 	gsh_refstr_get(old_oid);
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(old_oid->gr_val, len, "%s_old", host);
+	(void)snprintf(old_oid->gr_val, len, "%s_old", host);
 	rcu_set_pointer(&rados_recov_old_oid, old_oid);
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
-			rados_kv_param.ceph_conf, rados_kv_param.pool,
-			rados_kv_param.namespace);
+			       rados_kv_param.ceph_conf, rados_kv_param.pool,
+			       rados_kv_param.namespace);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID,
-			"Failed to connect to cluster: %d", ret);
+		LogEvent(COMPONENT_CLIENTID, "Failed to connect to cluster: %d",
+			 ret);
 		goto out;
 	}
 
 	rados_write_op_t op = rados_create_write_op();
 
 	rados_write_op_create(op, LIBRADOS_CREATE_EXCLUSIVE, NULL);
-	ret = rados_write_op_operate(op, rados_recov_io_ctx,
-				     old_oid->gr_val, NULL, 0);
+	ret = rados_write_op_operate(op, rados_recov_io_ctx, old_oid->gr_val,
+				     NULL, 0);
 	if (ret < 0 && ret != -EEXIST) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to create object");
 		rados_release_write_op(op);
@@ -561,7 +552,7 @@ static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
 	bool takeover = pop_args->takeover;
 
 	/* extract clid records */
-	dupval = gsh_malloc(val_len +  1);
+	dupval = gsh_malloc(val_len + 1);
 	memcpy(dupval, val, val_len);
 	dupval[val_len] = '\0';
 
@@ -583,8 +574,7 @@ static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
 	if (!old) {
 		ret = rados_kv_put(key, dupval, old_oid->gr_val);
 		if (ret < 0) {
-			LogEvent(COMPONENT_CLIENTID,
-				 "Failed to move %s", key);
+			LogEvent(COMPONENT_CLIENTID, "Failed to move %s", key);
 		}
 	}
 	gsh_free(dupval);
@@ -597,14 +587,13 @@ static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
 
 			rcu_read_lock();
 			recov_oid = gsh_refstr_get(
-					rcu_dereference(rados_recov_oid));
+				rcu_dereference(rados_recov_oid));
 			rcu_read_unlock();
 			ret = rados_kv_del(key, recov_oid->gr_val);
 			gsh_refstr_put(recov_oid);
 		}
 		if (ret < 0) {
-			LogEvent(COMPONENT_CLIENTID,
-				 "Failed to del %s", key);
+			LogEvent(COMPONENT_CLIENTID, "Failed to del %s", key);
 		}
 	}
 	gsh_refstr_put(old_oid);
@@ -612,7 +601,7 @@ static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
 
 static void
 rados_kv_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
-				       add_rfh_entry_hook add_rfh_entry)
+				  add_rfh_entry_hook add_rfh_entry)
 {
 	int ret;
 	struct gsh_refstr *recov_oid, *old_oid;
@@ -671,12 +660,12 @@ void rados_kv_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 		       gsp->ipaddr);
 
 	if (unlikely(ret >= sizeof(object_takeover))) {
-		LogCrit(COMPONENT_CLIENTID,
-			"object_takeover too long %s_recov", gsp->ipaddr);
+		LogCrit(COMPONENT_CLIENTID, "object_takeover too long %s_recov",
+			gsp->ipaddr);
 	} else if (unlikely(ret < 0)) {
 		LogCrit(COMPONENT_CLIENTID,
-			"Unexpected return from snprintf %d error %s (%d)",
-			ret, strerror(errno), errno);
+			"Unexpected return from snprintf %d error %s (%d)", ret,
+			strerror(errno), errno);
 	}
 
 	ret = rados_kv_traverse(rados_kv_pop_clid_entry, &args,
@@ -724,15 +713,13 @@ void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 		goto out;
 	}
 
-	LogDebug(COMPONENT_CLIENTID, "%s: key=%s val=%s", __func__,
-			ckey, cval);
+	LogDebug(COMPONENT_CLIENTID, "%s: key=%s val=%s", __func__, ckey, cval);
 	rados_kv_append_val_rdfh(cval, delr_handle->nfs_fh4_val,
-				      delr_handle->nfs_fh4_len);
+				 delr_handle->nfs_fh4_len);
 
 	ret = rados_kv_put(ckey, cval, recov_oid->gr_val);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to add rdfh for clid %lu",
+		LogEvent(COMPONENT_CLIENTID, "Failed to add rdfh for clid %lu",
 			 delr_clid->cid_clientid);
 	}
 out:

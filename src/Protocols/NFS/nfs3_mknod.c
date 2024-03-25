@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "fsal.h"
@@ -74,14 +74,14 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_status_t fsal_status;
 	struct fsal_attrlist sattr, attrs, parent_pre_attrs, parent_post_attrs;
 	MKNOD3resfail *resfail = &res->res_mknod3.MKNOD3res_u.resfail;
-	MKNOD3resok * const rok = &res->res_mknod3.MKNOD3res_u.resok;
+	MKNOD3resok *const rok = &res->res_mknod3.MKNOD3res_u.resok;
 
 	/* We have the option of not sending attributes, so set ATTR_RDATTR_ERR.
 	 */
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	fsal_prepare_attrs(&parent_pre_attrs,
-		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+			   ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	memset(&sattr, 0, sizeof(sattr));
@@ -95,8 +95,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* retrieve parent entry */
 	parent_obj = nfs3_FhandleToCache(&arg->arg_mknod3.where.dir,
-					   &res->res_mknod3.status,
-					   &rc);
+					 &res->res_mknod3.status, &rc);
 
 	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -124,27 +123,25 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	case NF3CHR:
 	case NF3BLK:
 		if (nfs3_Sattr_To_FSALattr(
-		       &sattr,
-		       &arg->arg_mknod3.what.mknoddata3_u.device.dev_attributes)
-		    == 0) {
+			    &sattr, &arg->arg_mknod3.what.mknoddata3_u.device
+					     .dev_attributes) == 0) {
 			res->res_mknod3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
 			goto out;
 		}
 		sattr.rawdev.major =
-		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata1;
+			arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata1;
 		sattr.rawdev.minor =
-		    arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata2;
+			arg->arg_mknod3.what.mknoddata3_u.device.spec.specdata2;
 		sattr.valid_mask |= ATTR_RAWDEV;
 
 		break;
 
 	case NF3FIFO:
 	case NF3SOCK:
-		if (nfs3_Sattr_To_FSALattr(
-			&sattr,
-			&arg->arg_mknod3.what.mknoddata3_u.pipe_attributes)
-		    == 0) {
+		if (nfs3_Sattr_To_FSALattr(&sattr,
+					   &arg->arg_mknod3.what.mknoddata3_u
+						    .pipe_attributes) == 0) {
 			res->res_mknod3.status = NFS3ERR_INVAL;
 			rc = NFS_REQ_OK;
 			goto out;
@@ -180,9 +177,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
-							op_ctx->fsal_export,
-							CTX_FULLPATH(op_ctx),
-							FSAL_QUOTA_INODES);
+		op_ctx->fsal_export, CTX_FULLPATH(op_ctx), FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_mknod3.status = NFS3ERR_DQUOT;
@@ -198,8 +193,8 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Try to create it */
-	fsal_status = fsal_create(parent_obj, file_name, nodetype, &sattr,
-				  NULL, &node_obj, &attrs, &parent_pre_attrs,
+	fsal_status = fsal_create(parent_obj, file_name, nodetype, &sattr, NULL,
+				  &node_obj, &attrs, &parent_pre_attrs,
 				  &parent_post_attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
@@ -209,9 +204,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out_fail;
 
 	/* Build file handle */
-	if (!nfs3_FSALToFhandle(true,
-				&rok->obj.post_op_fh3_u.handle,
-				node_obj,
+	if (!nfs3_FSALToFhandle(true, &rok->obj.post_op_fh3_u.handle, node_obj,
 				op_ctx->ctx_export)) {
 		res->res_mknod3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -228,23 +221,23 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Build Weak Cache Coherency data */
 	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
-		&rok->dir_wcc);
+		       &rok->dir_wcc);
 
 	res->res_mknod3.status = NFS3_OK;
 
 	rc = NFS_REQ_OK;
 	goto out;
 
- out_fail:
+out_fail:
 	res->res_mknod3.status = nfs3_Errno_status(fsal_status);
 	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
 	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
-		&resfail->dir_wcc);
+		       &resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
- out:
+out:
 
 	/* Release the attributes. */
 	fsal_release_attrs(&attrs);
@@ -259,7 +252,7 @@ int nfs3_mknod(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		node_obj->obj_ops->put_ref(node_obj);
 
 	return rc;
-}				/* nfs3_mknod */
+} /* nfs3_mknod */
 
 /**
  * @brief Free the result structure allocated for nfs3_mknod.
@@ -274,8 +267,8 @@ void nfs3_mknod_free(nfs_res_t *res)
 	nfs_fh3 *handle =
 		&res->res_mknod3.MKNOD3res_u.resok.obj.post_op_fh3_u.handle;
 
-	if ((res->res_mknod3.status == NFS3_OK)
-	    && (res->res_mknod3.MKNOD3res_u.resok.obj.handle_follows)) {
+	if ((res->res_mknod3.status == NFS3_OK) &&
+	    (res->res_mknod3.MKNOD3res_u.resok.obj.handle_follows)) {
 		gsh_free(handle->data.data_val);
 	}
 }

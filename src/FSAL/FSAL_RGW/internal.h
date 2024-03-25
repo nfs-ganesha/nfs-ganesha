@@ -65,7 +65,6 @@ struct rgw_fsal_module {
 };
 extern struct rgw_fsal_module RGWFSM;
 
-
 #define MAXUIDLEN 32
 #define MAXKEYLEN 20
 #define MAXSECRETLEN 40
@@ -75,9 +74,9 @@ extern struct rgw_fsal_module RGWFSM;
  */
 
 struct rgw_export {
-	struct fsal_export export;	/*< The public export object */
-	struct rgw_fs *rgw_fs;		/*< "Opaque" fs handle */
-	struct rgw_handle *root;    /*< root handle */
+	struct fsal_export export; /*< The public export object */
+	struct rgw_fs *rgw_fs; /*< "Opaque" fs handle */
+	struct rgw_handle *root; /*< root handle */
 	char *rgw_name;
 	char *rgw_user_id;
 	char *rgw_access_key_id;
@@ -89,11 +88,11 @@ struct rgw_export {
  */
 
 struct rgw_handle {
-	struct fsal_obj_handle handle;	/*< The public handle */
-	struct rgw_file_handle *rgw_fh;  /*< RGW-internal file handle */
+	struct fsal_obj_handle handle; /*< The public handle */
+	struct rgw_file_handle *rgw_fh; /*< RGW-internal file handle */
 	/* XXXX remove ptr to up-ops--we can always follow export! */
-	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
-	struct rgw_export *export;	/*< The first export this handle
+	const struct fsal_up_vector *up_ops; /*< Upcall operations */
+	struct rgw_export *export; /*< The first export this handle
 					 *< belongs to */
 	struct fsal_share share;
 	fsal_openflags_t openflags;
@@ -122,15 +121,16 @@ struct rgw_open_state {
  * The attributes this FSAL can set.
  */
 #ifdef USE_FSAL_RGW_XATTRS
-#define RGW_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
-	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |\
-	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |\
-	ATTR_ATIME_SERVER | ATTR4_XATTR))
+#define RGW_SETTABLE_ATTRIBUTES                                                \
+	((const attrmask_t)(ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | \
+			    ATTR_CTIME | ATTR_MTIME | ATTR_SIZE |              \
+			    ATTR_MTIME_SERVER | ATTR_ATIME_SERVER |            \
+			    ATTR4_XATTR))
 #else
-#define RGW_SETTABLE_ATTRIBUTES ((const attrmask_t) (			\
-	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME	 |\
-	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |\
-	ATTR_ATIME_SERVER))
+#define RGW_SETTABLE_ATTRIBUTES                                                \
+	((const attrmask_t)(ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | \
+			    ATTR_CTIME | ATTR_MTIME | ATTR_SIZE |              \
+			    ATTR_MTIME_SERVER | ATTR_ATIME_SERVER))
 #endif
 
 /**
@@ -143,8 +143,7 @@ static const size_t BIGGEST_PATTERN = 1024;
 
 /* Prototypes */
 int construct_handle(struct rgw_export *export,
-		     struct rgw_file_handle *rgw_file_handle,
-		     struct stat *st,
+		     struct rgw_file_handle *rgw_file_handle, struct stat *st,
 		     struct rgw_handle **obj);
 void deconstruct_handle(struct rgw_handle *obj);
 
@@ -155,4 +154,4 @@ struct state_t *rgw_alloc_state(struct fsal_export *exp_hdl,
 				enum state_type state_type,
 				struct state_t *related_state);
 void rgw_fs_invalidate(void *handle, struct rgw_fh_hk fh_hk);
-#endif				/* !FSAL_RGW_INTERNAL_INTERNAL */
+#endif /* !FSAL_RGW_INTERNAL_INTERNAL */

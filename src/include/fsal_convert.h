@@ -101,14 +101,14 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in);
 /** converts posix fsid to fsal FSid. */
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid);
 
- /**
+/**
  * posix2fsal_time:
  * Convert POSIX time structure (time_t)
  * to FSAL time type (now struct timespec).
  */
 static inline struct timespec posix2fsal_time(time_t tsec, time_t nsec)
 {
-	struct timespec ts = {.tv_sec = tsec, .tv_nsec = nsec};
+	struct timespec ts = { .tv_sec = tsec, .tv_nsec = nsec };
 	return ts;
 }
 
@@ -119,5 +119,5 @@ const char *object_file_type_to_str(object_file_type_t type);
 
 fsal_dev_t posix2fsal_devt(dev_t posix_devid);
 
-#endif				/* !FSAL_CONVERT_H */
+#endif /* !FSAL_CONVERT_H */
 /** @} */

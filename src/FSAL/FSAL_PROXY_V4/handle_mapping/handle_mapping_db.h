@@ -35,12 +35,12 @@
 #define DB_FILE_PREFIX "handlemap.sqlite"
 
 /* Database definition */
-#define MAP_TABLE      "HandleMap"
-#define OBJID_FIELD    "ObjectId"
-#define HASH_FIELD     "HandleHash"
-#define HANDLE_FIELD   "FSALHandle"
+#define MAP_TABLE "HandleMap"
+#define OBJID_FIELD "ObjectId"
+#define HASH_FIELD "HandleHash"
+#define HANDLE_FIELD "FSALHandle"
 
-#define MAX_DB  32
+#define MAX_DB 32
 
 /**
  * count the number of database instances in a given directory
@@ -69,8 +69,8 @@ int handlemap_db_reaload_all(hash_table_t *target_hash);
  * Submit a db 'insert' request.
  * The request is inserted in the appropriate db queue.
  */
-int handlemap_db_insert(nfs23_map_handle_t *p_in_nfs23_digest,
-			const void *data, uint32_t len);
+int handlemap_db_insert(nfs23_map_handle_t *p_in_nfs23_digest, const void *data,
+			uint32_t len);
 
 /**
  * Submit a db 'delete' request.

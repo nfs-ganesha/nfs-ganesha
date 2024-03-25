@@ -20,9 +20,8 @@
 #include "context_wrap.h"
 #include "lzfs_internal.h"
 
-int liz_cred_lookup(liz_t *instance, struct user_cred *cred,
-		    liz_inode_t parent, const char *path,
-		    struct liz_entry *entry)
+int liz_cred_lookup(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
+		    const char *path, struct liz_entry *entry)
 {
 	liz_context_t *ctx = lzfs_fsal_create_context(instance, cred);
 
@@ -108,8 +107,8 @@ int liz_cred_flush(liz_t *instance, struct user_cred *cred,
 	return rc;
 }
 
-int liz_cred_getattr(liz_t *instance, struct user_cred *cred,
-		     liz_inode_t inode, struct liz_attr_reply *reply)
+int liz_cred_getattr(liz_t *instance, struct user_cred *cred, liz_inode_t inode,
+		     struct liz_attr_reply *reply)
 {
 	liz_context_t *ctx = lzfs_fsal_create_context(instance, cred);
 
@@ -181,8 +180,8 @@ int liz_cred_rmdir(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
 	return rc;
 }
 
-int liz_cred_unlink(liz_t *instance, struct user_cred *cred,
-		    liz_inode_t parent, const char *name)
+int liz_cred_unlink(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
+		    const char *name)
 {
 	liz_context_t *ctx = lzfs_fsal_create_context(instance, cred);
 
@@ -195,8 +194,8 @@ int liz_cred_unlink(liz_t *instance, struct user_cred *cred,
 	return rc;
 }
 
-int liz_cred_setattr(liz_t *instance, struct user_cred *cred,
-		     liz_inode_t inode, struct stat *stbuf, int to_set,
+int liz_cred_setattr(liz_t *instance, struct user_cred *cred, liz_inode_t inode,
+		     struct stat *stbuf, int to_set,
 		     struct liz_attr_reply *reply)
 {
 	liz_context_t *ctx = lzfs_fsal_create_context(instance, cred);
@@ -224,9 +223,9 @@ int liz_cred_fsync(liz_t *instance, struct user_cred *cred,
 	return rc;
 }
 
-int liz_cred_rename(liz_t *instance, struct user_cred *cred,
-		    liz_inode_t parent, const char *name,
-		    liz_inode_t new_parent, const char *new_name)
+int liz_cred_rename(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
+		    const char *name, liz_inode_t new_parent,
+		    const char *new_name)
 {
 	liz_context_t *ctx = lzfs_fsal_create_context(instance, cred);
 
@@ -269,8 +268,7 @@ int liz_cred_readlink(liz_t *instance, struct user_cred *cred,
 }
 
 int liz_cred_link(liz_t *instance, struct user_cred *cred, liz_inode_t inode,
-		  liz_inode_t parent, const char *name,
-		  struct liz_entry *entry)
+		  liz_inode_t parent, const char *name, struct liz_entry *entry)
 {
 	liz_context_t *ctx = lzfs_fsal_create_context(instance, cred);
 
@@ -293,9 +291,8 @@ int liz_cred_get_chunks_info(liz_t *instance, struct user_cred *cred,
 	if (ctx == NULL) {
 		return -1;
 	}
-	int rc =
-		liz_get_chunks_info(instance, ctx, inode, chunk_index, buffer,
-				    buffer_size, reply_size);
+	int rc = liz_get_chunks_info(instance, ctx, inode, chunk_index, buffer,
+				     buffer_size, reply_size);
 
 	liz_destroy_context(ctx);
 	return rc;

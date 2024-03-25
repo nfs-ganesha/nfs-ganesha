@@ -121,10 +121,8 @@ struct proxyv4_obj_handle {
 };
 
 static struct proxyv4_obj_handle *
-proxyv4_alloc_handle(struct fsal_export *exp,
-		     const nfs_fh4 *fh,
-		     fattr4 *obj_attributes,
-		     struct fsal_attrlist *attrs_out);
+proxyv4_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
+		     fattr4 *obj_attributes, struct fsal_attrlist *attrs_out);
 
 struct proxyv4_state {
 	/** state MUST be first to use default free_state */
@@ -136,14 +134,14 @@ struct state_t *proxyv4_alloc_state(struct fsal_export *exp_hdl,
 				    enum state_type state_type,
 				    struct state_t *related_state)
 {
-	return init_state(gsh_calloc(1, sizeof(struct proxyv4_state)),
-			  NULL, state_type, related_state);
+	return init_state(gsh_calloc(1, sizeof(struct proxyv4_state)), NULL,
+			  state_type, related_state);
 }
 
-#define FSAL_VERIFIER_T_TO_VERIFIER4(verif4, fsal_verif)		\
-	do {								\
+#define FSAL_VERIFIER_T_TO_VERIFIER4(verif4, fsal_verif)                    \
+	do {                                                                \
 		BUILD_BUG_ON(sizeof(fsal_verifier_t) != sizeof(verifier4)); \
-		memcpy(verif4, fsal_verif, sizeof(fsal_verifier_t));	\
+		memcpy(verif4, fsal_verif, sizeof(fsal_verifier_t));        \
 	} while (0)
 
 static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
@@ -255,39 +253,36 @@ static fsal_status_t nfsstat4_to_fsal(nfsstat4 nfsstatus)
 
 static struct bitmap4 proxyv4_bitmap_getattr = {
 	.map[0] =
-	(PROXYV4_ATTR_BIT(FATTR4_SUPPORTED_ATTRS) |
-	 PROXYV4_ATTR_BIT(FATTR4_TYPE) | PROXYV4_ATTR_BIT(FATTR4_CHANGE) |
-	 PROXYV4_ATTR_BIT(FATTR4_SIZE) | PROXYV4_ATTR_BIT(FATTR4_FSID) |
-	 PROXYV4_ATTR_BIT(FATTR4_FILEID)),
-	.map[1] =
-	(PROXYV4_ATTR_BIT2(FATTR4_MODE) |
-	 PROXYV4_ATTR_BIT2(FATTR4_NUMLINKS) |
-	 PROXYV4_ATTR_BIT2(FATTR4_OWNER) |
-	 PROXYV4_ATTR_BIT2(FATTR4_OWNER_GROUP) |
-	 PROXYV4_ATTR_BIT2(FATTR4_SPACE_USED) |
-	 PROXYV4_ATTR_BIT2(FATTR4_TIME_ACCESS) |
-	 PROXYV4_ATTR_BIT2(FATTR4_TIME_METADATA) |
-	 PROXYV4_ATTR_BIT2(FATTR4_TIME_MODIFY) |
-	 PROXYV4_ATTR_BIT2(FATTR4_RAWDEV)),
+		(PROXYV4_ATTR_BIT(FATTR4_SUPPORTED_ATTRS) |
+		 PROXYV4_ATTR_BIT(FATTR4_TYPE) |
+		 PROXYV4_ATTR_BIT(FATTR4_CHANGE) |
+		 PROXYV4_ATTR_BIT(FATTR4_SIZE) | PROXYV4_ATTR_BIT(FATTR4_FSID) |
+		 PROXYV4_ATTR_BIT(FATTR4_FILEID)),
+	.map[1] = (PROXYV4_ATTR_BIT2(FATTR4_MODE) |
+		   PROXYV4_ATTR_BIT2(FATTR4_NUMLINKS) |
+		   PROXYV4_ATTR_BIT2(FATTR4_OWNER) |
+		   PROXYV4_ATTR_BIT2(FATTR4_OWNER_GROUP) |
+		   PROXYV4_ATTR_BIT2(FATTR4_SPACE_USED) |
+		   PROXYV4_ATTR_BIT2(FATTR4_TIME_ACCESS) |
+		   PROXYV4_ATTR_BIT2(FATTR4_TIME_METADATA) |
+		   PROXYV4_ATTR_BIT2(FATTR4_TIME_MODIFY) |
+		   PROXYV4_ATTR_BIT2(FATTR4_RAWDEV)),
 	.bitmap4_len = 2
 };
 
 static struct bitmap4 proxyv4_bitmap_fsinfo = {
-	.map[0] =
-	(PROXYV4_ATTR_BIT(FATTR4_FILES_AVAIL) |
-	 PROXYV4_ATTR_BIT(FATTR4_FILES_FREE) |
-	 PROXYV4_ATTR_BIT(FATTR4_FILES_TOTAL)),
-	.map[1] =
-	(PROXYV4_ATTR_BIT2(FATTR4_SPACE_AVAIL) |
-	 PROXYV4_ATTR_BIT2(FATTR4_SPACE_FREE) |
-	 PROXYV4_ATTR_BIT2(FATTR4_SPACE_TOTAL)),
+	.map[0] = (PROXYV4_ATTR_BIT(FATTR4_FILES_AVAIL) |
+		   PROXYV4_ATTR_BIT(FATTR4_FILES_FREE) |
+		   PROXYV4_ATTR_BIT(FATTR4_FILES_TOTAL)),
+	.map[1] = (PROXYV4_ATTR_BIT2(FATTR4_SPACE_AVAIL) |
+		   PROXYV4_ATTR_BIT2(FATTR4_SPACE_FREE) |
+		   PROXYV4_ATTR_BIT2(FATTR4_SPACE_TOTAL)),
 	.bitmap4_len = 2
 };
 
-static struct bitmap4 lease_bits = {
-	.map[0] = PROXYV4_ATTR_BIT(FATTR4_LEASE_TIME),
-	.bitmap4_len = 1
-};
+static struct bitmap4 lease_bits = { .map[0] = PROXYV4_ATTR_BIT(
+					     FATTR4_LEASE_TIME),
+				     .bitmap4_len = 1 };
 
 static struct bitmap4 proxyv4_bitmap_per_fs = {
 	.map[0] = (PROXYV4_ATTR_BIT(FATTR4_MAXREAD) |
@@ -301,28 +296,23 @@ static struct bitmap4 proxyv4_bitmap_per_fs = {
 static struct {
 	attrmask_t mask;
 	int fattr_bit;
-} fsal_mask2bit[] = {
-	{
-		ATTR_SIZE, FATTR4_SIZE}, {
-		ATTR_MODE, FATTR4_MODE}, {
-		ATTR_OWNER, FATTR4_OWNER}, {
-		ATTR_GROUP, FATTR4_OWNER_GROUP}, {
-		ATTR_ATIME, FATTR4_TIME_ACCESS_SET}, {
-		ATTR_ATIME_SERVER, FATTR4_TIME_ACCESS_SET}, {
-		ATTR_MTIME, FATTR4_TIME_MODIFY_SET}, {
-		ATTR_MTIME_SERVER, FATTR4_TIME_MODIFY_SET}, {
-		ATTR_CTIME, FATTR4_TIME_METADATA}
-};
+} fsal_mask2bit[] = { { ATTR_SIZE, FATTR4_SIZE },
+		      { ATTR_MODE, FATTR4_MODE },
+		      { ATTR_OWNER, FATTR4_OWNER },
+		      { ATTR_GROUP, FATTR4_OWNER_GROUP },
+		      { ATTR_ATIME, FATTR4_TIME_ACCESS_SET },
+		      { ATTR_ATIME_SERVER, FATTR4_TIME_ACCESS_SET },
+		      { ATTR_MTIME, FATTR4_TIME_MODIFY_SET },
+		      { ATTR_MTIME_SERVER, FATTR4_TIME_MODIFY_SET },
+		      { ATTR_CTIME, FATTR4_TIME_METADATA } };
 
-static struct bitmap4 empty_bitmap = {
-	.map[0] = 0,
-	.map[1] = 0,
-	.map[2] = 0,
-	.bitmap4_len = 2
-};
+static struct bitmap4 empty_bitmap = { .map[0] = 0,
+				       .map[1] = 0,
+				       .map[2] = 0,
+				       .bitmap4_len = 2 };
 
-static int
-proxyv4_fsalattr_to_fattr4(const struct fsal_attrlist *attrs, fattr4 *data)
+static int proxyv4_fsalattr_to_fattr4(const struct fsal_attrlist *attrs,
+				      fattr4 *data)
 {
 	int i;
 	struct bitmap4 bmap = empty_bitmap;
@@ -335,8 +325,7 @@ proxyv4_fsalattr_to_fattr4(const struct fsal_attrlist *attrs, fattr4 *data)
 					1U << (fsal_mask2bit[i].fattr_bit - 32);
 				bmap.bitmap4_len = 2;
 			} else {
-				bmap.map[0] |=
-					1U << fsal_mask2bit[i].fattr_bit;
+				bmap.map[0] |= 1U << fsal_mask2bit[i].fattr_bit;
 			}
 		}
 	}
@@ -348,8 +337,8 @@ proxyv4_fsalattr_to_fattr4(const struct fsal_attrlist *attrs, fattr4 *data)
 	return nfs4_FSALattr_To_Fattr(&args, &bmap, data);
 }
 
-static GETATTR4resok *
-proxyv4_fill_getattr_reply(nfs_resop4 *resop, char *blob, size_t blob_sz)
+static GETATTR4resok *proxyv4_fill_getattr_reply(nfs_resop4 *resop, char *blob,
+						 size_t blob_sz)
 {
 	GETATTR4resok *a = &resop->nfs_resop4_u.opgetattr.GETATTR4res_u.resok4;
 
@@ -360,10 +349,8 @@ proxyv4_fill_getattr_reply(nfs_resop4 *resop, char *blob, size_t blob_sz)
 	return a;
 }
 
-static int proxyv4_got_rpc_reply(struct proxyv4_rpc_io_context *ctx,
-				 int sock,
-				 int sz,
-				 u_int xid)
+static int proxyv4_got_rpc_reply(struct proxyv4_rpc_io_context *ctx, int sock,
+				 int sz, u_int xid)
 {
 	char *repbuf = ctx->recvbuf;
 	int size;
@@ -429,15 +416,15 @@ static int proxyv4_rpc_read_reply(struct proxyv4_export *proxyv4_exp)
 	h.recmark &= ~(1U << 31);
 
 	PTHREAD_MUTEX_lock(&rpc->listlock);
-	glist_for_each(c, &rpc->rpc_calls) {
+	glist_for_each(c, &rpc->rpc_calls)
+	{
 		struct proxyv4_rpc_io_context *ctx =
 			container_of(c, struct proxyv4_rpc_io_context, calls);
 
 		if (ctx->rpc_xid == h.xid) {
 			glist_del(c);
 			PTHREAD_MUTEX_unlock(&rpc->listlock);
-			return proxyv4_got_rpc_reply(ctx,
-						     rpc->rpc_sock,
+			return proxyv4_got_rpc_reply(ctx, rpc->rpc_sock,
 						     h.recmark, h.xid);
 		}
 	}
@@ -466,7 +453,8 @@ static void proxyv4_new_socket_ready(struct proxyv4_export *proxyv4_exp)
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
 
 	/* If there are any outstanding calls then tell them to resend */
-	glist_for_each_safe(c, nxt, &rpc->rpc_calls) {
+	glist_for_each_safe(c, nxt, &rpc->rpc_calls)
+	{
 		struct proxyv4_rpc_io_context *ctx =
 			container_of(c, struct proxyv4_rpc_io_context, calls);
 
@@ -485,8 +473,8 @@ static void proxyv4_new_socket_ready(struct proxyv4_export *proxyv4_exp)
 }
 
 /* called with listlock */
-static int proxyv4_connect(struct proxyv4_export *proxyv4_exp,
-			   sockaddr_t *dest, uint16_t port)
+static int proxyv4_connect(struct proxyv4_export *proxyv4_exp, sockaddr_t *dest,
+			   uint16_t port)
 {
 	int sock;
 	int socklen;
@@ -552,15 +540,11 @@ static void *proxyv4_rpc_recv(void *arg)
 
 		PTHREAD_MUTEX_lock(list_lock);
 		do {
-			sockaddr_t *srv_addr =
-				&proxyv4_exp->info.srv_addr;
-			uint16_t srv_port =
-				proxyv4_exp->info.srv_port;
+			sockaddr_t *srv_addr = &proxyv4_exp->info.srv_addr;
+			uint16_t srv_port = proxyv4_exp->info.srv_port;
 
-			rpc->rpc_sock =
-				proxyv4_connect(proxyv4_exp,
-						srv_addr,
-						srv_port);
+			rpc->rpc_sock = proxyv4_connect(proxyv4_exp, srv_addr,
+							srv_port);
 
 			/* early stop test */
 			if (rpc->close_thread) {
@@ -571,10 +555,10 @@ static void *proxyv4_rpc_recv(void *arg)
 				if (nsleeps == 0) {
 					char addr[SOCK_NAME_MAX];
 					struct display_buffer dspbuf = {
-						sizeof(addr), addr, addr};
+						sizeof(addr), addr, addr
+					};
 
-					display_sockaddr(&dspbuf,
-							 srv_addr);
+					display_sockaddr(&dspbuf, srv_addr);
 
 					LogCrit(COMPONENT_FSAL,
 						"Cannot connect to server %s:%u",
@@ -585,12 +569,12 @@ static void *proxyv4_rpc_recv(void *arg)
 				nsleeps++;
 				PTHREAD_MUTEX_lock(list_lock);
 			} else {
-				LogDebug(COMPONENT_FSAL,
-					 "Connected after %d sleeps, resending outstanding calls",
-					 nsleeps);
+				LogDebug(
+					COMPONENT_FSAL,
+					"Connected after %d sleeps, resending outstanding calls",
+					nsleeps);
 			}
-		} while (rpc->rpc_sock < 0 &&
-			 !rpc->close_thread);
+		} while (rpc->rpc_sock < 0 && !rpc->close_thread);
 		PTHREAD_MUTEX_unlock(list_lock);
 		/* early stop test */
 		if (rpc->close_thread)
@@ -611,8 +595,9 @@ static void *proxyv4_rpc_recv(void *arg)
 
 			default:
 				if (pfd.revents & POLLRDHUP) {
-					LogEvent(COMPONENT_FSAL,
-						 "Other end has closed connection, reconnecting...");
+					LogEvent(
+						COMPONENT_FSAL,
+						"Other end has closed connection, reconnecting...");
 				} else if (pfd.revents & POLLNVAL) {
 					LogEvent(COMPONENT_FSAL,
 						 "Socket is closed");
@@ -630,7 +615,7 @@ static void *proxyv4_rpc_recv(void *arg)
 			PTHREAD_MUTEX_unlock(list_lock);
 		}
 	}
- out:
+out:
 	rcu_unregister_thread();
 	return NULL;
 }
@@ -662,8 +647,7 @@ static enum clnt_stat proxyv4_process_reply(struct proxyv4_rpc_io_context *ctx,
 		XDR x;
 
 		memset(&reply, 0, sizeof(reply));
-		reply.RPCM_ack.ar_results.proc =
-			(xdrproc_t) xdr_COMPOUND4res;
+		reply.RPCM_ack.ar_results.proc = (xdrproc_t)xdr_COMPOUND4res;
 		reply.RPCM_ack.ar_results.where = res;
 
 		memset(&x, 0, sizeof(x));
@@ -712,10 +696,10 @@ static enum clnt_stat proxyv4_process_reply(struct proxyv4_rpc_io_context *ctx,
 			rc = RPC_CANTDECODERES;
 		}
 
-		reply.RPCM_ack.ar_results.proc = (xdrproc_t) xdr_void;
+		reply.RPCM_ack.ar_results.proc = (xdrproc_t)xdr_void;
 		reply.RPCM_ack.ar_results.where = NULL;
 
-		xdr_free((xdrproc_t) xdr_replymsg, &reply);
+		xdr_free((xdrproc_t)xdr_replymsg, &reply);
 	}
 	return rc;
 }
@@ -726,8 +710,7 @@ static inline int proxyv4_rpc_need_sock(struct proxyv4_export *proxyv4_exp)
 
 	PTHREAD_MUTEX_lock(&rpc->listlock);
 	while (rpc->rpc_sock < 0 && !rpc->close_thread)
-		pthread_cond_wait(&rpc->sockless,
-				  &rpc->listlock);
+		pthread_cond_wait(&rpc->sockless, &rpc->listlock);
 	PTHREAD_MUTEX_unlock(&rpc->listlock);
 	return rpc->close_thread;
 }
@@ -743,8 +726,7 @@ static inline int proxyv4_rpc_renewer_wait(int timeout,
 	ts.tv_sec = time(NULL) + timeout;
 	ts.tv_nsec = 0;
 
-	rc = pthread_cond_timedwait(&rpc->sockless,
-				    &rpc->listlock, &ts);
+	rc = pthread_cond_timedwait(&rpc->sockless, &rpc->listlock, &ts);
 	PTHREAD_MUTEX_unlock(&rpc->listlock);
 	return (rc == ETIMEDOUT);
 }
@@ -771,9 +753,9 @@ static int proxyv4_compoundv4_call(struct proxyv4_rpc_io_context *pcontext,
 	rmsg.cb_proc = NFSPROC4_COMPOUND;
 
 	if (cred) {
-		au = authunix_ncreate(rpc->proxyv4_hostname,
-				      cred->caller_uid, cred->caller_gid,
-				      cred->caller_glen, cred->caller_garray);
+		au = authunix_ncreate(rpc->proxyv4_hostname, cred->caller_uid,
+				      cred->caller_gid, cred->caller_glen,
+				      cred->caller_garray);
 	} else {
 		au = authunix_ncreate_default();
 	}
@@ -847,31 +829,24 @@ static int proxyv4_compoundv4_call(struct proxyv4_rpc_io_context *pcontext,
 }
 
 int proxyv4_compoundv4_execute(const char *caller,
-			       const struct user_cred *creds,
-			       uint32_t cnt, nfs_argop4 *argoparray,
-			       nfs_resop4 *resoparray,
+			       const struct user_cred *creds, uint32_t cnt,
+			       nfs_argop4 *argoparray, nfs_resop4 *resoparray,
 			       struct proxyv4_export *proxyv4_exp)
 {
 	enum clnt_stat rc;
 	struct proxyv4_rpc_io_context *ctx;
-	COMPOUND4args arg = {
-		.minorversion = FSAL_PROXY_NFS_V4_MINOR,
-		.argarray.argarray_val = argoparray,
-		.argarray.argarray_len = cnt
-	};
-	COMPOUND4res res = {
-		.resarray.resarray_val = resoparray,
-		.resarray.resarray_len = cnt
-	};
+	COMPOUND4args arg = { .minorversion = FSAL_PROXY_NFS_V4_MINOR,
+			      .argarray.argarray_val = argoparray,
+			      .argarray.argarray_len = cnt };
+	COMPOUND4res res = { .resarray.resarray_val = resoparray,
+			     .resarray.resarray_len = cnt };
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
 
 	PTHREAD_MUTEX_lock(&rpc->context_lock);
 	while (glist_empty(&rpc->free_contexts))
-		pthread_cond_wait(&rpc->need_context,
-				  &rpc->context_lock);
-	ctx =
-		glist_first_entry(&rpc->free_contexts,
-				  struct proxyv4_rpc_io_context, calls);
+		pthread_cond_wait(&rpc->need_context, &rpc->context_lock);
+	ctx = glist_first_entry(&rpc->free_contexts,
+				struct proxyv4_rpc_io_context, calls);
 	glist_del(&ctx->calls);
 	PTHREAD_MUTEX_unlock(&rpc->context_lock);
 
@@ -887,16 +862,16 @@ int proxyv4_compoundv4_execute(const char *caller,
 	}
 
 	do {
-		rc = proxyv4_compoundv4_call(ctx, creds, &arg,
-					     &res, proxyv4_exp);
+		rc = proxyv4_compoundv4_call(ctx, creds, &arg, &res,
+					     proxyv4_exp);
 		if (rc != RPC_SUCCESS)
 			LogDebug(COMPONENT_FSAL, "%s failed with %d", caller,
 				 rc);
 		if (rc == RPC_CANTSEND)
 			if (proxyv4_rpc_need_sock(proxyv4_exp))
 				return -1;
-	} while ((rc == RPC_CANTRECV && (ctx->ioresult == -EAGAIN))
-		 || (rc == RPC_CANTSEND));
+	} while ((rc == RPC_CANTRECV && (ctx->ioresult == -EAGAIN)) ||
+		 (rc == RPC_CANTSEND));
 
 	PTHREAD_MUTEX_lock(&rpc->context_lock);
 	pthread_cond_signal(&rpc->need_context);
@@ -908,20 +883,19 @@ int proxyv4_compoundv4_execute(const char *caller,
 	return rc;
 }
 
-static inline int
-proxyv4_nfsv4_call(const struct user_cred *creds, uint32_t cnt,
-				     nfs_argop4 *args, nfs_resop4 *resp)
+static inline int proxyv4_nfsv4_call(const struct user_cred *creds,
+				     uint32_t cnt, nfs_argop4 *args,
+				     nfs_resop4 *resp)
 {
 	struct proxyv4_export *proxyv4_exp =
-		container_of(op_ctx->fsal_export,
-			     struct proxyv4_export, exp);
+		container_of(op_ctx->fsal_export, struct proxyv4_export, exp);
 
 	return proxyv4_compoundv4_execute(__func__, creds, cnt, args, resp,
 					  proxyv4_exp);
 }
 
-static inline void
-proxyv4_get_clientid(struct proxyv4_export *proxyv4_exp, clientid4 *ret)
+static inline void proxyv4_get_clientid(struct proxyv4_export *proxyv4_exp,
+					clientid4 *ret)
 {
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
 
@@ -933,8 +907,7 @@ proxyv4_get_clientid(struct proxyv4_export *proxyv4_exp, clientid4 *ret)
 static inline void proxyv4_get_client_sessionid(sessionid4 ret)
 {
 	struct proxyv4_export *proxyv4_exp =
-		container_of(op_ctx->fsal_export,
-			     struct proxyv4_export, exp);
+		container_of(op_ctx->fsal_export, struct proxyv4_export, exp);
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
 
 	PTHREAD_MUTEX_lock(&rpc->proxyv4_clientid_mutex);
@@ -997,8 +970,10 @@ static int proxyv4_setsessionid(sessionid4 new_sessionid, uint32_t *lease_time,
 
 	proxyv4_get_clientid(proxyv4_exp, &cid);
 	proxyv4_get_client_seqid(proxyv4_exp, &seqid);
-	LogDebug(COMPONENT_FSAL, "Getting new session id for client id %"PRIx64
-		 " with sequence id %"PRIx32, cid, seqid);
+	LogDebug(COMPONENT_FSAL,
+		 "Getting new session id for client id %" PRIx64
+		 " with sequence id %" PRIx32,
+		 cid, seqid);
 	s_res = &res->nfs_resop4_u.opcreate_session;
 	res_ok = &s_res->CREATE_SESSION4res_u.csr_resok4;
 	res_ok->csr_fore_chan_attrs.ca_rdma_ird.ca_rdma_ird_len = 0;
@@ -1008,11 +983,10 @@ static int proxyv4_setsessionid(sessionid4 new_sessionid, uint32_t *lease_time,
 	res_ok->csr_back_chan_attrs.ca_rdma_ird.ca_rdma_ird_val =
 		&back_ca_rdma_ird_val_sink;
 
-	COMPOUNDV4_ARG_ADD_OP_CREATE_SESSION(opcnt, arg, cid, seqid,
-					     (&(proxyv4_exp->info)),
-					     &sec_parms4);
-	rc = proxyv4_compoundv4_execute(__func__, NULL, opcnt,
-					arg, res, proxyv4_exp);
+	COMPOUNDV4_ARG_ADD_OP_CREATE_SESSION(
+		opcnt, arg, cid, seqid, (&(proxyv4_exp->info)), &sec_parms4);
+	rc = proxyv4_compoundv4_execute(__func__, NULL, opcnt, arg, res,
+					proxyv4_exp);
 	if (rc != NFS4_OK)
 		return -1;
 
@@ -1020,9 +994,7 @@ static int proxyv4_setsessionid(sessionid4 new_sessionid, uint32_t *lease_time,
 	if (s_res->csr_status != NFS4_OK)
 		return -1;
 
-	memcpy(new_sessionid,
-	       res_ok->csr_sessionid,
-	       sizeof(sessionid4));
+	memcpy(new_sessionid, res_ok->csr_sessionid, sizeof(sessionid4));
 
 	/* Get the lease time */
 	opcnt = 0;
@@ -1033,16 +1005,15 @@ static int proxyv4_setsessionid(sessionid4 new_sessionid, uint32_t *lease_time,
 				   sizeof(*lease_time));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, arg, lease_bits);
 
-	rc = proxyv4_compoundv4_execute(__func__, NULL, opcnt,
-					arg, res, proxyv4_exp);
+	rc = proxyv4_compoundv4_execute(__func__, NULL, opcnt, arg, res,
+					proxyv4_exp);
 	if (rc != NFS4_OK) {
 		*lease_time = 60;
-		LogDebug(COMPONENT_FSAL,
-			 "Setting new lease_time to default %d", *lease_time);
+		LogDebug(COMPONENT_FSAL, "Setting new lease_time to default %d",
+			 *lease_time);
 	} else {
 		*lease_time = ntohl(*lease_time);
-		LogDebug(COMPONENT_FSAL,
-			 "Getting new lease %d", *lease_time);
+		LogDebug(COMPONENT_FSAL, "Getting new lease %d", *lease_time);
 	}
 
 	return 0;
@@ -1096,7 +1067,6 @@ static int proxyv4_setclientid(clientid4 *new_clientid, sequenceid4 *new_seqid,
 	BUILD_BUG_ON(sizeof(clientid.co_verifier) != sizeof(uint64_t));
 	memcpy(&clientid.co_verifier, &temp_verifier, sizeof(uint64_t));
 
-
 	arg[0].argop = NFS4_OP_EXCHANGE_ID;
 	opexchange_id.eia_clientowner = clientid;
 	opexchange_id.eia_flags = 0;
@@ -1114,12 +1084,11 @@ static int proxyv4_setclientid(clientid4 *new_clientid, sequenceid4 *new_seqid,
 	ei_resok->eir_server_impl_id.eir_server_impl_id_val =
 		&eir_server_impl_id_val;
 
-	rc = proxyv4_compoundv4_execute(__func__, NULL, 1,
-					arg, res, proxyv4_exp);
+	rc = proxyv4_compoundv4_execute(__func__, NULL, 1, arg, res,
+					proxyv4_exp);
 	if (rc != NFS4_OK) {
 		LogDebug(COMPONENT_FSAL,
-			 "Compound setclientid res request returned %d",
-			 rc);
+			 "Compound setclientid res request returned %d", rc);
 		return -1;
 	}
 
@@ -1165,27 +1134,26 @@ static void *proxyv4_clientid_renewer(void *arg)
 			proxyv4_get_clientid(proxyv4_exp, &cid);
 			proxyv4_get_client_sessionid_export(sid, proxyv4_exp);
 			LogDebug(COMPONENT_FSAL,
-				 "Try renew session id for client id %"PRIx64,
+				 "Try renew session id for client id %" PRIx64,
 				 cid);
 			COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, &seq_arg, sid,
 						       NB_RPC_SLOT);
 			s_res = &res.nfs_resop4_u.opsequence;
 			s_resok = &s_res->SEQUENCE4res_u.sr_resok4;
 			s_resok->sr_status_flags = 0;
-			rc = proxyv4_compoundv4_execute(__func__, NULL, 1,
-							&seq_arg,
-							&res, proxyv4_exp);
+			rc = proxyv4_compoundv4_execute(
+				__func__, NULL, 1, &seq_arg, &res, proxyv4_exp);
 			if (rc == NFS4_OK && !s_resok->sr_status_flags) {
-				LogDebug(COMPONENT_FSAL,
-					 "New session id for client id %"PRIu64,
-					 cid);
+				LogDebug(
+					COMPONENT_FSAL,
+					"New session id for client id %" PRIu64,
+					cid);
 				continue;
-			} else if (rc == NFS4_OK &&
-				   s_resok->sr_status_flags) {
-				LogEvent(COMPONENT_FSAL,
-					 "sr_status_flags received on renewing session with seqop : %"
-					 PRIu32,
-					 s_resok->sr_status_flags);
+			} else if (rc == NFS4_OK && s_resok->sr_status_flags) {
+				LogEvent(
+					COMPONENT_FSAL,
+					"sr_status_flags received on renewing session with seqop : %" PRIu32,
+					s_resok->sr_status_flags);
 				continue;
 			} else if (rc != NFS4_OK) {
 				LogEvent(COMPONENT_FSAL,
@@ -1209,9 +1177,8 @@ static void *proxyv4_clientid_renewer(void *arg)
 
 			LogDebug(COMPONENT_FSAL, "Need %d new session id",
 				 sessionid_needed);
-			sessionid_needed =
-				proxyv4_setsessionid(new_sessionid,
-						     &lease_time, proxyv4_exp);
+			sessionid_needed = proxyv4_setsessionid(
+				new_sessionid, &lease_time, proxyv4_exp);
 			if (!sessionid_needed) {
 				pthread_mutex_t *client_lock =
 					&rpc->proxyv4_clientid_mutex;
@@ -1252,7 +1219,8 @@ void free_io_contexts(struct proxyv4_export *proxyv4_exp)
 	struct glist_head *cur, *n;
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
 
-	glist_for_each_safe(cur, n, &rpc->free_contexts) {
+	glist_for_each_safe(cur, n, &rpc->free_contexts)
+	{
 		struct proxyv4_rpc_io_context *c =
 			container_of(cur, struct proxyv4_rpc_io_context, calls);
 
@@ -1299,7 +1267,7 @@ void proxyv4_close_thread(struct proxyv4_export *proxyv4_exp)
 		if (rc) {
 			LogWarn(COMPONENT_FSAL,
 				"Error on waiting for the proxyv4_recv_thread: %s (%d)",
-					strerror(rc), rc);
+				strerror(rc), rc);
 		}
 	}
 }
@@ -1308,7 +1276,7 @@ int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
 {
 	int rc;
 	struct proxyv4_export_rpc *rpc = &proxyv4_exp->rpc;
-	int i = NB_RPC_SLOT-1;
+	int i = NB_RPC_SLOT - 1;
 
 	PTHREAD_MUTEX_lock(&rpc->listlock);
 	glist_init(&rpc->rpc_calls);
@@ -1329,18 +1297,16 @@ int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
 		rpc->rpc_xid = getpid() ^ time(NULL);
 	PTHREAD_MUTEX_unlock(&rpc->listlock);
 
-	if (gethostname(rpc->proxyv4_hostname,
-			sizeof(rpc->proxyv4_hostname))) {
+	if (gethostname(rpc->proxyv4_hostname, sizeof(rpc->proxyv4_hostname))) {
 		if (strlcpy(rpc->proxyv4_hostname, "NFS-GANESHA/Proxy",
-			    sizeof(rpc->proxyv4_hostname))
-		    >= sizeof(rpc->proxyv4_hostname)) {
-			LogCrit(COMPONENT_FSAL,
-				"Cannot set proxy hostname");
+			    sizeof(rpc->proxyv4_hostname)) >=
+		    sizeof(rpc->proxyv4_hostname)) {
+			LogCrit(COMPONENT_FSAL, "Cannot set proxy hostname");
 			return -1;
 		}
 	}
 
-	for (i = NB_RPC_SLOT-1; i >= 0; i--) {
+	for (i = NB_RPC_SLOT - 1; i >= 0; i--) {
 		struct proxyv4_rpc_io_context *c =
 			gsh_malloc(sizeof(*c) + proxyv4_exp->info.srv_sendsize +
 				   proxyv4_exp->info.srv_recvsize);
@@ -1390,8 +1356,8 @@ static fsal_status_t proxyv4_make_object(struct fsal_export *export,
 {
 	struct proxyv4_obj_handle *proxyv4_hdl;
 
-	proxyv4_hdl = proxyv4_alloc_handle(export, fh, obj_attributes,
-					   attrs_out);
+	proxyv4_hdl =
+		proxyv4_alloc_handle(export, fh, obj_attributes, attrs_out);
 	if (proxyv4_hdl == NULL)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 	*handle = &proxyv4_hdl->obj;
@@ -1401,8 +1367,8 @@ static fsal_status_t proxyv4_make_object(struct fsal_export *export,
 /*
  * cap maxread and maxwrite config values to background server values
  */
-static void
-proxyv4_check_maxread_maxwrite(struct fsal_export *export, fattr4 *f4)
+static void proxyv4_check_maxread_maxwrite(struct fsal_export *export,
+					   fattr4 *f4)
 {
 	fsal_dynamicfsinfo_t info;
 	int rc;
@@ -1413,16 +1379,14 @@ proxyv4_check_maxread_maxwrite(struct fsal_export *export, fattr4 *f4)
 			"Unable to get maxread and maxwrite from backend NFS server : %d",
 			rc);
 	} else {
-		struct proxyv4_fsal_module *pm =
-			container_of(export->fsal,
-				     struct proxyv4_fsal_module,
-				     module);
+		struct proxyv4_fsal_module *pm = container_of(
+			export->fsal, struct proxyv4_fsal_module, module);
 
 		if (info.maxread != 0 &&
 		    pm->module.fs_info.maxread > info.maxread) {
 			LogWarn(COMPONENT_FSAL,
-				"Reduced maxread from %"PRIu64
-				" to align with remote server %"PRIu64,
+				"Reduced maxread from %" PRIu64
+				" to align with remote server %" PRIu64,
 				pm->module.fs_info.maxread, info.maxread);
 			pm->module.fs_info.maxread = info.maxread;
 		}
@@ -1430,8 +1394,8 @@ proxyv4_check_maxread_maxwrite(struct fsal_export *export, fattr4 *f4)
 		if (info.maxwrite != 0 &&
 		    pm->module.fs_info.maxwrite > info.maxwrite) {
 			LogWarn(COMPONENT_FSAL,
-				"Reduced maxwrite from %"PRIu64
-				" to align with remote server %"PRIu64,
+				"Reduced maxwrite from %" PRIu64
+				" to align with remote server %" PRIu64,
 				pm->module.fs_info.maxwrite, info.maxwrite);
 			pm->module.fs_info.maxwrite = info.maxwrite;
 		}
@@ -1504,19 +1468,17 @@ static fsal_status_t proxyv4_lookup_impl(struct fsal_obj_handle *parent,
 	fhok = &resoparray[opcnt].nfs_resop4_u.opgetfh.GETFH4res_u.resok4;
 	COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-	atok =
-		proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-					   sizeof(fattr_blob));
+	atok = proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					  sizeof(fattr_blob));
 
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
 	/* Dynamic ask of server per file system attr */
 	if (!parent) {
-		atok_per_file_system_attr =
-			proxyv4_fill_getattr_reply(resoparray + opcnt,
-						   fattr_blob_per_fs,
-						   sizeof(fattr_blob_per_fs));
+		atok_per_file_system_attr = proxyv4_fill_getattr_reply(
+			resoparray + opcnt, fattr_blob_per_fs,
+			sizeof(fattr_blob_per_fs));
 		COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 					      proxyv4_bitmap_per_fs);
 	}
@@ -1544,8 +1506,8 @@ static fsal_status_t proxyv4_lookup(struct fsal_obj_handle *parent,
 				    struct fsal_obj_handle **handle,
 				    struct fsal_attrlist *attrs_out)
 {
-	return proxyv4_lookup_impl(parent, op_ctx->fsal_export,
-				   &op_ctx->creds, path, handle, attrs_out);
+	return proxyv4_lookup_impl(parent, op_ctx->fsal_export, &op_ctx->creds,
+				   path, handle, attrs_out);
 }
 
 /* TODO: make this per-export */
@@ -1597,9 +1559,8 @@ static fsal_status_t proxyv4_mkdir(struct fsal_obj_handle *dir_hdl,
 	fhok->object.nfs_fh4_len = sizeof(padfilehandle);
 	COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-	atok =
-		proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-					   sizeof(fattr_blob));
+	atok = proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					  sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
@@ -1616,14 +1577,12 @@ static fsal_status_t proxyv4_mkdir(struct fsal_obj_handle *dir_hdl,
 	return (*handle)->obj_ops->getattrs(*handle, attrib);
 }
 
-static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
-				   const char *name,
-				   object_file_type_t nodetype,
-				   struct fsal_attrlist *attrib,
-				   struct fsal_obj_handle **handle,
-				   struct fsal_attrlist *attrs_out,
-				   struct fsal_attrlist *parent_pre_attrs_out,
-				   struct fsal_attrlist *parent_post_attrs_out)
+static fsal_status_t
+proxyv4_mknod(struct fsal_obj_handle *dir_hdl, const char *name,
+	      object_file_type_t nodetype, struct fsal_attrlist *attrib,
+	      struct fsal_obj_handle **handle, struct fsal_attrlist *attrs_out,
+	      struct fsal_attrlist *parent_pre_attrs_out,
+	      struct fsal_attrlist *parent_post_attrs_out)
 {
 	int rc;
 	int opcnt = 0;
@@ -1686,9 +1645,8 @@ static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
 	fhok->object.nfs_fh4_len = sizeof(padfilehandle);
 	COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-	atok =
-		proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-					   sizeof(fattr_blob));
+	atok = proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					  sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
@@ -1705,10 +1663,9 @@ static fsal_status_t proxyv4_mknod(struct fsal_obj_handle *dir_hdl,
 	return (*handle)->obj_ops->getattrs(*handle, attrib);
 }
 
-static fsal_status_t proxyv4_symlink(
-		struct fsal_obj_handle *dir_hdl,
-		const char *name, const char *link_path,
-		struct fsal_attrlist *attrib,
+static fsal_status_t
+proxyv4_symlink(struct fsal_obj_handle *dir_hdl, const char *name,
+		const char *link_path, struct fsal_attrlist *attrib,
 		struct fsal_obj_handle **handle,
 		struct fsal_attrlist *attrs_out,
 		struct fsal_attrlist *parent_pre_attrs_out,
@@ -1753,9 +1710,8 @@ static fsal_status_t proxyv4_symlink(
 	fhok->object.nfs_fh4_len = sizeof(padfilehandle);
 	COMPOUNDV4_ARG_ADD_OP_GETFH(opcnt, argoparray);
 
-	atok =
-		proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-					   sizeof(fattr_blob));
+	atok = proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					  sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 
@@ -1859,7 +1815,7 @@ static bool xdr_readdirres(XDR *x, nfs_resop4 *rdres)
 	int res = true;
 
 	for (i = 0; i < FSAL_READDIR_NB_OP_ALLOC; i++) {
-		res  = xdr_nfs_resop4(x, rdres + i);
+		res = xdr_nfs_resop4(x, rdres + i);
 		if (res != true)
 			return res;
 	}
@@ -1940,13 +1896,13 @@ static fsal_status_t proxyv4_do_readdir(struct proxyv4_obj_handle *ph,
 		 */
 		st = proxyv4_lookup_impl(&ph->obj, op_ctx->fsal_export,
 					 &op_ctx->creds,
-					 e4->name.utf8string_val,
-					 &handle, NULL);
+					 e4->name.utf8string_val, &handle,
+					 NULL);
 		if (FSAL_IS_ERROR(st))
 			break;
 
-		cb_rc = cb(e4->name.utf8string_val, handle, &attrs,
-			   cbarg, e4->cookie);
+		cb_rc = cb(e4->name.utf8string_val, handle, &attrs, cbarg,
+			   e4->cookie);
 
 		fsal_release_attrs(&attrs);
 
@@ -1963,7 +1919,7 @@ static fsal_status_t proxyv4_do_readdir(struct proxyv4_obj_handle *ph,
 		}
 	}
 
-	xdr_free((xdrproc_t) xdr_readdirres, resoparray);
+	xdr_free((xdrproc_t)xdr_readdirres, resoparray);
 	return st;
 }
 
@@ -1981,7 +1937,7 @@ static fsal_status_t proxyv4_readdir(struct fsal_obj_handle *dir_hdl,
 	bool again = true;
 
 	if (whence)
-		cookie = (nfs_cookie4) *whence;
+		cookie = (nfs_cookie4)*whence;
 
 	ph = container_of(dir_hdl, struct proxyv4_obj_handle, obj);
 
@@ -2031,10 +1987,9 @@ static fsal_status_t proxyv4_rename(struct fsal_obj_handle *obj_hdl,
 	return nfsstat4_to_fsal(rc);
 }
 
-static inline int nfs4_Fattr_To_FSAL_attr_savreqmask(
-						struct fsal_attrlist *FSAL_attr,
-						fattr4 *Fattr,
-						compound_data_t *data)
+static inline int
+nfs4_Fattr_To_FSAL_attr_savreqmask(struct fsal_attrlist *FSAL_attr,
+				   fattr4 *Fattr, compound_data_t *data)
 {
 	int rc = 0;
 	attrmask_t saved_request_mask = FSAL_attr->request_mask;
@@ -2113,9 +2068,8 @@ static fsal_status_t proxyv4_unlink(struct fsal_obj_handle *dir_hdl,
 	COMPOUNDV4_ARG_ADD_OP_REMOVE(opcnt, argoparray, (char *)name);
 
 #if GETATTR_AFTER
-	atok =
-		proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-					   sizeof(fattr_blob));
+	atok = proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					  sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray,
 				      proxyv4_bitmap_getattr);
 #endif
@@ -2219,11 +2173,10 @@ static fsal_status_t proxyv4_close(struct fsal_obj_handle *obj_hdl)
  *
  * @return FSAL status.
  */
-static fsal_status_t  fill_share_OPEN4args(uint32_t *share_access,
-					   uint32_t *share_deny,
-					   fsal_openflags_t openflags)
+static fsal_status_t fill_share_OPEN4args(uint32_t *share_access,
+					  uint32_t *share_deny,
+					  fsal_openflags_t openflags)
 {
-
 	/* share access */
 	*share_access = 0;
 	if (openflags & FSAL_O_READ)
@@ -2234,8 +2187,7 @@ static fsal_status_t  fill_share_OPEN4args(uint32_t *share_access,
 	*share_deny = OPEN4_SHARE_DENY_NONE;
 	if (openflags & FSAL_O_DENY_READ)
 		*share_deny |= OPEN4_SHARE_DENY_READ;
-	if (openflags & FSAL_O_DENY_WRITE ||
-	    openflags & FSAL_O_DENY_WRITE_MAND)
+	if (openflags & FSAL_O_DENY_WRITE || openflags & FSAL_O_DENY_WRITE_MAND)
 		*share_deny |= OPEN4_SHARE_DENY_WRITE;
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -2257,8 +2209,7 @@ static fsal_status_t  fill_share_OPEN4args(uint32_t *share_access,
  *
  * @return FSAL status.
  */
-static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow,
-					    fattr4 inattrs,
+static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow, fattr4 inattrs,
 					    enum fsal_create_mode createmode,
 					    fsal_verifier_t verifier,
 					    bool *setattr_needed,
@@ -2323,8 +2274,7 @@ static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow,
 			}
 			break;
 		default:
-			return fsalstat(ERR_FSAL_FAULT,
-					EINVAL);
+			return fsalstat(ERR_FSAL_FAULT, EINVAL);
 		}
 	} else
 		openhow->opentype = OPEN4_NOCREATE;
@@ -2336,18 +2286,14 @@ static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow,
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
 
-static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
-				   struct state_t *state,
-				   fsal_openflags_t openflags,
-				   enum fsal_create_mode createmode,
-				   const char *name,
-				   struct fsal_attrlist *attrs_in,
-				   fsal_verifier_t verifier,
-				   struct fsal_obj_handle **new_obj,
-				   struct fsal_attrlist *attrs_out,
-				   bool *caller_perm_check,
-				   struct fsal_attrlist *parent_pre_attrs_out,
-				   struct fsal_attrlist *parent_post_attrs_out)
+static fsal_status_t
+proxyv4_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	      fsal_openflags_t openflags, enum fsal_create_mode createmode,
+	      const char *name, struct fsal_attrlist *attrs_in,
+	      fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
+	      struct fsal_attrlist *attrs_out, bool *caller_perm_check,
+	      struct fsal_attrlist *parent_pre_attrs_out,
+	      struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct proxyv4_obj_handle *ph;
 	int rc; /* return code of nfs call */
@@ -2496,13 +2442,10 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 			return nfsstat4_to_fsal(rc);
 		}
 
-
 		/* update stateid in current state */
 		if (state) {
-			struct proxyv4_state *proxyv4_state_id =
-				container_of(state,
-					     struct proxyv4_state,
-					     state);
+			struct proxyv4_state *proxyv4_state_id = container_of(
+				state, struct proxyv4_state, state);
 
 			proxyv4_state_id->stateid = opok->stateid;
 		}
@@ -2529,17 +2472,15 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 			/* GETATTR */
 			nfs_resop4 *setattr_res = setattr_resoparray + opcnt;
 
-			atok = proxyv4_fill_getattr_reply(setattr_res,
-							  fattr_blob,
-							  sizeof(fattr_blob));
+			atok = proxyv4_fill_getattr_reply(
+				setattr_res, fattr_blob, sizeof(fattr_blob));
 			COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, setattr_argoparray,
 						      proxyv4_bitmap_getattr);
 		}
 
 		/* nfs call*/
 		rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt,
-					setattr_argoparray,
-					setattr_resoparray);
+					setattr_argoparray, setattr_resoparray);
 		if (rc != NFS4_OK) {
 			nfs4_Fattr_Free(&inattrs);
 			return nfsstat4_to_fsal(rc);
@@ -2555,8 +2496,8 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 			/* create new_obj and set attrs_out*/
 			st = proxyv4_make_object(op_ctx->fsal_export,
 						 &atok->obj_attributes,
-						 &fhok->object,
-						 new_obj, attrs_out);
+						 &fhok->object, new_obj,
+						 attrs_out);
 			if (FSAL_IS_ERROR(st))
 				return st;
 		} else {
@@ -2576,10 +2517,8 @@ static fsal_status_t proxyv4_open2(struct fsal_obj_handle *obj_hdl,
 }
 
 /* XXX Note that this only currently supports a vector size of 1 */
-static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
-			  bool bypass,
-			  fsal_async_cb done_cb,
-			  struct fsal_io_arg *read_arg,
+static void proxyv4_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+			  fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 			  void *caller_arg)
 {
 	int maxReadSize;
@@ -2601,7 +2540,6 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 
 	if (iov_len > maxReadSize)
 		iov_len = maxReadSize;
-
 
 	/* SEQUENCE */
 	proxyv4_get_client_sessionid(sid);
@@ -2625,24 +2563,19 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 	/* Issue the read. */
 	if (bypass)
 		COMPOUNDV4_ARG_ADD_OP_READ_BYPASS(opcnt, argoparray,
-						  read_arg->offset,
-						  iov_len);
+						  read_arg->offset, iov_len);
 	else {
 		if (read_arg->state) {
-			struct proxyv4_state *proxyv4_state_id =
-				container_of(read_arg->state,
-					     struct proxyv4_state,
-					     state);
+			struct proxyv4_state *proxyv4_state_id = container_of(
+				read_arg->state, struct proxyv4_state, state);
 			char *other = proxyv4_state_id->stateid.other;
 
 			COMPOUNDV4_ARG_ADD_OP_READ(opcnt, argoparray,
-						   read_arg->offset,
-						   iov_len,
+						   read_arg->offset, iov_len,
 						   other);
 		} else {
-			COMPOUNDV4_ARG_ADD_OP_READ_STATELESS(opcnt, argoparray,
-							     read_arg->offset,
-							     iov_len);
+			COMPOUNDV4_ARG_ADD_OP_READ_STATELESS(
+				opcnt, argoparray, read_arg->offset, iov_len);
 		}
 	}
 
@@ -2659,8 +2592,7 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 	assert(resok->data.iovcnt == 1);
 	assert(read_arg->iov_count == 1);
 
-	memcpy(read_arg->iov[0].iov_base,
-	       resok->data.iov[0].iov_base,
+	memcpy(read_arg->iov[0].iov_base, resok->data.iov[0].iov_base,
 	       resok->data.iov[0].iov_len);
 	read_arg->iov[0].iov_len = resok->data.iov[0].iov_len;
 
@@ -2670,8 +2602,8 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 
 	if (read_arg->info) {
 		read_arg->info->io_content.what = NFS4_CONTENT_DATA;
-		read_arg->info->io_content.data.d_offset = read_arg->offset +
-			read_arg->io_amount;
+		read_arg->info->io_content.data.d_offset =
+			read_arg->offset + read_arg->io_amount;
 		read_arg->info->io_content.data.d_data.data_len =
 			read_arg->io_amount;
 		read_arg->info->io_content.data.d_data.data_val =
@@ -2681,10 +2613,8 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 	done_cb(obj_hdl, fsalstat(0, 0), read_arg, caller_arg);
 }
 
-static void proxyv4_write2(struct fsal_obj_handle *obj_hdl,
-			   bool bypass,
-			   fsal_async_cb done_cb,
-			   struct fsal_io_arg *write_arg,
+static void proxyv4_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
+			   fsal_async_cb done_cb, struct fsal_io_arg *write_arg,
 			   void *caller_arg)
 {
 	int rc;
@@ -2712,25 +2642,20 @@ static void proxyv4_write2(struct fsal_obj_handle *obj_hdl,
 	else
 		stable_how = UNSTABLE4;
 	if (write_arg->state) {
-		struct proxyv4_state *proxyv4_state_id =
-			container_of(write_arg->state,
-				     struct proxyv4_state,
-				     state);
+		struct proxyv4_state *proxyv4_state_id = container_of(
+			write_arg->state, struct proxyv4_state, state);
 
 		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray,
 					    write_arg->offset,
 					    write_arg->iov_count,
 					    write_arg->iov,
-					    write_arg->io_request,
-					    stable_how,
+					    write_arg->io_request, stable_how,
 					    proxyv4_state_id->stateid.other);
 	} else {
-		COMPOUNDV4_ARG_ADD_OP_WRITE_STATELESS(opcnt, argoparray,
-						      write_arg->offset,
-						      write_arg->iov_count,
-						      write_arg->iov,
-						      write_arg->io_request,
-						      stable_how);
+		COMPOUNDV4_ARG_ADD_OP_WRITE_STATELESS(
+			opcnt, argoparray, write_arg->offset,
+			write_arg->iov_count, write_arg->iov,
+			write_arg->io_request, stable_how);
 	}
 
 	/* nfs call */
@@ -2761,7 +2686,7 @@ static fsal_status_t proxyv4_close2(struct fsal_obj_handle *obj_hdl,
 #define FSAL_CLOSE_NB_OP_ALLOC 3
 	nfs_argop4 argoparray[FSAL_CLOSE_NB_OP_ALLOC];
 	nfs_resop4 resoparray[FSAL_CLOSE_NB_OP_ALLOC];
-	char All_Zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0";	/* 12 times \0 */
+	char All_Zero[] = "\0\0\0\0\0\0\0\0\0\0\0\0"; /* 12 times \0 */
 	struct proxyv4_state *proxyv4_state_id = NULL;
 
 	ph = container_of(obj_hdl, struct proxyv4_obj_handle, obj);
@@ -2804,8 +2729,7 @@ static fsal_status_t proxyv4_close2(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t proxyv4_setattr2(struct fsal_obj_handle *obj_hdl,
-				      bool bypass,
-				      struct state_t *state,
+				      bool bypass, struct state_t *state,
 				      struct fsal_attrlist *attrib_set)
 {
 	int rc;
@@ -2852,9 +2776,7 @@ static fsal_status_t proxyv4_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* RFC 5661, section 8.2.3 */
 	if (state) {
 		struct proxyv4_state *proxyv4_state_id =
-			container_of(state,
-				     struct proxyv4_state,
-				     state);
+			container_of(state, struct proxyv4_state, state);
 
 		COMPOUNDV4_ARG_ADD_OP_SETATTR(opcnt, argoparray, input_attr,
 					      proxyv4_state_id->stateid.other);
@@ -2892,8 +2814,7 @@ static fsal_status_t proxyv4_reopen2(struct fsal_obj_handle *obj_hdl,
 }
 
 static fsal_status_t proxyv4_commit2(struct fsal_obj_handle *obj_hdl,
-				     off_t offset,
-				     size_t len)
+				     off_t offset, size_t len)
 {
 	struct proxyv4_obj_handle *ph;
 	int rc; /* return code of nfs call */
@@ -2975,7 +2896,7 @@ static unsigned int hash_nfs_fh4(const nfs_fh4 *fh, unsigned int cookie)
 		extract = 0;
 		while (cpt - fh->nfs_fh4_val < fh->nfs_fh4_len) {
 			extract <<= 8;
-			extract |= (uint8_t) (*cpt++);
+			extract |= (uint8_t)(*cpt++);
 		}
 		sum = (3 * sum + 5 * extract + 1999);
 	}
@@ -2985,10 +2906,8 @@ static unsigned int hash_nfs_fh4(const nfs_fh4 *fh, unsigned int cookie)
 #endif
 
 static struct proxyv4_obj_handle *
-proxyv4_alloc_handle(struct fsal_export *exp,
-		     const nfs_fh4 *fh,
-		     fattr4 *obj_attributes,
-		     struct fsal_attrlist *attrs_out)
+proxyv4_alloc_handle(struct fsal_export *exp, const nfs_fh4 *fh,
+		     fattr4 *obj_attributes, struct fsal_attrlist *attrs_out)
 {
 	struct proxyv4_obj_handle *n =
 		gsh_calloc(1, sizeof(*n) + fh->nfs_fh4_len);
@@ -3001,9 +2920,8 @@ proxyv4_alloc_handle(struct fsal_export *exp,
 
 	data.current_obj = &n->obj;
 
-	if (nfs4_Fattr_To_FSAL_attr(&attributes,
-				    obj_attributes,
-				    &data) != NFS4_OK) {
+	if (nfs4_Fattr_To_FSAL_attr(&attributes, obj_attributes, &data) !=
+	    NFS4_OK) {
 		gsh_free(n);
 		return NULL;
 	}
@@ -3051,8 +2969,7 @@ proxyv4_alloc_handle(struct fsal_export *exp,
 /* export methods that create object handles
  */
 
-fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl,
-				  const char *path,
+fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl, const char *path,
 				  struct fsal_obj_handle **handle,
 				  struct fsal_attrlist *attrs_out)
 {
@@ -3093,9 +3010,8 @@ fsal_status_t proxyv4_lookup_path(struct fsal_export *exp_hdl,
 		 * attributes of the terminal lookup.
 		 */
 		fsal_status_t st =
-			proxyv4_lookup_impl(parent, exp_hdl, creds, p,
-					    &next, pnext == NULL ?
-					    attrs_out : NULL);
+			proxyv4_lookup_impl(parent, exp_hdl, creds, p, &next,
+					    pnext == NULL ? attrs_out : NULL);
 		if (FSAL_IS_ERROR(st)) {
 			gsh_free(pcopy);
 			return st;
@@ -3177,7 +3093,7 @@ fsal_status_t proxyv4_get_dynamic_info(struct fsal_export *exp_hdl,
 	nfs_argop4 argoparray[FSAL_FSINFO_NB_OP_ALLOC];
 	nfs_resop4 resoparray[FSAL_FSINFO_NB_OP_ALLOC];
 	GETATTR4resok *atok;
-	char fattr_blob[48];	/* 6 values, 8 bytes each */
+	char fattr_blob[48]; /* 6 values, 8 bytes each */
 	struct proxyv4_obj_handle *ph;
 
 	ph = container_of(obj_hdl, struct proxyv4_obj_handle, obj);
@@ -3186,9 +3102,8 @@ fsal_status_t proxyv4_get_dynamic_info(struct fsal_export *exp_hdl,
 	proxyv4_get_client_sessionid(sid);
 	COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid, NB_RPC_SLOT);
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
-	atok =
-		proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
-					   sizeof(fattr_blob));
+	atok = proxyv4_fill_getattr_reply(resoparray + opcnt, fattr_blob,
+					  sizeof(fattr_blob));
 	COMPOUNDV4_ARG_ADD_OP_GETATTR(opcnt, argoparray, proxyv4_bitmap_fsinfo);
 
 	rc = proxyv4_nfsv4_call(&op_ctx->creds, opcnt, argoparray, resoparray);
@@ -3211,8 +3126,7 @@ fsal_status_t proxyv4_get_dynamic_info(struct fsal_export *exp_hdl,
  * can be used to identify the object */
 fsal_status_t proxyv4_wire_to_host(struct fsal_export *exp_hdl,
 				   fsal_digesttype_t in_type,
-				   struct gsh_buffdesc *fh_desc,
-				   int flags)
+				   struct gsh_buffdesc *fh_desc, int flags)
 {
 	struct proxyv4_handle_blob *proxyv4_blob;
 	size_t fh_size;
@@ -3234,7 +3148,7 @@ fsal_status_t proxyv4_wire_to_host(struct fsal_export *exp_hdl,
 	}
 #ifdef PROXYV4_HANDLE_MAPPING
 	if (in_type == FSAL_DIGEST_NFSV3) {
-		nfs23_map_handle_t *h23 = (nfs23_map_handle_t *) fh_desc->addr;
+		nfs23_map_handle_t *h23 = (nfs23_map_handle_t *)fh_desc->addr;
 
 		if (h23->type != PROXYV4_HANDLE_MAPPED)
 			return fsalstat(ERR_FSAL_STALE, ESTALE);

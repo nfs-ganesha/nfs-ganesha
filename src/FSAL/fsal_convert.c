@@ -36,7 +36,7 @@
 
 #include "config.h"
 #ifdef LINUX
-#include <sys/sysmacros.h>  /* for major(3), minor(3) */
+#include <sys/sysmacros.h> /* for major(3), minor(3) */
 #endif
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -62,10 +62,8 @@
  */
 fsal_errors_t posix2fsal_error(int posix_errorcode)
 {
-	struct rlimit rlim = {
-		.rlim_cur = RLIM_INFINITY,
-		.rlim_max = RLIM_INFINITY
-	};
+	struct rlimit rlim = { .rlim_cur = RLIM_INFINITY,
+			       .rlim_max = RLIM_INFINITY };
 
 	switch (posix_errorcode) {
 	case 0:
@@ -103,11 +101,9 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
 				posix_errorcode);
 		} else {
 			LogInfo(COMPONENT_FSAL,
-				"Mapping %d to ERR_FSAL_IO, rlim_cur=%"
-				PRId64 " rlim_max=%" PRId64,
-				+posix_errorcode,
-				rlim.rlim_cur,
-				rlim.rlim_max);
+				"Mapping %d to ERR_FSAL_IO, rlim_cur=%" PRId64
+				" rlim_max=%" PRId64,
+				+posix_errorcode, rlim.rlim_cur, rlim.rlim_max);
 		}
 		return ERR_FSAL_IO;
 
@@ -123,7 +119,7 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
 	case EBADF:
 		/* we suppose it was not opened... */
 
-      /**
+		/**
        * @todo: The EBADF error also happens when file
        *        is opened for reading, and we try writing in it.
        *        In this case, we return ERR_FSAL_NOT_OPENED,
@@ -177,7 +173,7 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
 	case EDQUOT:
 		return ERR_FSAL_DQUOT;
 
-	case ESRCH:		/* Returned by quotaclt */
+	case ESRCH: /* Returned by quotaclt */
 		return ERR_FSAL_NO_QUOTA;
 
 	case ENAMETOOLONG:
@@ -237,9 +233,7 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
 			strerror(posix_errorcode), posix_errorcode);
 		/* other unexpected errors */
 		return ERR_FSAL_SERVERFAULT;
-
 	}
-
 }
 
 /**
@@ -251,7 +245,6 @@ fsal_errors_t posix2fsal_error(int posix_errorcode)
  */
 int fsal2posix_testperm(fsal_accessflags_t testperm)
 {
-
 	int posix_testperm = 0;
 
 	if (testperm & FSAL_R_OK)
@@ -262,7 +255,6 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
 		posix_testperm |= X_OK;
 
 	return posix_testperm;
-
 }
 
 /**
@@ -276,7 +268,6 @@ int fsal2posix_testperm(fsal_accessflags_t testperm)
 
 object_file_type_t posix2fsal_type(mode_t posix_type_in)
 {
-
 	switch (posix_type_in & S_IFMT) {
 	case S_IFIFO:
 		return FIFO_FILE;
@@ -305,7 +296,6 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in)
 			posix_type_in);
 		return -1;
 	}
-
 }
 
 /**
@@ -318,14 +308,12 @@ object_file_type_t posix2fsal_type(mode_t posix_type_in)
 
 fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 {
-
 	fsal_fsid_t fsid;
 
 	fsid.major = major(posix_devid);
 	fsid.minor = minor(posix_devid);
 
 	return fsid;
-
 }
 
 /**
@@ -338,7 +326,6 @@ fsal_fsid_t posix2fsal_fsid(dev_t posix_devid)
 
 fsal_dev_t posix2fsal_devt(dev_t posix_devid)
 {
-
 	fsal_dev_t dev;
 
 	dev.major = major(posix_devid);
@@ -428,7 +415,7 @@ void posix2fsal_attributes(const struct stat *buffstat,
 			   struct fsal_attrlist *fsalattr)
 {
 	fsalattr->supported = op_ctx->fsal_export->exp_ops.fs_supported_attrs(
-							op_ctx->fsal_export);
+		op_ctx->fsal_export);
 
 	/* Fills the output struct */
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_TYPE))
@@ -464,9 +451,9 @@ void posix2fsal_attributes(const struct stat *buffstat,
 
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_CHANGE)) {
 		fsalattr->change =
-			gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0
-				? timespec_to_nsecs(&fsalattr->mtime)
-				: timespec_to_nsecs(&fsalattr->ctime);
+			gsh_time_cmp(&fsalattr->mtime, &fsalattr->ctime) > 0 ?
+				timespec_to_nsecs(&fsalattr->mtime) :
+				timespec_to_nsecs(&fsalattr->ctime);
 	}
 
 	if (FSAL_TEST_MASK(fsalattr->valid_mask, ATTR_SPACEUSED))

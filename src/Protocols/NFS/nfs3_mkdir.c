@@ -34,7 +34,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "fsal.h"
@@ -68,10 +68,8 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	const char *dir_name = arg->arg_mkdir3.where.name;
 	struct fsal_obj_handle *dir_obj = NULL;
 	struct fsal_obj_handle *parent_obj = NULL;
-	pre_op_attr pre_parent = {
-		.attributes_follow = false
-	};
-	fsal_status_t fsal_status = {0, 0};
+	pre_op_attr pre_parent = { .attributes_follow = false };
+	fsal_status_t fsal_status = { 0, 0 };
 	int rc = NFS_REQ_OK;
 	struct fsal_attrlist sattr, attrs, parent_pre_attrs, parent_post_attrs;
 	MKDIR3resfail *resfail = &res->res_mkdir3.MKDIR3res_u.resfail;
@@ -82,7 +80,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	fsal_prepare_attrs(&attrs, ATTRS_NFS3 | ATTR_RDATTR_ERR);
 
 	fsal_prepare_attrs(&parent_pre_attrs,
-		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+			   ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	memset(&sattr, 0, sizeof(sattr));
@@ -95,8 +93,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resfail->dir_wcc.after.attributes_follow = FALSE;
 
 	parent_obj = nfs3_FhandleToCache(&arg->arg_mkdir3.where.dir,
-					   &res->res_mkdir3.status,
-					   &rc);
+					 &res->res_mkdir3.status, &rc);
 
 	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -114,9 +111,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* if quota support is active, then we should check is the
 	   FSAL allows inode creation or not */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
-							op_ctx->fsal_export,
-							CTX_FULLPATH(op_ctx),
-							FSAL_QUOTA_INODES);
+		op_ctx->fsal_export, CTX_FULLPATH(op_ctx), FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res->res_mkdir3.status = NFS3ERR_DQUOT;
@@ -155,9 +150,7 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out_fail;
 
 	/* Build file handle */
-	if (!nfs3_FSALToFhandle(true,
-				&resok->obj.post_op_fh3_u.handle,
-				dir_obj,
+	if (!nfs3_FSALToFhandle(true, &resok->obj.post_op_fh3_u.handle, dir_obj,
 				op_ctx->ctx_export)) {
 		res->res_mkdir3.status = NFS3ERR_BADHANDLE;
 		rc = NFS_REQ_OK;
@@ -174,23 +167,23 @@ int nfs3_mkdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Build Weak Cache Coherency data */
 	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
-		&resok->dir_wcc);
+		       &resok->dir_wcc);
 
 	res->res_mkdir3.status = NFS3_OK;
 	rc = NFS_REQ_OK;
 
 	goto out;
 
- out_fail:
+out_fail:
 	res->res_mkdir3.status = nfs3_Errno_status(fsal_status);
 	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
 	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
-		&resfail->dir_wcc);
+		       &resfail->dir_wcc);
 
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
- out:
+out:
 
 	/* Release the attributes. */
 	fsal_release_attrs(&attrs);
@@ -220,8 +213,8 @@ void nfs3_mkdir_free(nfs_res_t *res)
 	nfs_fh3 *handle =
 		&res->res_mkdir3.MKDIR3res_u.resok.obj.post_op_fh3_u.handle;
 
-	if ((res->res_mkdir3.status == NFS3_OK)
-	    && (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows)) {
+	if ((res->res_mkdir3.status == NFS3_OK) &&
+	    (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows)) {
 		gsh_free(handle->data.data_val);
 	}
 }

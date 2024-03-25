@@ -23,78 +23,77 @@ extern "C" {
 #define SM_UNMON_ALL 4
 #define SM_NOTIFY 6
 
-	enum res {
-		STAT_SUCC = 0,
-		STAT_FAIL = 1,
-	};
-	typedef enum res res;
+enum res {
+	STAT_SUCC = 0,
+	STAT_FAIL = 1,
+};
+typedef enum res res;
 
-	struct sm_stat_res {
-		res res_stat;
-		int state;
-	};
-	typedef struct sm_stat_res sm_stat_res;
+struct sm_stat_res {
+	res res_stat;
+	int state;
+};
+typedef struct sm_stat_res sm_stat_res;
 
-	struct sm_stat {
-		int state;
-	};
-	typedef struct sm_stat sm_stat;
+struct sm_stat {
+	int state;
+};
+typedef struct sm_stat sm_stat;
 
-	struct my_id {
-		char *my_name;
-		int my_prog;
-		int my_vers;
-		int my_proc;
-	};
-	typedef struct my_id my_id;
+struct my_id {
+	char *my_name;
+	int my_prog;
+	int my_vers;
+	int my_proc;
+};
+typedef struct my_id my_id;
 
-	struct mon_id {
-		char *mon_name;
-		struct my_id my_id;
-	};
-	typedef struct mon_id mon_id;
+struct mon_id {
+	char *mon_name;
+	struct my_id my_id;
+};
+typedef struct mon_id mon_id;
 
-	struct mon {
-		struct mon_id mon_id;
-		char priv[16];
-	};
-	typedef struct mon mon;
+struct mon {
+	struct mon_id mon_id;
+	char priv[16];
+};
+typedef struct mon mon;
 
+struct notify {
+	char *my_name;
+	int state;
+};
+typedef struct notify notify;
 
-	struct notify {
-		char *my_name;
-		int state;
-	};
-	typedef struct notify notify;
-
-	extern bool nsm_monitor(state_nsm_client_t *host);
-	extern bool nsm_unmonitor(state_nsm_client_t *host);
-	extern void nsm_unmonitor_all(void);
-	extern int nsm_notify(char *host, int state);
+extern bool nsm_monitor(state_nsm_client_t *host);
+extern bool nsm_unmonitor(state_nsm_client_t *host);
+extern void nsm_unmonitor_all(void);
+extern int nsm_notify(char *host, int state);
 
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
-	extern bool xdr_res(XDR *, res *);
-	extern bool xdr_sm_stat_res(XDR *, sm_stat_res *);
-	extern bool xdr_sm_stat(XDR *, sm_stat *);
-	extern bool xdr_my_id(XDR *, my_id *);
-	extern bool xdr_mon_id(XDR *, mon_id *);
-	extern bool xdr_mon(XDR *, mon *);
-	extern bool xdr_notify (XDR *, notify*);
+extern bool xdr_res(XDR *, res *);
+extern bool xdr_sm_stat_res(XDR *, sm_stat_res *);
+extern bool xdr_sm_stat(XDR *, sm_stat *);
+extern bool xdr_my_id(XDR *, my_id *);
+extern bool xdr_mon_id(XDR *, mon_id *);
+extern bool xdr_mon(XDR *, mon *);
+extern bool xdr_notify(XDR *, notify *);
 
-#else				/* K&R C */
-	extern bool xdr_res();
-	extern bool xdr_sm_stat_res();
-	extern bool xdr_sm_stat();
-	extern bool xdr_my_id();
-	extern bool xdr_mon_id();
-	extern bool xdr_mon();
-	extern bool xdr_notify ();
+#else /* K&R C */
+extern bool xdr_res();
+extern bool xdr_sm_stat_res();
+extern bool xdr_sm_stat();
+extern bool xdr_my_id();
+extern bool xdr_mon_id();
+extern bool xdr_mon();
+extern bool xdr_notify();
 
-#endif				/* K&R C */
+#endif /* K&R C */
 
 #ifdef __cplusplus
 }
 #endif
-#endif				/* !_NSM_H_RPCGEN */
+#endif /* !_NSM_H_RPCGEN */

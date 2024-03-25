@@ -46,39 +46,34 @@
 void display_xfs_handle(struct display_buffer *dspbuf,
 			struct vfs_file_handle *fh)
 {
-	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
+	xfs_handle_t *hdl = (xfs_handle_t *)fh->handle_data;
 
-	(void) display_printf(dspbuf,
-			      "Handle len %hhu: fsid=0x%016"
-			      PRIx32".0x%016"PRIx32
-			      " fid_len=%"PRIu16
-			      " fid_pad=%"PRIu16
-			      " fid_gen=%"PRIu32
-			      " fid_ino=%"PRIu64,
-			      fh->handle_len,
-			      hdl->ha_fsid.val[0],
-			      hdl->ha_fsid.val[1],
-			      hdl->ha_fid.fid_len,
-			      hdl->ha_fid.fid_pad,
-			      hdl->ha_fid.fid_gen,
-			      hdl->ha_fid.fid_ino);
+	(void)display_printf(dspbuf,
+			     "Handle len %hhu: fsid=0x%016" PRIx32
+			     ".0x%016" PRIx32 " fid_len=%" PRIu16
+			     " fid_pad=%" PRIu16 " fid_gen=%" PRIu32
+			     " fid_ino=%" PRIu64,
+			     fh->handle_len, hdl->ha_fsid.val[0],
+			     hdl->ha_fsid.val[1], hdl->ha_fid.fid_len,
+			     hdl->ha_fid.fid_pad, hdl->ha_fid.fid_gen,
+			     hdl->ha_fid.fid_ino);
 }
 
-#define LogXFSHandle(fh)						\
-	do {								\
-		if (isMidDebug(COMPONENT_FSAL)) {			\
-			char buf[256] = "\0";				\
-			struct display_buffer dspbuf =			\
-					{sizeof(buf), buf, buf};	\
-									\
-			display_xfs_handle(&dspbuf, fh);		\
-									\
-			LogMidDebug(COMPONENT_FSAL, "%s", buf);		\
-		}							\
+#define LogXFSHandle(fh)                                                   \
+	do {                                                               \
+		if (isMidDebug(COMPONENT_FSAL)) {                          \
+			char buf[256] = "\0";                              \
+			struct display_buffer dspbuf = { sizeof(buf), buf, \
+							 buf };            \
+                                                                           \
+			display_xfs_handle(&dspbuf, fh);                   \
+                                                                           \
+			LogMidDebug(COMPONENT_FSAL, "%s", buf);            \
+		}                                                          \
 	} while (0)
 
 static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino,
-		struct xfs_bstat *bstat)
+				   struct xfs_bstat *bstat)
 {
 	struct xfs_fsop_bulkreq bulkreq;
 	__u64 i = ino;
@@ -93,7 +88,7 @@ static int xfs_fsal_bulkstat_inode(int fd, xfs_ino_t ino,
 static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t *fh)
 {
 	struct xfs_bstat bstat;
-	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
+	xfs_handle_t *hdl = (xfs_handle_t *)fh->handle_data;
 	void *data;
 	size_t sz;
 
@@ -115,8 +110,7 @@ static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t *fh)
 	/* Fill in the rest of the handle with the information
 	 * pertinent to this inode.
 	 */
-	hdl->ha_fid.fid_len = sizeof(xfs_handle_t) -
-			      sizeof(xfs_fsid_t) -
+	hdl->ha_fid.fid_len = sizeof(xfs_handle_t) - sizeof(xfs_fsid_t) -
 			      sizeof(hdl->ha_fid.fid_len);
 	hdl->ha_fid.fid_pad = 0;
 	hdl->ha_fid.fid_gen = bstat.bs_gen;
@@ -128,9 +122,8 @@ static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t *fh)
 	return 0;
 }
 
-int vfs_open_by_handle(struct fsal_filesystem *fs,
-		       vfs_file_handle_t *fh, int openflags,
-		       fsal_errors_t *fsal_error)
+int vfs_open_by_handle(struct fsal_filesystem *fs, vfs_file_handle_t *fh,
+		       int openflags, fsal_errors_t *fsal_error)
 {
 	int fd;
 
@@ -150,8 +143,7 @@ int vfs_open_by_handle(struct fsal_filesystem *fs,
 	return fd;
 }
 
-int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs,
-		     vfs_file_handle_t *fh)
+int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs, vfs_file_handle_t *fh)
 {
 	void *data;
 	size_t sz;
@@ -173,9 +165,7 @@ int vfs_fd_to_handle(int fd, struct fsal_filesystem *fs,
 	return rv;
 }
 
-int vfs_name_to_handle(int fd,
-		       struct fsal_filesystem *fs,
-		       const char *name,
+int vfs_name_to_handle(int fd, struct fsal_filesystem *fs, const char *name,
 		       vfs_file_handle_t *fh)
 {
 	int retval;
@@ -202,16 +192,15 @@ int vfs_name_to_handle(int fd,
 	return retval;
 }
 
-int vfs_readlink(struct vfs_fsal_obj_handle *hdl,
-		 fsal_errors_t *ferr)
+int vfs_readlink(struct vfs_fsal_obj_handle *hdl, fsal_errors_t *ferr)
 {
 	char ldata[MAXPATHLEN + 1];
 	int retval;
 
 	LogXFSHandle(hdl->handle);
 	retval = readlink_by_handle(hdl->handle->handle_data,
-				    hdl->handle->handle_len,
-				    ldata, sizeof(ldata));
+				    hdl->handle->handle_len, ldata,
+				    sizeof(ldata));
 	if (retval < 0) {
 		retval = -errno;
 		*ferr = posix2fsal_error(retval);
@@ -225,15 +214,14 @@ int vfs_readlink(struct vfs_fsal_obj_handle *hdl,
 	hdl->u.symlink.link_size = retval + 1;
 	retval = 0;
 
- out:
+out:
 	return retval;
 }
 
-int vfs_extract_fsid(vfs_file_handle_t *fh,
-		     enum fsid_type *fsid_type,
+int vfs_extract_fsid(vfs_file_handle_t *fh, enum fsid_type *fsid_type,
 		     struct fsal_fsid__ *fsid)
 {
-	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
+	xfs_handle_t *hdl = (xfs_handle_t *)fh->handle_data;
 
 	LogXFSHandle(fh);
 
@@ -241,16 +229,13 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 		char handle_data[sizeof(struct fsal_fsid__)];
 		int rc;
 
-		*fsid_type = (enum fsid_type) (hdl->ha_fid.fid_pad - 1);
+		*fsid_type = (enum fsid_type)(hdl->ha_fid.fid_pad - 1);
 
 		memcpy(handle_data, &hdl->ha_fsid, sizeof(hdl->ha_fsid));
-		memcpy(handle_data + sizeof(hdl->ha_fsid),
-		       &hdl->ha_fid.fid_ino,
+		memcpy(handle_data + sizeof(hdl->ha_fsid), &hdl->ha_fid.fid_ino,
 		       sizeof(hdl->ha_fid.fid_ino));
 
-		rc = decode_fsid(handle_data,
-				 sizeof(handle_data),
-				 fsid,
+		rc = decode_fsid(handle_data, sizeof(handle_data), fsid,
 				 *fsid_type);
 		if (rc < 0) {
 			errno = EINVAL;
@@ -267,19 +252,16 @@ int vfs_extract_fsid(vfs_file_handle_t *fh,
 	return 0;
 }
 
-int vfs_encode_dummy_handle(vfs_file_handle_t *fh,
-			    struct fsal_filesystem *fs)
+int vfs_encode_dummy_handle(vfs_file_handle_t *fh, struct fsal_filesystem *fs)
 {
-	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
+	xfs_handle_t *hdl = (xfs_handle_t *)fh->handle_data;
 	char handle_data[sizeof(struct fsal_fsid__)];
 	int rc;
 
 	memset(handle_data, 0, sizeof(handle_data));
 
 	/* Pack fsid into handle_data */
-	rc = encode_fsid(handle_data,
-			 sizeof(handle_data),
-			 &fs->fsid,
+	rc = encode_fsid(handle_data, sizeof(handle_data), &fs->fsid,
 			 fs->fsid_type);
 
 	if (rc < 0) {
@@ -291,11 +273,9 @@ int vfs_encode_dummy_handle(vfs_file_handle_t *fh,
 	       (sizeof(hdl->ha_fsid) + sizeof(hdl->ha_fid.fid_ino)));
 
 	memcpy(&hdl->ha_fsid, handle_data, sizeof(hdl->ha_fsid));
-	memcpy(&hdl->ha_fid.fid_ino,
-	       handle_data + sizeof(hdl->ha_fsid),
+	memcpy(&hdl->ha_fid.fid_ino, handle_data + sizeof(hdl->ha_fsid),
 	       sizeof(hdl->ha_fid.fid_ino));
-	hdl->ha_fid.fid_len = sizeof(xfs_handle_t) -
-			      sizeof(xfs_fsid_t) -
+	hdl->ha_fid.fid_len = sizeof(xfs_handle_t) - sizeof(xfs_fsid_t) -
 			      sizeof(hdl->ha_fid.fid_len);
 	hdl->ha_fid.fid_pad = fs->fsid_type + 1;
 	hdl->ha_fid.fid_gen = 0;
@@ -308,44 +288,38 @@ int vfs_encode_dummy_handle(vfs_file_handle_t *fh,
 
 bool vfs_is_dummy_handle(vfs_file_handle_t *fh)
 {
-	xfs_handle_t *hdl = (xfs_handle_t *) fh->handle_data;
+	xfs_handle_t *hdl = (xfs_handle_t *)fh->handle_data;
 
 	return hdl->ha_fid.fid_pad != 0;
 }
 
 bool vfs_valid_handle(struct gsh_buffdesc *desc)
 {
-	xfs_handle_t *hdl = (xfs_handle_t *) desc->addr;
+	xfs_handle_t *hdl = (xfs_handle_t *)desc->addr;
 	bool fsid_type_ok = false;
 
-	if ((desc->addr == NULL) ||
-	    (desc->len != sizeof(xfs_handle_t)))
+	if ((desc->addr == NULL) || (desc->len != sizeof(xfs_handle_t)))
 		return false;
 
 	if (isMidDebug(COMPONENT_FSAL)) {
 		char buf[256] = "\0";
-		struct display_buffer dspbuf = {sizeof(buf), buf, buf};
+		struct display_buffer dspbuf = { sizeof(buf), buf, buf };
 
-		(void) display_printf(&dspbuf,
-				      "Handle len %d: fsid=0x%016"
-				      PRIx32".0x%016"PRIx32
-				      " fid_len=%"PRIu16
-				      " fid_pad=%"PRIu16
-				      " fid_gen=%"PRIu32
-				      " fid_ino=%"PRIu64,
-				      (int) desc->len,
-				      hdl->ha_fsid.val[0],
-				      hdl->ha_fsid.val[1],
-				      hdl->ha_fid.fid_len,
-				      hdl->ha_fid.fid_pad,
-				      hdl->ha_fid.fid_gen,
-				      hdl->ha_fid.fid_ino);
+		(void)display_printf(&dspbuf,
+				     "Handle len %d: fsid=0x%016" PRIx32
+				     ".0x%016" PRIx32 " fid_len=%" PRIu16
+				     " fid_pad=%" PRIu16 " fid_gen=%" PRIu32
+				     " fid_ino=%" PRIu64,
+				     (int)desc->len, hdl->ha_fsid.val[0],
+				     hdl->ha_fsid.val[1], hdl->ha_fid.fid_len,
+				     hdl->ha_fid.fid_pad, hdl->ha_fid.fid_gen,
+				     hdl->ha_fid.fid_ino);
 
 		LogMidDebug(COMPONENT_FSAL, "%s", buf);
 	}
 
 	if (hdl->ha_fid.fid_pad != 0) {
-		switch ((enum fsid_type) (hdl->ha_fid.fid_pad - 1)) {
+		switch ((enum fsid_type)(hdl->ha_fid.fid_pad - 1)) {
 		case FSID_NO_TYPE:
 		case FSID_ONE_UINT64:
 		case FSID_MAJOR_64:
@@ -358,7 +332,7 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 
 		if (!fsid_type_ok) {
 			LogDebug(COMPONENT_FSAL,
-				 "FSID Type %02"PRIu16" invalid",
+				 "FSID Type %02" PRIu16 " invalid",
 				 hdl->ha_fid.fid_pad - 1);
 			return false;
 		}
@@ -367,13 +341,12 @@ bool vfs_valid_handle(struct gsh_buffdesc *desc)
 			return false;
 	}
 
-	return hdl->ha_fid.fid_len == (sizeof(xfs_handle_t) -
-				       sizeof(xfs_fsid_t) -
-				       sizeof(hdl->ha_fid.fid_len));
+	return hdl->ha_fid.fid_len ==
+	       (sizeof(xfs_handle_t) - sizeof(xfs_fsid_t) -
+		sizeof(hdl->ha_fid.fid_len));
 }
 
-int vfs_get_root_handle(struct fsal_filesystem *fs,
-			struct vfs_fsal_export *exp,
+int vfs_get_root_handle(struct fsal_filesystem *fs, struct vfs_fsal_export *exp,
 			int *root_fd)
 {
 	enum fsid_type fsid_type;
@@ -387,9 +360,10 @@ int vfs_get_root_handle(struct fsal_filesystem *fs,
 
 	if (path_to_fshandle(fs->path, &data, &sz) < 0) {
 		retval = errno;
-		LogMajor(COMPONENT_FSAL,
-			 "Export root %s could not be established for XFS error %s",
-			 fs->path, strerror(retval));
+		LogMajor(
+			COMPONENT_FSAL,
+			"Export root %s could not be established for XFS error %s",
+			fs->path, strerror(retval));
 		return retval;
 	}
 
@@ -408,8 +382,8 @@ int vfs_get_root_handle(struct fsal_filesystem *fs,
 	if (retval != 0) {
 		retval = errno;
 		LogMajor(COMPONENT_FSAL,
-			 "Get root handle for %s failed with %s (%d)",
-			 fs->path, strerror(retval), retval);
+			 "Get root handle for %s failed with %s (%d)", fs->path,
+			 strerror(retval), retval);
 		goto errout;
 	}
 
@@ -417,7 +391,7 @@ int vfs_get_root_handle(struct fsal_filesystem *fs,
 	 * using it. This is because the file handle already has an fsid in
 	 * it.
 	 */
-	(void) vfs_extract_fsid(fh, &fsid_type, &fsid);
+	(void)vfs_extract_fsid(fh, &fsid_type, &fsid);
 
 	retval = re_index_fs_fsid(fs, fsid_type, &fsid);
 
@@ -436,4 +410,3 @@ errout:
 
 	return retval;
 }
-

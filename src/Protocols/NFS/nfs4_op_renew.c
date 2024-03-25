@@ -60,8 +60,8 @@
 enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 				  struct nfs_resop4 *resp)
 {
-	RENEW4args * const arg_RENEW4 = &op->nfs_argop4_u.oprenew;
-	RENEW4res * const res_RENEW4 = &resp->nfs_resop4_u.oprenew;
+	RENEW4args *const arg_RENEW4 = &op->nfs_argop4_u.oprenew;
+	RENEW4res *const res_RENEW4 = &resp->nfs_resop4_u.oprenew;
 	nfs_client_id_t *clientid;
 	int rc;
 
@@ -75,8 +75,7 @@ enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Tell the admin what I am doing... */
-	LogFullDebug(COMPONENT_CLIENTID,
-		     "RENEW Client id = %" PRIx64,
+	LogFullDebug(COMPONENT_CLIENTID, "RENEW Client id = %" PRIx64,
 		     arg_RENEW4->clientid);
 
 	/* Is this an existing client id ? */
@@ -98,11 +97,11 @@ enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 		/* Check the state of callback path and return correct error */
 		if (nfs_param.nfsv4_param.allow_delegations &&
 		    get_cb_chan_down(clientid) && clientid->curr_deleg_grants) {
-			res_RENEW4->status =  NFS4ERR_CB_PATH_DOWN;
+			res_RENEW4->status = NFS4ERR_CB_PATH_DOWN;
 			/* Set the time for first PATH_DOWN response */
 			if (clientid->first_path_down_resp_time == 0)
 				clientid->first_path_down_resp_time =
-								time(NULL);
+					time(NULL);
 		} else {
 			res_RENEW4->status = NFS4_OK;
 			/* Reset */
@@ -113,7 +112,7 @@ enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 	dec_client_id_ref(clientid);
 
 	return nfsstat4_to_nfs_req_result(res_RENEW4->status);
-}				/* nfs4_op_renew */
+} /* nfs4_op_renew */
 
 /**
  * @brief Free memory allocated for RENEW result

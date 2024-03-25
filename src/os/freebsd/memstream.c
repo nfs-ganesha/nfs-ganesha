@@ -129,7 +129,6 @@ static fpos_t memstream_seek(void *cookie, fpos_t pos, int whence)
 
 static int memstream_close(void *cookie)
 {
-
 	gsh_free(cookie);
 	return 0;
 }

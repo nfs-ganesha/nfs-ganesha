@@ -32,9 +32,13 @@
 
 #if !GSH_CAN_HOST_LOCAL_FS
 
-static inline void release_posix_file_systems(void) {}
+static inline void release_posix_file_systems(void)
+{
+}
 #ifdef USE_DBUS
-static inline void dbus_cache_init(void) {}
+static inline void dbus_cache_init(void)
+{
+}
 #endif
 
 struct fsal_filesystem;
@@ -52,31 +56,31 @@ struct fsal_filesystem;
  */
 
 struct fsal_filesystem {
-	struct glist_head filesystems;	/*< List of file systems */
-	struct glist_head children;	/*< Child file systems */
-	struct glist_head siblings;	/*< Entry in list of parent's child
+	struct glist_head filesystems; /*< List of file systems */
+	struct glist_head children; /*< Child file systems */
+	struct glist_head siblings; /*< Entry in list of parent's child
 					    file systems */
-	struct fsal_filesystem *parent;	/*< Parent file system */
-	struct fsal_module *fsal;	/*< Link back to fsal module */
-	struct glist_head exports;	/*< List of all the export maps */
-	void *private_data;		/*< Private data for owning FSAL */
-	char *path;			/*< Path to root of this file system */
-	char *device;			/*< Path to block device */
-	char *type;			/*< fs type */
+	struct fsal_filesystem *parent; /*< Parent file system */
+	struct fsal_module *fsal; /*< Link back to fsal module */
+	struct glist_head exports; /*< List of all the export maps */
+	void *private_data; /*< Private data for owning FSAL */
+	char *path; /*< Path to root of this file system */
+	char *device; /*< Path to block device */
+	char *type; /*< fs type */
 
-	unclaim_filesystem_cb unclaim;  /*< Call back to unclaim this fs */
-	uint32_t pathlen;		/*< Length of path */
-	uint32_t namelen;		/*< Name length from statfs */
+	unclaim_filesystem_cb unclaim; /*< Call back to unclaim this fs */
+	uint32_t pathlen; /*< Length of path */
+	uint32_t namelen; /*< Name length from statfs */
 
-	struct avltree_node avl_fsid;	/*< AVL indexed by fsid */
-	struct avltree_node avl_dev;	/*< AVL indexed by dev */
-	struct fsal_fsid__ fsid;	/*< file system id */
-	fsal_dev_t dev;			/*< device filesystem is on */
-	enum fsid_type fsid_type;	/*< type of fsid present */
-	bool in_fsid_avl;		/*< true if inserted in fsid avl */
-	bool in_dev_avl;		/*< true if inserted in dev avl */
-	int claims[CLAIM_NUM];		/*< number of each type of claim */
-	bool trunc_verif;		/*< true if the filesystem needs
+	struct avltree_node avl_fsid; /*< AVL indexed by fsid */
+	struct avltree_node avl_dev; /*< AVL indexed by dev */
+	struct fsal_fsid__ fsid; /*< file system id */
+	fsal_dev_t dev; /*< device filesystem is on */
+	enum fsid_type fsid_type; /*< type of fsid present */
+	bool in_fsid_avl; /*< true if inserted in fsid avl */
+	bool in_dev_avl; /*< true if inserted in dev avl */
+	int claims[CLAIM_NUM]; /*< number of each type of claim */
+	bool trunc_verif; /*< true if the filesystem needs
 					    atime/mtime to be truncated to 31
 					    bits when storing verifier. */
 };
@@ -134,28 +138,24 @@ static inline int fsal_fs_compare_fsid(enum fsid_type left_fsid_type,
 
 extern pthread_rwlock_t fs_lock;
 
-#define LogFilesystem(cmt, cmt2, fs) \
-	LogFullDebug(COMPONENT_FSAL, \
+#define LogFilesystem(cmt, cmt2, fs)                                         \
+	LogFullDebug(COMPONENT_FSAL,                                         \
 		     "%s%s FS %p %s parent %p %s children? %s siblings? %s " \
-		     "FSAL %s exports? %s private %p " \
-		     "claims ALL %d ROOT %d SUBTREE %d CHILD %d TEMP %d", \
-		     (cmt), (cmt2), (fs), (fs)->path, (fs)->parent, \
-		     (fs)->parent ? (fs)->parent->path : "NONE", \
-		     glist_empty(&(fs)->children) ? "NO" : "YES", \
-		     glist_null(&(fs)->siblings) ? "NO" : "YES", \
-		     (fs)->fsal ? (fs)->fsal->name : "NONE", \
-		     glist_empty(&(fs)->exports) ? "NO" : "YES", \
-		     (fs)->private_data, \
-		     (fs)->claims[CLAIM_ALL], \
-		     (fs)->claims[CLAIM_ROOT], \
-		     (fs)->claims[CLAIM_SUBTREE], \
-		     (fs)->claims[CLAIM_CHILD], \
-		     (fs)->claims[CLAIM_TEMP])
+		     "FSAL %s exports? %s private %p "                       \
+		     "claims ALL %d ROOT %d SUBTREE %d CHILD %d TEMP %d",    \
+		     (cmt), (cmt2), (fs), (fs)->path, (fs)->parent,          \
+		     (fs)->parent ? (fs)->parent->path : "NONE",             \
+		     glist_empty(&(fs)->children) ? "NO" : "YES",            \
+		     glist_null(&(fs)->siblings) ? "NO" : "YES",             \
+		     (fs)->fsal ? (fs)->fsal->name : "NONE",                 \
+		     glist_empty(&(fs)->exports) ? "NO" : "YES",             \
+		     (fs)->private_data, (fs)->claims[CLAIM_ALL],            \
+		     (fs)->claims[CLAIM_ROOT], (fs)->claims[CLAIM_SUBTREE],  \
+		     (fs)->claims[CLAIM_CHILD], (fs)->claims[CLAIM_TEMP])
 
 int populate_posix_file_systems(const char *path);
 
-int resolve_posix_filesystem(const char *path,
-			     struct fsal_module *fsal,
+int resolve_posix_filesystem(const char *path, struct fsal_module *fsal,
 			     struct fsal_export *exp,
 			     claim_filesystem_cb claimfs,
 			     unclaim_filesystem_cb unclaim,
@@ -171,15 +171,12 @@ enum release_claims {
 bool release_posix_file_system(struct fsal_filesystem *fs,
 			       enum release_claims release_claims);
 
-int re_index_fs_fsid(struct fsal_filesystem *fs,
-		     enum fsid_type fsid_type,
+int re_index_fs_fsid(struct fsal_filesystem *fs, enum fsid_type fsid_type,
 		     struct fsal_fsid__ *fsid);
 
-int re_index_fs_dev(struct fsal_filesystem *fs,
-		    struct fsal_dev__ *dev);
+int re_index_fs_dev(struct fsal_filesystem *fs, struct fsal_dev__ *dev);
 
-int change_fsid_type(struct fsal_filesystem *fs,
-		     enum fsid_type fsid_type);
+int change_fsid_type(struct fsal_filesystem *fs, enum fsid_type fsid_type);
 
 struct fsal_filesystem *lookup_fsid_locked(struct fsal_fsid__ *fsid,
 					   enum fsid_type fsid_type);
@@ -188,8 +185,7 @@ struct fsal_filesystem *lookup_fsid(struct fsal_fsid__ *fsid,
 				    enum fsid_type fsid_type);
 struct fsal_filesystem *lookup_dev(struct fsal_dev__ *dev);
 
-int claim_posix_filesystems(const char *path,
-			    struct fsal_module *fsal,
+int claim_posix_filesystems(const char *path, struct fsal_module *fsal,
 			    struct fsal_export *exp,
 			    claim_filesystem_cb claimfs,
 			    unclaim_filesystem_cb unclaim,
@@ -209,6 +205,6 @@ void get_fs_first_export_ref(struct fsal_filesystem *this,
 void dbus_cache_init(void);
 #endif
 
-#endif		/* GSH_CAN_HOST_LOCAL_FS */
+#endif /* GSH_CAN_HOST_LOCAL_FS */
 
-#endif				/* FSAL_LOCAL_FS_H */
+#endif /* FSAL_LOCAL_FS_H */

@@ -36,4 +36,4 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#endif				/* _EXTENDED_TYPES_LINUX_H */
+#endif /* _EXTENDED_TYPES_LINUX_H */

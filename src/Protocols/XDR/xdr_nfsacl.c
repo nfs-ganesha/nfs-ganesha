@@ -9,8 +9,7 @@
 #include "nfs23.h"
 #include "nfsacl.h"
 
-bool_t
-xdr_attr3 (XDR *xdrs, attr3 *objp)
+bool_t xdr_attr3(XDR *xdrs, attr3 *objp)
 {
 	if (!xdr_bool(xdrs, &objp->attributes_follow))
 		return FALSE;
@@ -27,8 +26,7 @@ xdr_attr3 (XDR *xdrs, attr3 *objp)
 	return TRUE;
 }
 
-bool_t
-xdr_posix_acl_entry (XDR *xdrs, posix_acl_entry *objp)
+bool_t xdr_posix_acl_entry(XDR *xdrs, posix_acl_entry *objp)
 {
 	if (!xdr_nfs3_uint32(xdrs, &objp->e_tag))
 		return FALSE;
@@ -39,21 +37,20 @@ xdr_posix_acl_entry (XDR *xdrs, posix_acl_entry *objp)
 	return TRUE;
 }
 
-bool_t
-xdr_posix_acl (XDR *xdrs, posix_acl *objp)
+bool_t xdr_posix_acl(XDR *xdrs, posix_acl *objp)
 {
 	if (!xdr_nfs3_uint32(xdrs, &objp->count))
 		return FALSE;
 	if (objp->count > 4096)
 		return FALSE;
 	if (!xdr_vector(xdrs, (char *)objp->entries, objp->count,
-		sizeof(posix_acl_entry), (xdrproc_t) xdr_posix_acl_entry))
+			sizeof(posix_acl_entry),
+			(xdrproc_t)xdr_posix_acl_entry))
 		return FALSE;
 	return TRUE;
 }
 
-bool_t
-xdr_getaclargs (XDR *xdrs, getaclargs *objp)
+bool_t xdr_getaclargs(XDR *xdrs, getaclargs *objp)
 {
 	if (!xdr_nfs_fh3(xdrs, &objp->fhandle))
 		return FALSE;
@@ -62,8 +59,7 @@ xdr_getaclargs (XDR *xdrs, getaclargs *objp)
 	return TRUE;
 }
 
-bool_t
-xdr_getaclresok (XDR *xdrs, getaclresok *objp)
+bool_t xdr_getaclresok(XDR *xdrs, getaclresok *objp)
 {
 	if (!xdr_attr3(xdrs, &objp->attr))
 		return FALSE;
@@ -73,37 +69,40 @@ xdr_getaclresok (XDR *xdrs, getaclresok *objp)
 		return FALSE;
 	if (objp->acl_access != NULL) {
 		if (!xdr_reference(xdrs, (void **)&objp->acl_access,
-			sizeof(posix_acl) +
-			objp->acl_access_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				   sizeof(posix_acl) +
+					   objp->acl_access_count *
+						   sizeof(posix_acl_entry),
+				   (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	} else {
 		if (!xdr_pointer(xdrs, (void **)&objp->acl_access,
-			sizeof(posix_acl) +
-			objp->acl_access_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				 sizeof(posix_acl) +
+					 objp->acl_access_count *
+						 sizeof(posix_acl_entry),
+				 (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	}
 	if (!xdr_nfs3_uint32(xdrs, &objp->acl_default_count))
 		return FALSE;
 	if (objp->acl_default != NULL) {
 		if (!xdr_reference(xdrs, (void **)&objp->acl_default,
-			sizeof(posix_acl) +
-			objp->acl_default_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				   sizeof(posix_acl) +
+					   objp->acl_default_count *
+						   sizeof(posix_acl_entry),
+				   (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	} else {
 		if (!xdr_pointer(xdrs, (void **)&objp->acl_default,
-			sizeof(posix_acl) +
-			objp->acl_default_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				 sizeof(posix_acl) +
+					 objp->acl_default_count *
+						 sizeof(posix_acl_entry),
+				 (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	}
 	return TRUE;
 }
 
-bool_t
-xdr_getaclres (XDR *xdrs, getaclres *objp)
+bool_t xdr_getaclres(XDR *xdrs, getaclres *objp)
 {
 	if (!xdr_nfsstat3(xdrs, &objp->status))
 		return FALSE;
@@ -118,8 +117,7 @@ xdr_getaclres (XDR *xdrs, getaclres *objp)
 	return TRUE;
 }
 
-bool_t
-xdr_setaclargs (XDR *xdrs, setaclargs *objp)
+bool_t xdr_setaclargs(XDR *xdrs, setaclargs *objp)
 {
 	if (!xdr_nfs_fh3(xdrs, &objp->fhandle))
 		return FALSE;
@@ -129,45 +127,47 @@ xdr_setaclargs (XDR *xdrs, setaclargs *objp)
 		return FALSE;
 	if (xdrs->x_op == XDR_DECODE) {
 		if (!xdr_reference(xdrs, (void **)&objp->acl_access,
-			sizeof(posix_acl) +
-			objp->acl_access_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				   sizeof(posix_acl) +
+					   objp->acl_access_count *
+						   sizeof(posix_acl_entry),
+				   (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	} else {
 		if (!xdr_pointer(xdrs, (void **)&objp->acl_access,
-			sizeof(posix_acl) +
-			objp->acl_access_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				 sizeof(posix_acl) +
+					 objp->acl_access_count *
+						 sizeof(posix_acl_entry),
+				 (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	}
 	if (!xdr_nfs3_uint32(xdrs, &objp->acl_default_count))
 		return FALSE;
 	if (xdrs->x_op == XDR_DECODE) {
 		if (!xdr_reference(xdrs, (void **)&objp->acl_default,
-			sizeof(posix_acl) +
-			objp->acl_default_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				   sizeof(posix_acl) +
+					   objp->acl_default_count *
+						   sizeof(posix_acl_entry),
+				   (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	} else {
 		if (!xdr_pointer(xdrs, (void **)&objp->acl_default,
-			sizeof(posix_acl) +
-			objp->acl_default_count * sizeof(posix_acl_entry),
-			(xdrproc_t) xdr_posix_acl))
+				 sizeof(posix_acl) +
+					 objp->acl_default_count *
+						 sizeof(posix_acl_entry),
+				 (xdrproc_t)xdr_posix_acl))
 			return FALSE;
 	}
 	return TRUE;
 }
 
-bool_t
-xdr_setaclresok (XDR *xdrs, setaclresok *objp)
+bool_t xdr_setaclresok(XDR *xdrs, setaclresok *objp)
 {
 	if (!xdr_attr3(xdrs, &objp->attr))
 		return FALSE;
 	return TRUE;
 }
 
-bool_t
-xdr_setaclres (XDR *xdrs, setaclres *objp)
+bool_t xdr_setaclres(XDR *xdrs, setaclres *objp)
 {
 	if (!xdr_nfsstat3(xdrs, &objp->status))
 		return FALSE;
@@ -181,4 +181,3 @@ xdr_setaclres (XDR *xdrs, setaclres *objp)
 	}
 	return TRUE;
 }
-

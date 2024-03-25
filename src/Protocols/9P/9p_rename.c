@@ -51,11 +51,11 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u32 *fid = NULL;
 	u32 *dfid = NULL;
 	u16 *name_len = NULL;
-	char *name_str = NULL;	/* for unused-but-set-variable */
+	char *name_str = NULL; /* for unused-but-set-variable */
 	struct _9p_fid *pfid = NULL;
 	struct _9p_fid *pdfid = NULL;
 
-	char newname[MAXNAMLEN+1];
+	char newname[MAXNAMLEN + 1];
 	fsal_status_t fsal_status;
 
 	/* Get data */
@@ -65,7 +65,7 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getstr(cursor, name_len, name_str);
 
 	LogDebug(COMPONENT_9P, "TRENAME: tag=%u fid=%u dfid=%u name=%.*s",
-		 (u32) *msgtag, *fid, *dfid, *name_len, name_str);
+		 (u32)*msgtag, *fid, *dfid, *name_len, name_str);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -98,16 +98,15 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (pfid->fid_export != NULL && pdfid->fid_export != NULL &&
 	    pfid->fid_export->export_id != pdfid->fid_export->export_id) {
 		LogDebug(COMPONENT_9P,
-			 "request on fid=%u and dfid=%u crosses exports",
-			 *fid, *dfid);
+			 "request on fid=%u and dfid=%u crosses exports", *fid,
+			 *dfid);
 		return _9p_rerror(req9p, msgtag, EXDEV, plenout, preply);
 	}
 
 	if (*name_len >= sizeof(newname)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(newname, *name_len, name_str);
@@ -115,9 +114,8 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_status = fsal_rename(pfid->ppentry, pfid->name, pdfid->pentry,
 				  newname, NULL, NULL, NULL, NULL);
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RRENAME);
@@ -127,7 +125,7 @@ int _9p_rename(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RRENAMEAT: tag=%u fid=%u dfid=%u newname=%.*s",
-		 (u32) *msgtag, *fid, *dfid, *name_len, name_str);
+		 (u32)*msgtag, *fid, *dfid, *name_len, name_str);
 
 	/*  _9p_stat_update(*pmsgtype, TRUE, &pwkrdata->stats._9p_stat_req); */
 	return 1;

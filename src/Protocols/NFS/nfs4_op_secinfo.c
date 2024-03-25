@@ -69,10 +69,10 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
-	SECINFO4args * const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
-	SECINFO4res * const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
+	SECINFO4args *const arg_SECINFO4 = &op->nfs_argop4_u.opsecinfo;
+	SECINFO4res *const res_SECINFO4 = &resp->nfs_resop4_u.opsecinfo;
 	secinfo4 *resok_val;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *obj_src = NULL;
 #ifdef _HAVE_GSSAPI
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
@@ -90,8 +90,8 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	/* Read name from uft8 strings, if one is empty then returns
 	 * NFS4ERR_INVAL
 	 */
-	res_SECINFO4->status = nfs4_utf8string_scan(&arg_SECINFO4->name,
-						    UTF8_SCAN_PATH_COMP);
+	res_SECINFO4->status =
+		nfs4_utf8string_scan(&arg_SECINFO4->name, UTF8_SCAN_PATH_COMP);
 
 	if (res_SECINFO4->status != NFS4_OK)
 		goto out;
@@ -103,10 +103,9 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	if (res_SECINFO4->status != NFS4_OK)
 		goto out;
 
-
 	fsal_status = fsal_lookup(data->current_obj,
-				  arg_SECINFO4->name.utf8string_val,
-				  &obj_src, NULL);
+				  arg_SECINFO4->name.utf8string_val, &obj_src,
+				  NULL);
 
 	if (obj_src == NULL) {
 		res_SECINFO4->status = nfs4_Errno_status(fsal_status);
@@ -158,10 +157,11 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 			 * have access to this export, return NFS4ERR_NOENT to
 			 * hide it. It was not visible in READDIR response.
 			 */
-			LogDebug(COMPONENT_EXPORT,
-				 "NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
-				 op_ctx->ctx_export->export_id,
-				 CTX_PSEUDOPATH(op_ctx));
+			LogDebug(
+				COMPONENT_EXPORT,
+				"NFS4ERR_ACCESS Hiding Export_Id %d Pseudo %s with NFS4ERR_NOENT",
+				op_ctx->ctx_export->export_id,
+				CTX_PSEUDOPATH(op_ctx));
 			res_SECINFO4->status = NFS4ERR_NOENT;
 			goto out;
 		}
@@ -169,25 +169,26 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		/* Only other error is NFS4ERR_WRONGSEC which is actually
 		 * what we expect here. Finish crossing the junction.
 		 */
-		fsal_status = nfs_export_get_root_entry(op_ctx->ctx_export,
-							&obj);
+		fsal_status =
+			nfs_export_get_root_entry(op_ctx->ctx_export, &obj);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			LogMajor(COMPONENT_EXPORT,
-				 "PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
-				 CTX_PSEUDOPATH(op_ctx),
-				 op_ctx->ctx_export->export_id,
-				 fsal_err_txt(fsal_status));
+			LogMajor(
+				COMPONENT_EXPORT,
+				"PSEUDO FS JUNCTION TRAVERSAL: Failed to get root for %s, id=%d, status = %s",
+				CTX_PSEUDOPATH(op_ctx),
+				op_ctx->ctx_export->export_id,
+				fsal_err_txt(fsal_status));
 
 			res_SECINFO4->status = nfs4_Errno_status(fsal_status);
 			goto out;
 		}
 
-		LogDebug(COMPONENT_EXPORT,
-			 "PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
-			 CTX_PSEUDOPATH(op_ctx),
-			 op_ctx->ctx_export->export_id,
-			 arg_SECINFO4->name.utf8string_val);
+		LogDebug(
+			COMPONENT_EXPORT,
+			"PSEUDO FS JUNCTION TRAVERSAL: Crossed to %s, id=%d for name=%s",
+			CTX_PSEUDOPATH(op_ctx), op_ctx->ctx_export->export_id,
+			arg_SECINFO4->name.utf8string_val);
 
 		/* Swap in the obj on the other side of the junction. */
 		obj_src->obj_ops->put_ref(obj_src);
@@ -286,7 +287,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
 	res_SECINFO4->status = NFS4_OK;
 
- out:
+out:
 
 	if (restore_op_ctx) {
 		/* Restore export stuff */
@@ -294,8 +295,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
 		/* Restore creds */
 		if (nfs_req_creds(data->req) != NFS4_OK) {
-			LogCrit(COMPONENT_EXPORT,
-				"Failure to restore creds");
+			LogCrit(COMPONENT_EXPORT, "Failure to restore creds");
 		}
 	}
 
@@ -303,7 +303,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 		obj_src->obj_ops->put_ref(obj_src);
 
 	return nfsstat4_to_nfs_req_result(res_SECINFO4->status);
-}				/* nfs4_op_secinfo */
+} /* nfs4_op_secinfo */
 
 /**
  * @brief Free memory allocated for SECINFO result

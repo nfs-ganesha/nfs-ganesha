@@ -83,12 +83,12 @@ void uid2grp_cache_reap(void);
 
 bool uid2grp(uid_t uid, struct group_data **);
 bool name2grp(const struct gsh_buffdesc *name, struct group_data **gdata);
-bool principal2grp(char *principal, struct group_data **,
-			     const uid_t, const gid_t);
+bool principal2grp(char *principal, struct group_data **, const uid_t,
+		   const gid_t);
 void uid2grp_unref(struct group_data *gdata);
 void uid2grp_hold_group_data(struct group_data *);
 void uid2grp_release_group_data(struct group_data *);
 bool uid2grp_is_group_data_expired(struct group_data *);
 
-#endif				/* UID2GRP_H */
+#endif /* UID2GRP_H */
 /** @} */

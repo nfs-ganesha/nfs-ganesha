@@ -47,7 +47,7 @@ ssize_t fsetxattr(int fd, const char *name, void *value, size_t size, int flags)
 	errno = 0;
 
 	attr_size =
-	    extattr_get_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, buff, size);
+		extattr_get_fd(fd, EXTATTR_NAMESPACE_SYSTEM, name, buff, size);
 	if (attr_size != size && errno == ENOATTR) {
 		/* attr we are trying to set doesn't exist. check if
 		 * XATTR_REPLACE was set */

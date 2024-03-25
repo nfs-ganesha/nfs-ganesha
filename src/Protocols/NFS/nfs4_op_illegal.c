@@ -63,7 +63,7 @@ enum nfs_req_result nfs4_op_illegal(struct nfs_argop4 *op,
 	resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;
 
 	return NFS_REQ_ERROR;
-}				/* nfs4_op_illegal */
+} /* nfs4_op_illegal */
 
 /**
  * @brief Free memory allocated for ILLEGAL result
@@ -98,7 +98,7 @@ enum nfs_req_result nfs4_op_notsupp(struct nfs_argop4 *op,
 	resp->nfs_resop4_u.opillegal.status = NFS4ERR_NOTSUPP;
 
 	return NFS_REQ_ERROR;
-}				/* nfs4_op_notsupp */
+} /* nfs4_op_notsupp */
 
 /**
  * @brief Free memory allocated for NOTSUPP result

@@ -55,15 +55,12 @@ int dbus_heartbeat_cb(void *arg)
 	if (ishealthy) {
 		/* send the heartbeat pulse */
 		err = gsh_dbus_broadcast(DBUS_PATH HEARTBEAT_NAME,
-					 DBUS_ADMIN_IFACE,
-					 HEARTBEAT_NAME,
-					 DBUS_TYPE_BOOLEAN,
-					 &ishealthy,
+					 DBUS_ADMIN_IFACE, HEARTBEAT_NAME,
+					 DBUS_TYPE_BOOLEAN, &ishealthy,
 					 DBUS_TYPE_INVALID);
 		if (err) {
 			LogCrit(COMPONENT_DBUS,
-				"heartbeat broadcast failed. err:%d",
-				err);
+				"heartbeat broadcast failed. err:%d", err);
 			rc = BCAST_STATUS_WARN;
 		}
 	}
@@ -73,8 +70,7 @@ int dbus_heartbeat_cb(void *arg)
 
 void init_heartbeat(void)
 {
-	add_dbus_broadcast(&dbus_heartbeat_cb,
-			   NULL,
-			   nfs_param.core_param.heartbeat_freq*NS_PER_MSEC,
+	add_dbus_broadcast(&dbus_heartbeat_cb, NULL,
+			   nfs_param.core_param.heartbeat_freq * NS_PER_MSEC,
 			   BCAST_FOREVER);
 }

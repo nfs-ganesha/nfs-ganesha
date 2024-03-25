@@ -38,14 +38,14 @@
  * @brief Bind connection to the session's backchannel
  */
 static nfsstat4 bind_conn_to_session_backchannel(SVCXPRT *rq_xprt,
-	nfs41_session_t *session)
+						 nfs41_session_t *session)
 {
 	char session_str[NFS4_SESSIONID_BUFFER_SIZE] = "\0";
-	struct display_buffer db_session = {
-		sizeof(session_str), session_str, session_str};
+	struct display_buffer db_session = { sizeof(session_str), session_str,
+					     session_str };
 	char xprt_addr_str[SOCK_NAME_MAX] = "\0";
-	struct display_buffer db_xprt = {
-		sizeof(xprt_addr_str), xprt_addr_str, xprt_addr_str};
+	struct display_buffer db_xprt = { sizeof(xprt_addr_str), xprt_addr_str,
+					  xprt_addr_str };
 
 	display_session_id(&db_session, session->session_id);
 	display_xprt_sockaddr(&db_xprt, rq_xprt);
@@ -66,8 +66,8 @@ static nfsstat4 bind_conn_to_session_backchannel(SVCXPRT *rq_xprt,
 			"Creating backchannel for session: %s", session_str);
 
 		/* Create backchannel */
-		rc = nfs_rpc_create_chan_v41(rq_xprt, session,
-			session->cb_sec_parms.sec_parms_len,
+		rc = nfs_rpc_create_chan_v41(
+			rq_xprt, session, session->cb_sec_parms.sec_parms_len,
 			session->cb_sec_parms.sec_parms_val);
 
 		if (unlikely(rc == EINVAL || rc == EPERM))
@@ -81,7 +81,8 @@ static nfsstat4 bind_conn_to_session_backchannel(SVCXPRT *rq_xprt,
 		return NFS4_OK;
 	}
 	/* We always set SP4_NONE during client-record creation */
-	LogFatal(COMPONENT_SESSIONS,
+	LogFatal(
+		COMPONENT_SESSIONS,
 		"Only SP4_NONE state protection is supported. Code flow should not reach here");
 	return NFS4ERR_SERVERFAULT;
 }
@@ -102,12 +103,13 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 				      compound_data_t *data,
 				      struct nfs_resop4 *resp)
 {
-	BIND_CONN_TO_SESSION4args * const arg_BIND_CONN_TO_SESSION4 =
-	    &op->nfs_argop4_u.opbind_conn_to_session;
-	BIND_CONN_TO_SESSION4res * const res_BIND_CONN_TO_SESSION4 =
-	    &resp->nfs_resop4_u.opbind_conn_to_session;
-	BIND_CONN_TO_SESSION4resok * const resok_BIND_CONN_TO_SESSION4 =
-	    &res_BIND_CONN_TO_SESSION4->BIND_CONN_TO_SESSION4res_u.bctsr_resok4;
+	BIND_CONN_TO_SESSION4args *const arg_BIND_CONN_TO_SESSION4 =
+		&op->nfs_argop4_u.opbind_conn_to_session;
+	BIND_CONN_TO_SESSION4res *const res_BIND_CONN_TO_SESSION4 =
+		&resp->nfs_resop4_u.opbind_conn_to_session;
+	BIND_CONN_TO_SESSION4resok *const resok_BIND_CONN_TO_SESSION4 =
+		&res_BIND_CONN_TO_SESSION4->BIND_CONN_TO_SESSION4res_u
+			 .bctsr_resok4;
 	nfs41_session_t *session;
 	channel_dir_from_client4 client_channel_dir;
 	channel_dir_from_server4 server_channel_dir;
@@ -128,15 +130,15 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 			    "BIND_CONN_TO_SESSION returning status %s",
 			    nfsstat4_to_str(
-				res_BIND_CONN_TO_SESSION4->bctsr_status));
+				    res_BIND_CONN_TO_SESSION4->bctsr_status));
 
 		return NFS_REQ_ERROR;
 	}
 
 	/* session->refcount +1 */
 
-	LogDebug(COMPONENT_SESSIONS,
-		 "BIND_CONN_TO_SESSION session=%p", session);
+	LogDebug(COMPONENT_SESSIONS, "BIND_CONN_TO_SESSION session=%p",
+		 session);
 
 	/* Check if lease is expired and reserve it */
 	if (!reserve_lease_or_expire(session->clientid_record, false, NULL)) {
@@ -146,7 +148,7 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 		LogDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 			    "BIND_CONN_TO_SESSION returning status %s",
 			    nfsstat4_to_str(
-				res_BIND_CONN_TO_SESSION4->bctsr_status));
+				    res_BIND_CONN_TO_SESSION4->bctsr_status));
 
 		return NFS_REQ_ERROR;
 	}
@@ -201,7 +203,7 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 			return NFS_REQ_ERROR;
 		}
 		if (client_channel_dir == CDFC4_BACK_OR_BOTH ||
-			client_channel_dir == CDFC4_FORE_OR_BOTH) {
+		    client_channel_dir == CDFC4_FORE_OR_BOTH) {
 			server_channel_dir = CDFS4_BOTH;
 			break;
 		}
@@ -211,7 +213,7 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 
 	resok_BIND_CONN_TO_SESSION4->bctsr_dir = server_channel_dir;
 	resok_BIND_CONN_TO_SESSION4->bctsr_use_conn_in_rdma_mode =
-			arg_BIND_CONN_TO_SESSION4->bctsa_use_conn_in_rdma_mode;
+		arg_BIND_CONN_TO_SESSION4->bctsa_use_conn_in_rdma_mode;
 
 #if 0
 	if (nfs_rpc_get_chan(session->clientid_record, 0) == NULL) {
@@ -228,7 +230,7 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 
 	res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4_OK;
 	return NFS_REQ_OK;
-}				/* nfs4_op_bind_conn */
+} /* nfs4_op_bind_conn */
 
 /**
  * @brief Free memory allocated for BIND_CONN_TO_SESSION result

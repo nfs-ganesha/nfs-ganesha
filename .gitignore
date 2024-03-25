@@ -55,7 +55,6 @@ Doxyfile
 *.swp
 .project
 .checkpatch.conf
-.clang-format
 nohup.out
 src/scripts/systemd/nfs-ganesha-config.service
 src/FSAL/FSAL_VFS/vfs/lustre_main.c

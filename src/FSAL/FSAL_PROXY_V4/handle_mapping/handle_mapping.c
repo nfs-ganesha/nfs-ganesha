@@ -101,21 +101,20 @@ static uint32_t hash_digest_idx(hash_parameter_t *p_conf,
 				struct gsh_buffdesc *p_key)
 {
 	uint32_t hash;
-	digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_key->addr;
+	digest_pool_entry_t *p_digest = (digest_pool_entry_t *)p_key->addr;
 
 	hash = ((unsigned long)p_digest->nfs23_digest.object_id ^
 		(unsigned int)p_digest->nfs23_digest.handle_hash);
 	hash = (743 * hash + 1999) % p_conf->index_size;
 
 	return hash;
-
 }
 
 static unsigned long hash_digest_rbt(hash_parameter_t *p_conf,
 				     struct gsh_buffdesc *p_key)
 {
 	unsigned long hash;
-	digest_pool_entry_t *p_digest = (digest_pool_entry_t *) p_key->addr;
+	digest_pool_entry_t *p_digest = (digest_pool_entry_t *)p_key->addr;
 
 	hash = (257 * p_digest->nfs23_digest.object_id + 541);
 
@@ -124,8 +123,8 @@ static unsigned long hash_digest_rbt(hash_parameter_t *p_conf,
 
 static int cmp_digest(struct gsh_buffdesc *p_key1, struct gsh_buffdesc *p_key2)
 {
-	digest_pool_entry_t *p_digest1 = (digest_pool_entry_t *) p_key1->addr;
-	digest_pool_entry_t *p_digest2 = (digest_pool_entry_t *) p_key2->addr;
+	digest_pool_entry_t *p_digest1 = (digest_pool_entry_t *)p_key1->addr;
+	digest_pool_entry_t *p_digest2 = (digest_pool_entry_t *)p_key2->addr;
 
 	/* compare object_id and handle_hash */
 
@@ -136,8 +135,8 @@ static int cmp_digest(struct gsh_buffdesc *p_key1, struct gsh_buffdesc *p_key2)
 	else if (p_digest1->nfs23_digest.handle_hash !=
 		 p_digest2->nfs23_digest.handle_hash)
 		return (int)p_digest1->nfs23_digest.handle_hash -
-		    (int)p_digest2->nfs23_digest.handle_hash;
-	else			/* same */
+		       (int)p_digest2->nfs23_digest.handle_hash;
+	else /* same */
 		return 0;
 }
 
@@ -150,9 +149,9 @@ static int cmp_digest(struct gsh_buffdesc *p_key1, struct gsh_buffdesc *p_key2)
 static int display_digest(struct display_buffer *dspbuf,
 			  struct gsh_buffdesc *buff)
 {
-	digest_pool_entry_t *p_digest = (digest_pool_entry_t *) buff->addr;
+	digest_pool_entry_t *p_digest = (digest_pool_entry_t *)buff->addr;
 
-	return display_printf(dspbuf, "%"PRIu64", %u",
+	return display_printf(dspbuf, "%" PRIu64 ", %u",
 			      p_digest->nfs23_digest.object_id,
 			      p_digest->nfs23_digest.handle_hash);
 }
@@ -166,10 +165,10 @@ static int display_digest(struct display_buffer *dspbuf,
 static int display_handle(struct display_buffer *dspbuf,
 			  struct gsh_buffdesc *buff)
 {
-	handle_pool_entry_t *p_handle = (handle_pool_entry_t *) buff->addr;
+	handle_pool_entry_t *p_handle = (handle_pool_entry_t *)buff->addr;
 
-	return display_opaque_bytes(dspbuf,
-				    p_handle->fh_data, p_handle->fh_len);
+	return display_opaque_bytes(dspbuf, p_handle->fh_data,
+				    p_handle->fh_len);
 }
 
 int handle_mapping_hash_add(hash_table_t *p_hash, uint64_t object_id,
@@ -230,14 +229,12 @@ int handle_mapping_hash_add(hash_table_t *p_hash, uint64_t object_id,
 }
 
 /* DEFAULT PARAMETERS for hash table */
-static hash_parameter_t handle_hash_config = {
-	.index_size = 67,
-	.hash_func_key = hash_digest_idx,
-	.hash_func_rbt = hash_digest_rbt,
-	.compare_key = cmp_digest,
-	.display_key = display_digest,
-	.display_val = display_handle
-};
+static hash_parameter_t handle_hash_config = { .index_size = 67,
+					       .hash_func_key = hash_digest_idx,
+					       .hash_func_rbt = hash_digest_rbt,
+					       .compare_key = cmp_digest,
+					       .display_key = display_digest,
+					       .display_val = display_handle };
 
 /**
  * Init handle mapping module.
@@ -277,10 +274,10 @@ int HandleMap_Init(const handle_map_param_t *p_param)
 	/* initialize memory pool of digests and handles */
 
 	digest_pool =
-	    pool_basic_init("digest_pool", sizeof(digest_pool_entry_t));
+		pool_basic_init("digest_pool", sizeof(digest_pool_entry_t));
 
 	handle_pool =
-	    pool_basic_init("handle_pool", sizeof(handle_pool_entry_t));
+		pool_basic_init("handle_pool", sizeof(handle_pool_entry_t));
 
 	/* create hash table */
 
@@ -322,7 +319,6 @@ int HandleMap_Init(const handle_map_param_t *p_param)
 int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 		    struct gsh_buffdesc *fsal_handle)
 {
-
 	int rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
@@ -337,7 +333,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 	rc = hashtable_getlatch(handle_map_hash, &buffkey, &buffval, 0, &hl);
 
 	if (rc == HASHTABLE_SUCCESS) {
-		handle_pool_entry_t *h = (handle_pool_entry_t *) buffval.addr;
+		handle_pool_entry_t *h = (handle_pool_entry_t *)buffval.addr;
 
 		if (h->fh_len < PROXYV4_HANDLE_MAXLEN) {
 			fsal_handle->len = h->fh_len;
@@ -353,7 +349,7 @@ int HandleMap_GetFH(const nfs23_map_handle_t *nfs23_digest,
 	if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
 		hashtable_releaselatched(handle_map_hash, &hl);
 	return HANDLEMAP_STALE;
-}				/* HandleMap_GetFH */
+} /* HandleMap_GetFH */
 
 /**
  * Save the handle association if it was unknown.
@@ -410,8 +406,8 @@ int HandleMap_DelFH(nfs23_map_handle_t *p_in_nfs23_digest)
 	if (rc != HASHTABLE_SUCCESS)
 		return HANDLEMAP_STALE;
 
-	p_stored_digest = (digest_pool_entry_t *) stored_buffkey.addr;
-	p_stored_handle = (handle_pool_entry_t *) stored_buffval.addr;
+	p_stored_digest = (digest_pool_entry_t *)stored_buffkey.addr;
+	p_stored_handle = (handle_pool_entry_t *)stored_buffval.addr;
 
 	digest_free(p_stored_digest);
 	handle_free(p_stored_handle);
@@ -419,7 +415,6 @@ int HandleMap_DelFH(nfs23_map_handle_t *p_in_nfs23_digest)
 	/* then, submit the request to the database */
 
 	return handlemap_db_delete(p_in_nfs23_digest);
-
 }
 
 /**

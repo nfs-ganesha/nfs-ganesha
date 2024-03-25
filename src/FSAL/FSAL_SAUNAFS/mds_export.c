@@ -421,7 +421,8 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 
 	uint16_t export_id = deviceid->device_id2;
 
-	glist_for_each_safe(glist, glistn, &module->exports) {
+	glist_for_each_safe(glist, glistn, &module->exports)
+	{
 		exportHandle = glist_entry(glist, struct fsal_export, exports);
 
 		if (exportHandle->export_id == export_id) {
@@ -474,8 +475,7 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 
 	if (!inline_xdr_u_int32_t(xdrStream, &stripeCount)) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode device information for export = %"
-			PRIu16
+			"Failed to encode device information for export = %" PRIu16
 			" inode = %" PRIu64,
 			export_id, deviceid->devid);
 
@@ -486,8 +486,8 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 	for (uint32_t chunkIndex = 0; chunkIndex < stripeCount; ++chunkIndex) {
 		if (!inline_xdr_u_int32_t(xdrStream, &chunkIndex)) {
 			LogCrit(COMPONENT_PNFS,
-				"Failed to encode device information for export = %"
-				PRIu16 " inode = %" PRIu64,
+				"Failed to encode device information for export = %" PRIu16
+				" inode = %" PRIu64,
 				export_id, deviceid->devid);
 
 			releaseResources(chunkInfo, chunkserverInfo);
@@ -497,8 +497,8 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 
 	if (!inline_xdr_u_int32_t(xdrStream, &stripeCount)) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode device information for export = %"
-			PRIu16 " inode = %" PRIu64,
+			"Failed to encode device information for export = %" PRIu16
+			" inode = %" PRIu64,
 			export_id, deviceid->devid);
 
 		releaseResources(chunkInfo, chunkserverInfo);
@@ -512,8 +512,8 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 
 	if (retvalue < 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode device information for export = %"
-			PRIu16 " inode = %" PRIu64,
+			"Failed to encode device information for export = %" PRIu16
+			" inode = %" PRIu64,
 			export_id, deviceid->devid);
 
 		releaseResources(chunkInfo, chunkserverInfo);
@@ -527,8 +527,8 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 
 	if (retvalue < 0) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode device information for export = %"
-			PRIu16 " inode = %" PRIu64,
+			"Failed to encode device information for export = %" PRIu16
+			" inode = %" PRIu64,
 			export_id, deviceid->devid);
 
 		releaseResources(chunkInfo, chunkserverInfo);
@@ -659,7 +659,7 @@ static size_t fs_loc_body_size(struct fsal_export *export)
 {
 	(void)export;
 
-	return MaxBufferSize;  /* typical value in NFS FSAL plugins */
+	return MaxBufferSize; /* typical value in NFS FSAL plugins */
 }
 
 /**

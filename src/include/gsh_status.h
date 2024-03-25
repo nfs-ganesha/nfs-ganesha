@@ -90,4 +90,4 @@ typedef enum state_status {
 
 #define STATE_FSAL_ESTALE STATE_ESTALE
 
-#endif				/* !GSH_STATUS_H */
+#endif /* !GSH_STATUS_H */

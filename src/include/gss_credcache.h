@@ -48,7 +48,6 @@ void gssd_init_cred_cache(void);
 void gssd_shutdown_cred_cache(void);
 void gssd_clear_cred_cache(void);
 int gssd_check_mechs(void);
-int gssd_refresh_krb5_machine_credential(char *,
-					 struct gssd_k5_kt_princ *,
+int gssd_refresh_krb5_machine_credential(char *, struct gssd_k5_kt_princ *,
 					 char *);
 #endif /* !GSS_CREDCACHE */

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "gsh_rpc.h"
@@ -41,7 +41,6 @@
 #include "export_mgr.h"
 #include "nfs_proto_data.h"
 #include "nfsacl.h"
-
 
 /**
  * @brief The NFSACL getacl function.
@@ -70,19 +69,16 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	attrs = &res->res_getacl.getaclres_u.resok.attr.attr3_u.obj_attributes;
 
 	LogNFSACL_Operation(COMPONENT_NFSPROTO, req, &arg->arg_getacl.fhandle,
-			  "");
+			    "");
 
 	fsal_prepare_attrs(attrs, ATTRS_NFS3_ACL);
 
 	obj = nfs3_FhandleToCache(&arg->arg_getacl.fhandle,
-					&res->res_getacl.status,
-					&rc);
+				  &res->res_getacl.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
-		LogFullDebug(COMPONENT_NFSPROTO,
-				 "nfs_Getacl returning %d",
-				 rc);
+		LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getacl returning %d", rc);
 		goto out;
 	}
 
@@ -93,7 +89,7 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		res->res_getacl.status = nfs3_Errno_status(status);
 
 		LogFullDebug(COMPONENT_NFSPROTO,
-			 "nfsacl_Getacl set failed status v3");
+			     "nfsacl_Getacl set failed status v3");
 
 		rc = NFS_REQ_OK;
 		goto out;
@@ -104,11 +100,10 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Set Mask*/
 	if (arg->arg_getacl.mask &
-		~(NFS_ACL|NFS_ACLCNT|NFS_DFACL|NFS_DFACLCNT)) {
+	    ~(NFS_ACL | NFS_ACLCNT | NFS_DFACL | NFS_DFACLCNT)) {
 		res->res_getacl.status = nfs3_Errno_status(status);
 
-		LogFullDebug(COMPONENT_NFSPROTO,
-			 "Invalid args");
+		LogFullDebug(COMPONENT_NFSPROTO, "Invalid args");
 
 		rc = NFS_REQ_OK;
 		goto out;
@@ -116,24 +111,23 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_getacl.getaclres_u.resok.mask = arg->arg_getacl.mask;
 
 	/*Get access acl*/
-	if (arg->arg_getacl.mask & (NFS_ACL|NFS_ACLCNT)) {
+	if (arg->arg_getacl.mask & (NFS_ACL | NFS_ACLCNT)) {
 		acl = fsal_acl_2_posix_acl(attrs->acl, ACL_TYPE_ACCESS);
 		if (acl == NULL) {
-			LogFullDebug(COMPONENT_NFSPROTO,
-				"Access ACL is NULL");
+			LogFullDebug(COMPONENT_NFSPROTO, "Access ACL is NULL");
 			res->res_getacl.getaclres_u.resok.acl_access = NULL;
 			res->res_getacl.getaclres_u.resok.acl_access_count = 0;
 		} else if (acl_valid(acl) != 0) {
 			LogWarn(COMPONENT_FSAL,
-					"failed to convert fsal acl to Access posix acl");
+				"failed to convert fsal acl to Access posix acl");
 			status = fsalstat(ERR_FSAL_FAULT, 0);
 			goto error;
 		} else {
-			encode_acl = encode_posix_acl(acl,
-				ACL_TYPE_ACCESS, attrs);
+			encode_acl =
+				encode_posix_acl(acl, ACL_TYPE_ACCESS, attrs);
 			if (encode_acl == NULL) {
 				LogFullDebug(COMPONENT_NFSPROTO,
-					"encode_posix_acl return NULL");
+					     "encode_posix_acl return NULL");
 				status = fsalstat(ERR_FSAL_FAULT, 0);
 				goto error;
 			}
@@ -145,24 +139,23 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/*Get default acl*/
-	if (arg->arg_getacl.mask & (NFS_DFACL|NFS_DFACLCNT)) {
+	if (arg->arg_getacl.mask & (NFS_DFACL | NFS_DFACLCNT)) {
 		d_acl = fsal_acl_2_posix_acl(attrs->acl, ACL_TYPE_DEFAULT);
 		if (d_acl == NULL) {
-			LogFullDebug(COMPONENT_NFSPROTO,
-				"Default ACL is NULL");
+			LogFullDebug(COMPONENT_NFSPROTO, "Default ACL is NULL");
 			res->res_getacl.getaclres_u.resok.acl_default = NULL;
 			res->res_getacl.getaclres_u.resok.acl_default_count = 0;
 		} else if (acl_valid(d_acl) != 0) {
 			LogWarn(COMPONENT_FSAL,
-					"failed to convert fsal acl to Default posix acl");
+				"failed to convert fsal acl to Default posix acl");
 			status = fsalstat(ERR_FSAL_FAULT, 0);
 			goto error;
 		} else {
-			encode_df_acl = encode_posix_acl(d_acl,
-				ACL_TYPE_DEFAULT, attrs);
+			encode_df_acl = encode_posix_acl(
+				d_acl, ACL_TYPE_DEFAULT, attrs);
 			if (encode_df_acl == NULL) {
 				LogFullDebug(COMPONENT_NFSPROTO,
-					"encode_posix_acl return NULL");
+					     "encode_posix_acl return NULL");
 				status = fsalstat(ERR_FSAL_FAULT, 0);
 				goto error;
 			}
@@ -180,7 +173,7 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	LogFullDebug(COMPONENT_NFSPROTO, "nfs_Getacl succeeded");
 	rc = NFS_REQ_OK;
 
- out:
+out:
 
 	/* Done with the attrs (NFSv3 doesn't use ANY of the reffed attributes)
 	 */
@@ -197,14 +190,14 @@ int nfsacl_getacl(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	return rc;
 
- error:
+error:
 	rc = NFS_REQ_OK;
 	res->res_getacl.status = nfs3_Errno_status(status);
 	goto out;
 #else
 	return 0;
-#endif				/* USE_NFSACL3 */
-}				/* nfsacl_getacl */
+#endif /* USE_NFSACL3 */
+} /* nfsacl_getacl */
 
 /**
  * @brief Free the result structure allocated for nfsacl_getacl

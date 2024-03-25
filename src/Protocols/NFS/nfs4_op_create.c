@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
- /*
+/*
   * vim:noexpandtab:shiftwidth=8:tabstop=8:
   *
   * Copyright CEA/DAM/DIF  (2008)
@@ -65,8 +65,8 @@
 enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 				   struct nfs_resop4 *resp)
 {
-	CREATE4args * const arg_CREATE4 = &op->nfs_argop4_u.opcreate;
-	CREATE4res * const res_CREATE4 = &resp->nfs_resop4_u.opcreate;
+	CREATE4args *const arg_CREATE4 = &op->nfs_argop4_u.opcreate;
+	CREATE4res *const res_CREATE4 = &resp->nfs_resop4_u.opcreate;
 
 	struct fsal_obj_handle *obj_parent = NULL;
 	struct fsal_obj_handle *obj_new = NULL;
@@ -94,9 +94,8 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	 * inode creation or not */
 	exp_hdl = op_ctx->fsal_export;
 
-	fsal_status = exp_hdl->exp_ops.check_quota(exp_hdl,
-						   CTX_FULLPATH(op_ctx),
-						   FSAL_QUOTA_INODES);
+	fsal_status = exp_hdl->exp_ops.check_quota(
+		exp_hdl, CTX_FULLPATH(op_ctx), FSAL_QUOTA_INODES);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_CREATE4->status = NFS4ERR_DQUOT;
@@ -110,8 +109,8 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Do not use READ attr, use WRITE attr */
-	if (!nfs4_Fattr_Check_Access
-	    (&arg_CREATE4->createattrs, FATTR4_ATTR_WRITE)) {
+	if (!nfs4_Fattr_Check_Access(&arg_CREATE4->createattrs,
+				     FATTR4_ATTR_WRITE)) {
 		res_CREATE4->status = NFS4ERR_INVAL;
 		goto out;
 	}
@@ -155,9 +154,8 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (arg_CREATE4->createattrs.attrmask.bitmap4_len != 0) {
 		/* Arguments were supplied, extract them */
-		convrc = nfs4_Fattr_To_FSAL_attr(&sattr,
-						 &arg_CREATE4->createattrs,
-						 data);
+		convrc = nfs4_Fattr_To_FSAL_attr(
+			&sattr, &arg_CREATE4->createattrs, data);
 
 		if (convrc != NFS4_OK) {
 			res_CREATE4->status = convrc;
@@ -173,14 +171,14 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		type = SYMBOLIC_LINK;
 		res_CREATE4->status = nfs4_utf8string_scan(
-				&arg_CREATE4->objtype.createtype4_u.linkdata,
-				UTF8_SCAN_PATH);
+			&arg_CREATE4->objtype.createtype4_u.linkdata,
+			UTF8_SCAN_PATH);
 
 		if (res_CREATE4->status != NFS4_OK)
 			goto out;
 
-		link_content =
-		    arg_CREATE4->objtype.createtype4_u.linkdata.utf8string_val;
+		link_content = arg_CREATE4->objtype.createtype4_u.linkdata
+				       .utf8string_val;
 		break;
 
 	case NF4DIR:
@@ -202,9 +200,9 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		/* Create a new socket file */
 		type = CHARACTER_FILE;
 		sattr.rawdev.major =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
+			arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
 		sattr.rawdev.minor =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
+			arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
 		sattr.valid_mask |= ATTR_RAWDEV;
 		break;
 
@@ -212,9 +210,9 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		/* Create a new socket file */
 		type = BLOCK_FILE;
 		sattr.rawdev.major =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
+			arg_CREATE4->objtype.createtype4_u.devdata.specdata1;
 		sattr.rawdev.minor =
-		    arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
+			arg_CREATE4->objtype.createtype4_u.devdata.specdata2;
 		sattr.valid_mask |= ATTR_RAWDEV;
 		break;
 
@@ -224,7 +222,7 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 		 */
 		res_CREATE4->status = NFS4ERR_BADTYPE;
 		goto out;
-	}			/* switch( arg_CREATE4.objtype.type ) */
+	} /* switch( arg_CREATE4.objtype.type ) */
 
 	if (!(sattr.valid_mask & ATTR_MODE)) {
 		/* Make sure mode is set. */
@@ -236,14 +234,9 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	fsal_status = fsal_create(obj_parent,
-				  arg_CREATE4->objname.utf8string_val,
-				  type,
-				  &sattr,
-				  link_content,
-				  &obj_new,
-				  NULL,
-				  &parent_pre_attrs,
-				  &parent_post_attrs);
+				  arg_CREATE4->objname.utf8string_val, type,
+				  &sattr, link_content, &obj_new, NULL,
+				  &parent_pre_attrs, &parent_post_attrs);
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
@@ -255,7 +248,7 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Building the new file handle to replace the current FH */
 	if (!nfs4_FSALToFhandle(false, &data->currentFH, obj_new,
-					op_ctx->ctx_export)) {
+				op_ctx->ctx_export)) {
 		res_CREATE4->status = NFS4ERR_SERVERFAULT;
 		goto out;
 	}
@@ -267,38 +260,37 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	/* Use the same fattr mask for reply, if one attribute was not
 	   settable, NFS4ERR_ATTRNOTSUPP was replyied */
 	res_CREATE4->CREATE4res_u.resok4.attrset.bitmap4_len =
-	    arg_CREATE4->createattrs.attrmask.bitmap4_len;
+		arg_CREATE4->createattrs.attrmask.bitmap4_len;
 
 	if (arg_CREATE4->createattrs.attrmask.bitmap4_len != 0) {
 		/* copy over bitmap */
 		res_CREATE4->CREATE4res_u.resok4.attrset =
-		    arg_CREATE4->createattrs.attrmask;
+			arg_CREATE4->createattrs.attrmask;
 	}
 
-	memset(&res_CREATE4->CREATE4res_u.resok4.cinfo.after,
-	       0,
+	memset(&res_CREATE4->CREATE4res_u.resok4.cinfo.after, 0,
 	       sizeof(changeid4));
 
 	is_parent_pre_attrs_valid =
 		FSAL_TEST_MASK(parent_pre_attrs.valid_mask, ATTR_CHANGE);
 	if (is_parent_pre_attrs_valid) {
 		res_CREATE4->CREATE4res_u.resok4.cinfo.before =
-			(changeid4) parent_pre_attrs.change;
+			(changeid4)parent_pre_attrs.change;
 	}
 
 	is_parent_post_attrs_valid =
 		FSAL_TEST_MASK(parent_post_attrs.valid_mask, ATTR_CHANGE);
 	if (is_parent_post_attrs_valid) {
 		res_CREATE4->CREATE4res_u.resok4.cinfo.after =
-			(changeid4) parent_post_attrs.change;
+			(changeid4)parent_post_attrs.change;
 	} else {
 		res_CREATE4->CREATE4res_u.resok4.cinfo.after =
-		fsal_get_changeid4(obj_parent);
+			fsal_get_changeid4(obj_parent);
 	}
 
 	res_CREATE4->CREATE4res_u.resok4.cinfo.atomic =
-		is_parent_pre_attrs_valid && is_parent_post_attrs_valid ?
-		TRUE : FALSE;
+		is_parent_pre_attrs_valid && is_parent_post_attrs_valid ? TRUE :
+									  FALSE;
 
 	LogFullDebug(COMPONENT_NFS_V4,
 		     "CREATE CINFO before = %" PRIu64 "  after = %" PRIu64
@@ -315,7 +307,7 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	/* If you reach this point, then no error occurred */
 	res_CREATE4->status = NFS4_OK;
 
- out:
+out:
 	fsal_release_attrs(&parent_pre_attrs);
 	fsal_release_attrs(&parent_post_attrs);
 
@@ -325,7 +317,7 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	return nfsstat4_to_nfs_req_result(res_CREATE4->status);
-}				/* nfs4_op_create */
+} /* nfs4_op_create */
 
 /**
  * @brief Free memory allocated for CREATE result

@@ -68,82 +68,69 @@
 #define DBUS_PATH "/org/ganesha/nfsd/"
 #define DBUS_ADMIN_IFACE "org.ganesha.nfsd.admin"
 
-#define HEARTBEAT_ARG        \
-{                            \
-	.name = "isHealthy", \
-	.type = "b",         \
-	.direction = "out"   \
-}
+#define HEARTBEAT_ARG                                                \
+	{                                                            \
+		.name = "isHealthy", .type = "b", .direction = "out" \
+	}
 
-#define STATUS_REPLY      \
-{                         \
-	.name = "status", \
-	.type = "b",      \
-	.direction = "out"\
-},                        \
-{                         \
-	.name = "error",  \
-	.type = "s",      \
-	.direction = "out"\
-}
+#define STATUS_REPLY                                             \
+	{ .name = "status", .type = "b", .direction = "out" },   \
+	{                                                        \
+		.name = "error", .type = "s", .direction = "out" \
+	}
 
-#define MESSAGE_REPLY		\
-{				\
-	.name = "message",	\
-	.type = "s",		\
-	.direction = "out"	\
-}
+#define MESSAGE_REPLY                                              \
+	{                                                          \
+		.name = "message", .type = "s", .direction = "out" \
+	}
 
-#define END_ARG_LIST {NULL, NULL, NULL}
+#define END_ARG_LIST             \
+	{                        \
+		NULL, NULL, NULL \
+	}
 
-#define IPADDR_ARG       \
-{                        \
-	.name = "ipaddr",\
-	.type = "s",     \
-	.direction = "in"\
-}
+#define IPADDR_ARG                                               \
+	{                                                        \
+		.name = "ipaddr", .type = "s", .direction = "in" \
+	}
 
-#define ID_ARG			\
-{				\
-	.name = "id",		\
-	.type = "q",		\
-	.direction = "in"	\
-}
+#define ID_ARG                                               \
+	{                                                    \
+		.name = "id", .type = "q", .direction = "in" \
+	}
 
-#define PATH_ARG		\
-{				\
-	.name = "path",		\
-	.type = "s",		\
-	.direction = "in"	\
-}
+#define PATH_ARG                                               \
+	{                                                      \
+		.name = "path", .type = "s", .direction = "in" \
+	}
 
-#define EXPR_ARG		\
-{				\
-	.name = "expr",		\
-	.type = "s",		\
-	.direction = "in"	\
-}
+#define EXPR_ARG                                               \
+	{                                                      \
+		.name = "expr", .type = "s", .direction = "in" \
+	}
 
-#define FSAL_ARG		\
-{				\
-	.name = "fsal",		\
-	.type = "s",		\
-	.direction = "in"	\
-}
+#define FSAL_ARG                                               \
+	{                                                      \
+		.name = "fsal", .type = "s", .direction = "in" \
+	}
 
-#define STAT_TYPE_ARG		\
-{				\
-	.name = "stat_type",		\
-	.type = "s",		\
-	.direction = "in"	\
-}
+#define STAT_TYPE_ARG                                               \
+	{                                                           \
+		.name = "stat_type", .type = "s", .direction = "in" \
+	}
 
 /* Properties list helper macros
  */
 
-#define END_ARG_LIST {NULL, NULL, NULL}
+#define END_ARG_LIST             \
+	{                        \
+		NULL, NULL, NULL \
+	}
 
-#define END_PROPS_LIST {NULL, DBUS_PROP_READ, "", NULL, NULL}
+#define END_PROPS_LIST                               \
+	{                                            \
+		NULL, DBUS_PROP_READ, "", NULL, NULL \
+	}
 
 typedef enum {
 	DBUS_PROP_READ = 0,
@@ -155,21 +142,20 @@ struct gsh_dbus_prop {
 	const char *name;
 	dbus_prop_access_t access;
 	const char *type;
-	 bool (*get)(DBusMessageIter *reply);
-	 bool (*set)(DBusMessageIter *args);
+	bool (*get)(DBusMessageIter *reply);
+	bool (*set)(DBusMessageIter *args);
 };
 
 struct gsh_dbus_arg {
 	const char *name;
 	const char *type;
-	const char *direction;	/* not used for signals */
+	const char *direction; /* not used for signals */
 };
 
 struct gsh_dbus_method {
 	const char *name;
-	 bool (*method)(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error);
+	bool (*method)(DBusMessageIter *args, DBusMessage *reply,
+		       DBusError *error);
 	struct gsh_dbus_arg args[];
 };
 
@@ -192,10 +178,10 @@ struct gsh_dbus_interface {
   */
 #define HEARTBEAT_FREQ_DEFAULT 1000
 
-#define BCAST_FOREVER       -1
+#define BCAST_FOREVER -1
 
-#define BCAST_STATUS_OK    0x00
-#define BCAST_STATUS_WARN  0x01
+#define BCAST_STATUS_OK 0x00
+#define BCAST_STATUS_WARN 0x01
 #define BCAST_STATUS_FATAL 0x02
 
 typedef int (*dbus_bcast_callback)(void *);
@@ -207,11 +193,9 @@ struct dbus_bcast_item {
 	dbus_bcast_callback bcast_callback;
 	struct glist_head dbus_bcast_q;
 };
-struct dbus_bcast_item *add_dbus_broadcast(
-					dbus_bcast_callback bcast_callback,
-					void *bcast_arg,
-					uint32_t bcast_interval,
-					int count);
+struct dbus_bcast_item *add_dbus_broadcast(dbus_bcast_callback bcast_callback,
+					   void *bcast_arg,
+					   uint32_t bcast_interval, int count);
 void del_dbus_broadcast(struct dbus_bcast_item *to_remove);
 
 /* heartbeat function call back */
@@ -227,12 +211,12 @@ void gsh_dbus_append_timestamp(DBusMessageIter *iterp, struct timespec *ts);
 void gsh_dbus_status_reply(DBusMessageIter *iter, bool success, char *errormsg);
 int32_t gsh_dbus_register_path(const char *name,
 			       struct gsh_dbus_interface **interfaces);
-int gsh_dbus_broadcast(char *obj_name, char *int_name,
-		       char *sig_name, int type, ...);
+int gsh_dbus_broadcast(char *obj_name, char *int_name, char *sig_name, int type,
+		       ...);
 /* more to come */
 
 #ifdef _USE_9P
 bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg);
 #endif
 
-#endif				/* GSH_DBUS_H */
+#endif /* GSH_DBUS_H */

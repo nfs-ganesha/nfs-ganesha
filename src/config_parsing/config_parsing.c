@@ -61,10 +61,10 @@ config_file_t config_ParseFile(char *file_path,
 	rc = ganesha_yyparse(&st);
 	root = st.root_node;
 	if (rc != 0)
-		config_proc_error(root, err_type,
-				  (rc == 1
-				   ? "Configuration syntax errors found"
-				   : "Configuration parse ran out of memory"));
+		config_proc_error(
+			root, err_type,
+			(rc == 1 ? "Configuration syntax errors found" :
+				   "Configuration parse ran out of memory"));
 #ifdef DUMP_PARSE_TREE
 	print_parse_tree(stderr, root);
 #endif
@@ -81,7 +81,8 @@ void *config_GetBlockNode(const char *block_name)
 	struct glist_head *glh;
 	struct config_node *node;
 
-	glist_for_each(glh, &all_blocks) {
+	glist_for_each(glh, &all_blocks)
+	{
 		node = glist_entry(glh, struct config_node, blocks);
 		if (!strcasecmp(node->u.nterm.name, block_name)) {
 			return node;
@@ -95,7 +96,7 @@ void *config_GetBlockNode(const char *block_name)
  * Print the content of the syntax tree
  * to a file.
  */
-void config_Print(FILE * output, config_file_t config)
+void config_Print(FILE *output, config_file_t config)
 {
 	print_parse_tree(output, (struct config_root *)config);
 }
@@ -110,7 +111,6 @@ void config_Free(config_file_t config)
 	if (config != NULL)
 		free_parse_tree((struct config_root *)config);
 	return;
-
 }
 
 /**
@@ -177,7 +177,7 @@ char *err_type_str(struct config_error_type *err_type)
 		return NULL;
 	}
 	/* each of the above strings (had better) have ', ' at the end! */
-	if (buf[strlen(buf) -1] == ' ') {
+	if (buf[strlen(buf) - 1] == ' ') {
 		buf[bufsize - 2] = ')';
 		buf[bufsize - 1] = '\0';
 	}
@@ -187,11 +187,11 @@ char *err_type_str(struct config_error_type *err_type)
 bool init_error_type(struct config_error_type *err_type)
 {
 	memset(err_type, 0, sizeof(struct config_error_type));
-	err_type->fp = open_memstream(&err_type->diag_buf,
-				     &err_type->diag_buf_size);
+	err_type->fp =
+		open_memstream(&err_type->diag_buf, &err_type->diag_buf_size);
 	if (err_type->fp == NULL) {
 		LogCrit(COMPONENT_MAIN,
-			 "Could not open memory stream for parser errors");
+			"Could not open memory stream for parser errors");
 		return false;
 	}
 	return true;
@@ -204,8 +204,7 @@ bool init_error_type(struct config_error_type *err_type)
  * and we can report errors in fsal_manager.c etc.
  */
 
-void config_proc_error(void *cnode,
-		       struct config_error_type *err_type,
+void config_proc_error(void *cnode, struct config_error_type *err_type,
 		       char *format, ...)
 {
 	struct config_node *node = cnode;
@@ -215,14 +214,13 @@ void config_proc_error(void *cnode,
 	va_list arguments;
 
 	if (fp == NULL)
-		return;  /* no stream, no message */
+		return; /* no stream, no message */
 	if (node != NULL && node->filename != NULL) {
 		filename = node->filename;
 		linenumber = node->linenumber;
 	}
 	va_start(arguments, format);
-	config_error(fp, filename, linenumber,
-		     format, arguments);
+	config_error(fp, filename, linenumber, format, arguments);
 	va_end(arguments);
 }
 void config_errs_to_log(char *err, void *dest,
@@ -230,16 +228,14 @@ void config_errs_to_log(char *err, void *dest,
 {
 	log_levels_t log_level;
 
-	if (config_error_is_fatal(err_type) ||
-	    config_error_is_crit(err_type))
+	if (config_error_is_fatal(err_type) || config_error_is_crit(err_type))
 		log_level = NIV_CRIT;
 	else if (config_error_is_harmless(err_type))
 		log_level = NIV_WARN;
 	else
 		log_level = NIV_EVENT;
-	DisplayLogComponentLevel(COMPONENT_CONFIG,
-				 __FILE__, __LINE__, (char *)__func__,
-				  log_level, "%s", err);
+	DisplayLogComponentLevel(COMPONENT_CONFIG, __FILE__, __LINE__,
+				 (char *)__func__, log_level, "%s", err);
 }
 
 int report_config_errors(struct config_error_type *err_type, void *dest,
@@ -273,8 +269,7 @@ int report_config_errors(struct config_error_type *err_type, void *dest,
 	return count;
 }
 
-static bool convert_bool(struct config_node *node,
-			 bool *b,
+static bool convert_bool(struct config_node *node, bool *b,
 			 struct config_error_type *err_type)
 {
 	if (node->u.term.type == TERM_TRUE)
@@ -283,8 +278,8 @@ static bool convert_bool(struct config_node *node,
 		*b = false;
 	else {
 		config_proc_error(node, err_type,
-		 "Expected boolean (true/false) got (%s)",
-		 node->u.term.varvalue);
+				  "Expected boolean (true/false) got (%s)",
+				  node->u.term.varvalue);
 		err_type->errors++;
 		err_type->invalid = true;
 		return false;
@@ -292,10 +287,8 @@ static bool convert_bool(struct config_node *node,
 	return true;
 }
 
-static bool convert_number(struct config_node *node,
-			   struct config_item *item,
-			   uint64_t *num,
-			   struct config_error_type *err_type)
+static bool convert_number(struct config_node *node, struct config_item *item,
+			   uint64_t *num, struct config_error_type *err_type)
 {
 	uint64_t val, mask, min, max;
 	int64_t sval, smin, smax;
@@ -305,12 +298,12 @@ static bool convert_number(struct config_node *node,
 	bool zero_ok = false, inrange;
 
 	if (node->type != TYPE_TERM) {
-		config_proc_error(node, err_type,
-				  "Expected a number, got a %s",
-				  (node->type == TYPE_ROOT
-				   ? "root node"
-				   : (node->type == TYPE_BLOCK
-				      ? "block" : "statement")));
+		config_proc_error(node, err_type, "Expected a number, got a %s",
+				  (node->type == TYPE_ROOT ?
+					   "root node" :
+					   (node->type == TYPE_BLOCK ?
+						    "block" :
+						    "statement")));
 		goto errout;
 	} else if (node->u.term.type == TERM_DECNUM) {
 		base = 10;
@@ -319,8 +312,7 @@ static bool convert_number(struct config_node *node,
 	} else if (node->u.term.type == TERM_OCTNUM) {
 		base = 8;
 	} else {
-		config_proc_error(node, err_type,
-				  "Expected a number, got a %s",
+		config_proc_error(node, err_type, "Expected a number, got a %s",
 				  config_term_desc(node->u.term.type));
 		goto errout;
 	}
@@ -328,8 +320,7 @@ static bool convert_number(struct config_node *node,
 	assert(*node->u.term.varvalue != '\0');
 	val = strtoull(node->u.term.varvalue, &endptr, base);
 	if (*endptr != '\0' || errno != 0) {
-		config_proc_error(node, err_type,
-				  "(%s) is not an integer",
+		config_proc_error(node, err_type, "(%s) is not an integer",
 				  node->u.term.varvalue);
 		goto errout;
 	}
@@ -384,26 +375,27 @@ static bool convert_number(struct config_node *node,
 	if (signed_int) {
 		if (node->u.term.op_code == NULL) {
 			/* Check for overflow of int64_t on positive */
-			if (val > (uint64_t) INT64_MAX) {
+			if (val > (uint64_t)INT64_MAX) {
 				config_proc_error(node, err_type,
-					  "(%s) is out of range",
-					  node->u.term.varvalue);
+						  "(%s) is out of range",
+						  node->u.term.varvalue);
 				goto errout;
 			}
 			sval = val;
 		} else if (*node->u.term.op_code == '-') {
 			/* Check for underflow of int64_t on negative */
-			if (val > ((uint64_t) INT64_MAX) + 1) {
+			if (val > ((uint64_t)INT64_MAX) + 1) {
 				config_proc_error(node, err_type,
-					  "(%s) is out of range",
-					  node->u.term.varvalue);
+						  "(%s) is out of range",
+						  node->u.term.varvalue);
 				goto errout;
 			}
-			sval = -((int64_t) val);
+			sval = -((int64_t)val);
 		} else {
-			config_proc_error(node, err_type,
-				  "(%c) is not allowed for signed values",
-				  *node->u.term.op_code);
+			config_proc_error(
+				node, err_type,
+				"(%c) is not allowed for signed values",
+				*node->u.term.op_code);
 			goto errout;
 		}
 
@@ -412,37 +404,37 @@ static bool convert_number(struct config_node *node,
 
 		if (!inrange) {
 			config_proc_error(node, err_type,
-				  "(%s) is out of range",
-				  node->u.term.varvalue);
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
 			goto errout;
 		}
 
-		val = (uint64_t) sval;
+		val = (uint64_t)sval;
 	} else {
 		if (node->u.term.op_code != NULL &&
 		    *node->u.term.op_code == '~') {
 			/* Check for overflow before negation */
 			if ((val & ~mask) != 0) {
 				config_proc_error(node, err_type,
-					  "(%s) is out of range",
-					  node->u.term.varvalue);
+						  "(%s) is out of range",
+						  node->u.term.varvalue);
 				goto errout;
 			}
 			val = ~val & mask;
 		} else if (node->u.term.op_code != NULL) {
-			config_proc_error(node, err_type,
-				  "(%c) is not allowed for signed values",
-				  *node->u.term.op_code);
+			config_proc_error(
+				node, err_type,
+				"(%c) is not allowed for signed values",
+				*node->u.term.op_code);
 			goto errout;
 		}
 
-		inrange = (val >= min && val <= max) ||
-			  (zero_ok && val == 0);
+		inrange = (val >= min && val <= max) || (zero_ok && val == 0);
 
 		if (!inrange) {
 			config_proc_error(node, err_type,
-				  "(%s) is out of range",
-				  node->u.term.varvalue);
+					  "(%s) is out of range",
+					  node->u.term.varvalue);
 			goto errout;
 		}
 	}
@@ -473,17 +465,16 @@ static bool convert_fsid(struct config_node *node, void *param,
 	int base;
 
 	if (node->type != TYPE_TERM) {
-		config_proc_error(node, err_type,
-				  "Expected an FSID, got a %s",
-				  (node->type == TYPE_ROOT
-				   ? "root node"
-				   : (node->type == TYPE_BLOCK
-				      ? "block" : "statement")));
+		config_proc_error(node, err_type, "Expected an FSID, got a %s",
+				  (node->type == TYPE_ROOT ?
+					   "root node" :
+					   (node->type == TYPE_BLOCK ?
+						    "block" :
+						    "statement")));
 		goto errout;
 	}
 	if (node->u.term.type != TERM_FSID) {
-		config_proc_error(node, err_type,
-				  "Expected an FSID, got a %s",
+		config_proc_error(node, err_type, "Expected an FSID, got a %s",
 				  config_term_desc(node->u.term.type));
 		goto errout;
 	}
@@ -499,8 +490,7 @@ static bool convert_fsid(struct config_node *node, void *param,
 	major = strtoull(sp, &endptr, base);
 	assert(*endptr == '.');
 	if (errno != 0 || major == ULLONG_MAX) {
-		config_proc_error(node, err_type,
-				  "(%s) major is out of range",
+		config_proc_error(node, err_type, "(%s) major is out of range",
 				  node->u.term.varvalue);
 		goto errout;
 	}
@@ -515,8 +505,7 @@ static bool convert_fsid(struct config_node *node, void *param,
 	minor = strtoull(sp, &endptr, base);
 	assert(*endptr == '\0');
 	if (errno != 0 || minor == ULLONG_MAX) {
-		config_proc_error(node, err_type,
-				  "(%s) minor is out of range",
+		config_proc_error(node, err_type, "(%s) minor is out of range",
 				  node->u.term.varvalue);
 		goto errout;
 	}
@@ -535,10 +524,8 @@ errout:
  *
  */
 
-static bool convert_list(struct config_node *node,
-			 struct config_item *item,
-			 uint32_t *flags,
-			 struct config_error_type *err_type)
+static bool convert_list(struct config_node *node, struct config_item *item,
+			 uint32_t *flags, struct config_error_type *err_type)
 {
 	struct config_item_list *tok;
 	struct config_node *sub_node;
@@ -547,22 +534,20 @@ static bool convert_list(struct config_node *node,
 	int errors = 0;
 
 	*flags = 0;
-	glist_for_each_safe(nsi, nsn, &node->u.nterm.sub_nodes) {
+	glist_for_each_safe(nsi, nsn, &node->u.nterm.sub_nodes)
+	{
 		sub_node = glist_entry(nsi, struct config_node, node);
 		assert(sub_node->type == TYPE_TERM);
 		found = false;
-		for (tok = item->u.lst.tokens;
-		     tok->token != NULL;
-		     tok++) {
-			if (strcasecmp(sub_node->u.term.varvalue,
-				       tok->token) == 0) {
+		for (tok = item->u.lst.tokens; tok->token != NULL; tok++) {
+			if (strcasecmp(sub_node->u.term.varvalue, tok->token) ==
+			    0) {
 				*flags |= tok->value;
 				found = true;
 			}
 		}
 		if (!found) {
-			config_proc_error(node, err_type,
-					  "Unknown token (%s)",
+			config_proc_error(node, err_type, "Unknown token (%s)",
 					  sub_node->u.term.varvalue);
 			err_type->bogus = true;
 			errors++;
@@ -572,10 +557,8 @@ static bool convert_list(struct config_node *node,
 	return errors == 0;
 }
 
-static bool convert_enum(struct config_node *node,
-			 struct config_item *item,
-			 uint32_t *val,
-			 struct config_error_type *err_type)
+static bool convert_enum(struct config_node *node, struct config_item *item,
+			 uint32_t *val, struct config_error_type *err_type)
 {
 	struct config_item_list *tok;
 	bool found;
@@ -590,9 +573,8 @@ static bool convert_enum(struct config_node *node,
 		tok++;
 	}
 	if (!found) {
-		config_proc_error(node, err_type,
-			 "Unknown token (%s)",
-			 node->u.term.varvalue);
+		config_proc_error(node, err_type, "Unknown token (%s)",
+				  node->u.term.varvalue);
 		err_type->bogus = true;
 		err_type->errors++;
 	}
@@ -600,9 +582,8 @@ static bool convert_enum(struct config_node *node,
 }
 
 static void convert_inet_addr(struct config_node *node,
-			     struct config_item *item,
-			     sockaddr_t *sock,
-			     struct config_error_type *err_type)
+			      struct config_item *item, sockaddr_t *sock,
+			      struct config_error_type *err_type)
 {
 	struct addrinfo hints;
 	struct addrinfo *res = NULL;
@@ -625,22 +606,19 @@ static void convert_inet_addr(struct config_node *node,
 	hints.ai_family = AF_INET6;
 	hints.ai_flags = AI_ADDRCONFIG | AI_V4MAPPED;
 
-	rc = getaddrinfo(node->u.term.varvalue, NULL,
-			 &hints, &res);
+	rc = getaddrinfo(node->u.term.varvalue, NULL, &hints, &res);
 
 	if (rc != 0 && (node->u.term.type == TERM_V4ADDR ||
 			node->u.term.type == TERM_V4_ANY)) {
 		hints.ai_family = AF_INET;
-		rc = getaddrinfo(node->u.term.varvalue, NULL,
-				 &hints, &res);
+		rc = getaddrinfo(node->u.term.varvalue, NULL, &hints, &res);
 	}
 	if (rc == 0) {
 		memcpy(sock, res->ai_addr, res->ai_addrlen);
 	} else {
 		config_proc_error(node, err_type,
 				  "No IP address found for %s because:%s",
-				  node->u.term.varvalue,
-				  gai_strerror(rc));
+				  node->u.term.varvalue, gai_strerror(rc));
 		err_type->invalid = true;
 		err_type->errors++;
 	}
@@ -662,27 +640,20 @@ static void convert_inet_addr(struct config_node *node,
  * @return number of errors
  */
 
-static void do_proc(struct config_node *node,
-		    struct config_item *item,
-		    void *param_addr,
-		    struct config_error_type *err_type)
+static void do_proc(struct config_node *node, struct config_item *item,
+		    void *param_addr, struct config_error_type *err_type)
 {
 	struct config_node *term_node;
 	struct glist_head *nsi, *nsn;
 	int rc = 0;
 
 	assert(node->type == TYPE_STMT);
-	glist_for_each_safe(nsi, nsn,
-			    &node->u.nterm.sub_nodes) {
-		term_node = glist_entry(nsi,
-				       struct config_node,
-				       node);
+	glist_for_each_safe(nsi, nsn, &node->u.nterm.sub_nodes)
+	{
+		term_node = glist_entry(nsi, struct config_node, node);
 		rc += item->u.proc.handler(term_node->u.term.varvalue,
-					   term_node->u.term.type,
-					   item,
-					   param_addr,
-					   term_node,
-					   err_type);
+					   term_node->u.term.type, item,
+					   param_addr, term_node, err_type);
 	}
 	err_type->errors += rc;
 }
@@ -701,11 +672,11 @@ static struct config_node *lookup_node(struct glist_head *list,
 {
 	struct config_node *node;
 	struct glist_head *ns;
-	
-	glist_for_each(ns, list) {
+
+	glist_for_each(ns, list)
+	{
 		node = glist_entry(ns, struct config_node, node);
-		assert(node->type == TYPE_BLOCK ||
-		       node->type == TYPE_STMT);
+		assert(node->type == TYPE_BLOCK || node->type == TYPE_STMT);
 		if (strcasecmp(name, node->u.nterm.name) == 0) {
 			node->found = true;
 			return node;
@@ -724,18 +695,17 @@ static struct config_node *lookup_node(struct glist_head *list,
  * @return first matching node or NULL
  */
 
-
 static struct config_node *lookup_next_node(struct glist_head *list,
-				     struct glist_head *start,
-				     const char *name)
+					    struct glist_head *start,
+					    const char *name)
 {
 	struct config_node *node;
 	struct glist_head *ns;
 
-	glist_for_each_next(start, ns, list) {
+	glist_for_each_next(start, ns, list)
+	{
 		node = glist_entry(ns, struct config_node, node);
-		assert(node->type == TYPE_BLOCK ||
-		       node->type == TYPE_STMT);
+		assert(node->type == TYPE_BLOCK || node->type == TYPE_STMT);
 		if (strcasecmp(name, node->u.nterm.name) == 0) {
 			node->found = true;
 			return node;
@@ -746,7 +716,7 @@ static struct config_node *lookup_next_node(struct glist_head *list,
 
 static const char *config_type_str(enum config_type type)
 {
-	switch(type) {
+	switch (type) {
 	case CONFIG_NULL:
 		return "CONFIG_NULL";
 	case CONFIG_INT16:
@@ -792,8 +762,7 @@ static const char *config_type_str(enum config_type type)
 }
 
 static bool do_block_init(struct config_node *blk_node,
-			  struct config_item *params,
-			  void *param_struct,
+			  struct config_item *params, void *param_struct,
 			  struct config_error_type *err_type)
 {
 	struct config_item *item;
@@ -806,9 +775,8 @@ static bool do_block_init(struct config_node *blk_node,
 
 	for (item = params; item->name != NULL; item++) {
 		param_addr = ((char *)param_struct + item->off);
-		LogFullDebug(COMPONENT_CONFIG,
-			     "%p name=%s type=%s",
-			     param_addr, item->name, config_type_str(item->type));
+		LogFullDebug(COMPONENT_CONFIG, "%p name=%s type=%s", param_addr,
+			     item->name, config_type_str(item->type));
 		switch (item->type) {
 		case CONFIG_NULL:
 			break;
@@ -834,16 +802,16 @@ static bool do_block_init(struct config_node *blk_node,
 			*(uid_t *)param_addr = item->u.i64.def;
 			break;
 		case CONFIG_FSID:
-			((struct fsal_fsid__ *)param_addr)->major
-				= item->u.fsid.def_maj;
-			((struct fsal_fsid__ *)param_addr)->minor
-				= item->u.fsid.def_min;
+			((struct fsal_fsid__ *)param_addr)->major =
+				item->u.fsid.def_maj;
+			((struct fsal_fsid__ *)param_addr)->minor =
+				item->u.fsid.def_min;
 			break;
 		case CONFIG_STRING:
 		case CONFIG_PATH:
 			if (item->u.str.def)
-				*(char **)param_addr
-					= gsh_strdup(item->u.str.def);
+				*(char **)param_addr =
+					gsh_strdup(item->u.str.def);
 			else
 				*(char **)param_addr = NULL;
 			break;
@@ -863,21 +831,17 @@ static bool do_block_init(struct config_node *blk_node,
 			*(uint32_t *)param_addr |= item->u.lst.def;
 			LogFullDebug(COMPONENT_CONFIG,
 				     "%p CONFIG_LIST %s mask=%08x def=%08x"
-				     " value=%08"PRIx32,
-				     param_addr,
-				     item->name,
-				     item->u.lst.mask, item->u.lst.def,
-				     *(uint32_t *)param_addr);
+				     " value=%08" PRIx32,
+				     param_addr, item->name, item->u.lst.mask,
+				     item->u.lst.def, *(uint32_t *)param_addr);
 			break;
 		case CONFIG_ENUM:
 			*(uint32_t *)param_addr |= item->u.lst.def;
 			LogFullDebug(COMPONENT_CONFIG,
 				     "%p CONFIG_ENUM %s mask=%08x def=%08x"
-				     " value=%08"PRIx32,
-				     param_addr,
-				     item->name,
-				     item->u.lst.mask, item->u.lst.def,
-				     *(uint32_t *)param_addr);
+				     " value=%08" PRIx32,
+				     param_addr, item->name, item->u.lst.mask,
+				     item->u.lst.def, *(uint32_t *)param_addr);
 			break;
 		case CONFIG_IP_ADDR:
 			sock = (sockaddr_t *)param_addr;
@@ -902,11 +866,11 @@ static bool do_block_init(struct config_node *blk_node,
 			if (rc == 0) {
 				memcpy(sock, res->ai_addr, res->ai_addrlen);
 			} else {
-				config_proc_error(blk_node, err_type,
-						  "Cannot set IP default for %s to %s because %s",
-						  item->name,
-						  item->u.ip.def,
-						  gai_strerror(rc));
+				config_proc_error(
+					blk_node, err_type,
+					"Cannot set IP default for %s to %s because %s",
+					item->name, item->u.ip.def,
+					gai_strerror(rc));
 				errors++;
 			}
 			if (res != NULL) {
@@ -915,17 +879,18 @@ static bool do_block_init(struct config_node *blk_node,
 			}
 			break;
 		case CONFIG_BLOCK:
-			(void) item->u.blk.init(NULL, param_addr);
+			(void)item->u.blk.init(NULL, param_addr);
 			break;
 		case CONFIG_PROC:
-			(void) item->u.proc.init(NULL, param_addr);
+			(void)item->u.proc.init(NULL, param_addr);
 			break;
 		case CONFIG_DEPRECATED:
 			break;
 		default:
-			config_proc_error(blk_node, err_type,
-					  "Cannot set default for parameter %s, type(%d) yet",
-					  item->name, item->type);
+			config_proc_error(
+				blk_node, err_type,
+				"Cannot set default for parameter %s, type(%d) yet",
+				item->name, item->type);
 			errors++;
 			break;
 		}
@@ -961,10 +926,8 @@ int noop_conf_commit(void *node, void *link_mem, void *self_struct,
 	return 0;
 }
 
-static bool proc_block(struct config_node *node,
-		      struct config_item *item,
-		      void *link_mem,
-		      struct config_error_type *err_type);
+static bool proc_block(struct config_node *node, struct config_item *item,
+		       void *link_mem, struct config_error_type *err_type);
 
 /*
  * All the types of integers supported by the config processor
@@ -995,10 +958,8 @@ union gen_int {
  * @returns 0 on success, number of errors on failure.
  */
 
-static int do_block_load(struct config_node *blk,
-			 struct config_item *params,
-			 bool relax,
-			 void *param_struct,
+static int do_block_load(struct config_node *blk, struct config_item *params,
+			 bool relax, void *param_struct,
 			 struct config_error_type *err_type)
 {
 	struct config_item *item;
@@ -1016,9 +977,10 @@ static int do_block_load(struct config_node *blk,
 		if ((item->flags & CONFIG_MANDATORY) && (node == NULL)) {
 			err_type->missing = true;
 			errors = ++err_type->errors;
-			config_proc_error(blk, err_type,
-					  "Mandatory field, %s is missing from block (%s)",
-					  item->name, blk->u.nterm.name);
+			config_proc_error(
+				blk, err_type,
+				"Mandatory field, %s is missing from block (%s)",
+				item->name, blk->u.nterm.name);
 			continue;
 		}
 		while (node != NULL) {
@@ -1026,39 +988,38 @@ static int do_block_load(struct config_node *blk,
 						     &node->node, item->name);
 			if (next_node != NULL &&
 			    (item->flags & CONFIG_UNIQUE)) {
-				config_proc_error(next_node, err_type,
-						  "Parameter %s set more than once",
-						  next_node->u.nterm.name);
+				config_proc_error(
+					next_node, err_type,
+					"Parameter %s set more than once",
+					next_node->u.nterm.name);
 				err_type->unique = true;
 				errors = ++err_type->errors;
 				node = next_node;
 				continue;
 			}
 			param_addr = ((char *)param_struct + item->off);
-			LogFullDebug(COMPONENT_CONFIG,
-				     "%p name=%s type=%s",
+			LogFullDebug(COMPONENT_CONFIG, "%p name=%s type=%s",
 				     param_addr, item->name,
 				     config_type_str(item->type));
 			if (glist_empty(&node->u.nterm.sub_nodes)) {
-				LogInfo(COMPONENT_CONFIG,
-					"%s %s is empty",
-					(node->type == TYPE_STMT
-					 ? "Statement" : "Block"),
+				LogInfo(COMPONENT_CONFIG, "%s %s is empty",
+					(node->type == TYPE_STMT ? "Statement" :
+								   "Block"),
 					node->u.nterm.name);
 				node = next_node;
 				continue;
 			}
 			term_node = glist_first_entry(&node->u.nterm.sub_nodes,
-						      struct config_node,
-						      node);
+						      struct config_node, node);
 			if ((item->type != CONFIG_BLOCK &&
 			     item->type != CONFIG_PROC &&
 			     item->type != CONFIG_LIST) &&
 			    glist_length(&node->u.nterm.sub_nodes) > 1) {
-				config_proc_error(node, err_type,
-						  "%s can have only one option.  First one is (%s)",
-						  node->u.nterm.name,
-						  term_node->u.term.varvalue);
+				config_proc_error(
+					node, err_type,
+					"%s can have only one option.  First one is (%s)",
+					node->u.nterm.name,
+					term_node->u.term.varvalue);
 				err_type->invalid = true;
 				errors = ++err_type->errors;
 				node = next_node;
@@ -1068,67 +1029,67 @@ static int do_block_load(struct config_node *blk,
 			case CONFIG_NULL:
 				break;
 			case CONFIG_INT16:
-				if (convert_number(term_node, item,
-						   &num64, err_type))
+				if (convert_number(term_node, item, &num64,
+						   err_type))
 					*(int16_t *)param_addr = num64;
 				break;
 			case CONFIG_UINT16:
-				if (convert_number(term_node, item,
-						   &num64, err_type))
-					*(uint16_t *)param_addr	= num64;
+				if (convert_number(term_node, item, &num64,
+						   err_type))
+					*(uint16_t *)param_addr = num64;
 				break;
 			case CONFIG_INT32:
-				if (convert_number(term_node, item,
-						   &num64, err_type)) {
+				if (convert_number(term_node, item, &num64,
+						   err_type)) {
 					*(int32_t *)param_addr = num64;
 					if (item->flags & CONFIG_MARK_SET) {
 						void *mask_addr;
 
 						mask_addr =
-							((char *)param_struct
-							 + item->u.i32.set_off);
-						*(uint32_t *)mask_addr
-							|= item->u.i32.bit;
+							((char *)param_struct +
+							 item->u.i32.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.i32.bit;
 					}
 				}
 				break;
 			case CONFIG_UINT32:
-				if (convert_number(term_node, item,
-						   &num64, err_type))
-					*(uint32_t *)param_addr	= num64;
+				if (convert_number(term_node, item, &num64,
+						   err_type))
+					*(uint32_t *)param_addr = num64;
 				break;
 			case CONFIG_INT64:
-				if (convert_number(term_node, item,
-						   &num64, err_type))
+				if (convert_number(term_node, item, &num64,
+						   err_type))
 					*(int64_t *)param_addr = num64;
 				break;
 			case CONFIG_UINT64:
-				if (convert_number(term_node, item,
-						   &num64, err_type)) {
+				if (convert_number(term_node, item, &num64,
+						   err_type)) {
 					*(uint64_t *)param_addr = num64;
 					if (item->flags & CONFIG_MARK_SET) {
 						void *mask_addr;
 
 						mask_addr =
-						((char *)param_struct
-						 + item->u.ui64.set_off);
-						*(uint32_t *)mask_addr
-						|= item->u.ui64.bit;
+							((char *)param_struct +
+							 item->u.ui64.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.ui64.bit;
 					}
 				}
 				break;
 			case CONFIG_ANON_ID:
-				if (convert_number(term_node, item,
-						   &num64, err_type)) {
+				if (convert_number(term_node, item, &num64,
+						   err_type)) {
 					*(uid_t *)param_addr = num64;
 					if (item->flags & CONFIG_MARK_SET) {
 						void *mask_addr;
 
 						mask_addr =
-							((char *)param_struct
-							 + item->u.i64.set_off);
-						*(uint32_t *)mask_addr
-							|= item->u.i64.bit;
+							((char *)param_struct +
+							 item->u.i64.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.i64.bit;
 					}
 				}
 				break;
@@ -1139,10 +1100,10 @@ static int do_block_load(struct config_node *blk,
 						void *mask_addr;
 
 						mask_addr =
-							((char *)param_struct
-							+ item->u.fsid.set_off);
-						*(uint32_t *)mask_addr
-							|= item->u.fsid.bit;
+							((char *)param_struct +
+							 item->u.fsid.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.fsid.bit;
 					}
 				}
 				break;
@@ -1173,27 +1134,28 @@ static int do_block_load(struct config_node *blk,
 				if (convert_bool(term_node, &bool_val,
 						 err_type)) {
 					if (bool_val)
-						*(uint32_t *)param_addr
-							|= item->u.bit.bit;
+						*(uint32_t *)param_addr |=
+							item->u.bit.bit;
 					else
-						*(uint32_t *)param_addr
-							&= ~item->u.bit.bit;
+						*(uint32_t *)param_addr &=
+							~item->u.bit.bit;
 					if (item->flags & CONFIG_MARK_SET) {
 						void *mask_addr;
 
 						mask_addr =
-							((char *)param_struct
-							+ item->u.bit.set_off);
-						*(uint32_t *)mask_addr
-							|= item->u.bit.bit;
-					}	
+							((char *)param_struct +
+							 item->u.bit.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.bit.bit;
+					}
 				}
 				break;
 			case CONFIG_LIST:
 				if (item->u.lst.def ==
-				   (*(uint32_t *)param_addr & item->u.lst.mask))
+				    (*(uint32_t *)param_addr &
+				     item->u.lst.mask))
 					*(uint32_t *)param_addr &=
-							~item->u.lst.mask;
+						~item->u.lst.mask;
 				if (convert_list(node, item, &num32,
 						 err_type)) {
 					*(uint32_t *)param_addr |= num32;
@@ -1201,25 +1163,26 @@ static int do_block_load(struct config_node *blk,
 						void *mask_addr;
 
 						mask_addr =
-							((char *)param_struct
-							+ item->u.lst.set_off);
-						*(uint32_t *)mask_addr
-							|= item->u.lst.mask;
-					}	
+							((char *)param_struct +
+							 item->u.lst.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.lst.mask;
+					}
 				}
-				LogFullDebug(COMPONENT_CONFIG,
-					     "%p CONFIG_LIST %s mask=%08x flags=%08x"
-					     " value=%08"PRIx32,
-					     param_addr,
-					     item->name,
-					     item->u.lst.mask, num32,
-					     *(uint32_t *)param_addr);
+				LogFullDebug(
+					COMPONENT_CONFIG,
+					"%p CONFIG_LIST %s mask=%08x flags=%08x"
+					" value=%08" PRIx32,
+					param_addr, item->name,
+					item->u.lst.mask, num32,
+					*(uint32_t *)param_addr);
 				break;
 			case CONFIG_ENUM:
 				if (item->u.lst.def ==
-				   (*(uint32_t *)param_addr & item->u.lst.mask))
+				    (*(uint32_t *)param_addr &
+				     item->u.lst.mask))
 					*(uint32_t *)param_addr &=
-							~item->u.lst.mask;
+						~item->u.lst.mask;
 				if (convert_enum(term_node, item, &num32,
 						 err_type)) {
 					*(uint32_t *)param_addr |= num32;
@@ -1227,19 +1190,19 @@ static int do_block_load(struct config_node *blk,
 						void *mask_addr;
 
 						mask_addr =
-							((char *)param_struct
-							+ item->u.lst.set_off);
-						*(uint32_t *)mask_addr
-							|= item->u.lst.mask;
-					}	
+							((char *)param_struct +
+							 item->u.lst.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.lst.mask;
+					}
 				}
-				LogFullDebug(COMPONENT_CONFIG,
-					     "%p CONFIG_ENUM %s mask=%08x flags=%08x"
-					     " value=%08"PRIx32,
-					     param_addr,
-					     item->name,
-					     item->u.lst.mask, num32,
-					     *(uint32_t *)param_addr);
+				LogFullDebug(
+					COMPONENT_CONFIG,
+					"%p CONFIG_ENUM %s mask=%08x flags=%08x"
+					" value=%08" PRIx32,
+					param_addr, item->name,
+					item->u.lst.mask, num32,
+					*(uint32_t *)param_addr);
 				break;
 			case CONFIG_IP_ADDR:
 				convert_inet_addr(term_node, item,
@@ -1249,34 +1212,35 @@ static int do_block_load(struct config_node *blk,
 			case CONFIG_BLOCK:
 				if (!proc_block(node, item, param_addr,
 						err_type))
-					config_proc_error(node, err_type,
-							  "Errors processing block (%s)",
-							  node->u.nterm.name);
+					config_proc_error(
+						node, err_type,
+						"Errors processing block (%s)",
+						node->u.nterm.name);
 				break;
 			case CONFIG_PROC:
-				do_proc(node, item, param_addr,	err_type);
+				do_proc(node, item, param_addr, err_type);
 				break;
 			case CONFIG_DEPRECATED:
-				config_proc_error(node, err_type,
+				config_proc_error(
+					node, err_type,
 					"Deprecated parameter (%s)%s%s",
 					item->name,
-					item->u.deprecated.message
-						? " - "
-						: "",
-					item->u.deprecated.message
-						? item->u.deprecated.message
-						: "");
+					item->u.deprecated.message ? " - " : "",
+					item->u.deprecated.message ?
+						item->u.deprecated.message :
+						"");
 				err_type->deprecated = true;
 				errors++;
 				break;
 			default:
-				config_proc_error(term_node, err_type,
-						  "Cannot set value for type(%d) yet",
-						  item->type);
+				config_proc_error(
+					term_node, err_type,
+					"Cannot set value for type(%d) yet",
+					item->type);
 				err_type->internal = true;
 				errors = ++err_type->errors;
 				break;
-				}
+			}
 			node = next_node;
 		}
 	}
@@ -1296,7 +1260,8 @@ static int do_block_load(struct config_node *blk,
 	/* We've been marking config nodes as being "seen" during the
 	 * scans.  Report the bogus and typo inflicted bits.
 	 */
-	glist_for_each(ns, &blk->u.nterm.sub_nodes) {
+	glist_for_each(ns, &blk->u.nterm.sub_nodes)
+	{
 		node = glist_entry(ns, struct config_node, node);
 		if (node->found)
 			node->found = false;
@@ -1348,10 +1313,8 @@ static int do_block_load(struct config_node *blk,
  * @ return true on success, false on errors.
  */
 
-static bool proc_block(struct config_node *node,
-		      struct config_item *item,
-		      void *link_mem,
-		      struct config_error_type *err_type)
+static bool proc_block(struct config_node *node, struct config_item *item,
+		       void *link_mem, struct config_error_type *err_type)
 {
 	void *param_struct;
 	int errors = 0;
@@ -1359,8 +1322,7 @@ static bool proc_block(struct config_node *node,
 	assert(item->type == CONFIG_BLOCK);
 
 	if (node->type != TYPE_BLOCK) {
-		config_proc_error(node, err_type,
-				  "%s is not a block!",
+		config_proc_error(node, err_type, "%s is not a block!",
 				  item->name);
 		err_type->invalid = true;
 		err_type->errors++;
@@ -1373,20 +1335,15 @@ static bool proc_block(struct config_node *node,
 
 	param_struct = item->u.blk.init(link_mem, NULL);
 	if (param_struct == NULL) {
-		config_proc_error(node, err_type,
-				  "Could not init block for %s",
+		config_proc_error(node, err_type, "Could not init block for %s",
 				  item->name);
 		err_type->init = true;
 		err_type->errors++;
 		return false;
 	}
-	LogFullDebug(COMPONENT_CONFIG,
-		     "------ At (%s:%d): do_block_init %s",
-		     node->filename,
-		     node->linenumber,
-		     item->name);
-	if (!do_block_init(node, item->u.blk.params,
-			   param_struct, err_type)) {
+	LogFullDebug(COMPONENT_CONFIG, "------ At (%s:%d): do_block_init %s",
+		     node->filename, node->linenumber, item->name);
+	if (!do_block_init(node, item->u.blk.params, param_struct, err_type)) {
 		config_proc_error(node, err_type,
 				  "Could not initialize parameters for %s",
 				  item->name);
@@ -1394,37 +1351,28 @@ static bool proc_block(struct config_node *node,
 		goto err_out;
 	}
 	if (item->u.blk.display != NULL)
-		item->u.blk.display("DEFAULTS", node,
-				      link_mem, param_struct);
-	LogFullDebug(COMPONENT_CONFIG,
-		     "------ At (%s:%d): do_block_load %s",
-		     node->filename,
-		     node->linenumber,
-		     item->name);
-	errors = do_block_load(node,
-			   item->u.blk.params,
-			   (item->flags & CONFIG_RELAX) ? true : false,
-			   param_struct, err_type);
+		item->u.blk.display("DEFAULTS", node, link_mem, param_struct);
+	LogFullDebug(COMPONENT_CONFIG, "------ At (%s:%d): do_block_load %s",
+		     node->filename, node->linenumber, item->name);
+	errors = do_block_load(node, item->u.blk.params,
+			       (item->flags & CONFIG_RELAX) ? true : false,
+			       param_struct, err_type);
 	if (errors > 0 && !cur_exp_config_error_is_harmless(err_type)) {
-		config_proc_error(node, err_type,
-				  "%d errors while processing parameters for %s",
-				  errors,
-				  item->name);
+		config_proc_error(
+			node, err_type,
+			"%d errors while processing parameters for %s", errors,
+			item->name);
 		goto err_out;
 	}
 	if (item->u.blk.check && item->u.blk.check(param_struct, err_type)) {
 		goto err_out;
 	}
-	LogFullDebug(COMPONENT_CONFIG,
-		     "------ At (%s:%d): commit %s",
-		     node->filename,
-		     node->linenumber,
-		     item->name);
+	LogFullDebug(COMPONENT_CONFIG, "------ At (%s:%d): commit %s",
+		     node->filename, node->linenumber, item->name);
 	errors = item->u.blk.commit(node, link_mem, param_struct, err_type);
 	if (errors > 0 && !cur_exp_config_error_is_harmless(err_type)) {
 		config_proc_error(node, err_type,
-				  "%d validation errors in block %s",
-				  errors,
+				  "%d validation errors in block %s", errors,
 				  item->name);
 		goto err_out;
 	}
@@ -1436,8 +1384,8 @@ static bool proc_block(struct config_node *node,
 		 * disposed of. Need to clear the flag so the next config
 		 * block processed gets a clear slate.
 		 */
-		LogFullDebug(COMPONENT_CONFIG,
-			     "Releasing block %p/%p", link_mem, param_struct);
+		LogFullDebug(COMPONENT_CONFIG, "Releasing block %p/%p",
+			     link_mem, param_struct);
 		(void)item->u.blk.init(link_mem, param_struct);
 		err_type->dispose = false;
 	}
@@ -1445,8 +1393,8 @@ static bool proc_block(struct config_node *node,
 	return true;
 
 err_out:
-	LogFullDebug(COMPONENT_CONFIG,
-		     "Releasing block %p/%p", link_mem, param_struct);
+	LogFullDebug(COMPONENT_CONFIG, "Releasing block %p/%p", link_mem,
+		     param_struct);
 	(void)item->u.blk.init(link_mem, param_struct);
 	err_type->dispose = false;
 	return false;
@@ -1461,7 +1409,8 @@ void find_unused_blocks(config_file_t config,
 	/* We've been marking config nodes as being "seen" during the
 	 * scans.  Report the bogus and typo inflicted bits.
 	 */
-	glist_for_each(ns, &tree->root.u.nterm.sub_nodes) {
+	glist_for_each(ns, &tree->root.u.nterm.sub_nodes)
+	{
 		struct config_node *node;
 
 		node = glist_entry(ns, struct config_node, node);
@@ -1469,8 +1418,7 @@ void find_unused_blocks(config_file_t config,
 		if (node->found)
 			node->found = false;
 		else {
-			config_proc_error(node, err_type,
-					  "Unknown block (%s)",
+			config_proc_error(node, err_type, "Unknown block (%s)",
 					  node->u.nterm.name);
 			err_type->bogus = true;
 		}
@@ -1494,8 +1442,7 @@ config_file_t get_parse_root(void *node)
 	while (parent->parent != NULL) {
 		parent = parent->parent;
 		assert(parent->type == TYPE_ROOT ||
-		       parent->type == TYPE_BLOCK ||
-		       parent->type == TYPE_STMT);
+		       parent->type == TYPE_BLOCK || parent->type == TYPE_STMT);
 	}
 	assert(parent->type == TYPE_ROOT);
 	root = container_of(parent, struct config_root, root);
@@ -1575,7 +1522,7 @@ static inline char *end_of_value(char *sp)
 		if (isspace(*sp) || *sp == ',' || *sp == ')' || *sp == '(')
 			break;
 		sp++;
-	 }
+	}
 	return sp;
 }
 
@@ -1633,7 +1580,7 @@ static char *parse_args(char *arg_str, struct expr_parse_arg **argp)
 	sp = skip_white(arg_str);
 	if (*sp == '\0')
 		return NULL;
-	name = sp;		/* name matches [A-Za-z_][A-Za-z0-9_]* */
+	name = sp; /* name matches [A-Za-z_][A-Za-z0-9_]* */
 	if (!(isalpha(*sp) || *sp == '_'))
 		return NULL;
 	sp = end_of_token(sp);
@@ -1642,7 +1589,7 @@ static char *parse_args(char *arg_str, struct expr_parse_arg **argp)
 	sp = skip_white(sp);
 	if (*sp != '=')
 		return NULL;
-	*sp++ = '\0';		/* name = ... */
+	*sp++ = '\0'; /* name = ... */
 	sp = skip_white(sp);
 	if (*sp == '\0')
 		return NULL;
@@ -1650,7 +1597,7 @@ static char *parse_args(char *arg_str, struct expr_parse_arg **argp)
 	sp = end_of_value(sp);
 	if (*sp == '\0')
 		return NULL;
-	if (isspace(*sp)) {	/* name = val */
+	if (isspace(*sp)) { /* name = val */
 		*sp++ = '\0';
 		sp = skip_white(sp);
 	}
@@ -1666,7 +1613,7 @@ static char *parse_args(char *arg_str, struct expr_parse_arg **argp)
 		*sp = saved_char;
 		return sp;
 	}
-	sp++;			/* name = val , ... */
+	sp++; /* name = val , ... */
 	return parse_args(sp, &arg->next);
 }
 
@@ -1688,7 +1635,7 @@ static char *parse_block(char *str, struct expr_parse **node)
 	sp = skip_white(str);
 	if (*sp == '\0')
 		return NULL;
-	name = sp;		/* name matches [A-Za-z_][A-Za-z0-9_]* */
+	name = sp; /* name matches [A-Za-z_][A-Za-z0-9_]* */
 	if (!(isalpha(*sp) || *sp != '_'))
 		return NULL;
 	if (*sp == '_')
@@ -1699,12 +1646,12 @@ static char *parse_block(char *str, struct expr_parse **node)
 	sp = skip_white(sp);
 	if (*sp != '(')
 		return NULL;
-	*sp++ = '\0';	/* name ( ... */
+	*sp++ = '\0'; /* name ( ... */
 	sp = parse_args(sp, &arg);
 	if (sp == NULL)
 		goto errout;
 	sp = skip_white(sp);
-	if (*sp == ')') {	/* name ( ... ) */
+	if (*sp == ')') { /* name ( ... ) */
 		new_node = gsh_calloc(1, sizeof(struct expr_parse));
 		new_node->name = gsh_strdup(name);
 		new_node->arg = arg;
@@ -1742,7 +1689,7 @@ static char *parse_expr(char *expr, struct expr_parse **expr_node)
 
 	sp = lexpr;
 	while (sp != NULL && *sp != '\0') {
-		sp = parse_block(sp, &node);	/* block is name ( ... ) */
+		sp = parse_block(sp, &node); /* block is name ( ... ) */
 		if (root_node == NULL)
 			root_node = node;
 		else
@@ -1752,7 +1699,7 @@ static char *parse_expr(char *expr, struct expr_parse **expr_node)
 			break;
 		sp = skip_white(sp);
 		if (*sp == '.') {
-			sp++;		/* boock '.' block ... */
+			sp++; /* boock '.' block ... */
 		} else if (*sp != '\0') {
 			sp = NULL;
 			break;
@@ -1770,8 +1717,9 @@ static inline bool match_one_term(char *value, struct config_node *node)
 	struct config_node *term_node;
 	struct glist_head *ts;
 
-	glist_for_each(ts, &node->u.nterm.sub_nodes) {
-		term_node = glist_entry(ts, struct config_node,	node);
+	glist_for_each(ts, &node->u.nterm.sub_nodes)
+	{
+		term_node = glist_entry(ts, struct config_node, node);
 		assert(term_node->type == TYPE_TERM);
 		if (strcasecmp(value, term_node->u.term.varvalue) == 0)
 			return true;
@@ -1792,8 +1740,7 @@ static inline bool match_one_term(char *value, struct config_node *node)
  * @return true if matched, else false
  */
 
-static bool match_block(struct config_node *blk,
-			struct expr_parse *expr)
+static bool match_block(struct config_node *blk, struct expr_parse *expr)
 {
 	struct glist_head *ns;
 	struct config_node *sub_node;
@@ -1802,11 +1749,12 @@ static bool match_block(struct config_node *blk,
 
 	assert(blk->type == TYPE_BLOCK);
 	for (arg = expr->arg; arg != NULL; arg = arg->next) {
-		glist_for_each(ns, &blk->u.nterm.sub_nodes) {
+		glist_for_each(ns, &blk->u.nterm.sub_nodes)
+		{
 			sub_node = glist_entry(ns, struct config_node, node);
 			if (sub_node->type == TYPE_STMT &&
-			    strcasecmp(arg->name,
-				       sub_node->u.nterm.name) == 0) {
+			    strcasecmp(arg->name, sub_node->u.nterm.name) ==
+				    0) {
 				found = true;
 				if (expr->next == NULL &&
 				    strcasecmp(arg->value, "*") == 0)
@@ -1859,9 +1807,10 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	bool found = false;
 
 	if (tree->root.type != TYPE_ROOT) {
-		config_proc_error(&tree->root, err_type,
-				  "Expected to start at parse tree root for (%s)",
-				  expr_str);
+		config_proc_error(
+			&tree->root, err_type,
+			"Expected to start at parse tree root for (%s)",
+			expr_str);
 		goto out;
 	}
 	top = &tree->root;
@@ -1871,7 +1820,8 @@ int find_config_nodes(config_file_t config, char *expr_str,
 	expr = expr_head;
 	*node_list = NULL;
 again:
-	glist_for_each(ns, &top->u.nterm.sub_nodes) {
+	glist_for_each(ns, &top->u.nterm.sub_nodes)
+	{
 #ifdef DS_ONLY_WAS
 		/* recent changes to parsing may prevent this,
 		 * but retain code here for future reference.
@@ -1879,8 +1829,8 @@ again:
 		 */
 		if (ns == NULL) {
 			config_proc_error(top, err_type,
-				 "Missing sub_node for (%s)",
-				 expr_str);
+					  "Missing sub_node for (%s)",
+					  expr_str);
 			break;
 		}
 #endif
@@ -1927,10 +1877,8 @@ out:
  * @returns -1 on errors, 0 for success
  */
 
-int load_config_from_node(void *tree_node,
-			  struct config_block *conf_blk,
-			  void *param,
-			  bool unique,
+int load_config_from_node(void *tree_node, struct config_block *conf_blk,
+			  void *param, bool unique,
 			  struct config_error_type *err_type)
 {
 	struct config_node *node = (struct config_node *)tree_node;
@@ -1938,8 +1886,7 @@ int load_config_from_node(void *tree_node,
 	char *altblkname = conf_blk->blk_desc.altname;
 
 	if (node == NULL) {
-		config_proc_error(NULL, err_type,
-				  "Missing tree_node for (%s)",
+		config_proc_error(NULL, err_type, "Missing tree_node for (%s)",
 				  blkname);
 		err_type->missing = true;
 		return -1;
@@ -1956,9 +1903,10 @@ int load_config_from_node(void *tree_node,
 			return -1;
 		}
 	} else {
-		config_proc_error(node, err_type,
-				  "Unrecognized parse tree node type for block (%s)",
-				  blkname);
+		config_proc_error(
+			node, err_type,
+			"Unrecognized parse tree node type for block (%s)",
+			blkname);
 		err_type->invalid = true;
 		err_type->errors++;
 		return -1;
@@ -1987,10 +1935,8 @@ int load_config_from_node(void *tree_node,
  * @returns number of blocks found. -1 on errors, errors are in err_type
  */
 
-int load_config_from_parse(config_file_t config,
-			   struct config_block *conf_blk,
-			   void *param,
-			   bool unique,
+int load_config_from_parse(config_file_t config, struct config_block *conf_blk,
+			   void *param, bool unique,
 			   struct config_error_type *err_type)
 {
 	struct config_root *tree = (struct config_root *)config;
@@ -2004,29 +1950,31 @@ int load_config_from_parse(config_file_t config,
 
 	if (tree == NULL) {
 		config_proc_error(NULL, err_type,
-				  "Missing parse tree root for (%s)",
-				  blkname);
+				  "Missing parse tree root for (%s)", blkname);
 		err_type->missing = true;
 		return -1;
 	}
 	if (tree->root.type != TYPE_ROOT) {
-		config_proc_error(&tree->root, err_type,
-				  "Expected to start at parse tree root for (%s)",
-				  blkname);
+		config_proc_error(
+			&tree->root, err_type,
+			"Expected to start at parse tree root for (%s)",
+			blkname);
 		err_type->internal = true;
 		return -1;
 	}
 	if (param != NULL) {
 		blk_mem = conf_blk->blk_desc.u.blk.init(NULL, param);
 		if (blk_mem == NULL) {
-			config_proc_error(&tree->root, err_type,
-					  "Top level block init failed for (%s)",
-					  blkname);
+			config_proc_error(
+				&tree->root, err_type,
+				"Top level block init failed for (%s)",
+				blkname);
 			err_type->internal = true;
 			return -1;
 		}
 	}
-	glist_for_each(ns, &tree->root.u.nterm.sub_nodes) {
+	glist_for_each(ns, &tree->root.u.nterm.sub_nodes)
+	{
 		node = glist_entry(ns, struct config_node, node);
 		if (node->type == TYPE_BLOCK &&
 		    (strcasecmp(blkname, node->u.nterm.name) == 0 ||
@@ -2043,13 +1991,12 @@ int load_config_from_parse(config_file_t config,
 				 * if an EXPORT block is processed. */
 				err_type->cur_exp_create_err = false;
 
-				if (!proc_block(node,
-						&conf_blk->blk_desc,
-						blk_mem,
-						err_type))
-					config_proc_error(node, err_type,
-							  "Errors processing block (%s)",
-							  blkname);
+				if (!proc_block(node, &conf_blk->blk_desc,
+						blk_mem, err_type))
+					config_proc_error(
+						node, err_type,
+						"Errors processing block (%s)",
+						blkname);
 				else
 					found++;
 
@@ -2068,15 +2015,16 @@ int load_config_from_parse(config_file_t config,
 		/* Found nothing but we have to do the allocate and init
 		 * at least. Use a fake, not NULL link_mem */
 		blk_mem = param != NULL ?
-			param : conf_blk->blk_desc.u.blk.init((void *)~0UL,
-							      NULL);
+				  param :
+				  conf_blk->blk_desc.u.blk.init((void *)~0UL,
+								NULL);
 		assert(blk_mem != NULL);
-		if (!do_block_init(&tree->root,
-				   conf_blk->blk_desc.u.blk.params,
+		if (!do_block_init(&tree->root, conf_blk->blk_desc.u.blk.params,
 				   blk_mem, err_type)) {
-			config_proc_error(&tree->root, err_type,
-					  "Could not initialize defaults for block %s",
-					  blkname);
+			config_proc_error(
+				&tree->root, err_type,
+				"Could not initialize defaults for block %s",
+				blkname);
 			err_type->init = true;
 		}
 	}
@@ -2086,11 +2034,9 @@ int load_config_from_parse(config_file_t config,
 
 		assert(!config_error_no_error(err_type));
 
-		config_proc_error(node, err_type,
-			 "%d %s errors found block %s",
-			 err_type->errors - prev_errs,
-			 errstr != NULL ? errstr : "unknown",
-			 blkname);
+		config_proc_error(node, err_type, "%d %s errors found block %s",
+				  err_type->errors - prev_errs,
+				  errstr != NULL ? errstr : "unknown", blkname);
 		if (errstr != NULL)
 			gsh_free(errstr);
 	}

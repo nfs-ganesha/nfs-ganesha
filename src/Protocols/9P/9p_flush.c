@@ -53,8 +53,8 @@ int _9p_flush(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, oldtag, u16);
 
-	LogDebug(COMPONENT_9P, "TFLUSH: tag=%u oldtag=%u", (u32) *msgtag,
-		 (u32) *oldtag);
+	LogDebug(COMPONENT_9P, "TFLUSH: tag=%u oldtag=%u", (u32)*msgtag,
+		 (u32)*oldtag);
 
 	_9p_FlushFlushHook(req9p->pconn, (int)*oldtag,
 			   req9p->flush_hook.sequence);
@@ -66,8 +66,8 @@ int _9p_flush(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RFLUSH: tag=%u oldtag=%u", (u32) *msgtag,
-		 (u32) *oldtag);
+	LogDebug(COMPONENT_9P, "RFLUSH: tag=%u oldtag=%u", (u32)*msgtag,
+		 (u32)*oldtag);
 
 	return 1;
 }

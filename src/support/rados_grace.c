@@ -32,15 +32,15 @@
 #include <stdbool.h>
 
 /* Each cluster node needs a slot here */
-#define MAX_ITEMS			1024
+#define MAX_ITEMS 1024
 
 /* Flags for the omap value flags field */
 
 /* Does this node currently require a grace period? */
-#define RADOS_GRACE_NEED_GRACE		0x1
+#define RADOS_GRACE_NEED_GRACE 0x1
 
 /* Is this node currently enforcing its grace period locally? */
-#define RADOS_GRACE_ENFORCING		0x2
+#define RADOS_GRACE_ENFORCING 0x2
 
 static void rados_grace_notify(rados_ioctx_t io_ctx, const char *oid)
 {
@@ -52,14 +52,13 @@ static void rados_grace_notify(rados_ioctx_t io_ctx, const char *oid)
 	rados_buffer_free(buf);
 }
 
-int
-rados_grace_create(rados_ioctx_t io_ctx, const char *oid)
+int rados_grace_create(rados_ioctx_t io_ctx, const char *oid)
 {
-	int			ret;
-	rados_write_op_t	op = NULL;
-	uint64_t		cur = htole64(1);	// starting epoch
-	uint64_t		rec = htole64(0);	// no recovery yet
-	char			buf[sizeof(uint64_t) * 2];
+	int ret;
+	rados_write_op_t op = NULL;
+	uint64_t cur = htole64(1); // starting epoch
+	uint64_t rec = htole64(0); // no recovery yet
+	char buf[sizeof(uint64_t) * 2];
 
 	/*
 	 * 2 uint64_t's
@@ -88,8 +87,7 @@ rados_grace_create(rados_ioctx_t io_ctx, const char *oid)
 	return ret;
 }
 
-int
-rados_grace_dump(rados_ioctx_t io_ctx, const char *oid, FILE *stream)
+int rados_grace_dump(rados_ioctx_t io_ctx, const char *oid, FILE *stream)
 {
 	int ret;
 	rados_omap_iter_t iter;
@@ -99,7 +97,7 @@ rados_grace_dump(rados_ioctx_t io_ctx, const char *oid, FILE *stream)
 	unsigned char more = '\0';
 	size_t len_out = 0;
 	char buf[sizeof(uint64_t) * 2];
-	uint64_t	cur, rec;
+	uint64_t cur, rec;
 
 	op = rados_create_read_op();
 	rados_read_op_read(op, 0, sizeof(buf), buf, &len_out, NULL);
@@ -141,9 +139,8 @@ out:
 	return ret;
 }
 
-int
-rados_grace_epochs(rados_ioctx_t io_ctx, const char *oid,
-			uint64_t *cur, uint64_t *rec)
+int rados_grace_epochs(rados_ioctx_t io_ctx, const char *oid, uint64_t *cur,
+		       uint64_t *rec)
 {
 	int ret;
 	rados_read_op_t op;
@@ -168,17 +165,16 @@ out:
 	return ret;
 }
 
-int
-rados_grace_enforcing_toggle(rados_ioctx_t io_ctx, const char *oid, int nodes,
-			const char * const *nodeids, uint64_t *pcur,
-			uint64_t *prec, bool enable)
+int rados_grace_enforcing_toggle(rados_ioctx_t io_ctx, const char *oid,
+				 int nodes, const char *const *nodeids,
+				 uint64_t *pcur, uint64_t *prec, bool enable)
 {
-	int			i, ret;
-	char			*flags = NULL;
-	char			**vals = NULL;
-	size_t			*lens = NULL;
-	bool			*match = NULL;
-	uint64_t		cur, rec, ver;
+	int i, ret;
+	char *flags = NULL;
+	char **vals = NULL;
+	size_t *lens = NULL;
+	bool *match = NULL;
+	uint64_t cur, rec, ver;
 
 	/* allocate an array of flag bytes */
 	flags = calloc(nodes, 1);
@@ -214,18 +210,18 @@ rados_grace_enforcing_toggle(rados_ioctx_t io_ctx, const char *oid, int nodes,
 	}
 
 	do {
-		rados_write_op_t	wop;
-		rados_read_op_t		rop;
-		rados_omap_iter_t	iter;
-		size_t			len = 0;
-		unsigned char		more = 0;
-		char			buf[sizeof(uint64_t) * 2];
+		rados_write_op_t wop;
+		rados_read_op_t rop;
+		rados_omap_iter_t iter;
+		size_t len = 0;
+		unsigned char more = 0;
+		char buf[sizeof(uint64_t) * 2];
 
 		/* read epoch blob */
 		rop = rados_create_read_op();
 		rados_read_op_read(rop, 0, sizeof(buf), buf, &len, NULL);
 		rados_read_op_omap_get_vals2(rop, "", "", MAX_ITEMS, &iter,
-						&more, NULL);
+					     &more, NULL);
 		ret = rados_read_op_operate(rop, io_ctx, oid, 0);
 		if (ret < 0) {
 			rados_release_read_op(rop);
@@ -284,8 +280,8 @@ rados_grace_enforcing_toggle(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		rados_write_op_assert_version(wop, ver);
 
 		/* Set omap values to given ones */
-		rados_write_op_omap_set(wop, nodeids,
-				(const char * const*)vals, lens, nodes);
+		rados_write_op_omap_set(wop, nodeids, (const char *const *)vals,
+					lens, nodes);
 
 		ret = rados_write_op_operate(wop, io_ctx, oid, NULL, 0);
 		rados_release_write_op(wop);
@@ -305,18 +301,17 @@ out:
 	return ret;
 }
 
-int
-rados_grace_enforcing_check(rados_ioctx_t io_ctx, const char *oid,
-			    const char *nodeid)
+int rados_grace_enforcing_check(rados_ioctx_t io_ctx, const char *oid,
+				const char *nodeid)
 {
-	int			ret;
-	rados_read_op_t		rop;
-	rados_omap_iter_t	iter;
-	unsigned char		more = 0;
+	int ret;
+	rados_read_op_t rop;
+	rados_omap_iter_t iter;
+	unsigned char more = 0;
 
 	rop = rados_create_read_op();
-	rados_read_op_omap_get_vals2(rop, "", "", MAX_ITEMS, &iter,
-					&more, NULL);
+	rados_read_op_omap_get_vals2(rop, "", "", MAX_ITEMS, &iter, &more,
+				     NULL);
 	ret = rados_read_op_operate(rop, io_ctx, oid, 0);
 	if (ret < 0) {
 		rados_release_read_op(rop);
@@ -331,8 +326,8 @@ rados_grace_enforcing_check(rados_ioctx_t io_ctx, const char *oid,
 
 	ret = -ENOKEY;
 	for (;;) {
-		char		*key, *val;
-		size_t		len = 0;
+		char *key, *val;
+		size_t len = 0;
 
 		rados_omap_get_next(iter, &key, &val, &len);
 		if (!key)
@@ -353,17 +348,16 @@ out:
 	return ret;
 }
 
-int
-rados_grace_join_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
-			const char * const *nodeids, uint64_t *pcur,
-			uint64_t *prec, bool start)
+int rados_grace_join_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
+			  const char *const *nodeids, uint64_t *pcur,
+			  uint64_t *prec, bool start)
 {
-	int			i, ret;
-	char			*flags = NULL;
-	char			**vals = NULL;
-	size_t			*lens = NULL;
-	bool			*match = NULL;
-	uint64_t		cur, rec, ver;
+	int i, ret;
+	char *flags = NULL;
+	char **vals = NULL;
+	size_t *lens = NULL;
+	bool *match = NULL;
+	uint64_t cur, rec, ver;
 
 	/* flag bytes */
 	flags = malloc(nodes);
@@ -399,18 +393,18 @@ rados_grace_join_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 	}
 
 	do {
-		rados_write_op_t	wop;
-		rados_read_op_t		rop;
-		rados_omap_iter_t	iter;
-		size_t			len = 0;
-		unsigned char		more = 0;
-		char			buf[sizeof(uint64_t) * 2];
+		rados_write_op_t wop;
+		rados_read_op_t rop;
+		rados_omap_iter_t iter;
+		size_t len = 0;
+		unsigned char more = 0;
+		char buf[sizeof(uint64_t) * 2];
 
 		/* read epoch blob */
 		rop = rados_create_read_op();
 		rados_read_op_read(rop, 0, sizeof(buf), buf, &len, NULL);
 		rados_read_op_omap_get_vals2(rop, "", "", MAX_ITEMS, &iter,
-						&more, NULL);
+					     &more, NULL);
 		ret = rados_read_op_operate(rop, io_ctx, oid, 0);
 		if (ret < 0) {
 			rados_release_read_op(rop);
@@ -429,8 +423,8 @@ rados_grace_join_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		 * Walk the returned kv pairs and flip on any existing flags
 		 * in the matching nodeid (if there is one)
 		 */
-		memset(flags, RADOS_GRACE_NEED_GRACE|RADOS_GRACE_ENFORCING,
-			nodes);
+		memset(flags, RADOS_GRACE_NEED_GRACE | RADOS_GRACE_ENFORCING,
+		       nodes);
 		for (;;) {
 			char *key, *val;
 
@@ -485,8 +479,8 @@ rados_grace_join_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		}
 
 		/* Set omap values to given ones */
-		rados_write_op_omap_set(wop, nodeids,
-				(const char * const*)vals, lens, nodes);
+		rados_write_op_omap_set(wop, nodeids, (const char *const *)vals,
+					lens, nodes);
 
 		ret = rados_write_op_operate(wop, io_ctx, oid, NULL, 0);
 		rados_release_write_op(wop);
@@ -506,18 +500,17 @@ out:
 	return ret;
 }
 
-int
-rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
-			const char * const *nodeids, uint64_t *pcur,
-			uint64_t *prec, bool remove)
+int rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
+			  const char *const *nodeids, uint64_t *pcur,
+			  uint64_t *prec, bool remove)
 {
-	int			ret;
-	char			*flags = NULL;
-	char			**vals = NULL;
-	size_t			*lens = NULL;
-	const char		**keys = NULL;
-	bool			*match = NULL;
-	uint64_t		cur, rec;
+	int ret;
+	char *flags = NULL;
+	char **vals = NULL;
+	size_t *lens = NULL;
+	const char **keys = NULL;
+	bool *match = NULL;
+	uint64_t cur, rec;
 
 	keys = calloc(nodes, sizeof(char *));
 	if (!keys) {
@@ -554,22 +547,22 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 	}
 
 	do {
-		int			i, k, need;
-		rados_write_op_t	wop;
-		rados_read_op_t		rop;
-		rados_omap_iter_t	iter;
-		char			*key, *val;
-		size_t			len;
-		char			buf[sizeof(uint64_t) * 2];
-		unsigned char		more = '\0';
-		uint64_t		ver;
-		bool			enforcing;
+		int i, k, need;
+		rados_write_op_t wop;
+		rados_read_op_t rop;
+		rados_omap_iter_t iter;
+		char *key, *val;
+		size_t len;
+		char buf[sizeof(uint64_t) * 2];
+		unsigned char more = '\0';
+		uint64_t ver;
+		bool enforcing;
 
 		/* read epoch blob and omap keys */
 		rop = rados_create_read_op();
 		rados_read_op_read(rop, 0, sizeof(buf), buf, &len, NULL);
 		rados_read_op_omap_get_vals2(rop, "", "", MAX_ITEMS, &iter,
-						&more, NULL);
+					     &more, NULL);
 		ret = rados_read_op_operate(rop, io_ctx, oid, 0);
 		if (ret < 0) {
 			rados_release_read_op(rop);
@@ -628,8 +621,8 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 				 * keys.
 				 */
 				if (!remove) {
-					flags[k] =
-						*val & ~RADOS_GRACE_NEED_GRACE;
+					flags[k] = *val &
+						   ~RADOS_GRACE_NEED_GRACE;
 					vals[k] = &flags[k];
 					lens[k] = 1;
 				}
@@ -670,9 +663,8 @@ rados_grace_lift_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		if (remove)
 			rados_write_op_omap_rm_keys(wop, keys, k);
 		else
-			rados_write_op_omap_set(wop, keys,
-						(const char * const *)vals,
-						lens, k);
+			rados_write_op_omap_set(
+				wop, keys, (const char *const *)vals, lens, k);
 
 		/*
 		 * If number of omap records we're setting or removing is the
@@ -708,15 +700,14 @@ out:
 	return ret;
 }
 
-int
-rados_grace_add(rados_ioctx_t io_ctx, const char *oid, int nodes,
-		const char * const *nodeids)
+int rados_grace_add(rados_ioctx_t io_ctx, const char *oid, int nodes,
+		    const char *const *nodeids)
 {
-	int			i, ret;
-	char			*flags = NULL;
-	char			**vals = NULL;
-	size_t			*lens = NULL;
-	uint64_t		ver;
+	int i, ret;
+	char *flags = NULL;
+	char **vals = NULL;
+	size_t *lens = NULL;
+	uint64_t ver;
 
 	/* allocate an array of flag bytes */
 	flags = calloc(nodes, 1);
@@ -747,15 +738,15 @@ rados_grace_add(rados_ioctx_t io_ctx, const char *oid, int nodes,
 	}
 
 	do {
-		rados_write_op_t	wop;
-		rados_read_op_t		rop;
-		rados_omap_iter_t	iter;
-		unsigned char		more = 0;
+		rados_write_op_t wop;
+		rados_read_op_t rop;
+		rados_omap_iter_t iter;
+		unsigned char more = 0;
 
 		/* read epoch blob */
 		rop = rados_create_read_op();
 		rados_read_op_omap_get_vals2(rop, "", "", MAX_ITEMS, &iter,
-						&more, NULL);
+					     &more, NULL);
 		ret = rados_read_op_operate(rop, io_ctx, oid, 0);
 		if (ret < 0) {
 			rados_release_read_op(rop);
@@ -797,8 +788,8 @@ rados_grace_add(rados_ioctx_t io_ctx, const char *oid, int nodes,
 		rados_write_op_assert_version(wop, ver);
 
 		/* Set omap values to given ones */
-		rados_write_op_omap_set(wop, nodeids,
-				(const char * const*)vals, lens, nodes);
+		rados_write_op_omap_set(wop, nodeids, (const char *const *)vals,
+					lens, nodes);
 
 		ret = rados_write_op_operate(wop, io_ctx, oid, NULL, 0);
 		rados_release_write_op(wop);
@@ -812,13 +803,12 @@ out:
 	return ret;
 }
 
-int
-rados_grace_member_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
-			 const char * const *nodeids)
+int rados_grace_member_bulk(rados_ioctx_t io_ctx, const char *oid, int nodes,
+			    const char *const *nodeids)
 {
-	int			ret, rval, cnt;
-	rados_read_op_t		rop;
-	rados_omap_iter_t	iter;
+	int ret, rval, cnt;
+	rados_read_op_t rop;
+	rados_omap_iter_t iter;
 
 	/* read epoch blob */
 	rop = rados_create_read_op();

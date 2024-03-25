@@ -38,16 +38,16 @@
 #include "config.h"
 #include <stdio.h>
 #include <sys/types.h>
-#include <ctype.h>		/* for having isalnum */
-#include <stdlib.h>		/* for having atoi */
-#include <dirent.h>		/* for having MAXNAMLEN */
+#include <ctype.h> /* for having isalnum */
+#include <stdlib.h> /* for having atoi */
+#include <dirent.h> /* for having MAXNAMLEN */
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <pwd.h>
 #include <grp.h>
 #include <pthread.h>
@@ -90,8 +90,8 @@ char all_ones[OTHERSIZE];
  */
 int display_stateid_other(struct display_buffer *dspbuf, char *other)
 {
-	uint64_t clientid = *((uint64_t *) other);
-	uint32_t count    = *((uint32_t *) (other + sizeof(uint64_t)));
+	uint64_t clientid = *((uint64_t *)other);
+	uint32_t count = *((uint32_t *)(other + sizeof(uint64_t)));
 	int b_left = display_cat(dspbuf, "OTHER=");
 
 	if (b_left <= 0)
@@ -112,7 +112,8 @@ int display_stateid_other(struct display_buffer *dspbuf, char *other)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, "} StateIdCounter=0x%08"PRIx32"}", count);
+	return display_printf(dspbuf, "} StateIdCounter=0x%08" PRIx32 "}",
+			      count);
 }
 
 /**
@@ -142,7 +143,7 @@ int display_stateid4(struct display_buffer *dspbuf, stateid4 *stateid)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " seqid=%"PRIu32, stateid->seqid);
+	return display_printf(dspbuf, " seqid=%" PRIu32, stateid->seqid);
 }
 
 const char *str_state_type(state_t *state)
@@ -186,10 +187,7 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 	if (state == NULL)
 		return display_cat(dspbuf, "STATE <NULL>");
 
-
-	b_left = display_printf(dspbuf,
-				"STATE %p ",
-				state);
+	b_left = display_printf(dspbuf, "STATE %p ", state);
 
 	if (b_left <= 0)
 		return b_left;
@@ -200,9 +198,8 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 		return b_left;
 
 	b_left = display_printf(dspbuf,
-				" obj=%p type=%s seqid=%"PRIu32" owner={",
-				state->state_obj,
-				str_state_type(state),
+				" obj=%p type=%s seqid=%" PRIu32 " owner={",
+				state->state_obj, str_state_type(state),
 				state->state_seqid);
 
 	if (b_left <= 0)
@@ -213,8 +210,7 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf,
-			      "} state_refcount=%"PRId32,
+	return display_printf(dspbuf, "} state_refcount=%" PRId32,
 			      atomic_fetch_int32_t(&state->state_refcount));
 }
 
@@ -245,8 +241,8 @@ int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str1[DISPLAY_STATEID_OTHER_SIZE] = "\0";
 		char str2[DISPLAY_STATEID_OTHER_SIZE] = "\0";
-		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
-		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+		struct display_buffer dspbuf1 = { sizeof(str1), str1, str1 };
+		struct display_buffer dspbuf2 = { sizeof(str2), str2, str2 };
 
 		display_stateid_other(&dspbuf1, buff1->addr);
 		display_stateid_other(&dspbuf2, buff2->addr);
@@ -257,7 +253,7 @@ int compare_state_id(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 	}
 
 	return memcmp(buff1->addr, buff2->addr, OTHERSIZE);
-}				/* compare_state_id */
+} /* compare_state_id */
 
 /**
  * @brief Hash a stateid
@@ -281,7 +277,7 @@ uint32_t state_id_value_hash_func(hash_parameter_t *hparam,
 				  struct gsh_buffdesc *key)
 {
 	uint32_t val =
-	    compute_stateid_hash_value(key->addr) % hparam->index_size;
+		compute_stateid_hash_value(key->addr) % hparam->index_size;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "val = %" PRIu32, val);
@@ -370,11 +366,11 @@ uint32_t state_obj_value_hash_func(hash_parameter_t *hparam,
 		sum += c;
 	}
 
-	res = ((uint32_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
-	      + (uint32_t) sum + pkey->state_owner->so_owner_len
-	      + (uint32_t) pkey->state_owner->so_type
-	      + (uint64_t) CityHash64WithSeed(fh_desc.addr, fh_desc.len, 557))
-	      % (uint32_t) hparam->index_size;
+	res = ((uint32_t)pkey->state_owner->so_owner.so_nfs4_owner.so_clientid +
+	       (uint32_t)sum + pkey->state_owner->so_owner_len +
+	       (uint32_t)pkey->state_owner->so_type +
+	       (uint64_t)CityHash64WithSeed(fh_desc.addr, fh_desc.len, 557)) %
+	      (uint32_t)hparam->index_size;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "value = %" PRIu32, res);
@@ -409,10 +405,10 @@ uint64_t state_obj_rbt_hash_func(hash_parameter_t *hparam,
 		sum += c;
 	}
 
-	res = (uint64_t) pkey->state_owner->so_owner.so_nfs4_owner.so_clientid
-	      + (uint64_t) sum + pkey->state_owner->so_owner_len
-	      + (uint64_t) pkey->state_owner->so_type
-	      + (uint64_t) CityHash64WithSeed(fh_desc.addr, fh_desc.len, 557);
+	res = (uint64_t)pkey->state_owner->so_owner.so_nfs4_owner.so_clientid +
+	      (uint64_t)sum + pkey->state_owner->so_owner_len +
+	      (uint64_t)pkey->state_owner->so_type +
+	      (uint64_t)CityHash64WithSeed(fh_desc.addr, fh_desc.len, 557);
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "rbt = %" PRIu64, res);
@@ -471,7 +467,7 @@ int nfs4_Init_state_id(void)
 void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other)
 {
 	uint32_t my_stateid =
-	    atomic_inc_uint32_t(&clientid->cid_stateid_counter);
+		atomic_inc_uint32_t(&clientid->cid_stateid_counter);
 
 	/* The first part of the other is the 64 bit clientid, which
 	 * consists of the epoch in the high order 32 bits followed by
@@ -491,7 +487,7 @@ void nfs4_BuildStateId_Other(nfs_client_id_t *clientid, char *other)
 void dec_nfs4_state_ref(struct state_t *state)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	int32_t refcount;
 
@@ -542,9 +538,7 @@ state_status_t nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	err = hashtable_test_and_set(ht_state_id,
-				     &buffkey,
-				     &buffval,
+	err = hashtable_test_and_set(ht_state_id, &buffkey, &buffval,
 				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
 	switch (err) {
@@ -568,9 +562,7 @@ state_status_t nfs4_State_Set(state_t *state)
 	buffval.addr = state;
 	buffval.len = sizeof(state_t);
 
-	err = hashtable_test_and_set(ht_state_obj,
-				     &buffkey,
-				     &buffval,
+	err = hashtable_test_and_set(ht_state_obj, &buffkey, &buffval,
 				     HASHTABLE_SET_HOW_SET_NO_OVERWRITE);
 
 	switch (err) {
@@ -585,7 +577,8 @@ state_status_t nfs4_State_Set(state_t *state)
 
 		if (isFullDebug(COMPONENT_STATE)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 			state_t *state2;
 
 			display_stateid(&dspbuf, state);
@@ -596,8 +589,7 @@ state_status_t nfs4_State_Set(state_t *state)
 				display_reset_buffer(&dspbuf);
 				display_stateid(&dspbuf, state2);
 
-				LogCrit(COMPONENT_STATE,
-					"Duplicate State %s",
+				LogCrit(COMPONENT_STATE, "Duplicate State %s",
 					str);
 			}
 		}
@@ -607,9 +599,8 @@ state_status_t nfs4_State_Set(state_t *state)
 		err = HashTable_Del(ht_state_id, &buffkey, NULL, NULL);
 
 		if (err != HASHTABLE_SUCCESS) {
-			LogCrit(COMPONENT_STATE,
-				 "Failure to delete stateid %s",
-				 hash_table_err_to_str(err));
+			LogCrit(COMPONENT_STATE, "Failure to delete stateid %s",
+				hash_table_err_to_str(err));
 		}
 		return STATE_ENTRY_EXISTS; /* likely reason */
 	}
@@ -693,11 +684,7 @@ struct state_t *nfs4_State_Get_Obj(struct fsal_obj_handle *obj,
 	state_key.state_owner = owner;
 	state_key.state_obj = obj;
 
-	rc = hashtable_getlatch(ht_state_obj,
-				&buffkey,
-				&buffval,
-				true,
-				&latch);
+	rc = hashtable_getlatch(ht_state_obj, &buffkey, &buffval, true, &latch);
 
 	if (rc != HASHTABLE_SUCCESS) {
 		if (rc == HASHTABLE_ERROR_NO_SUCH_KEY)
@@ -741,14 +728,12 @@ bool nfs4_State_Del(state_t *state)
 		return false;
 	} else if (err != HASHTABLE_SUCCESS) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_stateid(&dspbuf, state);
 
-		LogDebug(COMPONENT_STATE,
-			 "Failure to delete stateid %s %s",
-			 str,
-			 hash_table_err_to_str(err));
+		LogDebug(COMPONENT_STATE, "Failure to delete stateid %s %s",
+			 str, hash_table_err_to_str(err));
 		return false;
 	}
 
@@ -774,8 +759,7 @@ bool nfs4_State_Del(state_t *state)
 		if (err == HASHTABLE_ERROR_NO_SUCH_KEY)
 			hashtable_releaselatched(ht_state_obj, &latch);
 
-		LogCrit(COMPONENT_STATE, "hashtable get latch failed: %d",
-			err);
+		LogCrit(COMPONENT_STATE, "hashtable get latch failed: %d", err);
 		return false;
 	}
 
@@ -817,7 +801,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	struct fsal_obj_handle *obj2 = NULL;
 	state_owner_t *owner2 = NULL;
 	char str[DISPLAY_STATEID4_SIZE] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	int32_t diff;
 	clientid4 clientid;
@@ -830,8 +814,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		str_valid = true;
 	}
 
-	LogFullDebug(COMPONENT_STATE, "Check %s stateid flags%s%s%s%s%s%s",
-		     tag, flags & STATEID_SPECIAL_ALL_0 ? " ALL_0" : "",
+	LogFullDebug(COMPONENT_STATE, "Check %s stateid flags%s%s%s%s%s%s", tag,
+		     flags & STATEID_SPECIAL_ALL_0 ? " ALL_0" : "",
 		     flags & STATEID_SPECIAL_ALL_1 ? " ALL_1" : "",
 		     flags & STATEID_SPECIAL_CURRENT ? " CURRENT" : "",
 		     flags & STATEID_SPECIAL_CLOSE_40 ? " CLOSE_40" : "",
@@ -853,16 +837,18 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			data->current_stateid_valid = false;
 			goto success;
 		}
-		if (stateid->seqid == 1
-		    && (flags & STATEID_SPECIAL_CURRENT) != 0) {
+		if (stateid->seqid == 1 &&
+		    (flags & STATEID_SPECIAL_CURRENT) != 0) {
 			/* Special current stateid */
-			LogDebug(COMPONENT_STATE,
-				 "Check %s stateid found special 'current' stateid",
-				 tag);
+			LogDebug(
+				COMPONENT_STATE,
+				"Check %s stateid found special 'current' stateid",
+				tag);
 			if (!data->current_stateid_valid) {
-				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid STATEID_SPECIAL_CURRENT - current stateid is bad",
-					 tag);
+				LogDebug(
+					COMPONENT_STATE,
+					"Check %s stateid STATEID_SPECIAL_CURRENT - current stateid is bad",
+					tag);
 				status = NFS4ERR_BAD_STATEID;
 				goto failure;
 			}
@@ -872,9 +858,10 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			goto check_it;
 		}
 
-		LogDebug(COMPONENT_STATE,
-			 "Check %s stateid with OTHER all zeros, seqid %u unexpected",
-			 tag, (unsigned int)stateid->seqid);
+		LogDebug(
+			COMPONENT_STATE,
+			"Check %s stateid with OTHER all zeros, seqid %u unexpected",
+			tag, (unsigned int)stateid->seqid);
 		status = NFS4ERR_BAD_STATEID;
 		goto failure;
 	}
@@ -896,27 +883,28 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			goto success;
 		}
 
-		LogDebug(COMPONENT_STATE,
-			 "Check %s stateid with OTHER all ones, seqid %u unexpected",
-			 tag, (unsigned int)stateid->seqid);
+		LogDebug(
+			COMPONENT_STATE,
+			"Check %s stateid with OTHER all ones, seqid %u unexpected",
+			tag, (unsigned int)stateid->seqid);
 		status = NFS4ERR_BAD_STATEID;
 		goto failure;
 	}
 
- check_it:
+check_it:
 
 	/* Extract the clientid from the stateid other field */
 	memcpy(&clientid, stateid->other, sizeof(clientid));
 
 	/* Extract the epoch from the clientid */
-	client_unique_prefix = clientid >> (clientid4) 32;
+	client_unique_prefix = clientid >> (clientid4)32;
 
 	/* Check if stateid was made from this server instance */
 	if (client_unique_prefix != unique_prefix) {
 		if (str_valid)
 			LogDebug(COMPONENT_STATE,
-				 "Check %s stateid found stale stateid %s",
-				 tag, str);
+				 "Check %s stateid found stale stateid %s", tag,
+				 str);
 		if (data->minorversion == 0)
 			status = NFS4ERR_STALE_STATEID;
 		else
@@ -936,10 +924,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	 *       that case, and we may not have an op_ctx to release the object
 	 *       reference.
 	 */
-	if (!get_state_obj_export_owner_refs(state2,
-					     fsal_obj != NULL ? &obj2 : NULL,
-					     NULL,
-					     &owner2)) {
+	if (!get_state_obj_export_owner_refs(
+		    state2, fsal_obj != NULL ? &obj2 : NULL, NULL, &owner2)) {
 		/* We matched this server's epoch, but could not find the
 		 * stateid. Chances are, the client was expired and the state
 		 * has all been freed.
@@ -948,8 +934,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		 */
 		if (str_valid)
 			LogDebug(COMPONENT_STATE,
-				 "Check %s stateid could not find %s",
-				 tag, str);
+				 "Check %s stateid could not find %s", tag,
+				 str);
 
 		/* Try and find the clientid */
 		rc = nfs_client_id_get_confirmed(clientid, &pclientid);
@@ -972,11 +958,11 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 				/* We don't expect this, but, just in case...
 				 * Update and release already reserved lease.
 				 */
-				PTHREAD_MUTEX_lock(&data->preserved_clientid
-						   ->cid_mutex);
+				PTHREAD_MUTEX_lock(
+					&data->preserved_clientid->cid_mutex);
 				update_lease(data->preserved_clientid);
-				PTHREAD_MUTEX_unlock(&data->preserved_clientid
-						     ->cid_mutex);
+				PTHREAD_MUTEX_unlock(
+					&data->preserved_clientid->cid_mutex);
 				data->preserved_clientid = NULL;
 			}
 
@@ -988,7 +974,6 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 				    pclientid,
 				    (flags & STATEID_SPECIAL_CLOSE_40) != 0,
 				    NULL)) {
-
 				LogDebug(COMPONENT_STATE,
 					 "Returning NFS4ERR_EXPIRED");
 
@@ -1057,21 +1042,21 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			/* We don't expect this to happen, but, just in case...
 			 * Update and release already reserved lease.
 			 */
-			PTHREAD_MUTEX_lock(&data->preserved_clientid
-					   ->cid_mutex);
+			PTHREAD_MUTEX_lock(
+				&data->preserved_clientid->cid_mutex);
 
 			update_lease(data->preserved_clientid);
 
-			PTHREAD_MUTEX_unlock(&data->preserved_clientid
-					     ->cid_mutex);
+			PTHREAD_MUTEX_unlock(
+				&data->preserved_clientid->cid_mutex);
 
 			data->preserved_clientid = NULL;
 		}
 
 		/* Check if lease is expired and reserve it */
 		if (!reserve_lease_or_expire(
-				owner2->so_owner.so_nfs4_owner.so_clientrec,
-				false, &owner2)) {
+			    owner2->so_owner.so_nfs4_owner.so_clientrec, false,
+			    &owner2)) {
 			LogDebug(COMPONENT_STATE, "Returning NFS4ERR_EXPIRED");
 
 			status = NFS4ERR_EXPIRED;
@@ -1079,15 +1064,16 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		}
 
 		data->preserved_clientid =
-		    owner2->so_owner.so_nfs4_owner.so_clientrec;
+			owner2->so_owner.so_nfs4_owner.so_clientrec;
 	}
 
 	/* Sanity check : Is this the right file ? */
 	if (fsal_obj && !fsal_obj->obj_ops->handle_cmp(fsal_obj, obj2)) {
 		if (str_valid)
-			LogDebug(COMPONENT_STATE,
-				 "Check %s stateid found stateid %s has wrong file",
-				 tag, str);
+			LogDebug(
+				COMPONENT_STATE,
+				"Check %s stateid found stateid %s has wrong file",
+				tag, str);
 		status = NFS4ERR_BAD_STATEID;
 		goto failure;
 	}
@@ -1109,12 +1095,12 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			 * than current AND if owner_seqid is current
 			 * pass state back to allow replay check
 			 */
-			if ((check_seqid)
-			    && ((diff == -1)
-				|| ((state2->state_seqid == 1)
-				    && (stateid->seqid == seqid_all_one)))
-			    && (owner_seqid ==
-				owner2->so_owner.so_nfs4_owner.so_seqid)) {
+			if ((check_seqid) &&
+			    ((diff == -1) ||
+			     ((state2->state_seqid == 1) &&
+			      (stateid->seqid == seqid_all_one))) &&
+			    (owner_seqid ==
+			     owner2->so_owner.so_nfs4_owner.so_seqid)) {
 				LogDebug(COMPONENT_STATE, "possible replay?");
 				*state = state2;
 				status = NFS4ERR_REPLAY;
@@ -1122,11 +1108,10 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			}
 			/* OLD_STATEID */
 			if (str_valid)
-				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid found OLD stateid %s, expected seqid %"
-					 PRIu32,
-					 tag, str,
-					 state2->state_seqid);
+				LogDebug(
+					COMPONENT_STATE,
+					"Check %s stateid found OLD stateid %s, expected seqid %" PRIu32,
+					tag, str, state2->state_seqid);
 			status = NFS4ERR_OLD_STATEID;
 			goto failure;
 		}
@@ -1136,9 +1121,9 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		 * the stateid, no real need to check since the operation
 		 * must be the same)
 		 */
-		else if ((diff == 0) && (check_seqid)
-			 && (owner_seqid ==
-			     owner2->so_owner.so_nfs4_owner.so_seqid)) {
+		else if ((diff == 0) && (check_seqid) &&
+			 (owner_seqid ==
+			  owner2->so_owner.so_nfs4_owner.so_seqid)) {
 			LogDebug(COMPONENT_STATE, "possible replay?");
 			*state = state2;
 			status = NFS4ERR_REPLAY;
@@ -1146,11 +1131,10 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 		} else if (diff > 0) {
 			/* BAD_STATEID */
 			if (str_valid)
-				LogDebug(COMPONENT_STATE,
-					 "Check %s stateid found BAD stateid %s, expected seqid %"
-					 PRIu32,
-					 tag, str,
-					 state2->state_seqid);
+				LogDebug(
+					COMPONENT_STATE,
+					"Check %s stateid found BAD stateid %s, expected seqid %" PRIu32,
+					tag, str, state2->state_seqid);
 			status = NFS4ERR_BAD_STATEID;
 			goto failure;
 		}
@@ -1167,7 +1151,7 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	data->current_stateid = *stateid;
 	data->current_stateid.seqid = state2->state_seqid;
 
- success:
+success:
 
 	if (obj2 != NULL)
 		obj2->obj_ops->put_ref(obj2);
@@ -1178,14 +1162,14 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	*state = state2;
 	return NFS4_OK;
 
- failure:
+failure:
 
 	if (state2 != NULL)
 		dec_state_t_ref(state2);
 
 	*state = NULL;
 
- replay:
+replay:
 
 	if (obj2 != NULL)
 		obj2->obj_ops->put_ref(obj2);
@@ -1238,7 +1222,7 @@ void update_stateid(state_t *state, stateid4 *resp, compound_data_t *data,
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[DISPLAY_STATEID4_SIZE] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_stateid4(&dspbuf, resp);
 

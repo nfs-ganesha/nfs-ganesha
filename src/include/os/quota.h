@@ -32,4 +32,4 @@
 #include <os/freebsd/quota.h>
 #endif
 
-#endif				/* _QUOTA_OS_H */
+#endif /* _QUOTA_OS_H */

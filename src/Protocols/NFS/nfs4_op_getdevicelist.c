@@ -54,8 +54,8 @@
 /* nfsstat4 + layout type + gdlr_deviceid_list_len + nfs_cookie4 + verifier4 +
  * gdlr_eof
  */
-#define GETDEVICELIST_RESP_BASE_SIZE (3 * BYTES_PER_XDR_UNIT + \
-				      sizeof(nfs_cookie4) + sizeof(verifier4))
+#define GETDEVICELIST_RESP_BASE_SIZE \
+	(3 * BYTES_PER_XDR_UNIT + sizeof(nfs_cookie4) + sizeof(verifier4))
 
 struct cb_data {
 	deviceid4 *buffer;
@@ -71,9 +71,9 @@ static bool cb(void *opaque, uint64_t id)
 	if (data->count > data->max)
 		return false;
 
-	*((uint64_t *) data->buffer[data->count]) = data->swexport;
-	*((uint64_t *) (data->buffer[data->count] + sizeof(uint64_t)))
-	    = nfs_htonl64(id);
+	*((uint64_t *)data->buffer[data->count]) = data->swexport;
+	*((uint64_t *)(data->buffer[data->count] + sizeof(uint64_t))) =
+		nfs_htonl64(id);
 	++data->count;
 
 	return true;
@@ -101,10 +101,10 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 					  struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
-	GETDEVICELIST4args * const arg_GETDEVICELIST4 =
+	GETDEVICELIST4args *const arg_GETDEVICELIST4 =
 		&op->nfs_argop4_u.opgetdevicelist;
 	/* Convenience alias for response */
-	GETDEVICELIST4res * const res_GETDEVICELIST4 =
+	GETDEVICELIST4res *const res_GETDEVICELIST4 =
 		&resp->nfs_resop4_u.opgetdevicelist;
 	/* Convenience alias for response */
 	GETDEVICELIST4resok *resok =
@@ -132,8 +132,7 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 	memset(&res, 0, sizeof(struct fsal_getdevicelist_res));
 
 	res.cookie = arg_GETDEVICELIST4->gdla_cookie;
-	memcpy(&res.cookieverf,
-	       arg_GETDEVICELIST4->gdla_cookieverf,
+	memcpy(&res.cookieverf, arg_GETDEVICELIST4->gdla_cookieverf,
 	       NFS4_VERIFIER_SIZE);
 
 	cb_opaque.count = 0;
@@ -141,15 +140,13 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 	cb_opaque.swexport = nfs_htonl64(op_ctx->ctx_export->export_id);
 
 	resok->gdlr_deviceid_list.gdlr_deviceid_list_val =
-				gsh_malloc(cb_opaque.max * sizeof(deviceid4));
+		gsh_malloc(cb_opaque.max * sizeof(deviceid4));
 
 	cb_opaque.buffer = resok->gdlr_deviceid_list.gdlr_deviceid_list_val;
 
 	nfs_status = op_ctx->fsal_export->exp_ops.getdevicelist(
-					op_ctx->fsal_export,
-					arg_GETDEVICELIST4->gdla_layout_type,
-					&cb_opaque, cb,
-					&res);
+		op_ctx->fsal_export, arg_GETDEVICELIST4->gdla_layout_type,
+		&cb_opaque, cb, &res);
 
 	if (nfs_status != NFS4_OK) {
 		gsh_free(cb_opaque.buffer);
@@ -175,7 +172,7 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 
 	nfs_status = NFS4_OK;
 
- out:
+out:
 	res_GETDEVICELIST4->gdlr_status = nfs_status;
 
 	return nfsstat4_to_nfs_req_result(res_GETDEVICELIST4->gdlr_status);
@@ -193,10 +190,9 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 void nfs4_op_getdevicelist_Free(nfs_resop4 *res)
 {
 	GETDEVICELIST4res *resp = &res->nfs_resop4_u.opgetdevicelist;
-	GETDEVICELIST4resok *resok =
-		&resp->GETDEVICELIST4res_u.gdlr_resok4;
+	GETDEVICELIST4resok *resok = &resp->GETDEVICELIST4res_u.gdlr_resok4;
 
 	if (resp->gdlr_status == NFS4_OK) {
 		gsh_free(resok->gdlr_deviceid_list.gdlr_deviceid_list_val);
 	}
-}				/* nfs41_op_getdevicelist_Free */
+} /* nfs41_op_getdevicelist_Free */

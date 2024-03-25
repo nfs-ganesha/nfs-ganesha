@@ -73,10 +73,10 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 					  struct nfs_resop4 *resp)
 {
 	/* Convenience alias for arguments */
-	GETDEVICEINFO4args * const arg_GETDEVICEINFO4 =
+	GETDEVICEINFO4args *const arg_GETDEVICEINFO4 =
 		&op->nfs_argop4_u.opgetdeviceinfo;
 	/* Convenience alias for response */
-	GETDEVICEINFO4res * const res_GETDEVICEINFO4 =
+	GETDEVICEINFO4res *const res_GETDEVICEINFO4 =
 		&resp->nfs_resop4_u.opgetdeviceinfo;
 	/* Convenience alias for response */
 	GETDEVICEINFO4resok *resok =
@@ -109,7 +109,7 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 	}
 
 	/* Overlay Ganesha's pnfs_deviceid on arg */
-	deviceid = (struct pnfs_deviceid *) arg_GETDEVICEINFO4->gdia_device_id;
+	deviceid = (struct pnfs_deviceid *)arg_GETDEVICEINFO4->gdia_device_id;
 
 	if (deviceid->fsal_id >= FSAL_ID_COUNT) {
 		LogInfo(COMPONENT_PNFS,
@@ -131,9 +131,9 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 
 	/* Check that we have space */
 
-	mincount = sizeof(uint32_t) +	/* Count for the empty bitmap */
-	    sizeof(layouttype4) +	/* Type in the device_addr4 */
-	    sizeof(uint32_t);	/* Number of bytes in da_addr_body */
+	mincount = sizeof(uint32_t) + /* Count for the empty bitmap */
+		   sizeof(layouttype4) + /* Type in the device_addr4 */
+		   sizeof(uint32_t); /* Number of bytes in da_addr_body */
 
 	da_addr_size = MIN(fsal->m_ops.fs_da_addr_size(fsal),
 			   arg_GETDEVICEINFO4->gdia_maxcount - mincount);
@@ -148,7 +148,7 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 	/* Set up the device_addr4 and get stream for FSAL to write into */
 
 	resok->gdir_device_addr.da_layout_type =
-					arg_GETDEVICEINFO4->gdia_layout_type;
+		arg_GETDEVICEINFO4->gdia_layout_type;
 
 	da_buffer = gsh_malloc(da_addr_size);
 
@@ -157,10 +157,8 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 	da_beginning = xdr_getpos(&da_addr_body);
 
 	nfs_status = fsal->m_ops.getdeviceinfo(
-			fsal,
-			&da_addr_body,
-			arg_GETDEVICEINFO4->gdia_layout_type,
-			deviceid);
+		fsal, &da_addr_body, arg_GETDEVICEINFO4->gdia_layout_type,
+		deviceid);
 
 	da_length = xdr_getpos(&da_addr_body) - da_beginning;
 
@@ -183,7 +181,7 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 
 	nfs_status = NFS4_OK;
 
- out:
+out:
 
 	if ((nfs_status != NFS4_OK) && da_buffer)
 		gsh_free(da_buffer);
@@ -191,7 +189,7 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 	res_GETDEVICEINFO4->gdir_status = nfs_status;
 
 	return nfsstat4_to_nfs_req_result(res_GETDEVICEINFO4->gdir_status);
-}				/* nfs41_op_getdeviceinfo */
+} /* nfs41_op_getdeviceinfo */
 
 /**
  * @brief Free memory allocated for GETDEVICEINFO result
@@ -210,4 +208,4 @@ void nfs4_op_getdeviceinfo_Free(nfs_resop4 *res)
 	if (resp->gdir_status == NFS4_OK) {
 		gsh_free(resok->gdir_device_addr.da_addr_body.da_addr_body_val);
 	}
-}				/* nfs41_op_getdeviceinfo_Free */
+} /* nfs41_op_getdeviceinfo_Free */

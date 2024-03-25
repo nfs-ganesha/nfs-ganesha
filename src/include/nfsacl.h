@@ -7,19 +7,18 @@
  * This file is under version control.
  */
 
-
 #ifndef _NFSACL_H_RPCGEN
 #define _NFSACL_H_RPCGEN
 
 #include <rpc/rpc.h>
 
-#define NFS_ACL         0x0001
-#define NFS_ACLCNT      0x0002
-#define NFS_DFACL       0x0004
-#define NFS_DFACLCNT    0x0008
+#define NFS_ACL 0x0001
+#define NFS_ACLCNT 0x0002
+#define NFS_DFACL 0x0004
+#define NFS_DFACLCNT 0x0008
 
-#define NFS_ACL_MASK    0x00FF
-#define NFS_DFACL_MASK  0x1000
+#define NFS_ACL_MASK 0x00FF
+#define NFS_DFACL_MASK 0x1000
 
 struct attr3 {
 	bool_t attributes_follow;
@@ -73,7 +72,6 @@ struct setaclargs {
 	posix_acl *acl_access;
 	nfs3_uint32 acl_default_count;
 	posix_acl *acl_default;
-
 };
 typedef struct setaclargs setaclargs;
 
@@ -93,21 +91,20 @@ typedef struct setaclres setaclres;
 #define NFSACLPROG 100227
 #define NFSACL_V3 3
 
-#define NFSACLPROC_NULL   0
+#define NFSACLPROC_NULL 0
 #define NFSACLPROC_GETACL 1
 #define NFSACLPROC_SETACL 2
 
 /* the xdr functions */
 
-extern bool_t xdr_attr3 (XDR *, attr3*);
-extern bool_t xdr_posix_acl_entry(XDR *, posix_acl_entry*);
-extern bool_t xdr_posix_acl(XDR *, posix_acl*);
-extern bool_t xdr_getaclargs(XDR *, getaclargs*);
-extern bool_t xdr_getaclresok(XDR *, getaclresok*);
-extern bool_t xdr_getaclres(XDR *, getaclres*);
-extern bool_t xdr_setaclargs(XDR *, setaclargs*);
-extern bool_t xdr_setaclresok(XDR *, setaclresok*);
-extern bool_t xdr_setaclres(XDR *, setaclres*);
+extern bool_t xdr_attr3(XDR *, attr3 *);
+extern bool_t xdr_posix_acl_entry(XDR *, posix_acl_entry *);
+extern bool_t xdr_posix_acl(XDR *, posix_acl *);
+extern bool_t xdr_getaclargs(XDR *, getaclargs *);
+extern bool_t xdr_getaclresok(XDR *, getaclresok *);
+extern bool_t xdr_getaclres(XDR *, getaclres *);
+extern bool_t xdr_setaclargs(XDR *, setaclargs *);
+extern bool_t xdr_setaclresok(XDR *, setaclresok *);
+extern bool_t xdr_setaclres(XDR *, setaclres *);
 
 #endif /* !_NFSACL_H_RPCGEN */
-

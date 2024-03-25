@@ -37,7 +37,8 @@ static void print_glist(struct glist_head *head)
 	struct myteststruct *entry;
 	struct glist_head *glist;
 
-	glist_for_each(glist, head) {
+	glist_for_each(glist, head)
+	{
 		entry = glist_entry(glist, struct myteststruct, glist);
 		printf("The value is %d\n", entry->value);
 	}
@@ -102,15 +103,13 @@ void splice_tail_test(void)
 			/* and 6-10 to mytestglist_new */
 			glist_add_tail(&mytestglist_new, &node->glist);
 		}
-
 	}
 
 	printf("List mytestglist should have nodes 1..5\n");
 	print_glist(&mytestglist);
 	printf("List mytestglist_new should have nodes 6..10\n");
 	print_glist(&mytestglist_new);
-	printf(
-	    "Now after glist_splice_tail mytestglist should have all 10 nodes:\n");
+	printf("Now after glist_splice_tail mytestglist should have all 10 nodes:\n");
 	glist_splice_tail(&mytestglist, &mytestglist_new);
 	print_glist(&mytestglist);
 	printf("And mytestglist_new no nodes:\n");

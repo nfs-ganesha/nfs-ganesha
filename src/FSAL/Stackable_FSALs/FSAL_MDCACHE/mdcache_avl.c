@@ -55,8 +55,7 @@
 #include <pthread.h>
 #include <assert.h>
 
-void
-mdcache_avl_init(mdcache_entry_t *entry)
+void mdcache_avl_init(mdcache_entry_t *entry)
 {
 	avltree_init(&entry->fsobj.fsdir.avl.t, avl_dirent_name_cmpf,
 		     0 /* flags */);
@@ -73,15 +72,13 @@ avltree_inline_lookup_hk(const struct avltree_node *key,
 	return avltree_inline_lookup(key, tree, avl_dirent_name_cmpf);
 }
 
-void
-avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
+void avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
 	struct avltree_node *node;
 	mdcache_dir_entry_t *next;
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-			"Delete dir entry %p %s",
-			v, v->name);
+			"Delete dir entry %p %s", v, v->name);
 
 #ifdef DEBUG_MDCACHE
 	assert(entry->content_lock.__data.__cur_writer);
@@ -108,10 +105,10 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 			next = v;
 			while (next != NULL &&
 			       next->flags & DIR_ENTRY_FLAG_DELETED) {
-				next =  glist_next_entry(&chunk->dirents,
-							 mdcache_dir_entry_t,
-							 chunk_list,
-							 &next->chunk_list);
+				next = glist_next_entry(&chunk->dirents,
+							mdcache_dir_entry_t,
+							chunk_list,
+							&next->chunk_list);
 
 				if (next != NULL) {
 					/* Evaluate it in the while condition.
@@ -126,12 +123,10 @@ avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 				 *        the chunk...
 				 */
 
-
 				/* Look for the next chunk */
 				if (chunk->next_ck != 0 &&
-				    mdcache_avl_lookup_ck(parent,
-							  chunk->next_ck,
-							  &next)) {
+				    mdcache_avl_lookup_ck(
+					    parent, chunk->next_ck, &next)) {
 					chunk = next->chunk;
 					/* We don't need the ref, we have the
 					 * content lock */
@@ -168,8 +163,7 @@ void unchunk_dirent(mdcache_dir_entry_t *dirent)
 	mdcache_entry_t *parent = dirent->chunk->parent;
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-			"Unchunking %p %s",
-			dirent, dirent->name);
+			"Unchunking %p %s", dirent, dirent->name);
 
 #ifdef DEBUG_MDCACHE
 	assert(parent->content_lock.__data.__cur_writer);
@@ -211,8 +205,7 @@ void unchunk_dirent(mdcache_dir_entry_t *dirent)
  * @param[in] dirent    The dirent to remove
  *
  */
-void mdcache_avl_remove(mdcache_entry_t *parent,
-			mdcache_dir_entry_t *dirent)
+void mdcache_avl_remove(mdcache_entry_t *parent, mdcache_dir_entry_t *dirent)
 {
 	struct dir_chunk *chunk = dirent->chunk;
 
@@ -239,8 +232,8 @@ void mdcache_avl_remove(mdcache_entry_t *parent,
 		mdcache_key_delete(&dirent->ckey);
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-			"Just freed dirent %p from chunk %p parent %p",
-			dirent, chunk, (chunk) ? chunk->parent : NULL);
+			"Just freed dirent %p from chunk %p parent %p", dirent,
+			chunk, (chunk) ? chunk->parent : NULL);
 
 	gsh_free(dirent);
 }
@@ -259,10 +252,10 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 {
 	struct avltree_node *node;
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-			"Insert dirent %p for %s on entry=%p FSAL cookie=%"
-			PRIx64,
-			v, v->name, entry, v->ck);
+	LogFullDebugAlt(
+		COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+		"Insert dirent %p for %s on entry=%p FSAL cookie=%" PRIx64, v,
+		v->name, entry, v->ck);
 
 #ifdef DEBUG_MDCACHE
 	assert(entry->content_lock.__data.__cur_writer);
@@ -271,17 +264,17 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
 				     avl_dirent_ck_cmpf);
 
 	if (!node) {
-		LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-			    "inserted dirent %p for %s on entry=%p FSAL cookie=%"
-			    PRIx64,
-			    v, v->name, entry, v->ck);
+		LogDebugAlt(
+			COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+			"inserted dirent %p for %s on entry=%p FSAL cookie=%" PRIx64,
+			v, v->name, entry, v->ck);
 		return 0;
 	}
 
 	/* already inserted */
-	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-		"Already existent when inserting dirent %p for %s on entry=%p FSAL cookie=%"
-		PRIx64
+	LogDebugAlt(
+		COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+		"Already existent when inserting dirent %p for %s on entry=%p FSAL cookie=%" PRIx64
 		", duplicated directory cookies make READDIR unreliable.",
 		v, v->name, entry, v->ck);
 	return -1;
@@ -308,8 +301,7 @@ int mdcache_avl_insert_ck(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
  * @retval -4  FSAL cookie collision
  *
  **/
-int
-mdcache_avl_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
+int mdcache_avl_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 {
 	mdcache_dir_entry_t *v = *dirent, *v2;
 #if AVL_HASH_MURMUR3
@@ -319,8 +311,7 @@ mdcache_avl_insert(mdcache_entry_t *entry, mdcache_dir_entry_t **dirent)
 	int code;
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-			"Insert dir entry %p %s",
-			v, v->name);
+			"Insert dir entry %p %s", v, v->name);
 #ifdef DEBUG_MDCACHE
 	assert(entry->content_lock.__data.__cur_writer);
 #endif
@@ -359,9 +350,10 @@ again:
 		if (isFullDebug(COMPONENT_MDCACHE) ||
 		    isFullDebug(COMPONENT_NFS_READDIR)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 
-			(void) display_mdcache_key(&dspbuf, &v->ckey);
+			(void)display_mdcache_key(&dspbuf, &v->ckey);
 
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
 					COMPONENT_MDCACHE,
@@ -376,9 +368,10 @@ again:
 	v2 = avltree_container_of(node, mdcache_dir_entry_t, node_name);
 
 	/* Same name, probably already inserted. */
-	LogDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-		    "Already existent when inserting new dirent on entry=%p name=%s",
-		    entry, v->name);
+	LogDebugAlt(
+		COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+		"Already existent when inserting new dirent on entry=%p name=%s",
+		entry, v->name);
 
 	if (mdcache_key_cmp(&v->ckey, &v2->ckey) != 0) {
 		/* The two names don't seem to have the same object
@@ -388,13 +381,13 @@ again:
 		    isFullDebug(COMPONENT_NFS_READDIR)) {
 			char str1[LOG_BUFF_LEN / 2] = "\0";
 			char str2[LOG_BUFF_LEN / 2] = "\0";
-			struct display_buffer dspbuf1 = {
-					sizeof(str1), str1, str1 };
-			struct display_buffer dspbuf2 = {
-					sizeof(str2), str2, str2 };
+			struct display_buffer dspbuf1 = { sizeof(str1), str1,
+							  str1 };
+			struct display_buffer dspbuf2 = { sizeof(str2), str2,
+							  str2 };
 
-			(void) display_mdcache_key(&dspbuf1, &v->ckey);
-			(void) display_mdcache_key(&dspbuf2, &v2->ckey);
+			(void)display_mdcache_key(&dspbuf1, &v->ckey);
+			(void)display_mdcache_key(&dspbuf2, &v2->ckey);
 
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
 					COMPONENT_MDCACHE,
@@ -435,19 +428,18 @@ again:
 			if (isFullDebug(COMPONENT_MDCACHE) ||
 			    isFullDebug(COMPONENT_NFS_READDIR)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-						sizeof(str), str, str };
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
-				(void) display_mdcache_key(&dspbuf, &v2->ckey);
+				(void)display_mdcache_key(&dspbuf, &v2->ckey);
 
-				LogFullDebugAlt(COMPONENT_NFS_READDIR,
-						COMPONENT_MDCACHE,
-						"Updated dirent %p with ck=%"
-						PRIx64
-						" and chunk %p eod=%s ckey=%s",
-						v2, v2->ck, v2->chunk,
-						v2->eod ? "true" : "false",
-						str);
+				LogFullDebugAlt(
+					COMPONENT_NFS_READDIR,
+					COMPONENT_MDCACHE,
+					"Updated dirent %p with ck=%" PRIx64
+					" and chunk %p eod=%s ckey=%s",
+					v2, v2->ck, v2->chunk,
+					v2->eod ? "true" : "false", str);
 			}
 
 			/* Remove v2 from the detached entry cache */
@@ -461,23 +453,21 @@ again:
 		 */
 		if (v->ck == v2->ck) {
 			/* completely a duplicate entry, ignore it */
-			LogDebugAlt(COMPONENT_NFS_READDIR,
-				    COMPONENT_MDCACHE,
-				    "Duplicate filename %s insert into chunk %p, existing was in chunk %p, ignoring",
-				    v->name, v->chunk, v2->chunk);
+			LogDebugAlt(
+				COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+				"Duplicate filename %s insert into chunk %p, existing was in chunk %p, ignoring",
+				v->name, v->chunk, v2->chunk);
 			code = 0;
 		} else {
 			/* This is an odd case, lets treat it as an
 			 * error.
 			 */
-			LogDebugAlt(COMPONENT_NFS_READDIR,
-				    COMPONENT_MDCACHE,
-				    "Duplicate filename %s with different cookies ckey %"
-				    PRIx64
-				    " chunk %p don't match existing ckey %"
-				    PRIx64" chunk %p",
-				    v->name, v->ck, v->chunk,
-				    v2->ck, v2->chunk);
+			LogDebugAlt(
+				COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+				"Duplicate filename %s with different cookies ckey %" PRIx64
+				" chunk %p don't match existing ckey %" PRIx64
+				" chunk %p",
+				v->name, v->ck, v->chunk, v2->ck, v2->chunk);
 			code = -3;
 			v2 = NULL;
 		}
@@ -486,9 +476,10 @@ again:
 		 * be in a chunk, in any case, the entry already
 		 * exists so we are good.
 		 */
-		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-				"Duplicate insert of %s v->chunk=%p v2->chunk=%p",
-				v->name, v->chunk, v2->chunk);
+		LogFullDebugAlt(
+			COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+			"Duplicate insert of %s v->chunk=%p v2->chunk=%p",
+			v->name, v->chunk, v2->chunk);
 		code = 0;
 	}
 
@@ -563,8 +554,8 @@ mdcache_dir_entry_t *mdcache_avl_lookup(mdcache_entry_t *entry,
 #endif
 	size_t namelen = strlen(name);
 
-	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-			"Lookup %s", name);
+	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE, "Lookup %s",
+			name);
 
 #if AVL_HASH_MURMUR3
 	MurmurHash3_x64_128(name, namelen, 67, hashbuff);

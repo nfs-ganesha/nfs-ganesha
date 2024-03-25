@@ -52,16 +52,13 @@ int _9p_readlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	struct _9p_fid *pfid = NULL;
 
 	fsal_status_t fsal_status;
-	struct gsh_buffdesc link_buffer = {.addr = NULL,
-		.len = 0
-	};
+	struct gsh_buffdesc link_buffer = { .addr = NULL, .len = 0 };
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TREADLINK: tag=%u fid=%u", (u32) *msgtag,
-		 *fid);
+	LogDebug(COMPONENT_9P, "TREADLINK: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -79,9 +76,8 @@ int _9p_readlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	/* let's do the job */
 	fsal_status = fsal_readlink(pfid->pentry, &link_buffer);
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RREADLINK);
@@ -93,7 +89,7 @@ int _9p_readlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s", *msgtag,
-		 (u32) *fid, (char *) link_buffer.addr);
+		 (u32)*fid, (char *)link_buffer.addr);
 
 	gsh_free(link_buffer.addr);
 	return 1;

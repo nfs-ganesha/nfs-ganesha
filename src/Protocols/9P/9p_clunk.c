@@ -55,7 +55,7 @@ int _9p_clunk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -74,8 +74,7 @@ int _9p_clunk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	req9p->pconn->fids[*fid] = NULL;
 
 	if (rc) {
-		return _9p_rerror(req9p, msgtag, rc,
-				  plenout, preply);
+		return _9p_rerror(req9p, msgtag, rc, plenout, preply);
 	}
 
 	/* Build the reply */
@@ -85,7 +84,7 @@ int _9p_clunk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "RCLUNK: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	return 1;
 }

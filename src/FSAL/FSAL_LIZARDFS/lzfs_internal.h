@@ -24,35 +24,35 @@
 #include "fileinfo_cache.h"
 
 #define LIZARDFS_VERSION(major, minor, micro) \
-				(0x010000 * major + 0x0100 * minor + micro)
+	(0x010000 * major + 0x0100 * minor + micro)
 #define kDisconnectedChunkserverVersion LIZARDFS_VERSION(256, 0, 0)
 
-#define MFS_NAME_MAX				255
-#define MFSBLOCKSIZE				65536
-#define MFSCHUNKSIZE				(65536 * 1024)
+#define MFS_NAME_MAX 255
+#define MFSBLOCKSIZE 65536
+#define MFSCHUNKSIZE (65536 * 1024)
 
-#define SPECIAL_INODE_BASE			0xFFFFFFF0U
+#define SPECIAL_INODE_BASE 0xFFFFFFF0U
 
-#define SPECIAL_INODE_ROOT			0x01U
-#define SPECIAL_INODE_MASTERINFO		(SPECIAL_INODE_BASE + 0xFU)
-#define SPECIAL_INODE_STATS			(SPECIAL_INODE_BASE + 0x0U)
-#define SPECIAL_INODE_OPLOG			(SPECIAL_INODE_BASE + 0x1U)
-#define SPECIAL_INODE_OPHISTORY			(SPECIAL_INODE_BASE + 0x2U)
-#define SPECIAL_INODE_TWEAKS			(SPECIAL_INODE_BASE + 0x3U)
-#define SPECIAL_INODE_FILE_BY_INODE		(SPECIAL_INODE_BASE + 0x4U)
-#define SPECIAL_INODE_META_TRASH		(SPECIAL_INODE_BASE + 0x5U)
-#define SPECIAL_INODE_META_UNDEL		(SPECIAL_INODE_BASE + 0x6U)
-#define SPECIAL_INODE_META_RESERVED		(SPECIAL_INODE_BASE + 0x7U)
+#define SPECIAL_INODE_ROOT 0x01U
+#define SPECIAL_INODE_MASTERINFO (SPECIAL_INODE_BASE + 0xFU)
+#define SPECIAL_INODE_STATS (SPECIAL_INODE_BASE + 0x0U)
+#define SPECIAL_INODE_OPLOG (SPECIAL_INODE_BASE + 0x1U)
+#define SPECIAL_INODE_OPHISTORY (SPECIAL_INODE_BASE + 0x2U)
+#define SPECIAL_INODE_TWEAKS (SPECIAL_INODE_BASE + 0x3U)
+#define SPECIAL_INODE_FILE_BY_INODE (SPECIAL_INODE_BASE + 0x4U)
+#define SPECIAL_INODE_META_TRASH (SPECIAL_INODE_BASE + 0x5U)
+#define SPECIAL_INODE_META_UNDEL (SPECIAL_INODE_BASE + 0x6U)
+#define SPECIAL_INODE_META_RESERVED (SPECIAL_INODE_BASE + 0x7U)
 
-#define SPECIAL_FILE_NAME_MASTERINFO		".masterinfo"
-#define SPECIAL_FILE_NAME_STATS			".stats"
-#define SPECIAL_FILE_NAME_OPLOG			".oplog"
-#define SPECIAL_FILE_NAME_OPHISTORY		".ophistory"
-#define SPECIAL_FILE_NAME_TWEAKS		".lizardfs_tweaks"
-#define SPECIAL_FILE_NAME_FILE_BY_INODE		".lizardfs_file_by_inode"
-#define SPECIAL_FILE_NAME_META_TRASH		"trash"
-#define SPECIAL_FILE_NAME_META_UNDEL		"undel"
-#define SPECIAL_FILE_NAME_META_RESERVED		"reserved"
+#define SPECIAL_FILE_NAME_MASTERINFO ".masterinfo"
+#define SPECIAL_FILE_NAME_STATS ".stats"
+#define SPECIAL_FILE_NAME_OPLOG ".oplog"
+#define SPECIAL_FILE_NAME_OPHISTORY ".ophistory"
+#define SPECIAL_FILE_NAME_TWEAKS ".lizardfs_tweaks"
+#define SPECIAL_FILE_NAME_FILE_BY_INODE ".lizardfs_file_by_inode"
+#define SPECIAL_FILE_NAME_META_TRASH "trash"
+#define SPECIAL_FILE_NAME_META_UNDEL "undel"
+#define SPECIAL_FILE_NAME_META_RESERVED "reserved"
 
 #define MAX_REGULAR_INODE (SPECIAL_INODE_BASE - 0x01U)
 
@@ -116,16 +116,15 @@ struct lzfs_fsal_ds_handle {
 	liz_fileinfo_entry_t *cache_handle;
 };
 
-#define LZFS_SUPPORTED_ATTRS						\
-	(ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID | ATTR_MODE |	\
-	 ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME |		\
-	 ATTR_CTIME | ATTR_MTIME | ATTR_CHANGE | ATTR_SPACEUSED |	\
-	 ATTR_RAWDEV | ATTR_ACL)
+#define LZFS_SUPPORTED_ATTRS                                                 \
+	(ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID | ATTR_MODE |       \
+	 ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_CTIME | \
+	 ATTR_MTIME | ATTR_CHANGE | ATTR_SPACEUSED | ATTR_RAWDEV | ATTR_ACL)
 
-#define LZFS_BIGGEST_STRIPE_COUNT		4096
-#define LZFS_STD_CHUNK_PART_TYPE		0
-#define LZFS_EXPECTED_BACKUP_DS_COUNT		3
-#define TCP_PROTO_NUMBER			6
+#define LZFS_BIGGEST_STRIPE_COUNT 4096
+#define LZFS_STD_CHUNK_PART_TYPE 0
+#define LZFS_EXPECTED_BACKUP_DS_COUNT 3
+#define TCP_PROTO_NUMBER 6
 
 fsal_status_t lizardfs2fsal_error(liz_err_t err);
 
@@ -138,8 +137,8 @@ fsal_staticfsinfo_t *lzfs_fsal_staticinfo(struct fsal_module *module_hdl);
 
 void lzfs_fsal_export_ops_init(struct export_ops *ops);
 
-void lzfs_fsal_handle_ops_init(
-	struct lzfs_fsal_export *lzfs_export, struct fsal_obj_ops *ops);
+void lzfs_fsal_handle_ops_init(struct lzfs_fsal_export *lzfs_export,
+			       struct fsal_obj_ops *ops);
 
 void lzfs_fsal_handle_ops_pnfs(struct fsal_obj_ops *ops);
 
@@ -147,8 +146,9 @@ void lzfs_fsal_export_ops_pnfs(struct export_ops *ops);
 
 void lzfs_fsal_ops_pnfs(struct fsal_ops *ops);
 
-struct lzfs_fsal_handle *lzfs_fsal_new_handle(
-		const struct stat *attr, struct lzfs_fsal_export *lzfs_export);
+struct lzfs_fsal_handle *
+lzfs_fsal_new_handle(const struct stat *attr,
+		     struct lzfs_fsal_export *lzfs_export);
 
 void lzfs_fsal_delete_handle(struct lzfs_fsal_handle *obj);
 
@@ -156,10 +156,9 @@ void lzfs_fsal_ds_handle_ops_init(struct fsal_pnfs_ds_ops *ops);
 
 nfsstat4 lzfs_nfs4_last_err(void);
 
-fsal_status_t lzfs_int_getacl(
-		struct lzfs_fsal_export *lzfs_export, uint32_t inode,
-		uint32_t owner, fsal_acl_t **fsal_acl);
+fsal_status_t lzfs_int_getacl(struct lzfs_fsal_export *lzfs_export,
+			      uint32_t inode, uint32_t owner,
+			      fsal_acl_t **fsal_acl);
 
-fsal_status_t lzfs_int_setacl(
-		struct lzfs_fsal_export *lzfs_export, uint32_t inode,
-		const fsal_acl_t *fsal_acl);
+fsal_status_t lzfs_int_setacl(struct lzfs_fsal_export *lzfs_export,
+			      uint32_t inode, const fsal_acl_t *fsal_acl);

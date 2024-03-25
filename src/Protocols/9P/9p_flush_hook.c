@@ -38,7 +38,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -84,7 +84,8 @@ void _9p_FlushFlushHook(struct _9p_conn *conn, int tag, unsigned long sequence)
 	struct flush_condition fc;
 
 	PTHREAD_MUTEX_lock(&conn->flush_buckets[bucket].flb_lock);
-	glist_for_each(node, &conn->flush_buckets[bucket].list) {
+	glist_for_each(node, &conn->flush_buckets[bucket].list)
+	{
 		hook = glist_entry(node, struct _9p_flush_hook, list);
 		/* Cancel a request that has the right tag
 		 * --AND-- is older than the flush request.

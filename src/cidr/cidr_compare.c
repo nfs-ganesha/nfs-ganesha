@@ -32,12 +32,12 @@
 #include "config.h"
 
 #include <errno.h>
-#include <stdio.h>		/* For NULL */
+#include <stdio.h> /* For NULL */
 
 #include "../include/cidr.h"
 
 /* Is one block entirely contained in another? */
-int cidr_contains(const CIDR * big, const CIDR * little)
+int cidr_contains(const CIDR *big, const CIDR *little)
 {
 	int i, oct, bit;
 	int pflen;
@@ -83,12 +83,12 @@ int cidr_contains(const CIDR * big, const CIDR * little)
 		i = 0;
 	else {
 		/* Shouldn't happen */
-		errno = ENOENT;	/* This is a really bad choice of errno */
+		errno = ENOENT; /* This is a really bad choice of errno */
 		return (-1);
 	}
 
 	/* Start comparing */
-	for ( /* i */ ; i < pflen; i++) {
+	for (/* i */; i < pflen; i++) {
 		/* For convenience, set temp. vars to the octet/bit */
 		oct = i / 8;
 		bit = 7 - (i % 8);
@@ -105,7 +105,7 @@ int cidr_contains(const CIDR * big, const CIDR * little)
 }
 
 /* Are two CIDR's the same? */
-int cidr_equals(const CIDR * one, const CIDR * two)
+int cidr_equals(const CIDR *one, const CIDR *two)
 {
 	int i;
 
@@ -118,7 +118,7 @@ int cidr_equals(const CIDR * one, const CIDR * two)
 		i = 12;
 	else
 		i = 0;
-	for ( /* i */ ; i <= 15; i++) {
+	for (/* i */; i <= 15; i++) {
 		if (one->addr[i] != two->addr[i])
 			return (-1);
 		if (one->mask[i] != two->mask[i])

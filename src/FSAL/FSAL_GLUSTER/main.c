@@ -45,47 +45,44 @@ static const char glfsal_name[] = "GLUSTER";
 /**
  * Gluster global module object
  */
-struct glusterfs_fsal_module GlusterFS = {
-	.fsal = {
-		.fs_info = {
-			.maxfilesize = INT64_MAX,
-			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = 1024,
-			.maxpathlen = 1024,
-			.no_trunc = true,
-			.chown_restricted = true,
-			.case_insensitive = false,
-			.case_preserving = true,
-			.link_support = true,
-			.symlink_support = true,
-			.lock_support = true,
-			.lock_support_async_block = false,
-			.named_attr = true,
-			.unique_handles = true,
-			.acl_support = FSAL_ACLSUPPORT_ALLOW |
-							FSAL_ACLSUPPORT_DENY,
-			.cansettime = true,
-			.homogenous = true,
-			.supported_attrs = GLUSTERFS_SUPPORTED_ATTRIBUTES,
-			.maxread = 0,
-			.maxwrite = 0,
-			.umask = 0,
-			.auth_exportpath_xdev = false,
-			.pnfs_mds = false,
-			.pnfs_ds = true,
-			.link_supports_permission_checks = true,
-			.delegations = FSAL_OPTION_FILE_DELEGATIONS,
-			.readdir_plus = true,
-			.expire_time_parent = -1,
-		}
-	}
-};
+struct glusterfs_fsal_module
+	GlusterFS = { .fsal = { .fs_info = {
+					.maxfilesize = INT64_MAX,
+					.maxlink = _POSIX_LINK_MAX,
+					.maxnamelen = 1024,
+					.maxpathlen = 1024,
+					.no_trunc = true,
+					.chown_restricted = true,
+					.case_insensitive = false,
+					.case_preserving = true,
+					.link_support = true,
+					.symlink_support = true,
+					.lock_support = true,
+					.lock_support_async_block = false,
+					.named_attr = true,
+					.unique_handles = true,
+					.acl_support = FSAL_ACLSUPPORT_ALLOW |
+						       FSAL_ACLSUPPORT_DENY,
+					.cansettime = true,
+					.homogenous = true,
+					.supported_attrs =
+						GLUSTERFS_SUPPORTED_ATTRIBUTES,
+					.maxread = 0,
+					.maxwrite = 0,
+					.umask = 0,
+					.auth_exportpath_xdev = false,
+					.pnfs_mds = false,
+					.pnfs_ds = true,
+					.link_supports_permission_checks = true,
+					.delegations =
+						FSAL_OPTION_FILE_DELEGATIONS,
+					.readdir_plus = true,
+					.expire_time_parent = -1,
+				} } };
 
 static struct config_item glfs_params[] = {
-	CONF_ITEM_BOOL("pnfs_mds", false,
-		       fsal_staticfsinfo_t, pnfs_mds),
-	CONF_ITEM_BOOL("pnfs_ds", true,
-		       fsal_staticfsinfo_t, pnfs_ds),
+	CONF_ITEM_BOOL("pnfs_mds", false, fsal_staticfsinfo_t, pnfs_mds),
+	CONF_ITEM_BOOL("pnfs_ds", true, fsal_staticfsinfo_t, pnfs_ds),
 	CONFIG_EOL
 };
 
@@ -93,7 +90,7 @@ struct config_block glfs_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gluster",
 	.blk_desc.name = "GLUSTER",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = glfs_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
@@ -104,13 +101,11 @@ static fsal_status_t init_config(struct fsal_module *fsal_hdl,
 				 struct config_error_type *err_type)
 {
 	struct glusterfs_fsal_module *glfsal_module =
-	    container_of(fsal_hdl, struct glusterfs_fsal_module, fsal);
+		container_of(fsal_hdl, struct glusterfs_fsal_module, fsal);
 
-	(void) load_config_from_parse(config_struct,
-				      &glfs_param,
-					  &glfsal_module->fsal.fs_info,
-				      true,
-				      err_type);
+	(void)load_config_from_parse(config_struct, &glfs_param,
+				     &glfsal_module->fsal.fs_info, true,
+				     err_type);
 
 	/*
 	 * Global block is not mandatory, so evenif

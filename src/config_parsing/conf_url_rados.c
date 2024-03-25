@@ -46,12 +46,12 @@ static struct rados_url_parameter {
 } rados_url_param;
 
 static struct config_item rados_url_params[] = {
-	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
-		       rados_url_parameter, ceph_conf),
-	CONF_ITEM_STR("userid", 1, MAXPATHLEN, NULL,
-		       rados_url_parameter, userid),
-	CONF_ITEM_STR("watch_url", 1, MAXPATHLEN, NULL,
-		       rados_url_parameter, watch_url),
+	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL, rados_url_parameter,
+		       ceph_conf),
+	CONF_ITEM_STR("userid", 1, MAXPATHLEN, NULL, rados_url_parameter,
+		      userid),
+	CONF_ITEM_STR("watch_url", 1, MAXPATHLEN, NULL, rados_url_parameter,
+		      watch_url),
 	CONFIG_EOL
 };
 
@@ -67,7 +67,7 @@ struct config_block rados_url_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.rados_urls",
 	.blk_desc.name = "RADOS_URLS",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = rados_url_param_init,
 	.blk_desc.u.blk.params = rados_url_params,
 	.blk_desc.u.blk.commit = noop_conf_commit
@@ -76,11 +76,8 @@ struct config_block rados_url_param_blk = {
 static int rados_urls_set_param_from_conf(void *tree_node,
 					  struct config_error_type *err_type)
 {
-	(void) load_config_from_node(tree_node,
-				&rados_url_param_blk,
-				NULL,
-				true,
-				err_type);
+	(void)load_config_from_node(tree_node, &rados_url_param_blk, NULL, true,
+				    err_type);
 
 	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
@@ -89,15 +86,13 @@ static int rados_urls_set_param_from_conf(void *tree_node,
 	}
 
 	LogFullDebug(COMPONENT_CONFIG,
-		"%s parsed RADOS_URLS block, have ceph_conf=%s "
-		" userid=%s",
-		__func__,
-		rados_url_param.ceph_conf,
-		rados_url_param.userid);
+		     "%s parsed RADOS_URLS block, have ceph_conf=%s "
+		     " userid=%s",
+		     __func__, rados_url_param.ceph_conf,
+		     rados_url_param.userid);
 
 	return 0;
 }
-
 
 /* decompose RADOS URL into (<pool>/(<namespace>/))object
  *
@@ -119,8 +114,7 @@ static void init_url_regex(void)
 
 	r = regcomp(&url_regex, RADOS_URL_REGEX, REG_EXTENDED);
 	if (!!r) {
-		LogFatal(COMPONENT_INIT,
-			"Error initializing rados url regex");
+		LogFatal(COMPONENT_INIT, "Error initializing rados url regex");
 	}
 }
 
@@ -141,14 +135,14 @@ static int rados_url_client_setup(void)
 	ret = rados_create(&cluster, rados_url_param.userid);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CONFIG, "%s: Failed in rados_create",
-			__func__);
+			 __func__);
 		return ret;
 	}
 
 	ret = rados_conf_read_file(cluster, rados_url_param.ceph_conf);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "%s: Failed to read ceph_conf",
-			__func__);
+			 __func__);
 		rados_shutdown(cluster);
 		return ret;
 	}
@@ -156,7 +150,7 @@ static int rados_url_client_setup(void)
 	ret = rados_connect(cluster);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CONFIG, "%s: Failed to connect to cluster",
-			__func__);
+			 __func__);
 		rados_shutdown(cluster);
 		return ret;
 	}
@@ -176,13 +170,12 @@ static void cu_rados_url_init(void)
 		ret = rados_urls_set_param_from_conf(node, &err_type);
 		if (ret < 0) {
 			LogEvent(COMPONENT_CONFIG,
-				"%s: Failed to parse RADOS_URLS %d",
-				__func__, ret);
+				 "%s: Failed to parse RADOS_URLS %d", __func__,
+				 ret);
 		}
 	} else {
 		LogWarn(COMPONENT_CONFIG,
-			"%s: RADOS_URLS config block not found",
-			__func__);
+			"%s: RADOS_URLS config block not found", __func__);
 	}
 
 	rados_url_client_setup();
@@ -266,15 +259,14 @@ static int rados_url_parse(const char *url, char **pool, char **ns, char **obj)
 
 	} else if (ret == REG_NOMATCH) {
 		LogWarn(COMPONENT_CONFIG,
-			"%s: Failed to match %s as a config URL",
-			__func__, url);
+			"%s: Failed to match %s as a config URL", __func__,
+			url);
 	} else {
 		char ebuf[100];
 
 		regerror(ret, &url_regex, ebuf, sizeof(ebuf));
-		LogWarn(COMPONENT_CONFIG,
-			"%s: Error in regexec: %s",
-			__func__, ebuf);
+		LogWarn(COMPONENT_CONFIG, "%s: Error in regexec: %s", __func__,
+			ebuf);
 	}
 
 	return ret;
@@ -307,7 +299,7 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 	ret = rados_ioctx_create(cluster, pool_name, &io_ctx);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CONFIG, "%s: Failed to create ioctx",
-			__func__);
+			 __func__);
 		cu_rados_url_shutdown();
 		goto out;
 	}
@@ -320,8 +312,8 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		nread = ret = rados_read(io_ctx, object_name, buf, 1024, off1);
 		if (ret < 0) {
 			LogEvent(COMPONENT_CONFIG,
-				"%s: Failed reading %s/%s %s", __func__,
-				pool_name, object_name, strerror(ret));
+				 "%s: Failed reading %s/%s %s", __func__,
+				 pool_name, object_name, strerror(ret));
 			goto err;
 		}
 		off1 += nread;
@@ -330,7 +322,7 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 			stream = open_memstream(&streambuf, &streamsz);
 		}
 		do {
-			wrt = fwrite(buf+off2, 1, nread, stream);
+			wrt = fwrite(buf + off2, 1, nread, stream);
 			if (wrt > 0) {
 				nwrt = MIN(nread, 1024);
 				nread -= nwrt;
@@ -355,7 +347,7 @@ err:
 out:
 
 	if (stream)
-		(void) fclose(stream);
+		(void)fclose(stream);
 
 	if (streambuf) {
 		/* Was allocated via open_memstream so use free NOT gsh_free. */
@@ -389,7 +381,7 @@ static void rados_url_watchcb(void *arg, uint64_t notify_id, uint64_t handle,
 
 	/* ACK it to keep things moving */
 	ret = rados_notify_ack(rados_watch_io_ctx, rados_watch_oid, notify_id,
-				rados_watch_cookie, NULL, 0);
+			       rados_watch_cookie, NULL, 0);
 	if (ret < 0)
 		LogEvent(COMPONENT_CONFIG, "rados_notify_ack failed: %d", ret);
 
@@ -441,7 +433,7 @@ int rados_url_setup_watch(void)
 	ret = rados_ioctx_create(cluster, pool, &rados_watch_io_ctx);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CONFIG, "%s: Failed to create ioctx",
-			__func__);
+			 __func__);
 		goto out;
 	}
 	rados_ioctx_set_namespace(rados_watch_io_ctx, ns);

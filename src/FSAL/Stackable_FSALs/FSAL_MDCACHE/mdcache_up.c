@@ -41,9 +41,9 @@
 #include "nfs_core.h"
 #include "nfs4_fs_locations.h"
 
-static fsal_status_t
-mdc_up_invalidate(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
-		  uint32_t flags)
+static fsal_status_t mdc_up_invalidate(const struct fsal_up_vector *vec,
+				       struct gsh_buffdesc *handle,
+				       uint32_t flags)
 {
 	mdcache_entry_t *entry;
 	fsal_status_t status;
@@ -102,9 +102,9 @@ out:
  *
  * @return FSAL status. (ERR_FSAL_NO_ERROR indicates that one was released)
  */
-static fsal_status_t
-mdc_up_try_release(const struct fsal_up_vector *vec,
-		   struct gsh_buffdesc *handle, uint32_t flags)
+static fsal_status_t mdc_up_try_release(const struct fsal_up_vector *vec,
+					struct gsh_buffdesc *handle,
+					uint32_t flags)
 {
 	mdcache_entry_t *entry;
 	mdcache_key_t key;
@@ -133,8 +133,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	cih_hash_key(&key, vec->up_fsal_export->sub_export->fsal, handle,
 		     CIH_HASH_KEY_PROTOTYPE);
 
-	entry = cih_get_by_key_latch(&key, &latch,
-				     CIH_GET_UNLOCK_ON_MISS,
+	entry = cih_get_by_key_latch(&key, &latch, CIH_GET_UNLOCK_ON_MISS,
 				     __func__, __LINE__);
 	if (!entry) {
 		LogDebug(COMPONENT_MDCACHE, "no entry found");
@@ -150,9 +149,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 	 */
 	refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 
-	LogDebug(COMPONENT_MDCACHE,
-		 "entry %p has refcnt of %d",
-		 entry, refcnt);
+	LogDebug(COMPONENT_MDCACHE, "entry %p has refcnt of %d", entry, refcnt);
 
 	if (refcnt == 1) {
 		mdcache_lru_ref(entry, LRU_TEMP_REF);
@@ -185,9 +182,9 @@ out:
  * @return FSAL status
  */
 
-static fsal_status_t
-mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
-	      struct fsal_attrlist *attr, uint32_t flags)
+static fsal_status_t mdc_up_update(const struct fsal_up_vector *vec,
+				   struct gsh_buffdesc *handle,
+				   struct fsal_attrlist *attr, uint32_t flags)
 {
 	mdcache_entry_t *entry;
 	fsal_status_t status;
@@ -199,20 +196,18 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 
 	/* These cannot be updated, changing any of them is
 	   tantamount to destroying and recreating the file. */
-	if (FSAL_TEST_MASK
-	    (attr->valid_mask,
-	     ATTR_TYPE | ATTR_FSID | ATTR_FILEID | ATTR_RAWDEV | ATTR_RDATTR_ERR
-	     | ATTR_GENERATION)) {
+	if (FSAL_TEST_MASK(attr->valid_mask,
+			   ATTR_TYPE | ATTR_FSID | ATTR_FILEID | ATTR_RAWDEV |
+				   ATTR_RDATTR_ERR | ATTR_GENERATION)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
 	/* Filter out garbage flags */
 
-	if (flags &
-	    ~(fsal_up_update_filesize_inc | fsal_up_update_atime_inc |
-	      fsal_up_update_creation_inc | fsal_up_update_ctime_inc |
-	      fsal_up_update_mtime_inc |
-	      fsal_up_update_spaceused_inc | fsal_up_nlink)) {
+	if (flags & ~(fsal_up_update_filesize_inc | fsal_up_update_atime_inc |
+		      fsal_up_update_creation_inc | fsal_up_update_ctime_inc |
+		      fsal_up_update_mtime_inc | fsal_up_update_spaceused_inc |
+		      fsal_up_nlink)) {
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
@@ -241,13 +236,14 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 	/* Knock things out if the link count falls to 0. */
 
 	if ((flags & fsal_up_nlink) && (attr->numlinks == 0)) {
-		LogFullDebug(COMPONENT_MDCACHE,
-			     "Entry %p Clearing MDCACHE_TRUST_ATTRS, MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
-			     entry);
+		LogFullDebug(
+			COMPONENT_MDCACHE,
+			"Entry %p Clearing MDCACHE_TRUST_ATTRS, MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
+			entry);
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
 					   MDCACHE_TRUST_ATTRS |
-					   MDCACHE_TRUST_CONTENT |
-					   MDCACHE_DIR_POPULATED);
+						   MDCACHE_TRUST_CONTENT |
+						   MDCACHE_DIR_POPULATED);
 
 		status = fsal_close(&entry->obj_handle);
 
@@ -339,37 +335,33 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		mask_set |= ATTR_GROUP;
 	}
 
-	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME)
-	    && ((flags & ~fsal_up_update_atime_inc)
-		||
-		(gsh_time_cmp(&attr->atime, &entry->attrs.atime) == 1))) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_ATIME) &&
+	    ((flags & ~fsal_up_update_atime_inc) ||
+	     (gsh_time_cmp(&attr->atime, &entry->attrs.atime) == 1))) {
 		entry->attrs.atime = attr->atime;
 		mutatis_mutandis = true;
 		mask_set |= ATTR_ATIME;
 	}
 
-	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CREATION)
-	    && ((flags & ~fsal_up_update_creation_inc)
-		||
-		(gsh_time_cmp(&attr->creation, &entry->attrs.creation) == 1))) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CREATION) &&
+	    ((flags & ~fsal_up_update_creation_inc) ||
+	     (gsh_time_cmp(&attr->creation, &entry->attrs.creation) == 1))) {
 		entry->attrs.creation = attr->creation;
 		mutatis_mutandis = true;
 		mask_set |= ATTR_CREATION;
 	}
 
-	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CTIME)
-	    && ((flags & ~fsal_up_update_ctime_inc)
-		||
-		(gsh_time_cmp(&attr->ctime, &entry->attrs.ctime) == 1))) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_CTIME) &&
+	    ((flags & ~fsal_up_update_ctime_inc) ||
+	     (gsh_time_cmp(&attr->ctime, &entry->attrs.ctime) == 1))) {
 		entry->attrs.ctime = attr->ctime;
 		mutatis_mutandis = true;
 		mask_set |= ATTR_CTIME;
 	}
 
-	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME)
-	    && ((flags & ~fsal_up_update_mtime_inc)
-		||
-		(gsh_time_cmp(&attr->mtime, &entry->attrs.mtime) == 1))) {
+	if (FSAL_TEST_MASK(attr->valid_mask, ATTR_MTIME) &&
+	    ((flags & ~fsal_up_update_mtime_inc) ||
+	     (gsh_time_cmp(&attr->mtime, &entry->attrs.mtime) == 1))) {
 		entry->attrs.mtime = attr->mtime;
 		mutatis_mutandis = true;
 		mask_set |= ATTR_MTIME;
@@ -403,12 +395,13 @@ mdc_up_update(const struct fsal_up_vector *vec, struct gsh_buffdesc *handle,
 		entry->attrs.valid_mask |= mask_set;
 		/* If directory can not trust content anymore. */
 		if (entry->obj_handle.type == DIRECTORY) {
-			LogFullDebug(COMPONENT_MDCACHE,
-				     "Entry %p Clearing MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
-				     entry);
-			atomic_clear_uint32_t_bits(&entry->mde_flags,
-						   MDCACHE_TRUST_CONTENT |
-						   MDCACHE_DIR_POPULATED);
+			LogFullDebug(
+				COMPONENT_MDCACHE,
+				"Entry %p Clearing MDCACHE_TRUST_CONTENT, MDCACHE_DIR_POPULATED",
+				entry);
+			atomic_clear_uint32_t_bits(
+				&entry->mde_flags,
+				MDCACHE_TRUST_CONTENT | MDCACHE_DIR_POPULATED);
 		}
 		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	} else {
@@ -439,15 +432,15 @@ out:
  * @return FSAL status
  */
 
-static fsal_status_t
-mdc_up_invalidate_close(const struct fsal_up_vector *vec,
-			struct gsh_buffdesc *key, uint32_t flags)
+static fsal_status_t mdc_up_invalidate_close(const struct fsal_up_vector *vec,
+					     struct gsh_buffdesc *key,
+					     uint32_t flags)
 {
 	fsal_status_t status;
 
 	status = up_async_invalidate(general_fridge, vec, key,
-				     flags | FSAL_UP_INVALIDATE_CLOSE,
-				     NULL, NULL);
+				     flags | FSAL_UP_INVALIDATE_CLOSE, NULL,
+				     NULL);
 	return status;
 }
 
@@ -462,8 +455,7 @@ mdc_up_invalidate_close(const struct fsal_up_vector *vec,
  *
  */
 state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
-				 struct gsh_buffdesc *file,
-				 void *owner,
+				 struct gsh_buffdesc *file, void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
@@ -495,8 +487,7 @@ state_status_t mdc_up_lock_grant(const struct fsal_up_vector *vec,
  *
  */
 state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
-				 struct gsh_buffdesc *file,
-				 void *owner,
+				 struct gsh_buffdesc *file, void *owner,
 				 fsal_lock_param_t *lock_param)
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
@@ -536,11 +527,9 @@ state_status_t mdc_up_lock_avail(const struct fsal_up_vector *vec,
  */
 state_status_t mdc_up_layoutrecall(const struct fsal_up_vector *vec,
 				   struct gsh_buffdesc *handle,
-				   layouttype4 layout_type,
-				   bool changed,
+				   layouttype4 layout_type, bool changed,
 				   const struct pnfs_segment *segment,
-				   void *cookie,
-				   struct layoutrecall_spec *spec)
+				   void *cookie, struct layoutrecall_spec *spec)
 {
 	struct mdcache_fsal_export *myself = mdc_export(vec->up_fsal_export);
 	state_status_t rc;

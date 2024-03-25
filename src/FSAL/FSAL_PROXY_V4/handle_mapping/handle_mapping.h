@@ -63,7 +63,7 @@ typedef struct handle_map_param__ {
 
 typedef struct nfs23_map_handle__ {
 	uint8_t len;
-	uint8_t type;		/* Must be PROXYV4_HANDLE_MAPPED */
+	uint8_t type; /* Must be PROXYV4_HANDLE_MAPPED */
 	/* to avoid reusing handles, when object_id is reused */
 	unsigned int handle_hash;
 	/* object id */
@@ -80,15 +80,15 @@ typedef struct nfs23_map_handle__ {
 #define PROXYV4_HANDLE_MAXLEN (NFS4_FHSIZE + 2)
 
 /* Error codes */
-#define HANDLEMAP_SUCCESS        0
-#define HANDLEMAP_STALE          1
-#define HANDLEMAP_INCONSISTENCY  2
-#define HANDLEMAP_DB_ERROR       3
-#define HANDLEMAP_SYSTEM_ERROR   4
+#define HANDLEMAP_SUCCESS 0
+#define HANDLEMAP_STALE 1
+#define HANDLEMAP_INCONSISTENCY 2
+#define HANDLEMAP_DB_ERROR 3
+#define HANDLEMAP_SYSTEM_ERROR 4
 #define HANDLEMAP_INTERNAL_ERROR 5
-#define HANDLEMAP_INVALID_PARAM  6
+#define HANDLEMAP_INVALID_PARAM 6
 #define HANDLEMAP_HASHTABLE_ERROR 7
-#define HANDLEMAP_EXISTS         8
+#define HANDLEMAP_EXISTS 8
 
 int HandleMap_Init(const handle_map_param_t *p_param);
 

@@ -35,4 +35,3 @@ int get_open_file_limit(struct rlimit *rlim)
 
 	return 0;
 }
-

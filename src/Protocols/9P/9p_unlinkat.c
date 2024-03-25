@@ -51,12 +51,12 @@ int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	u16 *name_len = NULL;
 	char *name_str = NULL;
 	/* flags are not used */
-	__attribute__ ((unused)) u32 *flags = NULL;
+	__attribute__((unused)) u32 *flags = NULL;
 
 	struct _9p_fid *pdfid = NULL;
 
 	fsal_status_t fsal_status;
-	char name[MAXNAMLEN+1];
+	char name[MAXNAMLEN + 1];
 
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
@@ -66,7 +66,7 @@ int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, flags, u32);
 
 	LogDebug(COMPONENT_9P, "TUNLINKAT: tag=%u dfid=%u name=%.*s",
-		 (u32) *msgtag, *dfid, *name_len, name_str);
+		 (u32)*msgtag, *dfid, *name_len, name_str);
 
 	if (*dfid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -88,17 +88,15 @@ int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	if (*name_len >= sizeof(name)) {
 		LogDebug(COMPONENT_9P, "request with name too long (%u)",
 			 *name_len);
-		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
 	_9p_get_fname(name, *name_len, name_str);
 
 	fsal_status = fsal_remove(pdfid->pentry, name, NULL, NULL);
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RUNLINKAT);
@@ -108,7 +106,7 @@ int _9p_unlinkat(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P, "TUNLINKAT: tag=%u dfid=%u name=%.*s",
-		 (u32) *msgtag, *dfid, *name_len, name_str);
+		 (u32)*msgtag, *dfid, *name_len, name_str);
 
 	return 1;
 }

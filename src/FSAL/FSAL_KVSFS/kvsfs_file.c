@@ -44,11 +44,11 @@
 #include <stdbool.h>
 
 static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
-					 struct state_t *state,
-					 fsal_openflags_t openflags,
-					 enum fsal_create_mode createmode,
-					 fsal_verifier_t verifier,
-					 struct fsal_attrlist *attrs_out)
+					  struct state_t *state,
+					  fsal_openflags_t openflags,
+					  enum fsal_create_mode createmode,
+					  fsal_verifier_t verifier,
+					  struct fsal_attrlist *attrs_out)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	fsal_status_t status;
@@ -59,13 +59,12 @@ static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
 	fsal_openflags_t old_openflags;
 	bool truncated = openflags & FSAL_O_TRUNC;
 
-	myself = container_of(obj_hdl,
-			      struct kvsfs_fsal_obj_handle,
-			      obj_handle);
+	myself =
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
 	if (state != NULL)
-		my_fd = &container_of(state, struct kvsfs_state_fd,
-				      state)->kvsfs_fd;
+		my_fd = &container_of(state, struct kvsfs_state_fd, state)
+				 ->kvsfs_fd;
 	else
 		my_fd = &myself->u.file.fd;
 
@@ -130,8 +129,7 @@ static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
 	status = kvsfs_reopen_func(obj_hdl, openflags, fsal_fd);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "kvsfs_reopen_func returned %s",
+		LogDebug(COMPONENT_FSAL, "kvsfs_reopen_func returned %s",
 			 fsal_err_txt(status));
 		goto exit;
 	}
@@ -156,8 +154,7 @@ static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		cred.uid = op_ctx->creds.caller_uid;
 		cred.gid = op_ctx->creds.caller_gid;
 
-		retval = kvsns_getattr(&cred,
-				       &myself->handle->kvsfs_handle,
+		retval = kvsns_getattr(&cred, &myself->handle->kvsfs_handle,
 				       &stat);
 
 		status = posix2fsal_status(-retval);
@@ -180,7 +177,7 @@ static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
 			remove_fd_lru(fsal_fd);
 		}
 		/* Close fd */
-		(void) kvsfs_close_func(obj_hdl, fsal_fd);
+		(void)kvsfs_close_func(obj_hdl, fsal_fd);
 	}
 
 exit:
@@ -189,8 +186,7 @@ exit:
 		if (!FSAL_IS_ERROR(status)) {
 			/* Success, establish the new share. */
 			update_share_counters(&myself->u.file.share,
-					      old_openflags,
-					      openflags);
+					      old_openflags, openflags);
 		}
 
 		/* Release obj_lock. */
@@ -203,14 +199,11 @@ exit:
 	return status;
 }
 
-static fsal_status_t kvsfs_open_by_name(struct fsal_obj_handle *obj_hdl,
-					struct state_t *state,
-					const char *name,
-					fsal_openflags_t openflags,
-					int posix_flags,
-					fsal_verifier_t verifier,
-					struct fsal_attrlist *attrs_out,
-					bool *cpm_check)
+static fsal_status_t
+kvsfs_open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+		   const char *name, fsal_openflags_t openflags,
+		   int posix_flags, fsal_verifier_t verifier,
+		   struct fsal_attrlist *attrs_out, bool *cpm_check)
 {
 	struct fsal_obj_handle *temp = NULL;
 	fsal_status_t status;
@@ -235,8 +228,7 @@ static fsal_status_t kvsfs_open_by_name(struct fsal_obj_handle *obj_hdl,
 
 		/* Release the object we found by lookup. */
 		temp->obj_ops->release(temp);
-		LogFullDebug(COMPONENT_FSAL,
-			     "open returned %s",
+		LogFullDebug(COMPONENT_FSAL, "open returned %s",
 			     fsal_err_txt(status));
 		return status;
 	}
@@ -270,7 +262,7 @@ fsal_status_t kvsfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 				fsal_openflags_t openflags,
 				struct fsal_fd *fsal_fd)
 {
-	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct kvsfs_fd *my_fd;
 	int posix_flags = 0;
 	kvsns_cred_t cred;
@@ -278,9 +270,8 @@ fsal_status_t kvsfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 	struct kvsfs_fsal_obj_handle *myself;
 	kvsns_file_open_t fd;
 
-	myself = container_of(obj_hdl,
-			      struct kvsfs_fsal_obj_handle,
-			      obj_handle);
+	myself =
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
 	my_fd = container_of(fsal_fd, struct kvsfs_fd, fsal_fd);
 
@@ -293,15 +284,11 @@ fsal_status_t kvsfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 		     "my_fd->fd.ino = %llu openflags = %x, posix_flags = %x",
 		     my_fd->fd.ino, openflags, posix_flags);
 
-	retval = kvsns_open(&cred,
-			    &myself->handle->kvsfs_handle,
-			    posix_flags,
-			    0777,
-			    &fd);
+	retval = kvsns_open(&cred, &myself->handle->kvsfs_handle, posix_flags,
+			    0777, &fd);
 
 	if (retval < 0) {
-		LogFullDebug(COMPONENT_FSAL,
-			     "kvsns_open failed with %s",
+		LogFullDebug(COMPONENT_FSAL, "kvsns_open failed with %s",
 			     strerror(-retval));
 
 		status = posix2fsal_status(-retval);
@@ -323,13 +310,12 @@ fsal_status_t kvsfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 		 * open modes that actually represent the open file.
 		 */
 		LogFullDebug(COMPONENT_FSAL,
-			     "fd.ino = %llu, new openflags = %x",
-			     fd.ino, openflags);
+			     "fd.ino = %llu, new openflags = %x", fd.ino,
+			     openflags);
 
 		my_fd->fd = fd;
 		my_fd->fsal_fd.openflags = FSAL_O_NFS_FLAGS(openflags);
 	}
-
 
 	if (FSAL_IS_ERROR(status))
 		return status;
@@ -352,7 +338,6 @@ fsal_status_t kvsfs_close_func(struct fsal_obj_handle *obj_hdl,
 
 	return fsalstat(posix2fsal_error(-retval), -retval);
 }
-
 
 /**
  * @brief Open a file descriptor for read or write and possibly create
@@ -405,18 +390,14 @@ fsal_status_t kvsfs_close_func(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
-			  struct state_t *state,
-			  fsal_openflags_t openflags,
-			  enum fsal_create_mode createmode,
-			  const char *name,
-			  struct fsal_attrlist *attr_set,
-			  fsal_verifier_t verifier,
-			  struct fsal_obj_handle **new_obj,
-			  struct fsal_attrlist *attrs_out,
-			  bool *caller_perm_check,
-			  struct fsal_attrlist *parent_pre_attrs_out,
-			  struct fsal_attrlist *parent_post_attrs_out)
+fsal_status_t
+kvsfs_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+	    fsal_openflags_t openflags, enum fsal_create_mode createmode,
+	    const char *name, struct fsal_attrlist *attr_set,
+	    fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
+	    struct fsal_attrlist *attrs_out, bool *caller_perm_check,
+	    struct fsal_attrlist *parent_pre_attrs_out,
+	    struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct fsal_export *export = op_ctx->fsal_export;
 	struct kvsfs_fsal_obj_handle *hdl = NULL;
@@ -435,8 +416,8 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 		set_common_verifier(attr_set, verifier, false);
 
 	if (name == NULL) {
-		status =  kvsfs_open_by_handle(obj_hdl, state, openflags,
-					       createmode, verifier, attrs_out);
+		status = kvsfs_open_by_handle(obj_hdl, state, openflags,
+					      createmode, verifier, attrs_out);
 
 		*caller_perm_check = FSAL_IS_SUCCESS(status);
 		return status;
@@ -454,11 +435,8 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 	 * have to do a lookup and then handle as an open by handle.
 	*/
 	if (createmode == FSAL_NO_CREATE)
-		return kvsfs_open_by_name(obj_hdl, state, name,
-					  openflags,
-					  posix_flags,
-					  verifier,
-					  attrs_out,
+		return kvsfs_open_by_name(obj_hdl, state, name, openflags,
+					  posix_flags, verifier, attrs_out,
 					  caller_perm_check);
 
 	/** @todo: to proceed past here, we need a struct fsal_attrlist in order
@@ -474,15 +452,15 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 	if (createmode >= FSAL_GUARDED)
 		posix_flags |= O_EXCL;
 
-       /* Fetch the mode attribute to use in the openat system call. */
+	/* Fetch the mode attribute to use in the openat system call. */
 	unix_mode = fsal2unix_mode(attr_set->mode) &
-			~export->exp_ops.fs_umask(export);
+		    ~export->exp_ops.fs_umask(export);
 
 	/* Don't set the mode if we later set the attributes */
 	FSAL_UNSET_MASK(attr_set->valid_mask, ATTR_MODE);
 
 	if (createmode == FSAL_UNCHECKED && (attr_set->valid_mask != 0)) {
-	/* If we have FSAL_UNCHECKED and want to set more attributes
+		/* If we have FSAL_UNCHECKED and want to set more attributes
 	 * than the mode, we attempt an O_EXCL create first, if that
 	 * succeeds, then we will be allowed to set the additional
 	 * attributes, otherwise, we don't know we created the file
@@ -491,13 +469,8 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 		posix_flags |= O_EXCL;
 	}
 
-	status = kvsfs_create2(obj_hdl,
-			       name,
-			       op_ctx,
-			       unix_mode,
-			       &fh,
-			       posix_flags,
-			       attrs_out);
+	status = kvsfs_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+			       posix_flags, attrs_out);
 
 	if (status.major == ERR_FSAL_EXIST && createmode == FSAL_UNCHECKED &&
 	    (posix_flags & O_EXCL) != 0) {
@@ -513,13 +486,8 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * attributes.
 		 */
 		posix_flags &= ~O_EXCL;
-		status = kvsfs_create2(obj_hdl,
-				       name,
-				       op_ctx,
-				       unix_mode,
-				       &fh,
-				       posix_flags,
-				       attrs_out);
+		status = kvsfs_create2(obj_hdl, name, op_ctx, unix_mode, &fh,
+				       posix_flags, attrs_out);
 	}
 
 	if (FSAL_IS_ERROR(status))
@@ -540,16 +508,16 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 	/* Check if the object type is SYMBOLIC_LINK for a state object.
 	 * If yes, then give error ERR_FSAL_SYMLINK.
 	 */
-	if (state != NULL &&
-		attrs_out != NULL && attrs_out->type != REGULAR_FILE) {
+	if (state != NULL && attrs_out != NULL &&
+	    attrs_out->type != REGULAR_FILE) {
 		LogDebug(COMPONENT_FSAL, "Trying to open a non-regular file");
-			if (attrs_out->type == DIRECTORY) {
-				/* Trying to open2 a directory */
-				status = fsalstat(ERR_FSAL_ISDIR, 0);
-			} else {
-				/* Trying to open2 any other non-regular file */
-				status = fsalstat(ERR_FSAL_SYMLINK, 0);
-			}
+		if (attrs_out->type == DIRECTORY) {
+			/* Trying to open2 a directory */
+			status = fsalstat(ERR_FSAL_ISDIR, 0);
+		} else {
+			/* Trying to open2 any other non-regular file */
+			status = fsalstat(ERR_FSAL_SYMLINK, 0);
+		}
 		goto fileerr;
 	}
 
@@ -571,13 +539,13 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 		 * for creating the file.
 		 */
 		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, state,
-						      attr_set);
+						       attr_set);
 		if (FSAL_IS_ERROR(status))
 			goto fileerr;
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops->getattrs(*new_obj,
-							      attrs_out);
+							       attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0)
 				/* Get attributes failed and caller expected
@@ -600,7 +568,7 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 	status = kvsfs_open_by_handle(&hdl->obj_handle, state, openflags,
 				      createmode, verifier, attrs_out);
 
- fileerr:
+fileerr:
 	if (hdl != NULL) {
 		/* Release the handle we just allocated. */
 		(*new_obj)->obj_ops->release(*new_obj);
@@ -613,16 +581,14 @@ fsal_status_t kvsfs_open2(struct fsal_obj_handle *obj_hdl,
 		struct kvsfs_fsal_obj_handle *myself;
 		int retval = 0;
 
-		myself = container_of(obj_hdl,
-				      struct kvsfs_fsal_obj_handle,
+		myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
 				      obj_handle);
 
 		cred.uid = op_ctx->creds.caller_uid;
 		cred.gid = op_ctx->creds.caller_gid;
 
 		/* Remove the file we just created */
-		retval = kvsns_unlink(&cred,
-				      &myself->handle->kvsfs_handle,
+		retval = kvsns_unlink(&cred, &myself->handle->kvsfs_handle,
 				      (char *)name);
 		status2 = fsalstat(posix2fsal_error(-retval), -retval);
 		if (FSAL_IS_ERROR(status2)) {
@@ -670,8 +636,7 @@ fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
-			    struct state_t *state,
-			    fsal_openflags_t openflags)
+			    struct state_t *state, fsal_openflags_t openflags)
 {
 	return kvsfs_open_by_handle(obj_hdl, state, openflags, FSAL_NO_CREATE,
 				    NULL, NULL);
@@ -694,9 +659,8 @@ fsal_status_t kvsfs_reopen2(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-fsal_status_t kvsfs_commit2(struct fsal_obj_handle *obj_hdl,    /* sync */
-			    off_t offset,
-			    size_t len)
+fsal_status_t kvsfs_commit2(struct fsal_obj_handle *obj_hdl, /* sync */
+			    off_t offset, size_t len)
 {
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -724,12 +688,10 @@ fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
 	assert(obj_hdl->type == REGULAR_FILE);
 	assert(state != NULL);
 
-	myself = container_of(obj_hdl,
-			      struct kvsfs_fsal_obj_handle, obj_handle);
+	myself =
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
-	my_fd = &container_of(state,
-			      struct kvsfs_state_fd,
-			      state)->kvsfs_fd;
+	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
 
 	if (state->state_type == STATE_TYPE_SHARE ||
 	    state->state_type == STATE_TYPE_NLM_SHARE ||
@@ -743,10 +705,8 @@ fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
 	return close_fsal_fd(obj_hdl, &my_fd->fsal_fd, false);
 }
 
-void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
-		 bool bypass,
-		 fsal_async_cb done_cb,
-		 struct fsal_io_arg *read_arg,
+void kvsfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		 fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 		 void *caller_arg)
 {
 	fsal_status_t status, status2;
@@ -759,15 +719,15 @@ void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_fd *out_fd;
 	struct kvsfs_fsal_obj_handle *myself;
 
-	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
-			      obj_handle);
+	myself =
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
 	cred.uid = op_ctx->creds.caller_uid;
 	cred.gid = op_ctx->creds.caller_gid;
 
 	if (read_arg->info != NULL) {
 		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
-					caller_arg);
+			caller_arg);
 		return;
 	}
 
@@ -786,11 +746,9 @@ void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
 	my_fd = container_of(out_fd, struct kvsfs_fd, fsal_fd);
 
 	for (i = 0; i < read_arg->iov_count; i++) {
-		nb_read = kvsns_read(&cred,
-				     &my_fd->fd,
+		nb_read = kvsns_read(&cred, &my_fd->fd,
 				     read_arg->iov[i].iov_base,
-				     read_arg->iov[i].iov_len,
-				     offset);
+				     read_arg->iov[i].iov_len, offset);
 
 		if (nb_read < 0) {
 			status = posix2fsal_status(-nb_read);
@@ -805,8 +763,7 @@ void kvsfs_read2(struct fsal_obj_handle *obj_hdl,
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_complete_io returned %s",
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io returned %s",
 		     fsal_err_txt(status2));
 
 	if (read_arg->state == NULL) {
@@ -825,10 +782,8 @@ exit:
 	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
 
-void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
-		  bool bypass,
-		  fsal_async_cb done_cb,
-		  struct fsal_io_arg *write_arg,
+void kvsfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		  fsal_async_cb done_cb, struct fsal_io_arg *write_arg,
 		  void *caller_arg)
 {
 	fsal_status_t status, status2;
@@ -841,17 +796,15 @@ void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_fd *out_fd;
 	struct kvsfs_fsal_obj_handle *myself;
 
-	myself = container_of(obj_hdl, struct kvsfs_fsal_obj_handle,
-			      obj_handle);
+	myself =
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 
 	cred.uid = op_ctx->creds.caller_uid;
 	cred.gid = op_ctx->creds.caller_gid;
 
 	if (write_arg->info)
-		return done_cb(obj_hdl,
-			       fsalstat(ERR_FSAL_NOTSUPP, 0),
-			       write_arg,
-			       caller_arg);
+		return done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0),
+			       write_arg, caller_arg);
 
 	/* Indicate a desire to start io and get a usable file descritor */
 	status = fsal_start_io(&out_fd, obj_hdl, &myself->u.file.fd.fsal_fd,
@@ -868,11 +821,9 @@ void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
 	my_fd = container_of(out_fd, struct kvsfs_fd, fsal_fd);
 
 	for (i = 0; i < write_arg->iov_count; i++) {
-		nb_written = kvsns_write(&cred,
-					 &my_fd->fd,
+		nb_written = kvsns_write(&cred, &my_fd->fd,
 					 write_arg->iov[i].iov_base,
-					 write_arg->iov[i].iov_len,
-					 offset);
+					 write_arg->iov[i].iov_len, offset);
 
 		if (nb_written < 0) {
 			status = posix2fsal_status(-nb_written);
@@ -885,8 +836,7 @@ void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_complete_io returned %s",
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io returned %s",
 		     fsal_err_txt(status2));
 
 	if (write_arg->state == NULL) {
@@ -900,8 +850,7 @@ void kvsfs_write2(struct fsal_obj_handle *obj_hdl,
 					     FSAL_O_WRITE, FSAL_O_CLOSED);
 	}
 
- exit:
+exit:
 
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
-

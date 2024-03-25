@@ -72,7 +72,7 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	databuffer = cursor;
 
 	LogDebug(COMPONENT_9P, "TWRITE: tag=%u fid=%u offset=%llu count=%u",
-		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count);
+		 (u32)*msgtag, *fid, (unsigned long long)*offset, *count);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -106,11 +106,10 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
 					  preply);
 
-		written_size = MIN(*count,
-				   pfid->xattr->xattr_size - *offset);
+		written_size = MIN(*count, pfid->xattr->xattr_size - *offset);
 
-		memcpy(pfid->xattr->xattr_content + *offset,
-		       databuffer, written_size);
+		memcpy(pfid->xattr->xattr_content + *offset, databuffer,
+		       written_size);
 		pfid->xattr->xattr_offset += size;
 		pfid->xattr->xattr_write = _9P_XATTR_DID_WRITE;
 
@@ -132,20 +131,19 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		outcount = written_size;
 	} else {
 		struct async_process_data write_data;
-		struct fsal_io_arg *write_arg = alloca(sizeof(*write_arg) +
-						      sizeof(struct iovec));
+		struct fsal_io_arg *write_arg =
+			alloca(sizeof(*write_arg) + sizeof(struct iovec));
 
 		write_arg->info = NULL;
 		write_arg->state = pfid->state;
 		write_arg->offset = *offset;
 		write_arg->io_request = size;
 		write_arg->iov_count = 1;
-		write_arg->iov = (struct iovec *) (write_arg + 1);
+		write_arg->iov = (struct iovec *)(write_arg + 1);
 		write_arg->iov[0].iov_len = size;
 		write_arg->iov[0].iov_base = databuffer;
 		write_arg->io_amount = 0;
 		write_arg->fsal_stable = false;
-
 
 		write_data.ret.major = 0;
 		write_data.ret.minor = 0;
@@ -170,8 +168,7 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					  _9p_tools_errno(write_data.ret),
 					  plenout, preply);
 
-		outcount = (u32) write_arg->io_amount;
-
+		outcount = (u32)write_arg->io_amount;
 	}
 
 	/* Build the reply */
@@ -183,12 +180,13 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RWRITE: tag=%u fid=%u offset=%llu input count=%u output count=%u",
-		 (u32) *msgtag, *fid, (unsigned long long)*offset, *count,
-		 outcount);
+	LogDebug(
+		COMPONENT_9P,
+		"RWRITE: tag=%u fid=%u offset=%llu input count=%u output count=%u",
+		(u32)*msgtag, *fid, (unsigned long long)*offset, *count,
+		outcount);
 
-/**
+	/**
  * @todo write statistics accounting goes here
  * modeled on nfs I/O stats
  */

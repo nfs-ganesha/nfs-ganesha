@@ -97,10 +97,8 @@ void init_new_deleg_state(union state_data *deleg_state,
  *
  * @return State status.
  */
-state_status_t do_lease_op(struct fsal_obj_handle *obj,
-			  state_t *state,
-			  state_owner_t *owner,
-			  fsal_deleg_t deleg)
+state_status_t do_lease_op(struct fsal_obj_handle *obj, state_t *state,
+			   state_owner_t *owner, fsal_deleg_t deleg)
 {
 	fsal_status_t fsal_status;
 	state_status_t status;
@@ -108,11 +106,7 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
 	/* Perform this delegation operation using the new
 	 * multiple file-descriptors.
 	 */
-	fsal_status = obj->obj_ops->lease_op2(
-				obj,
-				state,
-				owner,
-				deleg);
+	fsal_status = obj->obj_ops->lease_op2(obj, state, owner, deleg);
 
 	status = state_error_convert(fsal_status);
 
@@ -132,8 +126,7 @@ state_status_t do_lease_op(struct fsal_obj_handle *obj,
  * @param[in]  state      Associated state for the lock
  */
 state_status_t acquire_lease_lock(struct state_hdl *ostate,
-				  state_owner_t *owner,
-				  state_t *state)
+				  state_owner_t *owner, state_t *state)
 {
 	state_status_t status;
 	fsal_deleg_t deleg = FSAL_DELEG_RD;
@@ -190,8 +183,7 @@ state_status_t release_lease_lock(struct fsal_obj_handle *obj, state_t *state)
  *
  * @param[in] Delegation Entry
  */
-void update_delegation_stats(struct state_hdl *ostate,
-			     state_owner_t *owner)
+void update_delegation_stats(struct state_hdl *ostate, state_owner_t *owner)
 {
 	nfs_client_id_t *client = owner->so_owner.so_nfs4_owner.so_clientrec;
 
@@ -208,8 +200,8 @@ void update_delegation_stats(struct state_hdl *ostate,
 }
 
 /* Add a new delegation length to the average length stat. */
-static int advance_avg(time_t prev_avg, time_t new_time,
-		       uint32_t prev_tot, uint32_t curr_tot)
+static int advance_avg(time_t prev_avg, time_t new_time, uint32_t prev_tot,
+		       uint32_t curr_tot)
 {
 	return ((prev_tot * prev_avg) + new_time) / curr_tot;
 }
@@ -233,8 +225,7 @@ void reset_cbgetattr_stats(struct fsal_obj_handle *obj)
  *
  * @param[in] deleg Delegation state
  */
-void deleg_heuristics_recall(struct fsal_obj_handle *obj,
-			     state_owner_t *owner,
+void deleg_heuristics_recall(struct fsal_obj_handle *obj, state_owner_t *owner,
 			     struct state_t *deleg)
 {
 	nfs_client_id_t *client = owner->so_owner.so_nfs4_owner.so_clientrec;
@@ -247,7 +238,8 @@ void deleg_heuristics_recall(struct fsal_obj_handle *obj,
 
 	/* Reset the delegation type if no active delegation present. */
 	if (statistics->fds_curr_delegations == 0) {
-		LogFullDebug(COMPONENT_STATE,
+		LogFullDebug(
+			COMPONENT_STATE,
 			"Resetting Deleg type (%d/%d) as file has no delegation",
 			statistics->fds_curr_delegations,
 			statistics->fds_deleg_type);
@@ -261,11 +253,10 @@ void deleg_heuristics_recall(struct fsal_obj_handle *obj,
 	client->curr_deleg_grants--;
 
 	/* Update delegation stats for file. */
-	statistics->fds_avg_hold = advance_avg(statistics->fds_avg_hold,
-					   time(NULL)
-					   - statistics->fds_last_delegation,
-					   statistics->fds_recall_count - 1,
-					   statistics->fds_recall_count);
+	statistics->fds_avg_hold = advance_avg(
+		statistics->fds_avg_hold,
+		time(NULL) - statistics->fds_last_delegation,
+		statistics->fds_recall_count - 1, statistics->fds_recall_count);
 }
 
 /**
@@ -335,16 +326,15 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	assert(open_state->state_type == STATE_TYPE_SHARE);
 
 	*prerecall = false;
-	if (!nfs_param.nfsv4_param.allow_delegations
-	    || !op_ctx->fsal_export->exp_ops.fs_supports(
-					op_ctx->fsal_export,
-					fso_delegations_r)
-	    || !(op_ctx->export_perms.options & EXPORT_OPTION_DELEGATIONS)
-	    || (!owner->so_owner.so_nfs4_owner.so_confirmed
-		&& claim == CLAIM_NULL)
-	    || claim == CLAIM_DELEGATE_CUR) {
+	if (!nfs_param.nfsv4_param.allow_delegations ||
+	    !op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
+						      fso_delegations_r) ||
+	    !(op_ctx->export_perms.options & EXPORT_OPTION_DELEGATIONS) ||
+	    (!owner->so_owner.so_nfs4_owner.so_confirmed &&
+	     claim == CLAIM_NULL) ||
+	    claim == CLAIM_DELEGATE_CUR) {
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
-							WND4_NOT_SUPP_FTYPE;
+			WND4_NOT_SUPP_FTYPE;
 		return false;
 	}
 
@@ -354,22 +344,26 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 		switch (claim) {
 		case CLAIM_PREVIOUS:
 			*prerecall = true;
-			return args->claim.open_claim4_u.delegate_type
-					== OPEN_DELEGATE_NONE ? false : true;
+			return args->claim.open_claim4_u.delegate_type ==
+					       OPEN_DELEGATE_NONE ?
+				       false :
+				       true;
 		case CLAIM_DELEGATE_PREV:
 			*prerecall = true;
 			return true;
 		default:
-			resok->delegation.open_delegation4_u.od_whynone.ond_why
-								= WND4_RESOURCE;
+			resok->delegation.open_delegation4_u.od_whynone.ond_why =
+				WND4_RESOURCE;
 			return false;
 		}
 	} else {
 		*prerecall = false;
 		switch (claim) {
 		case CLAIM_PREVIOUS:
-			return args->claim.open_claim4_u.delegate_type
-					== OPEN_DELEGATE_NONE ? false : true;
+			return args->claim.open_claim4_u.delegate_type ==
+					       OPEN_DELEGATE_NONE ?
+				       false :
+				       true;
 		case CLAIM_DELEGATE_PREV:
 			return true;
 		default:
@@ -385,14 +379,14 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	if (file_stats->fds_last_recall != 0 &&
 	    time(NULL) - file_stats->fds_last_recall < RECALL2DELEG_TIME) {
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
-								WND4_CONTENTION;
+			WND4_CONTENTION;
 		return false;
 	}
 
 	/* Check if this is a misbehaving or unreliable client */
 	if (client->num_revokes > 2) { /* more than 2 revokes */
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
-								WND4_RESOURCE;
+			WND4_RESOURCE;
 		return false;
 	}
 
@@ -403,11 +397,11 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	 * counter before calling this function.
 	 */
 	if ((args->share_access & OPEN4_SHARE_ACCESS_READ &&
-		file_stats->fds_num_write_opens > 0) ||
-		(args->share_access & OPEN4_SHARE_ACCESS_WRITE &&
-		file_stats->fds_num_write_opens > 1)) {
+	     file_stats->fds_num_write_opens > 0) ||
+	    (args->share_access & OPEN4_SHARE_ACCESS_WRITE &&
+	     file_stats->fds_num_write_opens > 1)) {
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
-							WND4_CONTENTION;
+			WND4_CONTENTION;
 		return false;
 	}
 
@@ -417,17 +411,17 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 	 * if atomic_add_unless below returns false
 	 */
 	if ((file_stats->fds_curr_delegations == 0) &&
-		!atomic_add_unless_int32_t(&g_total_num_files_delegated, 1,
-			g_max_files_delegatable)){
-		LogFullDebug(COMPONENT_STATE,
+	    !atomic_add_unless_int32_t(&g_total_num_files_delegated, 1,
+				       g_max_files_delegatable)) {
+		LogFullDebug(
+			COMPONENT_STATE,
 			"Can't delegate file since Files_Delegatable_Percent limit is hit");
 		resok->delegation.open_delegation4_u.od_whynone.ond_why =
-								WND4_RESOURCE;
+			WND4_RESOURCE;
 		return false;
 	}
-	LogFullDebug(COMPONENT_STATE,
-		"total_num_files_delegated is %d",
-		atomic_fetch_int32_t(&g_total_num_files_delegated));
+	LogFullDebug(COMPONENT_STATE, "total_num_files_delegated is %d",
+		     atomic_fetch_int32_t(&g_total_num_files_delegated));
 
 	LogDebug(COMPONENT_STATE, "Let's delegate!!");
 	return true;
@@ -488,7 +482,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 	clid = owner->so_owner.so_nfs4_owner.so_clientrec;
 
 	/* Building a new fh ; Ignore return code, should not fail*/
-	(void) nfs4_FSALToFhandle(true, &fhandle, obj, export);
+	(void)nfs4_FSALToFhandle(true, &fhandle, obj, export);
 
 	deleg_heuristics_recall(obj, owner, deleg_state);
 	reset_cbgetattr_stats(obj);
@@ -606,17 +600,17 @@ bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write)
 		deleg_client =
 			obj->state_hdl->file.write_deleg_client->gsh_client;
 
-	if (deleg_stats->fds_curr_delegations > 0
-	    && ((deleg_stats->fds_deleg_type == OPEN_DELEGATE_READ
-		 && write)
-		|| (deleg_stats->fds_deleg_type == OPEN_DELEGATE_WRITE &&
-		    deleg_client != op_ctx->client))
-	    ) {
-		LogDebug(COMPONENT_STATE,
-			 "While trying to perform a %s op, found a conflicting %s delegation",
-			 write ? "write" : "read",
-			 (deleg_stats->fds_deleg_type
-			  == OPEN_DELEGATE_WRITE) ? "WRITE" : "READ");
+	if (deleg_stats->fds_curr_delegations > 0 &&
+	    ((deleg_stats->fds_deleg_type == OPEN_DELEGATE_READ && write) ||
+	     (deleg_stats->fds_deleg_type == OPEN_DELEGATE_WRITE &&
+	      deleg_client != op_ctx->client))) {
+		LogDebug(
+			COMPONENT_STATE,
+			"While trying to perform a %s op, found a conflicting %s delegation",
+			write ? "write" : "read",
+			(deleg_stats->fds_deleg_type == OPEN_DELEGATE_WRITE) ?
+				"WRITE" :
+				"READ");
 		if (async_delegrecall(general_fridge, obj) != 0)
 			LogCrit(COMPONENT_STATE,
 				"Failed to start thread to recall delegation from conflicting operation.");
@@ -669,8 +663,9 @@ nfsstat4 handle_deleg_getattr(struct fsal_obj_handle *obj,
 	enum cbgetattr_state cb_state;
 
 	/* Check for delegation conflict.*/
-	LogDebug(COMPONENT_STATE,
-		 "While trying to perform a GETATTR op, found a conflicting WRITE delegation");
+	LogDebug(
+		COMPONENT_STATE,
+		"While trying to perform a GETATTR op, found a conflicting WRITE delegation");
 
 	/*
 	 * @todo: Provide an option for user to enable CB_GETATTR
@@ -701,7 +696,7 @@ send_request:
 	goto out;
 deleg_recall:
 	LogDebug(COMPONENT_STATE, "CB_GETATTR is either not enabled or failed,"
-				   " recalling write delegation");
+				  " recalling write delegation");
 	rc = async_delegrecall(general_fridge, obj);
 	if (rc != 0) {
 		LogCrit(COMPONENT_STATE,
@@ -711,8 +706,7 @@ deleg_recall:
 
 out:
 	if (rc != 0) {
-		status = nfs4_Errno_status(fsalstat(posix2fsal_error(rc),
-						    rc));
+		status = nfs4_Errno_status(fsalstat(posix2fsal_error(rc), rc));
 	}
 	return status;
 }
@@ -731,14 +725,14 @@ bool deleg_supported(struct fsal_obj_handle *obj,
 	 */
 	if (share_access & OPEN4_SHARE_ACCESS_WRITE) {
 		if (!fsal_export->exp_ops.fs_supports(fsal_export,
-						   fso_delegations_w))
+						      fso_delegations_w))
 			return false;
 		if (!(export_perms->options & EXPORT_OPTION_WRITE_DELEG))
 			return false;
 	} else {
 		assert(share_access & OPEN4_SHARE_ACCESS_READ);
 		if (!fsal_export->exp_ops.fs_supports(fsal_export,
-						   fso_delegations_r))
+						      fso_delegations_r))
 			return false;
 		if (!(export_perms->options & EXPORT_OPTION_READ_DELEG))
 			return false;
@@ -765,8 +759,9 @@ bool can_we_grant_deleg(struct state_hdl *ostate, state_t *open_state)
 	 * in progress
 	 */
 	if (atomic_fetch_uint32_t(&ostate->file.anon_ops) != 0) {
-		LogFullDebug(COMPONENT_STATE,
-			     "Anonymous op in progress, not granting delegation");
+		LogFullDebug(
+			COMPONENT_STATE,
+			"Anonymous op in progress, not granting delegation");
 		return false;
 	}
 
@@ -774,14 +769,16 @@ bool can_we_grant_deleg(struct state_hdl *ostate, state_t *open_state)
 	 * with any kind of NLM lock, and NLM write lock would conflict
 	 * with any kind of delegation.
 	 */
-	glist_for_each(glist, &ostate->file.lock_list) {
+	glist_for_each(glist, &ostate->file.lock_list)
+	{
 		lock_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 		if (lock_entry->sle_lock.lock_type == FSAL_NO_LOCK)
 			continue; /* no lock, skip */
 		if (share->share_access & OPEN4_SHARE_ACCESS_WRITE ||
 		    lock_entry->sle_lock.lock_type == FSAL_LOCK_W) {
-			LogFullDebug(COMPONENT_STATE,
-				     "Conflicting NLM lock. Not granting delegation");
+			LogFullDebug(
+				COMPONENT_STATE,
+				"Conflicting NLM lock. Not granting delegation");
 			return false;
 		}
 	}

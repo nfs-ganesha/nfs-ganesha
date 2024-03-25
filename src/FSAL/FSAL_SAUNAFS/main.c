@@ -56,8 +56,8 @@ struct SaunaFSModule
 				    .unique_handles = true,
 #ifdef ENABLE_NFS_ACL_SUPPORT
 				    .acl_support =
-					   (unsigned int)FSAL_ACLSUPPORT_ALLOW |
-					   (unsigned int)FSAL_ACLSUPPORT_DENY,
+					    (unsigned int)FSAL_ACLSUPPORT_ALLOW |
+					    (unsigned int)FSAL_ACLSUPPORT_DENY,
 #else
 				    .acl_support = 0,
 #endif

@@ -51,10 +51,10 @@
 #include "avltree.h"
 
 /* Max length of a user_id string that we pass to ceph_mount */
-#define MAXUIDLEN	(64)
+#define MAXUIDLEN (64)
 
 /* Max length of a secret key for this user */
-#define MAXSECRETLEN	(88)
+#define MAXSECRETLEN (88)
 
 /**
  * Ceph Main (global) module object
@@ -102,19 +102,19 @@ struct ceph_mount {
  */
 
 struct ceph_export {
-	struct fsal_export export;	/*< The public export object */
-	struct glist_head cm_list;	/*< On list of exports for ceph_mount */
-	struct ceph_mount *cm;		/*< The ceph_mount descriptor */
-	struct ceph_mount_info *cmount;	/*< The mount object used to
+	struct fsal_export export; /*< The public export object */
+	struct glist_head cm_list; /*< On list of exports for ceph_mount */
+	struct ceph_mount *cm; /*< The ceph_mount descriptor */
+	struct ceph_mount_info *cmount; /*< The mount object used to
 					   access all Ceph methods on
 					   this export. */
-	struct ceph_handle *root;	/*< The root handle */
-	char *user_id;			/* cephx user_id for this mount */
+	struct ceph_handle *root; /*< The root handle */
+	char *user_id; /* cephx user_id for this mount */
 	char *secret_key;
-	char *sec_label_xattr;		/* name of xattr for security label */
-	char *fs_name;			/* filesystem name */
-	char *cmount_path;		/* path to cmount at */
-	int64_t fscid;			/* Cluster fsid for named fs' */
+	char *sec_label_xattr; /* name of xattr for security label */
+	char *fs_name; /* filesystem name */
+	char *cmount_path; /* path to cmount at */
+	int64_t fscid; /* Cluster fsid for named fs' */
 };
 
 struct ceph_fd {
@@ -135,10 +135,10 @@ struct ceph_state_fd {
  */
 
 struct ceph_host_handle {
-	uint64_t	chk_ino;
-	uint64_t	chk_snap;
-	int64_t		chk_fscid;
-} __attribute__ ((__packed__));
+	uint64_t chk_ino;
+	uint64_t chk_snap;
+	int64_t chk_fscid;
+} __attribute__((__packed__));
 
 struct ceph_handle_key {
 	/* NOTE: The ceph_host_handle MUST be first in this structure */
@@ -147,11 +147,11 @@ struct ceph_handle_key {
 };
 
 struct ceph_handle {
-	struct fsal_obj_handle handle;	/*< The public handle */
+	struct fsal_obj_handle handle; /*< The public handle */
 	struct ceph_fd fd;
-	struct Inode *i;	/*< The Ceph inode */
-	const struct fsal_up_vector *up_ops;	/*< Upcall operations */
-	struct ceph_handle_key key;	/*< The handle-key that includes the
+	struct Inode *i; /*< The Ceph inode */
+	const struct fsal_up_vector *up_ops; /*< Upcall operations */
+	struct ceph_handle_key key; /*< The handle-key that includes the
 					    ceph_host_handle. */
 	struct fsal_share share;
 #ifdef CEPH_PNFS
@@ -160,7 +160,7 @@ struct ceph_handle {
 	uint64_t rw_issued;
 	uint64_t rw_serial;
 	uint64_t rw_max_len;
-#endif				/* CEPH_PNFS */
+#endif /* CEPH_PNFS */
 };
 
 #ifdef CEPH_PNFS
@@ -171,7 +171,7 @@ struct ceph_handle {
 
 struct ds_wire {
 	struct wire_handle wire; /*< All the information of a regular handle */
-	struct ceph_file_layout layout;	/*< Layout information */
+	struct ceph_file_layout layout; /*< Layout information */
 	uint64_t snapseq; /*< And a single entry giving a degenerate
 			      snaprealm. */
 };
@@ -181,37 +181,34 @@ struct ds_wire {
  */
 
 struct ds {
-	struct fsal_ds_handle ds;	/*< Public DS handle */
-	struct ds_wire wire;	/*< Wire data */
-	bool connected;		/*< True if the handle has been connected
+	struct fsal_ds_handle ds; /*< Public DS handle */
+	struct ds_wire wire; /*< Wire data */
+	bool connected; /*< True if the handle has been connected
 				   (in Ceph) */
 };
 
-#endif				/* CEPH_PNFS */
+#endif /* CEPH_PNFS */
 
 #ifdef CEPHFS_POSIX_ACL
-#  define POSIX_ACL_ATTR	ATTR_ACL
+#define POSIX_ACL_ATTR ATTR_ACL
 #else /* CEPHFS_POSIX_ACL */
-#  define POSIX_ACL_ATTR	0
+#define POSIX_ACL_ATTR 0
 #endif /* CEPHFS_POSIX_ACL */
 
-#define CEPH_SUPPORTED_ATTRS ((const attrmask_t) (ATTRS_POSIX |		\
-						  ATTR4_SEC_LABEL |	\
-						  ATTR4_XATTR |		\
-						  POSIX_ACL_ATTR	\
-						  ))
+#define CEPH_SUPPORTED_ATTRS                                              \
+	((const attrmask_t)(ATTRS_POSIX | ATTR4_SEC_LABEL | ATTR4_XATTR | \
+			    POSIX_ACL_ATTR))
 
-#define CEPH_SETTABLE_ATTRIBUTES ((const attrmask_t) (          \
-	ATTR_MODE  | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME    |  \
-	ATTR_CTIME | ATTR_MTIME | ATTR_SIZE  | ATTR_MTIME_SERVER |  \
-	ATTR_ATIME_SERVER | ATTR4_SEC_LABEL | POSIX_ACL_ATTR))
+#define CEPH_SETTABLE_ATTRIBUTES                                               \
+	((const attrmask_t)(ATTR_MODE | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | \
+			    ATTR_CTIME | ATTR_MTIME | ATTR_SIZE |              \
+			    ATTR_MTIME_SERVER | ATTR_ATIME_SERVER |            \
+			    ATTR4_SEC_LABEL | POSIX_ACL_ATTR))
 
 /* Prototypes */
 
-void construct_handle(const struct ceph_statx *stx,
-					struct Inode *i,
-					struct ceph_export *export,
-					struct ceph_handle **obj);
+void construct_handle(const struct ceph_statx *stx, struct Inode *i,
+		      struct ceph_export *export, struct ceph_handle **obj);
 void deconstruct_handle(struct ceph_handle *obj);
 
 /**
@@ -240,7 +237,7 @@ void handle_ops_init(struct fsal_obj_ops *ops);
 void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
 void export_ops_pnfs(struct export_ops *ops);
 void handle_ops_pnfs(struct fsal_obj_ops *ops);
-#endif				/* CEPH_PNFS */
+#endif /* CEPH_PNFS */
 
 struct state_t *ceph_alloc_state(struct fsal_export *exp_hdl,
 				 enum state_type state_type,
@@ -252,8 +249,8 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 			   struct fsal_attrlist *attrs);
 
 int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
-	bool is_dir, struct fsal_attrlist *attrs);
-#endif				/* CEPHFS_POSIX_ACL */
+		 bool is_dir, struct fsal_attrlist *attrs);
+#endif /* CEPHFS_POSIX_ACL */
 
 extern pthread_rwlock_t cmount_lock;
 
@@ -262,4 +259,4 @@ struct ceph_mount *ceph_mount_lookup(const struct avltree_node *key);
 void ceph_mount_insert(struct avltree_node *key);
 void ceph_mount_remove(struct avltree_node *key);
 
-#endif				/* !FSAL_CEPH_INTERNAL_INTERNAL__ */
+#endif /* !FSAL_CEPH_INTERNAL_INTERNAL__ */

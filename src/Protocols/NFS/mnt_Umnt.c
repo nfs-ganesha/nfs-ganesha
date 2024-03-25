@@ -54,7 +54,7 @@ int mnt_Umnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Ganesha does not support the mount list so this is a NOOP */
 
 	return NFS_REQ_OK;
-}				/* mnt_Umnt */
+} /* mnt_Umnt */
 
 /**
  * mnt_Umnt_Free: Frees the result structure allocated for mnt_Umnt.

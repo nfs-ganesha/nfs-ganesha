@@ -58,8 +58,7 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	if (nfs_param.core_param.disable_NLM_SHARE) {
 		res->res_nlm4share.stat = NLM4_FAILED;
-		LogEvent(COMPONENT_NLM,
-			 "NLM4_SHARE call detected, failing it");
+		LogEvent(COMPONENT_NLM, "NLM4_SHARE call detected, failing it");
 		return NFS_REQ_OK;
 	}
 
@@ -79,7 +78,7 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	if (isDebug(COMPONENT_NLM)) {
 		char str[LEN_FH_STR];
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 		char oh[MAXNETOBJ_SZ * 2] = "\0";
 
 		display_opaque_bytes(&dspbuf, arg->share.fh.n_bytes,
@@ -87,12 +86,12 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 		netobj_to_string(&arg->share.oh, oh, 1024);
 
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST PROCESSING: Calling NLM4_SHARE File Handle V3: Len=%u %s, cookie=%s, reclaim=%s, owner=%s, access=%d, deny=%d",
-			 arg->share.fh.n_len, str, buffer,
-			 arg->reclaim ? "yes" : "no", oh,
-			 arg->share.access,
-			 arg->share.mode);
+		LogDebug(
+			COMPONENT_NLM,
+			"REQUEST PROCESSING: Calling NLM4_SHARE File Handle V3: Len=%u %s, cookie=%s, reclaim=%s, owner=%s, access=%d, deny=%d",
+			arg->share.fh.n_len, str, buffer,
+			arg->reclaim ? "yes" : "no", oh, arg->share.access,
+			arg->share.mode);
 	}
 
 	copy_netobj(&res->res_nlm4share.cookie, &arg->cookie);
@@ -102,53 +101,39 @@ int nlm4_Share(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * have a reclaim flag, so we will honor the reclaim flag if used.
 	 */
 	grace_ref = !op_ctx->fsal_export->exp_ops.fs_supports(
-					op_ctx->fsal_export, fso_grace_method);
+		op_ctx->fsal_export, fso_grace_method);
 	if (grace_ref) {
 		if (!nfs_get_grace_status(arg->reclaim)) {
 			res->res_nlm4share.stat = NLM4_DENIED_GRACE_PERIOD;
-			LogDebug(COMPONENT_NLM,
-				 "REQUEST RESULT: NLM4_SHARE %s",
+			LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_SHARE %s",
 				 lock_result_str(res->res_nlm4share.stat));
 			return NFS_REQ_OK;
 		}
 	}
 
-	rc = nlm_process_share_parms(req,
-				     &arg->share,
-				     op_ctx->fsal_export,
-				     &obj,
-				     CARE_NO_MONITOR,
-				     &nsm_client,
-				     &nlm_client,
-				     &nlm_owner,
-				     &nlm_state);
+	rc = nlm_process_share_parms(req, &arg->share, op_ctx->fsal_export,
+				     &obj, CARE_NO_MONITOR, &nsm_client,
+				     &nlm_client, &nlm_owner, &nlm_state);
 
 	if (rc >= 0) {
 		/* Present the error back to the client */
-		res->res_nlm4share.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: NLM4_SHARE %s",
+		res->res_nlm4share.stat = (nlm4_stats)rc;
+		LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_SHARE %s",
 			 lock_result_str(res->res_nlm4share.stat));
 		goto out;
 	}
 retry_nlm_share:
-	state_status = state_nlm_share(obj,
-				       arg->share.access,
-				       arg->share.mode,
-				       nlm_owner,
-				       nlm_state,
-				       arg->reclaim,
+	state_status = state_nlm_share(obj, arg->share.access, arg->share.mode,
+				       nlm_owner, nlm_state, arg->reclaim,
 				       false);
 
 	if (state_status != STATE_SUCCESS) {
-		res->res_nlm4share.stat =
-		    nlm_convert_state_error(state_status);
+		res->res_nlm4share.stat = nlm_convert_state_error(state_status);
 		/* We have an got an share denied with an existing
 		* client. Let's recheck if it was expired.
 		*/
 		if (res->res_nlm4share.stat == NLM4_DENIED &&
-			check_and_remove_conflicting_client(
-				obj->state_hdl)) {
+		    check_and_remove_conflicting_client(obj->state_hdl)) {
 			goto retry_nlm_share;
 		}
 	} else {

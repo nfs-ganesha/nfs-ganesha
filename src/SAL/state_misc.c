@@ -55,7 +55,7 @@ struct glist_head cached_open_owners = GLIST_HEAD_INIT(cached_open_owners);
 
 pthread_mutex_t cached_open_owners_lock;
 
-pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
+pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
 
 #ifdef DEBUG_SAL
 struct glist_head state_owners_all = GLIST_HEAD_INIT(state_owners_all);
@@ -655,8 +655,7 @@ nfsstat3 nfs3_Errno_state(state_status_t error)
 
 bool state_unlock_err_ok(state_status_t status)
 {
-	return status == STATE_SUCCESS ||
-	       status == STATE_ESTALE;
+	return status == STATE_SUCCESS || status == STATE_ESTALE;
 }
 
 /** String for undefined state owner types */
@@ -764,17 +763,14 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 		return display_nfs4_owner(dspbuf, owner);
 
 	case STATE_LOCK_OWNER_UNKNOWN:
-		return
-		    display_printf(dspbuf,
-				   "%s powner=%p: so_refcount=%d",
-				   state_owner_type_to_str(owner->so_type),
-				   owner,
-				   atomic_fetch_int32_t(&owner->so_refcount));
+		return display_printf(
+			dspbuf, "%s powner=%p: so_refcount=%d",
+			state_owner_type_to_str(owner->so_type), owner,
+			atomic_fetch_int32_t(&owner->so_refcount));
 	}
 
-	return display_printf(dspbuf,
-			      "%s powner=%p",
-			      invalid_state_owner_type, owner);
+	return display_printf(dspbuf, "%s powner=%p", invalid_state_owner_type,
+			      owner);
 }
 
 /**
@@ -785,7 +781,7 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 void inc_state_owner_ref(state_owner_t *owner)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	int32_t refcount;
 
@@ -810,7 +806,7 @@ void inc_state_owner_ref(state_owner_t *owner)
 void free_state_owner(state_owner_t *owner)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 
 	switch (owner->so_type) {
 #ifdef _USE_NLM
@@ -890,7 +886,7 @@ hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
 void dec_state_owner_ref(state_owner_t *owner)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	struct hash_latch latch;
 	hash_error_t rc;
@@ -982,9 +978,8 @@ void dec_state_owner_ref(state_owner_t *owner)
  */
 void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner)
 {
-	state_owner_t *owner = container_of(nfs4_owner,
-					    state_owner_t,
-					    so_owner.so_nfs4_owner);
+	state_owner_t *owner =
+		container_of(nfs4_owner, state_owner_t, so_owner.so_nfs4_owner);
 
 	/* This owner is to be removed from the open owner cache:
 	 * 1. Remove it from the list.
@@ -994,7 +989,7 @@ void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner)
 	 */
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_owner(&dspbuf, owner);
 
@@ -1009,8 +1004,8 @@ void uncache_nfs4_owner(struct state_nfs4_owner_t *nfs4_owner)
 	dec_state_owner_ref(owner);
 }
 
-static inline
-void refresh_nfs4_open_owner(struct state_nfs4_owner_t *nfs4_owner)
+static inline void
+refresh_nfs4_open_owner(struct state_nfs4_owner_t *nfs4_owner)
 {
 	time_t cache_expire;
 
@@ -1046,7 +1041,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 {
 	state_owner_t *owner;
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	struct hash_latch latch;
 	hash_error_t rc;
@@ -1113,8 +1108,8 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 				display_owner(&dspbuf, owner);
 
 			LogFullDebug(COMPONENT_STATE,
-				     "Found {%s} so_refcount now=%" PRId32,
-				     str, refcount);
+				     "Found {%s} so_refcount now=%" PRId32, str,
+				     refcount);
 		}
 		return owner;
 
@@ -1161,12 +1156,10 @@ not_found:
 	if (init_owner != NULL)
 		init_owner(owner);
 
-
 	if (key->so_owner_len != 0) {
 		owner->so_owner_val = gsh_malloc(key->so_owner_len);
 
-		memcpy(owner->so_owner_val,
-		       key->so_owner_val,
+		memcpy(owner->so_owner_val, key->so_owner_val,
 		       key->so_owner_len);
 	}
 
@@ -1226,7 +1219,7 @@ not_found:
 bool hold_state_owner_ref(state_owner_t *owner)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	int32_t refcount;
 
@@ -1239,9 +1232,10 @@ bool hold_state_owner_ref(state_owner_t *owner)
 
 	if (str_valid) {
 		if (refcount == 0) {
-			LogFullDebug(COMPONENT_STATE,
-				     "Did not increment so_refcount from 0 {%s}",
-				     str);
+			LogFullDebug(
+				COMPONENT_STATE,
+				"Did not increment so_refcount from 0 {%s}",
+				str);
 		} else {
 			LogFullDebug(COMPONENT_STATE,
 				     "Increment so_refcount now=%d {%s}",
@@ -1297,16 +1291,17 @@ void dump_all_owners(void)
 
 	if (!glist_empty(&state_owners_all)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 		struct glist_head *glist;
 
-		LogFullDebug(COMPONENT_STATE,
-			     " ---------------------- State Owner List ----------------------");
+		LogFullDebug(
+			COMPONENT_STATE,
+			" ---------------------- State Owner List ----------------------");
 
-		glist_for_each(glist, &state_owners_all) {
+		glist_for_each(glist, &state_owners_all)
+		{
 			display_reset_buffer(&dspbuf);
-			display_owner(&dspbuf, glist_entry(glist,
-							   state_owner_t,
+			display_owner(&dspbuf, glist_entry(glist, state_owner_t,
 							   so_all_owners));
 			LogFullDebug(COMPONENT_STATE, "{%s}", str);
 		}

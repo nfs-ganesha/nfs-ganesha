@@ -68,15 +68,14 @@ struct mem_fsal_export {
 	uint32_t async_type;
 };
 
-fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl,
-				const char *path,
-				struct fsal_obj_handle **handle,
-				struct fsal_attrlist *attrs_out);
+fsal_status_t mem_lookup_path(struct fsal_export *exp_hdl, const char *path,
+			      struct fsal_obj_handle **handle,
+			      struct fsal_attrlist *attrs_out);
 
 fsal_status_t mem_create_handle(struct fsal_export *exp_hdl,
-				  struct gsh_buffdesc *hdl_desc,
-				  struct fsal_obj_handle **handle,
-				  struct fsal_attrlist *attrs_out);
+				struct gsh_buffdesc *hdl_desc,
+				struct fsal_obj_handle **handle,
+				struct fsal_attrlist *attrs_out);
 
 struct mem_state_fd {
 	/** state MUST be first to use default free_state */
@@ -117,7 +116,7 @@ struct mem_fsal_obj_handle {
 	struct glist_head dirents; /**< List of dirents pointing to obj */
 	struct glist_head mfo_exp_entry; /**< Link into mfs_objs */
 	struct mem_fsal_export *mfo_exp; /**< Export owning object */
-	char *m_name;	/**< Base name of obj, for debugging */
+	char *m_name; /**< Base name of obj, for debugging */
 	uint32_t datasize;
 	bool is_export;
 	uint32_t refcount; /**< We persist handles, so we need a refcount */
@@ -130,17 +129,17 @@ struct mem_fsal_obj_handle {
 struct mem_dirent {
 	struct mem_fsal_obj_handle *hdl; /**< Handle dirent points to */
 	struct mem_fsal_obj_handle *dir; /**< Dir containing dirent */
-	const char *d_name;		 /**< Name of dirent */
-	uint64_t d_index;		 /**< index in dir */
-	struct avltree_node avl_n;	 /**< Entry in dir's avl_name tree */
-	struct avltree_node avl_i;	 /**< Entry in dir's avl_index tree */
-	struct glist_head dlist;	 /**< Entry in hdl's dirents list */
+	const char *d_name; /**< Name of dirent */
+	uint64_t d_index; /**< index in dir */
+	struct avltree_node avl_n; /**< Entry in dir's avl_name tree */
+	struct avltree_node avl_i; /**< Entry in dir's avl_index tree */
+	struct glist_head dlist; /**< Entry in hdl's dirents list */
 };
 
 static inline bool mem_unopenable_type(object_file_type_t type)
 {
-	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE)
-	    || (type == BLOCK_FILE)) {
+	if ((type == SOCKET_FILE) || (type == CHARACTER_FILE) ||
+	    (type == BLOCK_FILE)) {
 		return true;
 	} else {
 		return false;
@@ -152,25 +151,24 @@ void mem_handle_ops_init(struct fsal_obj_ops *ops);
 /* Internal MEM method linkage to export object
 */
 
-fsal_status_t mem_create_export(struct fsal_module *fsal_hdl,
-				void *parse_node,
+fsal_status_t mem_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 				struct config_error_type *err_type,
 				const struct fsal_up_vector *up_ops);
 
-fsal_status_t mem_update_export(struct fsal_module *fsal_hdl,
-				void *parse_node,
+fsal_status_t mem_update_export(struct fsal_module *fsal_hdl, void *parse_node,
 				struct config_error_type *err_type,
 				struct fsal_export *original,
 				struct fsal_module *updated_super);
 
 const char *str_async_type(uint32_t async_type);
 
-#define mem_free_handle(h) \
-	do { \
-		GSH_UNIQUE_AUTO_TRACEPOINT(fsalmem, mem_free, TRACE_DEBUG, \
+#define mem_free_handle(h)                                      \
+	do {                                                    \
+		GSH_UNIQUE_AUTO_TRACEPOINT(                     \
+			fsalmem, mem_free, TRACE_DEBUG,         \
 			"Freeing handle. hdl: {}, name: {}", h, \
-			TP_STR(h->m_name)); \
-		_mem_free_handle(h); \
+			TP_STR(h->m_name));                     \
+		_mem_free_handle(h);                            \
 	} while (0)
 /**
  * @brief Free a MEM handle

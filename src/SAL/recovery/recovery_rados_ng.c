@@ -66,18 +66,18 @@ static int rados_ng_put(char *key, char *val, char *object)
 	write_op = grace_op;
 	if (!write_op)
 		write_op = rados_create_write_op();
-	rados_write_op_omap_set(write_op, (const char * const*)keys,
-					  (const char * const*)vals, lens, 1);
+	rados_write_op_omap_set(write_op, (const char *const *)keys,
+				(const char *const *)vals, lens, 1);
 	PTHREAD_MUTEX_unlock(&grace_op_lock);
 	if (in_grace)
 		return 0;
 
-	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object,
-				     NULL, 0);
+	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object, NULL,
+				     0);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to put kv ret=%d, key=%s, val=%s",
-			 ret, key, val);
+			 "Failed to put kv ret=%d, key=%s, val=%s", ret, key,
+			 val);
 	}
 	rados_release_write_op(write_op);
 
@@ -96,14 +96,14 @@ static int rados_ng_del(char *key, char *object)
 	PTHREAD_MUTEX_lock(&grace_op_lock);
 	in_grace = grace_op;
 	write_op = in_grace ? grace_op : rados_create_write_op();
-	rados_write_op_omap_rm_keys(write_op, (const char * const*)keys, 1);
+	rados_write_op_omap_rm_keys(write_op, (const char *const *)keys, 1);
 	PTHREAD_MUTEX_unlock(&grace_op_lock);
 
 	if (in_grace)
 		return 0;
 
-	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object,
-				     NULL, 0);
+	ret = rados_write_op_operate(write_op, rados_recov_io_ctx, object, NULL,
+				     0);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to del kv ret=%d, key=%s",
 			 ret, key);
@@ -139,8 +139,8 @@ static int rados_ng_init(void)
 		ret = snprintf(host, sizeof(host), "node%d", g_nodeid);
 
 		if (unlikely(ret >= sizeof(host))) {
-			LogCrit(COMPONENT_CLIENTID,
-				"node%d too long", g_nodeid);
+			LogCrit(COMPONENT_CLIENTID, "node%d too long",
+				g_nodeid);
 			return -ENAMETOOLONG;
 		} else if (unlikely(ret < 0)) {
 			ret = errno;
@@ -164,16 +164,16 @@ static int rados_ng_init(void)
 	gsh_refstr_get(recov_oid);
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(recov_oid->gr_val, len, "%s_recov", host);
+	(void)snprintf(recov_oid->gr_val, len, "%s_recov", host);
 	rcu_set_pointer(&rados_recov_oid, recov_oid);
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
-			rados_kv_param.ceph_conf, rados_kv_param.pool,
-			rados_kv_param.namespace);
+			       rados_kv_param.ceph_conf, rados_kv_param.pool,
+			       rados_kv_param.namespace);
 	if (ret < 0) {
 		gsh_refstr_put(recov_oid);
-		LogEvent(COMPONENT_CLIENTID,
-			"Failed to connect to cluster: %d", ret);
+		LogEvent(COMPONENT_CLIENTID, "Failed to connect to cluster: %d",
+			 ret);
 		return ret;
 	}
 
@@ -257,7 +257,7 @@ void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 	add_rfh_entry_hook add_rfh_entry = pop_args->add_rfh_entry;
 
 	/* extract clid records */
-	dupval = gsh_malloc(val_len +  1);
+	dupval = gsh_malloc(val_len + 1);
 	memcpy(dupval, val, val_len);
 	dupval[val_len] = '\0';
 	cl_name = strtok(dupval, "#");
@@ -276,7 +276,7 @@ void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 
 static void
 rados_ng_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
-				       add_rfh_entry_hook add_rfh_entry)
+				  add_rfh_entry_hook add_rfh_entry)
 {
 	int ret;
 	struct gsh_refstr *recov_oid;
@@ -298,9 +298,10 @@ rados_ng_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
 	}
 }
 
-static void rados_ng_read_recov_clids_takeover(nfs_grace_start_t *gsp,
-					add_clid_entry_hook add_clid_entry,
-					add_rfh_entry_hook add_rfh_entry)
+static void
+rados_ng_read_recov_clids_takeover(nfs_grace_start_t *gsp,
+				   add_clid_entry_hook add_clid_entry,
+				   add_rfh_entry_hook add_rfh_entry)
 {
 	if (!gsp) {
 		rados_ng_read_recov_clids_recover(add_clid_entry,

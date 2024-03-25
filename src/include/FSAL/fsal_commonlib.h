@@ -102,21 +102,16 @@ static inline bool fsal_obj_handle_is(struct fsal_obj_handle *obj_hdl,
 void fsal_pnfs_ds_init(struct fsal_pnfs_ds *pds, struct fsal_module *fsal);
 void fsal_pnfs_ds_fini(struct fsal_pnfs_ds *pds);
 
-int encode_fsid(char *buf,
-		int max,
-		struct fsal_fsid__ *fsid,
+int encode_fsid(char *buf, int max, struct fsal_fsid__ *fsid,
 		enum fsid_type fsid_type);
 
-int decode_fsid(char *buf,
-		int max,
-		struct fsal_fsid__ *fsid,
+int decode_fsid(char *buf, int max, struct fsal_fsid__ *fsid,
 		enum fsid_type fsid_type);
 
 fsal_errors_t fsal_inherit_acls(struct fsal_attrlist *attrs, fsal_acl_t *sacl,
-			       fsal_aceflag_t inherit);
+				fsal_aceflag_t inherit);
 fsal_status_t fsal_remove_access(struct fsal_obj_handle *dir_hdl,
-				 struct fsal_obj_handle *rem_hdl,
-				 bool isdir);
+				 struct fsal_obj_handle *rem_hdl, bool isdir);
 fsal_status_t fsal_rename_access(struct fsal_obj_handle *old_dir_hdl,
 				 struct fsal_obj_handle *src_obj_hdl,
 				 struct fsal_obj_handle *new_dir_hdl,
@@ -126,8 +121,7 @@ bool fsal_can_reuse_mode_to_acl(const fsal_acl_t *sacl);
 fsal_status_t fsal_mode_to_acl(struct fsal_attrlist *attrs, fsal_acl_t *sacl);
 fsal_status_t fsal_acl_to_mode(struct fsal_attrlist *attrs);
 
-void set_common_verifier(struct fsal_attrlist *attrs,
-			 fsal_verifier_t verifier,
+void set_common_verifier(struct fsal_attrlist *attrs, fsal_verifier_t verifier,
 			 bool trunc_verif);
 
 void update_share_counters(struct fsal_share *share,
@@ -147,15 +141,13 @@ static inline void update_share_counters_locked(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t check_share_conflict(struct fsal_share *share,
-				   fsal_openflags_t openflags,
-				   bool bypass);
+				   fsal_openflags_t openflags, bool bypass);
 
-static inline
-fsal_status_t check_share_conflict_and_update(struct fsal_obj_handle *obj_hdl,
-					      struct fsal_share *share,
-					      fsal_openflags_t old_openflags,
-					      fsal_openflags_t new_openflags,
-					      bool bypass)
+static inline fsal_status_t
+check_share_conflict_and_update(struct fsal_obj_handle *obj_hdl,
+				struct fsal_share *share,
+				fsal_openflags_t old_openflags,
+				fsal_openflags_t new_openflags, bool bypass)
 {
 	fsal_status_t status;
 
@@ -169,12 +161,10 @@ fsal_status_t check_share_conflict_and_update(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-static inline fsal_status_t
-check_share_conflict_and_update_locked(struct fsal_obj_handle *obj_hdl,
-				       struct fsal_share *share,
-				       fsal_openflags_t old_openflags,
-				       fsal_openflags_t new_openflags,
-				       bool bypass)
+static inline fsal_status_t check_share_conflict_and_update_locked(
+	struct fsal_obj_handle *obj_hdl, struct fsal_share *share,
+	fsal_openflags_t old_openflags, fsal_openflags_t new_openflags,
+	bool bypass)
 {
 	fsal_status_t status;
 
@@ -227,9 +217,8 @@ typedef fsal_status_t (*fsal_close_func)(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-static inline
-fsal_status_t fsal_close_fd(struct fsal_obj_handle *obj_hdl,
-			    struct fsal_fd *fd)
+static inline fsal_status_t fsal_close_fd(struct fsal_obj_handle *obj_hdl,
+					  struct fsal_fd *fd)
 {
 	return obj_hdl->obj_ops->close_func(obj_hdl, fd);
 }
@@ -244,36 +233,29 @@ fsal_status_t fsal_close_fd(struct fsal_obj_handle *obj_hdl,
  * @return FSAL status.
  */
 
-static inline
-fsal_status_t fsal_reopen_fd(struct fsal_obj_handle *obj_hdl,
-			     fsal_openflags_t openflags,
-			     struct fsal_fd *fd)
+static inline fsal_status_t fsal_reopen_fd(struct fsal_obj_handle *obj_hdl,
+					   fsal_openflags_t openflags,
+					   struct fsal_fd *fd)
 {
 	return obj_hdl->obj_ops->reopen_func(obj_hdl, openflags, fd);
 }
 
 fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
-			    struct fsal_fd *fsal_fd,
-			    bool is_reclaiming);
+			    struct fsal_fd *fsal_fd, bool is_reclaiming);
 
 fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 				   struct fsal_obj_handle *obj_hdl,
 				   struct fsal_fd *my_fd,
 				   struct fsal_fd *tmp_fd,
-				   fsal_openflags_t openflags,
-				   bool bypass,
+				   fsal_openflags_t openflags, bool bypass,
 				   struct fsal_share *share);
 
 fsal_status_t fsal_start_io(struct fsal_fd **out_fd,
 			    struct fsal_obj_handle *obj_hdl,
-			    struct fsal_fd *obj_fd,
-			    struct fsal_fd *tmp_fd,
-			    struct state_t *state,
-			    fsal_openflags_t openflags,
-			    bool open_for_locks,
-			    bool *reusing_open_state_fd,
-			    bool bypass,
-			    struct fsal_share *share);
+			    struct fsal_fd *obj_fd, struct fsal_fd *tmp_fd,
+			    struct state_t *state, fsal_openflags_t openflags,
+			    bool open_for_locks, bool *reusing_open_state_fd,
+			    bool bypass, struct fsal_share *share);
 
 fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
 			       struct fsal_fd *fsal_fd);
@@ -318,28 +300,24 @@ static inline struct state_t *init_state(struct state_t *state,
 
 	if (related_state) {
 		memcpy(state->state_data.lock.openstate_key,
-		       related_state->stateid_other,
-		       OTHERSIZE);
+		       related_state->stateid_other, OTHERSIZE);
 	}
 
 	return state;
 }
 
-bool check_verifier_stat(struct stat *st,
-			 fsal_verifier_t verifier,
+bool check_verifier_stat(struct stat *st, fsal_verifier_t verifier,
 			 bool trunc_verif);
 
 bool check_verifier_attrlist(struct fsal_attrlist *attrs,
-			     fsal_verifier_t verifier,
-			     bool trunc_verif);
+			     fsal_verifier_t verifier, bool trunc_verif);
 
 bool fsal_common_is_referral(struct fsal_obj_handle *obj_hdl,
 			     struct fsal_attrlist *attrs, bool cache_attrs);
 
-fsal_status_t update_export(struct fsal_module *fsal_hdl,
-			    void *parse_node,
+fsal_status_t update_export(struct fsal_module *fsal_hdl, void *parse_node,
 			    struct config_error_type *err_type,
 			    struct fsal_export *original,
 			    struct fsal_module *updated_super);
 
-#endif				/* FSAL_COMMONLIB_H */
+#endif /* FSAL_COMMONLIB_H */

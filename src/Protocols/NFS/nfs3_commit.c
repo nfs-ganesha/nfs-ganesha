@@ -36,7 +36,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "nfs23.h"
@@ -69,18 +69,16 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	struct fsal_obj_handle *obj = NULL;
 	int rc = NFS_REQ_OK;
 
-	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_commit3.file,
-			  "");
+	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_commit3.file, "");
 
 	/* To avoid setting it on each error case */
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow
-		= FALSE;
-	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow
-		= FALSE;
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.before.attributes_follow =
+		FALSE;
+	res->res_commit3.COMMIT3res_u.resfail.file_wcc.after.attributes_follow =
+		FALSE;
 
 	obj = nfs3_FhandleToCache(&arg->arg_commit3.file,
-				    &res->res_commit3.status,
-				    &rc);
+				  &res->res_commit3.status, &rc);
 
 	if (obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -108,13 +106,13 @@ int nfs3_commit(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	       sizeof(writeverf3));
 	res->res_commit3.status = NFS3_OK;
 
- out:
+out:
 
 	if (obj)
 		obj->obj_ops->put_ref(obj);
 
 	return rc;
-}				/* nfs3_commit */
+} /* nfs3_commit */
 
 /**
  * @brief Free the result structure allocated for nfs3_commit.

@@ -46,22 +46,22 @@
  *        - ERR_FSAL_NO_ERROR     (no error)
  *        - Another error code if an error occurred.
  */
-fsal_status_t
-GPFSFSAL_rename(struct fsal_obj_handle *old_hdl, const char *old_name,
-		struct fsal_obj_handle *new_hdl, const char *new_name)
+fsal_status_t GPFSFSAL_rename(struct fsal_obj_handle *old_hdl,
+			      const char *old_name,
+			      struct fsal_obj_handle *new_hdl,
+			      const char *new_name)
 {
-
 	fsal_status_t status;
 	struct stat buffstat;
 	struct gpfs_fsal_obj_handle *old_gpfs_hdl, *new_gpfs_hdl;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	old_gpfs_hdl =
-	    container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+		container_of(old_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	new_gpfs_hdl =
-	    container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
+		container_of(new_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	/* build file paths */
 	status = fsal_internal_stat_name(export_fd, old_gpfs_hdl->handle,
@@ -69,7 +69,7 @@ GPFSFSAL_rename(struct fsal_obj_handle *old_hdl, const char *old_name,
 	if (FSAL_IS_ERROR(status))
 		return status;
 
-  /*************************************
+	/*************************************
    * Rename the file on the filesystem *
    *************************************/
 	status = fsal_internal_rename_fh(export_fd, old_gpfs_hdl->handle,

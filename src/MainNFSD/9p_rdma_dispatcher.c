@@ -37,7 +37,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -69,9 +69,10 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 	rcu_register_thread();
 	if (priv) {
 		if (priv->pconn) {
-			LogDebug(COMPONENT_9P,
-				 "9P/RDMA: waiting till we're done with all requests on trans [%p]",
-				 trans);
+			LogDebug(
+				COMPONENT_9P,
+				"9P/RDMA: waiting till we're done with all requests on trans [%p]",
+				trans);
 
 			while (atomic_fetch_uint32_t(&priv->pconn->refcount) !=
 			       0) {
@@ -110,17 +111,17 @@ void _9p_rdma_cleanup_conn(msk_trans_t *trans)
 	PTHREAD_ATTR_init(&attr_thr);
 	PTHREAD_ATTR_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
 	PTHREAD_ATTR_setdetachstate(&attr_thr, PTHREAD_CREATE_DETACHED);
-		return;
+	return;
 
 	if (pthread_create(&thr_id, &attr_thr, _9p_rdma_cleanup_conn_thread,
 			   trans))
-		LogMajor(COMPONENT_9P,
-			 "9P/RDMA : dispatcher cleanup could not spawn a related thread");
+		LogMajor(
+			COMPONENT_9P,
+			"9P/RDMA : dispatcher cleanup could not spawn a related thread");
 	else
 		LogDebug(COMPONENT_9P,
 			 "9P/RDMA: thread #%x spawned to cleanup trans [%p]",
-			 (unsigned int)thr_id,
-			 trans);
+			 (unsigned int)thr_id, trans);
 
 	PTHREAD_ATTR_destroy(&attr_thr);
 }
@@ -172,12 +173,10 @@ void *_9p_rdma_thread(void *Arg)
 	}
 	memcpy(&p_9p_conn->addrpeer, addrpeer,
 	       MIN(sizeof(*addrpeer), sizeof(p_9p_conn->addrpeer)));
-	p_9p_conn->client =
-		get_gsh_client(&p_9p_conn->addrpeer, false);
+	p_9p_conn->client = get_gsh_client(&p_9p_conn->addrpeer, false);
 
 	/* Init the fids pointers array */
-	memset(&p_9p_conn->fids,
-	       0,
+	memset(&p_9p_conn->fids, 0,
 	       _9P_FID_PER_CONN * sizeof(struct _9p_fid *));
 
 	/* Set initial msize.
@@ -190,9 +189,10 @@ void *_9p_rdma_thread(void *Arg)
 	/* Finalize accept */
 	rc = msk_finalize_accept(trans);
 	if (rc != 0) {
-		LogMajor(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not finalize accept, rc=%u",
-			 rc);
+		LogMajor(
+			COMPONENT_9P,
+			"9P/RDMA: trans handler could not finalize accept, rc=%u",
+			rc);
 		goto error;
 	}
 out:
@@ -207,7 +207,7 @@ error:
 
 	_9p_rdma_cleanup_conn_thread(trans);
 	goto out;
-}				/* _9p_rdma_handle_trans */
+} /* _9p_rdma_handle_trans */
 
 static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 {
@@ -222,14 +222,15 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 
 	/* register output buffers */
 	pernic->outmr = msk_reg_mr(trans, outrdmabuf,
-			_9p_param._9p_rdma_outpool_size
-			* _9p_param._9p_rdma_msize,
-			IBV_ACCESS_LOCAL_WRITE);
+				   _9p_param._9p_rdma_outpool_size *
+					   _9p_param._9p_rdma_msize,
+				   IBV_ACCESS_LOCAL_WRITE);
 	if (pernic->outmr == NULL) {
 		rc = errno;
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: pernic setup could not register outrdmabuf, errno: %s (%d)",
-			 strerror(rc), rc);
+		LogFatal(
+			COMPONENT_9P,
+			"9P/RDMA: pernic setup could not register outrdmabuf, errno: %s (%d)",
+			strerror(rc), rc);
 	}
 
 	/* register input buffers */
@@ -239,14 +240,15 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 
 	/* Register rdmabuf */
 	pernic->inmr = msk_reg_mr(trans, pernic->rdmabuf,
-				  _9p_param._9p_rdma_inpool_size
-					* _9p_param._9p_rdma_msize,
+				  _9p_param._9p_rdma_inpool_size *
+					  _9p_param._9p_rdma_msize,
 				  IBV_ACCESS_LOCAL_WRITE);
 	if (pernic->inmr == NULL) {
 		rc = errno;
-		LogFatal(COMPONENT_9P,
-			 "9P/RDMA: trans handler could not register rdmabuf, errno: %s (%d)",
-			 strerror(rc), rc);
+		LogFatal(
+			COMPONENT_9P,
+			"9P/RDMA: trans handler could not register rdmabuf, errno: %s (%d)",
+			strerror(rc), rc);
 	}
 
 	/* Get prepared to recv data */
@@ -255,19 +257,19 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 				   sizeof(*pernic->rdata));
 
 	for (i = 0; i < _9p_param._9p_rdma_inpool_size; i++) {
-		pernic->rdata[i].data = pernic->rdmabuf +
-					i * _9p_param._9p_rdma_msize;
+		pernic->rdata[i].data =
+			pernic->rdmabuf + i * _9p_param._9p_rdma_msize;
 		pernic->rdata[i].max_size = _9p_param._9p_rdma_msize;
 		pernic->rdata[i].mr = pernic->inmr;
 
 		rc = msk_post_recv(trans, pernic->rdata + i,
 				   _9p_rdma_callback_recv,
-				   _9p_rdma_callback_recv_err,
-				   NULL);
+				   _9p_rdma_callback_recv_err, NULL);
 		if (rc != 0) {
-			LogEvent(COMPONENT_9P,
-				 "9P/RDMA: trans handler could post_recv first byte of data[%u], rc=%u",
-				 i, rc);
+			LogEvent(
+				COMPONENT_9P,
+				"9P/RDMA: trans handler could post_recv first byte of data[%u], rc=%u",
+				i, rc);
 			msk_dereg_mr(pernic->inmr);
 			msk_dereg_mr(pernic->outmr);
 			gsh_free(pernic->rdmabuf);
@@ -288,20 +290,18 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	msk_data_t *wdata;
 	struct _9p_outqueue *outqueue;
 
-	outrdmabuf = gsh_malloc(_9p_param._9p_rdma_outpool_size
-				* _9p_param._9p_rdma_msize);
+	outrdmabuf = gsh_malloc(_9p_param._9p_rdma_outpool_size *
+				_9p_param._9p_rdma_msize);
 
 	*poutrdmabuf = outrdmabuf;
 
-	wdata = gsh_malloc(_9p_param._9p_rdma_outpool_size
-			   * sizeof(*wdata));
+	wdata = gsh_malloc(_9p_param._9p_rdma_outpool_size * sizeof(*wdata));
 
 	for (i = 0; i < _9p_param._9p_rdma_outpool_size; i++) {
-		wdata[i].data = outrdmabuf +
-				i * _9p_param._9p_rdma_msize;
+		wdata[i].data = outrdmabuf + i * _9p_param._9p_rdma_msize;
 		wdata[i].max_size = _9p_param._9p_rdma_msize;
 		if (i != _9p_param._9p_rdma_outpool_size - 1)
-			wdata[i].next = &wdata[i+1];
+			wdata[i].next = &wdata[i + 1];
 		else
 			wdata[i].next = NULL;
 	}
@@ -357,7 +357,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	trans_attr.sq_depth = _9p_param._9p_rdma_outpool_size + 1;
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(port, sizeof(port), "%d", _9p_param._9p_rdma_port);
+	(void)snprintf(port, sizeof(port), "%d", _9p_param._9p_rdma_port);
 	trans_attr.port = port;
 	trans_attr.node = "::";
 	trans_attr.use_srq = 1;
@@ -374,7 +374,7 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	LogInfo(COMPONENT_9P_DISPATCH, "Entering 9P/RDMA dispatcher");
 
 	LogDebug(COMPONENT_9P_DISPATCH, "My pthread id is %p",
-		 (void *) pthread_self());
+		 (void *)pthread_self());
 
 	/* Prepare attr_thr for dispatch */
 	memset((char *)&attr_thr, 0, sizeof(attr_thr));
@@ -402,37 +402,37 @@ void *_9p_rdma_dispatcher_thread(void *Arg)
 	while (1) {
 		child_trans = msk_accept_one(trans);
 		if (child_trans == NULL)
-			LogMajor(COMPONENT_9P,
-				 "9P/RDMA : dispatcher failed to accept a new client");
+			LogMajor(
+				COMPONENT_9P,
+				"9P/RDMA : dispatcher failed to accept a new client");
 		else {
 			/* Create output buffers on first connection.
 			 * need it here because we don't want multiple
 			 * children to do this job.
 			 */
 			if (!outrdmabuf) {
-				_9p_rdma_setup_global(&outrdmabuf,
-						      &wdata,
+				_9p_rdma_setup_global(&outrdmabuf, &wdata,
 						      &outqueue);
 			}
 			_9p_rdma_setup_pernic(child_trans, outrdmabuf);
 			child_trans->private_data = outqueue;
 
-			if (pthread_create(&thrid_handle_trans,
-					   &attr_thr,
-					   _9p_rdma_thread,
-					   child_trans))
-				LogMajor(COMPONENT_9P,
-					 "9P/RDMA : dispatcher accepted a new client but could not spawn a related thread");
+			if (pthread_create(&thrid_handle_trans, &attr_thr,
+					   _9p_rdma_thread, child_trans))
+				LogMajor(
+					COMPONENT_9P,
+					"9P/RDMA : dispatcher accepted a new client but could not spawn a related thread");
 			else
-				LogEvent(COMPONENT_9P,
-					 "9P/RDMA: thread #%x spawned to managed new child_trans [%p]",
-					 (unsigned int)thrid_handle_trans,
-					 child_trans);
+				LogEvent(
+					COMPONENT_9P,
+					"9P/RDMA: thread #%x spawned to managed new child_trans [%p]",
+					(unsigned int)thrid_handle_trans,
+					child_trans);
 		}
-	}			/* for( ;; ) */
+	} /* for( ;; ) */
 
 	PTHREAD_ATTR_destroy(&attr_thr);
 	_9p_rdma_cleanup_global(outrdmabuf, wdata, outqueue);
 	rcu_unregister_thread();
 	pthread_exit(NULL);
-}				/* _9p_rdma_dispatcher_thread */
+} /* _9p_rdma_dispatcher_thread */

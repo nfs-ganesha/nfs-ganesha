@@ -121,8 +121,8 @@ void pnfs_ds_free(struct fsal_pnfs_ds *pds)
 bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 {
 	struct avltree_node *node;
-	void **cache_slot = (void **)
-		&(server_by_id.cache[id_cache_offsetof(pds->id_servers)]);
+	void **cache_slot = (void **)&(
+		server_by_id.cache[id_cache_offsetof(pds->id_servers)]);
 
 	/* we will hold a ref starting out... */
 	assert(pds->ds_refcount == 1);
@@ -139,7 +139,7 @@ bool pnfs_ds_insert(struct fsal_pnfs_ds *pds)
 	atomic_store_voidptr(cache_slot, &pds->ds_node);
 	glist_add_tail(&dslist, &pds->ds_list);
 
-	pnfs_ds_get_ref(pds);		/* == 2 */
+	pnfs_ds_get_ref(pds); /* == 2 */
 	if (pds->mds_export != NULL) {
 		/* also bump related export for duration */
 		get_gsh_export_ref(pds->mds_export);
@@ -168,8 +168,8 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 	struct fsal_pnfs_ds v;
 	struct avltree_node *node;
 	struct fsal_pnfs_ds *pds;
-	void **cache_slot = (void **)
-		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
+	void **cache_slot =
+		(void **)&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 
 	v.id_servers = id_servers;
 	PTHREAD_RWLOCK_rdlock(&server_by_id.sid_lock);
@@ -198,7 +198,7 @@ struct fsal_pnfs_ds *pnfs_ds_get(uint16_t id_servers)
 		return NULL;
 	}
 
- out:
+out:
 	pnfs_ds_get_ref(pds);
 
 	PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
@@ -236,16 +236,16 @@ void pnfs_ds_remove(uint16_t id_servers)
 	struct fsal_pnfs_ds v;
 	struct avltree_node *node;
 	struct fsal_pnfs_ds *pds = NULL;
-	void **cache_slot = (void **)
-		&(server_by_id.cache[id_cache_offsetof(id_servers)]);
+	void **cache_slot =
+		(void **)&(server_by_id.cache[id_cache_offsetof(id_servers)]);
 
 	v.id_servers = id_servers;
 	PTHREAD_RWLOCK_wrlock(&server_by_id.sid_lock);
 
 	node = avltree_lookup(&v.ds_node, &server_by_id.t);
 	if (node) {
-		struct avltree_node *cnode = (struct avltree_node *)
-			 atomic_fetch_voidptr(cache_slot);
+		struct avltree_node *cnode =
+			(struct avltree_node *)atomic_fetch_voidptr(cache_slot);
 
 		/* Remove from the AVL cache and tree */
 		if (node == cnode)
@@ -319,7 +319,8 @@ void remove_all_dss(void)
 	PTHREAD_RWLOCK_unlock(&server_by_id.sid_lock);
 
 	/* Now we can safely process the list without the lock */
-	glist_for_each_safe(glist, glistn, &tmplist) {
+	glist_for_each_safe(glist, glistn, &tmplist)
+	{
 		pds = glist_entry(glist, struct fsal_pnfs_ds, ds_list);
 
 		/* Remove and destroy the fsal_pnfs_ds */
@@ -338,7 +339,7 @@ void remove_all_dss(void)
  */
 
 static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
-		       struct config_error_type *err_type)
+			   struct config_error_type *err_type)
 {
 	struct fsal_args *fp = self_struct;
 	struct fsal_module **pds_fsal = link_mem;
@@ -369,12 +370,9 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 	fsal_put(fsal);
 
 	if (status.major != ERR_FSAL_NO_ERROR) {
-		LogCrit(COMPONENT_CONFIG,
-			"Could not create pNFS DS");
-		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL %s fsal_refcount %"PRIu32,
-			     fsal->name,
-			     atomic_fetch_int32_t(&fsal->refcount));
+		LogCrit(COMPONENT_CONFIG, "Could not create pNFS DS");
+		LogFullDebug(COMPONENT_FSAL, "FSAL %s fsal_refcount %" PRIu32,
+			     fsal->name, atomic_fetch_int32_t(&fsal->refcount));
 		err_type->init = true;
 		errcnt++;
 		goto err;
@@ -429,8 +427,7 @@ static int pds_commit(void *node, void *link_mem, void *self_struct,
 
 	/* redundant probe before insert??? */
 	if (probe != NULL) {
-		LogDebug(COMPONENT_CONFIG,
-			 "Server %d already exists!",
+		LogDebug(COMPONENT_CONFIG, "Server %d already exists!",
 			 pds->id_servers);
 		pnfs_ds_put(probe);
 		err_type->exists = true;
@@ -438,15 +435,13 @@ static int pds_commit(void *node, void *link_mem, void *self_struct,
 	}
 
 	if (!pnfs_ds_insert(pds)) {
-		LogCrit(COMPONENT_CONFIG,
-			"Server id %d already in use.",
+		LogCrit(COMPONENT_CONFIG, "Server id %d already in use.",
 			pds->id_servers);
 		err_type->exists = true;
 		return 1;
 	}
 
-	LogEvent(COMPONENT_CONFIG,
-		 "DS %d created at FSAL (%s) with path (%s)",
+	LogEvent(COMPONENT_CONFIG, "DS %d created at FSAL (%s) with path (%s)",
 		 pds->id_servers, pds->fsal->name, pds->fsal->path);
 	return 0;
 }
@@ -455,14 +450,13 @@ static int pds_commit(void *node, void *link_mem, void *self_struct,
  * @brief Display the DS block
  */
 
-static void pds_display(const char *step, void *node,
-		       void *link_mem, void *self_struct)
+static void pds_display(const char *step, void *node, void *link_mem,
+			void *self_struct)
 {
 	struct fsal_pnfs_ds *pds = self_struct;
 	struct fsal_module *fsal = pds->fsal;
 
-	LogMidDebug(COMPONENT_CONFIG,
-		    "%s %p DS %d FSAL (%s) with path (%s)",
+	LogMidDebug(COMPONENT_CONFIG, "%s %p DS %d FSAL (%s) with path (%s)",
 		    step, pds, pds->id_servers, fsal->name, fsal->path);
 }
 
@@ -474,8 +468,7 @@ static void pds_display(const char *step, void *node,
  */
 
 static struct config_item fsal_params[] = {
-	CONF_ITEM_STR("Name", 1, 10, NULL,
-		      fsal_args, name), /* cheater union */
+	CONF_ITEM_STR("Name", 1, 10, NULL, fsal_args, name), /* cheater union */
 	CONFIG_EOL
 };
 
@@ -489,10 +482,8 @@ static struct config_item fsal_params[] = {
  */
 
 static struct config_item pds_items[] = {
-	CONF_ITEM_UI16("Number", 0, UINT16_MAX, 0,
-		       fsal_pnfs_ds, id_servers),
-	CONF_RELAX_BLOCK("FSAL", fsal_params,
-			 fsal_init, fsal_cfg_commit,
+	CONF_ITEM_UI16("Number", 0, UINT16_MAX, 0, fsal_pnfs_ds, id_servers),
+	CONF_RELAX_BLOCK("FSAL", fsal_params, fsal_init, fsal_cfg_commit,
 			 fsal_pnfs_ds, fsal),
 	CONFIG_EOL
 };
@@ -520,15 +511,11 @@ static struct config_block pds_block = {
  *         otherwise, the number of DS blocks.
  */
 
-int ReadDataServers(config_file_t in_config,
-		    struct config_error_type *err_type)
+int ReadDataServers(config_file_t in_config, struct config_error_type *err_type)
 {
 	int rc;
 
-	rc = load_config_from_parse(in_config,
-				    &pds_block,
-				    NULL,
-				    false,
+	rc = load_config_from_parse(in_config, &pds_block, NULL, false,
 				    err_type);
 	if (!config_error_is_harmless(err_type))
 		return -1;

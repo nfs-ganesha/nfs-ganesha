@@ -55,16 +55,15 @@ int nlm4_Sm_Notify(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	struct gsh_client *original_client = op_ctx->client;
 
 	if (!is_loopback(op_ctx->caller_addr)) {
-		LogEvent(COMPONENT_NLM,
-			 "Client %s sent an SM_NOTIFY, ignoring",
+		LogEvent(COMPONENT_NLM, "Client %s sent an SM_NOTIFY, ignoring",
 			 op_ctx->client->hostaddr_str);
 		return NFS_REQ_OK;
 	}
 
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling nlm4_sm_notify for %s state %"
-		 PRIu32,
-		 arg->name, arg->state);
+	LogDebug(
+		COMPONENT_NLM,
+		"REQUEST PROCESSING: Calling nlm4_sm_notify for %s state %" PRIu32,
+		arg->name, arg->state);
 
 	/* We don't have a client for the call to get_nsm_client. Note that
 	 * nsm_use_caller_name is true or not, note that we ALWAYS look up

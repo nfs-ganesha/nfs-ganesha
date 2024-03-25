@@ -55,7 +55,6 @@ int _9p_auth(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	char *aname_str = NULL;
 	u32 *n_aname = NULL;
 
-
 	/* Get data */
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, afid, u32);
@@ -65,8 +64,8 @@ int _9p_auth(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	LogDebug(COMPONENT_9P,
 		 "TAUTH: tag=%u afid=%d uname='%.*s' aname='%.*s' n_uname=%d",
-		 (u32) *msgtag, *afid, (int) *uname_len, uname_str,
-		 (int) *aname_len, aname_str, *n_aname);
+		 (u32)*msgtag, *afid, (int)*uname_len, uname_str,
+		 (int)*aname_len, aname_str, *n_aname);
 
 	if (*afid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);

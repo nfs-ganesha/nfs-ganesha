@@ -50,12 +50,12 @@ typedef enum negative_cache_entity_type {
 
 /* Struct representing a user or group entry in the negative cache */
 typedef struct negative_cache_entity {
-	struct gsh_buffdesc name;	/*< Entity name */
-	struct avltree_node name_node;	/*< Entity tree node */
+	struct gsh_buffdesc name; /*< Entity name */
+	struct avltree_node name_node; /*< Entity tree node */
 	time_t epoch; /*< Entity creation timestamp */
 
 	TAILQ_ENTRY(negative_cache_entity) queue_entry; /*< Entity queue node */
-	char name_buffer[];	/*< Entity name buffer */
+	char name_buffer[]; /*< Entity name buffer */
 } negative_cache_entity_t;
 
 /* Lock that protects the idmapper negative user cache */
@@ -75,8 +75,8 @@ pthread_rwlock_t idmapper_negative_cache_group_lock;
  * The tail of the queue contains the entry with most time-validity.
  * The eviction happens from the head, and insertion happens into the tail.
  */
-static TAILQ_HEAD(idmapping_negative_cache_queue, negative_cache_entity)
-	negative_user_fifo_queue;
+static TAILQ_HEAD(idmapping_negative_cache_queue,
+		  negative_cache_entity) negative_user_fifo_queue;
 
 /* The fifo queue (similar to above) for storing negative groups */
 struct idmapping_negative_cache_queue negative_group_fifo_queue;
@@ -87,7 +87,6 @@ static struct avltree uname_tree;
 /* AVL-Tree cache for storing negative cache group name node */
 static struct avltree gname_tree;
 
-
 /**
  * @brief Checks if a negative user/group entry is expired
  *
@@ -96,7 +95,7 @@ static struct avltree gname_tree;
 static bool is_negative_cache_entity_expired(negative_cache_entity_t *entity)
 {
 	return (time(NULL) - entity->epoch) >
-		nfs_param.directory_services_param.negative_cache_time_validity;
+	       nfs_param.directory_services_param.negative_cache_time_validity;
 }
 
 /**
@@ -104,8 +103,9 @@ static bool is_negative_cache_entity_expired(negative_cache_entity_t *entity)
  *
  * @note The caller must hold the corresponding entity lock for write.
  */
-static void remove_negative_cache_entity(negative_cache_entity_t *entity,
-	negative_cache_entity_type_t entity_type)
+static void
+remove_negative_cache_entity(negative_cache_entity_t *entity,
+			     negative_cache_entity_type_t entity_type)
 {
 	struct avltree *cache_tree;
 	struct idmapping_negative_cache_queue *cache_queue;
@@ -121,7 +121,7 @@ static void remove_negative_cache_entity(negative_cache_entity_t *entity,
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
-			"Unknown negative cache entity type: %d", entity_type);
+			 "Unknown negative cache entity type: %d", entity_type);
 	}
 	avltree_remove(&entity->name_node, cache_tree);
 	TAILQ_REMOVE(cache_queue, entity, queue_entry);
@@ -135,8 +135,8 @@ static void remove_negative_cache_entity(negative_cache_entity_t *entity,
  * validity, the reaper reaps from the queue head in the same order. It stops
  * when it first encounters a non-expired entry.
  */
-static void reap_negative_cache_entities(
-	negative_cache_entity_type_t entity_type)
+static void
+reap_negative_cache_entities(negative_cache_entity_type_t entity_type)
 {
 	struct negative_cache_entity *entity;
 	struct idmapping_negative_cache_queue *cache_queue;
@@ -153,7 +153,7 @@ static void reap_negative_cache_entities(
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
-			"Unknown negative cache entity type: %d", entity_type);
+			 "Unknown negative cache entity type: %d", entity_type);
 	}
 
 	PTHREAD_RWLOCK_wrlock(entity_lock);
@@ -173,11 +173,11 @@ static void reap_negative_cache_entities(
 void idmapper_negative_cache_reap(void)
 {
 	LogFullDebug(COMPONENT_IDMAPPER,
-		"Idmapper negative-cache reaper run started");
+		     "Idmapper negative-cache reaper run started");
 	reap_negative_cache_entities(USER);
 	reap_negative_cache_entities(GROUP);
 	LogFullDebug(COMPONENT_IDMAPPER,
-		"Idmapper negative-cache reaper run ended");
+		     "Idmapper negative-cache reaper run ended");
 }
 
 /*
@@ -188,7 +188,7 @@ void idmapper_negative_cache_reap(void)
  * @return 1 if @arg node1 is greater than @arg node2
  */
 static int node_comparator(const struct avltree_node *node1,
-	const struct avltree_node *node2)
+			   const struct avltree_node *node2)
 {
 	negative_cache_entity_t *entity1 =
 		avltree_container_of(node1, negative_cache_entity_t, name_node);
@@ -242,7 +242,7 @@ static void idmapper_negative_cache_add_entity_by_name(
 		cache_tree = &uname_tree;
 		cache_queue = &negative_user_fifo_queue;
 		max_cache_entities = nfs_param.directory_services_param
-			.negative_cache_users_max_count;
+					     .negative_cache_users_max_count;
 		entity_type_string = (char *)"user";
 		cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_USER;
 		break;
@@ -250,21 +250,21 @@ static void idmapper_negative_cache_add_entity_by_name(
 		cache_tree = &gname_tree;
 		cache_queue = &negative_group_fifo_queue;
 		max_cache_entities = nfs_param.directory_services_param
-			.negative_cache_groups_max_count;
+					     .negative_cache_groups_max_count;
 		entity_type_string = (char *)"group";
 		cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_GROUP;
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
-			"Unknown negative cache entity type: %d", entity_type);
+			 "Unknown negative cache entity type: %d", entity_type);
 	}
 
 	old_node = avltree_insert(&new_entity->name_node, cache_tree);
 
 	/* Unlikely that the node already exists. If it does, we update it */
 	if (unlikely(old_node)) {
-		old_entity = avltree_container_of(old_node,
-			negative_cache_entity_t, name_node);
+		old_entity = avltree_container_of(
+			old_node, negative_cache_entity_t, name_node);
 		old_entity->epoch = time(NULL);
 		/* Move entity to the tail of the queue */
 		TAILQ_REMOVE(cache_queue, old_entity, queue_entry);
@@ -285,7 +285,7 @@ static void idmapper_negative_cache_add_entity_by_name(
 			time(NULL) - cache_queue_head->epoch;
 		remove_negative_cache_entity(cache_queue_head, entity_type);
 		idmapper_monitoring__evicted_cache_entity(cache_entity,
-			cached_duration);
+							  cached_duration);
 	}
 }
 
@@ -330,9 +330,7 @@ static bool idmapper_negative_cache_lookup_entity_by_name(
 	struct avltree *cache_tree;
 	struct avltree_node *cache_node;
 	negative_cache_entity_t *cache_entity;
-	negative_cache_entity_t prototype = {
-		.name = *name
-	};
+	negative_cache_entity_t prototype = { .name = *name };
 
 	switch (entity_type) {
 	case USER:
@@ -343,14 +341,14 @@ static bool idmapper_negative_cache_lookup_entity_by_name(
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
-			"Unknown negative cache entity type: %d", entity_type);
+			 "Unknown negative cache entity type: %d", entity_type);
 	}
 	cache_node = avltree_lookup(&prototype.name_node, cache_tree);
 	if (!cache_node)
 		return false;
 
 	cache_entity = avltree_container_of(cache_node, negative_cache_entity_t,
-		name_node);
+					    name_node);
 	return is_negative_cache_entity_expired(cache_entity) ? false : true;
 }
 
@@ -363,8 +361,7 @@ static bool idmapper_negative_cache_lookup_entity_by_name(
  *
  * @return true on success, false otherwise.
  */
-bool idmapper_negative_cache_lookup_user_by_name(
-	const struct gsh_buffdesc *name)
+bool idmapper_negative_cache_lookup_user_by_name(const struct gsh_buffdesc *name)
 {
 	return idmapper_negative_cache_lookup_entity_by_name(name, USER);
 }
@@ -387,8 +384,8 @@ bool idmapper_negative_cache_lookup_group_by_name(
 /**
  * @brief Remove all negative cache entities of input @arg entity_type
  */
-static void remove_all_negative_cache_entities(
-	negative_cache_entity_type_t entity_type)
+static void
+remove_all_negative_cache_entities(negative_cache_entity_type_t entity_type)
 {
 	struct avltree *cache_tree;
 	pthread_rwlock_t *entity_lock;
@@ -406,15 +403,14 @@ static void remove_all_negative_cache_entities(
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
-			"Unknown negative cache entity type: %d", entity_type);
+			 "Unknown negative cache entity type: %d", entity_type);
 	}
 
 	PTHREAD_RWLOCK_wrlock(entity_lock);
-	for (node = avltree_first(cache_tree);
-	     node != NULL;
+	for (node = avltree_first(cache_tree); node != NULL;
 	     node = avltree_first(cache_tree)) {
 		entity = avltree_container_of(node, negative_cache_entity_t,
-			name_node);
+					      name_node);
 		remove_negative_cache_entity(entity, entity_type);
 	}
 	assert(avltree_first(cache_tree) == NULL);

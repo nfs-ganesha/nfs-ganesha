@@ -25,7 +25,7 @@
 #include "saunafs/saunafs_c_api.h"
 
 #define SAUNAFS_VERSION(major, minor, micro) \
-		(0x010000 * major + 0x0100 * minor + micro)
+	(0x010000 * major + 0x0100 * minor + micro)
 #define kDisconnectedChunkServerVersion SAUNAFS_VERSION(256, 0, 0)
 
 #define SFS_NAME_MAX 255
@@ -39,16 +39,16 @@ static const int kNFS4_ERROR = -1;
 
 #define SPECIAL_INODE_BASE 0xFFFFFFF0U
 #define SPECIAL_INODE_ROOT 0x01U
-#define MAX_REGULAR_INODE  (SPECIAL_INODE_BASE - 0x01U)
+#define MAX_REGULAR_INODE (SPECIAL_INODE_BASE - 0x01U)
 
-#define SAUNAFS_SUPPORTED_ATTRS                                           \
+#define SAUNAFS_SUPPORTED_ATTRS                                               \
 	(ATTR_TYPE | ATTR_SIZE | ATTR_FSID | ATTR_FILEID | ATTR_MODE |        \
 	 ATTR_NUMLINKS | ATTR_OWNER | ATTR_GROUP | ATTR_ATIME | ATTR_CTIME |  \
 	 ATTR_MTIME | ATTR_CHANGE | ATTR_SPACEUSED | ATTR_RAWDEV | ATTR_ACL | \
 	 ATTR4_XATTR)
 
 #define SAUNAFS_BIGGEST_STRIPE_COUNT 4096
-#define SAUNAFS_STD_CHUNK_PART_TYPE  0
+#define SAUNAFS_STD_CHUNK_PART_TYPE 0
 #define SAUNAFS_EXPECTED_BACKUP_DS_COUNT 3
 #define TCP_PROTO_NUMBER 6
 
@@ -90,7 +90,7 @@ struct SaunaFSExport {
 	FileInfoCache_t *cache; /* Export cache */
 
 	bool pnfsMdsEnabled; /* pNFS Metadata Server enabled */
-	bool pnfsDsEnabled;  /* pNFS Data Server enabled */
+	bool pnfsDsEnabled; /* pNFS Data Server enabled */
 
 	uint32_t cacheTimeout; /* Timeout for entries at cache */
 	uint32_t cacheMaximumSize; /* Maximum size of cache */

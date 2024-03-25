@@ -34,8 +34,8 @@
  */
 
 #include "config.h"
-#include <unistd.h>		/* for using gethostname */
-#include <stdlib.h>		/* for using exit */
+#include <unistd.h> /* for using gethostname */
+#include <stdlib.h> /* for using exit */
 #include <strings.h>
 #include <string.h>
 #include <sys/types.h>
@@ -46,7 +46,7 @@
 #ifdef USE_NFSIDMAP
 #include <nfsidmap.h>
 #include "nfs_exports.h"
-#endif				/* USE_NFSIDMAP */
+#endif /* USE_NFSIDMAP */
 #ifdef _MSPAC_SUPPORT
 #include <wbclient.h>
 #endif
@@ -111,23 +111,23 @@ static bool idmapper_set_owner_domain(void)
 		 * clearing the earlier state within libnfsidmap, which is
 		 * currently not possible.
 		 */
-		if (nfs4_init_name_mapping(nfs_param.nfsv4_param.idmapconf)
-			!= 0) {
+		if (nfs4_init_name_mapping(nfs_param.nfsv4_param.idmapconf) !=
+		    0) {
 			LogCrit(COMPONENT_IDMAPPER,
 				"Failed to init idmapping via nfsidmap");
 			return false;
 		}
-		if (nfs4_get_default_domain
-			(NULL, domain_addr, NFS4_MAX_DOMAIN_LEN) != 0) {
+		if (nfs4_get_default_domain(NULL, domain_addr,
+					    NFS4_MAX_DOMAIN_LEN) != 0) {
 			LogCrit(COMPONENT_IDMAPPER,
 				"Failed to get default domain via nfsidmap");
 			return false;
 		}
 	}
-#endif				/* USE_NFSIDMAP */
+#endif /* USE_NFSIDMAP */
 	if (nfs_param.nfsv4_param.use_getpwnam)
 		strcpy(domain_addr,
-			nfs_param.directory_services_param.domainname);
+		       nfs_param.directory_services_param.domainname);
 
 	/* Return false if domain was not initialised through above
 	 * conditions
@@ -263,7 +263,7 @@ static void idmapper_reaper_init(void)
 	assert(cache_reaper_fridge == NULL);
 
 	rc = fridgethr_init(&cache_reaper_fridge, "idmapper_reaper",
-		&thread_params);
+			    &thread_params);
 	if (rc != 0) {
 		LogCrit(COMPONENT_IDMAPPER,
 			"Idmapper reaper fridge init failed. Error: %d", rc);
@@ -324,7 +324,7 @@ bool idmapper_init(void)
  * @param[in] gss_princ true if the name is a gss principal
  */
 static void add_user_to_cache(const struct gsh_buffdesc *name, uid_t uid,
-	const gid_t *gid, bool gss_princ)
+			      const gid_t *gid, bool gss_princ)
 {
 	bool success;
 
@@ -349,7 +349,7 @@ static void add_user_to_cache(const struct gsh_buffdesc *name, uid_t uid,
 
 	if (unlikely(!success)) {
 		LogMajor(COMPONENT_IDMAPPER,
-			"idmapper_add_user (uid: %u) failed.", uid);
+			 "idmapper_add_user (uid: %u) failed.", uid);
 	}
 }
 
@@ -409,7 +409,7 @@ static void add_group_to_cache(const struct gsh_buffdesc *name, gid_t gid)
 
 	if (unlikely(!success)) {
 		LogMajor(COMPONENT_IDMAPPER,
-			"idmapper_add_group (gid: %u) failed.", gid);
+			 "idmapper_add_group (gid: %u) failed.", gid);
 	}
 }
 
@@ -461,7 +461,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		char namebuf[11];
 
 		name.addr = namebuf;
-		name.len = sprintf(namebuf, "%"PRIu32, id);
+		name.len = sprintf(namebuf, "%" PRIu32, id);
 		not_a_size_t = name.len;
 		return inline_xdr_bytes(xdrs, (char **)&name.addr,
 					&not_a_size_t, UINT32_MAX);
@@ -473,7 +473,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		return false;
 	}
 	PTHREAD_RWLOCK_rdlock(group ? &idmapper_group_lock :
-			      &idmapper_user_lock);
+				      &idmapper_user_lock);
 	if (group)
 		success = idmapper_lookup_by_gid(id, &found);
 	else
@@ -484,15 +484,14 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 
 		/* Fully qualified owners are always stored in the
 		   hash table, no matter what our lookup method. */
-		success =
-		    inline_xdr_bytes(xdrs, (char **)&found->addr, &not_a_size_t,
-				     UINT32_MAX);
+		success = inline_xdr_bytes(xdrs, (char **)&found->addr,
+					   &not_a_size_t, UINT32_MAX);
 		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
-				      &idmapper_user_lock);
+					      &idmapper_user_lock);
 		return success;
 	} else {
 		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
-				      &idmapper_user_lock);
+					      &idmapper_user_lock);
 		int rc;
 		int size;
 		bool looked_up = false;
@@ -511,7 +510,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		char owner_domain_addr[owner_domain_len + 1];
 
 		memcpy(owner_domain_addr, owner_domain.domain.addr,
-			owner_domain_len);
+		       owner_domain_len);
 		owner_domain_addr[owner_domain_len] = '\0';
 		PTHREAD_RWLOCK_unlock(&owner_domain.lock);
 
@@ -524,7 +523,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				size = PWENT_BEST_GUESS_LEN;
 
 			if (nfs_param.directory_services_param
-				.pwutils_use_fully_qualified_names) {
+				    .pwutils_use_fully_qualified_names) {
 				size += NFS4_MAX_DOMAIN_LEN + 1;
 				/* new_name should include domain length */
 				new_name.len = size;
@@ -560,8 +559,8 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				now_mono(&e_time);
 				idmapper_monitoring__external_request(
 					IDMAPPING_GID_TO_GROUP,
-					IDMAPPING_PWUTILS,
-					rc == 0, &s_time, &e_time);
+					IDMAPPING_PWUTILS, rc == 0, &s_time,
+					&e_time);
 
 				nulled = (gres == NULL);
 			} else {
@@ -574,8 +573,8 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				now_mono(&e_time);
 				idmapper_monitoring__external_request(
 					IDMAPPING_UID_TO_UIDGID,
-					IDMAPPING_PWUTILS,
-					rc == 0, &s_time, &e_time);
+					IDMAPPING_PWUTILS, rc == 0, &s_time,
+					&e_time);
 
 				nulled = (pres == NULL);
 			}
@@ -584,7 +583,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				new_name.len = strlen(namebuff);
 
 				if (!nfs_param.directory_services_param
-					.pwutils_use_fully_qualified_names) {
+					     .pwutils_use_fully_qualified_names) {
 					char *cursor = namebuff + new_name.len;
 					*(cursor++) = '@';
 					++new_name.len;
@@ -595,7 +594,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 						return false;
 					}
 					memcpy(cursor, owner_domain_addr,
-						owner_domain_len);
+					       owner_domain_len);
 					new_name.len += owner_domain_len;
 					*(cursor + owner_domain_len) = '\0';
 				}
@@ -618,10 +617,9 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 						      NFS4_MAX_DOMAIN_LEN + 1);
 			}
 			idmapper_monitoring__external_request(
-				group ? IDMAPPING_GID_TO_GROUP
-					: IDMAPPING_UID_TO_UIDGID,
-				IDMAPPING_NFSIDMAP, rc == 0, &s_time,
-				&e_time);
+				group ? IDMAPPING_GID_TO_GROUP :
+					IDMAPPING_UID_TO_UIDGID,
+				IDMAPPING_NFSIDMAP, rc == 0, &s_time, &e_time);
 			if (rc == 0) {
 				new_name.len = strlen(namebuff);
 				looked_up = true;
@@ -629,11 +627,12 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				LogInfo(COMPONENT_IDMAPPER,
 					"%s failed with code %d.",
 					(group ? "nfs4_gid_to_name" :
-					"nfs4_uid_to_name"), rc);
+						 "nfs4_uid_to_name"),
+					rc);
 			}
-#else				/* USE_NFSIDMAP */
+#else /* USE_NFSIDMAP */
 			looked_up = false;
-#endif				/* !USE_NFSIDMAP */
+#endif /* !USE_NFSIDMAP */
 		}
 
 		if (!looked_up) {
@@ -642,7 +641,8 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 					"Lookup for %d failed, using numeric %s",
 					id, (group ? "group" : "owner"));
 				/* 2**32 is 10 digits long in decimal */
-				new_name.len = sprintf(namebuff, "%"PRIu32, id);
+				new_name.len =
+					sprintf(namebuff, "%" PRIu32, id);
 			} else {
 				LogInfo(COMPONENT_IDMAPPER,
 					"Lookup for %d failed, using nobody.",
@@ -705,8 +705,7 @@ bool xdr_encode_nfs4_group(XDR *xdrs, gid_t gid)
  * @return true on success, false on just phoning it in.
  */
 
-static bool atless2id(char *name, size_t len, uint32_t *id,
-		      const uint32_t anon)
+static bool atless2id(char *name, size_t len, uint32_t *id, const uint32_t anon)
 {
 	if ((len == 6) && (!memcmp(name, "nobody", 6))) {
 		*id = anon;
@@ -860,13 +859,13 @@ static int name_to_uid(const char *name, uint32_t *uid, gid_t *gid)
  *
  * @return true on success, false not making the grade
  */
-static bool pwentname2id(char *name, uint32_t *id, bool group,
-			 gid_t *gid, bool *got_gid, char *at)
+static bool pwentname2id(char *name, uint32_t *id, bool group, gid_t *gid,
+			 bool *got_gid, char *at)
 {
 	int err;
 
 	if (nfs_param.directory_services_param
-		.pwutils_use_fully_qualified_names) {
+		    .pwutils_use_fully_qualified_names) {
 		if (at == NULL) {
 			LogWarn(COMPONENT_IDMAPPER,
 				"The input name: %s must contain a domain",
@@ -980,10 +979,9 @@ static bool idmapname2id(char *name, size_t len, uint32_t *id,
 		now_mono(&e_time);
 	}
 	idmapper_monitoring__external_request(
-		group ? IDMAPPING_GROUPNAME_TO_GROUP
-			: IDMAPPING_USERNAME_TO_UIDGID,
-		IDMAPPING_NFSIDMAP, rc == 0,
-		&s_time, &e_time);
+		group ? IDMAPPING_GROUPNAME_TO_GROUP :
+			IDMAPPING_USERNAME_TO_UIDGID,
+		IDMAPPING_NFSIDMAP, rc == 0, &s_time, &e_time);
 
 	if (rc == 0) {
 		return true;
@@ -994,9 +992,9 @@ static bool idmapname2id(char *name, size_t len, uint32_t *id,
 			-rc);
 		return false;
 	}
-#else				/* USE_NFSIDMAP */
+#else /* USE_NFSIDMAP */
 	return false;
-#endif				/* USE_NFSIDMAP */
+#endif /* USE_NFSIDMAP */
 }
 
 /**
@@ -1021,26 +1019,26 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 	bool looked_up = false;
 
 	PTHREAD_RWLOCK_rdlock(group ? &idmapper_group_lock :
-			      &idmapper_user_lock);
+				      &idmapper_user_lock);
 	if (group)
 		success = idmapper_lookup_by_gname(name, id);
 	else
 		success = idmapper_lookup_by_uname(name, id, NULL, false);
 	PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
-			      &idmapper_user_lock);
+				      &idmapper_user_lock);
 
 	if (success)
 		return true;
 
 	/* Lookup negative cache */
 	PTHREAD_RWLOCK_rdlock(group ? &idmapper_negative_cache_group_lock :
-		&idmapper_negative_cache_user_lock);
+				      &idmapper_negative_cache_user_lock);
 	if (group)
 		success = idmapper_negative_cache_lookup_group_by_name(name);
 	else
 		success = idmapper_negative_cache_lookup_user_by_name(name);
 	PTHREAD_RWLOCK_unlock(group ? &idmapper_negative_cache_group_lock :
-		&idmapper_negative_cache_user_lock);
+				      &idmapper_negative_cache_user_lock);
 
 	if (success) {
 		*id = anon;
@@ -1066,7 +1064,7 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 			pwentname2id(namebuff, id, group, &gid, &got_gid, at);
 	} else {
 		looked_up = idmapname2id(namebuff, name->len, id, anon, group,
-			&gid, &got_gid, at);
+					 &gid, &got_gid, at);
 	}
 
 	if (!looked_up) {
@@ -1129,12 +1127,10 @@ void winbind_stats_update(struct timespec *s_time, struct timespec *e_time)
 
 	PTHREAD_RWLOCK_wrlock(&winbind_auth_lock);
 	(void)atomic_inc_uint64_t(&winbind_auth_stats.total);
-	(void)atomic_add_uint64_t(&winbind_auth_stats.latency,
-					resp_time);
+	(void)atomic_add_uint64_t(&winbind_auth_stats.latency, resp_time);
 	if (winbind_auth_stats.max < resp_time)
 		winbind_auth_stats.max = resp_time;
-	if (winbind_auth_stats.min == 0 ||
-	    winbind_auth_stats.min > resp_time)
+	if (winbind_auth_stats.min == 0 || winbind_auth_stats.min > resp_time)
 		winbind_auth_stats.min = resp_time;
 	PTHREAD_RWLOCK_unlock(&winbind_auth_lock);
 }
@@ -1147,12 +1143,10 @@ void gc_stats_update(struct timespec *s_time, struct timespec *e_time)
 
 	PTHREAD_RWLOCK_wrlock(&gc_auth_lock);
 	(void)atomic_inc_uint64_t(&gc_auth_stats.total);
-	(void)atomic_add_uint64_t(&gc_auth_stats.latency,
-					resp_time);
+	(void)atomic_add_uint64_t(&gc_auth_stats.latency, resp_time);
 	if (gc_auth_stats.max < resp_time)
 		gc_auth_stats.max = resp_time;
-	if (gc_auth_stats.min == 0 ||
-	    gc_auth_stats.min > resp_time)
+	if (gc_auth_stats.min == 0 || gc_auth_stats.min > resp_time)
 		gc_auth_stats.min = resp_time;
 	PTHREAD_RWLOCK_unlock(&gc_auth_lock);
 }
@@ -1165,16 +1159,13 @@ void dns_stats_update(struct timespec *s_time, struct timespec *e_time)
 
 	PTHREAD_RWLOCK_wrlock(&dns_auth_lock);
 	(void)atomic_inc_uint64_t(&dns_auth_stats.total);
-	(void)atomic_add_uint64_t(&dns_auth_stats.latency,
-					resp_time);
+	(void)atomic_add_uint64_t(&dns_auth_stats.latency, resp_time);
 	if (dns_auth_stats.max < resp_time)
 		dns_auth_stats.max = resp_time;
-	if (dns_auth_stats.min == 0 ||
-	    dns_auth_stats.min > resp_time)
+	if (dns_auth_stats.min == 0 || dns_auth_stats.min > resp_time)
 		dns_auth_stats.min = resp_time;
 	PTHREAD_RWLOCK_unlock(&dns_auth_lock);
 }
-
 
 void reset_auth_stats(void)
 {
@@ -1230,10 +1221,8 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 	const gid_t *gss_gidres = NULL;
 	bool success;
 	uint principal_len = strlen(principal);
-	struct gsh_buffdesc princbuff = {
-		.addr = principal,
-		.len = principal_len
-	};
+	struct gsh_buffdesc princbuff = { .addr = principal,
+					  .len = principal_len };
 
 	if (!idmapping_enabled) {
 		LogWarn(COMPONENT_IDMAPPER,
@@ -1243,7 +1232,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 
 	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
 	success = idmapper_lookup_by_uname(&princbuff, &gss_uid, &gss_gidres,
-		true);
+					   true);
 
 	/* We do need uid and gid. If gid is not in the cache, treat it as a
 	 * failure.
@@ -1263,10 +1252,9 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 	if (success)
 		return false;
 
-	if ((princbuff.len >= 4)
-		  && (!memcmp(princbuff.addr, "nfs/", 4)
-		|| !memcmp(princbuff.addr, "root/", 5)
-		|| !memcmp(princbuff.addr, "host/", 5))) {
+	if ((princbuff.len >= 4) && (!memcmp(princbuff.addr, "nfs/", 4) ||
+				     !memcmp(princbuff.addr, "root/", 5) ||
+				     !memcmp(princbuff.addr, "host/", 5))) {
 		/* NFSv4 specific features: RPCSEC_GSS will
 		 * provide user like
 		 *
@@ -1284,13 +1272,13 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 	if (nfs_param.nfsv4_param.use_getpwnam) {
 		bool got_gid = false;
 		char *at = strchr(principal, '@');
-		LogDebug(COMPONENT_IDMAPPER,
-			"Get uid for %s using pw func", principal);
+		LogDebug(COMPONENT_IDMAPPER, "Get uid for %s using pw func",
+			 principal);
 
 		if (nfs_param.directory_services_param
-			.pwutils_use_fully_qualified_names) {
+			    .pwutils_use_fully_qualified_names) {
 			success = pwentname2id(principal, &gss_uid, false,
-				&gss_gid, &got_gid, at);
+					       &gss_gid, &got_gid, at);
 		} else {
 			char *uname;
 			int uname_len = principal_len;
@@ -1303,8 +1291,8 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 			memcpy(uname, principal, uname_len);
 			uname[uname_len] = '\0';
 
-			success = pwentname2id(uname, &gss_uid, false,
-				&gss_gid, &got_gid, NULL);
+			success = pwentname2id(uname, &gss_uid, false, &gss_gid,
+					       &got_gid, NULL);
 		}
 
 		if (!success) {
@@ -1326,14 +1314,14 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 		struct timespec s_time, e_time;
 		int err;
 
-		LogDebug(COMPONENT_IDMAPPER,
-			"Get uid for %s using nfsidmap", principal);
+		LogDebug(COMPONENT_IDMAPPER, "Get uid for %s using nfsidmap",
+			 principal);
 
 		/* nfs4_gss_princ_to_ids required to extract uid/gid
 		   from gss creds */
 		now_mono(&s_time);
 		err = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid,
-			&gss_gid);
+					    &gss_gid);
 		now_mono(&e_time);
 		idmapper_monitoring__external_request(
 			IDMAPPING_PRINCIPAL_TO_UIDGID, IDMAPPING_NFSIDMAP,
@@ -1359,20 +1347,19 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				memset(&params, 0, sizeof(params));
 				params.level = WBC_AUTH_USER_LEVEL_PAC;
 				params.password.pac.data =
-				    (uint8_t *) gd->pac.ms_pac.value;
+					(uint8_t *)gd->pac.ms_pac.value;
 				params.password.pac.length =
-				    gd->pac.ms_pac.length;
+					gd->pac.ms_pac.length;
 
 				now(&s_time);
-				wbc_err =
-				    wbcAuthenticateUserEx(&params, &info,
-							  &error);
+				wbc_err = wbcAuthenticateUserEx(&params, &info,
+								&error);
 				now(&e_time);
 				idmapper_monitoring__external_request(
 					IDMAPPING_MSPAC_TO_SID,
 					IDMAPPING_WINBIND,
-					WBC_ERROR_IS_OK(wbc_err),
-					&s_time, &e_time);
+					WBC_ERROR_IS_OK(wbc_err), &s_time,
+					&e_time);
 
 				if (stats)
 					winbind_stats_update(&s_time, &e_time);
@@ -1393,15 +1380,13 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				}
 
 				now(&s_time);
-				wbc_err =
-					wbcGetpwsid(&info->sids[0].sid,
-						    &pwd);
+				wbc_err = wbcGetpwsid(&info->sids[0].sid, &pwd);
 				now(&e_time);
 				idmapper_monitoring__external_request(
 					IDMAPPING_SID_TO_UIDGID,
 					IDMAPPING_WINBIND,
-					WBC_ERROR_IS_OK(wbc_err),
-					&s_time, &e_time);
+					WBC_ERROR_IS_OK(wbc_err), &s_time,
+					&e_time);
 
 				if (stats)
 					winbind_stats_update(&s_time, &e_time);
@@ -1419,13 +1404,13 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				wbcFreeMemory(info);
 				goto principal_found;
 			}
-#endif				/* _MSPAC_SUPPORT */
+#endif /* _MSPAC_SUPPORT */
 
 			goto principal_not_found;
 		}
 		goto principal_found;
 
-#else				/* !USE_NFSIDMAP */
+#else /* !USE_NFSIDMAP */
 		assert(!"prohibited by idmapping configuration");
 #endif
 	}
@@ -1450,7 +1435,7 @@ principal_not_found:
  * DBUS method to collect Auth stats for group cache and winbind
  */
 static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
-				DBusError *error)
+			   DBusError *error)
 {
 	bool success = true, stats_exist = false;
 	char *errormsg = "OK";
@@ -1467,28 +1452,25 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 	gsh_dbus_status_reply(&iter, success, errormsg);
 
 	gsh_dbus_append_timestamp(&iter, &auth_stats_time);
-	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT,
-		NULL, &struct_iter);
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
+					 &struct_iter);
 
 	/* group cache stats */
 	PTHREAD_RWLOCK_rdlock(&gc_auth_lock);
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_UINT64, &gc_auth_stats.total);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &gc_auth_stats.total);
 	if (gc_auth_stats.total > 0) {
 		stats_exist = true;
-		res = (double) gc_auth_stats.latency /
-			gc_auth_stats.total * 0.000001;
+		res = (double)gc_auth_stats.latency / gc_auth_stats.total *
+		      0.000001;
 	}
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	if (stats_exist)
-		res = (double) gc_auth_stats.max * 0.000001;
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+		res = (double)gc_auth_stats.max * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	if (stats_exist)
-		res = (double) gc_auth_stats.min * 0.000001;
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+		res = (double)gc_auth_stats.min * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	PTHREAD_RWLOCK_unlock(&gc_auth_lock);
 
 	stats_exist = false;
@@ -1496,23 +1478,20 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 
 	/* winbind stats */
 	PTHREAD_RWLOCK_rdlock(&winbind_auth_lock);
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_UINT64, &winbind_auth_stats.total);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &winbind_auth_stats.total);
 	if (winbind_auth_stats.total > 0) {
 		stats_exist = true;
-		res = (double) winbind_auth_stats.latency /
-			winbind_auth_stats.total * 0.000001;
+		res = (double)winbind_auth_stats.latency /
+		      winbind_auth_stats.total * 0.000001;
 	}
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	if (stats_exist)
-		res = (double) winbind_auth_stats.max * 0.000001;
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+		res = (double)winbind_auth_stats.max * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	if (stats_exist)
-		res = (double) winbind_auth_stats.min * 0.000001;
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+		res = (double)winbind_auth_stats.min * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	PTHREAD_RWLOCK_unlock(&winbind_auth_lock);
 
 	stats_exist = false;
@@ -1520,23 +1499,20 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 
 	/* DNS stats */
 	PTHREAD_RWLOCK_rdlock(&dns_auth_lock);
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_UINT64, &dns_auth_stats.total);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+				       &dns_auth_stats.total);
 	if (dns_auth_stats.total > 0) {
 		stats_exist = true;
-		res = (double) dns_auth_stats.latency /
-			dns_auth_stats.total * 0.000001;
+		res = (double)dns_auth_stats.latency / dns_auth_stats.total *
+		      0.000001;
 	}
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	if (stats_exist)
-		res = (double) dns_auth_stats.max * 0.000001;
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+		res = (double)dns_auth_stats.max * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	if (stats_exist)
-		res = (double) dns_auth_stats.min * 0.000001;
-	dbus_message_iter_append_basic(&struct_iter,
-		DBUS_TYPE_DOUBLE, &res);
+		res = (double)dns_auth_stats.min * 0.000001;
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
 	PTHREAD_RWLOCK_unlock(&dns_auth_lock);
 	dbus_message_iter_close_container(&iter, &struct_iter);
 
@@ -1546,10 +1522,7 @@ static bool all_auth_stats(DBusMessageIter *args, DBusMessage *reply,
 struct gsh_dbus_method auth_statistics = {
 	.name = "GetAuthStats",
 	.method = all_auth_stats,
-	.args = {STATUS_REPLY,
-		 TIMESTAMP_REPLY,
-		 AUTH_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, AUTH_REPLY, END_ARG_LIST }
 };
 #endif
 #endif

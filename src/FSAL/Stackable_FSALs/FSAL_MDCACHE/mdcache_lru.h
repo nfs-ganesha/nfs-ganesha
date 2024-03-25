@@ -73,7 +73,7 @@ struct lru_state {
 	uint64_t chunks_lowat;
 	uint64_t chunks_used;
 	uint32_t per_lane_work;
-	time_t prev_time;	/* previous time the gc thread was run. */
+	time_t prev_time; /* previous time the gc thread was run. */
 };
 
 extern struct lru_state lru_state;
@@ -94,13 +94,13 @@ extern pool_t *mdcache_entry_pool;
  * The minimum reference count for a cache entry not being recycled.
  */
 
-#define LRU_SENTINEL_REFCOUNT  1
+#define LRU_SENTINEL_REFCOUNT 1
 
 /**
  * The number of lanes comprising a logical queue.  This must be
  * prime.
  */
-#define LRU_N_Q_LANES  17
+#define LRU_N_Q_LANES 17
 
 fsal_status_t mdcache_lru_pkginit(void);
 fsal_status_t mdcache_lru_pkgshutdown(void);
@@ -118,8 +118,8 @@ void mdcache_lru_insert_active(mdcache_entry_t *entry);
  * @param[in] entry   Cache entry being returned
  * @param[in] flags   Set of flags to specify type of reference
  */
-void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags,
-		      const char *func, int line);
+void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
+		      int line);
 
 /* XXX */
 void mdcache_lru_kill(mdcache_entry_t *entry);
@@ -169,5 +169,5 @@ void mdc_lru_map_dirent(mdcache_dir_entry_t *dirent);
 fsal_cookie_t *mdc_lru_unmap_dirent(uint64_t ck);
 fsal_status_t dirmap_lru_init(struct mdcache_fsal_export *exp);
 void dirmap_lru_stop(struct mdcache_fsal_export *exp);
-#endif				/* MDCACHE_LRU_H */
+#endif /* MDCACHE_LRU_H */
 /** @} */

@@ -58,8 +58,8 @@ extern struct fridgethr *req_fridge;
  */
 
 struct _9p_worker_data {
-	wait_q_entry_t wqe;	/*< Queue for coordinating with decoder */
-	unsigned int worker_index;	/*< Index for log messages */
+	wait_q_entry_t wqe; /*< Queue for coordinating with decoder */
+	unsigned int worker_index; /*< Index for log messages */
 };
 
 /**
@@ -71,23 +71,23 @@ struct fridgethr_entry {
 	 * @brief Thread context
 	 */
 	struct fridgethr_context {
-		struct _9p_worker_data wd;	/*< Work queue data */
-		pthread_mutex_t fre_mtx;	/*< Mutex for fiddling this
+		struct _9p_worker_data wd; /*< Work queue data */
+		pthread_mutex_t fre_mtx; /*< Mutex for fiddling this
 					   thread */
-		pthread_cond_t fre_cv;	/*< Condition variable to wait for sync
+		pthread_cond_t fre_cv; /*< Condition variable to wait for sync
 					 */
-		sigset_t sigmask;	/*< This thread's signal mask */
-		void *thread_info;	/*< Information belonging to the
+		sigset_t sigmask; /*< This thread's signal mask */
+		void *thread_info; /*< Information belonging to the
 					   user and associated with the
 					   thread.  Never modified by the
 					   fridgethr code. */
 		void (*func)(struct fridgethr_context *); /*< Function being
 							       executed */
-		void *arg;	/*< Functions argument */
+		void *arg; /*< Functions argument */
 
-		pthread_t id;	/*< Thread ID */
+		pthread_t id; /*< Thread ID */
 		uint32_t uflags; /*< Flags (for any use) */
-		bool woke;	/*< Set to false on first run and if wait
+		bool woke; /*< Set to false on first run and if wait
 				   in fridgethr_freeze didn't time out. */
 	} ctx;
 	uint32_t flags; /*< Thread-fridge flags (for handoff) */
@@ -180,7 +180,7 @@ struct fridgethr_params {
  * @brief Queued requests
  */
 struct fridgethr_work {
-	struct glist_head link;	/*< Link in the work queue */
+	struct glist_head link; /*< Link in the work queue */
 	void (*func)(struct fridgethr_context *); /*< Function being
 						      executed */
 	void *arg; /*< Functions argument */
@@ -201,28 +201,29 @@ typedef enum {
  */
 
 struct fridgethr {
-	char *s;		/*< Name for this fridge */
-	struct fridgethr_params p;	/*< Parameters */
-	pthread_mutex_t frt_mtx;	/*< Mutex */
-	pthread_attr_t attr;	/*< Creation attributes */
-	struct glist_head thread_list;	/*< List of threads */
-	uint32_t nthreads;	/*< Number of threads in fridge */
-	struct glist_head idle_q;	/*< Idle threads */
-	uint32_t nidle;		/*< Number of idle threads */
-	uint32_t flags;		/*< Fridge-wide flags */
-	fridgethr_comm_t command;	/*< Command state */
-	void (*cb_func)(void *);	/*< Callback on command completion */
-	void *cb_arg;		/*< Argument for completion callback */
-	pthread_mutex_t *cb_mtx;	/*< Mutex for completion condition
+	char *s; /*< Name for this fridge */
+	struct fridgethr_params p; /*< Parameters */
+	pthread_mutex_t frt_mtx; /*< Mutex */
+	pthread_attr_t attr; /*< Creation attributes */
+	struct glist_head thread_list; /*< List of threads */
+	uint32_t nthreads; /*< Number of threads in fridge */
+	struct glist_head idle_q; /*< Idle threads */
+	uint32_t nidle; /*< Number of idle threads */
+	uint32_t flags; /*< Fridge-wide flags */
+	fridgethr_comm_t command; /*< Command state */
+	void (*cb_func)(void *); /*< Callback on command completion */
+	void *cb_arg; /*< Argument for completion callback */
+	pthread_mutex_t *cb_mtx; /*< Mutex for completion condition
 					    variable */
-	pthread_cond_t *cb_cv;	/*< Condition variable, signalled on
+	pthread_cond_t *cb_cv; /*< Condition variable, signalled on
 				   completion */
 	bool transitioning; /*< Changing state */
 	struct glist_head work_q; /*< Work queued */
 };
 
 #define fridgethr_flag_none 0x0000 /*< Null flag */
-#define fridgethr_flag_available 0x0001 /*< I am available to be
+#define fridgethr_flag_available \
+	0x0001 /*< I am available to be
 					    dispatched */
 #define fridgethr_flag_dispatched 0x0002 /*< You have been dispatched */
 
@@ -243,7 +244,7 @@ int fridgethr_start(struct fridgethr *, pthread_mutex_t *, pthread_cond_t *,
 int fridgethr_sync_command(struct fridgethr *, fridgethr_comm_t, time_t);
 bool fridgethr_you_should_break(struct fridgethr_context *);
 int fridgethr_populate(struct fridgethr *, void (*)(struct fridgethr_context *),
-		      void *);
+		       void *);
 
 void fridgethr_setwait(struct fridgethr_context *ctx, time_t thread_delay);
 time_t fridgethr_getwait(struct fridgethr_context *ctx);
@@ -254,6 +255,6 @@ extern struct fridgethr *general_fridge;
 int general_fridge_init(void);
 int general_fridge_shutdown(void);
 
-#endif				/* FRIDGETHR_H */
+#endif /* FRIDGETHR_H */
 
 /** @} */

@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/module.h>
 
-#if __FreeBSD_cc_version  >= 800001
+#if __FreeBSD_cc_version >= 800001
 /* Fllowing syscalls are not yet implemented in vanilla FreeBSD kernels  */
 int getfhat(int dir_fd, char *fname, struct fhandle *fhp, int flag)
 {
@@ -118,23 +118,23 @@ int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
  *
  */
 
-#define SYS_faccessat   512
-#define SYS_fchmodat    513
-#define SYS_fchownat    514
-#define SYS_fstatat     515
-#define SYS_futimesat   516
-#define SYS_linkat      517
-#define SYS_mkdirat     518
-#define SYS_mkfifoat    519
-#define SYS_mknodat     520
-#define SYS_openat      521
-#define SYS_readlinkat  522
-#define SYS_renameat    523
-#define SYS_symlinkat   524
-#define SYS_unlinkat    525
-#define SYS_getfhat     526
-#define SYS_fhlink      527
-#define SYS_fhreadlink  528
+#define SYS_faccessat 512
+#define SYS_fchmodat 513
+#define SYS_fchownat 514
+#define SYS_fstatat 515
+#define SYS_futimesat 516
+#define SYS_linkat 517
+#define SYS_mkdirat 518
+#define SYS_mkfifoat 519
+#define SYS_mknodat 520
+#define SYS_openat 521
+#define SYS_readlinkat 522
+#define SYS_renameat 523
+#define SYS_symlinkat 524
+#define SYS_unlinkat 525
+#define SYS_getfhat 526
+#define SYS_fhlink 527
+#define SYS_fhreadlink 528
 
 int openat(int dir_fd, const char *file, int oflag, mode_t mode)
 {
@@ -216,4 +216,4 @@ int fhreadlink(struct fhandle *fhp, char *buf, size_t bufsize)
 	return syscall(SYS_fhreadlink, fhp, buf, bufsize);
 }
 
-#endif				/* SYS_openat */
+#endif /* SYS_openat */

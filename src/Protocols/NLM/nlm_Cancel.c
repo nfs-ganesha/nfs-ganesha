@@ -67,40 +67,30 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	netobj_to_string(&arg->cookie, buffer, 1024);
 
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST PROCESSING: Calling NLM4_CANCEL svid=%d off=%llx len=%llx cookie=%s",
-		 (int)arg->alock.svid, (unsigned long long)arg->alock.l_offset,
-		 (unsigned long long)arg->alock.l_len, buffer);
+	LogDebug(
+		COMPONENT_NLM,
+		"REQUEST PROCESSING: Calling NLM4_CANCEL svid=%d off=%llx len=%llx cookie=%s",
+		(int)arg->alock.svid, (unsigned long long)arg->alock.l_offset,
+		(unsigned long long)arg->alock.l_len, buffer);
 
 	copy_netobj(&res->res_nlm4test.cookie, &arg->cookie);
 
 	if (!nfs_get_grace_status(false)) {
 		res->res_nlm4.stat.stat = NLM4_DENIED_GRACE_PERIOD;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: NLM4_CANCEL %s",
+		LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_CANCEL %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		return NFS_REQ_OK;
 	}
 
 	/* cancel doesn't care if owner is found */
-	rc = nlm_process_parameters(req,
-				    arg->exclusive,
-				    &arg->alock,
-				    &lock,
-				    &obj,
-				    CARE_NOT,
-				    &nsm_client,
-				    &nlm_client,
-				    &nlm_owner,
-				    NULL,
-				    0,
-				    NULL);
+	rc = nlm_process_parameters(req, arg->exclusive, &arg->alock, &lock,
+				    &obj, CARE_NOT, &nsm_client, &nlm_client,
+				    &nlm_owner, NULL, 0, NULL);
 
 	if (rc >= 0) {
 		/* resent the error back to the client */
-		res->res_nlm4.stat.stat = (nlm4_stats) rc;
-		LogDebug(COMPONENT_NLM,
-			 "REQUEST RESULT: nlm4_Unlock %s",
+		res->res_nlm4.stat.stat = (nlm4_stats)rc;
+		LogDebug(COMPONENT_NLM, "REQUEST RESULT: nlm4_Unlock %s",
 			 lock_result_str(res->res_nlm4.stat.stat));
 		goto out;
 	}
@@ -112,7 +102,7 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		 * error is already logged.
 		 */
 		res->res_nlm4test.test_stat.stat =
-		    nlm_convert_state_error(state_status);
+			nlm_convert_state_error(state_status);
 	} else {
 		res->res_nlm4.stat.stat = NLM4_GRANTED;
 	}
@@ -123,18 +113,17 @@ int nlm4_Cancel(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	dec_state_owner_ref(nlm_owner);
 	obj->obj_ops->put_ref(obj);
 
-	LogDebug(COMPONENT_NLM,
-		 "REQUEST RESULT: NLM4_CANCEL %s",
+	LogDebug(COMPONENT_NLM, "REQUEST RESULT: NLM4_CANCEL %s",
 		 lock_result_str(res->res_nlm4.stat.stat));
 out:
 	nfs_put_grace_status();
 	return NFS_REQ_OK;
-}				/* nlm4_Cancel */
+} /* nlm4_Cancel */
 
 static void nlm4_cancel_message_resp(state_async_queue_t *arg)
 {
 	state_nlm_async_data_t *nlm_arg =
-	    &arg->state_async_data.state_nlm_async_data;
+		&arg->state_async_data.state_nlm_async_data;
 	nfs_res_t *res = &nlm_arg->nlm_async_args.nlm_async_res;
 
 	if (isFullDebug(COMPONENT_NLM)) {
@@ -176,10 +165,8 @@ int nlm4_Cancel_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	nsm_client = get_nsm_client(CARE_NO_MONITOR, arg->alock.caller_name);
 
 	if (nsm_client != NULL)
-		nlm_client = get_nlm_client(CARE_NO_MONITOR,
-					    req->rq_xprt,
-					    nsm_client,
-					    arg->alock.caller_name);
+		nlm_client = get_nlm_client(CARE_NO_MONITOR, req->rq_xprt,
+					    nsm_client, arg->alock.caller_name);
 
 	if (nlm_client == NULL)
 		rc = NFS_REQ_DROP;
@@ -188,8 +175,7 @@ int nlm4_Cancel_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 
 	if (rc == NFS_REQ_OK)
 		rc = nlm_send_async_res_nlm4(nlm_client,
-					     nlm4_cancel_message_resp,
-					     res);
+					     nlm4_cancel_message_resp, res);
 
 	if (rc == NFS_REQ_DROP) {
 		if (nsm_client != NULL)
@@ -214,4 +200,4 @@ int nlm4_Cancel_Message(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 void nlm4_Cancel_Free(nfs_res_t *res)
 {
 	netobj_free(&res->res_nlm4test.cookie);
-}				/* nlm4_Cancel_Free */
+} /* nlm4_Cancel_Free */

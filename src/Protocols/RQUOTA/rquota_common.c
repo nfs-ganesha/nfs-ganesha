@@ -69,14 +69,13 @@ char *check_handle_lead_slash(char *quota_path, char *temp_path,
 		put_gsh_export(exp);
 
 		/* Add trailing slash if it is missing */
-		if ((pathlen > 0) &&
-		    (temp_path[pathlen - 1] != '/'))
+		if ((pathlen > 0) && (temp_path[pathlen - 1] != '/'))
 			temp_path[pathlen++] = '/';
 
 		qpathlen = strlen(quota_path);
 		if ((pathlen + qpathlen) >= temp_path_size) {
-			LogInfo(COMPONENT_NFSPROTO,
-				"Quota path %s too long", quota_path);
+			LogInfo(COMPONENT_NFSPROTO, "Quota path %s too long",
+				quota_path);
 			return NULL;
 		}
 		memcpy(temp_path + pathlen, quota_path, qpathlen + 1);

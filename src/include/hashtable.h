@@ -66,18 +66,19 @@ struct hash_data {
 
 typedef struct hash_param hash_parameter_t;
 
-typedef uint32_t(*index_function_t)(struct hash_param *,
-				    struct gsh_buffdesc *);
-typedef uint64_t(*rbthash_function_t)(struct hash_param *,
-				      struct gsh_buffdesc *);
+typedef uint32_t (*index_function_t)(struct hash_param *,
+				     struct gsh_buffdesc *);
+typedef uint64_t (*rbthash_function_t)(struct hash_param *,
+				       struct gsh_buffdesc *);
 typedef int (*both_function_t)(struct hash_param *, struct gsh_buffdesc *,
 			       uint32_t *, uint64_t *);
 typedef int (*hash_comparator_t)(struct gsh_buffdesc *, struct gsh_buffdesc *);
 typedef int (*hash_display_function_t)(struct display_buffer *dspbuf,
 				       struct gsh_buffdesc *);
 
-#define HT_FLAG_NONE 0x0000	/*< Null hash table flags */
-#define HT_FLAG_CACHE 0x0001	/*< Indicates that caching should be
+#define HT_FLAG_NONE 0x0000 /*< Null hash table flags */
+#define HT_FLAG_CACHE \
+	0x0001 /*< Indicates that caching should be
 				   enabled */
 
 /**
@@ -90,9 +91,9 @@ typedef int (*hash_display_function_t)(struct display_buffer *dspbuf,
 struct hash_param {
 	uint32_t flags; /*< Create flags */
 	uint32_t cache_entry_count; /*< 2^10 <= Power of 2 <= 2^15 */
-	uint32_t index_size;	/*< Number of partition trees, this MUST
+	uint32_t index_size; /*< Number of partition trees, this MUST
 				   be a prime number. */
-	index_function_t hash_func_key;	/*< Partition function,
+	index_function_t hash_func_key; /*< Partition function,
 					   returns an integer from 0
 					   to (index_size - 1).  This
 					   should be something fairly
@@ -105,13 +106,13 @@ struct hash_param {
 					      high quality hash
 					      function such as 64 bit
 					      Lookup3 or Murmur. */
-	both_function_t hash_func_both;	/*< Index and partition
+	both_function_t hash_func_both; /*< Index and partition
 					   calculator.  Returns false
 					   on failure. A single
 					   function may replace the
 					   partition and hash
 					   functions. */
-	hash_comparator_t compare_key;/*< Function to compare two
+	hash_comparator_t compare_key; /*< Function to compare two
 					  keys.  This function
 					  returns 0 on equality. */
 	hash_display_function_t display_key; /*< Function to display a key */
@@ -177,7 +178,7 @@ typedef struct hash_table {
 struct hash_latch {
 	struct rbt_node *locator; /*< Saved location in the tree */
 	uint64_t rbt_hash; /*< Saved red-black hash */
-	uint32_t index;	/*< Saved partition index */
+	uint32_t index; /*< Saved partition index */
 };
 
 typedef enum hash_set_how {
@@ -221,10 +222,8 @@ hash_error_t hashtable_setlatched(struct hash_table *, struct gsh_buffdesc *,
 				  struct gsh_buffdesc *, struct hash_latch *,
 				  int, struct gsh_buffdesc *,
 				  struct gsh_buffdesc *);
-void hashtable_deletelatched(struct hash_table *,
-			     const struct gsh_buffdesc *,
-			     struct hash_latch *,
-			     struct gsh_buffdesc *,
+void hashtable_deletelatched(struct hash_table *, const struct gsh_buffdesc *,
+			     struct hash_latch *, struct gsh_buffdesc *,
 			     struct gsh_buffdesc *);
 hash_error_t hashtable_delall(struct hash_table *,
 			      int (*)(struct gsh_buffdesc,
@@ -283,14 +282,13 @@ static inline hash_error_t HashTable_Set(struct hash_table *ht,
 
 	rc = hashtable_getlatch(ht, key, NULL, true, &latch);
 
-	if ((rc != HASHTABLE_SUCCESS) &&
-	    (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
+	if ((rc != HASHTABLE_SUCCESS) && (rc != HASHTABLE_ERROR_NO_SUCH_KEY))
 		return rc;
 
 	rc = hashtable_setlatched(ht, key, val, &latch, false, NULL, NULL);
 
 	return rc;
-}				/* HashTable_Set */
+} /* HashTable_Set */
 
 /**
  * @brief Remove an entry from the hash table
@@ -320,8 +318,8 @@ static inline hash_error_t HashTable_Del(struct hash_table *ht,
 
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
-		hashtable_deletelatched(ht, key, &latch,
-					stored_key, stored_val);
+		hashtable_deletelatched(ht, key, &latch, stored_key,
+					stored_val);
 		/* Fall through to release latch */
 
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
@@ -336,17 +334,15 @@ static inline hash_error_t HashTable_Del(struct hash_table *ht,
 /* These are the prototypes for large wrappers implementing more
    complex semantics on top of the primitives. */
 
-hash_error_t hashtable_test_and_set(struct hash_table *,
-				    struct gsh_buffdesc *,
-				    struct gsh_buffdesc *,
-				    enum hash_set_how);
+hash_error_t hashtable_test_and_set(struct hash_table *, struct gsh_buffdesc *,
+				    struct gsh_buffdesc *, enum hash_set_how);
 hash_error_t hashtable_getref(struct hash_table *, struct gsh_buffdesc *,
 			      struct gsh_buffdesc *,
 			      void (*)(struct gsh_buffdesc *));
 
 typedef void (*ht_for_each_cb_t)(struct rbt_node *pn, void *arg);
 void hashtable_for_each(struct hash_table *ht, ht_for_each_cb_t callback,
-				void *arg);
+			void *arg);
 /** @} */
 
 #endif /* HASHTABLE_H */

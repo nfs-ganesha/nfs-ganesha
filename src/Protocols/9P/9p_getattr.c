@@ -56,15 +56,15 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	struct _9p_fid *pfid = NULL;
 
-	u64 valid = 0LL;	/* Not a pointer */
-	u32 mode = 0;		/* Not a pointer */
+	u64 valid = 0LL; /* Not a pointer */
+	u32 mode = 0; /* Not a pointer */
 	u32 uid = 0;
 	u32 gid = 0;
 	u64 nlink = 0LL;
 	u64 rdev = 0LL;
 	u64 size = 0LL;
-	u64 blksize = 0LL;	/* Be careful, this one is no pointer */
-	u64 blocks = 0LL;	/* And so does this one...            */
+	u64 blksize = 0LL; /* Be careful, this one is no pointer */
+	u64 blocks = 0LL; /* And so does this one...            */
 	u64 atime_sec = 0LL;
 	u64 atime_nsec = 0LL;
 	u64 mtime_sec = 0LL;
@@ -82,7 +82,7 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, request_mask, u64);
 
 	LogDebug(COMPONENT_9P, "TGETATTR: tag=%u fid=%u request_mask=0x%llx",
-		 (u32) *msgtag, *fid, (unsigned long long) *request_mask);
+		 (u32)*msgtag, *fid, (unsigned long long)*request_mask);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -102,24 +102,22 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	fsal_status = pfid->pentry->obj_ops->getattrs(pfid->pentry, &attrs);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_9P,
-			 "fsal_refresh_attrs failed %s",
+		LogDebug(COMPONENT_9P, "fsal_refresh_attrs failed %s",
 			 fsal_err_txt(fsal_status));
 
 		/* Done with the attrs */
 		fsal_release_attrs(&attrs);
 
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 	}
 
 	/* Attach point is found, build the requested attributes */
 
-	valid = _9P_GETATTR_BASIC;	/* FSAL covers all basic attributes */
+	valid = _9P_GETATTR_BASIC; /* FSAL covers all basic attributes */
 
 	if (*request_mask & _9P_GETATTR_RDEV) {
-		mode = (u32) attrs.mode;
+		mode = (u32)attrs.mode;
 		if (attrs.type == DIRECTORY)
 			mode |= __S_IFDIR;
 		if (attrs.type == REGULAR_FILE)
@@ -137,59 +135,39 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	} else
 		mode = 0;
 
-	uid =
-	    (*request_mask & _9P_GETATTR_UID) ?
-		(u32) attrs.owner :
-		0;
-	gid =
-	    (*request_mask & _9P_GETATTR_GID) ?
-		(u32) attrs.group :
-		0;
-	nlink =
-	    (*request_mask & _9P_GETATTR_NLINK) ?
-		(u64) attrs.numlinks :
-		0LL;
+	uid = (*request_mask & _9P_GETATTR_UID) ? (u32)attrs.owner : 0;
+	gid = (*request_mask & _9P_GETATTR_GID) ? (u32)attrs.group : 0;
+	nlink = (*request_mask & _9P_GETATTR_NLINK) ? (u64)attrs.numlinks : 0LL;
 	/* rdev = (*request_mask & _9P_GETATTR_RDEV) ?
 	 *     (u64) attrs.rawdev.major :
 	 *     0LL; */
-	rdev =
-	    (*request_mask & _9P_GETATTR_RDEV) ?
-		(u64) pfid->fid_export->filesystem_id.major :
-		0LL;
-	size =
-	    (*request_mask & _9P_GETATTR_SIZE) ?
-		(u64) attrs.filesize :
-		0LL;
-	blksize =
-	    (*request_mask & _9P_GETATTR_BLOCKS) ? (u64) _9P_BLK_SIZE : 0LL;
-	blocks =
-	    (*request_mask & _9P_GETATTR_BLOCKS)
-	    ? (u64) (attrs.filesize / DEV_BSIZE)
-	    : 0LL;
-	atime_sec =
-	    (*request_mask & _9P_GETATTR_ATIME) ?
-		(u64) attrs.atime.tv_sec :
-		0LL;
-	atime_nsec =
-	    (*request_mask & _9P_GETATTR_ATIME) ?
-		(u64) attrs.atime.tv_nsec :
-		0LL;
-	mtime_sec =
-	    (*request_mask & _9P_GETATTR_MTIME) ?
-		(u64) attrs.mtime.tv_sec :
-		0LL;
-	mtime_nsec =
-	    (*request_mask & _9P_GETATTR_MTIME) ?
-		(u64) attrs.mtime.tv_nsec :
-		0LL;
-	ctime_sec =
-	    (*request_mask & _9P_GETATTR_CTIME) ?
-		(u64) attrs.ctime.tv_sec :
-		0LL;
-	ctime_nsec =
-	    (*request_mask & _9P_GETATTR_CTIME) ?
-		(u64) attrs.ctime.tv_nsec :
-		0LL;
+	rdev = (*request_mask & _9P_GETATTR_RDEV) ?
+		       (u64)pfid->fid_export->filesystem_id.major :
+		       0LL;
+	size = (*request_mask & _9P_GETATTR_SIZE) ? (u64)attrs.filesize : 0LL;
+	blksize = (*request_mask & _9P_GETATTR_BLOCKS) ? (u64)_9P_BLK_SIZE :
+							 0LL;
+	blocks = (*request_mask & _9P_GETATTR_BLOCKS) ?
+			 (u64)(attrs.filesize / DEV_BSIZE) :
+			 0LL;
+	atime_sec = (*request_mask & _9P_GETATTR_ATIME) ?
+			    (u64)attrs.atime.tv_sec :
+			    0LL;
+	atime_nsec = (*request_mask & _9P_GETATTR_ATIME) ?
+			     (u64)attrs.atime.tv_nsec :
+			     0LL;
+	mtime_sec = (*request_mask & _9P_GETATTR_MTIME) ?
+			    (u64)attrs.mtime.tv_sec :
+			    0LL;
+	mtime_nsec = (*request_mask & _9P_GETATTR_MTIME) ?
+			     (u64)attrs.mtime.tv_nsec :
+			     0LL;
+	ctime_sec = (*request_mask & _9P_GETATTR_CTIME) ?
+			    (u64)attrs.ctime.tv_sec :
+			    0LL;
+	ctime_nsec = (*request_mask & _9P_GETATTR_CTIME) ?
+			     (u64)attrs.ctime.tv_nsec :
+			     0LL;
 
 	/* Not yet supported attributes */
 	btime_sec = 0LL;
@@ -229,13 +207,13 @@ int _9p_getattr(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_checkbound(cursor, preply, plenout);
 
 	LogDebug(COMPONENT_9P,
-		 "RGETATTR: tag=%u valid=0x%"PRIx64
-		 "qid=(type=%u,version=%u, path=%"
-		 PRIu64") mode=0%o uid=%u gid=%u nlink=%"PRIu64
-		 " rdev=%"PRIu64" size=%"PRIu64" blksize=%"PRIu64
-		 " blocks=%"PRIu64" atime=(%"PRIu64",%"PRIu64") mtime=(%"PRIu64
-		 ",%"PRIu64") ctime=(%"PRIu64",%"PRIu64") btime=(%"PRIu64
-		 ",%"PRIu64") gen=%"PRIu64", data_version=%"PRIu64,
+		 "RGETATTR: tag=%u valid=0x%" PRIx64
+		 "qid=(type=%u,version=%u, path=%" PRIu64
+		 ") mode=0%o uid=%u gid=%u nlink=%" PRIu64 " rdev=%" PRIu64
+		 " size=%" PRIu64 " blksize=%" PRIu64 " blocks=%" PRIu64
+		 " atime=(%" PRIu64 ",%" PRIu64 ") mtime=(%" PRIu64 ",%" PRIu64
+		 ") ctime=(%" PRIu64 ",%" PRIu64 ") btime=(%" PRIu64 ",%" PRIu64
+		 ") gen=%" PRIu64 ", data_version=%" PRIu64,
 		 *msgtag, valid, pfid->qid.type, pfid->qid.version,
 		 pfid->qid.path, mode, uid, gid, nlink, rdev, size, blksize,
 		 blocks, atime_sec, atime_nsec, mtime_sec, mtime_nsec,

@@ -74,12 +74,11 @@ static inline size_t nfs3_sizeof_handle(struct file_handle_v3 *hdl)
  * @param fh [INOUT] the filehandle to manage.
  *
  */
-static inline
-void nfs3_AllocateFH(nfs_fh3 *fh)
+static inline void nfs3_AllocateFH(nfs_fh3 *fh)
 {
 	/* Allocating the filehandle in memory */
 	fh->data.data_len = NFS3_FHSIZE;
-	fh->data.data_val = (char *) gsh_calloc(1, NFS3_FHSIZE);
+	fh->data.data_val = (char *)gsh_calloc(1, NFS3_FHSIZE);
 }
 
 static inline void nfs3_freeFH(nfs_fh3 *fh)
@@ -98,12 +97,11 @@ static inline void nfs3_freeFH(nfs_fh3 *fh)
  * @param fh [INOUT] the filehandle to manage.
  *
  */
-static inline
-void nfs4_AllocateFH(nfs_fh4 *fh)
+static inline void nfs4_AllocateFH(nfs_fh4 *fh)
 {
 	/* Allocating the filehandle in memory */
 	fh->nfs_fh4_len = NFS4_FHSIZE;
-	fh->nfs_fh4_val = (char *) gsh_calloc(1, NFS4_FHSIZE);
+	fh->nfs_fh4_val = (char *)gsh_calloc(1, NFS4_FHSIZE);
 }
 
 static inline void nfs4_freeFH(nfs_fh4 *fh)
@@ -126,7 +124,6 @@ static inline size_t nfs4_sizeof_handle(struct file_handle_v4 *hdl)
 
 static inline size_t nfs4_sizeof_handle_padding(struct file_handle_v4 *hdl)
 {
-
 	int hsize;
 	int aligned_hsize;
 
@@ -143,8 +140,9 @@ static inline bool valid_Fh4_Len(nfs_fh4 *fh, file_handle_v4_t *pfile_handle)
 	if (!nfs_param.core_param.enable_v3_fh_for_v4) {
 		return fh->nfs_fh4_len == nfs4_sizeof_handle(pfile_handle);
 	} else {
-		return ((fh->nfs_fh4_len == nfs4_sizeof_handle(pfile_handle))
-	|| (fh->nfs_fh4_len == nfs4_sizeof_handle_padding(pfile_handle)));
+		return ((fh->nfs_fh4_len == nfs4_sizeof_handle(pfile_handle)) ||
+			(fh->nfs_fh4_len ==
+			 nfs4_sizeof_handle_padding(pfile_handle)));
 	}
 }
 
@@ -155,13 +153,11 @@ static inline bool valid_Fh4_Len(nfs_fh4 *fh, file_handle_v4_t *pfile_handle)
 struct fsal_obj_handle *nfs3_FhandleToCache(nfs_fh3 *, nfsstat3 *, int *);
 #endif
 
-bool nfs4_FSALToFhandle(bool allocate,
-			nfs_fh4 *fh4,
+bool nfs4_FSALToFhandle(bool allocate, nfs_fh4 *fh4,
 			const struct fsal_obj_handle *fsalhandle,
 			struct gsh_export *exp);
 
-bool nfs3_FSALToFhandle(bool allocate,
-			nfs_fh3 *fh3,
+bool nfs3_FSALToFhandle(bool allocate, nfs_fh3 *fh3,
 			const struct fsal_obj_handle *fsalhandle,
 			struct gsh_export *exp);
 
@@ -184,13 +180,13 @@ static inline int nfs3_FhandleToExportId(nfs_fh3 *pfh3)
 	file_handle_v3_t *pfile_handle;
 
 	if (nfs3_Is_Fh_Invalid(pfh3) != NFS4_OK)
-		return -1;	/* Badly formed argument */
+		return -1; /* Badly formed argument */
 
-	pfile_handle = (file_handle_v3_t *) (pfh3->data.data_val);
+	pfile_handle = (file_handle_v3_t *)(pfh3->data.data_val);
 
 	/*exportid is in network byte order in nfs_fh3*/
 	return ntohs(pfile_handle->exportid);
-}				/* nfs3_FhandleToExportId */
+} /* nfs3_FhandleToExportId */
 
 static inline int nlm4_FhandleToExportId(netobj *pfh3)
 {
@@ -227,7 +223,7 @@ static inline int nfs4_Is_Fh_Empty(nfs_fh4 *pfh)
 	}
 
 	return NFS4_OK;
-}				/* nfs4_Is_Fh_Empty */
+} /* nfs4_Is_Fh_Empty */
 
 /* NFSv4 specific FH related functions */
 int nfs4_Is_Fh_Invalid(nfs_fh4 *);
@@ -242,119 +238,115 @@ nfsstat4 nfs4_sanity_check_saved_FH(compound_data_t *data, int required_type,
 
 /* File handle print function (mostly used for debugging) */
 
-#define LogNFS3_Operation(component, req, fh, format, args...) \
-	do { \
-		if (unlikely(component_log_level[component] >= NIV_DEBUG)) { \
-			char str[LEN_FH_STR]; \
-			struct display_buffer dspbuf = { \
-				sizeof(str), str, str}; \
-			\
-			display_opaque_bytes(&dspbuf, (fh)->data.data_val, \
-					     (fh)->data.data_len); \
-			\
-			DisplayLogComponentLevel( \
-				component,  __FILE__, __LINE__, __func__, \
-				NIV_DEBUG, \
-				"REQUEST PROCESSING: Calling %s " \
-				"File Handle V3: Len=%u %s" \
-				format, \
+#define LogNFS3_Operation(component, req, fh, format, args...)                \
+	do {                                                                  \
+		if (unlikely(component_log_level[component] >= NIV_DEBUG)) {  \
+			char str[LEN_FH_STR];                                 \
+			struct display_buffer dspbuf = { sizeof(str), str,    \
+							 str };               \
+                                                                              \
+			display_opaque_bytes(&dspbuf, (fh)->data.data_val,    \
+					     (fh)->data.data_len);            \
+                                                                              \
+			DisplayLogComponentLevel(                             \
+				component, __FILE__, __LINE__, __func__,      \
+				NIV_DEBUG,                                    \
+				"REQUEST PROCESSING: Calling %s "             \
+				"File Handle V3: Len=%u %s" format,           \
 				nfs3_func_desc[req->rq_msg.cb_proc].funcname, \
-				(fh)->data.data_len, str, \
-				## args); \
-		} \
+				(fh)->data.data_len, str, ##args);            \
+		}                                                             \
 	} while (0)
 
-#define LogNFS3_Operation2(component, req, fh1, name1, fh2, name2) \
-	do { \
-		if (unlikely(component_log_level[component] >= NIV_DEBUG)) { \
-			char str1[LEN_FH_STR]; \
-			struct display_buffer dspbuf1 = { \
-				sizeof(str1), str1, str1}; \
-			char str2[LEN_FH_STR]; \
-			struct display_buffer dspbuf2 = { \
-				sizeof(str2), str2, str2}; \
-			\
-			display_opaque_bytes(&dspbuf1, (fh1)->data.data_val, \
-					     (fh1)->data.data_len); \
-			display_opaque_bytes(&dspbuf2, (fh2)->data.data_val, \
-					     (fh2)->data.data_len); \
-			\
-			DisplayLogComponentLevel( \
-				component,  __FILE__, __LINE__, __func__, \
-				NIV_DEBUG, \
-				"REQUEST PROCESSING: Calling %s " \
-				"File Handle V3: Len=%u %s%s%s to " \
-				"File Handle V3: Len=%u %s name %s", \
+#define LogNFS3_Operation2(component, req, fh1, name1, fh2, name2)            \
+	do {                                                                  \
+		if (unlikely(component_log_level[component] >= NIV_DEBUG)) {  \
+			char str1[LEN_FH_STR];                                \
+			struct display_buffer dspbuf1 = { sizeof(str1), str1, \
+							  str1 };             \
+			char str2[LEN_FH_STR];                                \
+			struct display_buffer dspbuf2 = { sizeof(str2), str2, \
+							  str2 };             \
+                                                                              \
+			display_opaque_bytes(&dspbuf1, (fh1)->data.data_val,  \
+					     (fh1)->data.data_len);           \
+			display_opaque_bytes(&dspbuf2, (fh2)->data.data_val,  \
+					     (fh2)->data.data_len);           \
+                                                                              \
+			DisplayLogComponentLevel(                             \
+				component, __FILE__, __LINE__, __func__,      \
+				NIV_DEBUG,                                    \
+				"REQUEST PROCESSING: Calling %s "             \
+				"File Handle V3: Len=%u %s%s%s to "           \
+				"File Handle V3: Len=%u %s name %s",          \
 				nfs3_func_desc[req->rq_msg.cb_proc].funcname, \
-				(fh1)->data.data_len, str1, \
-				name1 ? " name " : "", name1 ? "name1" : "", \
-				(fh2)->data.data_len, str2, name2); \
-		} \
+				(fh1)->data.data_len, str1,                   \
+				name1 ? " name " : "", name1 ? "name1" : "",  \
+				(fh2)->data.data_len, str2, name2);           \
+		}                                                             \
 	} while (0)
 
-#define LogHandleNFS4(label, fh4) \
-	do { \
-		if (isFullDebug(COMPONENT_NFS_V4)) { \
-			char str[LEN_FH_STR]; \
-			struct display_buffer dspbuf = { \
-				sizeof(str), str, str}; \
-			\
-			display_opaque_bytes(&dspbuf, (fh4)->nfs_fh4_val, \
-					     (fh4)->nfs_fh4_len); \
-			\
-			LogFullDebug(COMPONENT_NFS_V4, \
-				     "%sFile Handle V4: Len=%u %s", \
-				     label, (fh4)->nfs_fh4_len, str); \
-		} \
+#define LogHandleNFS4(label, fh4)                                          \
+	do {                                                               \
+		if (isFullDebug(COMPONENT_NFS_V4)) {                       \
+			char str[LEN_FH_STR];                              \
+			struct display_buffer dspbuf = { sizeof(str), str, \
+							 str };            \
+                                                                           \
+			display_opaque_bytes(&dspbuf, (fh4)->nfs_fh4_val,  \
+					     (fh4)->nfs_fh4_len);          \
+                                                                           \
+			LogFullDebug(COMPONENT_NFS_V4,                     \
+				     "%sFile Handle V4: Len=%u %s", label, \
+				     (fh4)->nfs_fh4_len, str);             \
+		}                                                          \
 	} while (0)
 
-#define LogCompoundFH(data) \
-	do { \
-		if (isFullDebug(COMPONENT_NFS_V4)) { \
-			char str[LEN_FH_STR]; \
-			struct display_buffer dspbuf = { \
-				sizeof(str), str, str}; \
-			\
-			display_opaque_bytes(&dspbuf, \
+#define LogCompoundFH(data)                                                \
+	do {                                                               \
+		if (isFullDebug(COMPONENT_NFS_V4)) {                       \
+			char str[LEN_FH_STR];                              \
+			struct display_buffer dspbuf = { sizeof(str), str, \
+							 str };            \
+                                                                           \
+			display_opaque_bytes(&dspbuf,                      \
 					     &data->currentFH.nfs_fh4_val, \
 					     data->currentFH.nfs_fh4_len); \
-			\
-			LogFullDebug(COMPONENT_NFS_V4, \
-				     "Current FH  Len=%u %s", \
-				     data->currentFH.nfs_fh4_len, str); \
-			\
-			display_reset_buffer(&dspbuf); \
-			\
-			display_opaque_bytes(&dspbuf, \
-					     &data->savedFH.nfs_fh4_val, \
-					     data->savedFH.nfs_fh4_len); \
-			\
-			LogFullDebug(COMPONENT_NFS_V4, \
-				     "Saved FH    Len=%u %s", \
-				     data->savedFH.nfs_fh4_len, str); \
-		} \
+                                                                           \
+			LogFullDebug(COMPONENT_NFS_V4,                     \
+				     "Current FH  Len=%u %s",              \
+				     data->currentFH.nfs_fh4_len, str);    \
+                                                                           \
+			display_reset_buffer(&dspbuf);                     \
+                                                                           \
+			display_opaque_bytes(&dspbuf,                      \
+					     &data->savedFH.nfs_fh4_val,   \
+					     data->savedFH.nfs_fh4_len);   \
+                                                                           \
+			LogFullDebug(COMPONENT_NFS_V4,                     \
+				     "Saved FH    Len=%u %s",              \
+				     data->savedFH.nfs_fh4_len, str);      \
+		}                                                          \
 	} while (0)
 
-#define LogNFSACL_Operation(component, req, fh, format, args...) \
-	do { \
-		if (unlikely(component_log_level[component] >= NIV_DEBUG)) { \
-			char str[LEN_FH_STR]; \
-			struct display_buffer dspbuf = { \
-				sizeof(str), str, str}; \
-			\
-			display_opaque_bytes(&dspbuf, (fh)->data.data_val, \
-					     (fh)->data.data_len); \
-			\
-			DisplayLogComponentLevel( \
-				component,  __FILE__, __LINE__, __func__, \
-				NIV_DEBUG, \
-				"REQUEST PROCESSING: Calling %s " \
-				"File Handle V3: Len=%u %s" \
-				format, \
-			    nfsacl_func_desc[req->rq_msg.cb_proc].funcname, \
-				(fh)->data.data_len, str, \
-				## args); \
-		} \
+#define LogNFSACL_Operation(component, req, fh, format, args...)                \
+	do {                                                                    \
+		if (unlikely(component_log_level[component] >= NIV_DEBUG)) {    \
+			char str[LEN_FH_STR];                                   \
+			struct display_buffer dspbuf = { sizeof(str), str,      \
+							 str };                 \
+                                                                                \
+			display_opaque_bytes(&dspbuf, (fh)->data.data_val,      \
+					     (fh)->data.data_len);              \
+                                                                                \
+			DisplayLogComponentLevel(                               \
+				component, __FILE__, __LINE__, __func__,        \
+				NIV_DEBUG,                                      \
+				"REQUEST PROCESSING: Calling %s "               \
+				"File Handle V3: Len=%u %s" format,             \
+				nfsacl_func_desc[req->rq_msg.cb_proc].funcname, \
+				(fh)->data.data_len, str, ##args);              \
+		}                                                               \
 	} while (0)
 
-#endif				/* NFS_FILE_HANDLE_H */
+#endif /* NFS_FILE_HANDLE_H */

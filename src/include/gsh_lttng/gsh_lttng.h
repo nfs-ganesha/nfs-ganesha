@@ -47,42 +47,44 @@ extern __thread struct req_op_context *op_ctx;
 /* We define temp variable for op_id so that it has a representative key name
  * generated. */
 #define GSH_AUTO_TRACEPOINT(prov_name, event_name, log_level, format, ...) \
-	do { \
-		const uint32_t _server_id_ = \
-			nfs_param.core_param.unique_server_id; \
-		\
-		uint32_t _op_id_ = op_ctx != NULL ? op_ctx->op_id : 0; \
-		AUTO_TRACEPOINT(prov_name, event_name, log_level, \
-			__FILE__ \
-			":" LINE_AS_STRING \
-			" | server_id={} | op_id={} | " format, \
-			_server_id_, _op_id_, ##__VA_ARGS__); \
+	do {                                                               \
+		const uint32_t _server_id_ =                               \
+			nfs_param.core_param.unique_server_id;             \
+                                                                           \
+		uint32_t _op_id_ = op_ctx != NULL ? op_ctx->op_id : 0;     \
+		AUTO_TRACEPOINT(prov_name, event_name, log_level,          \
+				__FILE__                                   \
+				":" LINE_AS_STRING                         \
+				" | server_id={} | op_id={} | " format,    \
+				_server_id_, _op_id_, ##__VA_ARGS__);      \
 	} while (0)
 
-#define GSH_UNIQUE_AUTO_TRACEPOINT(prov_name, event_name, log_level, format, \
-				   ...) \
-	do { \
-		const uint32_t _server_id_ = \
-			nfs_param.core_param.unique_server_id; \
-		\
-		uint32_t _op_id_ = op_ctx != NULL ? op_ctx->op_id : 0; \
-		UNIQUE_AUTO_TRACEPOINT( \
-			prov_name, event_name, log_level, \
-			__FILE__ ":" LINE_AS_STRING \
-			" | server_id={} | op_id={} | " format, \
-			_server_id_, _op_id_, ##__VA_ARGS__); \
+#define GSH_UNIQUE_AUTO_TRACEPOINT(prov_name, event_name, log_level, format,   \
+				   ...)                                        \
+	do {                                                                   \
+		const uint32_t _server_id_ =                                   \
+			nfs_param.core_param.unique_server_id;                 \
+                                                                               \
+		uint32_t _op_id_ = op_ctx != NULL ? op_ctx->op_id : 0;         \
+		UNIQUE_AUTO_TRACEPOINT(prov_name, event_name, log_level,       \
+				       __FILE__                                \
+				       ":" LINE_AS_STRING                      \
+				       " | server_id={} | op_id={} | " format, \
+				       _server_id_, _op_id_, ##__VA_ARGS__);   \
 	} while (0)
 
 #else /* USE_LTTNG */
 
 /* We call the empty function with the variable args to avoid unused variables
  * warning when LTTNG traces are disabled */
-static inline void gsh_empty_function(const char *unused, ...) {}
+static inline void gsh_empty_function(const char *unused, ...)
+{
+}
 
 #define GSH_AUTO_TRACEPOINT(prov_name, event_name, log_level, ...) \
-		gsh_empty_function("unused", ##__VA_ARGS__)
+	gsh_empty_function("unused", ##__VA_ARGS__)
 #define GSH_UNIQUE_AUTO_TRACEPOINT(prov_name, event_name, log_level, ...) \
-		gsh_empty_function("unused", ##__VA_ARGS__)
+	gsh_empty_function("unused", ##__VA_ARGS__)
 
 /* Define array macros for when lttng generator doesn't exist */
 #ifndef TP_INT_ARR

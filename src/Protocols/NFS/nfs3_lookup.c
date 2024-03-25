@@ -34,7 +34,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <fcntl.h>
-#include <sys/file.h>		/* for having FNDELAY */
+#include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
 #include "fsal.h"
@@ -82,8 +82,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resfail->dir_attributes.attributes_follow = FALSE;
 
 	obj_dir = nfs3_FhandleToCache(&arg->arg_lookup3.what.dir,
-				      &res->res_lookup3.status,
-				      &rc);
+				      &res->res_lookup3.status, &rc);
 
 	if (obj_dir == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -120,7 +119,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	rc = NFS_REQ_OK;
 
- out:
+out:
 
 	/* Release the attributes. */
 	fsal_release_attrs(&attrs);
@@ -133,7 +132,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		obj_file->obj_ops->put_ref(obj_file);
 
 	return rc;
-}				/* nfs3_lookup */
+} /* nfs3_lookup */
 
 /**
  * @brief Free the result structure allocated for nfs3_lookup.
@@ -146,7 +145,7 @@ int nfs3_lookup(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 void nfs3_lookup_free(nfs_res_t *res)
 {
 	if (res->res_lookup3.status == NFS3_OK) {
-		gsh_free(
-		    res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val);
+		gsh_free(res->res_lookup3.LOOKUP3res_u.resok.object.data
+				 .data_val);
 	}
 }

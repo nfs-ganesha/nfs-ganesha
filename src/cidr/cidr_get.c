@@ -39,7 +39,7 @@
 #include "abstract_mem.h"
 
 /* Get the prefix length */
-int cidr_get_pflen(const CIDR * block)
+int cidr_get_pflen(const CIDR *block)
 {
 	int i, j;
 	int foundnmh;
@@ -51,8 +51,8 @@ int cidr_get_pflen(const CIDR * block)
 	else if (block->proto == CIDR_IPV6)
 		i = 0;
 	else {
-		errno = ENOENT;	/* Bad errno */
-		return (-1);	/* Unknown */
+		errno = ENOENT; /* Bad errno */
+		return (-1); /* Unknown */
 	}
 
 	/*
@@ -61,7 +61,7 @@ int cidr_get_pflen(const CIDR * block)
 	 */
 	foundnmh = 0;
 	pflen = 0;
-	for ( /* i */ ; i <= 15; i++) {
+	for (/* i */; i <= 15; i++) {
 		for (j = 7; j >= 0; j--) {
 			if ((block->mask)[i] & (1 << j)) {
 				/*
@@ -75,7 +75,7 @@ int cidr_get_pflen(const CIDR * block)
 
 				pflen++;
 			} else
-				foundnmh = 1;	/* A host bit */
+				foundnmh = 1; /* A host bit */
 		}
 	}
 
@@ -84,7 +84,7 @@ int cidr_get_pflen(const CIDR * block)
 }
 
 /* Get the address bits */
-uint8_t *cidr_get_addr(const CIDR * addr)
+uint8_t *cidr_get_addr(const CIDR *addr)
 {
 	uint8_t *toret;
 
@@ -97,7 +97,7 @@ uint8_t *cidr_get_addr(const CIDR * addr)
 }
 
 /* Get the netmask bits */
-uint8_t *cidr_get_mask(const CIDR * addr)
+uint8_t *cidr_get_mask(const CIDR *addr)
 {
 	uint8_t *toret;
 
@@ -110,7 +110,7 @@ uint8_t *cidr_get_mask(const CIDR * addr)
 }
 
 /* Get the protocol */
-int cidr_get_proto(const CIDR * addr)
+int cidr_get_proto(const CIDR *addr)
 {
 	return (addr->proto);
 }

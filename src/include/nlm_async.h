@@ -47,4 +47,4 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key);
 
 void nlm_signal_async_resp(void *key);
 
-#endif				/* NLM_ASYNC_H */
+#endif /* NLM_ASYNC_H */

@@ -47,10 +47,12 @@
 #include "internal.h"
 #include "pnfs_utils.h"
 
-#define min(a, b) ({				\
-	typeof(a) _a = (a);			\
-	typeof(b) _b = (b);			\
-	_a < _b ? _a : _b; })
+#define min(a, b)                   \
+	({                          \
+		typeof(a) _a = (a); \
+		typeof(b) _b = (b); \
+		_a < _b ? _a : _b;  \
+	})
 
 /**
  * @brief Local invalidate
@@ -61,10 +63,8 @@
  */
 static inline void local_invalidate(struct ds *ds, struct fsal_export *export)
 {
-	struct gsh_buffdesc key = {
-		.addr = &ds->wire.wire.vi,
-		.len = sizeof(ds->wire.wire.vi)
-	};
+	struct gsh_buffdesc key = { .addr = &ds->wire.wire.vi,
+				    .len = sizeof(ds->wire.wire.vi) };
 	up_async_invalidate(general_fridge, export->up_ops, export->fsal, &key,
 			    MDCACHE_INVALIDATE_ATTRS, NULL, NULL);
 }
@@ -104,8 +104,7 @@ static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
 static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 			const stateid4 *stateid, const offset4 offset,
 			const count4 requested_length, void *const buffer,
-			count4 * const supplied_length,
-			bool * const end_of_file)
+			count4 *const supplied_length, bool *const end_of_file)
 {
 	/* The private 'full' export */
 	struct ceph_export *export =
@@ -140,17 +139,17 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
 	block_start = stripe * stripe_width;
 	internal_offset = offset - block_start;
 
-	if (local_OSD !=
-	    ceph_ll_get_stripe_osd(export->cmount, ds->wire.wire.vi, stripe,
-				   &(ds->wire.layout))) {
+	if (local_OSD != ceph_ll_get_stripe_osd(export->cmount,
+						ds->wire.wire.vi, stripe,
+						&(ds->wire.layout))) {
 		return NFS4ERR_PNFS_IO_HOLE;
 	}
 
-	amount_read =
-	    ceph_ll_read_block(export->cmount, ds->wire.wire.vi, stripe, buffer,
-			       internal_offset,
-			       min((stripe_width - internal_offset),
-				   requested_length), &(ds->wire.layout));
+	amount_read = ceph_ll_read_block(export->cmount, ds->wire.wire.vi,
+					 stripe, buffer, internal_offset,
+					 min((stripe_width - internal_offset),
+					     requested_length),
+					 &(ds->wire.layout));
 	if (amount_read < 0)
 		return posix2nfs4_error(-amount_read);
 
@@ -183,13 +182,11 @@ static nfsstat4 ds_read(struct fsal_ds_handle *const ds_pub,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
-			 const stateid4 *stateid, const offset4 offset,
-			 const count4 write_length, const void *buffer,
-			 const stable_how4 stability_wanted,
-			 count4 * const written_length,
-			 verifier4 * const writeverf,
-			 stable_how4 * const stability_got)
+static nfsstat4
+ds_write(struct fsal_ds_handle *const ds_pub, const stateid4 *stateid,
+	 const offset4 offset, const count4 write_length, const void *buffer,
+	 const stable_how4 stability_wanted, count4 *const written_length,
+	 verifier4 *const writeverf, stable_how4 *const stability_got)
 {
 	/* The private 'full' export */
 	struct ceph_export *export =
@@ -228,9 +225,9 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 	block_start = stripe * stripe_width;
 	internal_offset = offset - block_start;
 
-	if (local_OSD !=
-	    ceph_ll_get_stripe_osd(export->cmount, ds->wire.wire.vi, stripe,
-				   &(ds->wire.layout))) {
+	if (local_OSD != ceph_ll_get_stripe_osd(export->cmount,
+						ds->wire.wire.vi, stripe,
+						&(ds->wire.layout))) {
 		return NFS4ERR_PNFS_IO_HOLE;
 	}
 
@@ -244,50 +241,48 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 
 		if (!ds->connected) {
 			ceph_status = ceph_ll_connectable_m(
-				export->cmount,
-				&ds->wire.wire.vi,
+				export->cmount, &ds->wire.wire.vi,
 				ds->wire.wire.parent_ino,
 				ds->wire.wire.parent_hash);
 			if (ceph_status != 0) {
-				LogMajor(COMPONENT_PNFS,
-					 "Filehandle connection failed with: %d\n",
-					 ceph_status);
+				LogMajor(
+					COMPONENT_PNFS,
+					"Filehandle connection failed with: %d\n",
+					ceph_status);
 				return posix2nfs4_error(-ceph_status);
 			}
 			ds->connected = true;
 		}
-		ceph_status = fsal_ceph_ll_open(
-			export->cmount, ds->wire.wire.vi,
-			O_WRONLY, &descriptor, &op_ctx->creds);
+		ceph_status = fsal_ceph_ll_open(export->cmount,
+						ds->wire.wire.vi, O_WRONLY,
+						&descriptor, &op_ctx->creds);
 		if (ceph_status != 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "Open failed with: %d", ceph_status);
+			LogMajor(COMPONENT_FSAL, "Open failed with: %d",
+				 ceph_status);
 			return posix2nfs4_error(-ceph_status);
 		}
 
-		amount_written =
-		    ceph_ll_write(export->cmount, descriptor, offset,
-				  adjusted_write, buffer);
+		amount_written = ceph_ll_write(export->cmount, descriptor,
+					       offset, adjusted_write, buffer);
 
 		if (amount_written < 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "Write failed with: %d", amount_written);
+			LogMajor(COMPONENT_FSAL, "Write failed with: %d",
+				 amount_written);
 			ceph_ll_close(export->cmount, descriptor);
 			return posix2nfs4_error(-amount_written);
 		}
 
 		ceph_status = ceph_ll_fsync(export->cmount, descriptor, 0);
 		if (ceph_status < 0) {
-			LogMajor(COMPONENT_FSAL
-				"fsync failed with: %d", ceph_status);
+			LogMajor(COMPONENT_FSAL "fsync failed with: %d",
+				 ceph_status);
 			ceph_ll_close(export->cmount, descriptor);
 			return posix2nfs4_error(-ceph_status);
 		}
 
 		ceph_status = ceph_ll_close(export->cmount, descriptor);
 		if (ceph_status < 0) {
-			LogMajor(COMPONENT_FSAL,
-				 "close failed with: %d",
+			LogMajor(COMPONENT_FSAL, "close failed with: %d",
 				 ceph_status);
 			return posix2nfs4_error(-ceph_status);
 		}
@@ -301,12 +296,11 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
 		/* FILE_SYNC4 wasn't specified, so we don't have to
 		   bother with the MDS. */
 
-		amount_written =
-		    ceph_ll_write_block(export->cmount, ds->wire.wire.vi,
-					stripe, (char *)buffer, internal_offset,
-					adjusted_write, &(ds->wire.layout),
-					ds->wire.snapseq,
-					(stability_wanted == DATA_SYNC4));
+		amount_written = ceph_ll_write_block(
+			export->cmount, ds->wire.wire.vi, stripe,
+			(char *)buffer, internal_offset, adjusted_write,
+			&(ds->wire.layout), ds->wire.snapseq,
+			(stability_wanted == DATA_SYNC4));
 		if (amount_written < 0)
 			return posix2nfs4_error(-amount_written);
 
@@ -334,7 +328,7 @@ static nfsstat4 ds_write(struct fsal_ds_handle *const ds_pub,
  */
 static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 			  const offset4 offset, const count4 count,
-			  verifier4 * const writeverf)
+			  verifier4 *const writeverf)
 {
 #ifdef COMMIT_FIX
 	/* The private 'full' export */
@@ -353,7 +347,7 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 	if (rc < 0)
 		return posix2nfs4_error(rc);
 
-#endif				/* COMMIT_FIX */
+#endif /* COMMIT_FIX */
 
 	memset(*writeverf, 0, NFS4_VERIFIER_SIZE);
 
@@ -378,11 +372,10 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 
 static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 			       const struct gsh_buffdesc *const desc,
-			       struct fsal_ds_handle **const handle,
-			       int flags)
+			       struct fsal_ds_handle **const handle, int flags)
 {
 	struct ds_wire *dsw = (struct ds_wire *)desc->addr;
-	struct ds *ds;			/* Handle to be created */
+	struct ds *ds; /* Handle to be created */
 
 	*handle = NULL;
 
@@ -415,4 +408,4 @@ void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops)
 	ops->dsh_commit = ds_commit;
 }
 
-#endif				/* CEPH_PNFS */
+#endif /* CEPH_PNFS */

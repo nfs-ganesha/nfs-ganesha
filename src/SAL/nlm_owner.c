@@ -30,7 +30,7 @@
  * @{
  */
 
- /**
+/**
   * @file nlm_owner.c
   * @brief The management of the NLM owner cache.
   */
@@ -96,8 +96,7 @@ int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key)
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_len_cat(dspbuf,
-				 key->ssc_nlm_caller_name,
+	b_left = display_len_cat(dspbuf, key->ssc_nlm_caller_name,
 				 key->ssc_nlm_caller_name_len);
 
 	if (b_left <= 0)
@@ -105,8 +104,9 @@ int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key)
 
 	return display_printf(dspbuf, " ssc_client=%p %s ssc_refcount=%d",
 			      key->ssc_client,
-			      atomic_fetch_int32_t(&key->ssc_monitored)
-					? "monitored" : "unmonitored",
+			      atomic_fetch_int32_t(&key->ssc_monitored) ?
+				      "monitored" :
+				      "unmonitored",
 			      atomic_fetch_int32_t(&key->ssc_refcount));
 }
 
@@ -131,14 +131,13 @@ int display_nsm_client_key_val(struct display_buffer *dspbuf,
  * @retval 0 on equality.
  * @retval 1 on inequality.
  */
-int compare_nsm_client(state_nsm_client_t *client1,
-		       state_nsm_client_t *client2)
+int compare_nsm_client(state_nsm_client_t *client1, state_nsm_client_t *client2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		char str1[LOG_BUFF_LEN / 2] = "\0";
 		char str2[LOG_BUFF_LEN / 2] = "\0";
-		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
-		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+		struct display_buffer dspbuf1 = { sizeof(str1), str1, str1 };
+		struct display_buffer dspbuf2 = { sizeof(str2), str2, str2 };
 
 		display_nsm_client(&dspbuf1, client1);
 		display_nsm_client(&dspbuf2, client2);
@@ -182,7 +181,6 @@ int compare_nsm_client_key(struct gsh_buffdesc *buff1,
 			   struct gsh_buffdesc *buff2)
 {
 	return compare_nsm_client(buff1->addr, buff2->addr);
-
 }
 
 /**
@@ -262,7 +260,7 @@ uint64_t nsm_client_rbt_hash_func(hash_parameter_t *hparam,
 		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
 
 	return res;
-}				/* nsm_client_rbt_hash_func */
+} /* nsm_client_rbt_hash_func */
 
 /*******************************************************************************
  *
@@ -300,8 +298,7 @@ int display_nlm_client(struct display_buffer *dspbuf, state_nlm_client_t *key)
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_len_cat(dspbuf,
-				 key->slc_nlm_caller_name,
+	b_left = display_len_cat(dspbuf, key->slc_nlm_caller_name,
 				 key->slc_nlm_caller_name_len);
 
 	if (b_left <= 0)
@@ -333,14 +330,13 @@ int display_nlm_client_key_val(struct display_buffer *dspbuf,
  * @retval 0 on equality.
  * @retval 1 on inequality.
  */
-int compare_nlm_client(state_nlm_client_t *client1,
-		       state_nlm_client_t *client2)
+int compare_nlm_client(state_nlm_client_t *client1, state_nlm_client_t *client2)
 {
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		char str1[LOG_BUFF_LEN / 2] = "\0";
 		char str2[LOG_BUFF_LEN / 2] = "\0";
-		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
-		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+		struct display_buffer dspbuf1 = { sizeof(str1), str1, str1 };
+		struct display_buffer dspbuf2 = { sizeof(str2), str2, str2 };
 
 		display_nlm_client(&dspbuf1, client1);
 		display_nlm_client(&dspbuf2, client2);
@@ -353,12 +349,11 @@ int compare_nlm_client(state_nlm_client_t *client1,
 	if (client1 == client2)
 		return 0;
 
-	if (compare_nsm_client(client1->slc_nsm_client, client2->slc_nsm_client)
-	    != 0)
+	if (compare_nsm_client(client1->slc_nsm_client,
+			       client2->slc_nsm_client) != 0)
 		return 1;
 
-	if (cmp_sockaddr(&client1->slc_server_addr,
-			 &client2->slc_server_addr,
+	if (cmp_sockaddr(&client1->slc_server_addr, &client2->slc_server_addr,
 			 true) == 0)
 		return 1;
 
@@ -387,7 +382,6 @@ int compare_nlm_client_key(struct gsh_buffdesc *buff1,
 			   struct gsh_buffdesc *buff2)
 {
 	return compare_nlm_client(buff1->addr, buff2->addr);
-
 }
 
 /**
@@ -449,7 +443,7 @@ uint64_t nlm_client_rbt_hash_func(hash_parameter_t *hparam,
 		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
 
 	return res;
-}				/* nlm_client_rbt_hash_func */
+} /* nlm_client_rbt_hash_func */
 
 /*******************************************************************************
  *
@@ -477,8 +471,8 @@ int display_nlm_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 	if (b_left <= 0)
 		return b_left;
 
-	b_left =
-	    display_nlm_client(dspbuf, owner->so_owner.so_nlm_owner.so_client);
+	b_left = display_nlm_client(dspbuf,
+				    owner->so_owner.so_nlm_owner.so_client);
 
 	if (b_left <= 0)
 		return b_left;
@@ -488,8 +482,7 @@ int display_nlm_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 	if (b_left <= 0)
 		return b_left;
 
-	b_left = display_opaque_value(dspbuf,
-				      owner->so_owner_val,
+	b_left = display_opaque_value(dspbuf, owner->so_owner_val,
 				      owner->so_owner_len);
 
 	if (b_left <= 0)
@@ -526,8 +519,8 @@ int compare_nlm_owner(state_owner_t *owner1, state_owner_t *owner2)
 	if (isFullDebug(COMPONENT_STATE) && isDebug(COMPONENT_HASHTABLE)) {
 		char str1[LOG_BUFF_LEN / 2] = "\0";
 		char str2[LOG_BUFF_LEN / 2] = "\0";
-		struct display_buffer dspbuf1 = {sizeof(str1), str1, str1};
-		struct display_buffer dspbuf2 = {sizeof(str2), str2, str2};
+		struct display_buffer dspbuf1 = { sizeof(str1), str1, str1 };
+		struct display_buffer dspbuf2 = { sizeof(str2), str2, str2 };
 
 		display_nlm_owner(&dspbuf1, owner1);
 		display_nlm_owner(&dspbuf2, owner2);
@@ -540,9 +533,8 @@ int compare_nlm_owner(state_owner_t *owner1, state_owner_t *owner2)
 	if (owner1 == owner2)
 		return 0;
 
-	if (compare_nlm_client
-	    (owner1->so_owner.so_nlm_owner.so_client,
-	     owner2->so_owner.so_nlm_owner.so_client) != 0)
+	if (compare_nlm_client(owner1->so_owner.so_nlm_owner.so_client,
+			       owner2->so_owner.so_nlm_owner.so_client) != 0)
 		return 1;
 
 	if (owner1->so_owner.so_nlm_owner.so_nlm_svid !=
@@ -569,7 +561,6 @@ int compare_nlm_owner_key(struct gsh_buffdesc *buff1,
 			  struct gsh_buffdesc *buff2)
 {
 	return compare_nlm_owner(buff1->addr, buff2->addr);
-
 }
 
 /**
@@ -594,16 +585,14 @@ uint32_t nlm_owner_value_hash_func(hash_parameter_t *hparam,
 	for (i = 0; i < pkey->so_owner_len; i++)
 		sum += (unsigned char)pkey->so_owner_val[i];
 
-	res =
-	    (unsigned long)(pkey->so_owner.so_nlm_owner.so_nlm_svid) +
-	    (unsigned long)sum + (unsigned long)pkey->so_owner_len;
+	res = (unsigned long)(pkey->so_owner.so_nlm_owner.so_nlm_svid) +
+	      (unsigned long)sum + (unsigned long)pkey->so_owner_len;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "value = %lu",
 			     res % hparam->index_size);
 
 	return (unsigned long)(res % hparam->index_size);
-
 }
 
 /**
@@ -628,15 +617,14 @@ uint64_t nlm_owner_rbt_hash_func(hash_parameter_t *hparam,
 	for (i = 0; i < pkey->so_owner_len; i++)
 		sum += (unsigned char)pkey->so_owner_val[i];
 
-	res =
-	    (unsigned long)(pkey->so_owner.so_nlm_owner.so_nlm_svid) +
-	    (unsigned long)sum + (unsigned long)pkey->so_owner_len;
+	res = (unsigned long)(pkey->so_owner.so_nlm_owner.so_nlm_svid) +
+	      (unsigned long)sum + (unsigned long)pkey->so_owner_len;
 
 	if (isDebug(COMPONENT_HASHTABLE))
 		LogFullDebug(COMPONENT_STATE, "rbt = %lu", res);
 
 	return res;
-}				/* state_id_rbt_hash_func */
+} /* state_id_rbt_hash_func */
 
 static hash_parameter_t nsm_client_hash_param = {
 	.index_size = PRIME_STATE,
@@ -697,7 +685,7 @@ int Init_nlm_hash(void)
 	}
 
 	return 0;
-}				/* Init_nlm_hash */
+} /* Init_nlm_hash */
 
 /*******************************************************************************
  *
@@ -710,11 +698,11 @@ int Init_nlm_hash(void)
  *
  * @param[in] client The client to ref
  */
-void _inc_nsm_client_ref(state_nsm_client_t *client,
-			 char *file, int line, char *function)
+void _inc_nsm_client_ref(state_nsm_client_t *client, char *file, int line,
+			 char *function)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool strvalid = false;
 	int32_t refcount;
 
@@ -730,10 +718,11 @@ void _inc_nsm_client_ref(state_nsm_client_t *client,
 	refcount = atomic_inc_int32_t(&client->ssc_refcount);
 
 	if (strvalid) {
-		DisplayLogComponentLevel(
-			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
-			"Increment ssc_refcount now=%" PRId32 " {%s}",
-			refcount, str);
+		DisplayLogComponentLevel(COMPONENT_STATE, file, line, function,
+					 NIV_FULL_DEBUG,
+					 "Increment ssc_refcount now=%" PRId32
+					 " {%s}",
+					 refcount, str);
 	}
 }
 
@@ -759,11 +748,11 @@ void free_nsm_client(state_nsm_client_t *client)
  *
  * @param[in] client The client to release
  */
-void _dec_nsm_client_ref(state_nsm_client_t *client,
-			char *file, int line, char *function)
+void _dec_nsm_client_ref(state_nsm_client_t *client, char *file, int line,
+			 char *function)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	struct hash_latch latch;
 	hash_error_t rc;
@@ -797,9 +786,9 @@ void _dec_nsm_client_ref(state_nsm_client_t *client,
 	}
 
 	if (str_valid) {
-		DisplayLogComponentLevel(
-			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
-			"Try to remove {%s}", str);
+		DisplayLogComponentLevel(COMPONENT_STATE, file, line, function,
+					 NIV_FULL_DEBUG, "Try to remove {%s}",
+					 str);
 	}
 
 	buffkey.addr = client;
@@ -815,8 +804,8 @@ void _dec_nsm_client_ref(state_nsm_client_t *client,
 	switch (rc) {
 	case HASHTABLE_SUCCESS:
 		if (old_value.addr == client) { /* our nsm client */
-			hashtable_deletelatched(ht_nsm_client, &buffkey,
-						&latch, NULL, NULL);
+			hashtable_deletelatched(ht_nsm_client, &buffkey, &latch,
+						NULL, NULL);
 		}
 		break;
 
@@ -840,9 +829,8 @@ void _dec_nsm_client_ref(state_nsm_client_t *client,
 	hashtable_releaselatched(ht_nsm_client, &latch);
 
 	if (str_valid) {
-		DisplayLogComponentLevel(
-			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
-			"Free {%s}", str);
+		DisplayLogComponentLevel(COMPONENT_STATE, file, line, function,
+					 NIV_FULL_DEBUG, "Free {%s}", str);
 	}
 
 	nsm_unmonitor(client);
@@ -857,12 +845,12 @@ void _dec_nsm_client_ref(state_nsm_client_t *client,
  *
  * @return NSM client or NULL.
  */
-state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
+state_nsm_client_t *get_nsm_client(care_t care, char *caller_name)
 {
 	state_nsm_client_t key;
 	state_nsm_client_t *pclient;
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	struct hash_latch latch;
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
@@ -886,8 +874,7 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 			return NULL;
 
 		key.ssc_nlm_caller_name = caller_name;
-		LogFullDebug(COMPONENT_STATE,
-			     "Using caller_name %s",
+		LogFullDebug(COMPONENT_STATE, "Using caller_name %s",
 			     caller_name);
 	} else {
 		sockaddr_t alt_host;
@@ -895,12 +882,11 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 
 		if (isFullDebug(COMPONENT_STATE)) {
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer db = {sizeof(str), str, str};
+			struct display_buffer db = { sizeof(str), str, str };
 
 			display_sockaddr(&db, op_ctx->caller_addr);
 			LogFullDebug(COMPONENT_STATE,
-				     "Using address %s as caller name",
-				     str);
+				     "Using address %s as caller name", str);
 		}
 
 		/* Fixup any encapsulated IPv4 addresses */
@@ -913,8 +899,7 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 			return NULL;
 		}
 
-		LogFullDebug(COMPONENT_STATE,
-			     "Using caller address %s",
+		LogFullDebug(COMPONENT_STATE, "Using caller address %s",
 			     hostaddr_str);
 
 		key.ssc_nlm_caller_name = hostaddr_str;
@@ -941,8 +926,8 @@ state_nsm_client_t *get_nsm_client(care_t care,  char *caller_name)
 			 * deleted. Delete it from the hash table and
 			 * pretend as though we didn't find it.
 			 */
-			hashtable_deletelatched(ht_nsm_client, &buffkey,
-						&latch, NULL, NULL);
+			hashtable_deletelatched(ht_nsm_client, &buffkey, &latch,
+						NULL, NULL);
 			break;
 		}
 
@@ -1076,7 +1061,7 @@ void free_nlm_client(state_nlm_client_t *client)
  */
 void inc_nlm_client_ref(state_nlm_client_t *client)
 {
-	(void) atomic_inc_int32_t(&client->slc_refcount);
+	(void)atomic_inc_int32_t(&client->slc_refcount);
 }
 
 /**
@@ -1087,7 +1072,7 @@ void inc_nlm_client_ref(state_nlm_client_t *client)
 void dec_nlm_client_ref(state_nlm_client_t *client)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	struct hash_latch latch;
 	hash_error_t rc;
@@ -1108,7 +1093,8 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 	if (refcount > 0) {
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,
-				     "Decrement slc_refcount now=%" PRId32 " {%s}",
+				     "Decrement slc_refcount now=%" PRId32
+				     " {%s}",
 				     refcount, str);
 
 		return;
@@ -1135,8 +1121,8 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 
 	case HASHTABLE_SUCCESS:
 		if (old_value.addr == client) { /* our nlm client */
-			hashtable_deletelatched(ht_nlm_client, &buffkey,
-						&latch, &old_key, &old_value);
+			hashtable_deletelatched(ht_nlm_client, &buffkey, &latch,
+						&old_key, &old_value);
 		}
 		break;
 
@@ -1148,7 +1134,6 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 			hash_table_err_to_str(rc), str, client);
 		return;
 	}
-
 
 	/* Release the latch */
 	hashtable_releaselatched(ht_nlm_client, &latch);
@@ -1176,7 +1161,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	state_nlm_client_t key;
 	state_nlm_client_t *pclient;
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	struct hash_latch latch;
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
@@ -1195,8 +1180,8 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	key.slc_client_type = svc_get_xprt_type(xprt);
 
 	addr_len = sizeof(local_addr);
-	if (getsockname(xprt->xp_fd, (struct sockaddr *)&local_addr, &addr_len)
-	    == -1) {
+	if (getsockname(xprt->xp_fd, (struct sockaddr *)&local_addr,
+			&addr_len) == -1) {
 		LogEvent(COMPONENT_CLIENTID, "Failed to get local addr.");
 	} else {
 		memcpy(&(key.slc_server_addr), &local_addr, sizeof(sockaddr_t));
@@ -1236,8 +1221,8 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 			 * delete this entry will not find it in the
 			 * hash table but will free its nlm client.
 			 */
-			hashtable_deletelatched(ht_nlm_client, &buffkey,
-						&latch, NULL, NULL);
+			hashtable_deletelatched(ht_nlm_client, &buffkey, &latch,
+						NULL, NULL);
 			goto not_found;
 		}
 

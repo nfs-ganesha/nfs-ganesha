@@ -89,13 +89,13 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 			       enum state_type state_type,
 			       union state_data *state_data,
 			       state_owner_t *owner_input, state_t **state,
-			       struct state_refer *refer,
-			       const char *func, int line)
+			       struct state_refer *refer, const char *func,
+			       int line)
 {
 	state_t *pnew_state = *state;
 	struct state_hdl *ostate = obj->state_hdl;
 	char str[DISPLAY_STATEID_OTHER_SIZE] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	bool got_export_ref = false;
 	state_status_t status = 0;
@@ -129,11 +129,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 			openstate = nfs4_State_Get_Pointer(
 				state_data->lock.openstate_key);
 
-
 		pnew_state = op_ctx->fsal_export->exp_ops.alloc_state(
-							op_ctx->fsal_export,
-							state_type,
-							openstate);
+			op_ctx->fsal_export, state_type, openstate);
 
 		if (state_type == STATE_TYPE_LOCK && openstate)
 			dec_state_t_ref(openstate);
@@ -142,15 +139,16 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	/* If Max_Open_States_Per_Client is enabled and too many files are open
 	 * from same client then stop going ahead and return EIO
 	 */
-	if (state_type == STATE_TYPE_SHARE
-	    && nfs_param.nfsv4_param.max_open_states_per_client
-	    && (atomic_fetch_uint32_t(&clientid->cid_open_state_counter)
-		>= nfs_param.nfsv4_param.max_open_states_per_client)) {
+	if (state_type == STATE_TYPE_SHARE &&
+	    nfs_param.nfsv4_param.max_open_states_per_client &&
+	    (atomic_fetch_uint32_t(&clientid->cid_open_state_counter) >=
+	     nfs_param.nfsv4_param.max_open_states_per_client)) {
 		display_clientid(&dspbuf, clientid->cid_clientid);
 		LogCrit(COMPONENT_STATE,
-		    "Too many files(cur:%u>=limit:%u) opened by {CLIENTID %s}",
-		    atomic_fetch_uint32_t(&clientid->cid_open_state_counter),
-		    nfs_param.nfsv4_param.max_open_states_per_client, str);
+			"Too many files(cur:%u>=limit:%u) opened by {CLIENTID %s}",
+			atomic_fetch_uint32_t(
+				&clientid->cid_open_state_counter),
+			nfs_param.nfsv4_param.max_open_states_per_client, str);
 		display_reset_buffer(&dspbuf);
 		status = STATE_IO_ERROR;
 		goto errout;
@@ -166,7 +164,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	/* Set the type and data for this state */
 	memcpy(&(pnew_state->state_data), state_data, sizeof(*state_data));
 	pnew_state->state_type = state_type;
-	pnew_state->state_seqid = 0;	/* will be incremented to 1 later */
+	pnew_state->state_seqid = 0; /* will be incremented to 1 later */
 	pnew_state->state_refcount = 2; /* sentinel plus returned ref */
 
 	if (refer)
@@ -177,8 +175,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 		str_valid = true;
 
 		LogFullDebug(COMPONENT_STATE,
-			     "About to call nfs4_State_Set for %s",
-			     str);
+			     "About to call nfs4_State_Set for %s", str);
 	}
 
 	glist_init(&pnew_state->state_list);
@@ -221,7 +218,7 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 	PTHREAD_MUTEX_lock(&pnew_state->state_mutex);
 	glist_add_tail(&op_ctx->ctx_export->exp_state_list,
-		&pnew_state->state_export_list);
+		       &pnew_state->state_export_list);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 	PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 
@@ -233,7 +230,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
 	GSH_AUTO_TRACEPOINT(state, add, TRACE_INFO,
-		"State add. Obj: {}, new state: {}", obj, pnew_state);
+			    "State add. Obj: {}, new state: {}", obj,
+			    pnew_state);
 
 	/* Add state to list for owner */
 	PTHREAD_MUTEX_lock(&owner_input->so_mutex);
@@ -248,7 +246,6 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 	PTHREAD_MUTEX_unlock(&owner_input->so_mutex);
-
 
 #ifdef DEBUG_SAL
 	PTHREAD_MUTEX_lock(&all_state_v4_mutex);
@@ -272,8 +269,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	*state = pnew_state;
 
 	if (str_valid)
-		LogFullDebug(COMPONENT_STATE, "Add State: %p: %s",
-			     pnew_state, str);
+		LogFullDebug(COMPONENT_STATE, "Add State: %p: %s", pnew_state,
+			     str);
 
 	if (clientid->gsh_client)
 		inc_gsh_client_state_stats(clientid->gsh_client, state_type);
@@ -291,7 +288,7 @@ errout:
 		/* Make sure the new state is closed (may have been passed in
 		 * with file open).
 		 */
-		(void) obj->obj_ops->close2(obj, pnew_state);
+		(void)obj->obj_ops->close2(obj, pnew_state);
 
 		free_state(pnew_state);
 	}
@@ -302,7 +299,7 @@ errout:
 	*state = NULL;
 
 	return status;
-}				/* state_add */
+} /* state_add */
 
 /**
  * @brief Adds a new state to a file
@@ -319,9 +316,8 @@ errout:
 state_status_t _state_add(struct fsal_obj_handle *obj,
 			  enum state_type state_type,
 			  union state_data *state_data,
-			  state_owner_t *owner_input,
-			  state_t **state, struct state_refer *refer,
-			  const char *func, int line)
+			  state_owner_t *owner_input, state_t **state,
+			  struct state_refer *refer, const char *func, int line)
 {
 	state_status_t status = 0;
 
@@ -329,21 +325,19 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 	 * owners
 	 */
 
-	if (((state_type == STATE_TYPE_SHARE)
-	     && (owner_input->so_type != STATE_OPEN_OWNER_NFSV4))
-	    || ((state_type == STATE_TYPE_LOCK)
-		&& (owner_input->so_type != STATE_LOCK_OWNER_NFSV4))
-	    ||
-	    (((state_type == STATE_TYPE_DELEG)
-	      || (state_type == STATE_TYPE_LAYOUT))
-	     && (owner_input->so_type != STATE_CLIENTID_OWNER_NFSV4))) {
+	if (((state_type == STATE_TYPE_SHARE) &&
+	     (owner_input->so_type != STATE_OPEN_OWNER_NFSV4)) ||
+	    ((state_type == STATE_TYPE_LOCK) &&
+	     (owner_input->so_type != STATE_LOCK_OWNER_NFSV4)) ||
+	    (((state_type == STATE_TYPE_DELEG) ||
+	      (state_type == STATE_TYPE_LAYOUT)) &&
+	     (owner_input->so_type != STATE_CLIENTID_OWNER_NFSV4))) {
 		return STATE_BAD_TYPE;
 	}
 
 	STATELOCK_lock(obj);
-	status =
-	    _state_add_impl(obj, state_type, state_data, owner_input, state,
-			    refer, func, line);
+	status = _state_add_impl(obj, state_type, state_data, owner_input,
+				 state, refer, func, line);
 	STATELOCK_unlock(obj);
 
 	return status;
@@ -361,7 +355,7 @@ state_status_t _state_add(struct fsal_obj_handle *obj,
 void _state_del_locked(state_t *state, const char *func, int line)
 {
 	char str[LOG_BUFF_LEN] = "\0";
-	struct display_buffer dspbuf = {sizeof(str), str, str};
+	struct display_buffer dspbuf = { sizeof(str), str, str };
 	bool str_valid = false;
 	struct fsal_obj_handle *obj;
 	struct gsh_export *export;
@@ -378,8 +372,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 */
 	if (!nfs4_State_Del(state)) {
 		if (str_valid)
-			LogDebug(COMPONENT_STATE,
-				 "Racing to delete %s", str);
+			LogDebug(COMPONENT_STATE, "Racing to delete %s", str);
 		return;
 	}
 
@@ -403,14 +396,13 @@ void _state_del_locked(state_t *state, const char *func, int line)
 		 * via the call to this function that wins any race and is
 		 * proceeding.
 		 */
-		LogFatal(COMPONENT_STATE,
-			 "Entry for state is stale");
+		LogFatal(COMPONENT_STATE, "Entry for state is stale");
 		PTHREAD_MUTEX_unlock(&state->state_mutex);
 		return;
 	}
 
 	GSH_AUTO_TRACEPOINT(state, delete, TRACE_INFO,
-		"State delete. Obj: {}, state: {}", obj, state);
+			    "State delete. Obj: {}, state: {}", obj, state);
 
 	export = state->state_export;
 	owner = state->state_owner;
@@ -440,8 +432,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 		 * an assert or remove it altogether?
 		 */
 		owner_retain = owner->so_type == STATE_OPEN_OWNER_NFSV4 &&
-		    glist_empty(&nfs4_owner->so_state_list) &&
-		    glist_null(&nfs4_owner->so_cache_entry);
+			       glist_empty(&nfs4_owner->so_state_list) &&
+			       glist_null(&nfs4_owner->so_cache_entry);
 
 		PTHREAD_MUTEX_unlock(&state->state_mutex);
 
@@ -451,22 +443,22 @@ void _state_del_locked(state_t *state, const char *func, int line)
 			 */
 			PTHREAD_MUTEX_lock(&cached_open_owners_lock);
 
-			atomic_store_time_t(&nfs4_owner->so_cache_expire,
-					    nfs_param.nfsv4_param.lease_lifetime
-						+ time(NULL));
+			atomic_store_time_t(
+				&nfs4_owner->so_cache_expire,
+				nfs_param.nfsv4_param.lease_lifetime +
+					time(NULL));
 			glist_add_tail(&cached_open_owners,
 				       &nfs4_owner->so_cache_entry);
 
 			if (isFullDebug(COMPONENT_STATE)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-						sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
 				display_owner(&dspbuf, owner);
 
 				LogFullDebug(COMPONENT_STATE,
-					     "Caching open owner {%s}",
-					     str);
+					     "Caching open owner {%s}", str);
 			}
 
 			PTHREAD_MUTEX_unlock(&cached_open_owners_lock);
@@ -495,8 +487,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 		 * Else this could result in a file never being delegated
 		 */
 		if ((state->state_data.share.share_access &
-			OPEN4_SHARE_ACCESS_WRITE) &&
-			obj->type == REGULAR_FILE) {
+		     OPEN4_SHARE_ACCESS_WRITE) &&
+		    obj->type == REGULAR_FILE) {
 			obj->state_hdl->file.fdeleg_stats.fds_num_write_opens--;
 		}
 	}
@@ -516,7 +508,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	if (state->state_type == STATE_TYPE_DELEG &&
 	    state->state_data.deleg.sd_type == OPEN_DELEGATE_READ &&
 	    glist_empty(&obj->state_hdl->file.list_of_states)) {
-		LogEvent(COMPONENT_STATE,
+		LogEvent(
+			COMPONENT_STATE,
 			"Resetting Deleg Stats(%d/%d) as file have no active states",
 			obj->state_hdl->file.fdeleg_stats.fds_curr_delegations,
 			obj->state_hdl->file.fdeleg_stats.fds_deleg_type);
@@ -560,7 +553,7 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	 * is the last point we have a valid reference to the object
 	 * handle.
 	 */
-	(void) obj->obj_ops->close2(obj, state);
+	(void)obj->obj_ops->close2(obj, state);
 	if (clientid) {
 		if (state->state_type == STATE_TYPE_SHARE)
 			atomic_dec_uint32_t(&clientid->cid_open_state_counter);
@@ -586,8 +579,7 @@ void state_del(state_t *state)
 	struct fsal_obj_handle *obj = get_state_obj_ref(state);
 
 	if (obj == NULL) {
-		LogDebug(COMPONENT_STATE,
-			 "Entry for state is stale");
+		LogDebug(COMPONENT_STATE, "Entry for state is stale");
 		return;
 	}
 
@@ -701,7 +693,8 @@ void state_nfs4_state_wipe(struct state_hdl *ostate)
 	if (glist_empty(&ostate->file.list_of_states))
 		return;
 
-	glist_for_each_safe(glist, glistn, &ostate->file.list_of_states) {
+	glist_for_each_safe(glist, glistn, &ostate->file.list_of_states)
+	{
 		state = glist_entry(glist, state_t, state_list);
 		if (state->state_type > STATE_TYPE_LAYOUT)
 			continue;
@@ -714,13 +707,13 @@ void state_nfs4_state_wipe(struct state_hdl *ostate)
 	}
 
 	/* Loop over again to delete any STATE_TYPE_SHARE */
-	glist_for_each_safe(glist, glistn, &ostate->file.list_of_states) {
+	glist_for_each_safe(glist, glistn, &ostate->file.list_of_states)
+	{
 		state = glist_entry(glist, state_t, state_list);
 		if (state->state_type > STATE_TYPE_LAYOUT)
 			continue;
 		state_del_locked(state);
 	}
-
 }
 
 /**
@@ -743,7 +736,7 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 
 	if (isDebug(COMPONENT_STATE)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_owner(&dspbuf, owner);
 		LogDebug(COMPONENT_STATE, "Removing state for %s", str);
@@ -761,10 +754,9 @@ enum nfsstat4 release_lock_owner(state_owner_t *owner)
 		struct fsal_obj_handle *obj = NULL;
 		struct gsh_export *exp = NULL;
 
-		state = glist_first_entry(&owner->so_owner.so_nfs4_owner
-								.so_state_list,
-					  state_t,
-					  state_owner_list);
+		state = glist_first_entry(
+			&owner->so_owner.so_nfs4_owner.so_state_list, state_t,
+			state_owner_list);
 
 		if (state == NULL) {
 			PTHREAD_MUTEX_unlock(&owner->so_mutex);
@@ -830,7 +822,7 @@ void release_openstate(state_owner_t *owner)
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_owner(&dspbuf, owner);
 
@@ -854,8 +846,8 @@ void release_openstate(state_owner_t *owner)
 			 */
 			PTHREAD_MUTEX_lock(&cached_open_owners_lock);
 
-			if (atomic_fetch_time_t(&nfs4_owner->so_cache_expire)
-			    != 0) {
+			if (atomic_fetch_time_t(&nfs4_owner->so_cache_expire) !=
+			    0) {
 				/* We aren't racing with the reaper thread or
 				 * with get_state_owner.
 				 *
@@ -886,8 +878,7 @@ void release_openstate(state_owner_t *owner)
 			 */
 		}
 
-		state = glist_first_entry(&nfs4_owner->so_state_list,
-					  state_t,
+		state = glist_first_entry(&nfs4_owner->so_state_list, state_t,
 					  state_owner_list);
 
 		if (state == NULL) {
@@ -943,13 +934,14 @@ void release_openstate(state_owner_t *owner)
 
 	if (errcnt == STATE_ERR_MAX) {
 		char str[LOG_BUFF_LEN] = "\0";
-		struct display_buffer dspbuf = {sizeof(str), str, str};
+		struct display_buffer dspbuf = { sizeof(str), str, str };
 
 		display_owner(&dspbuf, owner);
 
-		LogFatal(COMPONENT_STATE,
-			 "Could not complete cleanup of lock state for lock owner %s",
-			 str);
+		LogFatal(
+			COMPONENT_STATE,
+			"Could not complete cleanup of lock state for lock owner %s",
+			str);
 	}
 }
 
@@ -968,13 +960,14 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 	struct req_op_context op_context;
 	bool ok;
 
- again:
+again:
 	first = NULL;
 	PTHREAD_MUTEX_lock(&client_owner->so_mutex);
 	so_mutex_held = true;
 
 	glist_for_each_safe(glist, glistn,
-			&client_owner->so_owner.so_nfs4_owner.so_state_list) {
+			    &client_owner->so_owner.so_nfs4_owner.so_state_list)
+	{
 		state = glist_entry(glist, state_t, state_owner_list);
 
 		/* We set first to the first state we look in this iteration.
@@ -1007,8 +1000,7 @@ void revoke_owner_delegs(state_owner_t *client_owner)
 						     NULL);
 
 		if (!ok || obj == NULL) {
-			LogDebug(COMPONENT_STATE,
-				 "Stale state or file");
+			LogDebug(COMPONENT_STATE, "Stale state or file");
 			continue;
 		}
 
@@ -1052,13 +1044,13 @@ static void release_export_nfs4_state(enum state_type type)
 	 * we MUST restart.
 	 */
 
- again:
+again:
 	first = NULL;
 	PTHREAD_RWLOCK_wrlock(&op_ctx->ctx_export->exp_lock);
 	hold_export_lock = true;
 
-	glist_for_each_safe(glist, glistn,
-			&op_ctx->ctx_export->exp_state_list) {
+	glist_for_each_safe(glist, glistn, &op_ctx->ctx_export->exp_state_list)
+	{
 		struct fsal_obj_handle *obj = NULL;
 		state_owner_t *owner = NULL;
 		bool deleted = false;
@@ -1112,14 +1104,9 @@ static void release_export_nfs4_state(enum state_type type)
 			STATELOCK_lock(obj);
 
 			/* this deletes the state too */
-			(void) nfs4_return_one_state(obj,
-						     LAYOUTRETURN4_FILE,
-						     circumstance_revoke,
-						     state,
-						     entire,
-						     0,
-						     NULL,
-						     &deleted);
+			(void)nfs4_return_one_state(obj, LAYOUTRETURN4_FILE,
+						    circumstance_revoke, state,
+						    entire, 0, NULL, &deleted);
 			if (!deleted) {
 				LogCrit(COMPONENT_PNFS,
 					"Layout state not destroyed during export cleanup.");
@@ -1187,13 +1174,14 @@ void dump_all_states(void)
 
 		LogFullDebug(COMPONENT_STATE, " =State List= ");
 
-		glist_for_each(glist, &state_v4_all) {
+		glist_for_each(glist, &state_v4_all)
+		{
 			char str1[LOG_BUFF_LEN / 2] = "\0";
 			char str2[LOG_BUFF_LEN / 2] = "\0";
-			struct display_buffer dspbuf1 = {
-						sizeof(str1), str1, str1};
-			struct display_buffer dspbuf2 = {
-						sizeof(str2), str2, str2};
+			struct display_buffer dspbuf1 = { sizeof(str1), str1,
+							  str1 };
+			struct display_buffer dspbuf2 = { sizeof(str2), str2,
+							  str2 };
 
 			state = glist_entry(glist, state_t, state_list_all);
 			owner = get_state_owner_ref(state);
@@ -1201,8 +1189,7 @@ void dump_all_states(void)
 			display_owner(&dspbuf1, owner);
 			display_stateid(&dspbuf2, state);
 
-			LogFullDebug(COMPONENT_STATE,
-				     "State {%s} owner {%s}",
+			LogFullDebug(COMPONENT_STATE, "State {%s} owner {%s}",
 				     str2, str1);
 
 			if (owner != NULL)
@@ -1235,8 +1222,8 @@ bool check_and_remove_conflicting_client(struct state_hdl *file_state_hdl)
 		return isFoundAndCleaned;
 
 recheck_for_conflicting_entries:
-	glist_for_each_safe(glist, glistn,
-		&file_state_hdl->file.list_of_states) {
+	glist_for_each_safe(glist, glistn, &file_state_hdl->file.list_of_states)
+	{
 		state_t *state = glist_entry(glist, state_t, state_list);
 		state_owner_t *owner = state->state_owner;
 

@@ -108,8 +108,7 @@ enum connection_manager__drain_t {
 	CONNECTION_MANAGER__DRAIN__LAST,
 };
 
-typedef enum connection_manager__drain_t
-(*connection_manager__callback_drain_t)(
+typedef enum connection_manager__drain_t (*connection_manager__callback_drain_t)(
 	/* User provided context */
 	void *user_context,
 	/* Client to drain */
@@ -124,8 +123,7 @@ typedef struct connection_manager__callback_context_t {
 	void *user_context;
 	/* Sends a "DRAIN" request to the other Ganesha servers in the
 	 * cluster */
-	connection_manager__callback_drain_t
-		drain_and_disconnect_other_servers;
+	connection_manager__callback_drain_t drain_and_disconnect_other_servers;
 } connection_manager__callback_context_t;
 
 /* A client steady state can be either DRAINED or ACTIVE.

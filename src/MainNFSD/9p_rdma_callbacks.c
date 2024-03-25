@@ -64,14 +64,11 @@ void _9p_rdma_callback_send(msk_trans_t *trans, msk_data_t *data, void *arg)
 	pthread_cond_signal(&priv->outqueue->oq_cond);
 	PTHREAD_MUTEX_unlock(&priv->outqueue->oq_lock);
 
-	server_stats_transport_done(priv->pconn->client,
-				    0, 0, 0,
-				    data->size, 1, 0);
-
+	server_stats_transport_done(priv->pconn->client, 0, 0, 0, data->size, 1,
+				    0);
 }
 
-void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
-				void *arg)
+void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
 	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
 	/**
@@ -87,13 +84,11 @@ void _9p_rdma_callback_send_err(msk_trans_t *trans, msk_data_t *data,
 		PTHREAD_MUTEX_unlock(&priv->outqueue->oq_lock);
 	}
 	if (priv && priv->pconn && priv->pconn->client)
-		server_stats_transport_done(priv->pconn->client,
-			    0, 0, 0,
-			    0, 0, 1);
+		server_stats_transport_done(priv->pconn->client, 0, 0, 0, 0, 0,
+					    1);
 }
 
-void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *data,
-				void *arg)
+void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *data, void *arg)
 {
 	struct _9p_rdma_priv *priv = _9p_rdma_priv_of(trans);
 
@@ -101,9 +96,8 @@ void _9p_rdma_callback_recv_err(msk_trans_t *trans, msk_data_t *data,
 		msk_post_recv(trans, data, _9p_rdma_callback_recv,
 			      _9p_rdma_callback_recv_err, arg);
 		if (priv && priv->pconn && priv->pconn->client)
-			server_stats_transport_done(priv->pconn->client,
-						    0, 0, 1,
-						    0, 0, 0);
+			server_stats_transport_done(priv->pconn->client, 0, 0,
+						    1, 0, 0, 0);
 	}
 }
 
@@ -144,8 +138,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p)
 	req9p->_9pmsg = req9p->data->data;
 	msglen = *(uint32_t *)req9p->_9pmsg;
 
-	if (req9p->data->size < _9P_HDR_SIZE
-	    || msglen != req9p->data->size) {
+	if (req9p->data->size < _9P_HDR_SIZE || msglen != req9p->data->size) {
 		LogMajor(COMPONENT_9P,
 			 "Malformed 9P/RDMA packet, bad header size");
 		/* send a rerror ? */
@@ -153,8 +146,7 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p)
 			      _9p_rdma_callback_recv_err, NULL);
 	} else {
 		LogFullDebug(COMPONENT_9P,
-			     "Received 9P/RDMA message of size %u",
-			     msglen);
+			     "Received 9P/RDMA message of size %u", msglen);
 
 		rc = _9p_process_buffer(req9p, dataout->data, &dataout->size);
 		if (rc != 1) {
@@ -168,11 +160,9 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p)
 
 		/* If earlier processing succeeded, post it */
 		if (rc == 1) {
-			if (0 !=
-			    msk_post_send(trans, dataout,
-					  _9p_rdma_callback_send,
-					  _9p_rdma_callback_send_err,
-					  NULL))
+			if (0 != msk_post_send(
+					 trans, dataout, _9p_rdma_callback_send,
+					 _9p_rdma_callback_send_err, NULL))
 				rc = -1;
 		}
 
@@ -198,7 +188,7 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 	u16 tag = 0;
 	char *_9pmsg = NULL;
 
-	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
+	(void)atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 	req = gsh_calloc(1, sizeof(struct _9p_request_data));
 
 	req->_9pmsg = _9pmsg;
@@ -207,12 +197,11 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 
 	/* Add this request to the request list, should it be flushed later. */
 	_9pmsg = data->data;
-	tag = *(u16 *) (_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
+	tag = *(u16 *)(_9pmsg + _9P_HDR_SIZE + _9P_TYPE_SIZE);
 	_9p_AddFlushHook(req, tag, req->pconn->sequence++);
 
 	DispatchWork9P(req);
 	server_stats_transport_done(_9p_rdma_priv_of(trans)->pconn->client,
-				    data->size, 1, 0,
-				    0, 0, 0);
+				    data->size, 1, 0, 0, 0, 0);
 
-}				/* _9p_rdma_callback_recv */
+} /* _9p_rdma_callback_recv */

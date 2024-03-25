@@ -49,8 +49,8 @@ static void rados_grace_watchcb(void *arg, uint64_t notify_id, uint64_t handle,
 	ret = rados_notify_ack(rados_recov_io_ctx, rados_kv_param.grace_oid,
 			       notify_id, rados_watch_cookie, NULL, 0);
 	if (ret < 0)
-		LogEvent(COMPONENT_CLIENTID,
-			 "rados_notify_ack failed: %d", ret);
+		LogEvent(COMPONENT_CLIENTID, "rados_notify_ack failed: %d",
+			 ret);
 
 	/* Now kick the reaper to check things out */
 	nfs_notify_grace_waiters();
@@ -71,18 +71,18 @@ static int rados_cluster_init(void)
 		ret = gethostname(nodeid, maxlen);
 		if (ret) {
 			LogEvent(COMPONENT_CLIENTID, "gethostname failed: %d",
-					errno);
+				 errno);
 			ret = -errno;
 			goto out_free_nodeid;
 		}
 	}
 
 	ret = rados_kv_connect(&rados_recov_io_ctx, rados_kv_param.userid,
-			rados_kv_param.ceph_conf, rados_kv_param.pool,
-			rados_kv_param.namespace);
+			       rados_kv_param.ceph_conf, rados_kv_param.pool,
+			       rados_kv_param.namespace);
 	if (ret < 0) {
-		LogEvent(COMPONENT_CLIENTID,
-			"Failed to connect to cluster: %d", ret);
+		LogEvent(COMPONENT_CLIENTID, "Failed to connect to cluster: %d",
+			 ret);
 		goto out_shutdown;
 	}
 
@@ -96,11 +96,11 @@ static int rados_cluster_init(void)
 
 	/* FIXME: not sure about the 30s timeout value here */
 	ret = rados_watch3(rados_recov_io_ctx, rados_kv_param.grace_oid,
-			   &rados_watch_cookie, rados_grace_watchcb, NULL,
-			   30, NULL);
+			   &rados_watch_cookie, rados_grace_watchcb, NULL, 30,
+			   NULL);
 	if (ret < 0) {
 		LogEvent(COMPONENT_CLIENTID,
-			"Failed to set watch on grace db: %d", ret);
+			 "Failed to set watch on grace db: %d", ret);
 		goto out_shutdown;
 	}
 	return 0;
@@ -121,14 +121,13 @@ static void rados_cluster_end_grace(void)
 	uint64_t cur, rec;
 	struct gsh_refstr *old_oid;
 
-
 	old_oid = rcu_xchg_pointer(&rados_recov_old_oid, NULL);
 	if (!old_oid)
 		return;
 
 	ret = rados_grace_enforcing_off(rados_recov_io_ctx,
-					rados_kv_param.grace_oid, nodeid,
-					&cur, &rec);
+					rados_kv_param.grace_oid, nodeid, &cur,
+					&rec);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to set grace off for %s: %d", nodeid, ret);
@@ -146,8 +145,8 @@ static void rados_cluster_end_grace(void)
 }
 
 static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
-				add_clid_entry_hook add_clid_entry,
-				add_rfh_entry_hook add_rfh_entry)
+				     add_clid_entry_hook add_clid_entry,
+				     add_rfh_entry_hook add_rfh_entry)
 {
 	int ret;
 	size_t len;
@@ -169,8 +168,8 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	ret = rados_grace_join(rados_recov_io_ctx, rados_kv_param.grace_oid,
 			       nodeid, &cur, &rec, true);
 	if (ret) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to join grace period: %d", ret);
+		LogEvent(COMPONENT_CLIENTID, "Failed to join grace period: %d",
+			 ret);
 		return;
 	}
 
@@ -185,15 +184,15 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	recov_oid = gsh_refstr_alloc(len);
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
+	(void)snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
 	gsh_refstr_get(recov_oid);
 	rcu_set_pointer(&rados_recov_oid, recov_oid);
 
 	wop = rados_create_write_op();
 	rados_write_op_create(wop, LIBRADOS_CREATE_IDEMPOTENT, NULL);
 	rados_write_op_omap_clear(wop);
-	ret = rados_write_op_operate(wop, rados_recov_io_ctx,
-				     recov_oid->gr_val, NULL, 0);
+	ret = rados_write_op_operate(wop, rados_recov_io_ctx, recov_oid->gr_val,
+				     NULL, 0);
 	gsh_refstr_put(recov_oid);
 	rados_release_write_op(wop);
 	if (ret < 0) {
@@ -203,8 +202,8 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 
 	old_oid = gsh_refstr_alloc(len);
 
-/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
+	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
+	(void)snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
 	rcu_set_pointer(&rados_recov_old_oid, old_oid);
 	ret = rados_kv_traverse(rados_ng_pop_clid_entry, &args,
 				old_oid->gr_val);
@@ -219,10 +218,10 @@ static bool rados_cluster_try_lift_grace(void)
 	uint64_t cur, rec;
 
 	ret = rados_grace_lift(rados_recov_io_ctx, rados_kv_param.grace_oid,
-				nodeid, &cur, &rec);
+			       nodeid, &cur, &rec);
 	if (ret) {
-		LogEvent(COMPONENT_CLIENTID,
-			 "Attempt to lift grace failed: %d", ret);
+		LogEvent(COMPONENT_CLIENTID, "Attempt to lift grace failed: %d",
+			 ret);
 		return false;
 	}
 
@@ -231,11 +230,11 @@ static bool rados_cluster_try_lift_grace(void)
 }
 
 struct rados_cluster_kv_pairs {
-	size_t	slots;			/* Current array size */
-	size_t	num;			/* Count of populated elements */
-	char	**keys;			/* Array of key strings */
-	char	**vals;			/* Array of value blobs */
-	size_t	*lens;			/* Array of value lengths */
+	size_t slots; /* Current array size */
+	size_t num; /* Count of populated elements */
+	char **keys; /* Array of key strings */
+	char **vals; /* Array of value blobs */
+	size_t *lens; /* Array of value lengths */
 };
 
 /*
@@ -244,7 +243,7 @@ struct rados_cluster_kv_pairs {
  *        have a fixed-size cap of 1024 entries in the db, but we should allow
  *        there to be an arbitrary number of entries.
  */
-#define RADOS_KV_STARTING_SLOTS		1024
+#define RADOS_KV_STARTING_SLOTS 1024
 
 static void rados_set_client_cb(struct rbt_node *pn, void *arg)
 {
@@ -262,8 +261,8 @@ static void rados_set_client_cb(struct rbt_node *pn, void *arg)
 	rados_kv_create_key(clientid, ckey, sizeof(ckey));
 
 	kvp->keys[kvp->num] = gsh_strdup(ckey);
-	kvp->vals[kvp->num] = rados_kv_create_val(clientid,
-						  &kvp->lens[kvp->num]);
+	kvp->vals[kvp->num] =
+		rados_kv_create_val(clientid, &kvp->lens[kvp->num]);
 
 	++kvp->num;
 }
@@ -285,20 +284,18 @@ static void rados_cluster_maybe_start_grace(void)
 	char *keys[RADOS_KV_STARTING_SLOTS];
 	char *vals[RADOS_KV_STARTING_SLOTS];
 	size_t lens[RADOS_KV_STARTING_SLOTS];
-	struct rados_cluster_kv_pairs kvp = {
-					.slots = RADOS_KV_STARTING_SLOTS,
-					.num = 0,
-					.keys = keys,
-					.vals = vals,
-					.lens = lens };
-
+	struct rados_cluster_kv_pairs kvp = { .slots = RADOS_KV_STARTING_SLOTS,
+					      .num = 0,
+					      .keys = keys,
+					      .vals = vals,
+					      .lens = lens };
 
 	/* Fix up the strings */
 	ret = rados_grace_epochs(rados_recov_io_ctx, rados_kv_param.grace_oid,
 				 &cur, &rec);
 	if (ret) {
 		LogEvent(COMPONENT_CLIENTID, "rados_grace_epochs failed: %d",
-				ret);
+			 ret);
 		return;
 	}
 
@@ -320,13 +317,13 @@ static void rados_cluster_maybe_start_grace(void)
 	gsh_refstr_get(recov_oid);
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
+	(void)snprintf(recov_oid->gr_val, len, "rec-%16.16lx:%s", cur, nodeid);
 	prev_recov_oid = rcu_xchg_pointer(&rados_recov_oid, recov_oid);
 
 	old_oid = gsh_refstr_alloc(len);
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
-	(void) snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
+	(void)snprintf(old_oid->gr_val, len, "rec-%16.16lx:%s", rec, nodeid);
 	old_oid = rcu_xchg_pointer(&rados_recov_old_oid, old_oid);
 
 	synchronize_rcu();
@@ -341,15 +338,15 @@ static void rados_cluster_maybe_start_grace(void)
 	wop = rados_create_write_op();
 	rados_write_op_create(wop, LIBRADOS_CREATE_IDEMPOTENT, NULL);
 	rados_write_op_omap_clear(wop);
-	rados_write_op_omap_set(wop, (char const * const *)keys,
-				     (char const * const *)vals,
-				     (const size_t *)lens, kvp.num);
-	ret = rados_write_op_operate(wop, rados_recov_io_ctx,
-				     recov_oid->gr_val, NULL, 0);
+	rados_write_op_omap_set(wop, (char const *const *)keys,
+				(char const *const *)vals, (const size_t *)lens,
+				kvp.num);
+	ret = rados_write_op_operate(wop, rados_recov_io_ctx, recov_oid->gr_val,
+				     NULL, 0);
 	gsh_refstr_put(recov_oid);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
-				"rados_write_op_operate failed: %d", ret);
+			 "rados_write_op_operate failed: %d", ret);
 
 	rados_release_write_op(wop);
 
@@ -365,8 +362,8 @@ static void rados_cluster_maybe_start_grace(void)
 
 static void rados_cluster_shutdown(void)
 {
-	int		ret;
-	uint64_t	cur, rec;
+	int ret;
+	uint64_t cur, rec;
 
 	/*
 	 * Request grace on clean shutdown to minimize the chance that we'll
@@ -376,15 +373,15 @@ static void rados_cluster_shutdown(void)
 	 *        non-empty recovery db.
 	 */
 	ret = rados_grace_join(rados_recov_io_ctx, rados_kv_param.grace_oid,
-				nodeid, &cur, &rec, true);
+			       nodeid, &cur, &rec, true);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to start grace period on shutdown: %d", ret);
 
 	ret = rados_unwatch2(rados_recov_io_ctx, rados_watch_cookie);
 	if (ret)
-		LogEvent(COMPONENT_CLIENTID,
-			 "Failed to unwatch grace db: %d", ret);
+		LogEvent(COMPONENT_CLIENTID, "Failed to unwatch grace db: %d",
+			 ret);
 
 	rados_kv_shutdown();
 	gsh_free(nodeid);
@@ -393,12 +390,12 @@ static void rados_cluster_shutdown(void)
 
 static void rados_cluster_set_enforcing(void)
 {
-	int		ret;
-	uint64_t	cur, rec;
+	int ret;
+	uint64_t cur, rec;
 
 	ret = rados_grace_enforcing_on(rados_recov_io_ctx,
-				       rados_kv_param.grace_oid, nodeid,
-				       &cur, &rec);
+				       rados_kv_param.grace_oid, nodeid, &cur,
+				       &rec);
 	if (ret)
 		LogEvent(COMPONENT_CLIENTID,
 			 "Failed to set enforcing for %s: %d", nodeid, ret);
@@ -406,7 +403,7 @@ static void rados_cluster_set_enforcing(void)
 
 static bool rados_cluster_grace_enforcing(void)
 {
-	int		ret;
+	int ret;
 
 	ret = rados_grace_enforcing_check(rados_recov_io_ctx,
 					  rados_kv_param.grace_oid, nodeid);
@@ -416,8 +413,8 @@ static bool rados_cluster_grace_enforcing(void)
 
 static bool rados_cluster_is_member(void)
 {
-	int	ret = rados_grace_member(rados_recov_io_ctx,
-					 rados_kv_param.grace_oid, nodeid);
+	int ret = rados_grace_member(rados_recov_io_ctx,
+				     rados_kv_param.grace_oid, nodeid);
 	if (ret) {
 		LogEvent(COMPONENT_CLIENTID,
 			 "%s: %s is no longer a cluster member (ret=%d)",

@@ -77,8 +77,8 @@ int display_buffer_remain(struct display_buffer *dspbuf)
 	}
 
 	/* If b_current is invalid, set it to b_start */
-	if (dspbuf->b_current == NULL || dspbuf->b_current < dspbuf->b_start
-	    || dspbuf->b_current > (dspbuf->b_start + dspbuf->b_size))
+	if (dspbuf->b_current == NULL || dspbuf->b_current < dspbuf->b_start ||
+	    dspbuf->b_current > (dspbuf->b_start + dspbuf->b_size))
 		dspbuf->b_current = dspbuf->b_start;
 
 	/* Buffer is too small, just make it an empty
@@ -144,12 +144,12 @@ void _display_complete_overflow(struct display_buffer *dspbuf, char *ptr)
 	 * a 2 byte character leads off with 110xxxxxxx, so we mask with
 	 * 11100000 (0xe0) and test for 11000000 (0xc0).
 	 */
-	if ((((*ptr & 0x80) == 0x00) && (utf8len == 1))
-	    || (((*ptr & 0xe0) == 0xc0) && (utf8len == 2))
-	    || (((*ptr & 0xf0) == 0xe0) && (utf8len == 3))
-	    || (((*ptr & 0xf8) == 0xf0) && (utf8len == 4))
-	    || (((*ptr & 0xfc) == 0xf8) && (utf8len == 5))
-	    || (((*ptr & 0xfe) == 0xfc) && (utf8len == 6))) {
+	if ((((*ptr & 0x80) == 0x00) && (utf8len == 1)) ||
+	    (((*ptr & 0xe0) == 0xc0) && (utf8len == 2)) ||
+	    (((*ptr & 0xf0) == 0xe0) && (utf8len == 3)) ||
+	    (((*ptr & 0xf8) == 0xf0) && (utf8len == 4)) ||
+	    (((*ptr & 0xfc) == 0xf8) && (utf8len == 5)) ||
+	    (((*ptr & 0xfe) == 0xfc) && (utf8len == 6))) {
 		/* Last character before end is valid, increment ptr past it. */
 		ptr = end;
 	}
@@ -271,9 +271,8 @@ int display_force_overflow(struct display_buffer *dspbuf)
 		 * possibility that a UTF-8 character ended up truncated as a
 		 * result.
 		 */
-		_display_complete_overflow(dspbuf,
-					   dspbuf->b_start + dspbuf->b_size -
-					   4);
+		_display_complete_overflow(dspbuf, dspbuf->b_start +
+							   dspbuf->b_size - 4);
 	} else {
 		/* Otherwise just put the "..." at b_current */
 		_display_complete_overflow(dspbuf, dspbuf->b_current);
@@ -337,8 +336,8 @@ int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
  * @return the bytes remaining in the buffer.
  *
  */
-int display_opaque_bytes_flags(struct display_buffer *dspbuf,
-			       void *value, int len, int flags)
+int display_opaque_bytes_flags(struct display_buffer *dspbuf, void *value,
+			       int len, int flags)
 {
 	unsigned int i = 0;
 	int b_left = display_start(dspbuf);
@@ -383,8 +382,8 @@ int display_opaque_bytes_flags(struct display_buffer *dspbuf,
 
 	/* Display the value one hex byte at a time. */
 	for (i = 0; i < len && b_left > 0; i++)
-		b_left =
-		    display_printf(dspbuf, fmt, ((unsigned char *)value)[i]);
+		b_left = display_printf(dspbuf, fmt,
+					((unsigned char *)value)[i]);
 
 	/* Finish up */
 	return display_finish(dspbuf);

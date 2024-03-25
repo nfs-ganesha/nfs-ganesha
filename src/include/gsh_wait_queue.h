@@ -47,16 +47,16 @@ typedef struct wait_entry {
 	pthread_cond_t wq_cv;
 } wait_entry_t;
 
-#define Wqe_LFlag_None        0x0000
-#define Wqe_LFlag_WaitSync    0x0001
-#define Wqe_LFlag_SyncDone    0x0002
+#define Wqe_LFlag_None 0x0000
+#define Wqe_LFlag_WaitSync 0x0001
+#define Wqe_LFlag_SyncDone 0x0002
 
 /* thread wait queue */
 typedef struct wait_q_entry {
 	uint32_t flags;
 	uint32_t waiters;
-	wait_entry_t lwe;	/* left */
-	wait_entry_t rwe;	/* right */
+	wait_entry_t lwe; /* left */
+	wait_entry_t rwe; /* right */
 	struct glist_head waitq;
 } wait_q_entry_t;
 

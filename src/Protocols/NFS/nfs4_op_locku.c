@@ -63,12 +63,12 @@ static const char *locku_tag = "LOCKU";
  */
 
 enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
-			  struct nfs_resop4 *resp)
+				  struct nfs_resop4 *resp)
 {
 	/* Alias for arguments */
-	LOCKU4args * const arg_LOCKU4 = &op->nfs_argop4_u.oplocku;
+	LOCKU4args *const arg_LOCKU4 = &op->nfs_argop4_u.oplocku;
 	/* Alias for response */
-	LOCKU4res * const res_LOCKU4 = &resp->nfs_resop4_u.oplocku;
+	LOCKU4res *const res_LOCKU4 = &resp->nfs_resop4_u.oplocku;
 	/* Return for state functions */
 	state_status_t state_status = STATE_SUCCESS;
 	/* Found lock state */
@@ -79,8 +79,8 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_lock_param_t lock_desc;
 	/*  */
 	nfsstat4 nfs_status = NFS4_OK;
-	uint64_t maxfilesize =
-	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
+	uint64_t maxfilesize = op_ctx->fsal_export->exp_ops.fs_maxfilesize(
+		op_ctx->fsal_export);
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCKU handler ----------------------------");
@@ -94,7 +94,6 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	if (res_LOCKU4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
-
 	/* Convert lock parameters to internal types */
 	switch (arg_LOCKU4->locktype) {
 	case READ_LT:
@@ -107,8 +106,7 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 		lock_desc.lock_type = FSAL_LOCK_W;
 		break;
 	default:
-		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "Invalid lock type");
+		LogDebug(COMPONENT_NFS_V4_LOCK, "Invalid lock type");
 		res_LOCKU4->status = NFS4ERR_INVAL;
 		return NFS_REQ_ERROR;
 	}
@@ -124,13 +122,10 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check stateid correctness and get pointer to state */
 	nfs_status = nfs4_Check_Stateid(&arg_LOCKU4->lock_stateid,
-					data->current_obj,
-					&state_found,
-					data,
+					data->current_obj, &state_found, data,
 					STATEID_SPECIAL_FOR_LOCK,
 					arg_LOCKU4->seqid,
-					data->minorversion == 0,
-					locku_tag);
+					data->minorversion == 0, locku_tag);
 
 	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_LOCKU4->status = nfs_status;
@@ -149,12 +144,8 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check seqid (lock_seqid or open_seqid) */
 	if (data->minorversion == 0) {
-		if (!Check_nfs4_seqid(lock_owner,
-				      arg_LOCKU4->seqid,
-				      op,
-				      data->current_obj,
-				      resp,
-				      locku_tag)) {
+		if (!Check_nfs4_seqid(lock_owner, arg_LOCKU4->seqid, op,
+				      data->current_obj, resp, locku_tag)) {
 			/* Response is all setup for us and LogDebug
 			 * told what was wrong
 			 */
@@ -186,10 +177,10 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	 */
 	if (lock_desc.lock_length > (maxfilesize - lock_desc.lock_start)) {
 		LogDebug(COMPONENT_NFS_V4_LOCK,
-			 "LOCK past maxfilesize %"PRIx64" start %"PRIx64
-			 " length %"PRIx64,
-			 maxfilesize,
-			 lock_desc.lock_start, lock_desc.lock_length);
+			 "LOCK past maxfilesize %" PRIx64 " start %" PRIx64
+			 " length %" PRIx64,
+			 maxfilesize, lock_desc.lock_start,
+			 lock_desc.lock_length);
 		lock_desc.lock_length = 0;
 	}
 
@@ -198,17 +189,13 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		op_ctx->clientid =
-		    &lock_owner->so_owner.so_nfs4_owner.so_clientid;
+			&lock_owner->so_owner.so_nfs4_owner.so_clientid;
 	}
 
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   unlock into SAL (and FSAL). */
-	state_status = state_unlock(data->current_obj,
-				    state_found,
-				    lock_owner,
-				    false,
-				    0,
-				    &lock_desc);
+	state_status = state_unlock(data->current_obj, state_found, lock_owner,
+				    false, 0, &lock_desc);
 
 	if (state_status != STATE_SUCCESS) {
 		res_LOCKU4->status = nfs4_Errno_state(state_status);
@@ -222,32 +209,26 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	res_LOCKU4->status = NFS4_OK;
 
 	/* Handle stateid/seqid for success */
-	update_stateid(state_found,
-		       &res_LOCKU4->LOCKU4res_u.lock_stateid,
-		       data,
+	update_stateid(state_found, &res_LOCKU4->LOCKU4res_u.lock_stateid, data,
 		       locku_tag);
 
- out:
+out:
 	if (data->minorversion == 0) {
 		/* Save the response in the lock owner */
-		Copy_nfs4_state_req(lock_owner,
-				    arg_LOCKU4->seqid,
-				    op,
-				    data->current_obj,
-				    resp,
-				    locku_tag);
+		Copy_nfs4_state_req(lock_owner, arg_LOCKU4->seqid, op,
+				    data->current_obj, resp, locku_tag);
 	}
 
- out2:
+out2:
 
 	dec_state_owner_ref(lock_owner);
 
- out3:
+out3:
 
 	dec_state_t_ref(state_found);
 
 	return nfsstat4_to_nfs_req_result(res_LOCKU4->status);
-}				/* nfs4_op_locku */
+} /* nfs4_op_locku */
 
 /**
  * @brief Free memory allocated for LOCKU result

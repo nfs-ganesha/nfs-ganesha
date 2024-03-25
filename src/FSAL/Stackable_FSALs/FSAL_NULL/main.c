@@ -33,7 +33,7 @@
 #include "config.h"
 
 #include "fsal.h"
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <limits.h>
@@ -42,43 +42,39 @@
 #include "FSAL/fsal_init.h"
 #include "nullfs_methods.h"
 
-
 /* FSAL name determines name of shared library: libfsal<name>.so */
 static const char myname[] = "NULL";
 
 /* my module private storage
  */
 
-struct null_fsal_module NULLFS = {
-	.module = {
-		.fs_info = {
-			.maxfilesize = UINT64_MAX,
-			.maxlink = _POSIX_LINK_MAX,
-			.maxnamelen = 1024,
-			.maxpathlen = 1024,
-			.no_trunc = true,
-			.chown_restricted = true,
-			.case_insensitive = false,
-			.case_preserving = true,
-			.link_support = true,
-			.symlink_support = true,
-			.lock_support = true,
-			.lock_support_async_block = false,
-			.named_attr = true,
-			.unique_handles = true,
-			.acl_support = FSAL_ACLSUPPORT_ALLOW,
-			.cansettime = true,
-			.homogenous = true,
-			.supported_attrs = ALL_ATTRIBUTES,
-			.maxread = FSAL_MAXIOSIZE,
-			.maxwrite = FSAL_MAXIOSIZE,
-			.umask = 0,
-			.auth_exportpath_xdev = false,
-			.link_supports_permission_checks = true,
-			.expire_time_parent = -1,
-		}
-	}
-};
+struct null_fsal_module
+	NULLFS = { .module = { .fs_info = {
+				       .maxfilesize = UINT64_MAX,
+				       .maxlink = _POSIX_LINK_MAX,
+				       .maxnamelen = 1024,
+				       .maxpathlen = 1024,
+				       .no_trunc = true,
+				       .chown_restricted = true,
+				       .case_insensitive = false,
+				       .case_preserving = true,
+				       .link_support = true,
+				       .symlink_support = true,
+				       .lock_support = true,
+				       .lock_support_async_block = false,
+				       .named_attr = true,
+				       .unique_handles = true,
+				       .acl_support = FSAL_ACLSUPPORT_ALLOW,
+				       .cansettime = true,
+				       .homogenous = true,
+				       .supported_attrs = ALL_ATTRIBUTES,
+				       .maxread = FSAL_MAXIOSIZE,
+				       .maxwrite = FSAL_MAXIOSIZE,
+				       .umask = 0,
+				       .auth_exportpath_xdev = false,
+				       .link_supports_permission_checks = true,
+				       .expire_time_parent = -1,
+			       } } };
 
 /* Module methods
  */

@@ -36,7 +36,7 @@
 #include "../include/cidr.h"
 
 /* Create a network address */
-CIDR *cidr_addr_network(const CIDR * addr)
+CIDR *cidr_addr_network(const CIDR *addr)
 {
 	int i, j;
 	CIDR *toret;
@@ -68,7 +68,7 @@ CIDR *cidr_addr_network(const CIDR * addr)
 }
 
 /* And a broadcast */
-CIDR *cidr_addr_broadcast(const CIDR * addr)
+CIDR *cidr_addr_broadcast(const CIDR *addr)
 {
 	int i, j;
 	CIDR *toret;
@@ -88,14 +88,13 @@ CIDR *cidr_addr_broadcast(const CIDR * addr)
 
 			/* Else, copy this network bit */
 			toret->addr[i] |= (addr->addr[i] & 1 << j);
-
 		}
 	}
 
- post:
+post:
 	/* Now set the remaining bits to 1 */
-	for ( /* i */ ; i <= 15; i++) {
-		for ( /* j */ ; j >= 0; j--)
+	for (/* i */; i <= 15; i++) {
+		for (/* j */; j >= 0; j--)
 			toret->addr[i] |= (1 << j);
 
 		j = 7;
@@ -106,13 +105,13 @@ CIDR *cidr_addr_broadcast(const CIDR * addr)
 }
 
 /* Get the first host in a CIDR block */
-CIDR *cidr_addr_hostmin(const CIDR * addr)
+CIDR *cidr_addr_hostmin(const CIDR *addr)
 {
 	CIDR *toret;
 
 	toret = cidr_addr_network(addr);
 	if (toret == NULL)
-		return (NULL);	/* Preserve errno */
+		return (NULL); /* Preserve errno */
 
 	toret->addr[15] |= 1;
 
@@ -120,13 +119,13 @@ CIDR *cidr_addr_hostmin(const CIDR * addr)
 }
 
 /* Get the last host in a CIDR block */
-CIDR *cidr_addr_hostmax(const CIDR * addr)
+CIDR *cidr_addr_hostmax(const CIDR *addr)
 {
 	CIDR *toret;
 
 	toret = cidr_addr_broadcast(addr);
 	if (toret == NULL)
-		return (NULL);	/* Preserve errno */
+		return (NULL); /* Preserve errno */
 
 	toret->addr[15] &= 0xfe;
 

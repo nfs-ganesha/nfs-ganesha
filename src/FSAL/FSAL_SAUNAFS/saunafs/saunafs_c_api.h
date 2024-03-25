@@ -97,12 +97,12 @@ struct sau_context;
 typedef struct sau_context sau_context_t;
 typedef struct sau_acl sau_acl_t;
 
-#define SAU_SET_ATTR_MODE      (1u << 0u)
-#define SAU_SET_ATTR_UID       (1u << 1u)
-#define SAU_SET_ATTR_GID       (1u << 2u)
-#define SAU_SET_ATTR_SIZE      (1u << 3u)
-#define SAU_SET_ATTR_ATIME     (1u << 4u)
-#define SAU_SET_ATTR_MTIME     (1u << 5u)
+#define SAU_SET_ATTR_MODE (1u << 0u)
+#define SAU_SET_ATTR_UID (1u << 1u)
+#define SAU_SET_ATTR_GID (1u << 2u)
+#define SAU_SET_ATTR_SIZE (1u << 3u)
+#define SAU_SET_ATTR_ATIME (1u << 4u)
+#define SAU_SET_ATTR_MTIME (1u << 5u)
 #define SAU_SET_ATTR_ATIME_NOW (1u << 7u)
 #define SAU_SET_ATTR_MTIME_NOW (1u << 8u)
 
@@ -125,8 +125,8 @@ typedef struct sau_acl sau_acl_t;
 #define SAU_ACL_SUCCESSFUL_ACCESS_ACE_FLAG 0x00000010
 #define SAU_ACL_FAILED_ACCESS_ACE_FLAG 0x00000020
 #define SAU_ACL_IDENTIFIER_GROUP 0x0040
-#define SAU_ACL_INHERITED_ACE 0x0080  /* non nfs4 */
-#define SAU_ACL_SPECIAL_WHO 0x0100    /* saunafs */
+#define SAU_ACL_INHERITED_ACE 0x0080 /* non nfs4 */
+#define SAU_ACL_SPECIAL_WHO 0x0100 /* saunafs */
 
 /* ACL ace mask bits */
 #define SAU_ACL_READ_DATA 0x00000001
@@ -156,8 +156,9 @@ typedef struct sau_acl sau_acl_t;
 
 /* ACL helper macros */
 #define SAU_ACL_POSIX_MODE_READ (SAU_ACL_READ_DATA | SAU_ACL_LIST_DIRECTORY)
-#define SAU_ACL_POSIX_MODE_WRITE (SAU_ACL_WRITE_DATA | SAU_ACL_ADD_FILE \
-	| SAU_ACL_APPEND_DATA | SAU_ACL_ADD_SUBDIRECTORY | SAU_ACL_DELETE_CHILD)
+#define SAU_ACL_POSIX_MODE_WRITE                                       \
+	(SAU_ACL_WRITE_DATA | SAU_ACL_ADD_FILE | SAU_ACL_APPEND_DATA | \
+	 SAU_ACL_ADD_SUBDIRECTORY | SAU_ACL_DELETE_CHILD)
 #define SAU_ACL_POSIX_MODE_EXECUTE (EXECUTE)
 #define SAU_ACL_POSIX_MODE_ALL                                \
 	(SAU_ACL_POSIX_MODE_READ | SAU_ACL_POSIX_MODE_WRITE | \
@@ -170,9 +171,9 @@ enum sau_special_ino {
 
 enum sau_setxattr_mode {
 	XATTR_SMODE_CREATE_OR_REPLACE = 0,
-	XATTR_SMODE_CREATE_ONLY       = 1,
-	XATTR_SMODE_REPLACE_ONLY      = 2,
-	XATTR_SMODE_REMOVE            = 3,
+	XATTR_SMODE_CREATE_ONLY = 1,
+	XATTR_SMODE_REPLACE_ONLY = 2,
+	XATTR_SMODE_REMOVE = 3,
 };
 
 /* Basic attributes of a file */
@@ -258,10 +259,10 @@ typedef struct sau_acl_ace {
 } sau_acl_ace_t;
 
 typedef struct sau_lock_info {
-	int16_t l_type;   /* Type of lock: F_RDLCK, F_WRLCK, or F_UNLCK. */
-	int64_t l_start;  /* Offset where the lock begins. */
-	int64_t l_len;    /* Size of the locked area; zero means until EOF. */
-	int32_t l_pid;    /* Process holding the lock. */
+	int16_t l_type; /* Type of lock: F_RDLCK, F_WRLCK, or F_UNLCK. */
+	int64_t l_start; /* Offset where the lock begins. */
+	int64_t l_len; /* Size of the locked area; zero means until EOF. */
+	int32_t l_pid; /* Process holding the lock. */
 } sau_lock_info_t;
 
 typedef struct sau_lock_interrupt_info {

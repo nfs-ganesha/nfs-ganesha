@@ -38,7 +38,7 @@
 #include "config.h"
 
 #include <assert.h>
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -61,19 +61,15 @@
 #include "pnfs_utils.h"
 #include <stdbool.h>
 
-
 /**
  * @brief Release a DS handle
  *
  * @param[in] ds_pub The object to release
  */
-static void
-kvsfs_release(struct fsal_ds_handle *const ds_pub)
+static void kvsfs_release(struct fsal_ds_handle *const ds_pub)
 {
 	/* The private 'full' DS handle */
-	struct kvsfs_ds *ds = container_of(ds_pub,
-					    struct kvsfs_ds,
-					    ds);
+	struct kvsfs_ds *ds = container_of(ds_pub, struct kvsfs_ds, ds);
 
 	gsh_free(ds);
 }
@@ -97,14 +93,11 @@ kvsfs_release(struct fsal_ds_handle *const ds_pub)
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4
-kvsfs_ds_read(struct fsal_ds_handle *const ds_pub,
-		const stateid4 *stateid,
-		const offset4 offset,
-		const count4 requested_length,
-		void *const buffer,
-		count4 *const supplied_length,
-		bool *const end_of_file)
+static nfsstat4 kvsfs_ds_read(struct fsal_ds_handle *const ds_pub,
+			      const stateid4 *stateid, const offset4 offset,
+			      const count4 requested_length, void *const buffer,
+			      count4 *const supplied_length,
+			      bool *const end_of_file)
 {
 	/* The private 'full' DS handle */
 	struct kvsfs_ds *ds = container_of(ds_pub, struct kvsfs_ds, ds);
@@ -118,14 +111,13 @@ kvsfs_ds_read(struct fsal_ds_handle *const ds_pub,
 	cred.uid = op_ctx->creds.caller_uid;
 	cred.gid = op_ctx->creds.caller_gid;
 
-	rc = kvsns_open(&cred, &kvsfs_fh->kvsfs_handle, O_RDONLY,
-			0777, &fd);
+	rc = kvsns_open(&cred, &kvsfs_fh->kvsfs_handle, O_RDONLY, 0777, &fd);
 	if (rc < 0)
 		return posix2nfs4_error(-rc);
 
 	/* write the data */
-	amount_read = kvsns_read(&cred, &fd, (char *)buffer,
-				 requested_length, offset);
+	amount_read = kvsns_read(&cred, &fd, (char *)buffer, requested_length,
+				 offset);
 	if (amount_read < 0) {
 		/* ignore any potential error on close if read failed? */
 		kvsns_close(&fd);
@@ -135,7 +127,6 @@ kvsfs_ds_read(struct fsal_ds_handle *const ds_pub,
 	rc = kvsns_close(&fd);
 	if (rc < 0)
 		return posix2nfs4_error(-rc);
-
 
 	*supplied_length = amount_read;
 	*end_of_file = amount_read == 0 ? true : false;
@@ -165,16 +156,12 @@ kvsfs_ds_read(struct fsal_ds_handle *const ds_pub,
  *
  * @return An NFSv4.1 status code.
  */
-static nfsstat4
-kvsfs_ds_write(struct fsal_ds_handle *const ds_pub,
-		const stateid4 *stateid,
-		const offset4 offset,
-		const count4 write_length,
-		const void *buffer,
-		const stable_how4 stability_wanted,
-		count4 *written_length,
-		verifier4 *writeverf,
-		stable_how4 *stability_got)
+static nfsstat4 kvsfs_ds_write(struct fsal_ds_handle *const ds_pub,
+			       const stateid4 *stateid, const offset4 offset,
+			       const count4 write_length, const void *buffer,
+			       const stable_how4 stability_wanted,
+			       count4 *written_length, verifier4 *writeverf,
+			       stable_how4 *stability_got)
 {
 	/* The private 'full' DS handle */
 	struct kvsfs_ds *ds = container_of(ds_pub, struct kvsfs_ds, ds);
@@ -193,14 +180,13 @@ kvsfs_ds_write(struct fsal_ds_handle *const ds_pub,
 	/** @todo Add some debug code here about the fh to be used */
 
 	/* @todo: we could take care of parameter stability_wanted here */
-	rc = kvsns_open(&cred, &kvsfs_fh->kvsfs_handle, O_WRONLY,
-			0777, &fd);
+	rc = kvsns_open(&cred, &kvsfs_fh->kvsfs_handle, O_WRONLY, 0777, &fd);
 	if (rc < 0)
 		return posix2nfs4_error(-rc);
 
 	/* write the data */
-	amount_written = kvsns_write(&cred, &fd, (char *)buffer,
-				     write_length, offset);
+	amount_written =
+		kvsns_write(&cred, &fd, (char *)buffer, write_length, offset);
 	if (amount_written < 0) {
 		kvsns_close(&fd);
 		return posix2nfs4_error(-amount_written);
@@ -232,12 +218,9 @@ kvsfs_ds_write(struct fsal_ds_handle *const ds_pub,
  * @return An NFSv4.1 status code.
  */
 
-
-static nfsstat4
-kvsfs_ds_commit(struct fsal_ds_handle *const ds_pub,
-		 const offset4 offset,
-		 const count4 count,
-		 verifier4 *const writeverf)
+static nfsstat4 kvsfs_ds_commit(struct fsal_ds_handle *const ds_pub,
+				const offset4 offset, const count4 count,
+				verifier4 *const writeverf)
 {
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 	return NFS4_OK;
@@ -255,10 +238,9 @@ kvsfs_ds_commit(struct fsal_ds_handle *const ds_pub,
 
 static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 			       const struct gsh_buffdesc *const desc,
-			       struct fsal_ds_handle **const handle,
-			       int flags)
+			       struct fsal_ds_handle **const handle, int flags)
 {
-	struct kvsfs_ds *ds;		/* Handle to be created */
+	struct kvsfs_ds *ds; /* Handle to be created */
 
 	*handle = NULL;
 

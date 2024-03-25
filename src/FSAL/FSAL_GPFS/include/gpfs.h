@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
+/* NOTE: This file is directly taken from the GPFS source code and should not   */
+/*       be modified beyond the inclusion of this notice and the SPDX header    */
+/*       above.                                                                 */
 /*                                                                              */
 /* Copyright (C) 2001 International Business Machines                           */
 /* All rights reserved.                                                         */
@@ -309,7 +312,7 @@ typedef struct gpfs_acl
  *              The aclP parameter must point to a buffer mapped by either:
  *                - gpfs_opaque_acl_t (when flags are zero).  In this case,
  *                  the opaque data that is intended to be used by a backup
- *                  program (restored by passing this data back on a subsequent
+ *                  program (restoreed by passing this data back on a subsequent
  *                  call to gpfs_putacl).
  *                - gpfs_acl_t (when GPFS_GETACL_STRUCT is specified).  In this
  *                  case, the data can be interpreted by the calling application
@@ -731,7 +734,7 @@ gpfs_unregister_cifs_export(void);
   *              ENOSYS  function not available
   *              EACCES  cannot establish credentials
   *              ENOMEM  unable to allocate required memory
-  *              EINVAL  no associated process registration exists
+  *              EINVAL  no associated process registrion exists
   *                      bad dataLength in buffer.
   */
 int GPFS_API
@@ -747,7 +750,7 @@ gpfs_register_cifs_buffer(cifsThreadData_t *bufP);
   *              ENOSYS  function not available
   *              EACCES  cannot establish credentials
   *              ENOMEM  unable to allocate required memory
-  *              EINVAL  no associated process registration exists
+  *              EINVAL  no associated process registrion exists
   */
 int GPFS_API
 gpfs_unregister_cifs_buffer(void);

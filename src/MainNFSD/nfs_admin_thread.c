@@ -36,7 +36,7 @@
 #include <pthread.h>
 #include <urcu-bp.h>
 #ifdef LINUX
-#include <mcheck.h>		/* For mtrace/muntrace */
+#include <mcheck.h> /* For mtrace/muntrace */
 #endif
 #ifndef __APPLE__
 #include <malloc.h>
@@ -86,8 +86,7 @@ bool admin_shutdown;
  * @param[in]  args  dbus args
  * @param[out] reply dbus reply message with grace period status
  */
-static bool admin_dbus_get_grace(DBusMessageIter *args,
-				 DBusMessage *reply,
+static bool admin_dbus_get_grace(DBusMessageIter *args, DBusMessage *reply,
 				 DBusError *error)
 {
 	char *errormsg = "get grace success";
@@ -106,7 +105,7 @@ static bool admin_dbus_get_grace(DBusMessageIter *args,
 	ingrace = nfs_in_grace();
 	dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &ingrace);
 
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -114,13 +113,13 @@ static bool admin_dbus_get_grace(DBusMessageIter *args,
 static struct gsh_dbus_method method_get_grace = {
 	.name = "get_grace",
 	.method = admin_dbus_get_grace,
-	.args = {
-		 {.name = "isgrace",
-		  .type = "b",
-		  .direction = "out",
-		 },
-		 STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { {
+			  .name = "isgrace",
+			  .type = "b",
+			  .direction = "out",
+		  },
+		  STATUS_REPLY,
+		  END_ARG_LIST }
 };
 
 /**
@@ -130,8 +129,7 @@ static struct gsh_dbus_method method_get_grace = {
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_grace(DBusMessageIter *args,
-			     DBusMessage *reply,
+static bool admin_dbus_grace(DBusMessageIter *args, DBusMessage *reply,
 			     DBusError *error)
 {
 	char *errormsg = "Started grace period";
@@ -162,16 +160,16 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 
 	ip = index(input, ':');
 	if (ip == NULL)
-		gsp.ipaddr = input;	/* no event specified */
+		gsp.ipaddr = input; /* no event specified */
 	else {
 		int size = strlen(input) + 1;
 		char *buf = alloca(size);
 
-		gsp.ipaddr = ip + 1;	/* point at the ip passed the : */
+		gsp.ipaddr = ip + 1; /* point at the ip passed the : */
 		memcpy(buf, input, size);
 		ip = strstr(buf, ":");
 		if (ip != NULL) {
-			*ip = '\0';	/* replace ":" with null */
+			*ip = '\0'; /* replace ":" with null */
 			gsp.event = atoi(buf);
 		}
 		if (gsp.event == EVENT_TAKE_NODEID)
@@ -188,14 +186,13 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 			LogEvent(COMPONENT_DBUS, "Retry grace");
 			nfs_wait_for_grace_norefs();
 		} else if (ret) {
-			LogCrit(COMPONENT_DBUS, "Start grace failed %d",
-				ret);
+			LogCrit(COMPONENT_DBUS, "Start grace failed %d", ret);
 			success = false;
 			errormsg = "Unable to start grace";
 			break;
 		}
 	} while (ret);
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -203,9 +200,7 @@ static bool admin_dbus_grace(DBusMessageIter *args,
 static struct gsh_dbus_method method_grace_period = {
 	.name = "grace",
 	.method = admin_dbus_grace,
-	.args = {IPADDR_ARG,
-		 STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { IPADDR_ARG, STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -215,8 +210,7 @@ static struct gsh_dbus_method method_grace_period = {
  * @param[out] reply Unused
  */
 
-static bool admin_dbus_shutdown(DBusMessageIter *args,
-				DBusMessage *reply,
+static bool admin_dbus_shutdown(DBusMessageIter *args, DBusMessage *reply,
 				DBusError *error)
 {
 	char *errormsg = "Server shut down";
@@ -233,17 +227,15 @@ static bool admin_dbus_shutdown(DBusMessageIter *args,
 
 	admin_halt();
 
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
-static struct gsh_dbus_method method_shutdown = {
-	.name = "shutdown",
-	.method = admin_dbus_shutdown,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
-};
+static struct gsh_dbus_method method_shutdown = { .name = "shutdown",
+						  .method = admin_dbus_shutdown,
+						  .args = { STATUS_REPLY,
+							    END_ARG_LIST } };
 
 /**
  * @brief Dbus method for flushing manage gids cache
@@ -251,8 +243,7 @@ static struct gsh_dbus_method method_shutdown = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool admin_dbus_purge_gids(DBusMessageIter *args,
-				  DBusMessage *reply,
+static bool admin_dbus_purge_gids(DBusMessageIter *args, DBusMessage *reply,
 				  DBusError *error)
 {
 	char *errormsg = "Purge gids cache";
@@ -269,7 +260,7 @@ static bool admin_dbus_purge_gids(DBusMessageIter *args,
 
 	uid2grp_clear_cache();
 
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -277,8 +268,7 @@ static bool admin_dbus_purge_gids(DBusMessageIter *args,
 static struct gsh_dbus_method method_purge_gids = {
 	.name = "purge_gids",
 	.method = admin_dbus_purge_gids,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -288,8 +278,7 @@ static struct gsh_dbus_method method_purge_gids = {
  * @param[out] reply
  */
 static bool admin_dbus_purge_netgroups(DBusMessageIter *args,
-				       DBusMessage *reply,
-				       DBusError *error)
+				       DBusMessage *reply, DBusError *error)
 {
 	char *errormsg = "Purge netgroup cache";
 	bool success = true;
@@ -305,7 +294,7 @@ static bool admin_dbus_purge_netgroups(DBusMessageIter *args,
 
 	ng_clear_cache();
 
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -313,8 +302,7 @@ static bool admin_dbus_purge_netgroups(DBusMessageIter *args,
 static struct gsh_dbus_method method_purge_netgroups = {
 	.name = "purge_netgroups",
 	.method = admin_dbus_purge_netgroups,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -339,7 +327,7 @@ static bool admin_dbus_purge_idmapper_cache(DBusMessageIter *args,
 		goto out;
 	}
 	idmapper_clear_cache();
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -347,8 +335,7 @@ static bool admin_dbus_purge_idmapper_cache(DBusMessageIter *args,
 static struct gsh_dbus_method method_purge_idmapper_cache = {
 	.name = "purge_idmapper_cache",
 	.method = admin_dbus_purge_idmapper_cache,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -357,9 +344,8 @@ static struct gsh_dbus_method method_purge_idmapper_cache = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool admin_dbus_init_fds_limit(DBusMessageIter *args,
-				       DBusMessage *reply,
-				       DBusError *error)
+static bool admin_dbus_init_fds_limit(DBusMessageIter *args, DBusMessage *reply,
+				      DBusError *error)
 {
 	char *errormsg = "Init fds limit";
 	bool success = true;
@@ -375,7 +361,7 @@ static bool admin_dbus_init_fds_limit(DBusMessageIter *args,
 
 	init_fds_limit();
 
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -383,8 +369,7 @@ static bool admin_dbus_init_fds_limit(DBusMessageIter *args,
 static struct gsh_dbus_method method_init_fds_limit = {
 	.name = "init_fds_limit",
 	.method = admin_dbus_init_fds_limit,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -393,10 +378,8 @@ static struct gsh_dbus_method method_init_fds_limit = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool
-admin_dbus_malloc_trace(DBusMessageIter *args,
-			DBusMessage *reply,
-			DBusError *error)
+static bool admin_dbus_malloc_trace(DBusMessageIter *args, DBusMessage *reply,
+				    DBusError *error)
 {
 	char *errormsg = "malloc trace";
 	bool success = true;
@@ -427,7 +410,7 @@ admin_dbus_malloc_trace(DBusMessageIter *args,
 	success = false;
 #endif
 
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -438,10 +421,8 @@ admin_dbus_malloc_trace(DBusMessageIter *args,
  * @param[in]  args
  * @param[out] reply
  */
-static bool
-admin_dbus_malloc_untrace(DBusMessageIter *args,
-			  DBusMessage *reply,
-			  DBusError *error)
+static bool admin_dbus_malloc_untrace(DBusMessageIter *args, DBusMessage *reply,
+				      DBusError *error)
 {
 	char *errormsg = "malloc untrace";
 	bool success = true;
@@ -462,7 +443,7 @@ admin_dbus_malloc_untrace(DBusMessageIter *args,
 	success = false;
 #endif
 
- out:
+out:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
@@ -470,18 +451,15 @@ admin_dbus_malloc_untrace(DBusMessageIter *args,
 static struct gsh_dbus_method method_malloc_trace = {
 	.name = "malloc_trace",
 	.method = admin_dbus_malloc_trace,
-	.args = {{ .name = "tracefile",
-		   .type = "s",
-		   .direction = "in"},
-		 STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { { .name = "tracefile", .type = "s", .direction = "in" },
+		  STATUS_REPLY,
+		  END_ARG_LIST }
 };
 
 static struct gsh_dbus_method method_malloc_untrace = {
 	.name = "malloc_untrace",
 	.method = admin_dbus_malloc_untrace,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -490,8 +468,7 @@ static struct gsh_dbus_method method_malloc_untrace = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool admin_dbus_trim_enable(DBusMessageIter *args,
-				   DBusMessage *reply,
+static bool admin_dbus_trim_enable(DBusMessageIter *args, DBusMessage *reply,
 				   DBusError *error)
 {
 	char *errormsg = "Malloc trim enabled";
@@ -509,8 +486,7 @@ static bool admin_dbus_trim_enable(DBusMessageIter *args,
 static struct gsh_dbus_method method_trim_enable = {
 	.name = "trim_enable",
 	.method = admin_dbus_trim_enable,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -519,8 +495,7 @@ static struct gsh_dbus_method method_trim_enable = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool admin_dbus_trim_disable(DBusMessageIter *args,
-				    DBusMessage *reply,
+static bool admin_dbus_trim_disable(DBusMessageIter *args, DBusMessage *reply,
 				    DBusError *error)
 {
 	char *errormsg = "Malloc trim disabled";
@@ -538,8 +513,7 @@ static bool admin_dbus_trim_disable(DBusMessageIter *args,
 static struct gsh_dbus_method method_trim_disable = {
 	.name = "trim_disable",
 	.method = admin_dbus_trim_disable,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -548,8 +522,7 @@ static struct gsh_dbus_method method_trim_disable = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool admin_dbus_trim_call(DBusMessageIter *args,
-				 DBusMessage *reply,
+static bool admin_dbus_trim_call(DBusMessageIter *args, DBusMessage *reply,
 				 DBusError *error)
 {
 	char *errormsg = "malloc_trim() called";
@@ -567,8 +540,7 @@ static bool admin_dbus_trim_call(DBusMessageIter *args,
 static struct gsh_dbus_method method_trim_call = {
 	.name = "trim_call",
 	.method = admin_dbus_trim_call,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
 /**
@@ -577,21 +549,20 @@ static struct gsh_dbus_method method_trim_call = {
  * @param[in]  args
  * @param[out] reply
  */
-static bool admin_dbus_trim_status(DBusMessageIter *args,
-				   DBusMessage *reply,
+static bool admin_dbus_trim_status(DBusMessageIter *args, DBusMessage *reply,
 				   DBusError *error)
 {
 	char *errormsg = "Malloc trim status: enabled";
 	bool success = true;
 	DBusMessageIter iter;
-	char hostname[64+1] = {0};
+	char hostname[64 + 1] = { 0 };
 	char name[100];
 	FILE *fp;
 
 	/* log malloc_info() as a side effect! */
 	(void)gethostname(hostname, sizeof(hostname));
-	snprintf(name, sizeof(name), "/tmp/mallinfo-%s.%d.txt",
-		 hostname, getpid());
+	snprintf(name, sizeof(name), "/tmp/mallinfo-%s.%d.txt", hostname,
+		 getpid());
 	fp = fopen(name, "w");
 	if (fp != NULL) {
 		malloc_info(0, fp);
@@ -609,45 +580,41 @@ static bool admin_dbus_trim_status(DBusMessageIter *args,
 static struct gsh_dbus_method method_trim_status = {
 	.name = "trim_status",
 	.method = admin_dbus_trim_status,
-	.args = {STATUS_REPLY,
-		 END_ARG_LIST}
+	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
+static struct gsh_dbus_method *admin_methods[] = { &method_shutdown,
+						   &method_grace_period,
+						   &method_get_grace,
+						   &method_purge_gids,
+						   &method_purge_netgroups,
+						   &method_init_fds_limit,
+						   &method_purge_idmapper_cache,
+						   &method_malloc_trace,
+						   &method_malloc_untrace,
+						   &method_trim_enable,
+						   &method_trim_disable,
+						   &method_trim_call,
+						   &method_trim_status,
+						   NULL };
 
-static struct gsh_dbus_method *admin_methods[] = {
-	&method_shutdown,
-	&method_grace_period,
-	&method_get_grace,
-	&method_purge_gids,
-	&method_purge_netgroups,
-	&method_init_fds_limit,
-	&method_purge_idmapper_cache,
-	&method_malloc_trace,
-	&method_malloc_untrace,
-	&method_trim_enable,
-	&method_trim_disable,
-	&method_trim_call,
-	&method_trim_status,
-	NULL
-};
-
-#define HANDLE_VERSION_PROP(prop_name, prop_string) \
-static bool dbus_prop_get_VERSION_##prop_name(DBusMessageIter *reply) \
-{ \
-	const char *version_string = prop_string; \
-	if (!dbus_message_iter_append_basic \
-	    (reply, DBUS_TYPE_STRING, &version_string)) \
-		return false; \
-	return true; \
-} \
-\
-static struct gsh_dbus_prop VERSION_##prop_name##_prop = { \
-	.name = "VERSION_" #prop_name, \
-	.access = DBUS_PROP_READ, \
-	.type = "s", \
-	.get = dbus_prop_get_VERSION_##prop_name, \
-	.set = NULL \
-}
+#define HANDLE_VERSION_PROP(prop_name, prop_string)                           \
+	static bool dbus_prop_get_VERSION_##prop_name(DBusMessageIter *reply) \
+	{                                                                     \
+		const char *version_string = prop_string;                     \
+		if (!dbus_message_iter_append_basic(reply, DBUS_TYPE_STRING,  \
+						    &version_string))         \
+			return false;                                         \
+		return true;                                                  \
+	}                                                                     \
+                                                                              \
+	static struct gsh_dbus_prop VERSION_##prop_name##_prop = {            \
+		.name = "VERSION_" #prop_name,                                \
+		.access = DBUS_PROP_READ,                                     \
+		.type = "s",                                                  \
+		.get = dbus_prop_get_VERSION_##prop_name,                     \
+		.set = NULL                                                   \
+	}
 
 #define VERSION_PROPERTY_ITEM(name) (&VERSION_##name##_prop)
 
@@ -673,32 +640,22 @@ static struct gsh_dbus_prop *admin_props[] = {
 	NULL
 };
 
-static struct gsh_dbus_signal heartbeat_signal = {
-	.name = HEARTBEAT_NAME,
-	.signal = NULL,
-	.args = {HEARTBEAT_ARG,
-		 END_ARG_LIST}
-};
+static struct gsh_dbus_signal heartbeat_signal = { .name = HEARTBEAT_NAME,
+						   .signal = NULL,
+						   .args = { HEARTBEAT_ARG,
+							     END_ARG_LIST } };
 
-static struct gsh_dbus_signal *admin_signals[] = {
-	&heartbeat_signal,
-	NULL
-};
+static struct gsh_dbus_signal *admin_signals[] = { &heartbeat_signal, NULL };
 
-static struct gsh_dbus_interface admin_interface = {
-	.name = DBUS_ADMIN_IFACE,
-	.props = admin_props,
-	.methods = admin_methods,
-	.signals = admin_signals
-};
+static struct gsh_dbus_interface admin_interface = { .name = DBUS_ADMIN_IFACE,
+						     .props = admin_props,
+						     .methods = admin_methods,
+						     .signals = admin_signals };
 
-static struct gsh_dbus_interface *admin_interfaces[] = {
-	&admin_interface,
-	&log_interface,
-	NULL
-};
+static struct gsh_dbus_interface *admin_interfaces[] = { &admin_interface,
+							 &log_interface, NULL };
 
-#endif				/* USE_DBUS */
+#endif /* USE_DBUS */
 
 /**
  * @brief Initialize admin thread control state and DBUS methods.
@@ -710,7 +667,7 @@ void nfs_Init_admin_thread(void)
 	PTHREAD_COND_init(&admin_control_cv, NULL);
 #ifdef USE_DBUS
 	gsh_dbus_register_path("admin", admin_interfaces);
-#endif				/* USE_DBUS */
+#endif /* USE_DBUS */
 	LogEvent(COMPONENT_NFS_CB, "Admin thread initialized");
 }
 
@@ -754,9 +711,10 @@ static void do_shutdown(void)
 	LogEvent(COMPONENT_MAIN, "Stopping state asynchronous request thread");
 	rc = state_async_shutdown();
 	if (rc != 0) {
-		LogMajor(COMPONENT_THREAD,
-			 "Error shutting down state asynchronous request system: %d",
-			 rc);
+		LogMajor(
+			COMPONENT_THREAD,
+			"Error shutting down state asynchronous request system: %d",
+			rc);
 		disorderly = true;
 	} else {
 		LogEvent(COMPONENT_THREAD,
@@ -826,7 +784,6 @@ static void do_shutdown(void)
 		   potentially invalid locks. */
 		emergency_cleanup_fsals();
 	} else {
-
 		LogEvent(COMPONENT_MAIN, "Destroying the FSAL system.");
 		destroy_fsals();
 		LogEvent(COMPONENT_MAIN, "FSAL system destroyed.");

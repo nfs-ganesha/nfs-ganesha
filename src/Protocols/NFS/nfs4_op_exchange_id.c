@@ -49,13 +49,11 @@ int get_raddr(SVCXPRT *xprt)
 		return addr;
 
 	switch (ss->ss_family) {
-	case AF_INET6:
-		{
-			void *ab = &(((struct sockaddr_in6 *)ss)->
-					sin6_addr.s6_addr[12]);
-			addr = ntohl(*(uint32_t *) ab);
-		}
-		break;
+	case AF_INET6: {
+		void *ab =
+			&(((struct sockaddr_in6 *)ss)->sin6_addr.s6_addr[12]);
+		addr = ntohl(*(uint32_t *)ab);
+	} break;
 	case AF_INET:
 		addr = ntohl(((struct sockaddr_in *)ss)->sin_addr.s_addr);
 
@@ -73,16 +71,16 @@ int get_raddr(SVCXPRT *xprt)
 #define SSV_PROT_INFO4_BASE_SIZE (2 * sizeof(bitmap4) + 5 * BYTES_PER_XDR_UNIT)
 
 /* spr_how + spr_mach_ops + spr_ssv_info */
-#define STATE_PROTECT4_R_BASE_SIZE (BYTES_PER_XDR_UNIT + sizeof(bitmap4) + \
-				    SSV_PROT_INFO4_BASE_SIZE)
+#define STATE_PROTECT4_R_BASE_SIZE \
+	(BYTES_PER_XDR_UNIT + sizeof(bitmap4) + SSV_PROT_INFO4_BASE_SIZE)
 
 /* nfsstat4 + clientid + sequenceid + eir_flags + eir_state_protect +
  * so_minor_id + so_major_id_len + eir_server_scope_len + eir_server_impl_id_len
  */
-#define EXCHANGE_ID_BASE_RESP_SIZE (BYTES_PER_XDR_UNIT + sizeof(clientid4) + \
-				    3 * BYTES_PER_XDR_UNIT \
-				    + STATE_PROTECT4_R_BASE_SIZE + \
-				    sizeof(uint64_t) + 3 * BYTES_PER_XDR_UNIT)
+#define EXCHANGE_ID_BASE_RESP_SIZE                                         \
+	(BYTES_PER_XDR_UNIT + sizeof(clientid4) + 3 * BYTES_PER_XDR_UNIT + \
+	 STATE_PROTECT4_R_BASE_SIZE + sizeof(uint64_t) +                   \
+	 3 * BYTES_PER_XDR_UNIT)
 
 /**
  * @brief The NFS4_OP_EXCHANGE_ID operation
@@ -110,12 +108,12 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	uint32_t server_pnfs_flags = 0;
 	in_addr_t server_addr = 0;
 	/* Arguments and response */
-	EXCHANGE_ID4args * const arg_EXCHANGE_ID4 =
-	    &op->nfs_argop4_u.opexchange_id;
-	EXCHANGE_ID4res * const res_EXCHANGE_ID4 =
-	    &resp->nfs_resop4_u.opexchange_id;
-	EXCHANGE_ID4resok * const res_EXCHANGE_ID4_ok =
-	    &resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4;
+	EXCHANGE_ID4args *const arg_EXCHANGE_ID4 =
+		&op->nfs_argop4_u.opexchange_id;
+	EXCHANGE_ID4res *const res_EXCHANGE_ID4 =
+		&resp->nfs_resop4_u.opexchange_id;
+	EXCHANGE_ID4resok *const res_EXCHANGE_ID4_ok =
+		&resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4;
 	uint32_t resp_size = EXCHANGE_ID_BASE_RESP_SIZE;
 	int owner_len, scope_len;
 
@@ -126,14 +124,11 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 	}
 
-	if ((arg_EXCHANGE_ID4->eia_flags & ~(EXCHGID4_FLAG_SUPP_MOVED_REFER |
-					     EXCHGID4_FLAG_SUPP_MOVED_MIGR |
-					     EXCHGID4_FLAG_BIND_PRINC_STATEID |
-					     EXCHGID4_FLAG_USE_NON_PNFS |
-					     EXCHGID4_FLAG_USE_PNFS_MDS |
-					     EXCHGID4_FLAG_USE_PNFS_DS |
-					     EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)
-	     ) != 0) {
+	if ((arg_EXCHANGE_ID4->eia_flags &
+	     ~(EXCHGID4_FLAG_SUPP_MOVED_REFER | EXCHGID4_FLAG_SUPP_MOVED_MIGR |
+	       EXCHGID4_FLAG_BIND_PRINC_STATEID | EXCHGID4_FLAG_USE_NON_PNFS |
+	       EXCHGID4_FLAG_USE_PNFS_MDS | EXCHGID4_FLAG_USE_PNFS_DS |
+	       EXCHGID4_FLAG_UPD_CONFIRMED_REC_A)) != 0) {
 		res_EXCHANGE_ID4->eir_status = NFS4ERR_INVAL;
 		return NFS_REQ_ERROR;
 	}
@@ -183,19 +178,20 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	/* If client did ask for pNFS related server roles than try to match the
 	   server roles to the client request. */
 	else {
-		if ((arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_USE_PNFS_MDS)
-		    && (nfs_param.nfsv4_param.pnfs_mds))
+		if ((arg_EXCHANGE_ID4->eia_flags &
+		     EXCHGID4_FLAG_USE_PNFS_MDS) &&
+		    (nfs_param.nfsv4_param.pnfs_mds))
 			server_pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_MDS;
 		else
 			server_pnfs_flags |= EXCHGID4_FLAG_USE_NON_PNFS;
-		if ((arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_USE_PNFS_DS)
-		    && (nfs_param.nfsv4_param.pnfs_ds))
+		if ((arg_EXCHANGE_ID4->eia_flags & EXCHGID4_FLAG_USE_PNFS_DS) &&
+		    (nfs_param.nfsv4_param.pnfs_ds))
 			server_pnfs_flags |= EXCHGID4_FLAG_USE_PNFS_DS;
 	}
 
 	LogDebug(COMPONENT_CLIENTID,
-		"EXCHANGE_ID pnfs_flags 0x%08x eia_flags 0x%08x",
-		server_pnfs_flags, arg_EXCHANGE_ID4->eia_flags);
+		 "EXCHANGE_ID pnfs_flags 0x%08x eia_flags 0x%08x",
+		 server_pnfs_flags, arg_EXCHANGE_ID4->eia_flags);
 
 	update = (arg_EXCHANGE_ID4->eia_flags &
 		  EXCHGID4_FLAG_UPD_CONFIRMED_REC_A) != 0;
@@ -205,7 +201,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	/* Do we already have one or more records for client id (x)? */
 	client_record = get_client_record(
 		arg_EXCHANGE_ID4->eia_clientowner.co_ownerid.co_ownerid_val,
-		arg_EXCHANGE_ID4->eia_clientowner.co_ownerid. co_ownerid_len,
+		arg_EXCHANGE_ID4->eia_clientowner.co_ownerid.co_ownerid_len,
 		server_pnfs_flags, server_addr);
 
 	if (client_record == NULL) {
@@ -261,7 +257,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 				 */
 
 				res_EXCHANGE_ID4->eir_status =
-				    NFS4ERR_CLID_INUSE;
+					NFS4ERR_CLID_INUSE;
 
 				/* Release our reference to the
 				 * confirmed clientid.
@@ -280,7 +276,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 
 			unconf = conf;
 			res_EXCHANGE_ID4_ok->eir_flags |=
-			    EXCHGID4_FLAG_CONFIRMED_R;
+				EXCHGID4_FLAG_CONFIRMED_R;
 			goto return_ok;
 		} else {
 			/* CASE 5, client restart */
@@ -293,10 +289,10 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 			   conf->cid_incoming_verifier,
 			   NFS4_VERIFIER_SIZE) == 0) {
 			if (!nfs_compare_clientcred(&conf->cid_credential,
-						    &data->credential)
-			    || op_ctx->client == NULL
-			    || conf->gsh_client == NULL
-			    || op_ctx->client != conf->gsh_client) {
+						    &data->credential) ||
+			    op_ctx->client == NULL ||
+			    conf->gsh_client == NULL ||
+			    op_ctx->client != conf->gsh_client) {
 				/* CASE 9, Update but wrong principal */
 				res_EXCHANGE_ID4->eir_status = NFS4ERR_PERM;
 			} else {
@@ -309,7 +305,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 					 "EXCHANGE_ID Update ignored");
 				unconf = conf;
 				res_EXCHANGE_ID4_ok->eir_flags |=
-				    EXCHGID4_FLAG_CONFIRMED_R;
+					EXCHGID4_FLAG_CONFIRMED_R;
 				goto return_ok;
 			}
 		} else {
@@ -347,9 +343,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	 * above.
 	 */
 
-	unconf = create_client_id(0,
-				  client_record,
-				  &data->credential,
+	unconf = create_client_id(0, client_record, &data->credential,
 				  data->minorversion);
 
 	if (unconf == NULL) {
@@ -377,31 +371,31 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	if (rc != CLIENT_ID_SUCCESS) {
 		/* Record is already freed, return. */
 		res_EXCHANGE_ID4->eir_status =
-					clientid_error_to_nfsstat_no_expire(rc);
+			clientid_error_to_nfsstat_no_expire(rc);
 
 		goto out;
 	}
 
- return_ok:
+return_ok:
 
 	/* Build the reply */
 	res_EXCHANGE_ID4_ok->eir_clientid = unconf->cid_clientid;
 	res_EXCHANGE_ID4_ok->eir_sequenceid =
-	    unconf->cid_create_session_sequence;
+		unconf->cid_create_session_sequence;
 
 	res_EXCHANGE_ID4_ok->eir_flags |= client_record->cr_pnfs_flags;
 	res_EXCHANGE_ID4_ok->eir_flags |= EXCHGID4_FLAG_SUPP_MOVED_REFER;
 
 	res_EXCHANGE_ID4_ok->eir_state_protect.spr_how =
-	    unconf->cid_state_protect_how;
+		unconf->cid_state_protect_how;
 
 	temp = gsh_malloc(owner_len + 1);
 	memcpy(temp, cid_server_owner, owner_len + 1);
 
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_major_id.so_major_id_len =
-	    owner_len;
+		owner_len;
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_major_id.so_major_id_val =
-	    temp;
+		temp;
 
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_minor_id = 0;
 
@@ -424,7 +418,7 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 		dec_client_id_ref(conf);
 	}
 
- out:
+out:
 
 	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 

@@ -61,8 +61,8 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 				     compound_data_t *data,
 				     struct nfs_resop4 *resp)
 {
-	GETXATTR4args * const arg_GETXATTR4 = &op->nfs_argop4_u.opgetxattr;
-	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
+	GETXATTR4args *const arg_GETXATTR4 = &op->nfs_argop4_u.opgetxattr;
+	GETXATTR4res *const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
 	xattrvalue4 gxr_value;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_handle = data->current_obj;
@@ -71,8 +71,7 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 	resp->resop = NFS4_OP_GETXATTR;
 	res_GETXATTR4->status = NFS4_OK;
 
-	LogDebug(COMPONENT_NFS_V4,
-		 "GetXattr name: %.*s",
+	LogDebug(COMPONENT_NFS_V4, "GetXattr name: %.*s",
 		 arg_GETXATTR4->gxa_name.utf8string_len,
 		 arg_GETXATTR4->gxa_name.utf8string_val);
 
@@ -88,28 +87,27 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 	if (res_GETXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
-	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
-		(op_ctx->fsal_export) & ATTR4_XATTR)) {
-
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+		      op_ctx->fsal_export) &
+	      ATTR4_XATTR)) {
 		res_GETXATTR4->status = NFS4ERR_NOTSUPP;
 		return NFS_REQ_ERROR;
 	}
 
-	fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
-						    &arg_GETXATTR4->gxa_name,
-						    &gxr_value);
+	fsal_status = obj_handle->obj_ops->getxattrs(
+		obj_handle, &arg_GETXATTR4->gxa_name, &gxr_value);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		if (fsal_status.major == ERR_FSAL_XATTR2BIG) {
 			LogDebug(COMPONENT_NFS_V4,
 				 "FSAL buffer len %d too small",
-				  XATTR_VALUE_SIZE);
+				 XATTR_VALUE_SIZE);
 			/* Get size of xattr value  */
 			gsh_free(gxr_value.utf8string_val);
 			gxr_value.utf8string_len = 0;
 			gxr_value.utf8string_val = NULL;
-			fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
-						    &arg_GETXATTR4->gxa_name,
-						    &gxr_value);
+			fsal_status = obj_handle->obj_ops->getxattrs(
+				obj_handle, &arg_GETXATTR4->gxa_name,
+				&gxr_value);
 
 			if (FSAL_IS_ERROR(fsal_status)) {
 				res_GETXATTR4->status = nfs4_Errno_state(
@@ -117,15 +115,14 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 				return NFS_REQ_ERROR;
 			}
 
-			LogDebug(COMPONENT_NFS_V4,
-				 "FSAL buffer new len %d",
-				  gxr_value.utf8string_len);
+			LogDebug(COMPONENT_NFS_V4, "FSAL buffer new len %d",
+				 gxr_value.utf8string_len);
 			/* Try again with a bigger buffer */
-			gxr_value.utf8string_val = gsh_malloc(
-						gxr_value.utf8string_len + 1);
-			fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
-						    &arg_GETXATTR4->gxa_name,
-						    &gxr_value);
+			gxr_value.utf8string_val =
+				gsh_malloc(gxr_value.utf8string_len + 1);
+			fsal_status = obj_handle->obj_ops->getxattrs(
+				obj_handle, &arg_GETXATTR4->gxa_name,
+				&gxr_value);
 
 			if (FSAL_IS_ERROR(fsal_status)) {
 				res_GETXATTR4->status = nfs4_Errno_state(
@@ -138,9 +135,8 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 		}
 	}
 
-
 	resp_size = sizeof(nfsstat4) + sizeof(uint32_t) +
-			RNDUP(gxr_value.utf8string_len);
+		    RNDUP(gxr_value.utf8string_len);
 	res_GETXATTR4->status = check_resp_room(data, resp_size);
 	if (res_GETXATTR4->status != NFS4_OK) {
 		gsh_free(gxr_value.utf8string_val);
@@ -161,7 +157,7 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
  */
 void nfs4_op_getxattr_Free(nfs_resop4 *resp)
 {
-	GETXATTR4res * const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
+	GETXATTR4res *const res_GETXATTR4 = &resp->nfs_resop4_u.opgetxattr;
 	GETXATTR4resok *res = &res_GETXATTR4->GETXATTR4res_u.resok4;
 
 	if (res_GETXATTR4->status == NFS4_OK) {
@@ -184,15 +180,14 @@ enum nfs_req_result nfs4_op_setxattr(struct nfs_argop4 *op,
 				     compound_data_t *data,
 				     struct nfs_resop4 *resp)
 {
-	SETXATTR4args * const arg_SETXATTR4 = &op->nfs_argop4_u.opsetxattr;
-	SETXATTR4res * const res_SETXATTR4 = &resp->nfs_resop4_u.opsetxattr;
+	SETXATTR4args *const arg_SETXATTR4 = &op->nfs_argop4_u.opsetxattr;
+	SETXATTR4res *const res_SETXATTR4 = &resp->nfs_resop4_u.opsetxattr;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_handle = data->current_obj;
 
 	resp->resop = NFS4_OP_SETXATTR;
 
-	LogDebug(COMPONENT_NFS_V4,
-		 "SetXattr option=%d key=%.*s",
+	LogDebug(COMPONENT_NFS_V4, "SetXattr option=%d key=%.*s",
 		 arg_SETXATTR4->sxa_option,
 		 arg_SETXATTR4->sxa_key.utf8string_len,
 		 arg_SETXATTR4->sxa_key.utf8string_val);
@@ -202,9 +197,9 @@ enum nfs_req_result nfs4_op_setxattr(struct nfs_argop4 *op,
 	if (res_SETXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
-	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
-		(op_ctx->fsal_export) & ATTR4_XATTR)) {
-
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+		      op_ctx->fsal_export) &
+	      ATTR4_XATTR)) {
 		res_SETXATTR4->status = NFS4ERR_NOTSUPP;
 		return NFS_REQ_ERROR;
 	}
@@ -220,16 +215,16 @@ enum nfs_req_result nfs4_op_setxattr(struct nfs_argop4 *op,
 
 	res_SETXATTR4->SETXATTR4res_u.resok4.sxr_info.atomic = false;
 	res_SETXATTR4->SETXATTR4res_u.resok4.sxr_info.before =
-				fsal_get_changeid4(data->current_obj);
+		fsal_get_changeid4(data->current_obj);
 	fsal_status = obj_handle->obj_ops->setxattrs(obj_handle,
-					arg_SETXATTR4->sxa_option,
-					&arg_SETXATTR4->sxa_key,
-					&arg_SETXATTR4->sxa_value);
+						     arg_SETXATTR4->sxa_option,
+						     &arg_SETXATTR4->sxa_key,
+						     &arg_SETXATTR4->sxa_value);
 	if (FSAL_IS_ERROR(fsal_status))
 		res_SETXATTR4->status = nfs4_Errno_status(fsal_status);
 	else
 		res_SETXATTR4->SETXATTR4res_u.resok4.sxr_info.after =
-				fsal_get_changeid4(data->current_obj);
+			fsal_get_changeid4(data->current_obj);
 	nfs_put_grace_status();
 	return nfsstat4_to_nfs_req_result(res_SETXATTR4->status);
 }
@@ -262,8 +257,8 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 				      compound_data_t *data,
 				      struct nfs_resop4 *resp)
 {
-	LISTXATTR4args * const arg_LISTXATTR4 = &op->nfs_argop4_u.oplistxattr;
-	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
+	LISTXATTR4args *const arg_LISTXATTR4 = &op->nfs_argop4_u.oplistxattr;
+	LISTXATTR4res *const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_handle = data->current_obj;
 	xattrlist4 list = { 0 };
@@ -276,25 +271,24 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 	resp->resop = NFS4_OP_LISTXATTR;
 	res_LISTXATTR4->status = NFS4_OK;
 
-	LogDebug(COMPONENT_NFS_V4,
-		 "SetXattr max count %d cookie %" PRIu64,
+	LogDebug(COMPONENT_NFS_V4, "SetXattr max count %d cookie %" PRIu64,
 		 arg_LISTXATTR4->lxa_maxcount, lxa_cookie);
 
 	/* Do basic checks on a filehandle */
-	res_LISTXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
-						      false);
+	res_LISTXATTR4->status =
+		nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 	if (res_LISTXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
 	/* Do basic checks on a filehandle */
-	res_LISTXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
-									false);
+	res_LISTXATTR4->status =
+		nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 	if (res_LISTXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
-	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
-		(op_ctx->fsal_export) & ATTR4_XATTR)) {
-
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+		      op_ctx->fsal_export) &
+	      ATTR4_XATTR)) {
 		res_LISTXATTR4->status = NFS4ERR_NOTSUPP;
 		return NFS_REQ_ERROR;
 	}
@@ -310,33 +304,29 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 
 	/* Is this maxcount too small for even the tiniest xattr name? */
 	if (arg_LISTXATTR4->lxa_maxcount <
-			(overhead + sizeof(uint32_t) + RNDUP(1))) {
+	    (overhead + sizeof(uint32_t) + RNDUP(1))) {
 		res_LISTXATTR4->status = NFS4ERR_TOOSMALL;
 		return NFS_REQ_ERROR;
 	}
 
 	maxcount = arg_LISTXATTR4->lxa_maxcount - overhead;
-	fsal_status = obj_handle->obj_ops->listxattrs(obj_handle,
-						maxcount,
-						&lxa_cookie,
-						&lxr_eof,
-						&list);
+	fsal_status = obj_handle->obj_ops->listxattrs(
+		obj_handle, maxcount, &lxa_cookie, &lxr_eof, &list);
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_LISTXATTR4->status = nfs4_Errno_status(fsal_status);
-		res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_names.xl4_entries
-									= NULL;
+		res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_names.xl4_entries =
+			NULL;
 		return NFS_REQ_ERROR;
 	}
 
 	entry = list.xl4_entries;
 	resp_size = sizeof(nfsstat4) + sizeof(nfs_cookie4) +
-				list.xl4_count * sizeof(uint32_t) +
-				RNDUP(sizeof(bool));
+		    list.xl4_count * sizeof(uint32_t) + RNDUP(sizeof(bool));
 
 	for (i = 0; i < list.xl4_count; i++) {
-		LogDebug(COMPONENT_FSAL, "entry %d len %d name %.*s",
-			i, entry->utf8string_len,
-			entry->utf8string_len, entry->utf8string_val);
+		LogDebug(COMPONENT_FSAL, "entry %d len %d name %.*s", i,
+			 entry->utf8string_len, entry->utf8string_len,
+			 entry->utf8string_val);
 		resp_size += RNDUP(entry->utf8string_len);
 		entry += 1;
 	}
@@ -366,7 +356,7 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
  */
 void nfs4_op_listxattr_Free(nfs_resop4 *resp)
 {
-	LISTXATTR4res * const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
+	LISTXATTR4res *const res_LISTXATTR4 = &resp->nfs_resop4_u.oplistxattr;
 	xattrlist4 *names = &res_LISTXATTR4->LISTXATTR4res_u.resok4.lxr_names;
 	int i;
 
@@ -393,30 +383,29 @@ enum nfs_req_result nfs4_op_removexattr(struct nfs_argop4 *op,
 					compound_data_t *data,
 					struct nfs_resop4 *resp)
 {
-	REMOVEXATTR4args * const arg_REMOVEXATTR4 =
-					&op->nfs_argop4_u.opremovexattr;
-	REMOVEXATTR4res * const res_REMOVEXATTR4 =
-					&resp->nfs_resop4_u.opremovexattr;
+	REMOVEXATTR4args *const arg_REMOVEXATTR4 =
+		&op->nfs_argop4_u.opremovexattr;
+	REMOVEXATTR4res *const res_REMOVEXATTR4 =
+		&resp->nfs_resop4_u.opremovexattr;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *obj_handle = data->current_obj;
 
 	resp->resop = NFS4_OP_REMOVEXATTR;
 	res_REMOVEXATTR4->status = NFS4_OK;
 
-	LogDebug(COMPONENT_NFS_V4,
-		 "RemoveXattr len %d name: %s",
+	LogDebug(COMPONENT_NFS_V4, "RemoveXattr len %d name: %s",
 		 arg_REMOVEXATTR4->rxa_name.utf8string_len,
 		 arg_REMOVEXATTR4->rxa_name.utf8string_val);
 
 	/* Do basic checks on a filehandle */
-	res_REMOVEXATTR4->status = nfs4_sanity_check_FH(data, NO_FILE_TYPE,
-							false);
+	res_REMOVEXATTR4->status =
+		nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 	if (res_REMOVEXATTR4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
-	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs
-		(op_ctx->fsal_export) & ATTR4_XATTR)) {
-
+	if (!(op_ctx->fsal_export->exp_ops.fs_supported_attrs(
+		      op_ctx->fsal_export) &
+	      ATTR4_XATTR)) {
 		res_REMOVEXATTR4->status = NFS4ERR_NOTSUPP;
 		return NFS_REQ_ERROR;
 	}
@@ -432,14 +421,14 @@ enum nfs_req_result nfs4_op_removexattr(struct nfs_argop4 *op,
 
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rxr_info.atomic = false;
 	res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rxr_info.before =
-				fsal_get_changeid4(data->current_obj);
-	fsal_status = obj_handle->obj_ops->removexattrs(obj_handle,
-					&arg_REMOVEXATTR4->rxa_name);
+		fsal_get_changeid4(data->current_obj);
+	fsal_status = obj_handle->obj_ops->removexattrs(
+		obj_handle, &arg_REMOVEXATTR4->rxa_name);
 	if (FSAL_IS_ERROR(fsal_status))
 		res_REMOVEXATTR4->status = nfs4_Errno_status(fsal_status);
 	else
 		res_REMOVEXATTR4->REMOVEXATTR4res_u.resok4.rxr_info.after =
-				fsal_get_changeid4(data->current_obj);
+			fsal_get_changeid4(data->current_obj);
 	nfs_put_grace_status();
 	return nfsstat4_to_nfs_req_result(res_REMOVEXATTR4->status);
 }

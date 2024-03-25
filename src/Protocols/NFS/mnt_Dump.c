@@ -55,7 +55,7 @@ int mnt_Dump(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	res->res_dump = NULL;
 
 	return NFS_REQ_OK;
-}				/* mnt_Null */
+} /* mnt_Null */
 
 /**
  * mnt_Dump_Free: Frees the result structure allocated for mnt_Dump.

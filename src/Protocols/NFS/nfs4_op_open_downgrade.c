@@ -55,17 +55,16 @@
  */
 static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 				       compound_data_t *data,
-				       state_owner_t *owner,
-				       state_t *state,
+				       state_owner_t *owner, state_t *state,
 				       char **cause);
 
 enum nfs_req_result nfs4_op_open_downgrade(struct nfs_argop4 *op,
 					   compound_data_t *data,
 					   struct nfs_resop4 *resp)
 {
-	OPEN_DOWNGRADE4args * const arg_OPEN_DOWNGRADE4 =
+	OPEN_DOWNGRADE4args *const arg_OPEN_DOWNGRADE4 =
 		&op->nfs_argop4_u.opopen_downgrade;
-	OPEN_DOWNGRADE4res * const res_OPEN_DOWNGRADE4 =
+	OPEN_DOWNGRADE4res *const res_OPEN_DOWNGRADE4 =
 		&resp->nfs_resop4_u.opopen_downgrade;
 	OPEN_DOWNGRADE4resok *resok =
 		&res_OPEN_DOWNGRADE4->OPEN_DOWNGRADE4res_u.resok4;
@@ -80,7 +79,7 @@ enum nfs_req_result nfs4_op_open_downgrade(struct nfs_argop4 *op,
 
 	/* Do basic checks on a filehandle */
 	res_OPEN_DOWNGRADE4->status =
-	    nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+		nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_OPEN_DOWNGRADE4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
@@ -93,13 +92,10 @@ enum nfs_req_result nfs4_op_open_downgrade(struct nfs_argop4 *op,
 
 	/* Check stateid correctness and get pointer to state */
 	rc = nfs4_Check_Stateid(&arg_OPEN_DOWNGRADE4->open_stateid,
-				data->current_obj,
-				&state_found,
-				data,
+				data->current_obj, &state_found, data,
 				STATEID_SPECIAL_FOR_LOCK,
 				arg_OPEN_DOWNGRADE4->seqid,
-				data->minorversion == 0,
-				tag);
+				data->minorversion == 0, tag);
 
 	if (rc != NFS4_OK && rc != NFS4ERR_REPLAY) {
 		res_OPEN_DOWNGRADE4->status = rc;
@@ -120,12 +116,8 @@ enum nfs_req_result nfs4_op_open_downgrade(struct nfs_argop4 *op,
 
 	/* Check seqid */
 	if (data->minorversion == 0 &&
-	    !Check_nfs4_seqid(open_owner,
-			      arg_OPEN_DOWNGRADE4->seqid,
-			      op,
-			      data->current_obj,
-			      resp,
-			      tag)) {
+	    !Check_nfs4_seqid(open_owner, arg_OPEN_DOWNGRADE4->seqid, op,
+			      data->current_obj, resp, tag)) {
 		/* Response is all setup for us and LogDebug told what was wrong
 		 */
 		PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
@@ -140,15 +132,11 @@ enum nfs_req_result nfs4_op_open_downgrade(struct nfs_argop4 *op,
 		     arg_OPEN_DOWNGRADE4->share_deny,
 		     arg_OPEN_DOWNGRADE4->share_access);
 
-	res_OPEN_DOWNGRADE4->status = nfs4_do_open_downgrade(op,
-							     data,
-							     open_owner,
-							     state_found,
-							     &cause);
+	res_OPEN_DOWNGRADE4->status = nfs4_do_open_downgrade(
+		op, data, open_owner, state_found, &cause);
 
 	if (res_OPEN_DOWNGRADE4->status != NFS4_OK) {
-		LogEvent(COMPONENT_STATE,
-			 "Failed to open downgrade: %s",
+		LogEvent(COMPONENT_STATE, "Failed to open downgrade: %s",
 			 cause);
 		goto out;
 	}
@@ -161,24 +149,20 @@ enum nfs_req_result nfs4_op_open_downgrade(struct nfs_argop4 *op,
 
 	/* Save the response in the open owner */
 	if (data->minorversion == 0) {
-		Copy_nfs4_state_req(open_owner,
-				    arg_OPEN_DOWNGRADE4->seqid,
-				    op,
-				    data->current_obj,
-				    resp,
-				    tag);
+		Copy_nfs4_state_req(open_owner, arg_OPEN_DOWNGRADE4->seqid, op,
+				    data->current_obj, resp, tag);
 	}
 
- out:
+out:
 
 	dec_state_owner_ref(open_owner);
 
- out2:
+out2:
 
 	dec_state_t_ref(state_found);
 
 	return nfsstat4_to_nfs_req_result(res_OPEN_DOWNGRADE4->status);
-}				/* nfs4_op_opendowngrade */
+} /* nfs4_op_opendowngrade */
 
 /**
  * @brief Free memory allocated for OPEN_DOWNGRADE result
@@ -209,17 +193,16 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	fsal_status_t fsal_status;
 	fsal_openflags_t openflags = 0;
 
-	LogFullDebug(COMPONENT_STATE,
-		     "Open downgrade current access=%x deny=%x access_prev=%x deny_prev=%x",
-		     state->state_data.share.share_access,
-		     state->state_data.share.share_deny,
-		     state->state_data.share.share_access_prev,
-		     state->state_data.share.share_deny_prev);
+	LogFullDebug(
+		COMPONENT_STATE,
+		"Open downgrade current access=%x deny=%x access_prev=%x deny_prev=%x",
+		state->state_data.share.share_access,
+		state->state_data.share.share_deny,
+		state->state_data.share.share_access_prev,
+		state->state_data.share.share_deny_prev);
 
-	LogFullDebug(COMPONENT_STATE,
-		     "Open downgrade to access=%x deny=%x",
-		     args->share_access,
-		     args->share_deny);
+	LogFullDebug(COMPONENT_STATE, "Open downgrade to access=%x deny=%x",
+		     args->share_access, args->share_deny);
 
 	STATELOCK_lock(data->current_obj);
 
@@ -248,7 +231,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	/* Check if given share access is previously seen */
 	if (((state->state_data.share.share_access_prev &
 	      (1 << args->share_access)) == 0) ||
-	     ((state->state_data.share.share_deny_prev &
+	    ((state->state_data.share.share_deny_prev &
 	      (1 << args->share_deny)) == 0)) {
 		*cause = " (share access or deny never seen before)";
 		STATELOCK_unlock(data->current_obj);
@@ -267,10 +250,7 @@ static nfsstat4 nfs4_do_open_downgrade(struct nfs_argop4 *op,
 	if ((args->share_deny & OPEN4_SHARE_DENY_WRITE) != 0)
 		openflags |= FSAL_O_DENY_WRITE_MAND;
 
-	fsal_status = fsal_reopen2(data->current_obj,
-				   state,
-				   openflags,
-				   true);
+	fsal_status = fsal_reopen2(data->current_obj, state, openflags, true);
 
 	state_status = state_error_convert(fsal_status);
 

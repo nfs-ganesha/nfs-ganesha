@@ -39,13 +39,13 @@
 
 #if __GLIBC__
 #ifndef likely
-#define likely(x)    __builtin_expect (!!(x), 1)
-#define unlikely(x)  __builtin_expect (!!(x), 0)
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
 #endif
 #else
 #ifndef likely
-#define likely(x)       (x)
-#define unlikely(x)     (x)
+#define likely(x) (x)
+#define unlikely(x) (x)
 #endif
 #endif
 
@@ -54,7 +54,6 @@
 #else /* __x86_64__, __i386__ and others */
 #define GSH_CACHE_LINE_SIZE 64
 #endif
-#define GSH_CACHE_PAD(_n) char __pad ## _n[GSH_CACHE_LINE_SIZE]
+#define GSH_CACHE_PAD(_n) char __pad##_n[GSH_CACHE_LINE_SIZE]
 
-
-#endif				/* _GSH_INTRINSIC_H */
+#endif /* _GSH_INTRINSIC_H */

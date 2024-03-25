@@ -32,4 +32,4 @@
 #include <os/freebsd/memstream.h>
 #endif
 
-#endif				/* _OS_MEMSTREAM_H */
+#endif /* _OS_MEMSTREAM_H */

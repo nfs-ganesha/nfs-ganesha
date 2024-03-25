@@ -65,7 +65,7 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 				      compound_data_t *data,
 				      struct nfs_resop4 *resp)
 {
-	RESTOREFH4res * const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
+	RESTOREFH4res *const res_RESTOREFH = &resp->nfs_resop4_u.oprestorefh;
 	/* First of all, set the reply to zero to make sure it contains no
 	   parasite information */
 	memset(resp, 0, sizeof(struct nfs_resop4));
@@ -73,9 +73,7 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 	resp->resop = NFS4_OP_RESTOREFH;
 	res_RESTOREFH->status = NFS4_OK;
 
-	LogFullDebugOpaque(COMPONENT_FILEHANDLE,
-			   "Saved FH %s",
-			   LEN_FH_STR,
+	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "Saved FH %s", LEN_FH_STR,
 			   data->savedFH.nfs_fh4_val,
 			   data->savedFH.nfs_fh4_len);
 
@@ -90,7 +88,7 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 
 	/* Do basic checks on saved filehandle */
 	res_RESTOREFH->status =
-	    nfs4_sanity_check_saved_FH(data, NO_FILE_TYPE, true);
+		nfs4_sanity_check_saved_FH(data, NO_FILE_TYPE, true);
 
 	if (res_RESTOREFH->status != NFS4_OK)
 		return NFS_REQ_ERROR;
@@ -148,7 +146,7 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 	LogHandleNFS4("RESTORE FH: Current FH ", &data->currentFH);
 
 	return NFS_REQ_OK;
-}				/* nfs4_op_restorefh */
+} /* nfs4_op_restorefh */
 
 /**
  * @brief Free memory allocated for RESTOREFH result

@@ -96,8 +96,7 @@ uint64_t ip_name_rbt_hash_func(hash_parameter_t *hparam,
  */
 int compare_ip_name(struct gsh_buffdesc *buff1, struct gsh_buffdesc *buff2)
 {
-	return (cmp_sockaddr(buff1->addr, buff2->addr, true) !=
-		0) ? 0 : 1;
+	return (cmp_sockaddr(buff1->addr, buff2->addr, true) != 0) ? 0 : 1;
 }
 
 /**
@@ -156,8 +155,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 
 	/* Speculatively get the hostname into our caller's buffer... */
 	rc = gsh_getnameinfo((struct sockaddr *)ipaddr, sizeof(sockaddr_t),
-			     hostname, maxsize,
-			     NULL, 0, 0,
+			     hostname, maxsize, NULL, 0, 0,
 			     nfs_param.core_param.enable_AUTHSTATS);
 
 	gettimeofday(&tv1, NULL);
@@ -179,13 +177,15 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	/* Ask for the name to be cached */
 	if (rc != 0) {
 		hn = ipstring;
-		LogEvent(COMPONENT_DISPATCH,
-			 "Cannot resolve address %s, error %s, using address as hostname",
-			 ipstring, gai_strerror(rc));
+		LogEvent(
+			COMPONENT_DISPATCH,
+			"Cannot resolve address %s, error %s, using address as hostname",
+			ipstring, gai_strerror(rc));
 
 		if (maxsize < SOCK_NAME_MAX) {
-			LogMajor(COMPONENT_DISPATCH,
-				 "Could not return ip address because caller's buffer was too small");
+			LogMajor(
+				COMPONENT_DISPATCH,
+				"Could not return ip address because caller's buffer was too small");
 			return IP_NAME_INSERT_MALLOC_ERROR;
 		}
 
@@ -212,8 +212,8 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	nfs_ip_name->timestamp = time(NULL);
 	memcpy(nfs_ip_name->hostname, hn, len + 1);
 
-	LogDebug(COMPONENT_DISPATCH, "Inserting %s->%s to addr cache",
-		 ipstring, hn);
+	LogDebug(COMPONENT_DISPATCH, "Inserting %s->%s to addr cache", ipstring,
+		 hn);
 
 	buffdata.addr = nfs_ip_name;
 	buffdata.len = size;
@@ -242,7 +242,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	}
 
 	return IP_NAME_SUCCESS;
-}				/* nfs_ip_name_add */
+} /* nfs_ip_name_add */
 
 /**
  *
@@ -271,23 +271,21 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 	buffkey.addr = ipaddr;
 	buffkey.len = sizeof(sockaddr_t);
 
-	if (HashTable_Get(ht_ip_name,
-			  &buffkey,
-			  &buffval) == HASHTABLE_SUCCESS) {
+	if (HashTable_Get(ht_ip_name, &buffkey, &buffval) ==
+	    HASHTABLE_SUCCESS) {
 		nfs_ip_name = buffval.addr;
 
 		if ((time(NULL) - nfs_ip_name->timestamp) > expiration_time) {
 			LogFullDebug(COMPONENT_DISPATCH,
 				     "Found an expired host %s entry, removing",
 				     nfs_ip_name->hostname);
-			if (HashTable_Del(ht_ip_name, &buffkey,
-					  NULL, &buffval) ==
-					  HASHTABLE_SUCCESS) {
-				nfs_ip_name = (nfs_ip_name_t *) buffval.addr;
+			if (HashTable_Del(ht_ip_name, &buffkey, NULL,
+					  &buffval) == HASHTABLE_SUCCESS) {
+				nfs_ip_name = (nfs_ip_name_t *)buffval.addr;
 
 				LogFullDebug(COMPONENT_DISPATCH,
-					"Removing cache entry %s->%s",
-					ipstring, nfs_ip_name->hostname);
+					     "Removing cache entry %s->%s",
+					     ipstring, nfs_ip_name->hostname);
 
 				gsh_free(nfs_ip_name);
 			}
@@ -310,7 +308,7 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 	LogFullDebug(COMPONENT_DISPATCH, "Cache get miss for %s", ipstring);
 
 	return IP_NAME_NOT_FOUND;
-}				/* nfs_ip_name_get */
+} /* nfs_ip_name_get */
 
 /**
  *
@@ -339,7 +337,7 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 
 	if (HashTable_Del(ht_ip_name, &buffkey, NULL, &old_value) ==
 	    HASHTABLE_SUCCESS) {
-		nfs_ip_name = (nfs_ip_name_t *) old_value.addr;
+		nfs_ip_name = (nfs_ip_name_t *)old_value.addr;
 
 		LogFullDebug(COMPONENT_DISPATCH, "Cache remove hit for %s->%s",
 			     ipstring, nfs_ip_name->hostname);
@@ -351,7 +349,7 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 	LogFullDebug(COMPONENT_DISPATCH, "Cache remove miss for %s", ipstring);
 
 	return IP_NAME_NOT_FOUND;
-}				/* nfs_ip_name_remove */
+} /* nfs_ip_name_remove */
 
 /**
  * @defgroup config_ipnamemap Structure and defaults for NFS_IP_Name
@@ -368,7 +366,6 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
  * @brief Default value for ip_name_param.expiration-time
  */
 #define IP_NAME_EXPIRATION 3600
-
 
 /** @} */
 
@@ -400,9 +397,9 @@ static struct ip_name_cache ip_name_cache = {
  */
 
 static struct config_item ip_name_params[] = {
-	CONF_ITEM_UI32("Index_Size", 1, 51, PRIME_IP_NAME,
-		       ip_name_cache, hash_param.index_size),
-	CONF_ITEM_UI32("Expiration_Time", 1, 60*60*24, IP_NAME_EXPIRATION,
+	CONF_ITEM_UI32("Index_Size", 1, 51, PRIME_IP_NAME, ip_name_cache,
+		       hash_param.index_size),
+	CONF_ITEM_UI32("Expiration_Time", 1, 60 * 60 * 24, IP_NAME_EXPIRATION,
 		       ip_name_cache, expiration_time),
 	CONFIG_EOL
 };
@@ -432,7 +429,7 @@ struct config_block nfs_ip_name = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.ip_name",
 	.blk_desc.name = "NFS_IP_Name",
 	.blk_desc.type = CONFIG_BLOCK,
-	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = ip_name_init,
 	.blk_desc.u.blk.params = ip_name_params,
 	.blk_desc.u.blk.commit = ip_name_commit
@@ -461,4 +458,4 @@ int nfs_Init_ip_name(void)
 	expiration_time = ip_name_cache.expiration_time;
 
 	return IP_NAME_SUCCESS;
-}				/* nfs_Init_ip_name */
+} /* nfs_Init_ip_name */

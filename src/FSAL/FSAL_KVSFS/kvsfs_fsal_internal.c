@@ -48,4 +48,3 @@
  * it is read-only, except during initialization.
  */
 struct fsal_staticfsinfo_t global_fs_info;
-

@@ -28,7 +28,7 @@
 #include "fsal_convert.h"
 
 #ifdef USE_LLAPI
-	#include <lustre/lustreapi.h>
+#include <lustre/lustreapi.h>
 #endif
 
 /**
@@ -42,8 +42,8 @@ fsal_status_t check_hsm_by_fd(int fd)
 {
 	struct vfs_fsal_export *vfs_export;
 
-	vfs_export = container_of(op_ctx->fsal_export,
-		struct vfs_fsal_export, export);
+	vfs_export = container_of(op_ctx->fsal_export, struct vfs_fsal_export,
+				  export);
 
 	/* check async_hsm_restore option */
 	if (!vfs_export->async_hsm_restore) {
@@ -77,8 +77,7 @@ fsal_status_t check_hsm_by_fd(int fd)
 	/* allocating request : one item, no extra data */
 	hur = llapi_hsm_user_request_alloc(1, 0);
 	if (hur == NULL) {
-		LogCrit(COMPONENT_FSAL,
-			"Error allocating hsm_user_request");
+		LogCrit(COMPONENT_FSAL, "Error allocating hsm_user_request");
 		return fsalstat(ERR_FSAL_NOMEM, ENOMEM);
 	}
 
@@ -92,8 +91,7 @@ fsal_status_t check_hsm_by_fd(int fd)
 	/* getting fid */
 	rc = llapi_fd2fid(fd, &fid);
 	if (rc) {
-		LogEvent(COMPONENT_FSAL,
-			 "Error retrieving fid from fd : %s",
+		LogEvent(COMPONENT_FSAL, "Error retrieving fid from fd : %s",
 			 strerror(-rc));
 		return fsalstat(posix2fsal_error(-rc), rc);
 	}
@@ -104,8 +102,7 @@ fsal_status_t check_hsm_by_fd(int fd)
 	hur->hur_user_item[0].hui_extent.length = -1; /*whole file*/
 	rc = llapi_hsm_request(op_ctx->fsal_export->root_fs->path, hur);
 	if (rc) {
-		LogEvent(COMPONENT_FSAL,
-			 "Error requesting a restore : %s",
+		LogEvent(COMPONENT_FSAL, "Error requesting a restore : %s",
 			 strerror(-rc));
 		return fsalstat(posix2fsal_error(-rc), rc);
 	}

@@ -67,8 +67,7 @@ static bool initialized;
 /**
  * @brief Initialize the package.
  */
-void
-cih_pkginit(void)
+void cih_pkginit(void)
 {
 	cih_partition_t *cp;
 	int ix;
@@ -83,9 +82,8 @@ cih_pkginit(void)
 		cp->part_ix = ix;
 		PTHREAD_MUTEX_init(&cp->cih_lock, NULL);
 		avltree_init(&cp->t, cih_fh_cmpf, 0 /* must be 0 */);
-		cp->cache =
-			gsh_calloc(cih_fhcache.cache_sz,
-				sizeof(struct avltree_node *));
+		cp->cache = gsh_calloc(cih_fhcache.cache_sz,
+				       sizeof(struct avltree_node *));
 	}
 
 	initialized = true;
@@ -94,8 +92,7 @@ cih_pkginit(void)
 /**
  * @brief Destroy the package.
  */
-void
-cih_pkgdestroy(void)
+void cih_pkgdestroy(void)
 {
 	/* Index over partitions */
 	int ix = 0;

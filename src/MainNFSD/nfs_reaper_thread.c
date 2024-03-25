@@ -71,9 +71,11 @@ restart:
 		PTHREAD_RWLOCK_wrlock(&ht_reap->partitions[i].ht_lock);
 
 		/* go through all entries in the red-black-tree */
-		RBT_LOOP(head_rbt, pn) {
+		RBT_LOOP(head_rbt, pn)
+		{
 			char str[LOG_BUFF_LEN] = "\0";
-			struct display_buffer dspbuf = {sizeof(str), str, str};
+			struct display_buffer dspbuf = { sizeof(str), str,
+							 str };
 			bool str_valid = false;
 
 			addr = RBT_OPAQ(pn);
@@ -125,11 +127,13 @@ restart:
 					display_printf(&dspbuf, "clientid %p",
 						       client_id);
 				if (client_id->marked_for_delayed_cleanup) {
-					LogFullDebug(COMPONENT_CLIENTID,
+					LogFullDebug(
+						COMPONENT_CLIENTID,
 						"Reaper, Parked for later cleanup {%s}",
 						str);
 				} else {
-					LogFullDebug(COMPONENT_CLIENTID,
+					LogFullDebug(
+						COMPONENT_CLIENTID,
 						"Reaper done, expired {%s}",
 						str);
 				}
@@ -161,8 +165,9 @@ static int reap_expired_open_owners(void)
 	 * process, and thus prevent them from expiring.
 	 */
 	while (true) {
-		owner = glist_first_entry(&cached_open_owners, state_owner_t,
-				so_owner.so_nfs4_owner.so_cache_entry);
+		owner = glist_first_entry(
+			&cached_open_owners, state_owner_t,
+			so_owner.so_nfs4_owner.so_cache_entry);
 
 		if (owner == NULL)
 			break;
@@ -173,15 +178,15 @@ static int reap_expired_open_owners(void)
 			/* This owner has not yet expired. */
 			if (isFullDebug(COMPONENT_STATE)) {
 				char str[LOG_BUFF_LEN] = "\0";
-				struct display_buffer dspbuf = {
-						sizeof(str), str, str};
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
 
 				display_owner(&dspbuf, owner);
 
-				LogFullDebug(COMPONENT_STATE,
-					     "Did not release CLOSE_PENDING %d seconds left for {%s}",
-					     (int) (texpire - tnow),
-					     str);
+				LogFullDebug(
+					COMPONENT_STATE,
+					"Did not release CLOSE_PENDING %d seconds left for {%s}",
+					(int)(texpire - tnow), str);
 			}
 
 			/* Because entries are not moved on this list, and
@@ -215,8 +220,8 @@ static size_t get_current_rss(void)
 	if (page_size == 0) {
 		page_size = sysconf(_SC_PAGESIZE);
 		if (page_size <= 0) {
-			LogEvent(COMPONENT_MEMLEAKS,
-				 "_SC_PAGESIZE failed, %d", errno);
+			LogEvent(COMPONENT_MEMLEAKS, "_SC_PAGESIZE failed, %d",
+				 errno);
 			return 0;
 		}
 	}
@@ -233,7 +238,7 @@ static size_t get_current_rss(void)
 	rc = sscanf(buf, "%ld %ld", &vsize, &rss);
 	if (rc != 2) {
 		LogEvent(COMPONENT_MEMLEAKS,
-			"Failed to read data from /proc/self/statm");
+			 "Failed to read data from /proc/self/statm");
 	}
 out:
 	close(fd);
@@ -250,8 +255,7 @@ static void reap_malloc_frag(void)
 		trim_threshold = min_threshold;
 
 	rss = get_current_rss();
-	LogDebug(COMPONENT_MEMLEAKS,
-		 "current rss: %zu MB, threshold: %zu MB",
+	LogDebug(COMPONENT_MEMLEAKS, "current rss: %zu MB, threshold: %zu MB",
 		 rss, trim_threshold);
 
 	if (rss < trim_threshold) {
@@ -317,9 +321,8 @@ static void reaper_run(struct fridgethr_context *ctx)
 	}
 
 	rst->count = reap_expired_client_list(NULL);
-	rst->count +=
-	    (reap_hash_table(ht_confirmed_client_id) +
-	     reap_hash_table(ht_unconfirmed_client_id));
+	rst->count += (reap_hash_table(ht_confirmed_client_id) +
+		       reap_hash_table(ht_unconfirmed_client_id));
 
 	rst->count += reap_expired_open_owners();
 
@@ -371,9 +374,8 @@ void reaper_wake(void)
 
 int reaper_shutdown(void)
 {
-	int rc = fridgethr_sync_command(reaper_fridge,
-					fridgethr_comm_stop,
-					120);
+	int rc =
+		fridgethr_sync_command(reaper_fridge, fridgethr_comm_stop, 120);
 
 	if (rc == ETIMEDOUT) {
 		LogMajor(COMPONENT_CLIENTID,

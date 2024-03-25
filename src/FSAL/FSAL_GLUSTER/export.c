@@ -61,7 +61,7 @@
 static void export_release(struct fsal_export *exp_hdl)
 {
 	struct glusterfs_export *glfs_export =
-	    container_of(exp_hdl, struct glusterfs_export, export);
+		container_of(exp_hdl, struct glusterfs_export, export);
 
 	/* check activity on the export */
 
@@ -92,11 +92,11 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	char *realpath = NULL;
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = { '\0' };
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-	    container_of(export_pub, struct glusterfs_export, export);
-	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+		container_of(export_pub, struct glusterfs_export, export);
+	char vol_uuid[GLAPI_UUID_LENGTH] = { '\0' };
 
 	LogFullDebug(COMPONENT_FSAL, "In args: path = %s", path);
 
@@ -135,8 +135,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		       len_path - len_mount_path + 1);
 	}
 
-	glhandle = glfs_h_lookupat(glfs_export->gl_fs->fs, NULL, realpath,
-				&sb, 1);
+	glhandle =
+		glfs_h_lookupat(glfs_export->gl_fs->fs, NULL, realpath, &sb, 1);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -155,8 +155,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 &objhandle, vol_uuid);
+	construct_handle(glfs_export, &sb, glhandle, globjhdl, &objhandle,
+			 vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -167,7 +167,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	gsh_free(realpath);
 
 	return status;
- out:
+out:
 	gluster_cleanup_vars(glhandle);
 	gsh_free(realpath);
 
@@ -180,8 +180,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 				  fsal_digesttype_t in_type,
-				  struct gsh_buffdesc *fh_desc,
-				  int flags)
+				  struct gsh_buffdesc *fh_desc, int flags)
 {
 	size_t fh_size;
 #ifdef GLTIMING
@@ -202,7 +201,7 @@ static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	fh_desc->len = fh_size;	/* pass back the actual size */
+	fh_desc->len = fh_size; /* pass back the actual size */
 
 #ifdef GLTIMING
 	now(&e_time);
@@ -224,11 +223,11 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct stat sb;
 	struct glfs_object *glhandle = NULL;
-	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = { '\0' };
 	struct glusterfs_handle *objhandle = NULL;
 	struct glusterfs_export *glfs_export =
-	    container_of(export_pub, struct glusterfs_export, export);
-	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+		container_of(export_pub, struct glusterfs_export, export);
+	char vol_uuid[GLAPI_UUID_LENGTH] = { '\0' };
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -244,11 +243,11 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 
 	/* First 16bytes contain volume UUID. globjhdl is in the second */
 	/* half(16bytes) of the fs_desc->addr.  */
-	memcpy(globjhdl, fh_desc->addr+GLAPI_UUID_LENGTH, GFAPI_HANDLE_LENGTH);
+	memcpy(globjhdl, fh_desc->addr + GLAPI_UUID_LENGTH,
+	       GFAPI_HANDLE_LENGTH);
 
-	glhandle =
-	    glfs_h_create_from_handle(glfs_export->gl_fs->fs, globjhdl,
-				      GFAPI_HANDLE_LENGTH, &sb);
+	glhandle = glfs_h_create_from_handle(glfs_export->gl_fs->fs, globjhdl,
+					     GFAPI_HANDLE_LENGTH, &sb);
 	if (glhandle == NULL) {
 		status = gluster2fsal_error(errno);
 		goto out;
@@ -261,8 +260,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		goto out;
 	}
 
-	construct_handle(glfs_export, &sb, glhandle, globjhdl,
-			 &objhandle, vol_uuid);
+	construct_handle(glfs_export, &sb, glhandle, globjhdl, &objhandle,
+			 vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(&sb, attrs_out);
@@ -271,8 +270,8 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	*pub_handle = &objhandle->handle;
 
 	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, gl_handle, TRACE_DEBUG,
-		"Handle: {}", &objhandle->handle);
- out:
+				   "Handle: {}", &objhandle->handle);
+out:
 	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
 #ifdef GLTIMING
@@ -290,14 +289,13 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 			       struct glfs_object *glhandle,
 			       struct fsal_obj_handle **pub_handle,
-			       struct stat *sb,
-			       struct fsal_attrlist *attrs_out)
+			       struct stat *sb, struct fsal_attrlist *attrs_out)
 {
 	int rc = 0;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
-	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = {'\0'};
+	unsigned char globjhdl[GFAPI_HANDLE_LENGTH] = { '\0' };
 	struct glusterfs_handle *objhandle = NULL;
-	char vol_uuid[GLAPI_UUID_LENGTH] = {'\0'};
+	char vol_uuid[GLAPI_UUID_LENGTH] = { '\0' };
 #ifdef GLTIMING
 	struct timespec s_time, e_time;
 
@@ -317,14 +315,14 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 		goto out;
 	}
 	rc = glfs_get_volumeid(glfs_export->gl_fs->fs, vol_uuid,
-				 GLAPI_UUID_LENGTH);
+			       GLAPI_UUID_LENGTH);
 	if (rc < 0) {
 		status = gluster2fsal_error(errno);
 		goto out;
 	}
 
-	construct_handle(glfs_export, sb, glhandle, globjhdl,
-			 &objhandle, vol_uuid);
+	construct_handle(glfs_export, sb, glhandle, globjhdl, &objhandle,
+			 vol_uuid);
 
 	if (attrs_out != NULL) {
 		posix2fsal_attributes_all(sb, attrs_out);
@@ -332,8 +330,8 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 
 	*pub_handle = &objhandle->handle;
 	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, gl_handle, TRACE_DEBUG,
-		"Handle: {}", &objhandle->handle);
- out:
+				   "Handle: {}", &objhandle->handle);
+out:
 #ifdef GLTIMING
 	now(&e_time);
 	latency_update(&s_time, &e_time, lat_create_handle);
@@ -353,7 +351,7 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct statvfs vfssb;
 	struct glusterfs_export *glfs_export =
-	    container_of(exp_hdl, struct glusterfs_export, export);
+		container_of(exp_hdl, struct glusterfs_export, export);
 
 	rc = glfs_statvfs(glfs_export->gl_fs->fs, glfs_export->export_path,
 			  &vfssb);
@@ -377,8 +375,8 @@ void gluster_free_state(struct state_t *state)
 {
 	struct glusterfs_fd *my_fd;
 
-	my_fd = &container_of(state, struct glusterfs_state_fd,
-			      state)->glusterfs_fd;
+	my_fd = &container_of(state, struct glusterfs_state_fd, state)
+			 ->glusterfs_fd;
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
 
@@ -398,8 +396,8 @@ void gluster_free_state(struct state_t *state)
  * @returns a state structure.
  */
 struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
-				enum state_type state_type,
-				struct state_t *related_state)
+				      enum state_type state_type,
+				      struct state_t *related_state)
 {
 	struct state_t *state;
 	struct glusterfs_fd *my_fd;
@@ -407,8 +405,8 @@ struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 	state = init_state(gsh_calloc(1, sizeof(struct glusterfs_state_fd)),
 			   gluster_free_state, state_type, related_state);
 
-	my_fd = &container_of(state, struct glusterfs_state_fd,
-			      state)->glusterfs_fd;
+	my_fd = &container_of(state, struct glusterfs_state_fd, state)
+			 ->glusterfs_fd;
 
 	init_fsal_fd(&my_fd->fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
 	my_fd->glfd = NULL;
@@ -434,7 +432,6 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
 	return supported_mask;
 }
 
-
 /**
  * @brief Function to get the fasl_obj_handle that has fsal_fd as its global fd.
  *
@@ -444,9 +441,8 @@ static attrmask_t fs_supported_attrs(struct fsal_export *exp_hdl)
  *
  * @return the fsal_obj_handle.
  */
-void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
-				  struct fsal_fd *fd,
-				  struct fsal_obj_handle **handle)
+void get_fsal_obj_hdl(struct fsal_export *exp_hdl, struct fsal_fd *fd,
+		      struct fsal_obj_handle **handle)
 {
 	struct glusterfs_fd *my_fd = NULL;
 	struct glusterfs_handle *myself = NULL;
@@ -456,7 +452,6 @@ void get_fsal_obj_hdl(struct fsal_export *exp_hdl,
 
 	*handle = &myself->handle;
 }
-
 
 /**
  * @brief Registers GLUSTER FSAL exportoperation vector
@@ -479,10 +474,7 @@ void export_ops_init(struct export_ops *ops)
 	ops->get_fsal_obj_hdl = get_fsal_obj_hdl;
 }
 
-enum transport {
-	GLUSTER_TCP_VOL,
-	GLUSTER_RDMA_VOL
-};
+enum transport { GLUSTER_TCP_VOL, GLUSTER_RDMA_VOL };
 
 struct glexport_params {
 	char *glvolname;
@@ -497,31 +489,28 @@ struct glexport_params {
 
 static struct config_item_list transportformats[] = {
 	CONFIG_LIST_TOK("tcp", GLUSTER_TCP_VOL),
-	CONFIG_LIST_TOK("rdma", GLUSTER_RDMA_VOL),
-	CONFIG_LIST_EOL
+	CONFIG_LIST_TOK("rdma", GLUSTER_RDMA_VOL), CONFIG_LIST_EOL
 };
 
 static struct config_item export_params[] = {
 	CONF_ITEM_NOOP("name"),
-	CONF_MAND_STR("volume", 1, MAXPATHLEN, NULL,
-		      glexport_params, glvolname),
-	CONF_MAND_STR("hostname", 1, MAXPATHLEN, NULL,
-		      glexport_params, glhostname),
-	CONF_ITEM_PATH("volpath", 1, MAXPATHLEN, "/",
-		      glexport_params, glvolpath),
+	CONF_MAND_STR("volume", 1, MAXPATHLEN, NULL, glexport_params,
+		      glvolname),
+	CONF_MAND_STR("hostname", 1, MAXPATHLEN, NULL, glexport_params,
+		      glhostname),
+	CONF_ITEM_PATH("volpath", 1, MAXPATHLEN, "/", glexport_params,
+		       glvolpath),
 	CONF_ITEM_PATH("glfs_log", 1, MAXPATHLEN, GFAPI_LOG_LOCATION,
 		       glexport_params, glfs_log),
-	CONF_ITEM_UI64("up_poll_usec", 1, 60*1000*1000, 10,
-		       glexport_params, up_poll_usec),
-	CONF_ITEM_BOOL("enable_upcall", true, glexport_params,
-		       enable_upcall),
+	CONF_ITEM_UI64("up_poll_usec", 1, 60 * 1000 * 1000, 10, glexport_params,
+		       up_poll_usec),
+	CONF_ITEM_BOOL("enable_upcall", true, glexport_params, enable_upcall),
 	CONF_ITEM_TOKEN("transport", GLUSTER_TCP_VOL, transportformats,
 			glexport_params, gltransport),
 	CONF_ITEM_STR("sec_label_xattr", 0, 256, "security.selinux",
-			glexport_params, sec_label_xattr),
+		      glexport_params, sec_label_xattr),
 	CONFIG_EOL
 };
-
 
 static struct config_block export_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.fsal.gluster-export%d",
@@ -536,11 +525,10 @@ static struct config_block export_param = {
  * Given glusterfs_fs object, decrement the refcount. In case if it
  * becomes zero, free the resources.
  */
-void
-glusterfs_free_fs(struct glusterfs_fs *gl_fs)
+void glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 {
 	int64_t refcnt;
-	int err     = 0;
+	int err = 0;
 
 	PTHREAD_MUTEX_lock(&GlusterFS.glfs_lock);
 
@@ -550,7 +538,7 @@ glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 
 	if (refcnt) {
 		LogDebug(COMPONENT_FSAL,
-			 "There are still (%"PRIi64
+			 "There are still (%" PRIi64
 			 ")active shares for volume(%s)",
 			 gl_fs->refcnt, gl_fs->volname);
 		PTHREAD_MUTEX_unlock(&GlusterFS.glfs_lock);
@@ -605,20 +593,19 @@ skip_upcall:
  * @brief Given Gluster export params, find and return if there is
  * already existing export entry. If not create one.
  */
-struct glusterfs_fs*
-glusterfs_get_fs(struct glexport_params params,
-		 const struct fsal_up_vector *up_ops)
+struct glusterfs_fs *glusterfs_get_fs(struct glexport_params params,
+				      const struct fsal_up_vector *up_ops)
 {
 	int rc = 0;
 	struct glusterfs_fs *gl_fs = NULL;
-	glfs_t  *fs = NULL;
+	glfs_t *fs = NULL;
 	struct glist_head *glist, *glistn;
 
 	PTHREAD_MUTEX_lock(&GlusterFS.glfs_lock);
 
-	glist_for_each_safe(glist, glistn, &GlusterFS.fs_obj) {
-		gl_fs = glist_entry(glist, struct glusterfs_fs,
-				    fs_obj);
+	glist_for_each_safe(glist, glistn, &GlusterFS.fs_obj)
+	{
+		gl_fs = glist_entry(glist, struct glusterfs_fs, fs_obj);
 		if (!strcmp(params.glvolname, gl_fs->volname)) {
 			goto found;
 		}
@@ -630,8 +617,7 @@ glusterfs_get_fs(struct glexport_params params,
 
 	fs = glfs_new(params.glvolname);
 	if (!fs) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to create new glfs. Volume: %s",
+		LogCrit(COMPONENT_FSAL, "Unable to create new glfs. Volume: %s",
 			params.glvolname);
 		goto out;
 	}
@@ -639,25 +625,23 @@ glusterfs_get_fs(struct glexport_params params,
 	switch (params.gltransport) {
 	case GLUSTER_RDMA_VOL:
 		rc = glfs_set_volfile_server(fs, "rdma", params.glhostname,
-				24007);
+					     24007);
 		break;
 	default:
 		rc = glfs_set_volfile_server(fs, "tcp", params.glhostname,
-				24007);
+					     24007);
 		break;
 	}
 
 	if (rc != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set volume file. Volume: %s",
+		LogCrit(COMPONENT_FSAL, "Unable to set volume file. Volume: %s",
 			params.glvolname);
 		goto out;
 	}
 
 	rc = glfs_set_logging(fs, params.glfs_log, 7);
 	if (rc != 0) {
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set logging. Volume: %s",
+		LogCrit(COMPONENT_FSAL, "Unable to set logging. Volume: %s",
 			params.glvolname);
 		goto out;
 	}
@@ -734,21 +718,17 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct glusterfs_export *glfsexport = NULL;
 	bool fsal_attached = false;
-	struct glexport_params params = {
-		.glvolname = NULL,
-		.glhostname = NULL,
-		.glvolpath = NULL,
-		.glfs_log = NULL};
+	struct glexport_params params = { .glvolname = NULL,
+					  .glhostname = NULL,
+					  .glvolpath = NULL,
+					  .glfs_log = NULL };
 
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
 		 CTX_FULLPATH(op_ctx));
 
 	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
 
-	rc = load_config_from_node(parse_node,
-				   &export_param,
-				   &params,
-				   true,
+	rc = load_config_from_node(parse_node, &export_param, &params, true,
 				   err_type);
 	if (rc != 0) {
 		LogCrit(COMPONENT_FSAL,
@@ -787,15 +767,13 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	op_ctx->fsal_export = &glfsexport->export;
 
-	glfsexport->pnfs_ds_enabled =
-		glfsexport->export.exp_ops.fs_supports(&glfsexport->export,
-						fso_pnfs_ds_supported);
+	glfsexport->pnfs_ds_enabled = glfsexport->export.exp_ops.fs_supports(
+		&glfsexport->export, fso_pnfs_ds_supported);
 	if (glfsexport->pnfs_ds_enabled) {
 		struct fsal_pnfs_ds *pds = NULL;
 
 		status = fsal_hdl->m_ops.create_fsal_pnfs_ds(fsal_hdl,
-							     parse_node,
-							     &pds);
+							     parse_node, &pds);
 
 		if (status.major != ERR_FSAL_NO_ERROR)
 			goto out;
@@ -821,9 +799,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 			 CTX_FULLPATH(op_ctx));
 	}
 
-	glfsexport->pnfs_mds_enabled =
-		glfsexport->export.exp_ops.fs_supports(&glfsexport->export,
-						fso_pnfs_mds_supported);
+	glfsexport->pnfs_mds_enabled = glfsexport->export.exp_ops.fs_supports(
+		&glfsexport->export, fso_pnfs_mds_supported);
 	if (glfsexport->pnfs_mds_enabled) {
 		LogDebug(COMPONENT_PNFS,
 			 "glusterfs_fsal_create: pnfs mds was enabled for [%s]",
@@ -834,7 +811,7 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	glfsexport->export.up_ops = up_ops;
 
- out:
+out:
 	gsh_free(params.glvolname);
 	gsh_free(params.glhostname);
 	gsh_free(params.glfs_log);
@@ -852,4 +829,3 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 
 	return status;
 }
-

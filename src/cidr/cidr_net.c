@@ -39,7 +39,7 @@
 #include "abstract_mem.h"
 
 /* Get the CIDR's immediate supernet */
-CIDR *cidr_net_supernet(const CIDR * addr)
+CIDR *cidr_net_supernet(const CIDR *addr)
 {
 	int i, j;
 	int pflen;
@@ -54,7 +54,7 @@ CIDR *cidr_net_supernet(const CIDR * addr)
 
 	toret = cidr_dup(addr);
 	if (toret == NULL)
-		return (NULL);	/* Preserve errno */
+		return (NULL); /* Preserve errno */
 
 	/* Chop a bit off the netmask */
 	/* This gets the last network bit */
@@ -72,8 +72,8 @@ CIDR *cidr_net_supernet(const CIDR * addr)
 	 * of calling cidr_addr_network() to save some extra copies and
 	 * allocations and so forth.
 	 */
-	for ( /* i */ ; i <= 15; i++) {
-		for ( /* j */ ; j >= 0; j--)
+	for (/* i */; i <= 15; i++) {
+		for (/* j */; j >= 0; j--)
 			(toret->addr)[i] &= ~(1 << j);
 		j = 7;
 	}
@@ -83,7 +83,7 @@ CIDR *cidr_net_supernet(const CIDR * addr)
 }
 
 /* Get the CIDR's two children */
-CIDR **cidr_net_subnets(const CIDR * addr)
+CIDR **cidr_net_subnets(const CIDR *addr)
 {
 	int i, j;
 	int pflen;
@@ -91,8 +91,8 @@ CIDR **cidr_net_subnets(const CIDR * addr)
 
 	/* You can't split a host address! */
 	pflen = cidr_get_pflen(addr);
-	if ((addr->proto == CIDR_IPV4 && pflen == 32)
-	    || (addr->proto == CIDR_IPV6 && pflen == 128)) {
+	if ((addr->proto == CIDR_IPV4 && pflen == 32) ||
+	    (addr->proto == CIDR_IPV6 && pflen == 128)) {
 		errno = 0;
 		return (NULL);
 	}
@@ -103,7 +103,7 @@ CIDR **cidr_net_subnets(const CIDR * addr)
 	toret[0] = cidr_addr_network(addr);
 	if (toret[0] == NULL) {
 		gsh_free(toret);
-		return (NULL);	/* Preserve errno */
+		return (NULL); /* Preserve errno */
 	}
 
 	/* Find its first host bit */
@@ -120,7 +120,7 @@ CIDR **cidr_net_subnets(const CIDR * addr)
 	if (toret[1] == NULL) {
 		cidr_free(toret[0]);
 		gsh_free(toret);
-		return (NULL);	/* Preserve errno */
+		return (NULL); /* Preserve errno */
 	}
 
 	/* And set that first host bit */

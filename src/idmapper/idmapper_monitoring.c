@@ -45,20 +45,21 @@ typedef enum idmapping_status {
 
 /* ID Mapping metrics */
 static histogram_metric_handle_t idmapping_user_groups_total;
-static histogram_metric_handle_t idmapping_external_request_latency[
-	IDMAPPING_OP_COUNT][IDMAPPING_UTILITY_COUNT][IDMAPPING_STATUS_COUNT];
-static counter_metric_handle_t idmapping_cache_uses_total[
-	IDMAPPING_CACHE_COUNT][IDMAPPING_STATUS_COUNT];
-static counter_metric_handle_t idmapping_failures_total[
-	IDMAPPING_OP_COUNT][IDMAPPING_UTILITY_COUNT];
+static histogram_metric_handle_t idmapping_external_request_latency
+	[IDMAPPING_OP_COUNT][IDMAPPING_UTILITY_COUNT][IDMAPPING_STATUS_COUNT];
+static counter_metric_handle_t
+	idmapping_cache_uses_total[IDMAPPING_CACHE_COUNT]
+				  [IDMAPPING_STATUS_COUNT];
+static counter_metric_handle_t
+	idmapping_failures_total[IDMAPPING_OP_COUNT][IDMAPPING_UTILITY_COUNT];
 
 /* Distribution of cached-duration of the cache-evicted entries */
 static histogram_metric_handle_t
 	evicted_entries_cached_duration[IDMAPPING_CACHE_ENTITY_COUNT];
 
 /* 8 buckets in increasing powers of 2 */
-static const int64_t groups_buckets[] = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256,
-	512, 1024 };
+static const int64_t groups_buckets[] = { 0,  1,  2,   4,   8,	 16,
+					  32, 64, 128, 256, 512, 1024 };
 
 /* Get status string */
 static const char *get_status_name(idmapping_status_t status)
@@ -70,7 +71,7 @@ static const char *get_status_name(idmapping_status_t status)
 		return "failure";
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
-			"Unsupported idmapping operation status");
+			 "Unsupported idmapping operation status");
 	}
 }
 
@@ -157,33 +158,28 @@ static const char *get_cache_entity_name(idmapping_cache_entity_t cache_entity)
 		return "NEGATIVE_GROUP";
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
-			"Unsupported idmapping cache entity: %d", cache_entity);
+			 "Unsupported idmapping cache entity: %d",
+			 cache_entity);
 	}
 }
 
 static void register_user_groups_metric(void)
 {
-	const histogram_buckets_t histogram_buckets = (histogram_buckets_t){
-		.buckets = groups_buckets,
-		.count = ARRAY_SIZE(groups_buckets)
-	};
+	const histogram_buckets_t histogram_buckets =
+		(histogram_buckets_t){ .buckets = groups_buckets,
+				       .count = ARRAY_SIZE(groups_buckets) };
 	const metric_label_t empty_labels[] = {};
 
-	idmapping_user_groups_total =
-		monitoring__register_histogram(
-			"idmapping__user_groups_total",
-			METRIC_METADATA(
-				"Total groups per user",
-				METRIC_UNIT_NONE),
-			empty_labels,
-			ARRAY_SIZE(empty_labels),
-			histogram_buckets);
+	idmapping_user_groups_total = monitoring__register_histogram(
+		"idmapping__user_groups_total",
+		METRIC_METADATA("Total groups per user", METRIC_UNIT_NONE),
+		empty_labels, ARRAY_SIZE(empty_labels), histogram_buckets);
 }
 
-static void register_external_request_latency_metric(
-	idmapping_op_t op,
-	idmapping_utility_t utility,
-	idmapping_status_t status)
+static void
+register_external_request_latency_metric(idmapping_op_t op,
+					 idmapping_utility_t utility,
+					 idmapping_status_t status)
 {
 	const metric_label_t labels[] = {
 		METRIC_LABEL("op", get_op_name(op)),
@@ -193,11 +189,9 @@ static void register_external_request_latency_metric(
 	idmapping_external_request_latency[op][utility][status] =
 		monitoring__register_histogram(
 			"idmapping__external_request_latency",
-			METRIC_METADATA(
-				"Idmapping external request latency",
-				METRIC_UNIT_MILLISECOND),
-			labels,
-			ARRAY_SIZE(labels),
+			METRIC_METADATA("Idmapping external request latency",
+					METRIC_UNIT_MILLISECOND),
+			labels, ARRAY_SIZE(labels),
 			monitoring__buckets_exp2_compact());
 }
 
@@ -206,8 +200,8 @@ static void register_external_request_latency_metrics(void)
 	for (int i = 0; i < IDMAPPING_OP_COUNT; i++) {
 		for (int j = 0; j < IDMAPPING_UTILITY_COUNT; j++) {
 			for (int k = 0; k < IDMAPPING_STATUS_COUNT; k++) {
-				register_external_request_latency_metric(
-					i, j, k);
+				register_external_request_latency_metric(i, j,
+									 k);
 			}
 		}
 	}
@@ -227,8 +221,7 @@ static void register_cache_uses_total_metrics(void)
 					METRIC_METADATA(
 						"Total idmapping-cache uses",
 						METRIC_UNIT_NONE),
-					labels,
-					ARRAY_SIZE(labels));
+					labels, ARRAY_SIZE(labels));
 		}
 	}
 }
@@ -247,8 +240,7 @@ static void register_failure_total_metrics(void)
 					METRIC_METADATA(
 						"Total idmapping failures",
 						METRIC_UNIT_NONE),
-					labels,
-					ARRAY_SIZE(labels));
+					labels, ARRAY_SIZE(labels));
 		}
 	}
 }
@@ -256,9 +248,8 @@ static void register_failure_total_metrics(void)
 static void register_evicted_entries_cache_duration_metrics(void)
 {
 	for (int i = 0; i < IDMAPPING_CACHE_ENTITY_COUNT; i++) {
-		const metric_label_t labels[] = {
-			METRIC_LABEL("cache_entity", get_cache_entity_name(i))
-		};
+		const metric_label_t labels[] = { METRIC_LABEL(
+			"cache_entity", get_cache_entity_name(i)) };
 		evicted_entries_cached_duration[i] =
 			monitoring__register_histogram(
 				"idmapping__evicted_entries_cached_duration",
@@ -267,8 +258,7 @@ static void register_evicted_entries_cache_duration_metrics(void)
 					"that evicted entries were stored in "
 					"the cache",
 					METRIC_UNIT_MINUTE),
-				labels,
-				ARRAY_SIZE(labels),
+				labels, ARRAY_SIZE(labels),
 				monitoring__buckets_exp2_compact());
 	}
 }
@@ -283,10 +273,11 @@ void idmapper_monitoring__init(void)
 }
 
 void idmapper_monitoring__cache_usage(idmapping_cache_t idmapping_cache,
-	bool is_cache_hit)
+				      bool is_cache_hit)
 {
-	const idmapping_status_t idmapping_status = is_cache_hit ?
-		IDMAPPING_STATUS_SUCCESS : IDMAPPING_STATUS_FAILURE;
+	const idmapping_status_t idmapping_status =
+		is_cache_hit ? IDMAPPING_STATUS_SUCCESS :
+			       IDMAPPING_STATUS_FAILURE;
 	monitoring__counter_inc(
 		idmapping_cache_uses_total[idmapping_cache][idmapping_status],
 		1);
@@ -298,13 +289,15 @@ void idmapper_monitoring__external_request(
 	const struct timespec *end)
 {
 	const nsecs_elapsed_t resp_time_ns = timespec_diff(start, end);
-	const idmapping_status_t idmapping_status = is_success ?
-		IDMAPPING_STATUS_SUCCESS : IDMAPPING_STATUS_FAILURE;
+	const idmapping_status_t idmapping_status =
+		is_success ? IDMAPPING_STATUS_SUCCESS :
+			     IDMAPPING_STATUS_FAILURE;
 	const int64_t resp_time_ms = resp_time_ns / NS_PER_MSEC;
 
 	monitoring__histogram_observe(
-		idmapping_external_request_latency[idmapping_op][
-			idmapping_utility][idmapping_status],
+		idmapping_external_request_latency[idmapping_op]
+						  [idmapping_utility]
+						  [idmapping_status],
 		resp_time_ms);
 }
 
@@ -319,8 +312,8 @@ void idmapper_monitoring__evicted_cache_entity(
 		cached_duration_in_min);
 }
 
-void idmapper_monitoring__failure(
-	idmapping_op_t idmapping_op, idmapping_utility_t idmapping_utility)
+void idmapper_monitoring__failure(idmapping_op_t idmapping_op,
+				  idmapping_utility_t idmapping_utility)
 {
 	monitoring__counter_inc(
 		idmapping_failures_total[idmapping_op][idmapping_utility], 1);
@@ -328,8 +321,7 @@ void idmapper_monitoring__failure(
 
 void idmapper_monitoring__user_groups(int num_groups)
 {
-	monitoring__histogram_observe(
-		idmapping_user_groups_total, num_groups);
+	monitoring__histogram_observe(idmapping_user_groups_total, num_groups);
 }
 
 /** @} */

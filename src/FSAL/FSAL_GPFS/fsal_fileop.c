@@ -55,35 +55,33 @@
  *
  * @return ERR_FSAL_NO_ERROR on success, error otherwise
  */
-fsal_status_t
-GPFSFSAL_open(struct fsal_obj_handle *obj_hdl, int posix_flags, int *file_desc)
+fsal_status_t GPFSFSAL_open(struct fsal_obj_handle *obj_hdl, int posix_flags,
+			    int *file_desc)
 {
 	struct gpfs_fsal_obj_handle *myself;
 	fsal_status_t status;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	/* sanity checks. */
 	if (!obj_hdl || !file_desc)
 		return fsalstat(ERR_FSAL_FAULT, 0);
 
-	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle,
-								obj_handle);
+	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 	LogFullDebug(COMPONENT_FSAL, "posix_flags 0x%X export_fd %d",
-						posix_flags, export_fd);
+		     posix_flags, export_fd);
 
 	fsal_set_credentials(&op_ctx->creds);
-	status = fsal_internal_handle2fd(export_fd, myself->handle,
-					 file_desc, posix_flags);
+	status = fsal_internal_handle2fd(export_fd, myself->handle, file_desc,
+					 posix_flags);
 	fsal_restore_ganesha_credentials();
 
 	if (FSAL_IS_ERROR(status)) {
 		/** Try open as root access if the above call fails,
 		 * permission will be checked somewhere else in the code.
 		 */
-		status = fsal_internal_handle2fd(export_fd,
-						 myself->handle,
+		status = fsal_internal_handle2fd(export_fd, myself->handle,
 						 file_desc, posix_flags);
 	}
 
@@ -106,11 +104,10 @@ GPFSFSAL_open(struct fsal_obj_handle *obj_hdl, int posix_flags, int *file_desc)
  *
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise.
  */
-fsal_status_t
-GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
-	      size_t *read_amount, bool *end_of_file, int expfd)
+fsal_status_t GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
+			    size_t *read_amount, bool *end_of_file, int expfd)
 {
-	struct read_arg rarg = {0};
+	struct read_arg rarg = { 0 };
 	ssize_t nb_read;
 	int errsv;
 
@@ -140,7 +137,7 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
 			errsv = labs(nb_read);
 			LogWarn(COMPONENT_FSAL,
 				"Received negative value (%d) from ioctl().",
-				(int) nb_read);
+				(int)nb_read);
 		}
 
 		if (errsv == EUNATCH)
@@ -169,11 +166,11 @@ GPFSFSAL_read(int fd, uint64_t offset, size_t buf_size, void *buf,
  *
  * @return ERR_FSAL_NO_ERROR on success, error otherwise
  */
-fsal_status_t
-GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
-	       size_t *write_amount, bool *fsal_stable, int expfd)
+fsal_status_t GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size,
+			     void *buf, size_t *write_amount, bool *fsal_stable,
+			     int expfd)
 {
-	struct write_arg warg = {0};
+	struct write_arg warg = { 0 };
 	uint32_t stability_got = 0;
 	ssize_t nb_write;
 	int errsv;
@@ -221,10 +218,10 @@ GPFSFSAL_write(int fd, uint64_t offset, size_t buf_size, void *buf,
  *
  *  @return ERR_FSAL_NO_ERROR on success, error otherwise
  */
-fsal_status_t
-GPFSFSAL_alloc(int fd, uint64_t offset, uint64_t length, bool allocate)
+fsal_status_t GPFSFSAL_alloc(int fd, uint64_t offset, uint64_t length,
+			     bool allocate)
 {
-	struct alloc_arg aarg = {0};
+	struct alloc_arg aarg = { 0 };
 	int errsv;
 	int rc;
 

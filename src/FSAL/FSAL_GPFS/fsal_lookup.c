@@ -41,7 +41,7 @@ uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
 {
 	struct f_handle {
 		char unused1[8];
-		uint64_t inode;  /* inode for file */
+		uint64_t inode; /* inode for file */
 		char unused2[8];
 		uint64_t pinode; /* inode for parent */
 	} *f_handle = (struct f_handle *)gfh->f_handle;
@@ -64,19 +64,20 @@ uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
  *  @return - ERR_FSAL_NO_ERROR, if no error.
  *          - Another error code else.
  */
-#define GPFS_ROOT_INODE  3
-fsal_status_t
-GPFSFSAL_lookup(struct fsal_obj_handle *parent, const char *filename,
-		struct fsal_attrlist *fsal_attr, struct gpfs_file_handle *fh,
-		struct fsal_filesystem **new_fs)
+#define GPFS_ROOT_INODE 3
+fsal_status_t GPFSFSAL_lookup(struct fsal_obj_handle *parent,
+			      const char *filename,
+			      struct fsal_attrlist *fsal_attr,
+			      struct gpfs_file_handle *fh,
+			      struct fsal_filesystem **new_fs)
 {
 	fsal_status_t status;
 	int parent_fd;
 	struct gpfs_fsal_obj_handle *parent_hdl;
 	struct gpfs_filesystem *gpfs_fs;
 	struct fsal_fsid__ fsid;
-	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
-					struct gpfs_fsal_export, export);
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 
 	if (!parent || !filename)
@@ -85,7 +86,7 @@ GPFSFSAL_lookup(struct fsal_obj_handle *parent, const char *filename,
 	assert(*new_fs == parent->fs);
 
 	parent_hdl =
-	    container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
+		container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = parent->fs->private_data;
 	status = fsal_internal_handle2fd(export_fd, parent_hdl->handle,
 					 &parent_fd, O_RDONLY);
@@ -110,8 +111,8 @@ GPFSFSAL_lookup(struct fsal_obj_handle *parent, const char *filename,
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
 
-	status = fsal_internal_get_handle_at(parent_fd, filename, fh,
-					     export_fd);
+	status =
+		fsal_internal_get_handle_at(parent_fd, filename, fh, export_fd);
 
 	/* After getting file handle 'fh' we won't be using parent_fd,
 	 * hence we can close parent_fd here.
@@ -157,8 +158,8 @@ GPFSFSAL_lookup(struct fsal_obj_handle *parent, const char *filename,
 		if (inode != GPFS_ROOT_INODE &&
 		    gfh->handle_size == fh->handle_size &&
 		    memcmp(gfh, fh, gfh->handle_size) == 0) {
-			LogCrit(COMPONENT_FSAL,
-				"DOTDOT error, inode: %llu", inode);
+			LogCrit(COMPONENT_FSAL, "DOTDOT error, inode: %llu",
+				inode);
 			return fsalstat(ERR_FSAL_DELAY, 0);
 		}
 	}
@@ -174,25 +175,28 @@ GPFSFSAL_lookup(struct fsal_obj_handle *parent, const char *filename,
 		/* XDEV */
 		*new_fs = lookup_fsid(&fsid, GPFS_FSID_TYPE);
 		if (*new_fs == NULL) {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to unknown file system fsid=0x%016"
-				 PRIx64".0x%016"PRIx64,
-				 filename, fsid.major, fsid.minor);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Lookup of %s crosses filesystem boundary to unknown file system fsid=0x%016" PRIx64
+				".0x%016" PRIx64,
+				filename, fsid.major, fsid.minor);
 			return fsalstat(ERR_FSAL_XDEV, EXDEV);
 		}
 
 		if ((*new_fs)->fsal != parent->fsal) {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
-				 filename, (*new_fs)->path,
-				 (*new_fs)->fsal != NULL
-					? (*new_fs)->fsal->name
-					: "(none)");
+			LogDebug(
+				COMPONENT_FSAL,
+				"Lookup of %s crosses filesystem boundary to file system %s into FSAL %s",
+				filename, (*new_fs)->path,
+				(*new_fs)->fsal != NULL ?
+					(*new_fs)->fsal->name :
+					"(none)");
 			return fsalstat(ERR_FSAL_XDEV, EXDEV);
 		} else {
-			LogDebug(COMPONENT_FSAL,
-				 "Lookup of %s crosses filesystem boundary to file system %s",
-				 filename, (*new_fs)->path);
+			LogDebug(
+				COMPONENT_FSAL,
+				"Lookup of %s crosses filesystem boundary to file system %s",
+				filename, (*new_fs)->path);
 		}
 		gpfs_fs = (*new_fs)->private_data;
 	}

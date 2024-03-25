@@ -21,9 +21,8 @@
 
 #include "lizardfs/lizardfs_c_api.h"
 
-int liz_cred_lookup(liz_t *instance, struct user_cred *cred,
-		    liz_inode_t parent, const char *path,
-		    struct liz_entry *entry);
+int liz_cred_lookup(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
+		    const char *path, struct liz_entry *entry);
 
 int liz_cred_mknod(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
 		   const char *path, mode_t mode, dev_t rdev,
@@ -43,8 +42,8 @@ ssize_t liz_cred_write(liz_t *instance, struct user_cred *cred,
 int liz_cred_flush(liz_t *instance, struct user_cred *cred,
 		   liz_fileinfo_t *fileinfo);
 
-int liz_cred_getattr(liz_t *instance, struct user_cred *cred,
-		     liz_inode_t inode, struct liz_attr_reply *reply);
+int liz_cred_getattr(liz_t *instance, struct user_cred *cred, liz_inode_t inode,
+		     struct liz_attr_reply *reply);
 
 liz_fileinfo_t *liz_cred_opendir(liz_t *instance, struct user_cred *cred,
 				 liz_inode_t inode);
@@ -60,19 +59,19 @@ int liz_cred_mkdir(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
 int liz_cred_rmdir(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
 		   const char *name);
 
-int liz_cred_unlink(liz_t *instance, struct user_cred *cred,
-		    liz_inode_t parent, const char *name);
+int liz_cred_unlink(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
+		    const char *name);
 
-int liz_cred_setattr(liz_t *instance, struct user_cred *cred,
-		     liz_inode_t inode, struct stat *stbuf, int to_set,
+int liz_cred_setattr(liz_t *instance, struct user_cred *cred, liz_inode_t inode,
+		     struct stat *stbuf, int to_set,
 		     struct liz_attr_reply *reply);
 
 int liz_cred_fsync(liz_t *instance, struct user_cred *cred,
 		   struct liz_fileinfo *fileinfo);
 
-int liz_cred_rename(liz_t *instance, struct user_cred *cred,
-		    liz_inode_t parent, const char *name,
-		    liz_inode_t new_parent, const char *new_name);
+int liz_cred_rename(liz_t *instance, struct user_cred *cred, liz_inode_t parent,
+		    const char *name, liz_inode_t new_parent,
+		    const char *new_name);
 
 int liz_cred_symlink(liz_t *instance, struct user_cred *cred, const char *link,
 		     liz_inode_t parent, const char *name,

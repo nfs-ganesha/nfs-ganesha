@@ -58,32 +58,27 @@ struct {
 	int m_flag;
 	const char *m_option;
 } mntoptions[] = {
-	{
-	MNT_ASYNC, "async"}, {
-	MNT_NOATIME, "noatime"}, {
-	MNT_NOEXEC, "noexec"}, {
-	MNT_NOSUID, "nosuid"}, {
-	MNT_NOSYMFOLLOW, "nosymfollow"}, {
-	MNT_SYNCHRONOUS, "sync"}, {
-	MNT_UNION, "union"}, {
-	MNT_NOCLUSTERR, "noclusterr"}, {
-	MNT_NOCLUSTERW, "noclusterw"}, {
-	MNT_SUIDDIR, "suiddir"},
+	{ MNT_ASYNC, "async" },
+	{ MNT_NOATIME, "noatime" },
+	{ MNT_NOEXEC, "noexec" },
+	{ MNT_NOSUID, "nosuid" },
+	{ MNT_NOSYMFOLLOW, "nosymfollow" },
+	{ MNT_SYNCHRONOUS, "sync" },
+	{ MNT_UNION, "union" },
+	{ MNT_NOCLUSTERR, "noclusterr" },
+	{ MNT_NOCLUSTERW, "noclusterw" },
+	{ MNT_SUIDDIR, "suiddir" },
 #ifdef MNT_SNAPSHOT
-	{
-	MNT_SNAPSHOT, "snapshot"},
+	{ MNT_SNAPSHOT, "snapshot" },
 #endif
 #ifdef MNT_MULTILABEL
-	{
-	MNT_MULTILABEL, "multilabel"},
+	{ MNT_MULTILABEL, "multilabel" },
 #endif
 #ifdef MNT_ACLS
-	{
-	MNT_ACLS, "acls"},
+	{ MNT_ACLS, "acls" },
 #endif
 #ifdef MNT_NODEV
-	{
-	MNT_NODEV, "nodev"},
+	{ MNT_NODEV, "nodev" },
 #endif
 };
 
@@ -160,8 +155,7 @@ struct mntent *getmntent(FILE *fp)
 		mntsize = getmntinfo(&_mntbuf, MNT_WAIT);
 
 	for (i = 0; i < mntsize; i++)
-		LogFullDebug(COMPONENT_FSAL,
-			     "%s", _mntbuf[i].f_mntfromname);
+		LogFullDebug(COMPONENT_FSAL, "%s", _mntbuf[i].f_mntfromname);
 
 	++pos;
 

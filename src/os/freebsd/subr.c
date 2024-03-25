@@ -84,16 +84,16 @@ bool to_vfs_dirent(char *buf, int bpos, struct vfs_dirent *vd, off_t base)
  * timespec <--> timeval conversion.
  */
 
-#define TIMEVAL_TO_TIMESPEC(tv, ts)                                     \
-	do {                                                            \
-		(ts)->tv_sec = (tv)->tv_sec;                            \
-		(ts)->tv_nsec = (tv)->tv_usec * 1000;                   \
+#define TIMEVAL_TO_TIMESPEC(tv, ts)                   \
+	do {                                          \
+		(ts)->tv_sec = (tv)->tv_sec;          \
+		(ts)->tv_nsec = (tv)->tv_usec * 1000; \
 	} while (0)
 
-#define TIMESPEC_TO_TIMEVAL(tv, ts)                                     \
-	do {                                                            \
-		(tv)->tv_sec = (ts)->tv_sec;                            \
-		(tv)->tv_usec = (ts)->tv_nsec / 1000;                   \
+#define TIMESPEC_TO_TIMEVAL(tv, ts)                   \
+	do {                                          \
+		(tv)->tv_sec = (ts)->tv_sec;          \
+		(tv)->tv_usec = (ts)->tv_nsec / 1000; \
 	} while (0)
 
 int vfs_utimesat(int fd, const char *path, const struct timespec ts[2],
@@ -207,8 +207,7 @@ void setuser(uid_t uid)
 	int rc = setthreaduid(uid);
 
 	if (rc != 0)
-		LogCrit(COMPONENT_FSAL,
-			"Could not set user identity %s (%d)",
+		LogCrit(COMPONENT_FSAL, "Could not set user identity %s (%d)",
 			strerror(errno), errno);
 }
 
@@ -217,8 +216,7 @@ void setgroup(gid_t gid)
 	int rc = setthreadgid(gid);
 
 	if (rc != 0)
-		LogCrit(COMPONENT_FSAL,
-			"Could not set group identity %s (%d)",
+		LogCrit(COMPONENT_FSAL, "Could not set group identity %s (%d)",
 			strerror(errno), errno);
 }
 

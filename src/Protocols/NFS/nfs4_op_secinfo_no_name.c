@@ -67,8 +67,8 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 					    compound_data_t *data,
 					    struct nfs_resop4 *resp)
 {
-	SECINFO_NO_NAME4res * const res_SECINFO_NO_NAME4 =
-	    &resp->nfs_resop4_u.opsecinfo_no_name;
+	SECINFO_NO_NAME4res *const res_SECINFO_NO_NAME4 =
+		&resp->nfs_resop4_u.opsecinfo_no_name;
 	secinfo4 *resok_val;
 #ifdef _HAVE_GSSAPI
 	sec_oid4 v5oid = { krb5oid.length, (char *)krb5oid.elements };
@@ -80,7 +80,7 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 
 	/* Do basic checks on a filehandle */
 	res_SECINFO_NO_NAME4->status =
-	    nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
+		nfs4_sanity_check_FH(data, NO_FILE_TYPE, false);
 
 	if (res_SECINFO_NO_NAME4->status != NFS4_OK)
 		goto out;
@@ -128,8 +128,8 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 
 	resok_val = gsh_calloc(num_entry, sizeof(secinfo4));
 
-	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val
-		= resok_val;
+	res_SECINFO_NO_NAME4->SECINFO4res_u.resok4.SECINFO4resok_val =
+		resok_val;
 
 	/**
 	 * @todo We give here the order in which the client should try
@@ -180,15 +180,14 @@ enum nfs_req_result nfs4_op_secinfo_no_name(struct nfs_argop4 *op,
 	/* Release CurrentFH reference to export. */
 	clear_op_context_export();
 
-
 	res_SECINFO_NO_NAME4->status = NFS4_OK;
 
- out:
+out:
 
 	resp->resop = NFS4_OP_SECINFO_NO_NAME;
 
 	return nfsstat4_to_nfs_req_result(res_SECINFO_NO_NAME4->status);
-}				/* nfs4_op_secinfo_no_name */
+} /* nfs4_op_secinfo_no_name */
 
 /**
  * @brief Free memory allocated for SECINFO_NO_NAME result
@@ -202,8 +201,8 @@ void nfs4_op_secinfo_no_name_Free(nfs_resop4 *res)
 {
 	SECINFO_NO_NAME4res *resp = &res->nfs_resop4_u.opsecinfo_no_name;
 
-	if ((resp->status == NFS4_OK)
-	    && (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
+	if ((resp->status == NFS4_OK) &&
+	    (resp->SECINFO4res_u.resok4.SECINFO4resok_val)) {
 		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
 		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
 	}

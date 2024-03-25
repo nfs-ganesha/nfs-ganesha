@@ -67,9 +67,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *parent_obj = NULL;
 	struct fsal_obj_handle *child_obj = NULL;
-	pre_op_attr pre_parent = {
-		.attributes_follow = false
-	};
+	pre_op_attr pre_parent = { .attributes_follow = false };
 	fsal_status_t fsal_status;
 	struct fsal_attrlist parent_pre_attrs, parent_post_attrs;
 	const char *name = arg->arg_rmdir3.object.name;
@@ -81,17 +79,16 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	/* Convert file handle into a pentry */
 	/* to avoid setting it on each error case */
 	res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc.before.attributes_follow =
-	    FALSE;
+		FALSE;
 	res->res_rmdir3.RMDIR3res_u.resfail.dir_wcc.after.attributes_follow =
-	    FALSE;
+		FALSE;
 
 	fsal_prepare_attrs(&parent_pre_attrs,
-		ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
+			   ATTR_SIZE | ATTR_CTIME | ATTR_MTIME);
 	fsal_prepare_attrs(&parent_post_attrs, ATTRS_NFS3);
 
 	parent_obj = nfs3_FhandleToCache(&arg->arg_rmdir3.object.dir,
-					   &res->res_rmdir3.status,
-					   &rc);
+					 &res->res_rmdir3.status, &rc);
 
 	if (parent_obj == NULL) {
 		/* Status and rc have been set by nfs3_FhandleToCache */
@@ -131,7 +128,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	fsal_status = fsal_remove(parent_obj, name, &parent_pre_attrs,
-		&parent_post_attrs);
+				  &parent_post_attrs);
 
 	if (FSAL_IS_ERROR(fsal_status))
 		goto out_fail;
@@ -146,7 +143,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	goto out;
 
- out_fail:
+out_fail:
 	res->res_rmdir3.status = nfs3_Errno_status(fsal_status);
 	nfs_PreOpAttrFromFsalAttr(&parent_pre_attrs, &pre_parent);
 	nfs_SetWccData(&pre_parent, parent_obj, &parent_post_attrs,
@@ -156,7 +153,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (nfs_RetryableError(fsal_status.major))
 		rc = NFS_REQ_DROP;
 
- out:
+out:
 	fsal_release_attrs(&parent_pre_attrs);
 	fsal_release_attrs(&parent_post_attrs);
 
@@ -168,7 +165,7 @@ int nfs3_rmdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		parent_obj->obj_ops->put_ref(parent_obj);
 
 	return rc;
-}				/* nfs3_rmdir */
+} /* nfs3_rmdir */
 
 /**
  * @brief Free the result structure allocated for nfs3_rmdir

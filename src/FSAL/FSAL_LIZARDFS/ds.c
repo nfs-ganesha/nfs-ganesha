@@ -40,7 +40,7 @@ static void lzfs_int_clear_fileinfo_cache(struct lzfs_fsal_export *lzfs_export,
 		liz_fileinfo_t *file_handle;
 
 		cache_handle = liz_fileinfo_cache_pop_expired(
-						lzfs_export->fileinfo_cache);
+			lzfs_export->fileinfo_cache);
 		if (cache_handle == NULL) {
 			break;
 		}
@@ -88,14 +88,13 @@ static nfsstat4 lzfs_int_openfile(struct lzfs_fsal_export *lzfs_export,
 	lzfs_int_clear_fileinfo_cache(lzfs_export, 2);
 
 	lzfs_ds->cache_handle = liz_fileinfo_cache_acquire(
-					lzfs_export->fileinfo_cache,
-					lzfs_ds->inode);
+		lzfs_export->fileinfo_cache, lzfs_ds->inode);
 	if (lzfs_ds->cache_handle == NULL) {
 		return NFS4ERR_IO;
 	}
 
-	liz_fileinfo_t *file_handle = liz_extract_fileinfo(
-							lzfs_ds->cache_handle);
+	liz_fileinfo_t *file_handle =
+		liz_extract_fileinfo(lzfs_ds->cache_handle);
 
 	if (file_handle != NULL) {
 		return NFS4_OK;
@@ -119,13 +118,11 @@ static nfsstat4 lzfs_int_openfile(struct lzfs_fsal_export *lzfs_export,
  *
  * \see fsal_api.h for more information
  */
-static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
-					 const stateid4 *stateid,
-					 const offset4 offset,
-					 const count4 requested_length,
-					 void *const buffer,
-					 count4 *const supplied_length,
-					 bool *const end_of_file)
+static nfsstat4
+lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
+			 const stateid4 *stateid, const offset4 offset,
+			 const count4 requested_length, void *const buffer,
+			 count4 *const supplied_length, bool *const end_of_file)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
@@ -139,8 +136,9 @@ static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "export=%" PRIu16 " inode=%" PRIu32 " offset=%" PRIu64
-		     " size=%" PRIu32, lzfs_export->export.export_id,
-		     lzfs_ds->inode, offset, requested_length);
+		     " size=%" PRIu32,
+		     lzfs_export->export.export_id, lzfs_ds->inode, offset,
+		     requested_length);
 
 	nfs_status = lzfs_int_openfile(lzfs_export, lzfs_ds);
 	if (nfs_status != NFS4_OK) {
@@ -165,15 +163,11 @@ static nfsstat4 lzfs_fsal_ds_handle_read(struct fsal_ds_handle *const ds_hdl,
  *
  * \see fsal_api.h for more information
  */
-static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
-					 const stateid4 *stateid,
-					 const offset4 offset,
-					 const count4 write_length,
-					 const void *buffer,
-					 const stable_how4 stability_wanted,
-					 count4 * const written_length,
-					 verifier4 * const writeverf,
-					 stable_how4 * const stability_got)
+static nfsstat4 lzfs_fsal_ds_handle_write(
+	struct fsal_ds_handle *const ds_hdl, const stateid4 *stateid,
+	const offset4 offset, const count4 write_length, const void *buffer,
+	const stable_how4 stability_wanted, count4 *const written_length,
+	verifier4 *const writeverf, stable_how4 *const stability_got)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
@@ -187,8 +181,9 @@ static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "export=%" PRIu16 " inode=%" PRIu32 " offset=%" PRIu64
-		     " size=%" PRIu32, lzfs_export->export.export_id,
-		     lzfs_ds->inode, offset, write_length);
+		     " size=%" PRIu32,
+		     lzfs_export->export.export_id, lzfs_ds->inode, offset,
+		     write_length);
 
 	nfs_status = lzfs_int_openfile(lzfs_export, lzfs_ds);
 	if (nfs_status != NFS4_OK) {
@@ -196,8 +191,8 @@ static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
 	}
 
 	file_handle = liz_extract_fileinfo(lzfs_ds->cache_handle);
-	nb_write = liz_cred_write(lzfs_export->lzfs_instance, NULL,
-				  file_handle, offset, write_length, buffer);
+	nb_write = liz_cred_write(lzfs_export->lzfs_instance, NULL, file_handle,
+				  offset, write_length, buffer);
 
 	if (nb_write < 0) {
 		return lzfs_nfs4_last_err();
@@ -206,8 +201,7 @@ static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
 	int rc = 0;
 
 	if (stability_wanted != UNSTABLE4) {
-		rc = liz_cred_flush(lzfs_export->lzfs_instance,
-				    NULL,
+		rc = liz_cred_flush(lzfs_export->lzfs_instance, NULL,
 				    file_handle);
 	}
 
@@ -224,7 +218,7 @@ static nfsstat4 lzfs_fsal_ds_handle_write(struct fsal_ds_handle *const ds_hdl,
 static nfsstat4 lzfs_fsal_ds_handle_commit(struct fsal_ds_handle *const ds_hdl,
 					   const offset4 offset,
 					   const count4 count,
-					   verifier4 * const writeverf)
+					   verifier4 *const writeverf)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_ds_handle *lzfs_ds;
@@ -240,8 +234,9 @@ static nfsstat4 lzfs_fsal_ds_handle_commit(struct fsal_ds_handle *const ds_hdl,
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "export=%" PRIu16 " inode=%" PRIu32 " offset=%" PRIu64
-		     " size=%" PRIu32, lzfs_export->export.export_id,
-		     lzfs_ds->inode, offset, count);
+		     " size=%" PRIu32,
+		     lzfs_export->export.export_id, lzfs_ds->inode, offset,
+		     count);
 
 	nfs_status = lzfs_int_openfile(lzfs_export, lzfs_ds);
 	if (nfs_status != NFS4_OK) {
@@ -267,14 +262,12 @@ static nfsstat4 lzfs_fsal_ds_handle_commit(struct fsal_ds_handle *const ds_hdl,
  *
  * \see fsal_api.h for more information
  */
-static nfsstat4 lzfs_fsal_ds_read_plus(struct fsal_ds_handle *const ds_hdl,
-				       const stateid4 *stateid,
-				       const offset4 offset,
-				       const count4 requested_length,
-				       void *const buffer,
-				       const count4 supplied_length,
-				       bool *const end_of_file,
-				       struct io_info *info)
+static nfsstat4
+lzfs_fsal_ds_read_plus(struct fsal_ds_handle *const ds_hdl,
+		       const stateid4 *stateid, const offset4 offset,
+		       const count4 requested_length, void *const buffer,
+		       const count4 supplied_length, bool *const end_of_file,
+		       struct io_info *info)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS read_plus!");
 	return NFS4ERR_NOTSUPP;

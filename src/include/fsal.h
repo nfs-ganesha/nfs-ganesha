@@ -97,12 +97,9 @@ extern int g_nodeid;
 void init_ctx_refstr(void);
 void destroy_ctx_refstr(void);
 
-void init_op_context(struct req_op_context *ctx,
-		     struct gsh_export *exp,
-		     struct fsal_export *fsal_exp,
-		     sockaddr_t *caller_data,
-		     uint32_t nfs_vers,
-		     uint32_t nfs_minorvers,
+void init_op_context(struct req_op_context *ctx, struct gsh_export *exp,
+		     struct fsal_export *fsal_exp, sockaddr_t *caller_data,
+		     uint32_t nfs_vers, uint32_t nfs_minorvers,
 		     enum request_type req_type);
 
 static inline void init_op_context_simple(struct req_op_context *ctx,
@@ -128,7 +125,7 @@ void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds);
  *                Structure used to define a fsal
  ******************************************************/
 
-#include "FSAL/access_check.h"	/* rethink where this should go */
+#include "FSAL/access_check.h" /* rethink where this should go */
 
 /**
  * Global fsal manager functions
@@ -183,8 +180,7 @@ int unregister_fsal(struct fsal_module *fsal_hdl);
  */
 struct fsal_module *lookup_fsal(const char *name);
 
-int load_fsal(const char *name,
-	      struct fsal_module **fsal_hdl);
+int load_fsal(const char *name, struct fsal_module **fsal_hdl);
 
 int fsal_load_init(void *node, const char *name,
 		   struct fsal_module **fsal_hdl_p,
@@ -206,13 +202,12 @@ int subfsal_commit(void *node, void *link_mem, void *self_struct,
 
 void destroy_fsals(void);
 void emergency_cleanup_fsals(void);
-int start_fsals(config_file_t in_config,
-		struct config_error_type *err_type);
+int start_fsals(config_file_t in_config, struct config_error_type *err_type);
 
 void display_fsinfo(struct fsal_module *fsal);
 
-int display_attrlist(struct display_buffer *dspbuf,
-		     struct fsal_attrlist *attr, bool is_obj);
+int display_attrlist(struct display_buffer *dspbuf, struct fsal_attrlist *attr,
+		     bool is_obj);
 
 void log_attrlist(log_components_t component, log_levels_t level,
 		  const char *reason, struct fsal_attrlist *attr, bool is_obj,
@@ -222,8 +217,8 @@ void log_attrlist(log_components_t component, log_levels_t level,
 	do {                                                                 \
 		if (unlikely(isLevel(component, level)))                     \
 			log_attrlist(component, level, reason, attr, is_obj, \
-				     (char *) __FILE__, __LINE__,            \
-				     (char *) __func__);                     \
+				     (char *)__FILE__, __LINE__,             \
+				     (char *)__func__);                      \
 	} while (0)
 
 const char *msg_fsal_err(fsal_errors_t fsal_err);
@@ -239,13 +234,12 @@ enum cb_state {
 	CB_PROBLEM,
 };
 
-typedef fsal_errors_t (*helper_readdir_cb)
-	(void *opaque,
-	 struct fsal_obj_handle *obj,
-	 const struct fsal_attrlist *attr,
-	 uint64_t mounted_on_fileid,
-	 uint64_t cookie,
-	 enum cb_state cb_state);
+typedef fsal_errors_t (*helper_readdir_cb)(void *opaque,
+					   struct fsal_obj_handle *obj,
+					   const struct fsal_attrlist *attr,
+					   uint64_t mounted_on_fileid,
+					   uint64_t cookie,
+					   enum cb_state cb_state);
 
 /**
  * @brief Type of callback for fsal_readdir
@@ -260,10 +254,10 @@ typedef fsal_errors_t (*helper_readdir_cb)
  */
 
 struct fsal_readdir_cb_parms {
-	void *opaque;		/*< Protocol specific parms */
-	const char *name;	/*< Dir entry name */
-	bool attr_allowed;	/*< True if caller has perm to getattr */
-	bool in_result;		/*< true if the entry has been added to the
+	void *opaque; /*< Protocol specific parms */
+	const char *name; /*< Dir entry name */
+	bool attr_allowed; /*< True if caller has perm to getattr */
+	bool in_result; /*< true if the entry has been added to the
 				 *< caller's response, or false if the
 				 *< structure is filled and the entry has not
 				 *< been added. */
@@ -285,23 +279,19 @@ fsal_status_t fsal_setattr(struct fsal_obj_handle *obj, bool bypass,
  * @return FSAL status
  *
  */
-static inline
-fsal_status_t fsal_access(struct fsal_obj_handle *obj,
-			  fsal_accessflags_t access_type)
+static inline fsal_status_t fsal_access(struct fsal_obj_handle *obj,
+					fsal_accessflags_t access_type)
 {
-	return
-	    obj->obj_ops->test_access(obj, access_type, NULL, NULL, false);
+	return obj->obj_ops->test_access(obj, access_type, NULL, NULL, false);
 }
 
 fsal_status_t fsal_link(struct fsal_obj_handle *obj,
-			struct fsal_obj_handle *dest_dir,
-			const char *name,
+			struct fsal_obj_handle *dest_dir, const char *name,
 			struct fsal_attrlist *destdir_pre_attrs_out,
 			struct fsal_attrlist *destdir_post_attrs_out);
 fsal_status_t fsal_readlink(struct fsal_obj_handle *obj,
 			    struct gsh_buffdesc *link_content);
-fsal_status_t fsal_lookup(struct fsal_obj_handle *parent,
-			  const char *name,
+fsal_status_t fsal_lookup(struct fsal_obj_handle *parent, const char *name,
 			  struct fsal_obj_handle **obj,
 			  struct fsal_attrlist *attrs_out);
 fsal_status_t fsal_lookup_path(const char *path,
@@ -309,10 +299,8 @@ fsal_status_t fsal_lookup_path(const char *path,
 fsal_status_t fsal_lookupp(struct fsal_obj_handle *obj,
 			   struct fsal_obj_handle **parent,
 			   struct fsal_attrlist *attrs_out);
-fsal_status_t fsal_create(struct fsal_obj_handle *parent,
-			  const char *name,
-			  object_file_type_t type,
-			  struct fsal_attrlist *attrs,
+fsal_status_t fsal_create(struct fsal_obj_handle *parent, const char *name,
+			  object_file_type_t type, struct fsal_attrlist *attrs,
 			  const char *link_content,
 			  struct fsal_obj_handle **obj,
 			  struct fsal_attrlist *attrs_out,
@@ -330,29 +318,22 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
 fsal_status_t fsal_remove(struct fsal_obj_handle *parent, const char *name,
 			  struct fsal_attrlist *parent_pre_attrs_out,
 			  struct fsal_attrlist *parent_post_attrs_out);
-fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src,
-			  const char *oldname,
-			  struct fsal_obj_handle *dir_dest,
-			  const char *newname,
+fsal_status_t fsal_rename(struct fsal_obj_handle *dir_src, const char *oldname,
+			  struct fsal_obj_handle *dir_dest, const char *newname,
 			  struct fsal_attrlist *olddir_pre_attrs_out,
 			  struct fsal_attrlist *olddir_post_attrs_out,
 			  struct fsal_attrlist *newdir_pre_attrs_out,
 			  struct fsal_attrlist *newdir_post_attrs_out);
-fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj,
-			 struct state_t *state,
+fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj, struct state_t *state,
 			 fsal_openflags_t openflags,
-			 enum fsal_create_mode createmode,
-			 const char *name,
-			 struct fsal_attrlist *attr,
-			 fsal_verifier_t verifier,
+			 enum fsal_create_mode createmode, const char *name,
+			 struct fsal_attrlist *attr, fsal_verifier_t verifier,
 			 struct fsal_obj_handle **obj,
 			 struct fsal_attrlist *attrs_out,
 			 struct fsal_attrlist *parent_pre_attrs_out,
 			 struct fsal_attrlist *parent_post_attrs_out);
-fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj,
-			   struct state_t *state,
-			   fsal_openflags_t openflags,
-			   bool check_permission);
+fsal_status_t fsal_reopen2(struct fsal_obj_handle *obj, struct state_t *state,
+			   fsal_openflags_t openflags, bool check_permission);
 fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 				 struct fsal_attrlist *attrs_out);
 /**
@@ -397,11 +378,10 @@ fsal_status_t fsal_statfs(struct fsal_obj_handle *obj,
  * @param[in] len	Length of commit
  * @return FSAL status
  */
-static inline
-fsal_status_t fsal_commit(struct fsal_obj_handle *obj, off_t offset,
-			 size_t len)
+static inline fsal_status_t fsal_commit(struct fsal_obj_handle *obj,
+					off_t offset, size_t len)
 {
-	if ((uint64_t) len > ~(uint64_t) offset)
+	if ((uint64_t)len > ~(uint64_t)offset)
 		return fsalstat(ERR_FSAL_INVAL, 0);
 
 	return obj->obj_ops->commit2(obj, offset, len);
@@ -466,14 +446,15 @@ static inline void fsal_release_attrs(struct fsal_attrlist *attrs)
  */
 
 static inline void fsal_copy_attrs(struct fsal_attrlist *dest,
-				   struct fsal_attrlist *src,
-				   bool pass_refs)
+				   struct fsal_attrlist *src, bool pass_refs)
 {
 	attrmask_t save_request_mask = dest->request_mask;
 
 	if (dest == src || dest->acl != NULL) {
-		LogCrit(COMPONENT_FSAL, "Invalid dest pointer, dest: %p, "
-			"src: %p, ac: %p", dest, src, dest->acl);
+		LogCrit(COMPONENT_FSAL,
+			"Invalid dest pointer, dest: %p, "
+			"src: %p, ac: %p",
+			dest, src, dest->acl);
 	}
 
 	/* Copy source to dest, but retain dest->request_mask */
@@ -508,7 +489,7 @@ static inline void fsal_copy_attrs(struct fsal_attrlist *dest,
 		src->fs_locations = NULL;
 		src->valid_mask &= ~ATTR4_FS_LOCATIONS;
 	} else if (dest->fs_locations != NULL &&
-		((save_request_mask & ATTR4_FS_LOCATIONS) != 0)) {
+		   ((save_request_mask & ATTR4_FS_LOCATIONS) != 0)) {
 		nfs4_fs_locations_get_ref(dest->fs_locations);
 	} else {
 		dest->fs_locations = NULL;
@@ -524,10 +505,10 @@ static inline void fsal_copy_attrs(struct fsal_attrlist *dest,
 		src->sec_label.slai_data.slai_data_val = NULL;
 		src->valid_mask &= ~ATTR4_SEC_LABEL;
 	} else if (dest->sec_label.slai_data.slai_data_val != NULL &&
-		((save_request_mask & ATTR4_SEC_LABEL) != 0)) {
-		dest->sec_label.slai_data.slai_data_val = (char *)
-			gsh_memdup(dest->sec_label.slai_data.slai_data_val,
-				   dest->sec_label.slai_data.slai_data_len);
+		   ((save_request_mask & ATTR4_SEC_LABEL) != 0)) {
+		dest->sec_label.slai_data.slai_data_val = (char *)gsh_memdup(
+			dest->sec_label.slai_data.slai_data_val,
+			dest->sec_label.slai_data.slai_data_len);
 	} else {
 		dest->sec_label.slai_data.slai_data_len = 0;
 		dest->sec_label.slai_data.slai_data_val = NULL;
@@ -543,8 +524,7 @@ static inline void fsal_copy_attrs(struct fsal_attrlist *dest,
  * @return A changeid4 indicating the last modification of the file.
  */
 
-static inline changeid4
-fsal_get_changeid4(struct fsal_obj_handle *obj)
+static inline changeid4 fsal_get_changeid4(struct fsal_obj_handle *obj)
 {
 	struct fsal_attrlist attrs;
 	fsal_status_t status;
@@ -557,7 +537,7 @@ fsal_get_changeid4(struct fsal_obj_handle *obj)
 	if (FSAL_IS_ERROR(status))
 		return 0;
 
-	change = (changeid4) attrs.change;
+	change = (changeid4)attrs.change;
 
 	/* Done with the attrs */
 	fsal_release_attrs(&attrs);
@@ -565,16 +545,16 @@ fsal_get_changeid4(struct fsal_obj_handle *obj)
 	return change;
 }
 
-static inline
-enum fsal_create_mode nfs4_createmode_to_fsal(createmode4 createmode)
+static inline enum fsal_create_mode
+nfs4_createmode_to_fsal(createmode4 createmode)
 {
-	return (enum fsal_create_mode) (1 + (unsigned int) createmode);
+	return (enum fsal_create_mode)(1 + (unsigned int)createmode);
 }
 
-static inline
-enum fsal_create_mode nfs3_createmode_to_fsal(createmode3 createmode)
+static inline enum fsal_create_mode
+nfs3_createmode_to_fsal(createmode3 createmode)
 {
-	return (enum fsal_create_mode) (1 + (unsigned int) createmode);
+	return (enum fsal_create_mode)(1 + (unsigned int)createmode);
 }
 
 /**
@@ -598,8 +578,8 @@ static inline bool not_open_usable(fsal_openflags_t fd_openflags,
 	 *    the second half will be true if fd_openflags does not include
 	 *    the requested modes.
 	 */
-	return (to_openflags != FSAL_O_ANY || fd_openflags == FSAL_O_CLOSED)
-	       && ((fd_openflags & to_openflags) != to_openflags);
+	return (to_openflags != FSAL_O_ANY || fd_openflags == FSAL_O_CLOSED) &&
+	       ((fd_openflags & to_openflags) != to_openflags);
 }
 
 /**
@@ -619,10 +599,10 @@ static inline bool not_open_usable(fsal_openflags_t fd_openflags,
 static inline bool open_correct(fsal_openflags_t fd_openflags,
 				fsal_openflags_t to_openflags)
 {
-	return (to_openflags == FSAL_O_ANY && fd_openflags != FSAL_O_CLOSED)
-	       || (to_openflags != FSAL_O_ANY
-		   && (fd_openflags & to_openflags & FSAL_O_RDWR)
-					== (to_openflags & FSAL_O_RDWR));
+	return (to_openflags == FSAL_O_ANY && fd_openflags != FSAL_O_CLOSED) ||
+	       (to_openflags != FSAL_O_ANY &&
+		(fd_openflags & to_openflags & FSAL_O_RDWR) ==
+			(to_openflags & FSAL_O_RDWR));
 }
 
 /**
@@ -654,28 +634,20 @@ struct async_process_data {
 	pthread_cond_t *fsa_cond;
 };
 
-extern void fsal_read2(struct fsal_obj_handle *obj_hdl,
-		       bool bypass,
-		       fsal_async_cb done_cb,
-		       struct fsal_io_arg *read_arg,
+extern void fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+		       fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 		       void *caller_arg);
 
-extern void fsal_read(struct fsal_obj_handle *obj_hdl,
-		      bool bypass,
-		      struct fsal_io_arg *arg,
-		      struct async_process_data *data);
+extern void fsal_read(struct fsal_obj_handle *obj_hdl, bool bypass,
+		      struct fsal_io_arg *arg, struct async_process_data *data);
 
-extern void fsal_write(struct fsal_obj_handle *obj_hdl,
-		       bool bypass,
+extern void fsal_write(struct fsal_obj_handle *obj_hdl, bool bypass,
 		       struct fsal_io_arg *arg,
 		       struct async_process_data *data);
 
-fsal_status_t fsal_listxattr_helper(const char *buf,
-				    size_t listlen,
-				    uint32_t maxbytes,
-				    nfs_cookie4 *lxa_cookie,
-				    bool_t *lxr_eof,
-				    xattrlist4 *lxr_names);
+fsal_status_t fsal_listxattr_helper(const char *buf, size_t listlen,
+				    uint32_t maxbytes, nfs_cookie4 *lxa_cookie,
+				    bool_t *lxr_eof, xattrlist4 *lxr_names);
 
 /**
  * @brief Structure to hold FD LURU paramaters
@@ -736,5 +708,5 @@ void fsal_init_fds_limit(struct fd_lru_parameter *params);
 fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params);
 fsal_status_t fd_lru_pkgshutdown(void);
 
-#endif				/* !FSAL_H */
+#endif /* !FSAL_H */
 /** @} */

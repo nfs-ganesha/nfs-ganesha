@@ -84,8 +84,8 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t *host,
 
 	if (pres->res_nlm4test.test_stat.stat == NLM4_DENIED) {
 		copy_netobj(
-		     &res->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
-		     &pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh);
+			&res->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh,
+			&pres->res_nlm4test.test_stat.nlm4_testrply_u.holder.oh);
 	}
 
 	status = state_async_schedule(arg);
@@ -100,11 +100,11 @@ int nlm_send_async_res_nlm4test(state_nlm_client_t *host,
 }
 
 xdrproc_t nlm_reply_proc[] = {
-	[NLMPROC4_GRANTED_MSG] = (xdrproc_t) xdr_nlm4_testargs,
-	[NLMPROC4_TEST_RES] = (xdrproc_t) xdr_nlm4_testres,
-	[NLMPROC4_LOCK_RES] = (xdrproc_t) xdr_nlm4_res,
-	[NLMPROC4_CANCEL_RES] = (xdrproc_t) xdr_nlm4_res,
-	[NLMPROC4_UNLOCK_RES] = (xdrproc_t) xdr_nlm4_res,
+	[NLMPROC4_GRANTED_MSG] = (xdrproc_t)xdr_nlm4_testargs,
+	[NLMPROC4_TEST_RES] = (xdrproc_t)xdr_nlm4_testres,
+	[NLMPROC4_LOCK_RES] = (xdrproc_t)xdr_nlm4_res,
+	[NLMPROC4_CANCEL_RES] = (xdrproc_t)xdr_nlm4_res,
+	[NLMPROC4_UNLOCK_RES] = (xdrproc_t)xdr_nlm4_res,
 };
 
 static void *resp_key;
@@ -123,15 +123,15 @@ int find_peer_addr(char *caller_name, in_port_t sin_port, sockaddr_t *client)
 	struct sockaddr_in6 *in6;
 
 	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_INET6;	/* only INET6 */
+	hints.ai_family = AF_INET6; /* only INET6 */
 	hints.ai_socktype = SOCK_STREAM; /* TCP */
-	hints.ai_protocol = 0;	/* Any protocol */
+	hints.ai_protocol = 0; /* Any protocol */
 	hints.ai_canonname = NULL;
 	hints.ai_addr = NULL;
 	hints.ai_next = NULL;
 
 	/* convert port to string format */
-	(void) sprintf(port_str, "%d", htons(sin_port));
+	(void)sprintf(port_str, "%d", htons(sin_port));
 
 	/* get the IPv4 mapped IPv6 address */
 	retval = gsh_getaddrinfo(caller_name, port_str, &hints, &result, stats);
@@ -162,8 +162,8 @@ int find_peer_addr(char *caller_name, in_port_t sin_port, sockaddr_t *client)
 	 *
 	 * Otherwise we compare to ::1
 	 */
-	in = (struct sockaddr_in *) result->ai_addr;
-	in6 = (struct sockaddr_in6 *) client;
+	in = (struct sockaddr_in *)result->ai_addr;
+	in6 = (struct sockaddr_in6 *)client;
 
 	/* Copy __SOCKADDR_COMMON part plus sin_port */
 	memcpy(in6, in, offsetof(struct sockaddr_in, sin_addr));
@@ -204,8 +204,7 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 
 	for (retry = 0; retry < MAX_ASYNC_RETRY; retry++) {
 		if (host->slc_callback_clnt == NULL) {
-			LogFullDebug(COMPONENT_NLM,
-				     "clnt_ncreate %s",
+			LogFullDebug(COMPONENT_NLM, "clnt_ncreate %s",
 				     caller_name);
 
 			if (host->slc_client_type == XPRT_TCP) {
@@ -218,52 +217,53 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				if (fd < 0)
 					return -1;
 
-				memcpy(&server_addr,
-				       &(host->slc_server_addr),
+				memcpy(&server_addr, &(host->slc_server_addr),
 				       sizeof(struct sockaddr_in6));
 				server_addr.sin6_port = 0;
 
 				if (isFullDebug(COMPONENT_NLM)) {
 					char str[LOG_BUFF_LEN] = "\0";
 					struct display_buffer db = {
-							sizeof(str), str, str};
+						sizeof(str), str, str
+					};
 
-					display_sockaddr(&db,
-							 (sockaddr_t *)
-								&server_addr);
+					display_sockaddr(
+						&db,
+						(sockaddr_t *)&server_addr);
 
-					LogFullDebug(COMPONENT_NLM,
-						     "Server address %s for NLM callback",
-						     str);
+					LogFullDebug(
+						COMPONENT_NLM,
+						"Server address %s for NLM callback",
+						str);
 				}
 
-				if (bind(fd,
-					 (struct sockaddr *)&server_addr,
-					  sizeof(server_addr)) == -1) {
+				if (bind(fd, (struct sockaddr *)&server_addr,
+					 sizeof(server_addr)) == -1) {
 					LogMajor(COMPONENT_NLM, "Cannot bind");
 					close(fd);
 					return -1;
 				}
 
 				buf = rpcb_find_mapped_addr(
-						(char *) client_type_str,
-						NLMPROG, NLM4_VERS,
-						caller_name);
+					(char *)client_type_str, NLMPROG,
+					NLM4_VERS, caller_name);
 				/* handle error here, for example,
 				 * client side blocking rpc call
 				 */
 				if (buf == NULL) {
-					LogMajor(COMPONENT_NLM,
-						 "Cannot create NLM async %s connection to client %s",
-						 client_type_str, caller_name);
+					LogMajor(
+						COMPONENT_NLM,
+						"Cannot create NLM async %s connection to client %s",
+						client_type_str, caller_name);
 					close(fd);
 					return -1;
 				}
 
-				retval = find_peer_addr(caller_name,
-							((struct sockaddr_in *)
-							    buf->buf)->sin_port,
-							&client_addr);
+				retval = find_peer_addr(
+					caller_name,
+					((struct sockaddr_in *)buf->buf)
+						->sin_port,
+					&client_addr);
 
 				/* buf with inet is only needed for the port */
 				gsh_free(buf->buf);
@@ -272,19 +272,21 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				/* retry for spurious EAI_NONAME errors */
 				if (retval == EAI_NONAME ||
 				    retval == EAI_AGAIN) {
-					LogEvent(COMPONENT_NLM,
-						 "failed to resolve %s to an address: %s",
-						 caller_name,
-						 gai_strerror(retval));
+					LogEvent(
+						COMPONENT_NLM,
+						"failed to resolve %s to an address: %s",
+						caller_name,
+						gai_strerror(retval));
 					/* getaddrinfo() failed, retry */
 					retval = RPC_UNKNOWNADDR;
 					usleep(1000);
 					continue;
 				} else if (retval != 0) {
-					LogMajor(COMPONENT_NLM,
-						 "failed to resolve %s to an address: %s",
-						 caller_name,
-						 gai_strerror(retval));
+					LogMajor(
+						COMPONENT_NLM,
+						"failed to resolve %s to an address: %s",
+						caller_name,
+						gai_strerror(retval));
 					return -1;
 				}
 
@@ -293,14 +295,12 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 				local_buf.len = sizeof(struct sockaddr_in6);
 
 				host->slc_callback_clnt =
-				    clnt_vc_ncreate(fd, &local_buf, NLMPROG,
-						    NLM4_VERS, 0, 0);
+					clnt_vc_ncreate(fd, &local_buf, NLMPROG,
+							NLM4_VERS, 0, 0);
 			} else {
-
-				host->slc_callback_clnt =
-				    clnt_ncreate(caller_name, NLMPROG,
-						 NLM4_VERS,
-						 (char *) client_type_str);
+				host->slc_callback_clnt = clnt_ncreate(
+					caller_name, NLMPROG, NLM4_VERS,
+					(char *)client_type_str);
 			}
 
 			if (CLNT_FAILURE(host->slc_callback_clnt)) {
@@ -308,9 +308,10 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 					&host->slc_callback_clnt->cl_error,
 					"failed");
 
-				LogMajor(COMPONENT_NLM,
-					 "Create NLM async %s connection to client %s %s",
-					 client_type_str, caller_name, err);
+				LogMajor(
+					COMPONENT_NLM,
+					"Create NLM async %s connection to client %s %s",
+					client_type_str, caller_name, err);
 				gsh_free(err);
 				CLNT_DESTROY(host->slc_callback_clnt);
 				host->slc_callback_clnt = NULL;
@@ -330,8 +331,8 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 		cc = gsh_malloc(sizeof(*cc));
 		clnt_req_fill(cc, host->slc_callback_clnt,
 			      host->slc_callback_auth, proc,
-			      (xdrproc_t) nlm_reply_proc[proc], inarg,
-			      (xdrproc_t) xdr_void, NULL);
+			      (xdrproc_t)nlm_reply_proc[proc], inarg,
+			      (xdrproc_t)xdr_void, NULL);
 		cc->cc_error.re_status = clnt_req_setup(cc, tout);
 		if (cc->cc_error.re_status == RPC_SUCCESS) {
 			cc->cc_refreshes = 0;
@@ -350,8 +351,7 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 		retval = cc->cc_error.re_status;
 
 		t = rpc_sperror(&cc->cc_error, "failed");
-		LogCrit(COMPONENT_NLM,
-			"NLM async Client procedure call %d %s",
+		LogCrit(COMPONENT_NLM, "NLM async Client procedure call %d %s",
 			proc, t);
 		gsh_free(t);
 
@@ -389,8 +389,7 @@ int nlm_send_async(int proc, state_nlm_client_t *host, void *inarg, void *key)
 						    &nlm_async_resp_mutex,
 						    &timeout);
 			LogFullDebug(COMPONENT_NLM,
-				     "pthread_cond_timedwait returned %d",
-				     rc);
+				     "pthread_cond_timedwait returned %d", rc);
 			gettimeofday(&now, NULL);
 		}
 		LogFullDebug(COMPONENT_NLM, "Done waiting");

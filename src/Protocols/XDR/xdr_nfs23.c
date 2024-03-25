@@ -12,11 +12,9 @@
 #include "nfs_fh.h"
 #include "fsal_convert.h"
 
-static struct nfs_request_lookahead dummy_lookahead = {
-	.flags = 0,
-	.read = 0,
-	.write = 0
-};
+static struct nfs_request_lookahead dummy_lookahead = { .flags = 0,
+							.read = 0,
+							.write = 0 };
 
 bool xdr_nfspath2(XDR *xdrs, nfspath2 *objp)
 {
@@ -41,9 +39,8 @@ bool xdr_fhandle2(XDR *xdrs, fhandle2 objp)
 
 bool xdr_nfsdata2(XDR *xdrs, nfsdata2 *objp)
 {
-	if (!xdr_bytes
-	    (xdrs, (char **)&objp->nfsdata2_val, (u_int *) & objp->nfsdata2_len,
-	     NFS2_MAXDATA))
+	if (!xdr_bytes(xdrs, (char **)&objp->nfsdata2_val,
+		       (u_int *)&objp->nfsdata2_len, NFS2_MAXDATA))
 		return (false);
 	return (true);
 }
@@ -70,14 +67,14 @@ bool xdr_fhstatus2(XDR *xdrs, fhstatus2 *objp)
 
 bool xdr_nfs3_uint64(XDR *xdrs, nfs3_uint64 *objp)
 {
-	if (!xdr_u_longlong_t(xdrs, (quad_t *) objp))
+	if (!xdr_u_longlong_t(xdrs, (quad_t *)objp))
 		return (false);
 	return (true);
 }
 
 bool xdr_nfs3_int64(XDR *xdrs, nfs3_int64 *objp)
 {
-	if (!xdr_longlong_t(xdrs, (quad_t *) objp))
+	if (!xdr_longlong_t(xdrs, (quad_t *)objp))
 		return (false);
 	return (true);
 }
@@ -189,14 +186,14 @@ bool xdr_count3(XDR *xdrs, count3 *objp)
 
 bool xdr_nfsstat3(XDR *xdrs, nfsstat3 *objp)
 {
-	if (!xdr_enum(xdrs, (enum_t *) objp))
+	if (!xdr_enum(xdrs, (enum_t *)objp))
 		return (false);
 	return (true);
 }
 
 bool xdr_ftype3(XDR *xdrs, ftype3 *objp)
 {
-	if (!xdr_enum(xdrs, (enum_t *) objp))
+	if (!xdr_enum(xdrs, (enum_t *)objp))
 		return (false);
 	return (true);
 }
@@ -212,9 +209,8 @@ bool xdr_specdata3(XDR *xdrs, specdata3 *objp)
 
 bool xdr_nfs_fh3(XDR *xdrs, nfs_fh3 *objp)
 {
-	if (!xdr_bytes
-	    (xdrs, (char **)&objp->data.data_val,
-	     (u_int *) & objp->data.data_len, 64))
+	if (!xdr_bytes(xdrs, (char **)&objp->data.data_val,
+		       (u_int *)&objp->data.data_len, 64))
 		return (false);
 
 	return (true);
@@ -272,8 +268,7 @@ bool xdr_fattr3(XDR *xdrs, fattr3 *objp)
 
 		default:
 			LogEvent(COMPONENT_NFSPROTO,
-				 "xdr_fattr3: Bogus type = %d",
-				 objp->type);
+				 "xdr_fattr3: Bogus type = %d", objp->type);
 		}
 
 		mode = fsal2unix_mode(objp->mode);
@@ -316,7 +311,6 @@ bool xdr_fattr3(XDR *xdrs, fattr3 *objp)
 	if (!xdr_nfstime3(xdrs, &ctime))
 		return (false);
 
-
 	if (xdrs->x_op == XDR_DECODE) {
 		/* Convert ftype3 to object_file_type_t */
 		switch (ft) {
@@ -350,8 +344,7 @@ bool xdr_fattr3(XDR *xdrs, fattr3 *objp)
 
 		default:
 			LogEvent(COMPONENT_NFSPROTO,
-				 "xdr_fattr3: Bogus type = %d",
-				 ft);
+				 "xdr_fattr3: Bogus type = %d", ft);
 		}
 
 		objp->mode = unix2fsal_mode(mode);
@@ -445,7 +438,7 @@ bool xdr_post_op_fh3(XDR *xdrs, post_op_fh3 *objp)
 
 bool xdr_time_how(XDR *xdrs, time_how *objp)
 {
-	if (!xdr_enum(xdrs, (enum_t *) objp))
+	if (!xdr_enum(xdrs, (enum_t *)objp))
 		return (false);
 	return (true);
 }
@@ -776,8 +769,9 @@ bool xdr_READLINK3res(XDR *xdrs, READLINK3res *objp)
 bool xdr_READ3args(XDR *xdrs, READ3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_nfs_fh3(xdrs, &objp->file))
 		return (false);
@@ -829,7 +823,7 @@ bool xdr_READ3res(XDR *xdrs, READ3res *objp)
 
 bool xdr_stable_how(XDR *xdrs, stable_how *objp)
 {
-	if (!xdr_enum(xdrs, (enum_t *) objp))
+	if (!xdr_enum(xdrs, (enum_t *)objp))
 		return (false);
 	return (true);
 }
@@ -837,8 +831,9 @@ bool xdr_stable_how(XDR *xdrs, stable_how *objp)
 bool xdr_WRITE3args(XDR *xdrs, WRITE3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_nfs_fh3(xdrs, &objp->file))
 		return (false);
@@ -894,7 +889,7 @@ bool xdr_WRITE3res(XDR *xdrs, WRITE3res *objp)
 
 bool xdr_createmode3(XDR *xdrs, createmode3 *objp)
 {
-	if (!xdr_enum(xdrs, (enum_t *) objp))
+	if (!xdr_enum(xdrs, (enum_t *)objp))
 		return (false);
 	return (true);
 }
@@ -922,8 +917,9 @@ bool xdr_createhow3(XDR *xdrs, createhow3 *objp)
 bool xdr_CREATE3args(XDR *xdrs, CREATE3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_diropargs3(xdrs, &objp->where))
 		return (false);
@@ -1143,8 +1139,9 @@ bool xdr_MKNOD3res(XDR *xdrs, MKNOD3res *objp)
 bool xdr_REMOVE3args(XDR *xdrs, REMOVE3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_diropargs3(xdrs, &objp->object))
 		return (false);
@@ -1224,8 +1221,9 @@ bool xdr_RMDIR3res(XDR *xdrs, RMDIR3res *objp)
 bool xdr_RENAME3args(XDR *xdrs, RENAME3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_diropargs3(xdrs, &objp->from))
 		return (false);
@@ -1317,8 +1315,9 @@ bool xdr_LINK3res(XDR *xdrs, LINK3res *objp)
 bool xdr_READDIR3args(XDR *xdrs, READDIR3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_nfs_fh3(xdrs, &objp->dir))
 		return (false);
@@ -1352,8 +1351,8 @@ bool xdr_entry3(XDR *xdrs, struct entry3 *objp)
 	 */
 	int freeing;
 	struct entry3 **ent = &objp;
-	struct entry3 **next = NULL;	/* pacify gcc */
-	bool_t more_elements = false;	/* yes, bool_t */
+	struct entry3 **next = NULL; /* pacify gcc */
+	bool_t more_elements = false; /* yes, bool_t */
 
 	assert(xdrs != NULL);
 	assert(objp != NULL);
@@ -1361,11 +1360,11 @@ bool xdr_entry3(XDR *xdrs, struct entry3 *objp)
 	freeing = (xdrs->x_op == XDR_FREE);
 
 	for (;;) {
-		more_elements = (bool_t) (*ent != NULL);
+		more_elements = (bool_t)(*ent != NULL);
 		if (!xdr_bool(xdrs, &more_elements))
 			return (false);
 		if (!more_elements)
-			return (true);	/* we are done */
+			return (true); /* we are done */
 		/*
 		 * the unfortunate side effect of non-recursion is that in
 		 * the case of freeing we must remember the next object
@@ -1373,9 +1372,9 @@ bool xdr_entry3(XDR *xdrs, struct entry3 *objp)
 		 */
 		if (freeing)
 			next = &((*ent)->nextentry);
-		if (!xdr_reference(xdrs, (void **) ent,
-				   (u_int) sizeof(struct entry3),
-				   (xdrproc_t) xdr_entry3_x))
+		if (!xdr_reference(xdrs, (void **)ent,
+				   (u_int)sizeof(struct entry3),
+				   (xdrproc_t)xdr_entry3_x))
 			return (false);
 		ent = (freeing) ? next : &((*ent)->nextentry);
 	}
@@ -1405,8 +1404,8 @@ void xdr_dirlist3_uio_release(struct xdr_uio *uio, u_int flags)
 	int ix;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "Releasing %p, references %"PRIi32", count %d",
-		     uio, uio->uio_references, (int) uio->uio_count);
+		     "Releasing %p, references %" PRIi32 ", count %d", uio,
+		     uio->uio_references, (int)uio->uio_count);
 
 	if (!(--uio->uio_references)) {
 		if (!(op_ctx && op_ctx->is_rdma_buff_used)) {
@@ -1432,7 +1431,7 @@ bool xdr_dirlist3(XDR *xdrs, dirlist3 *objp)
 		return xdr_dirlist3_encode(xdrs, objp);
 
 	if (!xdr_pointer(xdrs, (void **)&objp->entries, sizeof(entry3),
-			 (xdrproc_t) xdr_entry3))
+			 (xdrproc_t)xdr_entry3))
 		return (false);
 	if (!xdr_bool(xdrs, &objp->eof))
 		return (false);
@@ -1477,8 +1476,9 @@ bool xdr_READDIR3res(XDR *xdrs, READDIR3res *objp)
 bool xdr_READDIRPLUS3args(XDR *xdrs, READDIRPLUS3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_nfs_fh3(xdrs, &objp->dir))
 		return (false);
@@ -1518,8 +1518,8 @@ bool xdr_entryplus3(XDR *xdrs, struct entryplus3 *objp)
 	 */
 	int freeing;
 	struct entryplus3 **ent = &objp;
-	struct entryplus3 **next = NULL;	/* pacify gcc */
-	bool_t more_elements = false;		/* yes, bool_t */
+	struct entryplus3 **next = NULL; /* pacify gcc */
+	bool_t more_elements = false; /* yes, bool_t */
 
 	assert(xdrs != NULL);
 	assert(objp != NULL);
@@ -1527,11 +1527,11 @@ bool xdr_entryplus3(XDR *xdrs, struct entryplus3 *objp)
 	freeing = (xdrs->x_op == XDR_FREE);
 
 	for (;;) {
-		more_elements = (bool_t) (*ent != NULL);
+		more_elements = (bool_t)(*ent != NULL);
 		if (!xdr_bool(xdrs, &more_elements))
 			return (false);
 		if (!more_elements)
-			return (true);	/* we are done */
+			return (true); /* we are done */
 		/*
 		 * the unfortunate side effect of non-recursion is that in
 		 * the case of freeing we must remember the next object
@@ -1539,9 +1539,9 @@ bool xdr_entryplus3(XDR *xdrs, struct entryplus3 *objp)
 		 */
 		if (freeing)
 			next = &((*ent)->nextentry);
-		if (!xdr_reference(xdrs, (void **) ent,
-				   (u_int) sizeof(struct entryplus3),
-				   (xdrproc_t) xdr_entryplus3_x))
+		if (!xdr_reference(xdrs, (void **)ent,
+				   (u_int)sizeof(struct entryplus3),
+				   (xdrproc_t)xdr_entryplus3_x))
 			return (false);
 		ent = (freeing) ? next : &((*ent)->nextentry);
 	}
@@ -1565,7 +1565,7 @@ bool xdr_encode_entryplus3(XDR *xdrs, entryplus3 *objp, const fattr3 *attrs)
 	if (!xdr_bool(xdrs, &objp->name_attributes.attributes_follow))
 		return false;
 	if (objp->name_attributes.attributes_follow) {
-		if (!xdr_fattr3(xdrs, (fattr3 *) attrs))
+		if (!xdr_fattr3(xdrs, (fattr3 *)attrs))
 			return false;
 	}
 	if (!xdr_post_op_fh3(xdrs, &objp->name_handle))
@@ -1578,8 +1578,8 @@ void xdr_dirlistplus3_uio_release(struct xdr_uio *uio, u_int flags)
 	int ix;
 
 	LogFullDebug(COMPONENT_NFS_READDIR,
-		     "Releasing %p, references %"PRIi32", count %d",
-		     uio, uio->uio_references, (int) uio->uio_count);
+		     "Releasing %p, references %" PRIi32 ", count %d", uio,
+		     uio->uio_references, (int)uio->uio_count);
 
 	if (!(--uio->uio_references)) {
 		if (!(op_ctx && op_ctx->is_rdma_buff_used)) {
@@ -1605,7 +1605,7 @@ bool xdr_dirlistplus3(XDR *xdrs, dirlistplus3 *objp)
 		return xdr_dirlistplus3_encode(xdrs, objp);
 
 	if (!xdr_pointer(xdrs, (void **)&objp->entries, sizeof(entryplus3),
-			 (xdrproc_t) xdr_entryplus3))
+			 (xdrproc_t)xdr_entryplus3))
 		return (false);
 	if (!xdr_bool(xdrs, &objp->eof))
 		return (false);
@@ -1636,13 +1636,13 @@ bool xdr_READDIRPLUS3res(XDR *xdrs, READDIRPLUS3res *objp)
 		return (false);
 	switch (objp->status) {
 	case NFS3_OK:
-		if (!xdr_READDIRPLUS3resok
-		    (xdrs, &objp->READDIRPLUS3res_u.resok))
+		if (!xdr_READDIRPLUS3resok(xdrs,
+					   &objp->READDIRPLUS3res_u.resok))
 			return (false);
 		break;
 	default:
-		if (!xdr_READDIRPLUS3resfail
-		    (xdrs, &objp->READDIRPLUS3res_u.resfail))
+		if (!xdr_READDIRPLUS3resfail(xdrs,
+					     &objp->READDIRPLUS3res_u.resfail))
 			return (false);
 		break;
 	}
@@ -1812,8 +1812,9 @@ bool xdr_PATHCONF3res(XDR *xdrs, PATHCONF3res *objp)
 bool xdr_COMMIT3args(XDR *xdrs, COMMIT3args *objp)
 {
 	struct nfs_request_lookahead *lkhd =
-	    xdrs->x_public ? (struct nfs_request_lookahead *)xdrs->
-	    x_public : &dummy_lookahead;
+		xdrs->x_public ?
+			(struct nfs_request_lookahead *)xdrs->x_public :
+			&dummy_lookahead;
 
 	if (!xdr_nfs_fh3(xdrs, &objp->file))
 		return (false);

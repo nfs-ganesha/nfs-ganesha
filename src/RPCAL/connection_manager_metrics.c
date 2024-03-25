@@ -23,7 +23,6 @@
  * ---------------------------------------
  */
 
-
 /**
  * @file connection_manager_metrics.c
  * @author Yoni Couriel <yonic@google.com>
@@ -32,7 +31,7 @@
 
 #include "connection_manager_metrics.h"
 
-static connection_manager__metrics_t metrics = {0};
+static connection_manager__metrics_t metrics = { 0 };
 
 static const char *
 stringify_client_state(enum connection_manager__client_state_t client_state)
@@ -48,7 +47,7 @@ stringify_client_state(enum connection_manager__client_state_t client_state)
 		return "DRAINING";
 	default:
 		LogFatal(COMPONENT_XPRT, "Unknown client state: %d",
-			client_state);
+			 client_state);
 	}
 }
 
@@ -61,8 +60,8 @@ static const char *stringify_connection_started_result(
 	case CONNECTION_MANAGER__CONNECTION_STARTED__DROP:
 		return "DROP";
 	default:
-		LogFatal(COMPONENT_XPRT,
-			"Unknown connection stated result: %d", result);
+		LogFatal(COMPONENT_XPRT, "Unknown connection stated result: %d",
+			 result);
 	}
 }
 
@@ -86,15 +85,15 @@ stringify_drain_result(enum connection_manager__drain_t result)
 static void register_clients_metrics(void)
 {
 	for (uint32_t state = 0; state < ARRAY_SIZE(metrics.clients); state++) {
-		const metric_label_t labels[] = {METRIC_LABEL(
-			"state", stringify_client_state(
-				(enum connection_manager__client_state_t)state))
-		};
+		const metric_label_t labels[] = { METRIC_LABEL(
+			"state",
+			stringify_client_state(
+				(enum connection_manager__client_state_t)
+					state)) };
 		metrics.clients[state] = monitoring__register_gauge(
 			"connection_manager__clients",
-			METRIC_METADATA(
-				"Connection Manager Clients per State",
-				METRIC_UNIT_NONE),
+			METRIC_METADATA("Connection Manager Clients per State",
+					METRIC_UNIT_NONE),
 			labels, ARRAY_SIZE(labels));
 	}
 }
@@ -102,43 +101,39 @@ static void register_clients_metrics(void)
 static void register_connection_started_latencies_metrics(void)
 {
 	for (uint32_t result = 0;
-		result < ARRAY_SIZE(metrics.connection_started_latencies);
-		result++) {
-		const metric_label_t labels[] = {METRIC_LABEL(
-			"result", stringify_connection_started_result(
-			(enum connection_manager__connection_started_t)result))
-		};
-		metrics.connection_started_latencies[result] =
-			monitoring__register_histogram(
+	     result < ARRAY_SIZE(metrics.connection_started_latencies);
+	     result++) {
+		const metric_label_t labels[] = { METRIC_LABEL(
+			"result",
+			stringify_connection_started_result(
+				(enum connection_manager__connection_started_t)
+					result)) };
+		metrics.connection_started_latencies
+			[result] = monitoring__register_histogram(
 			"connection_manager__connection_started_latencies",
-			METRIC_METADATA(
-				"Connection Manager Connection Started "
-				"Latencies per Result",
-				METRIC_UNIT_MILLISECOND),
-			labels,
-			ARRAY_SIZE(labels),
-			monitoring__buckets_exp2());
+			METRIC_METADATA("Connection Manager Connection Started "
+					"Latencies per Result",
+					METRIC_UNIT_MILLISECOND),
+			labels, ARRAY_SIZE(labels), monitoring__buckets_exp2());
 	}
 }
 
 static void register_drain_local_client_latencies_metrics(void)
 {
 	for (uint32_t result = 0;
-		result < ARRAY_SIZE(metrics.drain_local_client_latencies);
-		result++) {
-		const metric_label_t labels[] = {METRIC_LABEL(
-			"result", stringify_drain_result(
-				(enum connection_manager__drain_t)result))};
-		metrics.drain_local_client_latencies[result] =
-			monitoring__register_histogram(
+	     result < ARRAY_SIZE(metrics.drain_local_client_latencies);
+	     result++) {
+		const metric_label_t labels[] = { METRIC_LABEL(
+			"result",
+			stringify_drain_result(
+				(enum connection_manager__drain_t)result)) };
+		metrics.drain_local_client_latencies
+			[result] = monitoring__register_histogram(
 			"connection_manager__drain_local_client_latencies",
-			METRIC_METADATA(
-				"Connection Manager Drain Local Client "
-				"Latencies per Result",
-				METRIC_UNIT_MILLISECOND),
-			labels,
-			ARRAY_SIZE(labels),
-			monitoring__buckets_exp2());
+			METRIC_METADATA("Connection Manager Drain Local Client "
+					"Latencies per Result",
+					METRIC_UNIT_MILLISECOND),
+			labels, ARRAY_SIZE(labels), monitoring__buckets_exp2());
 	}
 }
 

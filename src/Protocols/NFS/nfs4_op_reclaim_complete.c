@@ -72,12 +72,11 @@ enum nfs_req_result nfs4_op_reclaim_complete(struct nfs_argop4 *op,
 					     compound_data_t *data,
 					     struct nfs_resop4 *resp)
 {
-	RECLAIM_COMPLETE4args * const arg_RECLAIM_COMPLETE4
-	    __attribute__ ((unused))
-	    = &op->nfs_argop4_u.opreclaim_complete;
-	RECLAIM_COMPLETE4res * const res_RECLAIM_COMPLETE4 =
-	    &resp->nfs_resop4_u.opreclaim_complete;
-	nfs_client_id_t	*clientid = data->session->clientid_record;
+	RECLAIM_COMPLETE4args *const arg_RECLAIM_COMPLETE4
+		__attribute__((unused)) = &op->nfs_argop4_u.opreclaim_complete;
+	RECLAIM_COMPLETE4res *const res_RECLAIM_COMPLETE4 =
+		&resp->nfs_resop4_u.opreclaim_complete;
+	nfs_client_id_t *clientid = data->session->clientid_record;
 
 	resp->resop = NFS4_OP_RECLAIM_COMPLETE;
 
@@ -99,7 +98,7 @@ enum nfs_req_result nfs4_op_reclaim_complete(struct nfs_argop4 *op,
 	}
 
 	return NFS_REQ_OK;
-}				/* nfs41_op_reclaim_complete */
+} /* nfs41_op_reclaim_complete */
 
 /**
  * @brief Free memory allocated for RECLAIM_COMPLETE result

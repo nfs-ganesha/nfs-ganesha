@@ -85,7 +85,8 @@ done:
 
 	server_stats_io_done(write_arg->iov[0].iov_len, write_arg->io_amount,
 			     (data->res_WRITE4->status == NFS4_OK) ? true :
-			     false, true /*is_write*/);
+								     false,
+			     true /*is_write*/);
 
 	if (data->owner != NULL) {
 		op_ctx->clientid = NULL;
@@ -139,9 +140,8 @@ enum nfs_req_result nfs4_op_write_resume(struct nfs_argop4 *op,
 
 	if (write_data->write_arg.fsal_resume) {
 		/* FSAL is requesting another write2 call on resume */
-		atomic_postclear_uint32_t_bits(&write_data->flags,
-					       ASYNC_PROC_EXIT |
-					       ASYNC_PROC_DONE);
+		atomic_postclear_uint32_t_bits(
+			&write_data->flags, ASYNC_PROC_EXIT | ASYNC_PROC_DONE);
 
 		write_data->obj->obj_ops->write2(write_data->obj, true,
 						 nfs4_write_cb,
@@ -151,9 +151,8 @@ enum nfs_req_result nfs4_op_write_resume(struct nfs_argop4 *op,
 		/* Only atomically set the flags if we actually call write2,
 		 * otherwise we will have indicated as having been DONE.
 		 */
-		flags =
-		    atomic_postset_uint32_t_bits(&write_data->flags,
-						 ASYNC_PROC_EXIT);
+		flags = atomic_postset_uint32_t_bits(&write_data->flags,
+						     ASYNC_PROC_EXIT);
 
 		if ((flags & ASYNC_PROC_DONE) != ASYNC_PROC_DONE) {
 			/* The write was not finished before we got here. When
@@ -205,8 +204,8 @@ static enum nfs_req_result op_dswrite(struct nfs_argop4 *op,
 				      compound_data_t *data,
 				      struct nfs_resop4 *resp)
 {
-	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
-	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
+	WRITE4args *const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
+	WRITE4res *const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
 	/* NFSv4 return code */
 	nfsstat4 nfs_status = 0;
 
@@ -214,15 +213,12 @@ static enum nfs_req_result op_dswrite(struct nfs_argop4 *op,
 	assert(arg_WRITE4->data.iovcnt == 1);
 
 	res_WRITE4->status = op_ctx->ctx_pnfs_ds->s_ops.dsh_write(
-				data->current_ds,
-				&arg_WRITE4->stateid,
-				arg_WRITE4->offset,
-				arg_WRITE4->data.iov[0].iov_len,
-				arg_WRITE4->data.iov[0].iov_base,
-				arg_WRITE4->stable,
-				&res_WRITE4->WRITE4res_u.resok4.count,
-				&res_WRITE4->WRITE4res_u.resok4.writeverf,
-				&res_WRITE4->WRITE4res_u.resok4.committed);
+		data->current_ds, &arg_WRITE4->stateid, arg_WRITE4->offset,
+		arg_WRITE4->data.iov[0].iov_len,
+		arg_WRITE4->data.iov[0].iov_base, arg_WRITE4->stable,
+		&res_WRITE4->WRITE4res_u.resok4.count,
+		&res_WRITE4->WRITE4res_u.resok4.writeverf,
+		&res_WRITE4->WRITE4res_u.resok4.committed);
 
 	res_WRITE4->status = nfs_status;
 	return nfsstat4_to_nfs_req_result(res_WRITE4->status);
@@ -244,13 +240,13 @@ static enum nfs_req_result op_dswrite(struct nfs_argop4 *op,
 enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 				  struct nfs_resop4 *resp)
 {
-	WRITE4args * const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
-	WRITE4res * const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
+	WRITE4args *const arg_WRITE4 = &op->nfs_argop4_u.opwrite;
+	WRITE4res *const res_WRITE4 = &resp->nfs_resop4_u.opwrite;
 	uint64_t size = 0;
 	uint64_t offset;
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
-	fsal_status_t fsal_status = {0, 0};
+	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_obj_handle *obj = NULL;
 	bool anonymous_started = false;
 	struct gsh_buffdesc verf_desc;
@@ -271,8 +267,8 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	resp->resop = NFS4_OP_WRITE;
 	res_WRITE4->status = NFS4_OK;
 
-	if ((data->minorversion > 0)
-	     && (nfs4_Is_Fh_DSHandle(&data->currentFH))) {
+	if ((data->minorversion > 0) &&
+	    (nfs4_Is_Fh_DSHandle(&data->currentFH))) {
 		return op_dswrite(op, data, resp);
 	}
 
@@ -287,15 +283,12 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	/* if quota support is active, then we should check is the FSAL
 	   allows inode creation or not */
 	fsal_status = op_ctx->fsal_export->exp_ops.check_quota(
-						op_ctx->fsal_export,
-						CTX_FULLPATH(op_ctx),
-						FSAL_QUOTA_BLOCKS);
+		op_ctx->fsal_export, CTX_FULLPATH(op_ctx), FSAL_QUOTA_BLOCKS);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_WRITE4->status = NFS4ERR_DQUOT;
 		return NFS_REQ_ERROR;
 	}
-
 
 	/* vnode to manage is the current one */
 	obj = data->current_obj;
@@ -303,13 +296,9 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	/* Check stateid correctness and get pointer to state
 	 * (also checks for special stateids)
 	 */
-	res_WRITE4->status = nfs4_Check_Stateid(&arg_WRITE4->stateid,
-						obj,
-						&state_found,
-						data,
-						STATEID_SPECIAL_ANY,
-						0,
-						false,
+	res_WRITE4->status = nfs4_Check_Stateid(&arg_WRITE4->stateid, obj,
+						&state_found, data,
+						STATEID_SPECIAL_ANY, 0, false,
 						"WRITE");
 
 	if (res_WRITE4->status != NFS4_OK)
@@ -333,7 +322,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 
 		case STATE_TYPE_LOCK:
 			state_open = nfs4_State_Get_Pointer(
-			    state_found->state_data.lock.openstate_key);
+				state_found->state_data.lock.openstate_key);
 
 			if (state_open == NULL) {
 				res_WRITE4->status = NFS4ERR_BAD_STATEID;
@@ -352,9 +341,8 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 			if (!(sdeleg->sd_type & OPEN_DELEGATE_WRITE)) {
 				/* Invalid delegation for this operation. */
 				LogDebug(COMPONENT_STATE,
-					"Delegation type:%d state:%d",
-					sdeleg->sd_type,
-					sdeleg->sd_state);
+					 "Delegation type:%d state:%d",
+					 sdeleg->sd_type, sdeleg->sd_state);
 				res_WRITE4->status = NFS4ERR_BAD_STATEID;
 				goto out;
 			}
@@ -378,15 +366,16 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		     OPEN4_SHARE_ACCESS_WRITE) == 0) {
 			/* Bad open mode, return NFS4ERR_OPENMODE */
 			res_WRITE4->status = NFS4ERR_OPENMODE;
-				if (isDebug(COMPONENT_NFS_V4_LOCK)) {
-					char str[LOG_BUFF_LEN] = "\0";
-					struct display_buffer dspbuf = {
-							sizeof(str), str, str};
-					display_stateid(&dspbuf, state_found);
-					LogDebug(COMPONENT_NFS_V4_LOCK,
-						 "WRITE %s doesn't have OPEN4_SHARE_ACCESS_WRITE",
-						 str);
-				}
+			if (isDebug(COMPONENT_NFS_V4_LOCK)) {
+				char str[LOG_BUFF_LEN] = "\0";
+				struct display_buffer dspbuf = { sizeof(str),
+								 str, str };
+				display_stateid(&dspbuf, state_found);
+				LogDebug(
+					COMPONENT_NFS_V4_LOCK,
+					"WRITE %s doesn't have OPEN4_SHARE_ACCESS_WRITE",
+					str);
+			}
 			goto out;
 		}
 	} else {
@@ -405,8 +394,8 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Need to permission check the write. */
-	fsal_status = obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS,
-					       NULL, NULL, true);
+	fsal_status = obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS, NULL,
+						NULL, true);
 
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_WRITE4->status = nfs4_Errno_status(fsal_status);
@@ -423,15 +412,15 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	if (MaxOffsetWrite < UINT64_MAX) {
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "Write offset=%" PRIu64 " count=%" PRIu64
-			     " MaxOffSet=%" PRIu64, offset, size,
-			     MaxOffsetWrite);
+			     " MaxOffSet=%" PRIu64,
+			     offset, size, MaxOffsetWrite);
 
 		if ((offset + size) > MaxOffsetWrite) {
-			LogEvent(COMPONENT_NFS_V4,
-				 "A client tried to violate max file size %"
-				 PRIu64 " for exportid #%hu",
-				 MaxOffsetWrite,
-				 op_ctx->ctx_export->export_id);
+			LogEvent(
+				COMPONENT_NFS_V4,
+				"A client tried to violate max file size %" PRIu64
+				" for exportid #%hu",
+				MaxOffsetWrite, op_ctx->ctx_export->export_id);
 			res_WRITE4->status = NFS4ERR_FBIG;
 			goto out;
 		}
@@ -449,8 +438,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		size = MaxWrite;
 	}
 
-	LogFullDebug(COMPONENT_NFS_V4,
-		     "offset = %" PRIu64 " length = %" PRIu64,
+	LogFullDebug(COMPONENT_NFS_V4, "offset = %" PRIu64 " length = %" PRIu64,
 		     offset, size);
 
 	/* if size == 0 , no I/O) are actually made and everything is alright */
@@ -461,7 +449,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 		verf_desc.addr = res_WRITE4->WRITE4res_u.resok4.writeverf;
 		verf_desc.len = sizeof(verifier4);
 		op_ctx->fsal_export->exp_ops.get_write_verifier(
-					op_ctx->fsal_export, &verf_desc);
+			op_ctx->fsal_export, &verf_desc);
 
 		res_WRITE4->status = NFS4_OK;
 		server_stats_io_done(0, 0, true, true);
@@ -489,7 +477,6 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	write_arg->io_amount = 0;
 	write_arg->fsal_stable = arg_WRITE4->stable != UNSTABLE4 || force_sync;
 
-
 	write_data->res_WRITE4 = res_WRITE4;
 	write_data->owner = owner;
 	write_data->data = data;
@@ -505,10 +492,10 @@ again:
 	/* Only atomically set the flags if we actually call write2, otherwise
 	 * we will have indicated as having been DONE.
 	 */
-	flags =
-	    atomic_postset_uint32_t_bits(&write_data->flags, ASYNC_PROC_EXIT);
+	flags = atomic_postset_uint32_t_bits(&write_data->flags,
+					     ASYNC_PROC_EXIT);
 
- out:
+out:
 
 	if (state_open != NULL) {
 		dec_state_t_ref(state_open);
@@ -528,9 +515,8 @@ again:
 
 	if (write_data != NULL && write_arg->fsal_resume) {
 		/* FSAL is requesting another read2 call */
-		atomic_postclear_uint32_t_bits(&write_data->flags,
-					       ASYNC_PROC_EXIT |
-					       ASYNC_PROC_DONE);
+		atomic_postclear_uint32_t_bits(
+			&write_data->flags, ASYNC_PROC_EXIT | ASYNC_PROC_DONE);
 		/* Make the call with the same params, though the FSAL will be
 		 * signaled by fsal_resume being set.
 		 */
@@ -564,7 +550,7 @@ again:
 	}
 
 	return nfsstat4_to_nfs_req_result(res_WRITE4->status);
-}				/* nfs4_op_write */
+} /* nfs4_op_write */
 
 /**
  * @brief Free memory allocated for WRITE result
@@ -596,10 +582,10 @@ enum nfs_req_result nfs4_op_write_same(struct nfs_argop4 *op,
 				       compound_data_t *data,
 				       struct nfs_resop4 *resp)
 {
-	WRITE_SAME4res * const res_WSAME = &resp->nfs_resop4_u.opwrite_same;
+	WRITE_SAME4res *const res_WSAME = &resp->nfs_resop4_u.opwrite_same;
 
 	resp->resop = NFS4_OP_WRITE_SAME;
-	res_WSAME->wpr_status =  NFS4ERR_NOTSUPP;
+	res_WSAME->wpr_status = NFS4ERR_NOTSUPP;
 
 	return NFS_REQ_ERROR;
 }

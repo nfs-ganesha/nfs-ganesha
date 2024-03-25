@@ -27,7 +27,7 @@
 #include "config.h"
 
 #include <assert.h>
-#include <libgen.h>		/* used for 'dirname' */
+#include <libgen.h> /* used for 'dirname' */
 #include <pthread.h>
 #include <string.h>
 #include <sys/types.h>
@@ -60,10 +60,8 @@
  *                        after export reference is relinquished
  */
 
-static void
-kvsfs_fs_layouttypes(struct fsal_export *export_hdl,
-		      int32_t *count,
-		      const layouttype4 **types)
+static void kvsfs_fs_layouttypes(struct fsal_export *export_hdl, int32_t *count,
+				 const layouttype4 **types)
 {
 	static const layouttype4 supported_layout_type = LAYOUT4_NFSV4_1_FILES;
 
@@ -82,8 +80,7 @@ kvsfs_fs_layouttypes(struct fsal_export *export_hdl,
  *
  * @return 4 MB.
  */
-static uint32_t
-kvsfs_fs_layout_blocksize(struct fsal_export *export_pub)
+static uint32_t kvsfs_fs_layout_blocksize(struct fsal_export *export_pub)
 {
 	return 0x400000;
 }
@@ -97,8 +94,7 @@ kvsfs_fs_layout_blocksize(struct fsal_export *export_pub)
  *
  * @return 1
  */
-static uint32_t
-kvsfs_fs_maximum_segments(struct fsal_export *export_pub)
+static uint32_t kvsfs_fs_maximum_segments(struct fsal_export *export_pub)
 {
 	return 1;
 }
@@ -112,8 +108,7 @@ kvsfs_fs_maximum_segments(struct fsal_export *export_pub)
  *
  * @return Size of the buffer needed for a loc_body
  */
-static size_t
-kvsfs_fs_loc_body_size(struct fsal_export *export_pub)
+static size_t kvsfs_fs_loc_body_size(struct fsal_export *export_pub)
 {
 	return 0x100;
 }
@@ -140,11 +135,9 @@ size_t kvsfs_fs_da_addr_size(struct fsal_module *fsal_hdl)
  * @return Valid error codes in RFC 5661, p. 365.
  */
 
-
-nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl,
-			      XDR *da_addr_body,
-			      const layouttype4 type,
-			      const struct pnfs_deviceid *deviceid)
+nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
+			     const layouttype4 type,
+			     const struct pnfs_deviceid *deviceid)
 {
 	/* The number of DSs  */
 	unsigned int num_ds = 0; /** @todo To be set via a call to llapi */
@@ -162,31 +155,27 @@ nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl,
 	struct kvsfs_exp_pnfs_parameter *pnfs_exp_param;
 	unsigned int i;
 
-	exp_hdl  = glist_first_entry(&fsal_hdl->exports,
-				     struct fsal_export,
-				     exports);
+	exp_hdl = glist_first_entry(&fsal_hdl->exports, struct fsal_export,
+				    exports);
 	export = container_of(exp_hdl, struct kvsfs_fsal_export, export);
 	pnfs_exp_param = &export->pnfs_param;
 
 	/* Sanity check on type */
 	if (type != LAYOUT4_NFSV4_1_FILES) {
-		LogCrit(COMPONENT_PNFS,
-			"Unsupported layout type: %x",
-			type);
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x", type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
 	/* Retrieve and calculate storage parameters of layout */
 	stripe_count = pnfs_exp_param->nb_ds;
 
-	LogDebug(COMPONENT_PNFS, "device_id %u/%u/%u %lu",
-		 deviceid->device_id1, deviceid->device_id2,
-		 deviceid->device_id4, deviceid->devid);
+	LogDebug(COMPONENT_PNFS, "device_id %u/%u/%u %lu", deviceid->device_id1,
+		 deviceid->device_id2, deviceid->device_id4, deviceid->devid);
 
 	if (!inline_xdr_u_int32_t(da_addr_body, &stripe_count)) {
 		LogCrit(COMPONENT_PNFS,
-			"Failed to encode length of stripe_indices array: %"
-			PRIu32 ".",
+			"Failed to encode length of stripe_indices array: %" PRIu32
+			".",
 			stripe_count);
 		return NFS4ERR_SERVERFAULT;
 	}
@@ -208,26 +197,23 @@ nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl,
 	}
 
 	/* lookup for the right DS in the ds_list */
-	for (i = 0; i < pnfs_exp_param->nb_ds ; i++) {
+	for (i = 0; i < pnfs_exp_param->nb_ds; i++) {
 		fsal_multipath_member_t host;
 
 		ds = &pnfs_exp_param->ds_array[i];
 		LogDebug(COMPONENT_PNFS,
-			"advertises DS addr=%u.%u.%u.%u port=%u",
-			(ntohl(ds->ipaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
-			(ntohl(ds->ipaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
-			(ntohl(ds->ipaddr.sin_addr.s_addr) & 0x0000FF00) >> 8,
-			(unsigned int)ntohl(ds->ipaddr.sin_addr.s_addr)
-							   & 0x000000FF,
-			(unsigned short)ntohs(ds->ipport));
+			 "advertises DS addr=%u.%u.%u.%u port=%u",
+			 (ntohl(ds->ipaddr.sin_addr.s_addr) & 0xFF000000) >> 24,
+			 (ntohl(ds->ipaddr.sin_addr.s_addr) & 0x00FF0000) >> 16,
+			 (ntohl(ds->ipaddr.sin_addr.s_addr) & 0x0000FF00) >> 8,
+			 (unsigned int)ntohl(ds->ipaddr.sin_addr.s_addr) &
+				 0x000000FF,
+			 (unsigned short)ntohs(ds->ipport));
 
 		host.proto = IPPROTO_TCP;
 		host.addr = ntohl(ds->ipaddr.sin_addr.s_addr);
 		host.port = ntohs(ds->ipport);
-		nfs_status = FSAL_encode_v4_multipath(
-				da_addr_body,
-				1,
-				&host);
+		nfs_status = FSAL_encode_v4_multipath(da_addr_body, 1, &host);
 		if (nfs_status != NFS4_OK)
 			return nfs_status;
 
@@ -251,20 +237,16 @@ nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl,
  * @return Valid error codes in RFC 5661, pp. 365-6.
  */
 
-static nfsstat4
-kvsfs_getdevicelist(struct fsal_export *export_pub,
-		     layouttype4 type,
-		     void *opaque,
-		     bool (*cb)(void *opaque,
-			const uint64_t id),
-		     struct fsal_getdevicelist_res *res)
+static nfsstat4 kvsfs_getdevicelist(struct fsal_export *export_pub,
+				    layouttype4 type, void *opaque,
+				    bool (*cb)(void *opaque, const uint64_t id),
+				    struct fsal_getdevicelist_res *res)
 {
 	res->eof = true;
 	return NFS4_OK;
 }
 
-void
-export_ops_pnfs(struct export_ops *ops)
+void export_ops_pnfs(struct export_ops *ops)
 {
 	ops->getdevicelist = kvsfs_getdevicelist;
 	ops->fs_layouttypes = kvsfs_fs_layouttypes;
@@ -290,12 +272,9 @@ export_ops_pnfs(struct export_ops *ops)
  * @return Valid error codes in RFC 5661, pp. 366-7.
  */
 
-
-static nfsstat4
-kvsfs_layoutget(struct fsal_obj_handle *obj_hdl,
-		 XDR *loc_body,
-		 const struct fsal_layoutget_arg *arg,
-		 struct fsal_layoutget_res *res)
+static nfsstat4 kvsfs_layoutget(struct fsal_obj_handle *obj_hdl, XDR *loc_body,
+				const struct fsal_layoutget_arg *arg,
+				struct fsal_layoutget_res *res)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	struct kvsfs_exp_pnfs_parameter *pnfs_exp_param;
@@ -307,16 +286,14 @@ kvsfs_layoutget(struct fsal_obj_handle *obj_hdl,
 	nfsstat4 nfs_status = 0;
 	struct gsh_buffdesc ds_desc;
 
-	myexport = container_of(op_ctx->fsal_export,
-				struct kvsfs_fsal_export,
+	myexport = container_of(op_ctx->fsal_export, struct kvsfs_fsal_export,
 				export);
 	pnfs_exp_param = &myexport->pnfs_param;
 
 	/* We support only LAYOUT4_NFSV4_1_FILES layouts */
 
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
-		LogCrit(COMPONENT_PNFS,
-			"Unsupported layout type: %x",
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x",
 			arg->type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
@@ -324,12 +301,10 @@ kvsfs_layoutget(struct fsal_obj_handle *obj_hdl,
 	/* Get basic information on the file and calculate the dimensions
 	 *of the layout we can support. */
 
-	myself = container_of(obj_hdl,
-			      struct kvsfs_fsal_obj_handle,
-			      obj_handle);
-	memcpy(&kvsfs_ds_handle,
-	       myself->handle, sizeof(struct kvsfs_file_handle));
-
+	myself =
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
+	memcpy(&kvsfs_ds_handle, myself->handle,
+	       sizeof(struct kvsfs_file_handle));
 
 	/** @todo: here, put some code to check if such
 	 * a layout is available. If not,
@@ -348,30 +323,22 @@ kvsfs_layoutget(struct fsal_obj_handle *obj_hdl,
 
 	if (util != stripe_unit)
 		LogEvent(COMPONENT_PNFS,
-			 "Invalid stripe_unit %u, truncated to %u",
-			 stripe_unit, util);
+			 "Invalid stripe_unit %u, truncated to %u", stripe_unit,
+			 util);
 
 	/** @todo: several DSs not handled yet */
-	deviceid.devid =  1;
+	deviceid.devid = 1;
 
 	/* last_possible_byte = NFS4_UINT64_MAX; strict. set but unused */
 
-	LogDebug(COMPONENT_PNFS,
-		 "devid nodeAddr %016"PRIx64,
-		 deviceid.devid);
+	LogDebug(COMPONENT_PNFS, "devid nodeAddr %016" PRIx64, deviceid.devid);
 
 	ds_desc.addr = &kvsfs_ds_handle;
 	ds_desc.len = sizeof(struct kvsfs_file_handle);
 
-	nfs_status = FSAL_encode_file_layout(
-			loc_body,
-			&deviceid,
-			util,
-			0,
-			0,
-			&op_ctx->ctx_export->export_id,
-			1,
-			&ds_desc);
+	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
+					     &op_ctx->ctx_export->export_id, 1,
+					     &ds_desc);
 	if (nfs_status) {
 		LogCrit(COMPONENT_PNFS,
 			"Failed to encode nfsv4_1_file_layout.");
@@ -398,10 +365,9 @@ relinquish:
  * @return Valid error codes in RFC 5661, p. 367.
  */
 
-static nfsstat4
-kvsfs_layoutreturn(struct fsal_obj_handle *obj_hdl,
-		    XDR *lrf_body,
-		    const struct fsal_layoutreturn_arg *arg)
+static nfsstat4 kvsfs_layoutreturn(struct fsal_obj_handle *obj_hdl,
+				   XDR *lrf_body,
+				   const struct fsal_layoutreturn_arg *arg)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	/* The private 'full' object handle */
@@ -409,15 +375,13 @@ kvsfs_layoutreturn(struct fsal_obj_handle *obj_hdl,
 
 	/* Sanity check on type */
 	if (arg->lo_type != LAYOUT4_NFSV4_1_FILES) {
-		LogCrit(COMPONENT_PNFS,
-			"Unsupported layout type: %x",
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x",
 			arg->lo_type);
-	return NFS4ERR_UNKNOWN_LAYOUTTYPE;
+		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
-	myself = container_of(obj_hdl,
-			      struct kvsfs_fsal_obj_handle,
-			      obj_handle);
+	myself =
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 	kvsfs_handle = myself->handle;
 
 	return NFS4_OK;
@@ -438,11 +402,10 @@ kvsfs_layoutreturn(struct fsal_obj_handle *obj_hdl,
  * @return Valid error codes in RFC 5661, p. 366.
  */
 
-static nfsstat4
-kvsfs_layoutcommit(struct fsal_obj_handle *obj_hdl,
-		    XDR *lou_body,
-		    const struct fsal_layoutcommit_arg *arg,
-		    struct fsal_layoutcommit_res *res)
+static nfsstat4 kvsfs_layoutcommit(struct fsal_obj_handle *obj_hdl,
+				   XDR *lou_body,
+				   const struct fsal_layoutcommit_arg *arg,
+				   struct fsal_layoutcommit_res *res)
 {
 	struct kvsfs_fsal_obj_handle *myself;
 	/* The private 'full' object handle */
@@ -450,16 +413,13 @@ kvsfs_layoutcommit(struct fsal_obj_handle *obj_hdl,
 
 	/* Sanity check on type */
 	if (arg->type != LAYOUT4_NFSV4_1_FILES) {
-		LogCrit(COMPONENT_PNFS,
-			"Unsupported layout type: %x",
+		LogCrit(COMPONENT_PNFS, "Unsupported layout type: %x",
 			arg->type);
 		return NFS4ERR_UNKNOWN_LAYOUTTYPE;
 	}
 
 	myself =
-		container_of(obj_hdl,
-			     struct kvsfs_fsal_obj_handle,
-			     obj_handle);
+		container_of(obj_hdl, struct kvsfs_fsal_obj_handle, obj_handle);
 	kvsfs_handle = myself->handle;
 
 	/** @todo: here, add code to actually commit the layout */
@@ -469,9 +429,7 @@ kvsfs_layoutcommit(struct fsal_obj_handle *obj_hdl,
 	return NFS4_OK;
 }
 
-
-void
-handle_ops_pnfs(struct fsal_obj_ops *ops)
+void handle_ops_pnfs(struct fsal_obj_ops *ops)
 {
 	ops->layoutget = kvsfs_layoutget;
 	ops->layoutreturn = kvsfs_layoutreturn;

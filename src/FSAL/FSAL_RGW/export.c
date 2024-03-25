@@ -51,7 +51,7 @@ static void release(struct fsal_export *export_pub)
 {
 	/* The private, expanded export */
 	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
+		container_of(export_pub, struct rgw_export, export);
 
 	int rc = rgw_umount(export->rgw_fs, RGW_UMOUNT_FLAG_NONE);
 
@@ -90,7 +90,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 {
 	/* The 'private' full export handle */
 	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
+		container_of(export_pub, struct rgw_export, export);
 	/* The 'private' full object handle */
 	struct rgw_handle *handle = NULL;
 	/* FSAL status structure */
@@ -116,14 +116,14 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	/* should only be "/" or "bucket_name" or "bucket_name/dir "*/
 	if (strcmp(path, "/") && strchr(path, '/') &&
-		(strchr(path, '/') - path) > 1) {
+	    (strchr(path, '/') - path) > 1) {
 		/* case : "bucket_name/dir" */
 		char *cp_path = strdup(path);
 
 		bucket_name = strsep(&cp_path, "/");
 		global_dir = path + strlen(bucket_name) + 1;
 	} else if (strcmp(path, "/") && strchr(path, '/') &&
-		(strchr(path, '/') - path) == 0) {
+		   (strchr(path, '/') - path) == 0) {
 		/* case : "/bucket_name" */
 		bucket_name = path + 1;
 	} else {
@@ -138,8 +138,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	 */
 #ifndef USE_FSAL_RGW_MOUNT2
 	if (global_dir == NULL) {
-		rc = rgw_lookup(export->rgw_fs,
-				export->rgw_fs->root_fh,
+		rc = rgw_lookup(export->rgw_fs, export->rgw_fs->root_fh,
 				bucket_name, &rgw_fh, NULL, 0,
 				RGW_LOOKUP_FLAG_NONE);
 		if (rc < 0)
@@ -154,15 +153,15 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		/* search fh of bucket */
 		struct rgw_file_handle *rgw_dh;
 
-		rc = rgw_lookup(export->rgw_fs,
-				export->rgw_fs->root_fh, bucket_name,
-				&rgw_dh, NULL, 0, RGW_LOOKUP_FLAG_NONE);
+		rc = rgw_lookup(export->rgw_fs, export->rgw_fs->root_fh,
+				bucket_name, &rgw_dh, NULL, 0,
+				RGW_LOOKUP_FLAG_NONE);
 
 		if (rc < 0)
 			return rgw2fsal_error(rc);
 		/* search fh of global directory */
-		rc = rgw_lookup(export->rgw_fs, rgw_dh, global_dir,
-				&rgw_fh, NULL, 0,
+		rc = rgw_lookup(export->rgw_fs, rgw_dh, global_dir, &rgw_fh,
+				NULL, 0,
 				RGW_LOOKUP_FLAG_RCB /* XXX why RCB? */);
 		if (rc < 0)
 			return rgw2fsal_error(rc);
@@ -175,14 +174,14 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	/* get Unix attrs */
 	if (global_dir == NULL) {
-		rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
-					&st, RGW_GETATTR_FLAG_NONE);
+		rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh, &st,
+				 RGW_GETATTR_FLAG_NONE);
 		if (rc < 0) {
 			return rgw2fsal_error(rc);
 		}
 	} else {
-		rc = rgw_getattr(export->rgw_fs, rgw_fh,
-						&st, RGW_GETATTR_FLAG_NONE);
+		rc = rgw_getattr(export->rgw_fs, rgw_fh, &st,
+				 RGW_GETATTR_FLAG_NONE);
 		if (rc < 0) {
 			return rgw2fsal_error(rc);
 		}
@@ -192,14 +191,14 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	struct stat st_root;
 
 	/* fixup export fsid */
-	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh,
-			 &st_root, RGW_GETATTR_FLAG_NONE);
+	rc = rgw_getattr(export->rgw_fs, export->rgw_fs->root_fh, &st_root,
+			 RGW_GETATTR_FLAG_NONE);
 	if (rc < 0) {
 		return rgw2fsal_error(rc);
 	}
 	st.st_dev = st_root.st_dev;
 #endif
-	(void) construct_handle(export, rgw_fh, &st, &handle);
+	(void)construct_handle(export, rgw_fh, &st, &handle);
 
 	*pub_handle = &handle->handle;
 
@@ -221,8 +220,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
  */
 static fsal_status_t wire_to_host(struct fsal_export *exp_hdl,
 				  fsal_digesttype_t in_type,
-				  struct gsh_buffdesc *fh_desc,
-				  int flags)
+				  struct gsh_buffdesc *fh_desc, int flags)
 {
 	switch (in_type) {
 		/* Digested Handles */
@@ -257,7 +255,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 {
 	/* Full 'private' export structure */
 	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
+		container_of(export_pub, struct rgw_export, export);
 	/* FSAL status to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The FSAL specific portion of the handle received by the
@@ -279,10 +277,10 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		return status;
 	}
 
-	memcpy((char *) &fh_hk, desc->addr, desc->len);
+	memcpy((char *)&fh_hk, desc->addr, desc->len);
 
 	rc = rgw_lookup_handle(export->rgw_fs, &fh_hk, &rgw_fh,
-			RGW_LOOKUP_FLAG_NONE);
+			       RGW_LOOKUP_FLAG_NONE);
 	if (rc < 0)
 		return rgw2fsal_error(-ESTALE);
 
@@ -290,7 +288,7 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	if (rc < 0)
 		return rgw2fsal_error(rc);
 
-	(void) construct_handle(export, rgw_fh, &st, &handle);
+	(void)construct_handle(export, rgw_fh, &st, &handle);
 
 	*pub_handle = &handle->handle;
 
@@ -319,7 +317,7 @@ static fsal_status_t get_fs_dynamic_info(struct fsal_export *export_pub,
 {
 	/* Full 'private' export */
 	struct rgw_export *export =
-	    container_of(export_pub, struct rgw_export, export);
+		container_of(export_pub, struct rgw_export, export);
 
 	int rc = 0;
 

@@ -56,7 +56,7 @@ int _9p_fsync(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, msgtag, u16);
 	_9p_getptr(cursor, fid, u32);
 
-	LogDebug(COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "TFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -72,14 +72,13 @@ int _9p_fsync(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_init_opctx(pfid, req9p);
 
 	fsal_status = fsal_commit(pfid->pentry,
-				  0LL,	/* start at beginning of file */
-				  0LL);	/* Mimic sync_file_range's behavior: */
-					/* count=0 means "whole file" */
+				  0LL, /* start at beginning of file */
+				  0LL); /* Mimic sync_file_range's behavior: */
+	/* count=0 means "whole file" */
 
 	if (FSAL_IS_ERROR(fsal_status))
-		return _9p_rerror(req9p, msgtag,
-				  _9p_tools_errno(fsal_status), plenout,
-				  preply);
+		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),
+				  plenout, preply);
 
 	/* Build the reply */
 	_9p_setinitptr(cursor, preply, _9P_RFSYNC);
@@ -88,7 +87,7 @@ int _9p_fsync(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32) *msgtag, *fid);
+	LogDebug(COMPONENT_9P, "RFSYNC: tag=%u fid=%u", (u32)*msgtag, *fid);
 
 	return 1;
 }

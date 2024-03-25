@@ -43,7 +43,7 @@
 #include <sys/param.h>
 #include <time.h>
 #include <pthread.h>
-#include <dirent.h>		/* For having MAXNAMLEN */
+#include <dirent.h> /* For having MAXNAMLEN */
 
 #include "abstract_atomic.h"
 #include "abstract_mem.h"
@@ -54,7 +54,7 @@
 #ifdef _USE_9P
 /* define u32 and related types independent of SAL and 9P */
 #include "9p_types.h"
-#endif				/* _USE_9P */
+#endif /* _USE_9P */
 
 /**
 ** Forward declarations to avoid circular dependency conflicts
@@ -62,8 +62,8 @@
 
 #include "gsh_status.h"
 
-typedef struct nfs_client_id_t		nfs_client_id_t;
-typedef struct nfs41_session		nfs41_session_t;
+typedef struct nfs_client_id_t nfs_client_id_t;
+typedef struct nfs41_session nfs41_session_t;
 
 /**
 ** Consolidated circular dependencies
@@ -74,16 +74,16 @@ typedef struct nfs41_session		nfs41_session_t;
 /**
  ** Forward references to types
  */
-typedef struct nfs_argop4_state		nfs_argop4_state;
-typedef struct nfs_client_record_t	nfs_client_record_t;
-typedef struct state_async_queue_t	state_async_queue_t;
-typedef struct state_block_data_t	state_block_data_t;
-typedef struct state_cookie_entry_t	state_cookie_entry_t;
-typedef struct state_lock_entry_t	state_lock_entry_t;
-typedef struct state_nfs4_owner_t	state_nfs4_owner_t;
-typedef struct state_nlm_client_t	state_nlm_client_t;
-typedef struct state_owner_t		state_owner_t;
-typedef struct state_t			state_t;
+typedef struct nfs_argop4_state nfs_argop4_state;
+typedef struct nfs_client_record_t nfs_client_record_t;
+typedef struct state_async_queue_t state_async_queue_t;
+typedef struct state_block_data_t state_block_data_t;
+typedef struct state_cookie_entry_t state_cookie_entry_t;
+typedef struct state_lock_entry_t state_lock_entry_t;
+typedef struct state_nfs4_owner_t state_nfs4_owner_t;
+typedef struct state_nlm_client_t state_nlm_client_t;
+typedef struct state_owner_t state_owner_t;
+typedef struct state_t state_t;
 
 /**
  * @brief Number of errors before giving up on recovery
@@ -131,7 +131,6 @@ extern hash_table_t *ht_session_id;
  */
 #define NFS41_NB_SLOTS_DEF 64
 
-
 /**
  * @brief Default string length of all operations in one compound
  */
@@ -142,12 +141,12 @@ extern hash_table_t *ht_session_id;
  */
 
 struct nfs41_cached_req {
-	nfs_opnum4 opcodes[NFS4_MAX_OPERATIONS];	/*< opcodes
+	nfs_opnum4 opcodes[NFS4_MAX_OPERATIONS]; /*< opcodes
 		of compound */
-	uint32_t opcode_num;	/*< number of opcode in one compound */
-	uint32_t xid;	/*< Xid of request */
-	sequenceid4 seq_id;	/*< Sequence id of request */
-	uint64_t finish_time_ms;	/*< Finish time of request in ms */
+	uint32_t opcode_num; /*< number of opcode in one compound */
+	uint32_t xid; /*< Xid of request */
+	sequenceid4 seq_id; /*< Sequence id of request */
+	uint64_t finish_time_ms; /*< Finish time of request in ms */
 };
 
 /**
@@ -155,9 +154,9 @@ struct nfs41_cached_req {
  */
 
 typedef struct nfs41_session_slot__ {
-	sequenceid4 sequence;	/*< Sequence number of this operation */
-	pthread_mutex_t slot_lock;	/*< Lock on the slot */
-	struct COMPOUND4res_extended *cached_result;	/*< NFv41: pointer to
+	sequenceid4 sequence; /*< Sequence number of this operation */
+	pthread_mutex_t slot_lock; /*< Lock on the slot */
+	struct COMPOUND4res_extended *cached_result; /*< NFv41: pointer to
 							   cached RPC result in
 							   a session's slot */
 	struct nfs41_cached_req last_req; /*< Last request of the slot */
@@ -168,8 +167,8 @@ typedef struct nfs41_session_slot__ {
  */
 
 typedef struct nfs41_cb_session_slot {
-	sequenceid4 sequence;	/*< Sequence number of last call */
-	bool in_use;		/*< Set if a call if in progress on this slot */
+	sequenceid4 sequence; /*< Sequence number of last call */
+	bool in_use; /*< Set if a call if in progress on this slot */
 } nfs41_cb_session_slot_t;
 
 /**
@@ -193,7 +192,6 @@ enum {
  */
 #define NFS4_SESSIONID_BUFFER_SIZE 128
 
-
 /**
  * @brief Structure representing a connection-xprt entry in nfs41_session's
  * connection_xprts
@@ -209,18 +207,18 @@ typedef struct connection_xprt {
  */
 
 struct nfs41_session {
-	char session_id[NFS4_SESSIONID_SIZE];	/*< Session ID */
-	struct glist_head session_link;	/*< Link in the list of
+	char session_id[NFS4_SESSIONID_SIZE]; /*< Session ID */
+	struct glist_head session_link; /*< Link in the list of
 					   sessions for this
 					   clientid */
 
-	channel_attrs4 fore_channel_attrs;	/*< Fore-channel attributes */
+	channel_attrs4 fore_channel_attrs; /*< Fore-channel attributes */
 
-	channel_attrs4 back_channel_attrs;	/*< Back-channel attributes */
-	struct rpc_call_channel cb_chan;	/*< Back channel */
-	pthread_mutex_t cb_mutex;	/*< Protects the cb slot table,
+	channel_attrs4 back_channel_attrs; /*< Back-channel attributes */
+	struct rpc_call_channel cb_chan; /*< Back channel */
+	pthread_mutex_t cb_mutex; /*< Protects the cb slot table,
 					   when searching for a free slot */
-	pthread_cond_t cb_cond;	/*< Condition variable on which we
+	pthread_cond_t cb_cond; /*< Condition variable on which we
 				   wait if the slot table is full
 				   and on which we signal when we
 				   free an entry. */
@@ -229,19 +227,19 @@ struct nfs41_session {
 	int num_conn;
 	struct glist_head connection_xprts;
 
-	nfs_client_id_t *clientid_record;	/*< Client record
+	nfs_client_id_t *clientid_record; /*< Client record
 						   corresponding to ID */
-	clientid4 clientid;	/*< Clientid owning this session */
-	uint32_t cb_program;	/*< Callback program ID */
+	clientid4 clientid; /*< Clientid owning this session */
+	uint32_t cb_program; /*< Callback program ID */
 	struct {
 		u_int sec_parms_len;
 		callback_sec_parms4 *sec_parms_val;
 	} cb_sec_parms; /*< Callback security params */
-	uint32_t flags;		/*< Flags pertaining to this session */
+	uint32_t flags; /*< Flags pertaining to this session */
 	int32_t refcount;
-	uint32_t nb_slots;	/**< Number of slots in this session */
-	nfs41_session_slot_t *fc_slots;	/**< Forechannel slot table*/
-	nfs41_cb_session_slot_t *bc_slots;	/**< Backchannel slot table */
+	uint32_t nb_slots; /**< Number of slots in this session */
+	nfs41_session_slot_t *fc_slots; /**< Forechannel slot table*/
+	nfs41_cb_session_slot_t *bc_slots; /**< Backchannel slot table */
 };
 
 /**
@@ -249,10 +247,10 @@ struct nfs41_session {
  */
 
 struct state_refer {
-	sessionid4 session;	/*< The session of the creating call. */
-	sequenceid4 sequence;	/*< The sequence ID of the creating
+	sessionid4 session; /*< The session of the creating call. */
+	sequenceid4 sequence; /*< The sequence ID of the creating
 				   call. */
-	slotid4 slot;		/*< The slot ID of the creating call. */
+	slotid4 slot; /*< The slot ID of the creating call. */
 };
 
 /******************************************************************************
@@ -273,9 +271,9 @@ typedef struct rdel_fh {
  * @brief A client entry
  */
 typedef struct clid_entry {
-	struct glist_head cl_list;	/*< Link in the list */
+	struct glist_head cl_list; /*< Link in the list */
 	struct glist_head cl_rfh_list;
-	char cl_name[PATH_MAX];	/*< Client name */
+	char cl_name[PATH_MAX]; /*< Client name */
 } clid_entry_t;
 
 extern char v4_old_dir[PATH_MAX];
@@ -296,13 +294,13 @@ extern hash_table_t *ht_state_id;
  */
 
 struct state_share {
-	struct glist_head share_lockstates;	/*< Lock states for this
+	struct glist_head share_lockstates; /*< Lock states for this
 						   open state
 						   This field MUST be first */
-	unsigned int share_access;	/*< The NFSv4 Share Access state */
-	unsigned int share_deny;	/*< The NFSv4 Share Deny state */
-	unsigned int share_access_prev;	/*< Previous share access state */
-	unsigned int share_deny_prev;	/*< Previous share deny state   */
+	unsigned int share_access; /*< The NFSv4 Share Access state */
+	unsigned int share_deny; /*< The NFSv4 Share Deny state */
+	unsigned int share_access_prev; /*< Previous share access state */
+	unsigned int share_deny_prev; /*< Previous share deny state   */
 };
 
 /**
@@ -338,10 +336,10 @@ extern char all_ones[OTHERSIZE];
  */
 
 struct state_lock {
-	struct glist_head state_locklist;	/*< List of locks owned by
+	struct glist_head state_locklist; /*< List of locks owned by
 						   this stateid
 						   This field MUST be first */
-	struct glist_head state_sharelist;	/*< List of states related
+	struct glist_head state_sharelist; /*< List of states related
 						   to a share */
 	char openstate_key[OTHERSIZE]; /*< The hash key of related open-state */
 };
@@ -351,11 +349,11 @@ struct state_lock {
  */
 
 struct state_9p_fid {
-	struct glist_head state_locklist;	/*< List of locks owned by
+	struct glist_head state_locklist; /*< List of locks owned by
 						   this fid
 						   This field MUST be first */
-	unsigned int share_access;	/*< The 9p Access state */
-	unsigned int share_deny;	/*< Will always be 0 */
+	unsigned int share_access; /*< The 9p Access state */
+	unsigned int share_deny; /*< Will always be 0 */
 };
 
 /**
@@ -364,9 +362,9 @@ struct state_9p_fid {
 
 /* @brief Per client, per file stats */
 struct cf_deleg_stats {
-	time_t cfd_rs_time;                   /* time when the client responded
+	time_t cfd_rs_time; /* time when the client responded
 						 NFS4_OK for a recall. */
-	time_t cfd_r_time;               /* time of the recall attempt */
+	time_t cfd_r_time; /* time of the recall attempt */
 };
 
 /**
@@ -375,8 +373,8 @@ struct cf_deleg_stats {
  * Different states a delegation can be in during its lifetime
  */
 enum deleg_state {
-	DELEG_GRANTED =  1,	/* Granted               */
-	DELEG_RECALL_WIP,	/* Recall in progress    */
+	DELEG_GRANTED = 1, /* Granted               */
+	DELEG_RECALL_WIP, /* Recall in progress    */
 };
 
 /**
@@ -386,9 +384,9 @@ enum deleg_state {
 struct state_deleg {
 	open_delegation_type4 sd_type;
 	enum deleg_state sd_state;
-	struct cf_deleg_stats sd_clfile_stats;  /* client specific */
-	uint32_t share_access;	/*< The NFSv4 Share Access state */
-	uint32_t share_deny;	/*< The NFSv4 Share Deny state */
+	struct cf_deleg_stats sd_clfile_stats; /* client specific */
+	uint32_t share_access; /*< The NFSv4 Share Access state */
+	uint32_t share_deny; /*< The NFSv4 Share Deny state */
 };
 
 /**
@@ -396,11 +394,11 @@ struct state_deleg {
  */
 
 struct state_layout {
-	struct glist_head state_segments;	/*< List of segments */
-	layouttype4 state_layout_type;	/*< The type of layout this state
+	struct glist_head state_segments; /*< List of segments */
+	layouttype4 state_layout_type; /*< The type of layout this state
 					   represents */
-	uint32_t granting;	/*< Number of LAYOUTGETs in progress */
-	bool state_return_on_close;	/*< Whether this layout should be
+	uint32_t granting; /*< Number of LAYOUTGETs in progress */
+	bool state_return_on_close; /*< Whether this layout should be
 					   returned on last close. */
 };
 
@@ -426,30 +424,30 @@ union state_data {
  *
  * The lists are protected by the st_lock
  */
-typedef void (state_free_t) (struct state_t *state);
+typedef void(state_free_t)(struct state_t *state);
 
 struct state_t {
-	struct glist_head state_list;	/**< List of states on a file */
-	struct glist_head state_owner_list;  /**< List of states for an owner */
+	struct glist_head state_list; /**< List of states on a file */
+	struct glist_head state_owner_list; /**< List of states for an owner */
 	struct glist_head state_export_list; /**< List of states on the same
 						 export */
 #ifdef DEBUG_SAL
-	struct glist_head state_list_all;    /**< Global list of all stateids */
+	struct glist_head state_list_all; /**< Global list of all stateids */
 #endif
 	pthread_mutex_t state_mutex; /**< Mutex protecting following pointers */
 	state_free_t *state_free; /**< function to free if default gsh_free
 				      doesn't work. */
 	struct gsh_export *state_export; /**< Export this entry belongs to */
 	/* Don't re-order or move these next two.  They are used for hashing */
-	state_owner_t *state_owner;	/**< State Owner related to state */
+	state_owner_t *state_owner; /**< State Owner related to state */
 	struct fsal_obj_handle *state_obj; /**< owning object */
 	union state_data state_data;
 	enum state_type state_type;
-	u_int32_t state_seqid;		/**< The NFSv4 Sequence id */
-	int32_t state_refcount;		/**< Refcount for state_t objects */
-	char stateid_other[OTHERSIZE];	/**< "Other" part of state id,
+	u_int32_t state_seqid; /**< The NFSv4 Sequence id */
+	int32_t state_refcount; /**< Refcount for state_t objects */
+	char stateid_other[OTHERSIZE]; /**< "Other" part of state id,
 					   used as hash key */
-	struct state_refer state_refer;	/**< For NFSv4.1, track the
+	struct state_refer state_refer; /**< For NFSv4.1, track the
 					   call that created a
 					   state. */
 };
@@ -463,13 +461,13 @@ static inline void free_state(struct state_t *state)
 }
 
 /* Macros to compare and copy state_t to a struct stateid4 */
-#define SAME_STATEID(id4, state) \
+#define SAME_STATEID(id4, state)                 \
 	((id4)->seqid == (state)->state_seqid && \
-	memcmp((id4)->other, (state)->stateid_other, OTHERSIZE) == 0)
+	 memcmp((id4)->other, (state)->stateid_other, OTHERSIZE) == 0)
 
-#define COPY_STATEID(id4, state) \
-	do { \
-		(id4)->seqid = (state)->state_seqid; \
+#define COPY_STATEID(id4, state)                                               \
+	do {                                                                   \
+		(id4)->seqid = (state)->state_seqid;                           \
 		(void)memcpy((id4)->other, (state)->stateid_other, OTHERSIZE); \
 	} while (0)
 
@@ -479,7 +477,7 @@ static inline void free_state(struct state_t *state)
  *
  *****************************************************************************/
 
-typedef void (state_owner_init_t) (state_owner_t *powner);
+typedef void(state_owner_init_t)(state_owner_t *powner);
 
 extern hash_table_t *ht_nlm_owner;
 #ifdef _USE_9P
@@ -511,16 +509,16 @@ typedef struct state_nfs4_owner_name_t {
  */
 
 typedef enum state_owner_type_t {
-	STATE_LOCK_OWNER_UNKNOWN,	/*< Unknown */
+	STATE_LOCK_OWNER_UNKNOWN, /*< Unknown */
 #ifdef _USE_NLM
-	STATE_LOCK_OWNER_NLM,	/*< An NLM client */
+	STATE_LOCK_OWNER_NLM, /*< An NLM client */
 #endif /* _USE_NLM */
 #ifdef _USE_9P
-	STATE_LOCK_OWNER_9P,	/*< A 9P client */
+	STATE_LOCK_OWNER_9P, /*< A 9P client */
 #endif
-	STATE_OPEN_OWNER_NFSV4,	/*< An NFSv4 owner of an open */
-	STATE_LOCK_OWNER_NFSV4,	/*< An NFSv4 owner of a set of locks */
-	STATE_CLIENTID_OWNER_NFSV4	/*< An NFSv4 client, owns all
+	STATE_OPEN_OWNER_NFSV4, /*< An NFSv4 owner of an open */
+	STATE_LOCK_OWNER_NFSV4, /*< An NFSv4 owner of a set of locks */
+	STATE_CLIENTID_OWNER_NFSV4 /*< An NFSv4 client, owns all
 					   states but opens and locks. */
 } state_owner_type_t;
 
@@ -529,12 +527,12 @@ typedef enum state_owner_type_t {
  */
 
 typedef enum care_t {
-	CARE_NOT,		/*< Do not care about client's status */
-	CARE_OWNER,             /*< Don't care about nsm state but do need an
+	CARE_NOT, /*< Do not care about client's status */
+	CARE_OWNER, /*< Don't care about nsm state but do need an
 				    owner. */
-	CARE_ALWAYS,		/*< Always care about client's status */
-	CARE_NO_MONITOR,	/*< Care, but will not actively monitor */
-	CARE_MONITOR		/*< Will actively monitor client status */
+	CARE_ALWAYS, /*< Always care about client's status */
+	CARE_NO_MONITOR, /*< Care, but will not actively monitor */
+	CARE_MONITOR /*< Will actively monitor client status */
 } care_t;
 
 #ifdef _USE_NLM
@@ -553,7 +551,6 @@ extern pthread_mutex_t all_state_owners_mutex;
 extern pthread_mutex_t all_state_v4_mutex;
 #endif
 
-
 /**
  * @brief NSM (rpc.statd) state for a given client.
  *
@@ -568,17 +565,17 @@ extern pthread_mutex_t all_state_v4_mutex;
  */
 
 typedef struct state_nsm_client_t {
-	pthread_mutex_t ssc_mutex;	/*< Mutex protecting this
+	pthread_mutex_t ssc_mutex; /*< Mutex protecting this
 					   structure */
-	struct glist_head ssc_lock_list;	/*< All locks held by client */
-	struct glist_head ssc_share_list;	/*< All share reservations */
-	struct gsh_client *ssc_client;		/*< The client involved */
-	int32_t ssc_refcount;	/*< Reference count to protect
+	struct glist_head ssc_lock_list; /*< All locks held by client */
+	struct glist_head ssc_share_list; /*< All share reservations */
+	struct gsh_client *ssc_client; /*< The client involved */
+	int32_t ssc_refcount; /*< Reference count to protect
 				   structure */
-	int32_t ssc_monitored;	/*< If this client is actively
+	int32_t ssc_monitored; /*< If this client is actively
 				   monitored */
-	int32_t ssc_nlm_caller_name_len;	/*< Length of identifier */
-	char *ssc_nlm_caller_name;	/*< Client identifier */
+	int32_t ssc_nlm_caller_name_len; /*< Length of identifier */
+	char *ssc_nlm_caller_name; /*< Client identifier */
 } state_nsm_client_t;
 
 /**
@@ -586,16 +583,16 @@ typedef struct state_nsm_client_t {
  */
 
 struct state_nlm_client_t {
-	state_nsm_client_t *slc_nsm_client;	/*< Related NSM client */
-	xprt_type_t slc_client_type;	/*< The transport type to this
+	state_nsm_client_t *slc_nsm_client; /*< Related NSM client */
+	xprt_type_t slc_client_type; /*< The transport type to this
 					   client */
-	int32_t slc_refcount;	/*< Reference count for disposal */
+	int32_t slc_refcount; /*< Reference count for disposal */
 	sockaddr_t slc_server_addr; /*< local addr when request is
 						     made */
-	int32_t slc_nlm_caller_name_len;	/*< Length of client name */
-	char *slc_nlm_caller_name;	/*< Client name */
-	CLIENT *slc_callback_clnt;	/*< Callback for blocking locks */
-	AUTH *slc_callback_auth;	/*< Authentication for callback */
+	int32_t slc_nlm_caller_name_len; /*< Length of client name */
+	char *slc_nlm_caller_name; /*< Client name */
+	CLIENT *slc_callback_clnt; /*< Callback for blocking locks */
+	AUTH *slc_callback_auth; /*< Authentication for callback */
 };
 
 /**
@@ -603,9 +600,9 @@ struct state_nlm_client_t {
  */
 
 typedef struct state_nlm_owner_t {
-	state_nlm_client_t *so_client;	/*< Structure for this client */
-	int32_t so_nlm_svid;	/*< Owner within client */
-	struct glist_head so_nlm_shares;	/*< Share reservations */
+	state_nlm_client_t *so_client; /*< Structure for this client */
+	int32_t so_nlm_svid; /*< Owner within client */
+	struct glist_head so_nlm_shares; /*< Share reservations */
 } state_nlm_owner_t;
 
 /**
@@ -614,10 +611,10 @@ typedef struct state_nlm_owner_t {
 
 #ifdef _USE_9P
 typedef struct state_9p_owner_t {
-	u32 proc_id;		/*< PID on the client */
-	sockaddr_t client_addr;	/*< Network address of client */
+	u32 proc_id; /*< PID on the client */
+	sockaddr_t client_addr; /*< Network address of client */
 } state_9p_owner_t;
-#endif				/* _USE_9P */
+#endif /* _USE_9P */
 
 /**
  * @brief Share and lock operations for NFSv4.0
@@ -628,14 +625,14 @@ typedef struct state_9p_owner_t {
  */
 
 struct nfs_argop4_state {
-	nfs_opnum4 argop;	/*< Operation being saved */
+	nfs_opnum4 argop; /*< Operation being saved */
 	union {
-		CLOSE4args opclose;	/*< CLOSE */
-		LOCK4args oplock;	/*< LOCK */
-		LOCKU4args oplocku;	/*< LOCKU */
-		OPEN4args opopen;	/*< OPEN */
-		OPEN_CONFIRM4args opopen_confirm;	/*< OPEN_CONFIRM */
-		OPEN_DOWNGRADE4args opopen_downgrade;	/*< OPEN_DOWNGRADE */
+		CLOSE4args opclose; /*< CLOSE */
+		LOCK4args oplock; /*< LOCK */
+		LOCKU4args oplocku; /*< LOCKU */
+		OPEN4args opopen; /*< OPEN */
+		OPEN_CONFIRM4args opopen_confirm; /*< OPEN_CONFIRM */
+		OPEN_DOWNGRADE4args opopen_downgrade; /*< OPEN_DOWNGRADE */
 	} nfs_argop4_u;
 };
 
@@ -644,13 +641,13 @@ struct nfs_argop4_state {
  */
 
 struct state_nfs4_owner_t {
-	clientid4 so_clientid;	/*< Owning clientid */
-	nfs_client_id_t *so_clientrec;	/*< Owning client id record */
-	bool so_confirmed;	/*< Confirmation (NFSv4.0 only) */
-	seqid4 so_seqid;	/*< Seqid for serialization of operations on
+	clientid4 so_clientid; /*< Owning clientid */
+	nfs_client_id_t *so_clientrec; /*< Owning client id record */
+	bool so_confirmed; /*< Confirmation (NFSv4.0 only) */
+	seqid4 so_seqid; /*< Seqid for serialization of operations on
 				   owner (NFSv4.0 only) */
-	nfs_argop4_state so_args;	/*< Saved args */
-	void *so_last_entry;	/*< Last file operated on by this state owner
+	nfs_argop4_state so_args; /*< Saved args */
+	void *so_last_entry; /*< Last file operated on by this state owner
 				 *  we don't keep a reference so this is a
 				 *  void * to prevent it's dereferencing because
 				 *  the pointer might become invalid if cache
@@ -658,8 +655,8 @@ struct state_nfs4_owner_t {
 				 *  for the purposes of detecting replayed
 				 *  operations.
 				 */
-	nfs_resop4 so_resp;	/*< Saved response */
-	state_owner_t *so_related_owner;	/*< For lock-owners, the
+	nfs_resop4 so_resp; /*< Saved response */
+	state_owner_t *so_related_owner; /*< For lock-owners, the
 						   open-owner under which
 						   the lock owner was
 						   created */
@@ -667,7 +664,7 @@ struct state_nfs4_owner_t {
 					   states owned by this owner.
 					   so_mutex MUST be held when
 					   accessing this field. */
-	struct glist_head so_perclient;  /*< open owner entry to be
+	struct glist_head so_perclient; /*< open owner entry to be
 					   linked to client */
 	struct glist_head so_cache_entry; /*< Entry on cached_open_owners */
 	time_t so_cache_expire; /* time cached OPEN owner will expire.  If
@@ -685,21 +682,21 @@ struct state_nfs4_owner_t {
  */
 
 struct state_owner_t {
-	state_owner_type_t so_type;	/*< Owner type */
-	struct glist_head so_lock_list;	/*< Locks for this owner */
+	state_owner_type_t so_type; /*< Owner type */
+	struct glist_head so_lock_list; /*< Locks for this owner */
 #ifdef DEBUG_SAL
 	struct glist_head so_all_owners; /**< Global list of all state owners */
-#endif				/* _DEBUG_MEMLEAKS */
-	pthread_mutex_t so_mutex;	/*< Mutex on this owner */
-	int32_t so_refcount;	/*< Reference count for lifecyce management */
-	int so_owner_len;	/*< Length of owner name */
-	char *so_owner_val;	/*< Owner name */
+#endif /* _DEBUG_MEMLEAKS */
+	pthread_mutex_t so_mutex; /*< Mutex on this owner */
+	int32_t so_refcount; /*< Reference count for lifecyce management */
+	int so_owner_len; /*< Length of owner name */
+	char *so_owner_val; /*< Owner name */
 	union {
 		state_nfs4_owner_t so_nfs4_owner; /*< All NFSv4 state owners */
-		state_nlm_owner_t so_nlm_owner;	/*< NLM lock and share
+		state_nlm_owner_t so_nlm_owner; /*< NLM lock and share
 						   owners */
 #ifdef _USE_9P
-		state_9p_owner_t so_9p_owner;	/*< 9P lock owners */
+		state_9p_owner_t so_9p_owner; /*< 9P lock owners */
 #endif
 	} so_owner;
 };
@@ -735,11 +732,11 @@ typedef enum nfs_clientid_confirm_state__ {
  */
 
 typedef enum clientid_status {
-	CLIENT_ID_SUCCESS = 0,	/*< Success */
-	CLIENT_ID_INSERT_MALLOC_ERROR,	/*< Unable to allocate memory */
-	CLIENT_ID_INVALID_ARGUMENT,	/*< Invalid argument */
-	CLIENT_ID_EXPIRED,	/*< requested client id expired */
-	CLIENT_ID_STALE		/*< requested client id stale */
+	CLIENT_ID_SUCCESS = 0, /*< Success */
+	CLIENT_ID_INSERT_MALLOC_ERROR, /*< Unable to allocate memory */
+	CLIENT_ID_INVALID_ARGUMENT, /*< Invalid argument */
+	CLIENT_ID_EXPIRED, /*< requested client id expired */
+	CLIENT_ID_STALE /*< requested client id stale */
 } clientid_status_t;
 
 /**
@@ -749,20 +746,20 @@ typedef enum clientid_status {
  */
 
 struct nfs_client_id_t {
-	clientid4 cid_clientid;	/*< The clientid */
-	verifier4 cid_verifier;	/*< Known verifier */
+	clientid4 cid_clientid; /*< The clientid */
+	verifier4 cid_verifier; /*< Known verifier */
 	verifier4 cid_incoming_verifier; /*< Most recently supplied verifier */
-	time_t cid_last_renew;	/*< Time of last renewal */
+	time_t cid_last_renew; /*< Time of last renewal */
 	nfs_clientid_confirm_state_t cid_confirmed; /*< Confirm/expire state */
-	bool cid_allow_reclaim;	/*< Can still reclaim state? */
-	nfs_client_cred_t cid_credential;	/*< Client credential */
-	char *cid_recov_tag;	/*< Recovery tag */
-	nfs_client_record_t *cid_client_record;	/*< Record for managing
+	bool cid_allow_reclaim; /*< Can still reclaim state? */
+	nfs_client_cred_t cid_credential; /*< Client credential */
+	char *cid_recov_tag; /*< Recovery tag */
+	nfs_client_record_t *cid_client_record; /*< Record for managing
 						   confirmation and
 						   replacement */
-	struct glist_head cid_openowners;	/*< All open owners */
-	struct glist_head cid_lockowners;	/*< All lock owners */
-	pthread_mutex_t cid_mutex;	/*< Mutex for this client */
+	struct glist_head cid_openowners; /*< All open owners */
+	struct glist_head cid_lockowners; /*< All lock owners */
+	pthread_mutex_t cid_mutex; /*< Mutex for this client */
 	union {
 		struct {
 			/** Callback channel */
@@ -775,36 +772,36 @@ struct nfs_client_id_t {
 			char cb_client_r_addr[SOCK_NAME_MAX];
 			/** Callback program */
 			uint32_t cb_program;
-			bool cb_chan_down;    /* Callback channel state */
-		} v40;		/*< v4.0 callback information */
+			bool cb_chan_down; /* Callback channel state */
+		} v40; /*< v4.0 callback information */
 		struct {
 			bool cid_reclaim_complete; /*< reclaim complete
 						       indication */
 			/** All sessions */
 			struct glist_head cb_session_list;
-		} v41;		/*< v4.1 callback information */
-	} cid_cb;		/*< Version specific callback information */
-	time_t first_path_down_resp_time;  /* Time when the server first sent
+		} v41; /*< v4.1 callback information */
+	} cid_cb; /*< Version specific callback information */
+	time_t first_path_down_resp_time; /* Time when the server first sent
 					       NFS4ERR_CB_PATH_DOWN */
 	/* Since Ganesha only supports SP4_NONE, we do not store state
 	 * protection data required for other state protection mechanisms
 	 */
 	state_protect_how4 cid_state_protect_how; /* State protection type */
-	unsigned int cid_nb_session;	/*< Number of sessions stored */
-	uint32_t cid_create_session_sequence;	/*< Sequence number for session
+	unsigned int cid_nb_session; /*< Number of sessions stored */
+	uint32_t cid_create_session_sequence; /*< Sequence number for session
 						   creation. */
 	CREATE_SESSION4res cid_create_session_slot; /*< Cached response to
 							  last CREATE_SESSION */
-	state_owner_t cid_owner;	/*< Owner for per-client state */
-	int32_t cid_refcount;	/*< Reference count for lifecycle */
-	int cid_lease_reservations;	/*< Counted lease reservations, to spare
+	state_owner_t cid_owner; /*< Owner for per-client state */
+	int32_t cid_refcount; /*< Reference count for lifecycle */
+	int cid_lease_reservations; /*< Counted lease reservations, to spare
 					   this clientid from the reaper */
 	uint32_t cid_minorversion;
 	uint32_t cid_stateid_counter;
 
 	uint32_t curr_deleg_grants; /* current num of delegations owned by
 				       this client */
-	uint32_t num_revokes;       /* Num revokes for the client */
+	uint32_t num_revokes; /* Num revokes for the client */
 	struct gsh_client *gsh_client; /* for client specific statistics. */
 	uint32_t cid_open_state_counter; /* Num of files opened by client */
 	struct glist_head expired_client; /* List entry for expired clients */
@@ -821,24 +818,24 @@ struct nfs_client_id_t {
  */
 
 struct nfs_client_record_t {
-	int32_t cr_refcount;	/*< Reference count for lifecycle */
-	pthread_mutex_t cr_mutex;	/*< Mutex protecting this structure */
+	int32_t cr_refcount; /*< Reference count for lifecycle */
+	pthread_mutex_t cr_mutex; /*< Mutex protecting this structure */
 	nfs_client_id_t *cr_confirmed_rec; /*< The confirmed record associated
 					       with this owner (if there is
 					       one.) */
-	nfs_client_id_t *cr_unconfirmed_rec;	/*< The unconfirmed record
+	nfs_client_id_t *cr_unconfirmed_rec; /*< The unconfirmed record
 						   associated with this
 						   client name, if there is
 						   one. */
 	uint32_t cr_server_addr; /*< Server IP address the client connected to
 				  */
-	uint32_t cr_pnfs_flags;  /*< pNFS flags.  RFC 5661 allows us
+	uint32_t cr_pnfs_flags; /*< pNFS flags.  RFC 5661 allows us
 				     to treat identical co_owners with
 				     different pNFS flags as
 				     disjoint. Linux client stupidity
 				     forces us to do so. */
-	int cr_client_val_len;  /*< Length of owner */
-	char cr_client_val[];   /*< Supplied co_owner */
+	int cr_client_val_len; /*< Length of owner */
+	char cr_client_val[]; /*< Supplied co_owner */
 };
 
 extern pool_t *client_id_pool;
@@ -868,12 +865,7 @@ typedef enum state_blocking_t {
  * @brief Lock protocol type
  */
 
-typedef enum lock_protocol_t {
-	LOCK_NLM,
-	LOCK_NFSv4,
-	LOCK_9P
-} lock_protocol_t;
-
+typedef enum lock_protocol_t { LOCK_NLM, LOCK_NFSv4, LOCK_9P } lock_protocol_t;
 
 /**
  * @brief Grant callback
@@ -881,7 +873,7 @@ typedef enum lock_protocol_t {
  * The granted call back is responsible for acquiring a reference to
  * the lock entry if needed.
  */
-typedef state_status_t(*granted_callback_t) (struct fsal_obj_handle *obj,
+typedef state_status_t (*granted_callback_t)(struct fsal_obj_handle *obj,
 					     state_lock_entry_t *lock_entry);
 
 /**
@@ -889,8 +881,8 @@ typedef state_status_t(*granted_callback_t) (struct fsal_obj_handle *obj,
  */
 
 typedef struct state_nlm_block_data_t {
-	netobj sbd_nlm_fh;	/*< Filehandle */
-	char sbd_nlm_fh_buf[NFS3_FHSIZE];	/*< Statically allocated
+	netobj sbd_nlm_fh; /*< Filehandle */
+	char sbd_nlm_fh_buf[NFS3_FHSIZE]; /*< Statically allocated
 						   FH buffer */
 } state_nlm_block_data_t;
 
@@ -909,11 +901,11 @@ extern struct glist_head state_blocked_locks;
  * @brief Grant types
  */
 typedef enum state_grant_type_t {
-	STATE_GRANT_NONE,	/*< No grant */
-	STATE_GRANT_INTERNAL,	/*< Grant generated by SAL */
-	STATE_GRANT_FSAL,	/*< FSAL granting lock */
-	STATE_GRANT_FSAL_AVAILABLE,	/*< FSAL signalling lock availability */
-	STATE_GRANT_POLL,		/*< Poll this lock */
+	STATE_GRANT_NONE, /*< No grant */
+	STATE_GRANT_INTERNAL, /*< Grant generated by SAL */
+	STATE_GRANT_FSAL, /*< FSAL granting lock */
+	STATE_GRANT_FSAL_AVAILABLE, /*< FSAL signalling lock availability */
+	STATE_GRANT_POLL, /*< Poll this lock */
 } state_grant_type_t;
 
 typedef enum state_block_type_t {
@@ -931,12 +923,12 @@ typedef enum state_block_type_t {
  * @brief Blocking lock data
  */
 struct state_block_data_t {
-	struct glist_head sbd_list;	/*< Lost of blocking locks */
-	state_grant_type_t sbd_grant_type;	/*< Type of grant */
-	state_block_type_t sbd_block_type;	/*< Type of block */
+	struct glist_head sbd_list; /*< Lost of blocking locks */
+	state_grant_type_t sbd_grant_type; /*< Type of grant */
+	state_block_type_t sbd_block_type; /*< Type of block */
 	granted_callback_t sbd_granted_callback; /*< Callback for grant */
 	state_cookie_entry_t *sbd_blocked_cookie; /*< Blocking lock cookie */
-	state_lock_entry_t *sbd_lock_entry;	/*< Details of lock */
+	state_lock_entry_t *sbd_lock_entry; /*< Details of lock */
 	union {
 		state_nlm_block_data_t sbd_nlm; /*< NLM block data */
 		state_nfsv4_block_data_t sbd_v4; /*< NFSv4 block data */
@@ -944,25 +936,25 @@ struct state_block_data_t {
 };
 
 struct state_lock_entry_t {
-	struct glist_head sle_list;	/*< Locks on this file */
+	struct glist_head sle_list; /*< Locks on this file */
 	struct glist_head sle_owner_locks; /*< Link on the owner lock list */
-	struct glist_head sle_client_locks;	/*< Locks on this client */
-	struct glist_head sle_state_locks;	/*< Locks on this state */
+	struct glist_head sle_client_locks; /*< Locks on this client */
+	struct glist_head sle_state_locks; /*< Locks on this state */
 #ifdef DEBUG_SAL
 	struct glist_head sle_all_locks; /*< Link on the global lock list */
-#endif				/* DEBUG_SAL */
-	struct glist_head sle_export_locks;	/*< Link on the export
+#endif /* DEBUG_SAL */
+	struct glist_head sle_export_locks; /*< Link on the export
 						   lock list */
 	struct gsh_export *sle_export;
-	struct fsal_obj_handle *sle_obj;	/*< File being locked */
-	state_block_data_t *sle_block_data;	/*< Blocking lock data */
-	state_owner_t *sle_owner;	/* Lock owner */
-	state_t *sle_state;	/*< Associated lock state */
-	state_blocking_t sle_blocked;	/*< Blocking status */
+	struct fsal_obj_handle *sle_obj; /*< File being locked */
+	state_block_data_t *sle_block_data; /*< Blocking lock data */
+	state_owner_t *sle_owner; /* Lock owner */
+	state_t *sle_state; /*< Associated lock state */
+	state_blocking_t sle_blocked; /*< Blocking status */
 	lock_protocol_t sle_protocol; /*< Protocol type */
-	int32_t sle_ref_count;	/*< Reference count */
-	fsal_lock_param_t sle_lock;	/*< Lock description */
-	pthread_mutex_t sle_mutex;	/*< Mutex to protect the structure */
+	int32_t sle_ref_count; /*< Reference count */
+	fsal_lock_param_t sle_lock; /*< Lock description */
+	pthread_mutex_t sle_mutex; /*< Mutex to protect the structure */
 };
 
 /**
@@ -970,15 +962,15 @@ struct state_lock_entry_t {
  */
 
 struct file_deleg_stats {
-	uint32_t fds_curr_delegations;    /* number of delegations on file */
+	uint32_t fds_curr_delegations; /* number of delegations on file */
 	open_delegation_type4 fds_deleg_type; /* delegation type */
-	uint32_t fds_delegation_count;  /* times file has been delegated */
-	uint32_t fds_recall_count;      /* times file has been recalled */
-	time_t fds_avg_hold;            /* avg amount of time deleg held */
+	uint32_t fds_delegation_count; /* times file has been delegated */
+	uint32_t fds_recall_count; /* times file has been recalled */
+	time_t fds_avg_hold; /* avg amount of time deleg held */
 	time_t fds_last_delegation;
 	time_t fds_last_recall;
-	uint32_t fds_num_opens;         /* total num of opens so far. */
-	time_t fds_first_open;          /* time that we started recording
+	uint32_t fds_num_opens; /* total num of opens so far. */
+	time_t fds_first_open; /* time that we started recording
 					   num_opens */
 	uint32_t fds_num_write_opens; /* total num of opens in write mode
 					   incremented irrespective of
@@ -1001,7 +993,7 @@ struct cbgetattr_rsp {
 	uint64_t filesize;
 	bool modified;
 };
-typedef struct cbgetattr_rsp  cbgetattr_t;
+typedef struct cbgetattr_rsp cbgetattr_t;
 
 /**
  * @brief Per-file state lists
@@ -1027,7 +1019,7 @@ struct state_file {
 	struct file_deleg_stats fdeleg_stats;
 	/* cbgetattr stats. Protected by st_lock */
 	cbgetattr_t cbgetattr;
-	uint32_t anon_ops;   /* number of anonymous operations
+	uint32_t anon_ops; /* number of anonymous operations
 			      * happening at the moment which
 			      * prevents delegations from being
 			      * granted */
@@ -1092,25 +1084,25 @@ struct state_hdl {
 	bool no_cleanup;
 	union {
 		/** Details about the state held for a regular file. */
-		struct state_file	file;
+		struct state_file file;
 		/** Details about an export junction. */
-		struct state_dir	dir;
+		struct state_dir dir;
 	};
 };
 
-#define JCT_PSEUDOPATH(shdl) (shdl->dir.jct_pseudopath ? \
-	shdl->dir.jct_pseudopath->gr_val : NULL)
+#define JCT_PSEUDOPATH(shdl) \
+	(shdl->dir.jct_pseudopath ? shdl->dir.jct_pseudopath->gr_val : NULL)
 
 /**
  * @brief Description of a layout segment
  */
 
 typedef struct state_layout_segment {
-	struct glist_head sls_state_segments;	/*< Link on the per-layout-state
+	struct glist_head sls_state_segments; /*< Link on the per-layout-state
 						   segment list */
-	state_t *sls_state;	/*< Associated layout state */
-	struct pnfs_segment sls_segment;	/*< Segment descriptor */
-	void *sls_fsal_data;	/*< FSAL data */
+	state_t *sls_state; /*< Associated layout state */
+	struct pnfs_segment sls_segment; /*< Segment descriptor */
+	void *sls_fsal_data; /*< FSAL data */
 } state_layout_segment_t;
 
 /**
@@ -1121,9 +1113,9 @@ typedef struct state_layout_segment {
  */
 
 struct recall_state_list {
-	struct glist_head link;	/*< Link to the next layout state in the
+	struct glist_head link; /*< Link to the next layout state in the
 				   queue */
-	state_t *state;		/*< State on which to recall */
+	state_t *state; /*< State on which to recall */
 };
 
 /**
@@ -1131,13 +1123,13 @@ struct recall_state_list {
  */
 
 struct state_layout_recall_file {
-	struct glist_head entry_link;	/*< List of recalls on a file */
-	struct fsal_obj_handle *obj;	/*< Related file */
-	layouttype4 type;	/*< Type of layout being recalled */
-	struct pnfs_segment segment;	/*< Segment to recall */
-	struct glist_head state_list;	/*< List of states affected by this
+	struct glist_head entry_link; /*< List of recalls on a file */
+	struct fsal_obj_handle *obj; /*< Related file */
+	layouttype4 type; /*< Type of layout being recalled */
+	struct pnfs_segment segment; /*< Segment to recall */
+	struct glist_head state_list; /*< List of states affected by this
 					   layout */
-	void *recall_cookie;	/*< Cookie returned to FSAL on return of last
+	void *recall_cookie; /*< Cookie returned to FSAL on return of last
 				   segment satisfying the layout */
 };
 
@@ -1177,10 +1169,10 @@ struct state_layout_recall_file {
  */
 
 struct state_cookie_entry_t {
-	struct fsal_obj_handle *sce_obj;	/*< Associated file */
-	state_lock_entry_t *sce_lock_entry;	/*< Associated lock */
-	void *sce_cookie;	/*< Cookie data */
-	int sce_cookie_size;	/*< Length of cookie */
+	struct fsal_obj_handle *sce_obj; /*< Associated file */
+	state_lock_entry_t *sce_lock_entry; /*< Associated lock */
+	void *sce_cookie; /*< Cookie data */
+	int sce_cookie_size; /*< Length of cookie */
 };
 
 /*
@@ -1191,17 +1183,17 @@ struct state_cookie_entry_t {
 /**
  * @brief Asynchronous state function
  */
-typedef void (state_async_func_t) (state_async_queue_t *arg);
+typedef void(state_async_func_t)(state_async_queue_t *arg);
 
 /**
  * @brief Data for asynchronous NLM calls
  */
 typedef struct state_nlm_async_data_t {
-	state_nlm_client_t *nlm_async_host;	/*< The client */
-	void *nlm_async_key;	/*< Identifying key */
+	state_nlm_client_t *nlm_async_host; /*< The client */
+	void *nlm_async_key; /*< Identifying key */
 	union {
-		nfs_res_t nlm_async_res;	/*< Asynchronous response */
-		nlm4_testargs nlm_async_grant;	/*< Arguments for grant */
+		nfs_res_t nlm_async_res; /*< Asynchronous response */
+		nlm4_testargs nlm_async_grant; /*< Arguments for grant */
 	} nlm_async_args;
 } state_nlm_async_data_t;
 
@@ -1210,7 +1202,7 @@ typedef struct state_nlm_async_data_t {
  */
 
 typedef struct state_async_block_data_t {
-	state_lock_entry_t *state_async_lock_entry;	/*< Associated lock */
+	state_lock_entry_t *state_async_lock_entry; /*< Associated lock */
 } state_async_block_data_t;
 
 /**
@@ -1218,12 +1210,12 @@ typedef struct state_async_block_data_t {
  */
 
 struct state_async_queue_t {
-	struct glist_head state_async_glist;	/*< List of events */
-	state_async_func_t *state_async_func;	/*< Processing function */
+	struct glist_head state_async_glist; /*< List of events */
+	state_async_func_t *state_async_func; /*< Processing function */
 	union {
-		state_nlm_async_data_t state_nlm_async_data;	/*< Data for
+		state_nlm_async_data_t state_nlm_async_data; /*< Data for
 								   operation */
-		void *state_no_data;	/*< Dummy pointer */
+		void *state_no_data; /*< Dummy pointer */
 	} state_async_data;
 };
 
@@ -1235,30 +1227,35 @@ struct state_async_queue_t {
  *       of thing.)
  */
 
-#define EVENT_JUST_GRACE     0	/* Just start grace period */
-#define EVENT_CLEAR_BLOCKED  1	/* Start grace period, and clear blocked locks
+#define EVENT_JUST_GRACE 0 /* Just start grace period */
+#define EVENT_CLEAR_BLOCKED \
+	1 /* Start grace period, and clear blocked locks
 				 */
-#define EVENT_RELEASE_IP     2	/* Start grace period, clear blocked locks,
+#define EVENT_RELEASE_IP \
+	2 /* Start grace period, clear blocked locks,
 				   and release all locks */
-#define EVENT_UPDATE_CLIENTS 3	/* Start grace period, clear blocked locks,
+#define EVENT_UPDATE_CLIENTS \
+	3 /* Start grace period, clear blocked locks,
 				   release all locks, and update clients list.
 				 */
-#define EVENT_TAKE_NODEID    4	/* Start grace period, clear blocked locks,
+#define EVENT_TAKE_NODEID \
+	4 /* Start grace period, clear blocked locks,
 				   release all locks, and update clients using
 				   node id. */
-#define EVENT_TAKE_IP        5	/* Start grace period, clear blocked locks,
+#define EVENT_TAKE_IP \
+	5 /* Start grace period, clear blocked locks,
 				   release all locks, and update clients using
 				   IP address. */
 
 typedef struct nfs_grace_start {
-	int event;		/*< Reason for grace period, see EVENT_nnn */
-	int nodeid;		/*< Node from which we are taking over */
-	char *ipaddr;		/*< IP of failed node */
+	int event; /*< Reason for grace period, see EVENT_nnn */
+	int nodeid; /*< Node from which we are taking over */
+	char *ipaddr; /*< IP of failed node */
 } nfs_grace_start_t;
 
 /* Memory pools */
 
-extern pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
+extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
 
 extern int g_total_num_files_delegated;
 extern int g_max_files_delegatable;
@@ -1268,5 +1265,5 @@ extern struct glist_head state_v4_all;
 extern struct glist_head state_owners_all;
 #endif
 
-#endif				/* SAL_DATA_H */
+#endif /* SAL_DATA_H */
 /** @} */

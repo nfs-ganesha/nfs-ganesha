@@ -12,29 +12,26 @@
 
 bool xdr_mountstat3(XDR *xdrs, mountstat3 *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
-	if (!inline_xdr_enum(xdrs, (enum_t *) objp))
+	if (!inline_xdr_enum(xdrs, (enum_t *)objp))
 		return (false);
 	return (true);
 }
 
 bool xdr_fhandle3(XDR *xdrs, fhandle3 *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
-	if (!inline_xdr_bytes
-	    (xdrs, (char **)&objp->fhandle3_val, (u_int *) & objp->fhandle3_len,
-	     NFS3_FHSIZE))
+	if (!inline_xdr_bytes(xdrs, (char **)&objp->fhandle3_val,
+			      (u_int *)&objp->fhandle3_len, NFS3_FHSIZE))
 		return (false);
 
 	return (true);
@@ -42,11 +39,10 @@ bool xdr_fhandle3(XDR *xdrs, fhandle3 *objp)
 
 bool xdr_dirpath(XDR *xdrs, mnt3_dirpath *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
 	if (!inline_xdr_string(xdrs, objp, MNTPATHLEN))
@@ -56,11 +52,10 @@ bool xdr_dirpath(XDR *xdrs, mnt3_dirpath *objp)
 
 bool xdr_name(XDR *xdrs, mnt3_name *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
 	if (!inline_xdr_string(xdrs, objp, MNTNAMLEN))
@@ -70,11 +65,10 @@ bool xdr_name(XDR *xdrs, mnt3_name *objp)
 
 bool xdr_groupnode_x(XDR *xdrs, groupnode *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
 	if (!xdr_name(xdrs, &objp->gr_name))
@@ -90,8 +84,8 @@ bool xdr_groups(XDR *xdrs, struct groupnode **objp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	int freeing;
-	struct groupnode **next = NULL;	/* pacify gcc */
-	bool_t more_elements = false;	/* yes, bool_t */
+	struct groupnode **next = NULL; /* pacify gcc */
+	bool_t more_elements = false; /* yes, bool_t */
 
 	assert(xdrs != NULL);
 	assert(objp != NULL);
@@ -99,11 +93,11 @@ bool xdr_groups(XDR *xdrs, struct groupnode **objp)
 	freeing = (xdrs->x_op == XDR_FREE);
 
 	for (;;) {
-		more_elements = (bool_t) (*objp != NULL);
+		more_elements = (bool_t)(*objp != NULL);
 		if (!xdr_bool(xdrs, &more_elements))
 			return (false);
 		if (!more_elements)
-			return (true);	/* we are done */
+			return (true); /* we are done */
 		/*
 		 * the unfortunate side effect of non-recursion is that in
 		 * the case of freeing we must remember the next object
@@ -111,9 +105,9 @@ bool xdr_groups(XDR *xdrs, struct groupnode **objp)
 		 */
 		if (freeing)
 			next = &((*objp)->gr_next);
-		if (!xdr_reference(xdrs, (void **) objp,
-				   (u_int) sizeof(struct groupnode),
-				   (xdrproc_t) xdr_groupnode_x))
+		if (!xdr_reference(xdrs, (void **)objp,
+				   (u_int)sizeof(struct groupnode),
+				   (xdrproc_t)xdr_groupnode_x))
 			return (false);
 		objp = (freeing) ? next : &((*objp)->gr_next);
 	}
@@ -121,11 +115,10 @@ bool xdr_groups(XDR *xdrs, struct groupnode **objp)
 
 bool xdr_exportnode_x(XDR *xdrs, exportnode *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
 	if (!xdr_dirpath(xdrs, &objp->ex_dir))
@@ -143,8 +136,8 @@ bool xdr_exports(XDR *xdrs, struct exportnode **objp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	int freeing;
-	struct exportnode **next = NULL;	/* pacify gcc */
-	bool_t more_elements = false;		/* yes, bool_t */
+	struct exportnode **next = NULL; /* pacify gcc */
+	bool_t more_elements = false; /* yes, bool_t */
 
 	assert(xdrs != NULL);
 	assert(objp != NULL);
@@ -152,11 +145,11 @@ bool xdr_exports(XDR *xdrs, struct exportnode **objp)
 	freeing = (xdrs->x_op == XDR_FREE);
 
 	for (;;) {
-		more_elements = (bool_t) (*objp != NULL);
+		more_elements = (bool_t)(*objp != NULL);
 		if (!xdr_bool(xdrs, &more_elements))
 			return (false);
 		if (!more_elements)
-			return (true);	/* we are done */
+			return (true); /* we are done */
 		/*
 		 * the unfortunate side effect of non-recursion is that in
 		 * the case of freeing we must remember the next object
@@ -164,9 +157,9 @@ bool xdr_exports(XDR *xdrs, struct exportnode **objp)
 		 */
 		if (freeing)
 			next = &((*objp)->ex_next);
-		if (!xdr_reference(xdrs, (void **) objp,
-				   (u_int) sizeof(struct exportnode),
-				   (xdrproc_t) xdr_exportnode_x))
+		if (!xdr_reference(xdrs, (void **)objp,
+				   (u_int)sizeof(struct exportnode),
+				   (xdrproc_t)xdr_exportnode_x))
 			return (false);
 		objp = (freeing) ? next : &((*objp)->ex_next);
 	}
@@ -174,11 +167,10 @@ bool xdr_exports(XDR *xdrs, struct exportnode **objp)
 
 bool xdr_mountbody_x(XDR *xdrs, mountbody *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
 	if (!xdr_name(xdrs, &objp->ml_hostname))
@@ -196,8 +188,8 @@ bool xdr_mountlist(XDR *xdrs, struct mountbody **objp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	int freeing;
-	struct mountbody **next = NULL;	/* pacify gcc */
-	bool_t more_elements = false;	/* yes, bool_t */
+	struct mountbody **next = NULL; /* pacify gcc */
+	bool_t more_elements = false; /* yes, bool_t */
 
 	assert(xdrs != NULL);
 	assert(objp != NULL);
@@ -205,11 +197,11 @@ bool xdr_mountlist(XDR *xdrs, struct mountbody **objp)
 	freeing = (xdrs->x_op == XDR_FREE);
 
 	for (;;) {
-		more_elements = (bool_t) (*objp != NULL);
+		more_elements = (bool_t)(*objp != NULL);
 		if (!xdr_bool(xdrs, &more_elements))
 			return (false);
 		if (!more_elements)
-			return (true);	/* we are done */
+			return (true); /* we are done */
 		/*
 		 * the unfortunate side effect of non-recursion is that in
 		 * the case of freeing we must remember the next object
@@ -217,9 +209,9 @@ bool xdr_mountlist(XDR *xdrs, struct mountbody **objp)
 		 */
 		if (freeing)
 			next = &((*objp)->ml_next);
-		if (!xdr_reference(xdrs, (void **) objp,
-				   (u_int) sizeof(struct mountbody),
-				   (xdrproc_t) xdr_mountbody_x))
+		if (!xdr_reference(xdrs, (void **)objp,
+				   (u_int)sizeof(struct mountbody),
+				   (xdrproc_t)xdr_mountbody_x))
 			return (false);
 		objp = (freeing) ? next : &((*objp)->ml_next);
 	}
@@ -227,30 +219,27 @@ bool xdr_mountlist(XDR *xdrs, struct mountbody **objp)
 
 bool xdr_mountres3_ok(XDR *xdrs, mountres3_ok *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
 	if (!xdr_fhandle3(xdrs, &objp->fhandle))
 		return (false);
-	if (!xdr_array
-	    (xdrs, (char **)&objp->auth_flavors.auth_flavors_val,
-	     &objp->auth_flavors.auth_flavors_len, XDR_ARRAY_MAXLEN,
-	     sizeof(int), (xdrproc_t) xdr_int))
+	if (!xdr_array(xdrs, (char **)&objp->auth_flavors.auth_flavors_val,
+		       &objp->auth_flavors.auth_flavors_len, XDR_ARRAY_MAXLEN,
+		       sizeof(int), (xdrproc_t)xdr_int))
 		return (false);
 	return (true);
 }
 
 bool xdr_mountres3(XDR *xdrs, mountres3 *objp)
 {
-
 #if defined(_LP64) || defined(_KERNEL)
-	register int __attribute__ ((__unused__)) * buf;
+	register int __attribute__((__unused__)) * buf;
 #else
-	register long __attribute__ ((__unused__)) * buf;
+	register long __attribute__((__unused__)) * buf;
 #endif
 
 	if (!xdr_mountstat3(xdrs, &objp->fhs_status))

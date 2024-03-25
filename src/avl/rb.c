@@ -51,7 +51,7 @@ static inline struct rbtree_node *get_parent(const struct rbtree_node *node)
 static inline void set_parent(struct rbtree_node *parent,
 			      struct rbtree_node *node)
 {
-	node->parent = (uintptr_t) parent | (node->parent & 1);
+	node->parent = (uintptr_t)parent | (node->parent & 1);
 }
 
 #else
@@ -77,7 +77,7 @@ static inline void set_parent(struct rbtree_node *parent,
 	node->parent = parent;
 }
 
-#endif				/* UINTPTR_MAX */
+#endif /* UINTPTR_MAX */
 
 static inline int is_root(struct rbtree_node *node)
 {
@@ -179,7 +179,7 @@ static inline struct rbtree_node *do_lookup(const struct rbtree_node *key,
 static void rotate_left(struct rbtree_node *node, struct rbtree *tree)
 {
 	struct rbtree_node *p = node;
-	struct rbtree_node *q = node->right;	/* can't be NULL */
+	struct rbtree_node *q = node->right; /* can't be NULL */
 	struct rbtree_node *parent = get_parent(p);
 
 	if (!is_root(p)) {
@@ -201,7 +201,7 @@ static void rotate_left(struct rbtree_node *node, struct rbtree *tree)
 static void rotate_right(struct rbtree_node *node, struct rbtree *tree)
 {
 	struct rbtree_node *p = node;
-	struct rbtree_node *q = node->left;	/* can't be NULL */
+	struct rbtree_node *q = node->left; /* can't be NULL */
 	struct rbtree_node *parent = get_parent(p);
 
 	if (!is_root(p)) {
@@ -397,8 +397,8 @@ void rbtree_remove(struct rbtree_node *node, struct rbtree *tree)
 				rotate_left(parent, tree);
 				sibling = parent->right;
 			}
-			if ((!sibling->left || is_black(sibling->left))
-			    && (!sibling->right || is_black(sibling->right))) {
+			if ((!sibling->left || is_black(sibling->left)) &&
+			    (!sibling->right || is_black(sibling->right))) {
 				set_color(RB_RED, sibling);
 				node = parent;
 				parent = get_parent(parent);
@@ -425,8 +425,8 @@ void rbtree_remove(struct rbtree_node *node, struct rbtree *tree)
 				rotate_right(parent, tree);
 				sibling = parent->left;
 			}
-			if ((!sibling->left || is_black(sibling->left))
-			    && (!sibling->right || is_black(sibling->right))) {
+			if ((!sibling->left || is_black(sibling->left)) &&
+			    (!sibling->right || is_black(sibling->right))) {
 				set_color(RB_RED, sibling);
 				node = parent;
 				parent = get_parent(parent);

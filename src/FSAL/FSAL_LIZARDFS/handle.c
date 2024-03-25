@@ -44,10 +44,8 @@
  */
 static void lzfs_fsal_release(struct fsal_obj_handle *obj_hdl)
 {
-	struct lzfs_fsal_handle *lzfs_obj = container_of(
-						obj_hdl,
-						struct lzfs_fsal_handle,
-						handle);
+	struct lzfs_fsal_handle *lzfs_obj =
+		container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
 	if (lzfs_obj->handle.type == REGULAR_FILE) {
 		fsal_status_t st;
@@ -57,8 +55,8 @@ static void lzfs_fsal_release(struct fsal_obj_handle *obj_hdl)
 		if (FSAL_IS_ERROR(st)) {
 			LogCrit(COMPONENT_FSAL,
 				"Could not close hdl 0x%p, status %s error %s(%d)",
-				obj_hdl, fsal_err_txt(st),
-				strerror(st.minor), st.minor);
+				obj_hdl, fsal_err_txt(st), strerror(st.minor),
+				st.minor);
 		}
 
 		destroy_fsal_fd(&lzfs_obj->fd.fsal_fd);
@@ -83,8 +81,7 @@ static fsal_status_t lzfs_fsal_lookup(struct fsal_obj_handle *dir_hdl,
 	struct liz_entry node;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_dir = container_of(dir_hdl, struct lzfs_fsal_handle, handle);
 
@@ -113,10 +110,8 @@ static fsal_status_t lzfs_fsal_lookup(struct fsal_obj_handle *dir_hdl,
  * \see fsal_api.h for more information
  */
 static fsal_status_t lzfs_fsal_readdir(struct fsal_obj_handle *dir_hdl,
-				       fsal_cookie_t *whence,
-				       void *dir_state,
-				       fsal_readdir_cb cb,
-				       attrmask_t attrmask,
+				       fsal_cookie_t *whence, void *dir_state,
+				       fsal_readdir_cb cb, attrmask_t attrmask,
 				       bool *eof)
 {
 	static const int kBatchSize = 100;
@@ -130,15 +125,14 @@ static fsal_status_t lzfs_fsal_readdir(struct fsal_obj_handle *dir_hdl,
 	enum fsal_dir_result cb_rc;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_dir = container_of(dir_hdl, struct lzfs_fsal_handle, handle);
 
 	liz_context_t *ctx = lzfs_fsal_create_context(
-			lzfs_export->lzfs_instance, &op_ctx->creds);
-	dir_desc = liz_opendir(
-			lzfs_export->lzfs_instance, ctx, lzfs_dir->inode);
+		lzfs_export->lzfs_instance, &op_ctx->creds);
+	dir_desc =
+		liz_opendir(lzfs_export->lzfs_instance, ctx, lzfs_dir->inode);
 	if (!dir_desc) {
 		liz_destroy_context(ctx);
 		return lzfs_fsal_last_err();
@@ -148,9 +142,10 @@ static fsal_status_t lzfs_fsal_readdir(struct fsal_obj_handle *dir_hdl,
 		direntry_offset = MAX(3, *whence) - 1;
 	}
 
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " inode=%" PRIu32
-		     " offset=%lli", lzfs_export->export.export_id,
-		     lzfs_dir->inode, (long long)direntry_offset);
+	LogFullDebug(COMPONENT_FSAL,
+		     "export=%" PRIu16 " inode=%" PRIu32 " offset=%lli",
+		     lzfs_export->export.export_id, lzfs_dir->inode,
+		     (long long)direntry_offset);
 
 	while (1) {
 		size_t i, entries_count = 0;
@@ -201,11 +196,9 @@ static fsal_status_t lzfs_fsal_readdir(struct fsal_obj_handle *dir_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_mkdir(
-		struct fsal_obj_handle *dir_hdl,
-		const char *name,
-		struct fsal_attrlist *attrib,
-		struct fsal_obj_handle **new_obj,
+static fsal_status_t
+lzfs_fsal_mkdir(struct fsal_obj_handle *dir_hdl, const char *name,
+		struct fsal_attrlist *attrib, struct fsal_obj_handle **new_obj,
 		struct fsal_attrlist *attrs_out,
 		struct fsal_attrlist *parent_pre_attrs_out,
 		struct fsal_attrlist *parent_post_attrs_out)
@@ -217,18 +210,18 @@ static fsal_status_t lzfs_fsal_mkdir(
 	fsal_status_t status;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_dir = container_of(dir_hdl, struct lzfs_fsal_handle, handle);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "export=%" PRIu16 " parent_inode=%" PRIu32 " mode=%"
-		     PRIo32 " name=%s", lzfs_export->export.export_id,
-		     lzfs_dir->inode, attrib->mode, name);
+		     "export=%" PRIu16 " parent_inode=%" PRIu32 " mode=%" PRIo32
+		     " name=%s",
+		     lzfs_export->export.export_id, lzfs_dir->inode,
+		     attrib->mode, name);
 
 	unix_mode = fsal2unix_mode(attrib->mode) &
-		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	rc = liz_cred_mkdir(lzfs_export->lzfs_instance, &op_ctx->creds,
 			    lzfs_dir->inode, name, unix_mode, &dir_entry);
@@ -244,7 +237,7 @@ static fsal_status_t lzfs_fsal_mkdir(
 
 	if (attrib->valid_mask) {
 		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, NULL,
-							attrib);
+						       attrib);
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL, "setattr2 status=%s",
 				     fsal_err_txt(status));
@@ -266,15 +259,13 @@ static fsal_status_t lzfs_fsal_mkdir(
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_mknode(
-		struct fsal_obj_handle *dir_hdl,
-		const char *name,
-		object_file_type_t nodetype,
-		struct fsal_attrlist *attrib,
-		struct fsal_obj_handle **new_obj,
-		struct fsal_attrlist *attrs_out,
-		struct fsal_attrlist *parent_pre_attrs_out,
-		struct fsal_attrlist *parent_post_attrs_out)
+static fsal_status_t
+lzfs_fsal_mknode(struct fsal_obj_handle *dir_hdl, const char *name,
+		 object_file_type_t nodetype, struct fsal_attrlist *attrib,
+		 struct fsal_obj_handle **new_obj,
+		 struct fsal_attrlist *attrs_out,
+		 struct fsal_attrlist *parent_pre_attrs_out,
+		 struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
@@ -283,18 +274,18 @@ static fsal_status_t lzfs_fsal_mknode(
 	dev_t unix_dev = 0;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_dir = container_of(dir_hdl, struct lzfs_fsal_handle, handle);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "export=%" PRIu16 " parent_inode=%" PRIu32 " mode=%"
-		     PRIo32 " name=%s", lzfs_export->export.export_id,
-		     lzfs_dir->inode, attrib->mode, name);
+		     "export=%" PRIu16 " parent_inode=%" PRIu32 " mode=%" PRIo32
+		     " name=%s",
+		     lzfs_export->export.export_id, lzfs_dir->inode,
+		     attrib->mode, name);
 
 	unix_mode = fsal2unix_mode(attrib->mode) &
-		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	switch (nodetype) {
 	case BLOCK_FILE:
@@ -312,8 +303,7 @@ static fsal_status_t lzfs_fsal_mknode(
 		unix_mode |= S_IFSOCK;
 		break;
 	default:
-		LogMajor(COMPONENT_FSAL,
-			"Invalid node type in FSAL_mknode: %d",
+		LogMajor(COMPONENT_FSAL, "Invalid node type in FSAL_mknode: %d",
 			 nodetype);
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
@@ -332,10 +322,8 @@ static fsal_status_t lzfs_fsal_mknode(
 	FSAL_UNSET_MASK(attrib->valid_mask, ATTR_MODE);
 
 	if (attrib->valid_mask) {
-		fsal_status_t status = (*new_obj)->obj_ops->setattr2(*new_obj,
-								     false,
-								     NULL,
-								     attrib);
+		fsal_status_t status = (*new_obj)->obj_ops->setattr2(
+			*new_obj, false, NULL, attrib);
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL, "setattr2 status=%s",
 				     fsal_err_txt(status));
@@ -357,29 +345,26 @@ static fsal_status_t lzfs_fsal_mknode(
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_symlink(
-		struct fsal_obj_handle *dir_hdl,
-		const char *name,
-		const char *link_path,
-		struct fsal_attrlist *attrib,
-		struct fsal_obj_handle **new_obj,
-		struct fsal_attrlist *attrs_out,
-		struct fsal_attrlist *parent_pre_attrs_out,
-		struct fsal_attrlist *parent_post_attrs_out)
+static fsal_status_t
+lzfs_fsal_symlink(struct fsal_obj_handle *dir_hdl, const char *name,
+		  const char *link_path, struct fsal_attrlist *attrib,
+		  struct fsal_obj_handle **new_obj,
+		  struct fsal_attrlist *attrs_out,
+		  struct fsal_attrlist *parent_pre_attrs_out,
+		  struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir, *lzfs_obj;
 	struct liz_entry node_entry;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_dir = container_of(dir_hdl, struct lzfs_fsal_handle, handle);
 
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " parent_inode=%"
-		     PRIu32 " name=%s", lzfs_export->export.export_id,
-		     lzfs_dir->inode, name);
+	LogFullDebug(COMPONENT_FSAL,
+		     "export=%" PRIu16 " parent_inode=%" PRIu32 " name=%s",
+		     lzfs_export->export.export_id, lzfs_dir->inode, name);
 
 	rc = liz_cred_symlink(lzfs_export->lzfs_instance, &op_ctx->creds,
 			      link_path, lzfs_dir->inode, name, &node_entry);
@@ -393,10 +378,8 @@ static fsal_status_t lzfs_fsal_symlink(
 	FSAL_UNSET_MASK(attrib->valid_mask, ATTR_MODE);
 
 	if (attrib->valid_mask) {
-		fsal_status_t status = (*new_obj)->obj_ops->setattr2(*new_obj,
-								    false,
-								    NULL,
-								    attrib);
+		fsal_status_t status = (*new_obj)->obj_ops->setattr2(
+			*new_obj, false, NULL, attrib);
 		if (FSAL_IS_ERROR(status)) {
 			LogFullDebug(COMPONENT_FSAL, "setattr2 status=%s",
 				     fsal_err_txt(status));
@@ -427,8 +410,7 @@ static fsal_status_t lzfs_fsal_readlink(struct fsal_obj_handle *link_hdl,
 	char result[LIZARDFS_MAX_READLINK_LENGTH];
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_link = container_of(link_hdl, struct lzfs_fsal_handle, handle);
 
@@ -460,8 +442,7 @@ static fsal_status_t lzfs_fsal_getattrs(struct fsal_obj_handle *obj_hdl,
 	struct liz_attr_reply lzfs_attrs;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
@@ -497,32 +478,26 @@ static fsal_status_t lzfs_fsal_getattrs(struct fsal_obj_handle *obj_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_rename(
-		struct fsal_obj_handle *obj_hdl,
-		struct fsal_obj_handle *olddir_hdl,
-		const char *old_name,
-		struct fsal_obj_handle *newdir_hdl,
-		const char *new_name,
-		struct fsal_attrlist *olddir_pre_attrs_out,
-		struct fsal_attrlist *olddir_post_attrs_out,
-		struct fsal_attrlist *newdir_pre_attrs_out,
-		struct fsal_attrlist *newdir_post_attrs_out)
+static fsal_status_t
+lzfs_fsal_rename(struct fsal_obj_handle *obj_hdl,
+		 struct fsal_obj_handle *olddir_hdl, const char *old_name,
+		 struct fsal_obj_handle *newdir_hdl, const char *new_name,
+		 struct fsal_attrlist *olddir_pre_attrs_out,
+		 struct fsal_attrlist *olddir_post_attrs_out,
+		 struct fsal_attrlist *newdir_pre_attrs_out,
+		 struct fsal_attrlist *newdir_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_olddir, *lzfs_newdir;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
-	lzfs_olddir = container_of(olddir_hdl,
-				   struct lzfs_fsal_handle,
-				   handle);
-	lzfs_newdir = container_of(newdir_hdl,
-				   struct lzfs_fsal_handle,
-				   handle);
+	lzfs_olddir = container_of(olddir_hdl, struct lzfs_fsal_handle, handle);
+	lzfs_newdir = container_of(newdir_hdl, struct lzfs_fsal_handle, handle);
 
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " old_inode=%" PRIu32
+	LogFullDebug(COMPONENT_FSAL,
+		     "export=%" PRIu16 " old_inode=%" PRIu32
 		     " new_inode=%" PRIu32 " old_name=%s new_name=%s",
 		     lzfs_export->export.export_id, lzfs_olddir->inode,
 		     lzfs_newdir->inode, old_name, new_name);
@@ -542,25 +517,24 @@ static fsal_status_t lzfs_fsal_rename(
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_unlink(
-		struct fsal_obj_handle *dir_hdl,
-		struct fsal_obj_handle *obj_hdl,
-		const char *name,
-		struct fsal_attrlist *parent_pre_attrs_out,
-		struct fsal_attrlist *parent_post_attrs_out)
+static fsal_status_t
+lzfs_fsal_unlink(struct fsal_obj_handle *dir_hdl,
+		 struct fsal_obj_handle *obj_hdl, const char *name,
+		 struct fsal_attrlist *parent_pre_attrs_out,
+		 struct fsal_attrlist *parent_post_attrs_out)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_dir;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_dir = container_of(dir_hdl, struct lzfs_fsal_handle, handle);
 
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " parent_inode=%"
-		     PRIu32 " name=%s type=%s", lzfs_export->export.export_id,
-		     lzfs_dir->inode, name,
+	LogFullDebug(COMPONENT_FSAL,
+		     "export=%" PRIu16 " parent_inode=%" PRIu32
+		     " name=%s type=%s",
+		     lzfs_export->export.export_id, lzfs_dir->inode, name,
 		     object_file_type_to_str(obj_hdl->type));
 
 	if (obj_hdl->type != DIRECTORY) {
@@ -582,10 +556,9 @@ static fsal_status_t lzfs_fsal_unlink(
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_handle_to_wire(
-		const struct fsal_obj_handle *obj_hdl,
-		uint32_t output_type,
-		struct gsh_buffdesc *fh_desc)
+static fsal_status_t
+lzfs_fsal_handle_to_wire(const struct fsal_obj_handle *obj_hdl,
+			 uint32_t output_type, struct gsh_buffdesc *fh_desc)
 {
 	struct lzfs_fsal_handle *lzfs_obj;
 
@@ -666,8 +639,7 @@ fsal_status_t lzfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 		posix_flags |= O_CREAT;
 	}
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 
 	LogFullDebug(COMPONENT_FSAL,
@@ -675,8 +647,7 @@ fsal_status_t lzfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 		     lzfs_fd, lzfs_fd->fd, openflags, posix_flags);
 
 	assert(lzfs_fd->fd == NULL &&
-	       lzfs_fd->fsal_fd.openflags == FSAL_O_CLOSED &&
-	       openflags != 0);
+	       lzfs_fd->fsal_fd.openflags == FSAL_O_CLOSED && openflags != 0);
 
 	fd = liz_cred_open(lzfs_export->lzfs_instance, &op_ctx->creds,
 			   myself->inode, posix_flags);
@@ -691,7 +662,7 @@ fsal_status_t lzfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 	    lzfs_fd->fsal_fd.openflags != FSAL_O_CLOSED) {
 		int rc;
 
-		rc  = liz_release(myself->export->lzfs_instance, lzfs_fd->fd);
+		rc = liz_release(myself->export->lzfs_instance, lzfs_fd->fd);
 
 		if (rc < 0) {
 			LogFullDebug(COMPONENT_FSAL, "close failed with %s",
@@ -703,8 +674,8 @@ fsal_status_t lzfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 
 	lzfs_fd->fd = fd;
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "fd = %p, new openflags = %x", lzfs_fd->fd, openflags);
+	LogFullDebug(COMPONENT_FSAL, "fd = %p, new openflags = %x", lzfs_fd->fd,
+		     openflags);
 
 	lzfs_fd->fsal_fd.openflags = openflags;
 
@@ -738,12 +709,12 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 	bool truncated = openflags & FSAL_O_TRUNC;
 
 	lzfs_hdl = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export, export);
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
+				   export);
 
 	if (state != NULL)
-		lzfs_fd = &container_of(state, struct lzfs_fsal_state_fd,
-					state)->lzfs_fd;
+		lzfs_fd = &container_of(state, struct lzfs_fsal_state_fd, state)
+				   ->lzfs_fd;
 	else
 		lzfs_fd = &lzfs_hdl->fd;
 
@@ -805,13 +776,11 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* No share conflict, re-open the share fd */
-	status = lzfs_reopen_func(obj_hdl,
-				  openflags | after_mknod ? 0x1000 : 0,
+	status = lzfs_reopen_func(obj_hdl, openflags | after_mknod ? 0x1000 : 0,
 				  fsal_fd);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL,
-			 "lzfs_reopen_func returned %s",
+		LogDebug(COMPONENT_FSAL, "lzfs_reopen_func returned %s",
 			 fsal_err_txt(status));
 		goto exit;
 	}
@@ -841,8 +810,7 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		int rc;
 
 		rc = liz_cred_getattr(lzfs_export->lzfs_instance,
-				      &op_ctx->creds,
-				      lzfs_hdl->inode,
+				      &op_ctx->creds, lzfs_hdl->inode,
 				      &lzfs_attrs);
 
 		if (rc == 0) {
@@ -852,8 +820,7 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 			status = lzfs_fsal_last_err();
 		}
 
-		if (!FSAL_IS_ERROR(status) &&
-		    createmode >= FSAL_EXCLUSIVE &&
+		if (!FSAL_IS_ERROR(status) && createmode >= FSAL_EXCLUSIVE &&
 		    createmode != FSAL_EXCLUSIVE_9P &&
 		    !check_verifier_stat(&lzfs_attrs.attr, verifier, false)) {
 			/* Verifier didn't match, return EEXIST */
@@ -874,7 +841,7 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 			remove_fd_lru(fsal_fd);
 		}
 		/* Close fd */
-		(void) lzfs_int_close_fd(lzfs_hdl, lzfs_fd);
+		(void)lzfs_int_close_fd(lzfs_hdl, lzfs_fd);
 	}
 
 exit:
@@ -882,8 +849,7 @@ exit:
 	if (state != NULL) {
 		if (!FSAL_IS_ERROR(status)) {
 			/* Success, establish the new share. */
-			update_share_counters(&lzfs_hdl->share,
-					      old_openflags,
+			update_share_counters(&lzfs_hdl->share, old_openflags,
 					      openflags);
 		}
 
@@ -897,12 +863,10 @@ exit:
 	return status;
 }
 
-static fsal_status_t lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl,
-					   struct state_t *state,
-					   fsal_openflags_t openflags,
-					   const char *name,
-					   fsal_verifier_t verifier,
-					   struct fsal_attrlist *attrs_out)
+static fsal_status_t
+lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+		      fsal_openflags_t openflags, const char *name,
+		      fsal_verifier_t verifier, struct fsal_attrlist *attrs_out)
 {
 	struct fsal_obj_handle *temp = NULL;
 	fsal_status_t status;
@@ -915,9 +879,8 @@ static fsal_status_t lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl,
 		return status;
 	}
 
-	status = lzfs_int_open_by_handle(temp, state, openflags,
-					 FSAL_NO_CREATE, verifier, attrs_out,
-					 false);
+	status = lzfs_int_open_by_handle(temp, state, openflags, FSAL_NO_CREATE,
+					 verifier, attrs_out, false);
 
 	if (FSAL_IS_ERROR(status)) {
 		temp->obj_ops->release(temp);
@@ -932,17 +895,12 @@ static fsal_status_t lzfs_int_open_by_name(struct fsal_obj_handle *obj_hdl,
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_open2(
-		struct fsal_obj_handle *obj_hdl,
-		struct state_t *state,
-		fsal_openflags_t openflags,
-		enum fsal_create_mode createmode,
-		const char *name,
-		struct fsal_attrlist *attr_set,
-		fsal_verifier_t verifier,
-		struct fsal_obj_handle **new_obj,
-		struct fsal_attrlist *attrs_out,
-		bool *caller_perm_check,
+static fsal_status_t
+lzfs_fsal_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
+		fsal_openflags_t openflags, enum fsal_create_mode createmode,
+		const char *name, struct fsal_attrlist *attr_set,
+		fsal_verifier_t verifier, struct fsal_obj_handle **new_obj,
+		struct fsal_attrlist *attrs_out, bool *caller_perm_check,
 		struct fsal_attrlist *parent_pre_attrs_out,
 		struct fsal_attrlist *parent_post_attrs_out)
 {
@@ -978,12 +936,12 @@ static fsal_status_t lzfs_fsal_open2(
 	 * Create file
 	 */
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
-	mode_t unix_mode = fsal2unix_mode(attr_set->mode) &
+	mode_t unix_mode =
+		fsal2unix_mode(attr_set->mode) &
 		~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
 
 	FSAL_UNSET_MASK(attr_set->valid_mask, ATTR_MODE);
@@ -1005,22 +963,21 @@ static fsal_status_t lzfs_fsal_open2(
 
 	/* File has been created by us. */
 	*caller_perm_check = false;
-	struct lzfs_fsal_handle *lzfs_new_obj = lzfs_fsal_new_handle(
-							&lzfs_attrs.attr,
-							lzfs_export);
+	struct lzfs_fsal_handle *lzfs_new_obj =
+		lzfs_fsal_new_handle(&lzfs_attrs.attr, lzfs_export);
 
 	*new_obj = &lzfs_new_obj->handle;
 
 	if (attr_set->valid_mask != 0) {
 		status = (*new_obj)->obj_ops->setattr2(*new_obj, false, state,
-						      attr_set);
+						       attr_set);
 		if (FSAL_IS_ERROR(status)) {
 			goto fileerr;
 		}
 
 		if (attrs_out != NULL) {
 			status = (*new_obj)->obj_ops->getattrs(*new_obj,
-							      attrs_out);
+							       attrs_out);
 			if (FSAL_IS_ERROR(status) &&
 			    (attrs_out->request_mask & ATTR_RDATTR_ERR) == 0) {
 				goto fileerr;
@@ -1056,8 +1013,8 @@ static fsal_openflags_t lzfs_fsal_status2(struct fsal_obj_handle *obj_hdl,
 {
 	struct lzfs_fsal_fd *lzfs_fd;
 
-	lzfs_fd = &container_of(state,
-				struct lzfs_fsal_state_fd, state)->lzfs_fd;
+	lzfs_fd =
+		&container_of(state, struct lzfs_fsal_state_fd, state)->lzfs_fd;
 
 	return lzfs_fd->fsal_fd.openflags;
 }
@@ -1079,10 +1036,8 @@ static fsal_status_t lzfs_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
  *
  * \see fsal_api.h for more information
  */
-static void lzfs_fsal_read2(struct fsal_obj_handle *obj_hdl,
-			    bool bypass,
-			    fsal_async_cb done_cb,
-			    struct fsal_io_arg *read_arg,
+static void lzfs_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
+			    fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 			    void *caller_arg)
 {
 	struct lzfs_fsal_export *lzfs_export;
@@ -1095,18 +1050,17 @@ static void lzfs_fsal_read2(struct fsal_obj_handle *obj_hdl,
 	uint64_t offset = read_arg->offset;
 	int i;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " inode=%" PRIu32
-		     " offset=%" PRIu64, lzfs_export->export.export_id,
-		     lzfs_obj->inode, offset);
+	LogFullDebug(COMPONENT_FSAL,
+		     "export=%" PRIu16 " inode=%" PRIu32 " offset=%" PRIu64,
+		     lzfs_export->export.export_id, lzfs_obj->inode, offset);
 
 	if (read_arg->info != NULL) {
 		done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0), read_arg,
-					caller_arg);
+			caller_arg);
 		return;
 	}
 
@@ -1126,8 +1080,7 @@ static void lzfs_fsal_read2(struct fsal_obj_handle *obj_hdl,
 
 	for (i = 0; i < read_arg->iov_count; i++) {
 		nb_read = liz_cred_read(lzfs_export->lzfs_instance,
-					&op_ctx->creds,
-					my_fd->fd, offset,
+					&op_ctx->creds, my_fd->fd, offset,
 					read_arg->iov[i].iov_len,
 					read_arg->iov[i].iov_base);
 
@@ -1148,8 +1101,7 @@ out:
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_complete_io returned %s",
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io returned %s",
 		     fsal_err_txt(status2));
 
 	if (read_arg->state == NULL) {
@@ -1163,7 +1115,7 @@ out:
 					     FSAL_O_READ, FSAL_O_CLOSED);
 	}
 
- exit:
+exit:
 
 	done_cb(obj_hdl, status, read_arg, caller_arg);
 }
@@ -1172,11 +1124,9 @@ out:
  *
  * \see fsal_api.h for more information
  */
-static void lzfs_fsal_write2(struct fsal_obj_handle *obj_hdl,
-			     bool bypass,
+static void lzfs_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			     fsal_async_cb done_cb,
-			     struct fsal_io_arg *write_arg,
-			     void *caller_arg)
+			     struct fsal_io_arg *write_arg, void *caller_arg)
 {
 	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj;
@@ -1188,14 +1138,13 @@ static void lzfs_fsal_write2(struct fsal_obj_handle *obj_hdl,
 	uint64_t offset = write_arg->offset;
 	int i;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " inode=%" PRIu32
-		     " offset=%" PRIu64, lzfs_export->export.export_id,
-		     lzfs_obj->inode, offset);
+	LogFullDebug(COMPONENT_FSAL,
+		     "export=%" PRIu16 " inode=%" PRIu32 " offset=%" PRIu64,
+		     lzfs_export->export.export_id, lzfs_obj->inode, offset);
 
 	if (write_arg->info) {
 		return done_cb(obj_hdl, fsalstat(ERR_FSAL_NOTSUPP, 0),
@@ -1229,8 +1178,8 @@ static void lzfs_fsal_write2(struct fsal_obj_handle *obj_hdl,
 			write_arg->io_amount = nb_written;
 			if (write_arg->fsal_stable) {
 				int rc = liz_cred_fsync(
-						lzfs_export->lzfs_instance,
-						&op_ctx->creds, my_fd->fd);
+					lzfs_export->lzfs_instance,
+					&op_ctx->creds, my_fd->fd);
 
 				if (rc < 0) {
 					status = lzfs_fsal_last_err();
@@ -1246,8 +1195,7 @@ out:
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_complete_io returned %s",
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io returned %s",
 		     fsal_err_txt(status2));
 
 	if (write_arg->state == NULL) {
@@ -1261,7 +1209,7 @@ out:
 					     FSAL_O_WRITE, FSAL_O_CLOSED);
 	}
 
- exit:
+exit:
 
 	done_cb(obj_hdl, status, write_arg, caller_arg);
 }
@@ -1281,21 +1229,20 @@ static fsal_status_t lzfs_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	struct lzfs_fsal_fd *my_fd;
 	int rc;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export, export);
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
+				   export);
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
-	LogFullDebug(COMPONENT_FSAL, "export=%" PRIu16 " inode=%" PRIu32
-		     " offset=%lli len=%zu", lzfs_export->export.export_id,
-		     lzfs_obj->inode, (long long)offset, len);
+	LogFullDebug(COMPONENT_FSAL,
+		     "export=%" PRIu16 " inode=%" PRIu32 " offset=%lli len=%zu",
+		     lzfs_export->export.export_id, lzfs_obj->inode,
+		     (long long)offset, len);
 
 	/* Make sure file is open in appropriate mode.
 	 * Do not check share reservation.
 	 */
-	status = fsal_start_global_io(&out_fd, obj_hdl,
-				      &lzfs_obj->fd.fsal_fd,
-				      &temp_fd.fsal_fd,
-				      FSAL_O_ANY, false,
+	status = fsal_start_global_io(&out_fd, obj_hdl, &lzfs_obj->fd.fsal_fd,
+				      &temp_fd.fsal_fd, FSAL_O_ANY, false,
 				      NULL);
 
 	if (FSAL_IS_ERROR(status))
@@ -1311,8 +1258,7 @@ static fsal_status_t lzfs_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_complete_io returned %s",
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io returned %s",
 		     fsal_err_txt(status2));
 
 	/* We did not do share reservation stuff... */
@@ -1348,12 +1294,10 @@ static fsal_status_t lzfs_fsal_merge(struct fsal_obj_handle *orig_hdl,
 	if (orig_hdl->type == REGULAR_FILE && dupe_hdl->type == REGULAR_FILE) {
 		struct lzfs_fsal_handle *lzfs_orig, *lzfs_dupe;
 
-		lzfs_orig = container_of(orig_hdl,
-					 struct lzfs_fsal_handle,
-					 handle);
-		lzfs_dupe = container_of(dupe_hdl,
-					 struct lzfs_fsal_handle,
-					 handle);
+		lzfs_orig =
+			container_of(orig_hdl, struct lzfs_fsal_handle, handle);
+		lzfs_dupe =
+			container_of(dupe_hdl, struct lzfs_fsal_handle, handle);
 
 		LogFullDebug(COMPONENT_FSAL,
 			     "export=%" PRIu32 " orig_inode=%" PRIu16
@@ -1374,8 +1318,7 @@ static fsal_status_t lzfs_fsal_merge(struct fsal_obj_handle *orig_hdl,
  * \see fsal_api.h for more information
  */
 static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
-					bool bypass,
-					struct state_t *state,
+					bool bypass, struct state_t *state,
 					struct fsal_attrlist *attrib_set)
 {
 	struct lzfs_fsal_export *lzfs_export;
@@ -1383,8 +1326,7 @@ static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	fsal_status_t status = fsalstat(ERR_FSAL_NO_ERROR, 0);
 	bool has_share = false;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
@@ -1392,8 +1334,8 @@ static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 		    false);
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_MODE)) {
-		attrib_set->mode &=
-		  ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+		attrib_set->mode &= ~op_ctx->fsal_export->exp_ops.fs_umask(
+			op_ctx->fsal_export);
 	}
 
 	if (FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
@@ -1408,9 +1350,8 @@ static fsal_status_t lzfs_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 			 * counters.
 			 */
 			status = check_share_conflict_and_update_locked(
-						obj_hdl, &lzfs_obj->share,
-						FSAL_O_CLOSED, FSAL_O_WRITE,
-						bypass);
+				obj_hdl, &lzfs_obj->share, FSAL_O_CLOSED,
+				FSAL_O_WRITE, bypass);
 
 			if (FSAL_IS_ERROR(status)) {
 				LogDebug(COMPONENT_FSAL,
@@ -1505,9 +1446,8 @@ static fsal_status_t lzfs_fsal_close2(struct fsal_obj_handle *obj_hdl,
 				      struct state_t *state)
 {
 	struct lzfs_fsal_handle *lzfs_obj;
-	struct lzfs_fsal_fd *my_fd = &container_of(state,
-						   struct lzfs_fsal_state_fd,
-						   state)->lzfs_fd;
+	struct lzfs_fsal_fd *my_fd =
+		&container_of(state, struct lzfs_fsal_state_fd, state)->lzfs_fd;
 
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
@@ -1526,8 +1466,8 @@ static fsal_status_t lzfs_fsal_close2(struct fsal_obj_handle *obj_hdl,
 }
 
 fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
-				 struct state_t *state,
-				 void *owner, fsal_lock_op_t lock_op,
+				 struct state_t *state, void *owner,
+				 fsal_lock_op_t lock_op,
 				 fsal_lock_param_t *request_lock,
 				 fsal_lock_param_t *conflicting_lock)
 {
@@ -1536,7 +1476,7 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	liz_err_t last_err;
 	liz_fileinfo_t *fileinfo;
 	liz_lock_info_t lock_info;
-	fsal_status_t status = {0, 0}, status2;
+	fsal_status_t status = { 0, 0 }, status2;
 	int retval = 0;
 	fsal_openflags_t openflags = FSAL_O_RDWR;
 	struct lzfs_fsal_fd *my_fd;
@@ -1544,15 +1484,15 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	struct fsal_fd *out_fd;
 	bool bypass = false;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
 
-	LogFullDebug(COMPONENT_FSAL, "op:%d type:%d start:%" PRIu64 " length:%"
-		     PRIu64 " ", lock_op, request_lock->lock_type,
-		     request_lock->lock_start, request_lock->lock_length);
+	LogFullDebug(COMPONENT_FSAL,
+		     "op:%d type:%d start:%" PRIu64 " length:%" PRIu64 " ",
+		     lock_op, request_lock->lock_type, request_lock->lock_start,
+		     request_lock->lock_length);
 
 	if (lock_op == FSAL_OP_LOCKT) {
 		/* We may end up using global fd, don't fail on a deny mode */
@@ -1567,8 +1507,9 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	} else if (lock_op == FSAL_OP_UNLOCK) {
 		openflags = FSAL_O_ANY;
 	} else {
-		LogFullDebug(COMPONENT_FSAL,
-			     "ERROR: Lock operation requested was not TEST, READ, or WRITE.");
+		LogFullDebug(
+			COMPONENT_FSAL,
+			"ERROR: Lock operation requested was not TEST, READ, or WRITE.");
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
@@ -1582,8 +1523,9 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	} else if (request_lock->lock_type == FSAL_LOCK_W) {
 		lock_info.l_type = F_WRLCK;
 	} else {
-		LogFullDebug(COMPONENT_FSAL,
-			     "ERROR: The requested lock type was not read or write.");
+		LogFullDebug(
+			COMPONENT_FSAL,
+			"ERROR: The requested lock type was not read or write.");
 		return fsalstat(ERR_FSAL_NOTSUPP, 0);
 	}
 
@@ -1595,15 +1537,13 @@ fsal_status_t lzfs_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 	lock_info.l_len = request_lock->lock_length;
 	lock_info.l_start = request_lock->lock_start;
 
-
 	/* Indicate a desire to start io and get a usable file descritor */
 	status = fsal_start_io(&out_fd, obj_hdl, &lzfs_obj->fd.fsal_fd,
-			       &temp_fd.fsal_fd, state, openflags,
-			       true, NULL, bypass, &lzfs_obj->share);
+			       &temp_fd.fsal_fd, state, openflags, true, NULL,
+			       bypass, &lzfs_obj->share);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_FSAL,
-			"fsal_start_io failed returning %s",
+		LogCrit(COMPONENT_FSAL, "fsal_start_io failed returning %s",
 			fsal_err_txt(status));
 		goto exit;
 	}
@@ -1645,8 +1585,7 @@ err:
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
-	LogFullDebug(COMPONENT_FSAL,
-		     "fsal_complete_io returned %s",
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io returned %s",
 		     fsal_err_txt(status2));
 
 	if (state == NULL) {
@@ -1660,7 +1599,7 @@ err:
 					     openflags, FSAL_O_CLOSED);
 	}
 
- exit:
+exit:
 
 	return status;
 }
@@ -1669,28 +1608,26 @@ err:
  *
  * \see fsal_api.h for more information
  */
-static fsal_status_t lzfs_fsal_link(
-		struct fsal_obj_handle *obj_hdl,
-		struct fsal_obj_handle *destdir_hdl,
-		const char *name,
-		struct fsal_attrlist *destdir_pre_attrs_out,
-		struct fsal_attrlist *destdir_post_attrs_out)
+static fsal_status_t
+lzfs_fsal_link(struct fsal_obj_handle *obj_hdl,
+	       struct fsal_obj_handle *destdir_hdl, const char *name,
+	       struct fsal_attrlist *destdir_pre_attrs_out,
+	       struct fsal_attrlist *destdir_post_attrs_out)
 {
-struct lzfs_fsal_export *lzfs_export;
+	struct lzfs_fsal_export *lzfs_export;
 	struct lzfs_fsal_handle *lzfs_obj, *lzfs_destdir;
 
-	lzfs_export = container_of(op_ctx->fsal_export,
-				   struct lzfs_fsal_export,
+	lzfs_export = container_of(op_ctx->fsal_export, struct lzfs_fsal_export,
 				   export);
 	lzfs_obj = container_of(obj_hdl, struct lzfs_fsal_handle, handle);
-	lzfs_destdir = container_of(destdir_hdl,
-				    struct lzfs_fsal_handle,
-				    handle);
+	lzfs_destdir =
+		container_of(destdir_hdl, struct lzfs_fsal_handle, handle);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "export=%" PRIu16 " inode=%" PRIu32 " dest_inode=%" PRIu32
-		     " name=%s", lzfs_export->export.export_id,
-		     lzfs_obj->inode, lzfs_destdir->inode, name);
+		     " name=%s",
+		     lzfs_export->export.export_id, lzfs_obj->inode,
+		     lzfs_destdir->inode, name);
 
 	liz_entry_t result;
 	int rc = liz_cred_link(lzfs_export->lzfs_instance, &op_ctx->creds,
@@ -1704,7 +1641,7 @@ struct lzfs_fsal_export *lzfs_export;
 }
 
 void lzfs_fsal_handle_ops_init(struct lzfs_fsal_export *lzfs_export,
-			      struct fsal_obj_ops *ops)
+			       struct fsal_obj_ops *ops)
 {
 	ops->release = lzfs_fsal_release;
 	ops->merge = lzfs_fsal_merge;

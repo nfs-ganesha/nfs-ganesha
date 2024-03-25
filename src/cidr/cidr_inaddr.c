@@ -38,7 +38,7 @@
 #include "cidr.h"
 
 /* Create a struct in_addr with the given v4 address */
-struct in_addr *cidr_to_inaddr(const CIDR * addr, struct in_addr *uptr)
+struct in_addr *cidr_to_inaddr(const CIDR *addr, struct in_addr *uptr)
 {
 	struct in_addr *toret;
 
@@ -58,10 +58,8 @@ struct in_addr *cidr_to_inaddr(const CIDR * addr, struct in_addr *uptr)
 		toret = gsh_calloc(1, sizeof(struct in_addr));
 
 	/* Add 'em up and stuff 'em in */
-	toret->s_addr = ((addr->addr)[12] << 24)
-	    + ((addr->addr)[13] << 16)
-	    + ((addr->addr)[14] << 8)
-	    + ((addr->addr)[15]);
+	toret->s_addr = ((addr->addr)[12] << 24) + ((addr->addr)[13] << 16) +
+			((addr->addr)[14] << 8) + ((addr->addr)[15]);
 
 	/*
 	 * in_addr's are USUALLY used inside sockaddr_in's to do socket
@@ -75,7 +73,7 @@ struct in_addr *cidr_to_inaddr(const CIDR * addr, struct in_addr *uptr)
 }
 
 /* Build up a CIDR struct from a given in_addr */
-CIDR *cidr_from_inaddr(const struct in_addr * uaddr)
+CIDR *cidr_from_inaddr(const struct in_addr *uaddr)
 {
 	int i;
 	CIDR *toret;
@@ -98,7 +96,7 @@ CIDR *cidr_from_inaddr(const struct in_addr * uaddr)
 
 	/* Give it a single-host mask */
 	toret->mask[15] = toret->mask[14] = toret->mask[13] = toret->mask[12] =
-	    0xff;
+		0xff;
 
 	/* Standard v4 overrides of addr and mask for mapped form */
 	for (i = 0; i <= 9; i++)
@@ -113,7 +111,7 @@ CIDR *cidr_from_inaddr(const struct in_addr * uaddr)
 }
 
 /* Create a struct in5_addr with the given v6 address */
-struct in6_addr *cidr_to_in6addr(const CIDR * addr, struct in6_addr *uptr)
+struct in6_addr *cidr_to_in6addr(const CIDR *addr, struct in6_addr *uptr)
 {
 	struct in6_addr *toret;
 	int i;
@@ -154,7 +152,7 @@ struct in6_addr *cidr_to_in6addr(const CIDR * addr, struct in6_addr *uptr)
 }
 
 /* And create up a CIDR struct from a given in6_addr */
-CIDR *cidr_from_in6addr(const struct in6_addr * uaddr)
+CIDR *cidr_from_in6addr(const struct in6_addr *uaddr)
 {
 	int i;
 	CIDR *toret;

@@ -29,13 +29,11 @@
 #include <sys/acl.h>
 
 #ifndef HAVE_ACL_GET_FD_NP
-acl_t
-acl_get_fd_np(int fd, acl_type_t type);
+acl_t acl_get_fd_np(int fd, acl_type_t type);
 #endif
 
 #ifndef HAVE_ACL_SET_FD_NP
-int
-acl_set_fd_np(int fd, acl_t acl, acl_type_t type);
+int acl_set_fd_np(int fd, acl_t acl, acl_type_t type);
 #endif
 
 #endif /* _ACL_LINUX_H */

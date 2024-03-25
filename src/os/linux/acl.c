@@ -34,8 +34,7 @@
  * @return Posix ACL on success, NULL on failure.
  */
 
-acl_t
-acl_get_fd_np(int fd, acl_type_t type)
+acl_t acl_get_fd_np(int fd, acl_type_t type)
 {
 	char fname[PATH_MAX];
 	int num;
@@ -69,8 +68,7 @@ acl_get_fd_np(int fd, acl_type_t type)
  * @return 0 on success, non-zero on failure, with errno set.
  */
 
-int
-acl_set_fd_np(int fd, acl_t acl, acl_type_t type)
+int acl_set_fd_np(int fd, acl_t acl, acl_type_t type)
 {
 	char fname[PATH_MAX];
 	int num;

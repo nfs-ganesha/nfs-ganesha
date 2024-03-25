@@ -56,7 +56,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	char *wnames_str;
 	fsal_status_t fsal_status;
 	struct fsal_obj_handle *pentry = NULL;
-	char name[MAXNAMLEN+1];
+	char name[MAXNAMLEN + 1];
 
 	u16 *nwqid;
 
@@ -70,7 +70,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_getptr(cursor, nwname, u16);
 
 	LogDebug(COMPONENT_9P, "TWALK: tag=%u fid=%u newfid=%u nwname=%u",
-		 (u32) *msgtag, *fid, *newfid, *nwname);
+		 (u32)*msgtag, *fid, *newfid, *nwname);
 
 	if (*fid >= _9P_FID_PER_CONN)
 		return _9p_rerror(req9p, msgtag, ERANGE, plenout, preply);
@@ -111,10 +111,11 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 			_9p_get_fname(name, *wnames_len, wnames_str);
 
-			LogDebug(COMPONENT_9P,
-				 "TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
-				 (u32) *msgtag, *fid, *newfid, i + 1, *nwname,
-				 name);
+			LogDebug(
+				COMPONENT_9P,
+				"TWALK (lookup): tag=%u fid=%u newfid=%u (component %u/%u :%s)",
+				(u32)*msgtag, *fid, *newfid, i + 1, *nwname,
+				name);
 
 			if (pnewfid->pentry == pentry)
 				pnewfid->pentry = NULL;
@@ -139,12 +140,12 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 		pnewfid->ppentry = pfid->pentry;
 
-		if (strlcpy(pnewfid->name, name, sizeof(pnewfid->name))
-		    >= sizeof(pnewfid->name)) {
+		if (strlcpy(pnewfid->name, name, sizeof(pnewfid->name)) >=
+		    sizeof(pnewfid->name)) {
 			pentry->obj_ops->put_ref(pentry);
 			gsh_free(pnewfid);
-			return _9p_rerror(req9p, msgtag, ENAMETOOLONG,
-					  plenout, preply);
+			return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
+					  preply);
 		}
 
 		/* gdata ref is not hold : the pfid, which use same gdata */
@@ -183,15 +184,15 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			break;
 
 		default:
-			LogMajor(COMPONENT_9P,
-				 "implementation error, you should not see this message !!!!!!");
+			LogMajor(
+				COMPONENT_9P,
+				"implementation error, you should not see this message !!!!!!");
 			pentry->obj_ops->put_ref(pentry);
 			gsh_free(pnewfid);
-			return _9p_rerror(req9p, msgtag, EINVAL,
-					  plenout, preply);
+			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
+					  preply);
 			break;
 		}
-
 	}
 
 	/* Initialize state_t embedded in fid. The refcount is initialized
@@ -199,9 +200,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	 * prevents it from ever being reduced to zero by dec_state_t_ref.
 	 */
 	pnewfid->state = pnewfid->fid_export->fsal_export->exp_ops.alloc_state(
-					       pnewfid->fid_export->fsal_export,
-					       STATE_TYPE_9P_FID,
-					       NULL);
+		pnewfid->fid_export->fsal_export, STATE_TYPE_9P_FID, NULL);
 
 	glist_init(&pnewfid->state->state_data.fid.state_locklist);
 	pnewfid->state->state_refcount = 1;
@@ -236,10 +235,11 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_setendptr(cursor, preply);
 	_9p_checkbound(cursor, preply, plenout);
 
-	LogDebug(COMPONENT_9P,
-		 "RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
-		 (u32) *msgtag, *fid, *newfid, *nwqid,
-		 (unsigned long long)pnewfid->qid.path, pnewfid->pentry);
+	LogDebug(
+		COMPONENT_9P,
+		"RWALK: tag=%u fid=%u newfid=%u nwqid=%u fileid=%llu pentry=%p",
+		(u32)*msgtag, *fid, *newfid, *nwqid,
+		(unsigned long long)pnewfid->qid.path, pnewfid->pentry);
 
 	return 1;
 }

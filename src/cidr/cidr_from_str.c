@@ -34,7 +34,7 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <stdio.h>		/* I'm always stuffing debug printf's into here */
+#include <stdio.h> /* I'm always stuffing debug printf's into here */
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -46,7 +46,7 @@ CIDR *cidr_from_str(const char *addr)
 	size_t alen;
 	CIDR *toret, *ctmp;
 	const char *pfx, *buf;
-	char *buf2;		/* strtoul() can't use a (const char *) */
+	char *buf2; /* strtoul() can't use a (const char *) */
 	int i, j;
 	int pflen;
 	unsigned long octet;
@@ -82,22 +82,22 @@ CIDR *cidr_from_str(const char *addr)
 		buf = addr + alen - 8;
 	}
 
-	if (buf != NULL
-	    || ((alen >= 5) && strcasecmp(addr + alen - 5, ".arpa") == 0)) {
+	if (buf != NULL ||
+	    ((alen >= 5) && strcasecmp(addr + alen - 5, ".arpa") == 0)) {
 		/*
 		 * Do all this processing here, instead of trying to intermix it
 		 * with the rest of the formats.  This might lead to some code
 		 * duplication, but it'll be easier to read.
 		 */
-		if (buf == NULL) {	/* If not set by .ip6.int above */
+		if (buf == NULL) { /* If not set by .ip6.int above */
 			/* First, see what protocol it is */
-			if ((alen >= 9)
-			    && strncasecmp(addr + alen - 9, ".ip6", 3) == 0) {
+			if ((alen >= 9) &&
+			    strncasecmp(addr + alen - 9, ".ip6", 3) == 0) {
 				toret->proto = CIDR_IPV6;
 				buf = addr + alen - 9;
-			} else if ((alen >= 13)
-				   && strncasecmp(addr + alen - 13, ".in-addr",
-						  7) == 0) {
+			} else if ((alen >= 13) &&
+				   strncasecmp(addr + alen - 13, ".in-addr",
+					       7) == 0) {
 				toret->proto = CIDR_IPV4;
 				buf = addr + alen - 13;
 			} else {
@@ -123,9 +123,9 @@ CIDR *cidr_from_str(const char *addr)
 		 * result.  This way, the calling program can tell the difference
 		 * between "3.2.1..." and "0.3.2.1..." if it really cares to.
 		 */
-		buf--;		/* Step before the period */
+		buf--; /* Step before the period */
 		if (toret->proto == CIDR_IPV4) {
-			for (i = 11; i <= 14; /* */ ) {
+			for (i = 11; i <= 14; /* */) {
 				/* If we're before the beginning, we're done */
 				if (buf < addr)
 					break;
@@ -247,7 +247,7 @@ CIDR *cidr_from_str(const char *addr)
 				 * the condition at the top of the loop will drop us out.
 				 */
 				while (*--buf == '.' && buf >= addr)
-					/* nothing */ ;
+					/* nothing */;
 			}
 
 			/* Too much? */
@@ -261,7 +261,7 @@ CIDR *cidr_from_str(const char *addr)
 		} else {
 			/* Shouldn't happen */
 			cidr_free(toret);
-			errno = ENOENT;	/* Bad choice of errno */
+			errno = ENOENT; /* Bad choice of errno */
 			return (NULL);
 		}
 
@@ -270,7 +270,7 @@ CIDR *cidr_from_str(const char *addr)
 
 		/* NOTREACHED */
 	}
-	buf = NULL;		/* Done */
+	buf = NULL; /* Done */
 
 	/*
 	 * It's not a PTR form, so find the '/' prefix marker if we can.  We
@@ -316,9 +316,9 @@ CIDR *cidr_from_str(const char *addr)
 			 */
 			/* If it's a hex or octal number, assume it's a mask */
 			if (pfx[1] == '0' && tolower(pfx[2]) == 'x')
-				foundmask = 1;	/* Hex */
+				foundmask = 1; /* Hex */
 			else if (pfx[1] == '0')
-				foundmask = 1;	/* Oct */
+				foundmask = 1; /* Oct */
 			else if (isdigit(pfx[1])) {
 				/*
 				 * If we get here, it looks like a decimal number, and we
@@ -330,17 +330,17 @@ CIDR *cidr_from_str(const char *addr)
 				 * 2**31 and less than 2**32.
 				 */
 				octet = strtoul(pfx + 1, &buf2, 10);
-				if (*buf2 == '\0'
-				    && octet >= (unsigned long)(1 << 31)
-				    && octet <= (unsigned long)0xffffffff)
-					foundmask = 1;	/* Valid! */
+				if (*buf2 == '\0' &&
+				    octet >= (unsigned long)(1 << 31) &&
+				    octet <= (unsigned long)0xffffffff)
+					foundmask = 1; /* Valid! */
 
 				octet = 0;
-				buf2 = NULL;	/* Done */
+				buf2 = NULL; /* Done */
 			}
 		}
 	}
-	i = 0;			/* Done */
+	i = 0; /* Done */
 
 	/*
 	 * Now, let's figure out what kind of address this is.  A v6 address
@@ -359,22 +359,21 @@ CIDR *cidr_from_str(const char *addr)
 		 */
 		if (*addr == '0' && tolower(*(addr + 1)) == 'x') {
 			/* Hex? */
-			buf =
-			    (addr + 2) + strspn(addr + 2,
-						"0123456789abcdefABCDEF");
+			buf = (addr + 2) +
+			      strspn(addr + 2, "0123456789abcdefABCDEF");
 			if (*buf == '\0' || *buf == '/')
-				toret->proto = CIDR_IPV4;	/* Yep */
+				toret->proto = CIDR_IPV4; /* Yep */
 		} else if (*addr == '0') {
 			/* Oct? */
 			/* (note: this also catches the [decimal] address '0' */
 			buf = (addr + 1) + strspn(addr + 1, "01234567");
 			if (*buf == '\0' || *buf == '/')
-				toret->proto = CIDR_IPV4;	/* Yep */
+				toret->proto = CIDR_IPV4; /* Yep */
 		} else {
 			/* Dec? */
 			buf = (addr) + strspn(addr, "0123456789");
 			if (*buf == '\0' || *buf == '/')
-				toret->proto = CIDR_IPV4;	/* Yep */
+				toret->proto = CIDR_IPV4; /* Yep */
 		}
 
 		/* Did we catch anything? */
@@ -385,7 +384,7 @@ CIDR *cidr_from_str(const char *addr)
 			return (NULL);
 		}
 	}
-	buf = NULL;		/* Done */
+	buf = NULL; /* Done */
 
 	/*
 	 * So now we know what sort of address it is, we can go ahead and
@@ -405,8 +404,8 @@ CIDR *cidr_from_str(const char *addr)
 		/* Through here, nsect counts dots */
 		for (nsect = 0; buf != NULL && (pfx != NULL ? buf < pfx : 1);
 		     buf = strchr(buf, '.')) {
-			nsect++;	/* One more section */
-			buf++;	/* Move past . */
+			nsect++; /* One more section */
+			buf++; /* Move past . */
 			if (nsect > 3) {
 				/* Bad!  We can't have more than 4 sections... */
 				cidr_free(toret);
@@ -414,8 +413,8 @@ CIDR *cidr_from_str(const char *addr)
 				return (NULL);
 			}
 		}
-		buf = NULL;	/* Done */
-		nsect++;	/* sects = dots+1 */
+		buf = NULL; /* Done */
+		nsect++; /* sects = dots+1 */
 
 		/*
 		 * First, initialize this so we can skip building the bits if we
@@ -460,7 +459,7 @@ CIDR *cidr_from_str(const char *addr)
 			if (ctmp == NULL) {
 				/* This shouldn't happen */
 				cidr_free(toret);
-				return (NULL);	/* Preserve errno */
+				return (NULL); /* Preserve errno */
 			}
 			/* Stick it in the mask */
 			for (i = 0; i <= 11; i++)
@@ -474,7 +473,7 @@ CIDR *cidr_from_str(const char *addr)
 			if (pflen == -1) {
 				/* Failed; probably non-contiguous */
 				cidr_free(toret);
-				return (NULL);	/* Preserve errno */
+				return (NULL); /* Preserve errno */
 			}
 
 			/* And set us to before the '/' like below */
@@ -533,12 +532,12 @@ CIDR *cidr_from_str(const char *addr)
 			 *   for(j=0 ; j<pflen ; j++)
 			 *     toret->mask[12] |= 1<<(7-j);
 			 */
-#define UMIN(x,y) ((x)<(y)?(x):(y))
-#define MASKNUM(x) (24-((15-x)*8))
-#define WRMASKSET(x) \
-		if(pflen>MASKNUM(x)) \
-			for(j=MASKNUM(x) ; j<UMIN(pflen,MASKNUM(x)+8) ; j++) \
-				toret->mask[x] |= 1<<(MASKNUM(x)+7-j);
+#define UMIN(x, y) ((x) < (y) ? (x) : (y))
+#define MASKNUM(x) (24 - ((15 - x) * 8))
+#define WRMASKSET(x)                                                       \
+	if (pflen > MASKNUM(x))                                            \
+		for (j = MASKNUM(x); j < UMIN(pflen, MASKNUM(x) + 8); j++) \
+			toret->mask[x] |= 1 << (MASKNUM(x) + 7 - j);
 
 			WRMASKSET(15);
 			WRMASKSET(14);
@@ -561,14 +560,14 @@ CIDR *cidr_from_str(const char *addr)
 		while (i > 0 && addr[i] == '/')
 			i--;
 
-		for ( /* i */ ; i >= 0; i--) {
+		for (/* i */; i >= 0; i--) {
 			/*
 			 * As long as it's still a number or an 'x' (as in '0x'),
 			 * keep backing up.  Could be hex, so don't just use
 			 * isdigit().
 			 */
-			if ((isxdigit(addr[i]) || tolower(addr[i]) == 'x')
-			    && i > 0)
+			if ((isxdigit(addr[i]) || tolower(addr[i]) == 'x') &&
+			    i > 0)
 				continue;
 
 			/*
@@ -592,7 +591,7 @@ CIDR *cidr_from_str(const char *addr)
 				errno = EINVAL;
 				return (NULL);
 			}
-			buf2 = NULL;	/* Done */
+			buf2 = NULL; /* Done */
 
 			/*
 			 * Now, because of the way compressed IPv4 addresses work,
@@ -605,9 +604,9 @@ CIDR *cidr_from_str(const char *addr)
 			 * <http://www.opengroup.org/onlinepubs/007908799/xns/inet_addr.html>
 			 * for details.
 			 */
-			if ((nocts != 0 && octet > 255)
-			    || (nocts == 0
-				&& octet > (0xffffffff >> (8 * (nsect - 1))))) {
+			if ((nocts != 0 && octet > 255) ||
+			    (nocts == 0 &&
+			     octet > (0xffffffff >> (8 * (nsect - 1))))) {
 				cidr_free(toret);
 				errno = EINVAL;
 				return (NULL);
@@ -625,13 +624,13 @@ CIDR *cidr_from_str(const char *addr)
 			if (nocts == 1) {
 				if (nsect <= 3)
 					toret->addr[15 - nocts++] =
-					    (octet >> 8) & 0xff;
+						(octet >> 8) & 0xff;
 				if (nsect <= 2)
 					toret->addr[15 - nocts++] =
-					    (octet >> 16) & 0xff;
+						(octet >> 16) & 0xff;
 				if (nsect == 1)
 					toret->addr[15 - nocts++] =
-					    (octet >> 24) & 0xff;
+						(octet >> 24) & 0xff;
 			}
 
 			/*
@@ -681,7 +680,7 @@ CIDR *cidr_from_str(const char *addr)
 			if (ctmp == NULL) {
 				/* This shouldn't happen */
 				cidr_free(toret);
-				return (NULL);	/* Preserve errno */
+				return (NULL); /* Preserve errno */
 			}
 			/* Stick it in the mask */
 			for (i = 0; i <= 15; i++)
@@ -693,7 +692,7 @@ CIDR *cidr_from_str(const char *addr)
 			if (pflen == -1) {
 				/* Failed; probably non-contiguous */
 				cidr_free(toret);
-				return (NULL);	/* Preserve errno */
+				return (NULL); /* Preserve errno */
 			}
 
 			/* And set us to before the '/' like below */
@@ -724,12 +723,12 @@ CIDR *cidr_from_str(const char *addr)
 			 * Now save the pflen.  See comments on the similar code up in
 			 * the v4 section about the macros.
 			 */
-#define UMIN(x,y) ((x)<(y)?(x):(y))
-#define MASKNUM(x) (120-((15-x)*8))
-#define WRMASKSET(x) \
-		if(pflen>MASKNUM(x)) \
-			for(j=MASKNUM(x) ; j<UMIN(pflen,MASKNUM(x)+8) ; j++) \
-				toret->mask[x] |= 1<<(MASKNUM(x)+7-j);
+#define UMIN(x, y) ((x) < (y) ? (x) : (y))
+#define MASKNUM(x) (120 - ((15 - x) * 8))
+#define WRMASKSET(x)                                                       \
+	if (pflen > MASKNUM(x))                                            \
+		for (j = MASKNUM(x); j < UMIN(pflen, MASKNUM(x) + 8); j++) \
+			toret->mask[x] |= 1 << (MASKNUM(x) + 7 - j);
 
 			WRMASKSET(15);
 			WRMASKSET(14);
@@ -767,7 +766,7 @@ CIDR *cidr_from_str(const char *addr)
 		while (i > 0 && addr[i] == '/')
 			i--;
 
-		for ( /* i */ ; i >= 0; i--) {
+		for (/* i */; i >= 0; i--) {
 			/*
 			 * First, check the . cases, and handle them all in one
 			 * place.  These can only happen at the beginning, when we
@@ -775,9 +774,9 @@ CIDR *cidr_from_str(const char *addr)
 			 * have 4 of them.
 			 */
 			if (nocts == 0 && addr[i] == '.') {
-				i++;	/* Shift back to after the '.' */
+				i++; /* Shift back to after the '.' */
 
-				for ( /* i */ ; i > 0 && nocts < 4; i--) {
+				for (/* i */; i > 0 && nocts < 4; i--) {
 					/* This shouldn't happen except at the end */
 					if (addr[i] == ':' && nocts < 3) {
 						cidr_free(toret);
@@ -914,8 +913,8 @@ CIDR *cidr_from_str(const char *addr)
 				 * string now.  Translate it into an octet.
 				 */
 				octet = strtoul(addr + i, &buf2, 16);
-				if (*buf2 != ':' && *buf2 != '/'
-				    && *buf2 != '\0') {
+				if (*buf2 != ':' && *buf2 != '/' &&
+				    *buf2 != '\0') {
 					/* Got something unexpected */
 					cidr_free(toret);
 					errno = EINVAL;
@@ -931,8 +930,8 @@ CIDR *cidr_from_str(const char *addr)
 				}
 
 				/* Save it */
-				toret->addr[nocts - eocts] =
-				    (octet >> 8) & 0xff;
+				toret->addr[nocts - eocts] = (octet >> 8) &
+							     0xff;
 				nocts++;
 				toret->addr[nocts - eocts] = octet & 0xff;
 				nocts++;
@@ -991,7 +990,7 @@ CIDR *cidr_from_str(const char *addr)
 	} else {
 		/* Shouldn't happen */
 		cidr_free(toret);
-		errno = ENOENT;	/* Bad choice of errno */
+		errno = ENOENT; /* Bad choice of errno */
 		return (NULL);
 	}
 
