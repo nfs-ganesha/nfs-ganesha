@@ -845,12 +845,37 @@ static inline int PTHREAD_mutex_trylock(pthread_mutex_t *mtx,
 		rc = pthread_cond_signal(_cond);			\
 		if (rc == 0) {						\
 			LogFullDebug(COMPONENT_RW_LOCK,			\
-				     "Wait cond %p (%s) at %s:%d",	\
+				     "Signal cond %p (%s) at %s:%d",	\
 				     _cond, #_cond,			\
 				     __FILE__, __LINE__);		\
 		} else {						\
 			LogCrit(COMPONENT_RW_LOCK,			\
-				"Error %d, Wait cond %p (%s) "		\
+				"Error %d, Signal cond %p (%s) "	\
+				"at %s:%d", rc, _cond, #_cond,		\
+				__FILE__, __LINE__);			\
+			abort();					\
+		}							\
+	} while (0)
+
+/**
+ * @brief Logging condition variable broadcast
+ *
+ * @param[in,out] _cond The condition variable to destroy
+ */
+
+#define PTHREAD_COND_broadcast(_cond)					\
+	do {								\
+		int rc;							\
+									\
+		rc = pthread_cond_broadcast(_cond);			\
+		if (rc == 0) {						\
+			LogFullDebug(COMPONENT_RW_LOCK,			\
+				     "Broadcast cond %p (%s) at %s:%d",	\
+				     _cond, #_cond,			\
+				     __FILE__, __LINE__);		\
+		} else {						\
+			LogCrit(COMPONENT_RW_LOCK,			\
+				"Error %d, Broadcast cond %p (%s) "	\
 				"at %s:%d", rc, _cond, #_cond,		\
 				__FILE__, __LINE__);			\
 			abort();					\
