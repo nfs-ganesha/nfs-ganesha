@@ -977,8 +977,10 @@ struct fsal_fd {
 	struct glist_head fd_lru;
 	/** work_mutex protects fd work */
 	pthread_mutex_t work_mutex;
+	/** condition to signal when io work may commence */
+	pthread_cond_t io_work_cond;
 	/** condition to signal when fd work may commence */
-	pthread_cond_t work_cond;
+	pthread_cond_t fd_work_cond;
 	/** Indicate if should be closed on complete. */
 	bool close_on_complete;
 	/** Indicate if LRU reclaim wants to operate on this fd */
@@ -987,8 +989,8 @@ struct fsal_fd {
 	enum fsal_fd_type fd_type;
 };
 
-/* FSAL_FD_TEMP initializer, the work_mutex and work_cond are not initialized
- * as these are never used with a FSAL_FD_TEMP.
+/* FSAL_FD_TEMP initializer, the work_mutex, io_work_cond, and fd_work_cond are
+ * not initialized as these are never used with a FSAL_FD_TEMP.
  */
 #define FSAL_FD_INIT {	.openflags = FSAL_O_CLOSED, \
 			.fd_work = 0, \
@@ -998,7 +1000,8 @@ struct fsal_fd {
 			.fsal_export = op_ctx->fsal_export, \
 			.fd_lru = {NULL, NULL}, \
 			/* work_mutex unused for FSAL_FD_TEMP */ \
-			/* work_cond unused for FSAL_FD_TEMP */ \
+			/* io_work_cond unused for FSAL_FD_TEMP */ \
+			/* fd_work_cond unused for FSAL_FD_TEMP */ \
 			.close_on_complete = false, \
 			.lru_reclaim = 0, \
 			.fd_type = FSAL_FD_TEMP }
@@ -1013,7 +1016,8 @@ static inline void init_fsal_fd(struct fsal_fd *fsal_fd,
 		 * a FSAL_FD_TEMP. They are not used for FSAL_FD_TEMP.
 		 */
 		PTHREAD_MUTEX_init(&fsal_fd->work_mutex, NULL);
-		PTHREAD_COND_init(&fsal_fd->work_cond, NULL);
+		PTHREAD_COND_init(&fsal_fd->fd_work_cond, NULL);
+		PTHREAD_COND_init(&fsal_fd->io_work_cond, NULL);
 	}
 	fsal_fd->fd_type = fd_type;
 	fsal_fd->fsal_export = fsal_export;
@@ -1022,11 +1026,13 @@ static inline void init_fsal_fd(struct fsal_fd *fsal_fd,
 static inline void destroy_fsal_fd(struct fsal_fd *fsal_fd)
 {
 	if (fsal_fd->fd_type != FSAL_FD_TEMP) {
-		/* Only need to destroy work_mutex and work_cond if not
-		 * a FSAL_FD_TEMP. They are not used for FSAL_FD_TEMP.
+		/* Only need to destroy work_mutex, io_work_cond, and
+		 * fd_work_cond if not a FSAL_FD_TEMP. They are not used for
+		 * FSAL_FD_TEMP.
 		 */
 		PTHREAD_MUTEX_destroy(&fsal_fd->work_mutex);
-		PTHREAD_COND_destroy(&fsal_fd->work_cond);
+		PTHREAD_COND_destroy(&fsal_fd->fd_work_cond);
+		PTHREAD_COND_destroy(&fsal_fd->io_work_cond);
 	}
 }
 
