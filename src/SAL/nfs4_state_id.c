@@ -982,6 +982,10 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 				LogDebug(COMPONENT_STATE,
 					 "Returning NFS4ERR_EXPIRED");
 
+				/* Release the clientid reference we just
+				 * acquired.
+				 */
+				dec_client_id_ref(pclientid);
 				status = NFS4ERR_EXPIRED;
 				goto failure;
 			}

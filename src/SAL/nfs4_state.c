@@ -576,7 +576,7 @@ void state_del(state_t *state)
  * @param[in,out] owner Place to return the owner (NULL if not desired)
  *
  * @retval true if all desired references were taken
- * @retval flase otherwise (in which case no references are taken)
+ * @retval false otherwise (in which case no references are taken)
  *
  * For convenience, returns false if state is NULL which helps simplify
  * code for some callers.
