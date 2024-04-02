@@ -1540,6 +1540,7 @@ restart_recalls:
 					"Expired client got cleaned off");
 				dec_client_id_ref(client_id);
 			}
+			gsh_free(drc_ctx);
 
 			/* Safely restart the loop as state locks were removed,
 			 * pointers would have gone dangling
