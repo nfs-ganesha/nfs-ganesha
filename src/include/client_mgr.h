@@ -48,6 +48,7 @@
 #include "gsh_rpc.h"
 #include "cidr.h"
 #include "sal_shared.h"
+#include "connection_manager.h"
 
 struct gsh_client {
 	struct avltree_node node_k;
@@ -57,6 +58,7 @@ struct gsh_client {
 	char hostaddr_str[SOCK_NAME_MAX];
 	sockaddr_t cl_addrbuf;
 	uint64_t state_stats[STATE_TYPE_MAX]; /* state stats for this client */
+	connection_manager__client_t connection_manager;
 };
 
 static inline int64_t inc_gsh_client_refcount(struct gsh_client *client)

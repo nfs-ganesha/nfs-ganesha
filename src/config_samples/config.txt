@@ -203,6 +203,10 @@ NFS_CORE_PARAM {}
 
 	Unique_Server_Id(uint32, range 0 to UINT32_MAX, default 0)
 
+	Enable_Connection_Manager(bool, default false)
+
+	Connection_Manager_Timeout_sec(uint32, range 0 to UINT32_MAX, default 2*60)
+
 NFS_IP_NAME {}
 --------------
 

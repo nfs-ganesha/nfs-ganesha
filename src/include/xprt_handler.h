@@ -33,6 +33,7 @@
 
 #include "gsh_rpc.h"
 #include "sal_data.h"
+#include "connection_manager.h"
 
 typedef struct nfs41_session_list_entry {
 	nfs41_session_t *session;
@@ -55,6 +56,7 @@ typedef enum xprt_custom_data_status {
 typedef struct xprt_custom_data {
 	nfs41_sessions_holder_t nfs41_sessions_holder;
 	xprt_custom_data_status_t status;
+	connection_manager__connection_t managed_connection;
 } xprt_custom_data_t;
 
 void init_custom_data_for_xprt(SVCXPRT *);

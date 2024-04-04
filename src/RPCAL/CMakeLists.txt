@@ -22,6 +22,7 @@
 ########### next target ###############
 
 SET(rpcal_STAT_SRCS
+   connection_manager.c
    nfs_dupreq.c
    rpc_tools.c
 )

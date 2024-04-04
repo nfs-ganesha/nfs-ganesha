@@ -217,10 +217,19 @@ Malloc_trim_MinThreshold(uint32, range 1 to INT32_MAX, default 15*1024)
     Minimum threshold value to call malloc_trim. The malloc_trim will be called
     once memory allocation exceeds minimum value. Size in MB's.
     Note, this setting has no effect when Enable_malloc_trim is set to false.
+
 enable_rpc_cred_fallback(bool,  default false)
     if  Manage_Gids=True and group resolution fails,
     then use gid data from rpc request.
 
+Enable_Connection_Manager(bool, default false)
+    When enabled, a client (from the same source IP address), is allowed to
+    be connected to a single Ganesha server at a specific point in time.
+    See details in connection_manager.h
+
+Connection_Manager_Timeout_sec(uint32, range 0 to UINT32_MAX, default 2*60)
+    Timeout for waiting until client is fully disconnected from other Ganesha
+    servers.
 
 Unique_Server_Id(uint32, range 0 to UINT32_MAX, default 0)
    Unique value to the ganesha node, to diffrintiate it for the rest of the
