@@ -63,6 +63,7 @@
 #include "nfs_dupreq.h"
 #include "nfs_file_handle.h"
 #include "xprt_handler.h"
+#include "connection_manager.h"
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/nfs_rpc.h"
@@ -422,6 +423,11 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 	/* Add callback to un-reference xprt user data */
 	(void)SVC_CONTROL(xprt, SVCSET_XP_UNREF_USER_DATA,
 		nfs_rpc_unref_user_data);
+
+	if (connection_manager__connection_started(xprt) !=
+	    CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW) {
+		return XPRT_DIED;
+	}
 
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
 	return nfs_rpc_tcp_user_data(xprt);
@@ -1519,6 +1525,7 @@ static enum xprt_stat nfs_rpc_free_user_data(SVCXPRT *xprt)
 		nfs_dupreq_put_drc(xprt->xp_u2);
 		xprt->xp_u2 = NULL;
 	}
+	connection_manager__connection_finished(xprt);
 	destroy_custom_data_for_destroyed_xprt(xprt);
 	return XPRT_DESTROYED;
 }

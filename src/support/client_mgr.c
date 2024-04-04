@@ -191,6 +191,7 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 		cl = avltree_container_of(node, struct gsh_client, node_k);
 	} else {
 		PTHREAD_RWLOCK_init(&cl->client_lock, NULL);
+		connection_manager__client_init(&cl->connection_manager);
 		/* update cache */
 		atomic_store_voidptr(cache_slot, &cl->node_k);
 	}
@@ -264,6 +265,7 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 		server_st = container_of(cl, struct server_stats, client);
 		server_stats_free(&server_st->st);
 		server_stats_allops_free(&server_st->c_all);
+		connection_manager__client_fini(&cl->connection_manager);
 		PTHREAD_RWLOCK_destroy(&cl->client_lock);
 		gsh_free(server_st);
 	}
