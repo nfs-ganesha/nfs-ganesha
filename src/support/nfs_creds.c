@@ -241,6 +241,7 @@ int nfs_rpc_req2client_cred(struct svc_req *req, nfs_client_cred_t *pcred)
 	return 1;
 }
 
+#ifdef _HAVE_GSSAPI
 static void rpcsec_gss_fetch_managed_groups(char *principal)
 {
 	/* Fetch the group data only if required */
@@ -270,6 +271,7 @@ static void rpcsec_gss_fetch_managed_groups(char *principal)
 #endif
 	}
 }
+#endif
 
 /**
  * @brief Get numeric credentials from request
