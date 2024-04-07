@@ -55,7 +55,7 @@ void init_custom_data_for_xprt(SVCXPRT *xprt)
 	xprt_data->status = ASSOCIATED_TO_XPRT;
 
 	display_xprt_sockaddr(&db, xprt);
-	LogInfo(COMPONENT_XPRT,
+	LogDebug(COMPONENT_XPRT,
 		"xp_u1 initialised for xprt with FD: %d and socket-addr: %s",
 		xprt->xp_fd, sockaddr_str);
 }
@@ -246,7 +246,7 @@ void destroy_custom_data_for_destroyed_xprt(SVCXPRT *xprt)
 	xprt_custom_data_t *xprt_data;
 
 	display_xprt_sockaddr(&db, xprt);
-	LogInfo(COMPONENT_XPRT,
+	LogDebug(COMPONENT_XPRT,
 		"Processing custom data for destroyed xprt: %p with FD: %d, socket-addr: %s",
 		xprt, xprt->xp_fd, sockaddr_str);
 	assert(xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED);
