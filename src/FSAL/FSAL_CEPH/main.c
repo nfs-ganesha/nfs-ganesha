@@ -713,9 +713,6 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	enable_delegations(cm);
 
 has_cmount:
-
-	cm->cm_refcnt++;
-
 	export->cm = cm;
 	export->cmount = cm->cmount;
 	export->fscid = cm->cm_fscid;
