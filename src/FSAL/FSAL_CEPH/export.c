@@ -110,6 +110,11 @@ static void release(struct fsal_export *export_pub)
 
 	PTHREAD_RWLOCK_unlock(&cmount_lock);
 
+	gsh_free(export->sec_label_xattr);
+	gsh_free(export->fs_name);
+	gsh_free(export->cmount_path);
+	gsh_free(export->user_id);
+	gsh_free(export->secret_key);
 	gsh_free(export);
 	export = NULL;
 }
