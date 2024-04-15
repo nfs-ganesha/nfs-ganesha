@@ -44,7 +44,10 @@ sec_label_xattr(char, default "security.selinux xattr of the file")
 
 cmount_path(string, no default)
     If specified, the path within the ceph filesystem to mount this
-    export on. It must be a subset of the EXPORT { Path } parameter.
+    export on. It is allowed to be any complete path hierarchy between `/` and
+    the EXPORT {path}. (i.e. if EXPORT { Path } parameter is `/foo/bar` then
+    cmount_path could be `/`, `/foo` or `/foo/bar`).
+
     If this and the other EXPORT { FSAL {} } options are the same
     between multiple exports, those exports will share a single
     cephfs client. With the default, this effectively defaults to
