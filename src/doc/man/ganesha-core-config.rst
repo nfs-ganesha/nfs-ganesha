@@ -222,6 +222,12 @@ enable_rpc_cred_fallback(bool,  default false)
     then use gid data from rpc request.
 
 
+Unique_Server_Id(uint32, range 0 to UINT32_MAX, default 0)
+   Unique value to the ganesha node, to diffrintiate it for the rest of the
+   node. will be used as prefix for the Client id, to make sure it is
+   unique between ganesha nodes and file write verifier.
+   if 0 is supplied server boot epoch time in seconds will be used
+
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
 

@@ -116,6 +116,8 @@ void dump_all_owners(void);
 
 void state_release_export(struct gsh_export *exp);
 
+uint64_t get_unique_server_id(void);
+
 bool state_unlock_err_ok(state_status_t status);
 
 /**

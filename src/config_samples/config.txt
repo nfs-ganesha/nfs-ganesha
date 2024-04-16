@@ -201,6 +201,8 @@ NFS_CORE_PARAM {}
 
 	enable_rpc_cred_fallback(bool, default false)
 
+	Unique_Server_Id(uint32, range 0 to UINT32_MAX, default 0)
+
 NFS_IP_NAME {}
 --------------
 

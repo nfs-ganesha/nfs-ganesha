@@ -62,6 +62,7 @@
 
 #include "nfs_core.h"
 #include "config_parsing.h"
+#include "sal_functions.h"
 
 #ifdef USE_LTTNG
 #include "gsh_lttng/logger.h"
@@ -538,7 +539,7 @@ void set_const_log_str(void)
 
 	if (b_left > 0 && logfields->disp_epoch)
 		b_left = display_printf(&dspbuf,
-			": epoch %08lx ", (unsigned long) nfs_ServerEpoch);
+			": epoch %08lx ", get_unique_server_id());
 
 	if (b_left > 0 && logfields->disp_host)
 		b_left = display_printf(&dspbuf, ": %s ", hostname);

@@ -1342,4 +1342,18 @@ void state_release_export(struct gsh_export *export)
 	release_op_context();
 }
 
+/**
+ * @brief Gets a unique server id to be used for base of client id
+ * the value should be diffrent from old and diffrent instances of ganesha
+ *
+ * @return unique server id.
+ */
+
+uint64_t get_unique_server_id(void)
+{
+	if (nfs_param.core_param.unique_server_id != 0)
+		return nfs_param.core_param.unique_server_id;
+	return nfs_ServerEpoch & UINT32_MAX;
+}
+
 /** @} */

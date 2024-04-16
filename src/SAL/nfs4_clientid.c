@@ -1455,12 +1455,12 @@ clientid_status_t nfs_client_id_get(hash_table_t *ht, clientid4 clientid,
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
 	clientid_status_t status;
-	uint64_t epoch_low = nfs_ServerEpoch & 0xFFFFFFFF;
+	uint64_t unique_prefix = get_unique_server_id() & 0xFFFFFFFF;
 	uint64_t cid_epoch = (uint64_t) (clientid >> (clientid4) 32);
 	nfs_client_id_t *pclientid;
 
-	/* Don't even bother to look up clientid if epochs don't match */
-	if (cid_epoch != epoch_low) {
+	/* Don't bother to look up clientid if unique prefixes don't match */
+	if (cid_epoch != unique_prefix) {
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "%s NOTFOUND (epoch doesn't match, assumed STALE)",
@@ -1573,21 +1573,21 @@ int display_clientid(struct display_buffer *dspbuf, clientid4 clientid)
 {
 	int b_left = display_buffer_remain(dspbuf);
 	uint32_t counter = clientid & UINT32_MAX;
-	uint32_t epoch = clientid >> (clientid4) 32;
+	uint32_t unique = clientid >> (clientid4) 32;
 
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, "Epoch=0x%08"PRIx32" Counter=0x%08"PRIx32,
-			      epoch, counter);
+	return display_printf(dspbuf, "Unique=0x%08"PRIx32
+			" Counter=0x%08"PRIx32, unique, counter);
 }
 
 /**
  * @brief Builds a new clientid4 value
  *
- * We use the clientid counter and the server epoch, the latter
- * ensures that clientids from old instances of Ganesha are marked as
- * invalid.
+ * We use the clientid counter and the server epoch or a value supplied in the
+ * config, the latter should ensure that clientids from old instances of
+ * Ganesha are marked as invalid.
  *
  * @return The new clientid.
  */
@@ -1595,9 +1595,7 @@ int display_clientid(struct display_buffer *dspbuf, clientid4 clientid)
 clientid4 new_clientid(void)
 {
 	clientid4 newid = atomic_inc_uint32_t(&clientid_counter);
-	uint64_t epoch_low = nfs_ServerEpoch & UINT32_MAX;
-
-	return newid + (epoch_low << (clientid4) 32);
+	return newid + (clientid4)(get_unique_server_id() << 32);
 }
 
 /**

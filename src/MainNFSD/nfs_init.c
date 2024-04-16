@@ -1108,7 +1108,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 			uint64_t epoch;
 		} build_verifier;
 
-		build_verifier.epoch = (uint64_t) nfs_ServerEpoch;
+		build_verifier.epoch = get_unique_server_id();
 
 		memcpy(NFS3_write_verifier, build_verifier.NFS3_write_verifier,
 		       sizeof(NFS3_write_verifier));

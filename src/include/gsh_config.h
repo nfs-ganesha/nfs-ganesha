@@ -491,6 +491,8 @@ typedef struct nfs_core_param {
 	/** if  Manage_Gids=True and group resolution fails,
 	 *  then use gid data from rpc request */
 	bool enable_rpc_cred_fallback;
+	/** unique server id, if 0 will use start time **/
+	uint32_t unique_server_id;
 } nfs_core_parameter_t;
 
 /** @} */

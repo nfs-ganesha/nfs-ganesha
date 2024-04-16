@@ -811,8 +811,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			    seqid4 owner_seqid, bool check_seqid,
 			    const char *tag)
 {
-	uint32_t epoch = 0;
-	uint64_t epoch_low = nfs_ServerEpoch & 0xFFFFFFFF;
+	uint32_t client_unique_prefix = 0;
+	uint64_t unique_prefix = get_unique_server_id() & 0xFFFFFFFF;
 	state_t *state2 = NULL;
 	struct fsal_obj_handle *obj2 = NULL;
 	state_owner_t *owner2 = NULL;
@@ -909,10 +909,10 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	memcpy(&clientid, stateid->other, sizeof(clientid));
 
 	/* Extract the epoch from the clientid */
-	epoch = clientid >> (clientid4) 32;
+	client_unique_prefix = clientid >> (clientid4) 32;
 
 	/* Check if stateid was made from this server instance */
-	if (epoch != epoch_low) {
+	if (client_unique_prefix != unique_prefix) {
 		if (str_valid)
 			LogDebug(COMPONENT_STATE,
 				 "Check %s stateid found stale stateid %s",
