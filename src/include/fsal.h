@@ -115,8 +115,7 @@ static inline void init_op_context_simple(struct req_op_context *ctx,
 void release_op_context(void);
 void suspend_op_context(void);
 void resume_op_context(struct req_op_context *ctx);
-void set_op_context_export_fsal(struct gsh_export *exp,
-				struct fsal_export *fsal_exp);
+void set_op_context_export(struct gsh_export *exp);
 void clear_op_context_export(void);
 void save_op_context_export_and_clear(struct saved_export_context *saved);
 void save_op_context_export_and_set_export(struct saved_export_context *saved,
@@ -124,12 +123,6 @@ void save_op_context_export_and_set_export(struct saved_export_context *saved,
 void restore_op_context_export(struct saved_export_context *saved);
 void discard_op_context_export(struct saved_export_context *saved);
 void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds);
-
-#define set_op_context_export(exp_expr) \
-	do { \
-		struct gsh_export *ex = exp_expr; \
-		set_op_context_export_fsal(ex, ex ? ex->fsal_export : NULL); \
-	} while (0)
 
 /******************************************************
  *                Structure used to define a fsal
