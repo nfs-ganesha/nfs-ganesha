@@ -3183,16 +3183,23 @@ void destroy_ctx_refstr(void)
 	gsh_refstr_put(no_export);
 }
 
+/**
+ * @brief Set an export into an op_context (could be NULL).
+ *
+ * This is the core function that sets up an op_context. It makes no assumptions
+ * of what is already in the op_context. It will set up a refstr for both
+ * op_ctx->ctx_fullpath and op_ctx->ctx_pseudopath. If no export is set, or
+ * those strings are not available from the export, the refstr will reference
+ * the special "no_export" refstr.
+ *
+ * @param[in] exp       The gsh_export to set, can be NULL.
+ * @param[in] fsal_exp  The fsal_export to set, can be NULL.
+ * @param[in] pds       The pnfs ds to set, can be NULL.
+ */
 static void set_op_context_export_fsal_no_release(struct gsh_export *exp,
 						  struct fsal_export *fsal_exp,
-						  struct fsal_pnfs_ds *pds,
-						  bool discard_refstr)
+						  struct fsal_pnfs_ds *pds)
 {
-	if (discard_refstr) {
-		gsh_refstr_put(op_ctx->ctx_fullpath);
-		gsh_refstr_put(op_ctx->ctx_pseudopath);
-	}
-
 	op_ctx->ctx_export = exp;
 	op_ctx->fsal_export = fsal_exp;
 	op_ctx->ctx_pnfs_ds = pds;
@@ -3231,32 +3238,36 @@ static void set_op_context_export_fsal_no_release(struct gsh_export *exp,
 		op_ctx->fsal_module = op_ctx->saved_op_ctx->fsal_module;
 }
 
-void set_op_context_export_fsal(struct gsh_export *exp,
-				struct fsal_export *fsal_exp)
-{
-	if (op_ctx->ctx_export != NULL)
-		put_gsh_export(op_ctx->ctx_export);
-
-	if (op_ctx->ctx_pnfs_ds != NULL)
-		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
-
-	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL, true);
-}
-
-void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds)
-{
-	if (op_ctx->ctx_export != NULL)
-		put_gsh_export(op_ctx->ctx_export);
-
-	if (op_ctx->ctx_pnfs_ds != NULL)
-		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
-
-	set_op_context_export_fsal_no_release(pds->mds_export,
-					      pds->mds_fsal_export,
-					      pds,
-					      true);
-}
-
+/** @brief Remove the current export from the op_context so the op_context has
+ *         no export.
+ *
+ * If an export is referenced by the op_context, the reference will be
+ * dropped.
+ *
+ * If the op_context had a valid ctx_fullpath or ctx_pseudopath they will
+ * be unreferenced but no new refstr will be attached.
+ *
+ * This function should only be called from functions that will either be
+ * freeing the op_context, or will be overwriting the export data.
+ *
+ * Functions that are just removing the export data, but not freeing the
+ * op_context or overwriting the export data should call
+ * clear_op_context_export() instead.
+ *
+ * The following callers do call this function directly for the reasons
+ * explained below.
+ *
+ * When called by set_op_context_export() or set_op_context_pnfs_ds(),
+ * a new export (even if NULL) is about to be set.
+ *
+ * When called by release_op_context(), we are "destructing" the op_context.
+ *
+ * When called by restore_op_context_export(), we are replacing with the saved
+ * op_context so all the references that had been saved will be restored.
+ *
+ * No parameters, operates on the op_context directly.
+ *
+ */
 static inline void clear_op_context_export_impl(void)
 {
 	if (op_ctx->ctx_export != NULL)
@@ -3265,25 +3276,85 @@ static inline void clear_op_context_export_impl(void)
 	if (op_ctx->ctx_pnfs_ds != NULL)
 		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
 
-	if (op_ctx->ctx_fullpath != NULL)
-		gsh_refstr_put(op_ctx->ctx_fullpath);
-
-	if (op_ctx->ctx_pseudopath != NULL)
-		gsh_refstr_put(op_ctx->ctx_pseudopath);
-
-	op_ctx->ctx_export = NULL;
-	op_ctx->fsal_export = NULL;
+	/* Note these are NEVER NULL in an active op_context. When an op_context
+	 * is initialized, if there is no export, these strings will be set to
+	 * reference the special "no_export" string. These refstr will ONLY be
+	 * set to NULL when release_op_context is called to "destroy" the
+	 * op_context.
+	 */
+	gsh_refstr_put(op_ctx->ctx_fullpath);
+	gsh_refstr_put(op_ctx->ctx_pseudopath);
 }
 
+/**
+ * @brief Remove the current export from the op_context so the op_context
+ *        has no export.
+ *
+ * If an export is referenced by the op_context, the reference will be
+ * dropped.
+ *
+ * If the op_context had a valid ctx_fullpath or ctx_pseudopath they will
+ * be unreferenced and references to the "no_export" string will be attached.
+ *
+ * No parameters, operates on the op_context directly.
+ *
+ */
 void clear_op_context_export(void)
 {
 	clear_op_context_export_impl();
+
+	/* Clear the ctx_export and fsal_export */
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
 
 	/* An active op context will always have refstr */
 	op_ctx->ctx_fullpath = gsh_refstr_get(no_export);
 	op_ctx->ctx_pseudopath = gsh_refstr_get(no_export);
 }
 
+/**
+ * @brief Set an export into the op_context.
+ *
+ * @param[in] exp       The gsh_export to set, can be NULL.
+ *
+ * Will set a NULL pnfs ds and sets fsal_exp from exp.
+ *
+ */
+void set_op_context_export(struct gsh_export *exp)
+{
+	struct fsal_export *fsal_exp = exp ? exp->fsal_export : NULL;
+
+	clear_op_context_export_impl();
+
+	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL);
+}
+
+/**
+ * @brief Set a pnfs ds into the op_context.
+ *
+ * @param[in] pds       The pnfs ds to set, can be NULL.
+ *
+ * Will set export and fsal_export from pnfs ds.
+ *
+ */
+void set_op_context_pnfs_ds(struct fsal_pnfs_ds *pds)
+{
+	clear_op_context_export_impl();
+
+	set_op_context_export_fsal_no_release(pds->mds_export,
+					      pds->mds_fsal_export,
+					      pds);
+}
+
+/**
+ * @brief Save the op_context export and all its references.
+ *
+ * This is used when the caller will re-use the op_context to perform operations
+ * on other exports, and will then want to restore the original export.
+ *
+ * @param[in] saved  Pointer to a saved_export_context to save the data into.
+ *
+ */
 static void save_op_context_export(struct saved_export_context *saved)
 {
 	saved->saved_export = op_ctx->ctx_export;
@@ -3295,27 +3366,59 @@ static void save_op_context_export(struct saved_export_context *saved)
 	saved->saved_export_perms = op_ctx->export_perms;
 }
 
+/**
+ * @brief Save the op_context export and all its references and then set a new
+ *        export.
+ *
+ * @param[in] saved  Pointer to a saved_export_context to save the data into.
+ * @param[in] exp    The new export to set.
+ */
 void save_op_context_export_and_set_export(struct saved_export_context *saved,
 					   struct gsh_export *exp)
 {
 	save_op_context_export(saved);
 
-	/* Don't release op_ctx->ctx_export since it's saved */
-	set_op_context_export_fsal_no_release(exp, exp->fsal_export, NULL,
-					      false);
+	/* Don't release op_ctx->ctx_export or the refstr since it's saved */
+	set_op_context_export_fsal_no_release(exp, exp->fsal_export, NULL);
 }
 
+/**
+ * @brief Save the op_context export and all its references and then clear the
+ *        export from the op_context.
+ *
+ * This is used when the caller will re-use the op_context to perform operations
+ * on other exports, and will then want to restore the original export.
+ *
+ * @param[in] saved  Pointer to a saved_export_context to save the data into.
+ *
+ */
 void save_op_context_export_and_clear(struct saved_export_context *saved)
 {
 	save_op_context_export(saved);
 	op_ctx->ctx_export = NULL;
 	op_ctx->fsal_export = NULL;
 	op_ctx->ctx_pnfs_ds = NULL;
+
+	/* An active op context will always have refstr but the original
+	 * refstr are saved off, so replace with new refs to no_export.
+	 */
+	op_ctx->ctx_fullpath = gsh_refstr_get(no_export);
+	op_ctx->ctx_pseudopath = gsh_refstr_get(no_export);
 }
 
+/**
+ * @brief Restore a saved op_context export.
+ *
+ * @param[in] saved  Pointer to a saved_export_context to restore the data from.
+ *
+ */
 void restore_op_context_export(struct saved_export_context *saved)
 {
-	clear_op_context_export();
+	/* Since we are about to restore op_ctx->ctx_fullpath and
+	 * op_ctx->ctx_pseudopath, we don't want to fill them in with
+	 * references to the no_export gsh_refstr.
+	 */
+	clear_op_context_export_impl();
 	op_ctx->ctx_export = saved->saved_export;
 	op_ctx->ctx_fullpath = saved->saved_fullpath;
 	op_ctx->ctx_pseudopath = saved->saved_pseudopath;
@@ -3325,13 +3428,22 @@ void restore_op_context_export(struct saved_export_context *saved)
 	op_ctx->export_perms = saved->saved_export_perms;
 }
 
+/**
+ * @brief Discard the saved export data from an op_context.
+ *
+ * This is used when the caller determines it does not need to restore the
+ * saved op_context export data.
+ *
+ * @param[in] saved  Pointer to a saved_export_context to discard the data from.
+ *
+ */
 void discard_op_context_export(struct saved_export_context *saved)
 {
 	if (saved->saved_export)
 		put_gsh_export(saved->saved_export);
 
 	if (saved->saved_pnfs_ds != NULL)
-		pnfs_ds_put(op_ctx->ctx_pnfs_ds);
+		pnfs_ds_put(saved->saved_pnfs_ds);
 
 	if (saved->saved_fullpath != NULL)
 		gsh_refstr_put(saved->saved_fullpath);
@@ -3340,6 +3452,31 @@ void discard_op_context_export(struct saved_export_context *saved)
 		gsh_refstr_put(saved->saved_pseudopath);
 }
 
+/**
+ * @brief Initialize an op_context.
+ *
+ * This initializes all the fields in an op_context including setting up all the
+ * references if an export is provided. After this call, the op_context is
+ * totally valid even if NULL was passed for the export.
+ *
+ * If the thread's op_ctx is non-NULL, that will be saved in ctx->saved_op_ctx.
+ *
+ * The thread's op_ctx will be set to ctx.
+ *
+ * The export permissions and options will be set to root defaults.
+ *
+ * This is basically the "constructor" for an op_context.
+ *
+ * @param[in] ctx            The op_context to initialoze
+ * @param[in] exp            The gsh_export if any to reference
+ * @param[in] fsal_exp       The fsal_export if any to reference
+ * @param[in] caller_data    The caller address data, can be NULL
+ * @param[in] nfs_vers       The NFS version
+ * @param[in] nfs_minorvers  The minor version for 4.x
+ * @param[in] req_type       UNKNOWN_REQUEST, NFS_CALL, NFS_REQUEST, or
+ *                           _9P_REQUEST
+ *
+ */
 static uint32_t op_id;
 void init_op_context(struct req_op_context *ctx,
 		     struct gsh_export *exp,
@@ -3364,7 +3501,7 @@ void init_op_context(struct req_op_context *ctx,
 
 	/* Since this is a brand new op context, no need to release anything.
 	 */
-	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL, false);
+	set_op_context_export_fsal_no_release(exp, fsal_exp, NULL);
 
 	ctx->export_perms.set = root_op_export_set;
 	ctx->export_perms.options = root_op_export_options;
@@ -3372,13 +3509,31 @@ void init_op_context(struct req_op_context *ctx,
 	ctx->flags.pseudo_fsal_internal_lookup = false;
 }
 
+/**
+ * @brief Release an op_context and its references.
+ *
+ * This will release the thread's op_ctx and restore any previous one.
+ *
+ * The op_context will be set such that all the export bits are NULL and all
+ * references released.
+ *
+ * This is basically the "destructor" for an op_context.
+ *
+ */
 void release_op_context(void)
 {
 	struct req_op_context *cur_ctx = op_ctx;
 
 	clear_op_context_export_impl();
 
-	/* And now we're done with the gsh_refstr */
+	/* Clear the ctx_export and fsal_export */
+	op_ctx->ctx_export = NULL;
+	op_ctx->fsal_export = NULL;
+
+	/* And now we're done with the gsh_refstr (the refs just got released so
+	 * we really can NULL them out. This op_context is now done for.
+	 * This is analogous to a destructor.
+	 */
 	op_ctx->ctx_fullpath = NULL;
 	op_ctx->ctx_pseudopath = NULL;
 
@@ -3387,6 +3542,17 @@ void release_op_context(void)
 	cur_ctx->saved_op_ctx = NULL;
 }
 
+/**
+ * @brief Suspend an op_context so the thread may suspend and the operation be
+ *        resumed later.
+ *
+ * When a thread is processing an async request, the op_context must be
+ * preserved to resume that request. The request actually contains the
+ * op_context, so all this does is set the thread's op_ctx to NULL.
+ *
+ * NOTE: A suspended op_context better be a top level one, i.e. saved_op_ctx is
+ *       NULL. That will be asserted by resume_op_context().
+ */
 void suspend_op_context(void)
 {
 	/* We cannot touch the contents of op_ctx, because it may be already
@@ -3394,9 +3560,24 @@ void suspend_op_context(void)
 	op_ctx = NULL;
 }
 
+/**
+ * @brief Resume an op_context that had been suspended.
+ *
+ * When the request resumes, the op_context will be restored. The current
+ * op_ctx will be saved.
+ *
+ * The resume will also reset the client IP address string.
+ *
+ * NOTE: The caller must not have an op_ctx in use. Any op_context that may be
+ *       suspended and resumed MUST be a top level op_context with a NULL
+ *       saved_op_ctx. This is because a resumed op_context may be suspended
+ *       again, and suspend has no way to revert to a saved_op_ctx.
+ *
+ */
 void resume_op_context(struct req_op_context *ctx)
 {
-	ctx->saved_op_ctx = op_ctx;
+	assert(ctx->saved_op_ctx == NULL);
+	assert(op_ctx == NULL);
 	op_ctx = ctx;
 
 	if (op_ctx->client != NULL) {

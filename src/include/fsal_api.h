@@ -464,6 +464,12 @@ enum request_type {
  *       thread owning the req_op_context. There are a set of functions that
  *       make it easy to access these strings, and to access the "best" string
  *       in the context of which string is used for NFS v3 MOUNT requests.
+ *
+ * NOTE: Any function that causes a saved op_context MUST not suspend the
+ *       op_context. This is because the suspend and resume can not rely on
+ *       utilizing saved_op_ctx. An op_context that relied on saved_op_ctx is
+ *       intended for doing some processing on an export other than the one
+ *       currently in use, or needs to do something with different credentials.
  */
 
 struct req_op_context {

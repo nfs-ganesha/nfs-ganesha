@@ -1542,7 +1542,12 @@ retry_after_drc_suspend:
 	free_args(reqdata);
 
 	/* Make sure no-one called init_op_context() without calling
-	 * release_op_context() */
+	 * release_op_context(). This must be true in part to assure that
+	 * suspend_op_context() and resume_op_context() work properly, but
+	 * also so that when ntirpc makes another call on the same thread,
+	 * op_ctx doesn't point to memory that has likely been freed or even
+	 * re-allocated.
+	 */
 	assert(op_ctx == NULL);
 	/* Make sure we return to ntirpc without op_ctx set, or saved_op_ctx can
 	 * point to freed memory */
