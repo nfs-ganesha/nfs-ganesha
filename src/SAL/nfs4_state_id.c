@@ -917,7 +917,10 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			LogDebug(COMPONENT_STATE,
 				 "Check %s stateid found stale stateid %s",
 				 tag, str);
-		status = NFS4ERR_STALE_STATEID;
+		if (data->minorversion == 0)
+			status = NFS4ERR_STALE_STATEID;
+		else
+			status = NFS4ERR_BAD_STATEID;
 		goto failure;
 	}
 
