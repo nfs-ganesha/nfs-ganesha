@@ -569,6 +569,8 @@ struct gsh_export *get_gsh_export_by_pseudo_locked(char *path,
 				break;
 			}
 		}
+
+		gsh_refstr_put(ref_pseudopath);
 	}
 
 	if (ret_exp != NULL)
