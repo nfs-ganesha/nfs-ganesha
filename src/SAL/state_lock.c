@@ -2197,6 +2197,8 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 	 * Lock owners are not supported and hint tells us that lock fully
 	 *   overlaps a lock we already have (no need to make another FSAL
 	 *   call in that case)
+	 * Unlock of stale nfs4_clientid and some FSAL need the existence
+	 * of lock record to check the future lock reclaim.
 	 *
 	 * We do NOT need to quick exit if async blocking locks are not
 	 * supported and there is an overlap because we won't get here if
@@ -2258,6 +2260,16 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj,
 		nfs4_clientid = owner->so_owner.so_nfs4_owner.so_clientrec;
 		owner_client = nfs4_clientid->gsh_client;
 		break;
+	}
+
+	if (fsal_lock_op == FSAL_OP_UNLOCK
+	    && nfs4_clientid != NULL
+	    && nfs4_clientid->cid_confirmed == STALE_CLIENT_ID
+	    && fsal_export->exp_ops.fs_supports(
+			  fsal_export, fso_lock_full_control)) {
+		LogDebug(COMPONENT_STATE,
+			 "skip unlock of stale nfs4_clientid. FSAL need the lock record to check lock reclaim");
+		return STATE_SUCCESS;
 	}
 
 	/* If the owner gsh_client doesn't match the op_ctx and is not NULL

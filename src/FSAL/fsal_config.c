@@ -75,6 +75,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->lock_support;
 	case fso_lock_support_async_block:
 		return !!info->lock_support_async_block;
+	case fso_lock_full_control:
+		return !!info->lock_full_control;
 	case fso_named_attr:
 		return !!info->named_attr;
 	case fso_unique_handles:
