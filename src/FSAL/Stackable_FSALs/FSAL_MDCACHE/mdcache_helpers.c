@@ -3285,6 +3285,7 @@ again:
 				 */
 				mdcache_lru_unref_chunk(chunk);
 				chunk = NULL;
+				mdcache_lru_unref(entry, LRU_ACTIVE_REF);
 				goto restart;
 			}
 		}
