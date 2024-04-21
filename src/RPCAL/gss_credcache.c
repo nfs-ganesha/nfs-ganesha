@@ -978,9 +978,9 @@ static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
 	krb5_ccache ccache;
 
 	/* Skip if there is no cache to be destroyed */
-	if (!ple->ccname) {
+	if (!ple->ccname)
 		return;
-	}
+
 	code = krb5_cc_resolve(*context, ple->ccname, &ccache);
 	if (code) {
 		k5err = gssd_k5_err_msg(*context, code);
@@ -1006,15 +1006,15 @@ static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
 /* This function frees-up a ple entry */
 static void free_ple_entry(struct gssd_k5_kt_princ *ple, krb5_context *context)
 {
-	if (ple->realm != NULL) {
+	if (ple->realm != NULL)
 		gsh_free(ple->realm);
-	}
-	if (ple->ccname != NULL) {
+
+	if (ple->ccname != NULL)
 		gsh_free(ple->ccname);
-	}
-	if (context != NULL) {
+
+	if (context != NULL)
 		krb5_free_principal(*context, ple->princ);
-	}
+
 	gsh_free(ple);
 }
 
@@ -1037,9 +1037,8 @@ static void clear_global_krb5_principal_list(krb5_context *context)
 	while (ple != NULL) {
 		/* Store for later retrieval after ple is freed */
 		next_ple = ple->next;
-		if (context != NULL) {
+		if (context != NULL)
 			destroy_krb5_creds_cache(ple, context);
-		}
 		free_ple_entry(ple, context);
 		ple = next_ple;
 	}
@@ -1053,7 +1052,7 @@ static void clear_global_krb5_principal_list(krb5_context *context)
  * This function clears global krb5 principal entries, and destroys their
  * respective krb5 caches.
  */
-void gssd_clear_cred_cache()
+void gssd_clear_cred_cache(void)
 {
 	krb5_context context;
 	krb5_error_code code = 0;

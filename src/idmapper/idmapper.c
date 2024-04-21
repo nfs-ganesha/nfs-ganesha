@@ -357,7 +357,20 @@ static void add_user_to_cache(const struct gsh_buffdesc *name, uid_t uid,
  */
 static void add_user_to_negative_cache(const struct gsh_buffdesc *name)
 {
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add user to negative cache skipped.");
+		return;
+	}
 	PTHREAD_RWLOCK_wrlock(&idmapper_negative_cache_user_lock);
+
+	/* Recheck after obtaining the lock */
+	if (!idmapping_enabled) {
+		PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_user_lock);
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add user to negative cache skipped.");
+		return;
+	}
 	idmapper_negative_cache_add_user_by_name(name);
 	PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_user_lock);
 }
@@ -404,7 +417,20 @@ static void add_group_to_cache(const struct gsh_buffdesc *name, gid_t gid)
  */
 static void add_group_to_negative_cache(const struct gsh_buffdesc *name)
 {
+	if (!idmapping_enabled) {
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add group to negative cache skipped.");
+		return;
+	}
 	PTHREAD_RWLOCK_wrlock(&idmapper_negative_cache_group_lock);
+
+	/* Recheck after obtaining the lock */
+	if (!idmapping_enabled) {
+		PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_group_lock);
+		LogWarn(COMPONENT_IDMAPPER,
+			"Idmapping is disabled. Add group to negative cache skipped.");
+		return;
+	}
 	idmapper_negative_cache_add_group_by_name(name);
 	PTHREAD_RWLOCK_unlock(&idmapper_negative_cache_group_lock);
 }

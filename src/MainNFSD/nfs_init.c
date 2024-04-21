@@ -212,14 +212,14 @@ bool reread_config(void)
 	if (!config_error_is_harmless(&err_type)) {
 		LogCrit(COMPONENT_CONFIG,
 			"Error while parsing DIRECTORY_SERVICES configuration");
+		return false;
 	}
 
 	/* Set idmapping status based on directory_services configuration */
 	status = set_idmapping_status(
 		nfs_param.directory_services_param.idmapping_active);
-	if (!status) {
+	if (!status)
 		LogFatal(COMPONENT_CONFIG, "Failed to set idmapping status");
-	}
 
 	(void) report_config_errors(&err_type, NULL, config_errs_to_log);
 	config_Free(config_struct);
