@@ -1476,7 +1476,6 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		 "FSAL_UP_DELEG: obj %p type %u",
 		 obj, obj->type);
 
-restart_recalls:
 	STATELOCK_lock(obj);
 	glist_for_each_safe(glist, glist_n,
 			    &obj->state_hdl->file.list_of_states) {
@@ -1522,30 +1521,42 @@ restart_recalls:
 		inc_client_id_ref(client_id);
 		dec_state_owner_ref(owner);
 
-		/* Prevent client's lease expiring until we complete
-		 * this recall/revoke operation. If the client's lease
-		 * has already expired, let's go ahead and clean the
-		 * expired clients to revoke this delegation and we
-		 * restart to check for other conflicting delegation holders
+		/* Being an area in which there are/could be a lot of races,
+		 * updating the logic so that multiple ASync recalls as part of
+		 * conflciting IOs on same or different objects could happen
+		 * concurrently and in parallel the reaper wiping off the
+		 * expired clients with its states.
+		 * Steps:
+		 * 1) For an expired client, proceed directly to recall off the
+		 *    conflciting state as part of delegrecall_one() below.
+		 * 2) For a non-expired client -
+		 *     a) Prevent client's lease expiring until we complete this
+		 *        recall/revoke operation, be renewing/reserving lease.
+		 *     b) If reserve lease fails, then we cleanup and set the
+		 *        deleg state back to GRANTED, so that reaper could
+		 *        clean this up proper later, else below path ignores
+		 *        the deleg state to be revoked.
+		 *            nfs_client_id_expire -> revoke_owner_delegs ->
+		 *            state_deleg_revoke -> state_deleg_revoke
+		 * 3) Once deleg state is marked properly, then further ops on
+		 *    this state would return NFS4ERR_REVOKED or NFS4ERR_EXPIRED
+		 * 4) Continue to check for other conflicting delegation holders
+		 *    holding the state lock
 		 */
 		PTHREAD_MUTEX_lock(&client_id->cid_mutex);
-		if (!reserve_lease(client_id)) {
-			/* Let's release the locks and wipe off the client */
+		if (client_id->cid_confirmed != EXPIRED_CLIENT_ID &&
+		    !reserve_lease(client_id)) {
 			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
-			LogDebug(COMPONENT_FSAL_UP,
-				"Client's lease has already expired, no need to recall delegation but let's wipe off the client");
-			STATELOCK_unlock(obj);
-			if (!reserve_lease_or_expire(client_id, false)) {
-				LogDebug(COMPONENT_FSAL_UP,
-					"Expired client got cleaned off");
-				dec_client_id_ref(client_id);
-			}
-			gsh_free(drc_ctx);
+			/* Let's release the ref &*/
+			dec_client_id_ref(client_id);
 
-			/* Safely restart the loop as state locks were removed,
-			 * pointers would have gone dangling
-			 */
-			goto restart_recalls;
+			LogDebug(COMPONENT_FSAL_UP,
+				"Failed to reserve client's lease.");
+			gsh_free(drc_ctx);
+			/* Reset the state for reaper to clean  */
+			*deleg_state = DELEG_GRANTED;
+
+			continue;
 		}
 		PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
 
