@@ -905,8 +905,9 @@ void xdr_READ4res_uio_release(struct xdr_uio *uio, u_int flags)
 		     uio, uio->uio_references, (int) uio->uio_count);
 
 	if (!(--uio->uio_references)) {
-		for (ix = 0; ix < uio->uio_count; ix++) {
-			gsh_free(uio->uio_vio[ix].vio_base);
+		if (!op_ctx->is_rdma_buff_used) {
+			for (ix = 0; ix < uio->uio_count; ix++)
+				gsh_free(uio->uio_vio[ix].vio_base);
 		}
 		gsh_free(uio);
 	}
@@ -994,9 +995,13 @@ void nfs4_op_read_plus_Free(nfs_resop4 *res)
 	READ_PLUS4res *resp = &res->nfs_resop4_u.opread_plus;
 	contents *conp = &resp->rpr_resok4.rpr_contents;
 
-	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA)
-		if (conp->data.d_data.data_val != NULL)
-			gsh_free(conp->data.d_data.data_val);
+	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA) {
+		if (!op_ctx->is_rdma_buff_used) {
+			if (conp->data.d_data.data_val != NULL)
+				gsh_free(conp->data.d_data.data_val);
+		}
+		conp->data.d_data.data_val = NULL;
+	}
 }
 
 /**
