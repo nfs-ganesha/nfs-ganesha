@@ -774,9 +774,8 @@ bool xdr_io_data(XDR *xdrs, io_data *objp)
 
 /**
  *
- * @brief  API to get the buffer to fill the IO Payloads,
+ * @brief  API to get the buffer to fill the IO Payloads
  *
- * @param[in] req  The svc request structure
  * @param[in] size Requested size of buffer to be allocated.
  *
  * @returns The address of the buffer to fill the payload

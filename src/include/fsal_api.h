@@ -497,6 +497,7 @@ struct req_op_context {
 	struct timespec start_time;	/*< start time of this op/request */
 	void *fsal_private;		/*< private for FSAL use */
 	void *proto_private;		/*< private for protocol layer use */
+	bool is_rdma_buff_used;		/*< Whether RDMA buffer is being used */
 	struct fsal_module *fsal_module;	/*< current fsal module */
 	struct fsal_pnfs_ds *ctx_pnfs_ds;	/*< current pNFS DS */
 	uint32_t op_id;
