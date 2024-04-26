@@ -492,8 +492,9 @@ void xdr_dirlist4_uio_release(struct xdr_uio *uio, u_int flags)
 		     uio, uio->uio_references, (int) uio->uio_count);
 
 	if (!(--uio->uio_references)) {
-		for (ix = 0; ix < uio->uio_count; ix++) {
-			gsh_free(uio->uio_vio[ix].vio_base);
+		if (!op_ctx->is_rdma_buff_used) {
+			for (ix = 0; ix < uio->uio_count; ix++)
+				gsh_free(uio->uio_vio[ix].vio_base);
 		}
 		gsh_free(uio);
 	}
@@ -672,7 +673,11 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	/* Prepare to read the entries */
 	tracker.mem_avail = maxcount - READDIR_RESP_BASE_SIZE;
 	tracker.max_count = dircount;
-	tracker.entries = gsh_malloc(tracker.mem_avail);
+	tracker.entries = get_buffer_for_io_response(tracker.mem_avail);
+	/* If buffer was not assigned, let's allocate it */
+	if (tracker.entries == NULL)
+		tracker.entries = gsh_malloc(tracker.mem_avail);
+
 	tracker.error = NFS4_OK;
 	tracker.req_attr = &arg_READDIR4->attr_request;
 	tracker.data = data;
@@ -810,7 +815,9 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
  out:
 
 	/* If we allocated but didn't consume entries, free it now. */
-	gsh_free(tracker.entries);
+	if (!op_ctx->is_rdma_buff_used)
+		gsh_free(tracker.entries);
+	tracker.entries = NULL;
 
 	LogDebug(COMPONENT_NFS_READDIR,
 		 "Returning %s",
