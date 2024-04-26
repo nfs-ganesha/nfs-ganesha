@@ -374,6 +374,14 @@ typedef struct nfs_core_param {
 		/** TIRPC ioq max simultaneous io threads.  Defaults to
 		    200 and settable by RPC_Ioq_ThrdMax. */
 		uint32_t ioq_thrd_max;
+#ifdef _USE_NFS_RDMA
+		/** RDMA sq_depth */
+		uint32_t rdma_sq_depth;
+		/** RDMA rq_depth */
+		uint32_t rdma_rq_depth;
+		/** RDMA credits */
+		uint32_t rdma_credits;
+#endif
 		struct {
 			/** Partitions in GSS ctx cache table (default 13). */
 			uint32_t ctx_hash_partitions;

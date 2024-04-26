@@ -276,6 +276,17 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("MaxRPCRecvBufferSize", 1, 1048576*9,
 		       NFS_DEFAULT_RECV_BUFFER_SIZE,
 		       nfs_core_param, rpc.max_recv_buffer_size),
+#ifdef _USE_NFS_RDMA
+	CONF_ITEM_UI32("MaxRPCRdmaSqDepth", 1, 4096,
+		       1024,
+		       nfs_core_param, rpc.rdma_sq_depth),
+	CONF_ITEM_UI32("MaxRPCRdmaRqDepth", 1, 4096,
+		       1024,
+		       nfs_core_param, rpc.rdma_rq_depth),
+	CONF_ITEM_UI32("MaxRPCRdmaCredits", 1, 4096,
+		       1024,
+		       nfs_core_param, rpc.rdma_credits),
+#endif
 	CONF_ITEM_UI32("rpc_ioq_thrdmin", 2, 1024*128, 2,
 		       nfs_core_param, rpc.ioq_thrd_min),
 	CONF_ITEM_UI32("RPC_Ioq_ThrdMax", 2, 1024*128, 200,

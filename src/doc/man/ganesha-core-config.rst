@@ -320,6 +320,16 @@ MaxRPCSendBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 MaxRPCRecvBufferSize(uint32, range 1 to 1048576*9, default 1048576)
     Size of RPC receive buffer.
 
+MaxRPCRdmaSqDepth(uint32, range 1 to 4096, default 1024)
+    Max size of RDMA send queue.
+
+MaxRPCRdmaRqDepth(uint32, range 1 to 4096, default 1024)
+    Max size of RDMA receive queue.
+
+MaxRPCRdmaCredits(uint32, range 1 to 4096, default 1024)
+    Max credits of RDMA channel, representing the max number of outstanding
+    NFS operations on the channel.
+
 RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 200)
     TIRPC ioq max simultaneous io threads
 
