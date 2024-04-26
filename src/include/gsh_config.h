@@ -381,6 +381,10 @@ typedef struct nfs_core_param {
 		uint32_t rdma_rq_depth;
 		/** RDMA credits */
 		uint32_t rdma_credits;
+		/** Maximum number of RDMA connections for TIRPC.
+		    Defaults to 16 and settable by
+		    RPC_Max_RDMA_Connections. */
+		uint32_t max_rdma_connections;
 #endif
 		struct {
 			/** Partitions in GSS ctx cache table (default 13). */
