@@ -168,6 +168,12 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI16("Rquota_Port", 0, UINT16_MAX, RQUOTA_PORT,
 		       nfs_core_param, port[P_RQUOTA]),
 #endif
+
+#ifdef _USE_NFS_RDMA
+	CONF_ITEM_UI16("NFS_RDMA_Port", 0, UINT16_MAX, NFS_RDMA_PORT,
+		       nfs_core_param, port[P_NFS_RDMA]),
+#endif
+
 	CONF_ITEM_IP_ADDR("Bind_Addr", "0.0.0.0",
 			  nfs_core_param, bind_addr),
 	CONF_ITEM_UI32("NFS_Program", 1, INT32_MAX, NFS_PROGRAM,

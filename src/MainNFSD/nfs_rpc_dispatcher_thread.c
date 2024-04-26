@@ -561,7 +561,7 @@ void Create_tcp(protos prot)
 struct rpc_rdma_attr rpc_rdma_xa = {
 	.statistics_prefix = NULL,
 	.node = "::",
-	.port = "20049",
+	.port = "20049",		/* default port 20049 */
 	.sq_depth = 32,			/* default was 50 */
 	.max_send_sge = 32,		/* minimum 2 */
 	.rq_depth = 32,			/* default was 50 */
@@ -583,6 +583,12 @@ static enum xprt_stat nfs_rpc_dispatch_RDMA(SVCXPRT *xprt)
 
 void Create_RDMA(protos prot)
 {
+	/* Override the RDMA service port as per the port configured */
+	char str[20];
+
+	snprintf(str, 20, "%d", nfs_param.core_param.port[P_NFS_RDMA]);
+	rpc_rdma_xa.port = strdup(str);
+
 	/* This has elements of both UDP and TCP setup */
 	tcp_xprt[prot] =
 		svc_rdma_create(&rpc_rdma_xa,
@@ -1386,6 +1392,9 @@ void nfs_Init_svc(void)
 		nfs_param.core_param.rpc.gss.max_gc;
 #ifdef SVC_PARAM_HAS_THR_STACK_SIZE
 	svc_params.thr_stack_size = PTHREAD_stack_size;
+#endif
+#ifdef _USE_NFS_RDMA
+	svc_params.nfs_rdma_port = nfs_param.core_param.port[P_NFS_RDMA];
 #endif
 
 	/* Only after TI-RPC allocators, log channel are setup */

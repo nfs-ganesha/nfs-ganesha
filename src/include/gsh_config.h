@@ -95,6 +95,11 @@ typedef enum protos {
 #define RQUOTA_PORT 875
 
 /**
+ * @brief Default NFS Over RDMA Port.
+ */
+#define NFS_RDMA_PORT 20049
+
+/**
  * @brief Default value for _9p_param.nb_worker
  */
 #define NB_WORKER_THREAD_DEFAULT 256
