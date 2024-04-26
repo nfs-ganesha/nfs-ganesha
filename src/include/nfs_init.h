@@ -135,5 +135,8 @@ enum xprt_stat nfs_rpc_valid_RQUOTA(struct svc_req *);
 #ifdef USE_NFSACL3
 enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *);
 #endif
+#ifdef _USE_NFS_RDMA
+enum xprt_stat nfs_rpc_valid_NFS_RDMA(struct svc_req *);
+#endif
 
 #endif				/* !NFS_INIT_H */

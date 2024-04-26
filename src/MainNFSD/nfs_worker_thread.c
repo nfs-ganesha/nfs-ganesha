@@ -1927,3 +1927,30 @@ enum xprt_stat nfs_rpc_valid_NFSACL(struct svc_req *req)
 	return nfs_rpc_noprog(reqdata);
 }
 #endif
+
+#ifdef _USE_NFS_RDMA
+enum xprt_stat nfs_rpc_valid_NFS_RDMA(struct svc_req *req)
+{
+	nfs_request_t *reqdata =
+			container_of(req, struct nfs_request, svc);
+	SVCXPRT *xprt = reqdata->svc.rq_xprt;
+
+	/* NFS over RDMA transport is supported by default for NFSv4.0 Only,
+	 * fail NFSv3 unless configured in NFS_RDMA_Protocol_Versions.
+	 * For NFSv4+ we could validate this once we decode the compound, hence
+	 * logic done inside nfs4_Compound()
+	 */
+	if (get_port(svc_getrpclocal(xprt)) ==
+	    nfs_param.core_param.port[P_NFS_RDMA] &&
+	    reqdata->svc.rq_msg.cb_vers == NFS_V3 &&
+	    !(nfs_param.core_param.nfs_rdma_supported_protocol_versions &
+	    NFS_RDMA_ENABLE_FOR_NFSV3)) {
+		LogCrit(COMPONENT_DISPATCH,
+			"NFS over RDMA transport is not supported for NFSv3, failing the request !!!");
+		/* mount.nfs gets Protocol not supported errors */
+		return svcerr_progvers(&reqdata->svc, NFS_V4, NFS_V4);
+	}
+
+	return nfs_rpc_valid_NFS(req);
+}
+#endif

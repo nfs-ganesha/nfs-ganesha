@@ -1206,6 +1206,24 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
+#ifdef _USE_NFS_RDMA
+	/* NFS over RDMA transport is supported by default for NFSv4.0 Only,
+	 * fail other minor versions unless configured in
+	 * NFS_RDMA_Protocol_Versions
+	 */
+	if ((get_port(svc_getrpclocal(req->rq_xprt)) ==
+	    nfs_param.core_param.port[P_NFS_RDMA]) &&
+	    (!(nfs_param.core_param.nfs_rdma_supported_protocol_versions &
+	    (NFS_RDMA_ENABLE_FOR_NFSV40 << compound4_minor)))) {
+		LogCrit(COMPONENT_NFS_V4,
+			"NFS over RDMA transport is not supported for NFSv4.%d, failing the request !!!",
+			compound4_minor);
+		/* mount.nfs gets Protocol not supported errors */
+		res_compound4->status = NFS4ERR_MINOR_VERS_MISMATCH;
+		res_compound4->resarray.resarray_len = 0;
+		goto out;
+	}
+#endif
 	/* Initialisation of the compound request internal's data */
 	data = gsh_calloc(1, sizeof(*data));
 

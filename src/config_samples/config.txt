@@ -67,6 +67,11 @@ NFS_CORE_PARAM {}
 
 	NFS_RDMA_Port (uint16, range 0 to UINT16_MAX, default 20049)
 
+	NFS_RDMA_Protocol_Versions(enum list,
+				   values [NONE, 3, v3, NFS3, NFSv3, 4.0,
+				   v4.0, NFS4.0, NFSv4.0, ALL],
+				   default 4.0)
+
 	Monitoring_Port (uint16, range 0 to UINT16_MAX, default 9587)
 
 	Enable_Dynamic_Metrics (bool, default true)

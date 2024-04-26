@@ -230,6 +230,19 @@ typedef enum protos {
 #define UDP_LISTENER_MOUNT	0x00000002
 #define UDP_LISTENER_MASK (UDP_LISTENER_ALL | UDP_LISTENER_MOUNT)
 
+#ifdef _USE_NFS_RDMA
+#define NFS_RDMA_ENABLE_FOR_NONE	0
+#define NFS_RDMA_ENABLE_FOR_NFSV3	0x00000001
+/* Validations for V4.x happens based on below values being 2 << x */
+#define NFS_RDMA_ENABLE_FOR_NFSV40	0x00000002
+#define NFS_RDMA_ENABLE_FOR_NFSV41	0x00000004
+#define NFS_RDMA_ENABLE_FOR_NFSV42	0x00000008
+
+#define NFS_RDMA_ENABLE_FOR_ALL		(NFS_RDMA_ENABLE_FOR_NFSV3 | \
+					 NFS_RDMA_ENABLE_FOR_NFSV40)
+#define NFS_RDMA_ENABLE_BY_DEFAULT	NFS_RDMA_ENABLE_FOR_NFSV40
+#endif
+
 typedef struct nfs_core_param {
 	/** The list of hosts allowed to use the HAProxy protocol. These are
 	 *  the hosts running HAProxy, acting as load balancing/proxy. Actual
@@ -514,6 +527,13 @@ typedef struct nfs_core_param {
 	 *  Ganesha servers.
 	 */
 	uint32_t connection_manager_timeout_sec;
+#ifdef _USE_NFS_RDMA
+	/** NFS Versions to supported for NFSoRDMA.
+	    Defaults to NFS_RDMA_ENABLE_BY_DEFAULT and is settable with
+	    NFS_RDMA_Protocol_Versions
+	    (as a comma-separated list of 3,4.0,4.1,4.2) */
+	unsigned int nfs_rdma_supported_protocol_versions;
+#endif
 } nfs_core_parameter_t;
 
 /** @} */

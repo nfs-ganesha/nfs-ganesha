@@ -497,7 +497,7 @@ static enum xprt_stat nfs_rpc_dispatch_RDMA(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "RDMA request on SVCXPRT %p fd %d stat %d",
 		     xprt, xprt->xp_fd, SVC_STAT(xprt->xp_parent));
-	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
+	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS_RDMA;
 	return SVC_STAT(xprt->xp_parent);
 }
 #endif

@@ -58,6 +58,11 @@ Rquota_Port (uint16, range 0 to UINT16_MAX, default 875)
 NFS_RDMA_Port (uint16, range 0 to UINT16_MAX, default 20049)
     Port number used by NFS Over RDMA Protocol.
 
+NFS_RDMA_Protocol_Versions(enum list, default [4.0])
+    Possible values:
+        (NONE, 3, v3, NFS3, NFSv3, 4.0, v4.0, NFS4.0, NFSv4.0, 4.1, ALL)
+    Supported NFS Version for NFS Over RDMA. By default, NFSv4.0 is enabled.
+
 Monitoring_Port (uint16, range 0 to UINT16_MAX, default 9587)
     Port number used to export monitoring metrics.
 
