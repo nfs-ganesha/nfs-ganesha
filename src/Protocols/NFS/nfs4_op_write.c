@@ -481,6 +481,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	write_arg->state = state_found;
 	write_arg->offset = offset;
 	write_arg->iov_count = 1;
+	write_arg->iov = (struct iovec *) (write_data + 1);
 	write_arg->iov[0].iov_len = size;
 	write_arg->iov[0].iov_base = arg_WRITE4->data.data_val;
 	write_arg->io_amount = 0;

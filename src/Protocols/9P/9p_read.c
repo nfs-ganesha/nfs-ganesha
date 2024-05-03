@@ -119,6 +119,7 @@ int _9p_read(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		read_arg->state = pfid->state;
 		read_arg->offset = *offset;
 		read_arg->iov_count = 1;
+		read_arg->iov = (struct iovec *) (read_arg + 1);
 		read_arg->iov[0].iov_len = *count;
 		read_arg->iov[0].iov_base = databuffer;
 		read_arg->io_amount = 0;

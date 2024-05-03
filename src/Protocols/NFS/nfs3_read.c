@@ -382,6 +382,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	read_arg->state = NULL;
 	read_arg->offset = offset;
 	read_arg->iov_count = 1;
+	read_arg->iov = (struct iovec *) (read_data + 1);
 	read_arg->iov[0].iov_len = size;
 	/* Must allocate buffer as a multiple of BYTES_PER_XDR_UNIT */
 	read_arg->iov[0].iov_base = gsh_malloc(RNDUP(size));

@@ -1546,7 +1546,7 @@ struct fsal_io_arg {
 	struct state_t *state;	/**< State to use for read (or NULL) */
 	uint64_t offset;	/**< Offset into file to read */
 	int iov_count;		/**< Number of vectors in iov */
-	struct iovec iov[];	/**< Vector of buffers to fill */
+	struct iovec *iov;	/**< Vector of buffers to fill */
 };
 
 /**

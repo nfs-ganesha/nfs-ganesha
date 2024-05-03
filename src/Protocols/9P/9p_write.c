@@ -139,6 +139,7 @@ int _9p_write(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		write_arg->state = pfid->state;
 		write_arg->offset = *offset;
 		write_arg->iov_count = 1;
+		write_arg->iov = (struct iovec *) (write_arg + 1);
 		write_arg->iov[0].iov_len = size;
 		write_arg->iov[0].iov_base = databuffer;
 		write_arg->io_amount = 0;

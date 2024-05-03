@@ -364,6 +364,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	write_arg->fsal_stable = arg->arg_write3.stable != UNSTABLE ||
 				 force_sync;
 	write_arg->iov_count = 1;
+	write_arg->iov = (struct iovec *) (write_data + 1);
 	write_arg->iov[0].iov_len = size;
 	write_arg->iov[0].iov_base = arg->arg_write3.data.data_val;
 	write_arg->io_amount = 0;
