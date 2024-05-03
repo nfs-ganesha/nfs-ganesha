@@ -476,3 +476,298 @@ bool is_loopback(sockaddr_t *addr)
 			   &in6addr_loopback,
 			   sizeof(in6addr_loopback)) == 0);
 }
+
+static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
+{
+	int ix;
+	io_data *io_data = uio->uio_u2;
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Releasing %p, references %"PRIi32", count %d",
+		     uio, uio->uio_references, (int) uio->uio_count);
+
+	if (--uio->uio_references != 0)
+		return;
+
+	if (io_data->release != NULL) {
+		/* Handle the case where the io_data comes with its
+		 * own release method.
+		 *
+		 * Note if extra buffer was used to handle RNDUP, the
+		 * io_data release function doesn't even know about it so will
+		 * not free it.
+		 */
+		io_data->release(io_data->release_data);
+	} else {
+		if (uio->uio_u1 != NULL) {
+			/* Don't free the last buffer! It was allocated along
+			 * with uio..
+			 */
+			uio->uio_count--;
+		}
+
+		/* Free the buffers that had been allocated */
+		for (ix = 0; ix < uio->uio_count; ix++)
+			gsh_free(uio->uio_vio[ix].vio_base);
+	}
+
+	gsh_free(uio);
+}
+
+static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
+{
+	struct xdr_uio *uio;
+	uint32_t size = objp->data_len;
+	/* The size to actually be written must be a multiple of
+	 * BYTES_PER_XDR_UNIT
+	 */
+	uint32_t size2 = RNDUP(size);
+	int i, extra = 0, last;
+	int count = objp->iovcnt;
+	uint32_t remain = size;
+	size_t totlen = 0;
+
+	if (!inline_xdr_u_int32_t(xdrs, &size))
+		return false;
+
+	if (size != size2) {
+		/* Add an extra buffer for round up */
+		count++;
+		extra = BYTES_PER_XDR_UNIT;
+		last = objp->iovcnt - 1;
+	}
+
+	uio = gsh_calloc(1, sizeof(struct xdr_uio) +
+			 count * sizeof(struct xdr_vio) + extra);
+	uio->uio_release = xdr_io_data_uio_release;
+	uio->uio_count = count;
+	uio->uio_u2 = objp;
+
+	for (i = 0; i < objp->iovcnt; i++) {
+		size_t i_size = objp->iov[i].iov_len;
+
+		if (remain < i_size)
+			i_size = remain;
+
+		uio->uio_vio[i].vio_base = objp->iov[i].iov_base;
+		uio->uio_vio[i].vio_head = objp->iov[i].iov_base;
+		uio->uio_vio[i].vio_tail = objp->iov[i].iov_base + i_size;
+		uio->uio_vio[i].vio_wrap = objp->iov[i].iov_base + i_size;
+		uio->uio_vio[i].vio_length = i_size;
+		uio->uio_vio[i].vio_type = VIO_DATA;
+
+		totlen += i_size;
+		remain -= i_size;
+
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "iov %p [%d].iov_base %p iov_len %zu for %zu of %u",
+			     objp->iov, i,
+			     objp->iov[i].iov_base,
+			     i_size,
+			     totlen, objp->data_len);
+	}
+
+	if (size != size2) {
+		/* grab the last N bytes of last buffer into extra */
+		size_t n = size % BYTES_PER_XDR_UNIT;
+		char *p = uio->uio_vio[last].vio_base +
+			  uio->uio_vio[last].vio_length - n;
+		char *extra = (char *) uio + sizeof(struct xdr_uio) +
+					     count * sizeof(struct xdr_vio);
+
+		/* drop those bytes from the last buffer */
+		uio->uio_vio[last].vio_tail -= n;
+		uio->uio_vio[last].vio_wrap -= n;
+		uio->uio_vio[last].vio_length -= n;
+
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "Extra trim uio_vio[%d].vio_base %p vio_length %"
+			     PRIu32,
+			     last,
+			     uio->uio_vio[last].vio_base,
+			     uio->uio_vio[last].vio_length);
+
+		/* move the bytes to the extra buffer and set it up as a
+		 * BYTES_PER_XDR_UNIT (4) byte buffer. Because it is part of the
+		 * memory we allocated above with calloc, the extra bytes are
+		 * already zeroed.
+		 */
+		memcpy(extra, p, n);
+
+		i = count - 1;
+		uio->uio_vio[i].vio_base = extra;
+		uio->uio_vio[i].vio_head = extra;
+		uio->uio_vio[i].vio_tail = extra + BYTES_PER_XDR_UNIT;
+		uio->uio_vio[i].vio_wrap = extra + BYTES_PER_XDR_UNIT;
+		uio->uio_vio[i].vio_length = BYTES_PER_XDR_UNIT;
+		uio->uio_vio[i].vio_type = VIO_DATA;
+
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "Extra uio_vio[%d].vio_base %p vio_length %"PRIu32,
+			     i,
+			     uio->uio_vio[i].vio_base,
+			     uio->uio_vio[i].vio_length);
+
+		/* Remember so we don't free... */
+		uio->uio_u1 = extra;
+	}
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Allocated %p, references %"PRIi32", count %d",
+		     uio, uio->uio_references, (int) uio->uio_count);
+
+	if (!xdr_putbufs(xdrs, uio, UIO_FLAG_NONE)) {
+		uio->uio_release(uio, UIO_FLAG_NONE);
+		return false;
+	}
+
+	return true;
+}
+
+void release_io_data_copy(void *release_data)
+{
+	io_data *objp = release_data;
+	int i;
+
+	for (i = 0; i < objp->iovcnt; i++)
+		gsh_free(objp->iov[i].iov_base);
+}
+
+static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
+{
+	uint32_t start;
+	struct xdr_vio *vio;
+	int i;
+	size_t totlen = 0;
+
+	/* Get the data_len */
+	if (!inline_xdr_u_int32_t(xdrs, &objp->data_len))
+		return false;
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "data_len = %u",
+		     objp->data_len);
+
+	if (objp->data_len == 0) {
+		/* Special handling of length 0. */
+		objp->iov = gsh_calloc(1, sizeof(*objp->iov));
+		i = 0;
+
+		objp->iovcnt = 1;
+		objp->iov[i].iov_base = NULL;
+		objp->iov[i].iov_len = 0;
+
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "iov[%d].iov_base %p iov_len %zu for %zu of %u",
+			     i,
+			     objp->iov[i].iov_base,
+			     objp->iov[i].iov_len,
+			     totlen, objp->data_len);
+		return true;
+	}
+
+	/* Get the current position in the stream */
+	start = XDR_GETPOS(xdrs);
+
+	/* Find out how many buffers the data occupies */
+	objp->iovcnt = XDR_IOVCOUNT(xdrs, start, objp->data_len);
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "iovcnt = %u",
+		     objp->iovcnt);
+
+	if (objp->iovcnt > IOV_MAX) {
+		char *buf;
+
+		LogInfo(COMPONENT_DISPATCH,
+			"bypassing zero-copy, io_data iovcnt %u exceeds IOV_MAX, allocating %u byte buffer",
+			objp->iovcnt, objp->data_len);
+
+		/** @todo - Can we do something different? Do we really need to?
+		 *          Does anything other than pynfs with large I/O
+		 *          trigger this?
+		 */
+		/* The iovec is too big, we will have to copy, allocate and use
+		 * a single buffer.
+		 */
+		objp->iovcnt = 1;
+		objp->iov = gsh_calloc(1, sizeof(*objp->iov));
+		buf = gsh_malloc(objp->data_len);
+		objp->iov[0].iov_base = buf;
+		objp->iov[0].iov_len = objp->data_len;
+
+		if (!xdr_opaque_decode(xdrs, buf, objp->data_len)) {
+			gsh_free(buf);
+			gsh_free(objp->iov);
+			objp->iov = NULL;
+			return false;
+		}
+
+		objp->release = release_io_data_copy;
+		objp->release_data = objp;
+
+		return true;
+	}
+
+	/* Allocate a vio to extract the data buffers into */
+	vio = gsh_calloc(objp->iovcnt, sizeof(*vio));
+
+	/* Get the data buffers - XDR_FILLBUFS happens to do what we want... */
+	if (!XDR_FILLBUFS(xdrs, start, vio, objp->data_len)) {
+		gsh_free(vio);
+		return false;
+	}
+
+	/* Now allocate an iovec to carry the data */
+	objp->iov = gsh_calloc(objp->iovcnt, sizeof(*objp->iov));
+
+	/* Convert the xdr_vio to an iovec */
+	for (i = 0; i < objp->iovcnt; i++) {
+		objp->iov[i].iov_base = vio[i].vio_head;
+		objp->iov[i].iov_len = vio[i].vio_length;
+		totlen += vio[i].vio_length;
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "iov[%d].iov_base %p iov_len %zu for %zu of %u",
+			     i,
+			     objp->iov[i].iov_base,
+			     objp->iov[i].iov_len,
+			     totlen, objp->data_len);
+	}
+
+	/* We're done with the vio */
+	gsh_free(vio);
+
+	/* Now advance the position past the data (rounding up data_len) */
+	if (!XDR_SETPOS(xdrs, start + RNDUP(objp->data_len))) {
+		gsh_free(objp->iov);
+		objp->iov = NULL;
+		return false;
+	}
+
+	objp->release = NULL;
+	objp->release_data = NULL;
+
+	return true;
+}
+
+bool xdr_io_data(XDR *xdrs, io_data *objp)
+{
+	if (xdrs->x_op == XDR_ENCODE) {
+		/* We are going to use putbufs */
+		return xdr_io_data_encode(xdrs, objp);
+	}
+
+	if (xdrs->x_op == XDR_DECODE) {
+		/* We are going to use putbufs */
+		return xdr_io_data_decode(xdrs, objp);
+	}
+
+	/* All that remains is XDR_FREE */
+	if (objp->release != NULL)
+		objp->release(objp->release_data);
+
+	gsh_free(objp->iov);
+	objp->iov = NULL;
+
+	return true;
+}

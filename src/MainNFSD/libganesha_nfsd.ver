@@ -266,6 +266,7 @@
   vfs_utimes;
   vfs_utimesat;
   xattr_2_posix_acl;
+  xdr_io_data;
   xdr_notify;
   xdr_READ4res_uio_setup;
   _get_gsh_export_ref;

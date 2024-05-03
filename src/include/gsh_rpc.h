@@ -284,6 +284,22 @@ extern tirpc_pkg_params ntirpc_pp;
 sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
 bool is_loopback(sockaddr_t *addr);
 
+struct io_data {
+	/** Release function if needed. */
+	void (*release)(void *);
+	/** Data hook for release function to use if needed */
+	void *release_data;
+	/** Total length of iovec data */
+	u_int data_len;
+	/** Count of iovec structures in the io vector */
+	u_int iovcnt;
+	/** The actual io vector */
+	struct iovec *iov;
+};
+typedef struct io_data io_data;
+
+bool xdr_io_data(XDR *xdrs, io_data *objp);
+
 #ifdef __cplusplus
 }
 #endif
