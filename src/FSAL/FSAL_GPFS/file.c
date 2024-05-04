@@ -808,6 +808,8 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, fsal_async_cb done_cb,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 	struct gpfs_fsal_obj_handle *myself;
+	int i;
+	uint64_t offset = read_arg->offset;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -834,27 +836,37 @@ gpfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass, fsal_async_cb done_cb,
 
 	my_fd = container_of(out_fd, struct gpfs_fd, fsal_fd);
 
-	assert(read_arg->iov_count == 1);
+	read_arg->io_amount = 0;
 
-	if (read_arg->info)
-		status = gpfs_read_plus_fd(my_fd->fd, read_arg->offset,
-					   read_arg->iov[0].iov_len,
-					   read_arg->iov[0].iov_base,
-					   &read_arg->io_amount,
-					   &read_arg->end_of_file,
-					   read_arg->info,
-					   export_fd);
-	else
-		status = GPFSFSAL_read(my_fd->fd, read_arg->offset,
-				       read_arg->iov[0].iov_len,
-				       read_arg->iov[0].iov_base,
-				       &read_arg->io_amount,
-				       &read_arg->end_of_file, export_fd);
+	for (i = 0; i < read_arg->iov_count; i++) {
+		size_t io_amount;
 
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
-			 get_handle2inode(myself->handle),
-			 fsal_err_txt(status));
+		if (read_arg->info)
+			status = gpfs_read_plus_fd(my_fd->fd, offset,
+						   read_arg->iov[i].iov_len,
+						   read_arg->iov[i].iov_base,
+						   &io_amount,
+						   &read_arg->end_of_file,
+						   read_arg->info,
+						   export_fd);
+		else
+			status = GPFSFSAL_read(my_fd->fd, offset,
+					       read_arg->iov[i].iov_len,
+					       read_arg->iov[i].iov_base,
+					       &io_amount,
+					       &read_arg->end_of_file,
+					       export_fd);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_FSAL,
+				 "Inode involved: %"PRIu64", error: %s",
+				 get_handle2inode(myself->handle),
+				 fsal_err_txt(status));
+			break;
+		}
+
+		offset += read_arg->iov[i].iov_len;
+		read_arg->io_amount += io_amount;
 	}
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
@@ -913,6 +925,8 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl,
 					struct gpfs_fsal_export, export);
 	int export_fd = exp->export_fd;
 	struct gpfs_fsal_obj_handle *myself;
+	int i;
+	uint64_t offset = write_arg->offset;
 
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
@@ -939,17 +953,28 @@ gpfs_write2(struct fsal_obj_handle *obj_hdl,
 
 	my_fd = container_of(out_fd, struct gpfs_fd, fsal_fd);
 
-	status = GPFSFSAL_write(my_fd->fd, write_arg->offset,
-				write_arg->iov[0].iov_len,
-				write_arg->iov[0].iov_base,
-				&write_arg->io_amount,
-				&write_arg->fsal_stable,
-				export_fd);
+	write_arg->io_amount = 0;
 
-	if (FSAL_IS_ERROR(status)) {
-		LogDebug(COMPONENT_FSAL, "Inode involved: %"PRIu64", error: %s",
-			 get_handle2inode(myself->handle),
-			 fsal_err_txt(status));
+	for (i = 0; i < write_arg->iov_count; i++) {
+		size_t io_amount;
+
+		status = GPFSFSAL_write(my_fd->fd, offset,
+					write_arg->iov[i].iov_len,
+					write_arg->iov[i].iov_base,
+					&io_amount,
+					&write_arg->fsal_stable,
+					export_fd);
+
+		if (FSAL_IS_ERROR(status)) {
+			LogDebug(COMPONENT_FSAL,
+				 "Inode involved: %"PRIu64", error: %s",
+				 get_handle2inode(myself->handle),
+				 fsal_err_txt(status));
+			break;
+		}
+
+		offset += write_arg->iov[i].iov_len;
+		write_arg->io_amount += io_amount;
 	}
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
