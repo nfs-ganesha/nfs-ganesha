@@ -127,6 +127,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = w_databuffer;
@@ -189,6 +190,7 @@ TEST_F(Read2EmptyLatencyTest, SIMPLE_BYPASS)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = w_databuffer;
@@ -252,6 +254,7 @@ TEST_F(Read2EmptyLatencyTest, LARGE_DATA_READ)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = w_databuffer;
@@ -314,6 +317,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = w_databuffer;
@@ -384,6 +388,7 @@ TEST_F(Read2EmptyLatencyTest, LOOP_BYPASS)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = w_databuffer;

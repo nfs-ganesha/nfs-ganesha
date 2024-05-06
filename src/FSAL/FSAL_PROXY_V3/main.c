@@ -2038,10 +2038,6 @@ proxyv3_write2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	char *src = write_arg->iov[0].iov_base;
-	uint64_t offset = write_arg->offset;
-	size_t bytes_to_write = write_arg->iov[0].iov_len;
-
 	/*
 	 * @todo Check/clamp write size against maxWrite (but again, Ganesha's
 	 * NFSD layer will have already done so).
@@ -2055,10 +2051,11 @@ proxyv3_write2(struct fsal_obj_handle *obj_hdl,
 
 	args.file.data.data_val = obj->fh3.data.data_val;
 	args.file.data.data_len = obj->fh3.data.data_len;
-	args.offset = offset;
-	args.count = bytes_to_write;
-	args.data.data_len = bytes_to_write;
-	args.data.data_val = src;
+	args.offset = write_arg->offset;
+	args.count = write_arg->io_request;
+	args.data.data_len = write_arg->io_request;
+	args.data.iovcnt = write_arg->iov_count;
+	args.data.iov = write_arg->iov;
 
 	/*
 	 * If the request is for a stable write, ask for FILE_SYNC (rather than

@@ -210,12 +210,15 @@ static enum nfs_req_result op_dswrite(struct nfs_argop4 *op,
 	/* NFSv4 return code */
 	nfsstat4 nfs_status = 0;
 
+	/** @todo - this will compile but won't work... */
+	assert(arg_WRITE4->data.iovcnt == 1);
+
 	res_WRITE4->status = op_ctx->ctx_pnfs_ds->s_ops.dsh_write(
 				data->current_ds,
 				&arg_WRITE4->stateid,
 				arg_WRITE4->offset,
-				arg_WRITE4->data.data_len,
-				arg_WRITE4->data.data_val,
+				arg_WRITE4->data.iov[0].iov_len,
+				arg_WRITE4->data.iov[0].iov_base,
 				arg_WRITE4->stable,
 				&res_WRITE4->WRITE4res_u.resok4.count,
 				&res_WRITE4->WRITE4res_u.resok4.writeverf,
@@ -474,16 +477,15 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Set up args, allocate from heap, iov_len will be 1 */
-	write_data = gsh_calloc(1, sizeof(*write_data) + sizeof(struct iovec));
+	write_data = gsh_calloc(1, sizeof(*write_data));
 	LogFullDebug(COMPONENT_NFS_V4, "Allocated write_data %p", write_data);
 	write_arg = &write_data->write_arg;
 	write_arg->info = NULL;
 	write_arg->state = state_found;
 	write_arg->offset = offset;
-	write_arg->iov_count = 1;
-	write_arg->iov = (struct iovec *) (write_data + 1);
-	write_arg->iov[0].iov_len = size;
-	write_arg->iov[0].iov_base = arg_WRITE4->data.data_val;
+	write_arg->io_request = size;
+	write_arg->iov_count = arg_WRITE4->data.iovcnt;
+	write_arg->iov = arg_WRITE4->data.iov;
 	write_arg->io_amount = 0;
 	write_arg->fsal_stable = arg_WRITE4->stable != UNSTABLE4 || force_sync;
 

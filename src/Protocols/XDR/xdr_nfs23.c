@@ -868,10 +868,8 @@ bool xdr_READ3resok(XDR *xdrs, READ3resok *objp)
 		return (false);
 	if (!xdr_bool(xdrs, &objp->eof))
 		return (false);
-
 	if (xdrs->x_op == XDR_ENCODE)
 		return xdr_READ3resok_encode(xdrs, objp);
-
 	if (!xdr_bytes
 	    (xdrs, (char **)&objp->data.data_val,
 	     &objp->data.data_len, XDR_BYTES_MAXLEN_IO))
@@ -924,9 +922,7 @@ bool xdr_WRITE3args(XDR *xdrs, WRITE3args *objp)
 		return (false);
 	if (!xdr_stable_how(xdrs, &objp->stable))
 		return (false);
-	if (!xdr_bytes
-	    (xdrs, (char **)&objp->data.data_val,
-	     &objp->data.data_len, XDR_BYTES_MAXLEN_IO))
+	if (!xdr_io_data(xdrs, &objp->data))
 		return (false);
 	lkhd->flags |= NFS_LOOKAHEAD_WRITE;
 	(lkhd->write)++;

@@ -124,6 +124,7 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = databuffer;
@@ -159,6 +160,7 @@ TEST_F(Write2EmptyLatencyTest, SIMPLE_BYPASS)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = databuffer;
@@ -196,6 +198,7 @@ TEST_F(Write2EmptyLatencyTest, SMALL_STABLE_WRITE)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = databuffer;
@@ -230,6 +233,7 @@ TEST_F(Write2EmptyLatencyTest, LARGE_UNSTABLE_WRITE)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = databuffer;
@@ -264,6 +268,7 @@ TEST_F(Write2EmptyLatencyTest, LARGE_STABLE_WRITE)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = databuffer;
@@ -299,6 +304,7 @@ TEST_F(Write2EmptyLatencyTest, LOOP)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = databuffer;
@@ -344,6 +350,7 @@ TEST_F(Write2EmptyLatencyTest, LOOP_BYPASS)
   write_arg->info = NULL;
   write_arg->state = NULL;
   write_arg->offset = OFFSET;
+  write_arg->io_request = bytes;
   write_arg->iov_count = 1;
   write_arg->iov[0].iov_len = bytes;
   write_arg->iov[0].iov_base = databuffer;

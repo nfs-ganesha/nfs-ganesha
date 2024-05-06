@@ -354,19 +354,18 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Set up args, allocate from heap, iov_count will be 1 */
-	write_data = gsh_calloc(1, sizeof(*write_data) + sizeof(struct iovec));
+	write_data = gsh_calloc(1, sizeof(*write_data));
 	write_arg = &write_data->write_arg;
 
 	write_arg->info = NULL;
 	/** @todo for now pass NULL state */
 	write_arg->state = NULL;
 	write_arg->offset = offset;
+	write_arg->io_request = arg->arg_write3.data.data_len;
 	write_arg->fsal_stable = arg->arg_write3.stable != UNSTABLE ||
 				 force_sync;
-	write_arg->iov_count = 1;
-	write_arg->iov = (struct iovec *) (write_data + 1);
-	write_arg->iov[0].iov_len = size;
-	write_arg->iov[0].iov_base = arg->arg_write3.data.data_val;
+	write_arg->iov_count = arg->arg_write3.data.iovcnt;
+	write_arg->iov = arg->arg_write3.data.iov;
 	write_arg->io_amount = 0;
 
 	write_data->res = res;

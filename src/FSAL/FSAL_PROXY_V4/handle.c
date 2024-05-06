@@ -2662,7 +2662,6 @@ static void proxyv4_write2(struct fsal_obj_handle *obj_hdl,
 			   struct fsal_io_arg *write_arg,
 			   void *caller_arg)
 {
-	int maxWriteSize;
 	int rc;
 	int opcnt = 0;
 	sessionid4 sid;
@@ -2672,15 +2671,8 @@ static void proxyv4_write2(struct fsal_obj_handle *obj_hdl,
 	WRITE4resok *wok;
 	struct proxyv4_obj_handle *ph;
 	stable_how4 stable_how;
-	size_t buffer_size = write_arg->iov[0].iov_len;
 
 	ph = container_of(obj_hdl, struct proxyv4_obj_handle, obj);
-
-	/* check max write size */
-	maxWriteSize =
-		op_ctx->fsal_export->exp_ops.fs_maxwrite(op_ctx->fsal_export);
-	if (buffer_size > maxWriteSize)
-		buffer_size = maxWriteSize;
 
 	/* SEQUENCE */
 	proxyv4_get_client_sessionid(sid);
@@ -2702,16 +2694,17 @@ static void proxyv4_write2(struct fsal_obj_handle *obj_hdl,
 
 		COMPOUNDV4_ARG_ADD_OP_WRITE(opcnt, argoparray,
 					    write_arg->offset,
-					    write_arg->iov[0].iov_base,
-					    buffer_size, stable_how,
+					    write_arg->iov_count,
+					    write_arg->iov,
+					    write_arg->io_request,
+					    stable_how,
 					    proxyv4_state_id->stateid.other);
 	} else {
-		char *base = write_arg->iov[0].iov_base;
-
 		COMPOUNDV4_ARG_ADD_OP_WRITE_STATELESS(opcnt, argoparray,
 						      write_arg->offset,
-						      base,
-						      buffer_size,
+						      write_arg->iov_count,
+						      write_arg->iov,
+						      write_arg->io_request,
 						      stable_how);
 	}
 

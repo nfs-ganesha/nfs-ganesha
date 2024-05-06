@@ -489,10 +489,7 @@ struct WRITE3args {
 	offset3 offset;
 	count3 count;
 	stable_how stable;
-	struct {
-		u_int data_len;
-		char *data_val;
-	} data;
+	io_data data;
 };
 typedef struct WRITE3args WRITE3args;
 

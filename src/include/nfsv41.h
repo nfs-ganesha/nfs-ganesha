@@ -1975,10 +1975,7 @@ struct WRITE4args {
 	stateid4 stateid;
 	offset4 offset;
 	stable_how4 stable;
-	struct {
-		u_int data_len;
-		char *data_val;
-	} data;
+	io_data data;
 };
 typedef struct WRITE4args WRITE4args;
 
@@ -6875,9 +6872,7 @@ static inline bool xdr_WRITE4args(XDR *xdrs, WRITE4args *objp)
 		return false;
 	if (!xdr_stable_how4(xdrs, &objp->stable))
 		return false;
-	if (!inline_xdr_bytes(xdrs,
-	    (char **)&objp->data.data_val,
-	    &objp->data.data_len, XDR_BYTES_MAXLEN_IO))
+	if (!xdr_io_data(xdrs, &objp->data))
 		return false;
 	return true;
 }
