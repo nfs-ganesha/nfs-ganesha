@@ -2860,14 +2860,6 @@ static void set_fs_max_rdwr_size(struct gsh_export *export, uint64_t maxread,
 				maxread);
 			export->MaxRead = maxread;
 		}
-
-		if (!op_ctx_export_has_option_set(EXPORT_OPTION_PREFREAD_SET) ||
-		    (export->PrefRead > export->MaxRead)) {
-			LogInfo(COMPONENT_EXPORT,
-				"Readjusting PrefRead to %"PRIu64,
-				export->MaxRead);
-			export->PrefRead = export->MaxRead;
-		}
 	}
 
 	if (maxwrite != 0) {
@@ -2877,14 +2869,20 @@ static void set_fs_max_rdwr_size(struct gsh_export *export, uint64_t maxread,
 				maxwrite);
 			export->MaxWrite = maxwrite;
 		}
+	}
 
-		if (!op_ctx_export_has_option_set(EXPORT_OPTION_PREFWRITE_SET)
-		    || (export->PrefWrite > export->MaxWrite)) {
-			LogInfo(COMPONENT_EXPORT,
-				"Readjusting PrefWrite to %"PRIu64,
-				export->MaxWrite);
-			export->PrefWrite = export->MaxWrite;
-		}
+	if (export->PrefRead > export->MaxRead) {
+		LogInfo(COMPONENT_EXPORT,
+			"Readjusting PrefRead to %"PRIu64,
+			export->MaxRead);
+		export->PrefRead = export->MaxRead;
+	}
+
+	if (export->PrefWrite > export->MaxWrite) {
+		LogInfo(COMPONENT_EXPORT,
+			"Readjusting PrefWrite to %"PRIu64,
+			export->MaxWrite);
+		export->PrefWrite = export->MaxWrite;
 	}
 }
 
