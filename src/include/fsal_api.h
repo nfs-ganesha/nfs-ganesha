@@ -1533,6 +1533,9 @@ typedef enum fsal_dir_result (*fsal_readdir_cb)(
  *
  */
 struct fsal_io_arg {
+	void (*iov_release)(void *release_data); /**< function to release the
+						      iovec */
+	void *release_data;		/**< pointer passed to release func */
 	size_t io_amount;	/**< Total amount of I/O actually done */
 	struct io_info *info;	/**< More info about data for read_plus */
 	void *cbi;		/**< FSAL specific call back info */

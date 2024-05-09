@@ -92,6 +92,7 @@
   open_fd_count;
   fsal_pnfs_ds_fini;
   fsal_read;
+  fsal_read2;
   fsal_readdir;
   fsal_readlink;
   fsal_remove;

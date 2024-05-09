@@ -654,6 +654,12 @@ struct async_process_data {
 	pthread_cond_t *fsa_cond;
 };
 
+extern void fsal_read2(struct fsal_obj_handle *obj_hdl,
+		       bool bypass,
+		       fsal_async_cb done_cb,
+		       struct fsal_io_arg *read_arg,
+		       void *caller_arg);
+
 extern void fsal_read(struct fsal_obj_handle *obj_hdl,
 		      bool bypass,
 		      struct fsal_io_arg *arg,

@@ -95,6 +95,10 @@ struct ceph_fsal_module CephFSM = {
 		#endif
 			.readdir_plus = true,
 			.xattr_support = true,
+			/* Change the following to true to support zero copy
+			 * read.
+			 */
+			.allocate_own_read_buffer = false,
 			.expire_time_parent = -1,
 		}
 	}

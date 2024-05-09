@@ -771,3 +771,40 @@ bool xdr_io_data(XDR *xdrs, io_data *objp)
 
 	return true;
 }
+
+/**
+ *
+ * @brief  API to get the buffer to fill the IO Payloads,
+ *
+ * @param[in] req  The svc request structure
+ * @param[in] size Requested size of buffer to be allocated.
+ *
+ * @returns The address of the buffer to fill the payload
+ */
+void *get_buffer_for_io_response(uint64_t size)
+{
+#ifdef _USE_NFS_RDMA
+	struct nfs_request *nfs_req;
+	struct svc_req *req;
+
+	if (op_ctx->req_type != NFS_REQUEST)
+		return NULL;
+
+	nfs_req = container_of(op_ctx, struct nfs_request, op_context);
+	req = &nfs_req->svc;
+
+	/* Whether it's RDMA enabled xprt and having data chunk */
+	if (req->rq_xprt->xp_rdma && req->data_chunk) {
+		LogDebug(COMPONENT_TIRPC,
+			 "Using data_chunk %p length %d from req %p xprt %p",
+			 req->data_chunk, req->data_chunk_length,
+			 req, req->rq_xprt);
+		assert(size <= req->data_chunk_length);
+		op_ctx->is_rdma_buff_used = true;
+		return req->data_chunk;
+	}
+#endif /* _USE_NFS_RDMA */
+
+	/* No special buffer requirements */
+	return NULL;
+}

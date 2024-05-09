@@ -1893,6 +1893,84 @@ fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
+static void fsal_iov_release(void *release_data)
+{
+	struct fsal_io_arg *io_arg = release_data;
+
+	gsh_free(io_arg->iov[0].iov_base);
+	io_arg->iov[0].iov_base = NULL;
+}
+
+/**
+ * @brief Read data from a file
+ *
+ * This function reads data from the given file. The FSAL must be able to
+ * perform the read whether a state is presented or not. This function also
+ * is expected to handle properly bypassing or not share reservations.  This is
+ * an (optionally) asynchronous call.  When the I/O is complete, the done
+ * callback is called with the results.
+ *
+ * An iovec MUST be included in the read_arg. If the caller is supplying the
+ * read buffer (for example, RDMA), then the iovec will be passed as is. If
+ * the caller does not need to supply the read buffer, then the iovec MUST
+ * be length 1 and, and iov[0].iov_len must be the requested read size and
+ * iov[0].iov_base MUST be NULL. If the FSAL will allocate its own buffer,
+ * this special iovec will be passed down, otherwise a buffer will be allocated.
+ *
+ * @param[in]     obj_hdl	File on which to operate
+ * @param[in]     bypass	If state doesn't indicate a share reservation,
+ *				bypass any deny read
+ * @param[in,out] done_cb	Callback to call when I/O is done
+ * @param[in,out] read_arg	Info about read, passed back in callback
+ * @param[in,out] caller_arg	Opaque arg from the caller for callback
+ *
+ * @return Nothing; results are in callback
+ */
+
+void fsal_read2(struct fsal_obj_handle *obj_hdl,
+		bool bypass,
+		fsal_async_cb done_cb,
+		struct fsal_io_arg *read_arg,
+		void *caller_arg)
+{
+	assert(read_arg->iov_count > 0);
+	assert(read_arg->iov != NULL);
+
+	if (read_arg->iov[0].iov_base != NULL) {
+		/* Buffer's were supplied, use them */
+		goto call_read2;
+	}
+
+	/* If buffers aren't supplied, iov_count MUST be 1 */
+	assert(read_arg->iov_count == 1);
+
+	/* Check if someone else want's to allocate the buffer */
+	read_arg->iov[0].iov_base =
+			get_buffer_for_io_response(read_arg->iov[0].iov_len);
+
+	if (read_arg->iov[0].iov_base != NULL) {
+		/* Someone wanted to allocate the buffer, use it. */
+		goto call_read2;
+	}
+
+	/* Check if FSAL will allocate the buffer */
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(
+						op_ctx->fsal_export,
+						fso_allocate_own_read_buffer)) {
+		/* FSAL will not allocate a buffer, so allocate one. */
+		read_arg->iov[0].iov_base =
+					gsh_malloc(read_arg->iov[0].iov_len);
+		/* Set up release function */
+		read_arg->iov_release = fsal_iov_release;
+		read_arg->release_data = read_arg;
+	}
+
+call_read2:
+
+	return obj_hdl->obj_ops->read2(obj_hdl, bypass, done_cb,
+				       read_arg, caller_arg);
+}
+
 /**
  * @brief Callback to implement synchronous read and write
  *
@@ -1930,7 +2008,7 @@ void fsal_read(struct fsal_obj_handle *obj_hdl,
 {
 again:
 
-	obj_hdl->obj_ops->read2(obj_hdl, bypass, sync_cb, arg, data);
+	fsal_read2(obj_hdl, bypass, sync_cb, arg, data);
 
 	PTHREAD_MUTEX_lock(data->fsa_mutex);
 

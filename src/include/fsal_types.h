@@ -668,6 +668,7 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_readdir_plus,
 	fso_compliant_eof_behavior,
 	fso_xattr_support,
+	fso_allocate_own_read_buffer,
 } fsal_fsinfo_options_t;
 
 /* The largest maxread and maxwrite value */
@@ -726,6 +727,8 @@ typedef struct fsal_staticfsinfo_t {
 	bool compliant_eof_behavior;	/* FSAL compliant to end-of-file NFS
 					  v3 read behavior. */
 	bool xattr_support;	/*< fsal can support xattrs */
+	bool allocate_own_read_buffer;	/*< fsal will allocate its own read
+					 *  buffers. */
 	int32_t expire_time_parent; /*< Expiration time interval in
 				       seconds for parent handle.
 				       If FS gives information about parent
