@@ -249,7 +249,11 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 	}
 
-	tracker.entries = gsh_malloc(tracker.mem_avail);
+	tracker.entries = get_buffer_for_io_response(tracker.mem_avail);
+	/* If buffer was not assigned, let's allocate it */
+	if (tracker.entries == NULL)
+		tracker.entries = gsh_malloc(tracker.mem_avail);
+
 	xdrmem_create(&tracker.xdr, (char *)tracker.entries, tracker.mem_avail,
 		      XDR_ENCODE);
 	tracker.error = NFS3_OK;
@@ -398,7 +402,8 @@ out_destroy:
 		parent_dir_obj->obj_ops->put_ref(parent_dir_obj);
 
 	if (tracker.entries) {
-		gsh_free(tracker.entries);
+		if (!op_ctx->is_rdma_buff_used)
+			gsh_free(tracker.entries);
 		tracker.entries = NULL;
 	}
 

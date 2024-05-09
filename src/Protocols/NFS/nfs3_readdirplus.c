@@ -264,7 +264,11 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		fsal_cookie = 0;
 
 	/* Allocate space for entries */
-	tracker.entries = gsh_malloc(tracker.mem_avail);
+	tracker.entries = get_buffer_for_io_response(tracker.mem_avail);
+	/* If buffer was not assigned, let's allocate it */
+	if (tracker.entries == NULL)
+		tracker.entries = gsh_malloc(tracker.mem_avail);
+
 	xdrmem_create(&tracker.xdr, (char *)tracker.entries, tracker.mem_avail,
 		      XDR_ENCODE);
 
@@ -423,7 +427,8 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		dir_obj->obj_ops->put_ref(dir_obj);
 
 	/* If we allocated but didn't consume entries, free it now. */
-	gsh_free(tracker.entries);
+	if (!op_ctx->is_rdma_buff_used)
+		gsh_free(tracker.entries);
 
 	return rc;
 }				/* nfs3_readdirplus */
