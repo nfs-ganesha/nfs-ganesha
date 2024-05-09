@@ -1902,10 +1902,6 @@ proxyv3_read2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	char *dst = read_arg->iov[0].iov_base;
-	uint64_t offset = read_arg->offset;
-	size_t bytes_to_read = read_arg->iov[0].iov_len;
-
 	/*
 	 * @todo Maybe check / clamp read size against maxRead (but again,
 	 * Ganesha's NFSD layer will have already done so).
@@ -1919,16 +1915,17 @@ proxyv3_read2(struct fsal_obj_handle *obj_hdl,
 
 	args.file.data.data_val = obj->fh3.data.data_val;
 	args.file.data.data_len = obj->fh3.data.data_len;
-	args.offset = offset;
-	args.count = bytes_to_read;
+	args.offset = read_arg->offset;
+	args.count = read_arg->io_request;
 
 	/*
-	 * Setup the resok struct to fill in bytes on success. This avoids an
-	 * unnecessary allocation (on xdr_decode of the READ3res) and memcpy
-	 * afterwards.
+	 * Setup the resok struct with iovec using iov0. Because we are
+	 * decoding from an xdr_mem stream, there will only be one buffer.
+	 * We won't copy that buffer on decode.
 	 */
-	resok->data.data_val = dst;
-	resok->data.data_len = bytes_to_read;
+	resok->data.data_len = read_arg->io_request;
+	resok->data.iovcnt = 1;
+	resok->data.iov = &resok->iov0;
 
 	/* Issue the read. */
 	if (!proxyv3_nfs_call(proxyv3_sockaddr(),
@@ -1968,7 +1965,18 @@ proxyv3_read2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	/* We already filled in the actual bytes by setting up resok.data */
+	/* Copy the read buffer - unfortunately we can't avoid a data copy
+	 * here...
+	 */
+	assert(resok->data.iovcnt == 1);
+	assert(read_arg->iov_count == 1);
+
+	memcpy(read_arg->iov[0].iov_base,
+	       resok->data.iov[0].iov_base,
+	       resok->count);
+	resok->data.iov[0].iov_len = resok->count;
+
+	/* Fill in the rest of the return */
 	read_arg->end_of_file = resok->eof;
 	read_arg->io_amount = resok->count;
 

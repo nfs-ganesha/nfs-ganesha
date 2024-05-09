@@ -456,10 +456,8 @@ struct READ3resok {
 	post_op_attr file_attributes;
 	count3 count;
 	bool_t eof;
-	struct {
-		u_int data_len;
-		char *data_val;
-	} data;
+	struct iovec iov0;
+	io_data data;
 };
 typedef struct READ3resok READ3resok;
 

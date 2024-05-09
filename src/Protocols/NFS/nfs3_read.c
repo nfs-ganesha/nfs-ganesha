@@ -46,23 +46,40 @@
 #include "export_mgr.h"
 #include "sal_functions.h"
 
-static void nfs_read_ok(nfs_res_t *res, char *data, uint32_t read_size,
-			struct fsal_obj_handle *obj, int eof)
+static void nfs_read_ok(READ3resok *resok,
+			struct fsal_io_arg *read_arg,
+			struct fsal_obj_handle *obj)
 {
-	if ((read_size == 0) && (data != NULL)) {
-		gsh_free(data);
-		data = NULL;
+	/* Build Post Op Attributes */
+	nfs_SetPostOpAttr(obj, &resok->file_attributes, NULL);
+
+	resok->count = read_arg->io_amount;
+	resok->eof = read_arg->end_of_file;
+
+	if (read_arg->io_amount == 0) {
+		/* We won't need the FSAL's iovec and buffers if it used them */
+		if (read_arg->iov_release != NULL)
+			read_arg->iov_release(read_arg->release_data);
+
+		/* We will use the iov we set up before the call, but set the
+		 * length of the buffer to 0. The io_data->release is already
+		 * set up.
+		 */
+		resok->data.iov[0].iov_len = 0;
+		return;
 	}
 
-	/* Build Post Op Attributes */
-	nfs_SetPostOpAttr(obj,
-			  &res->res_read3.READ3res_u.resok.file_attributes,
-			  NULL);
+	if (read_arg->iov != resok->data.iov) {
+		/* FSAL returned a different iovector */
+		resok->data.iov = read_arg->iov;
+		resok->data.iovcnt = read_arg->iov_count;
+	}
 
-	res->res_read3.READ3res_u.resok.eof = eof;
-	res->res_read3.READ3res_u.resok.count = read_size;
-	res->res_read3.READ3res_u.resok.data.data_val = data;
-	res->res_read3.READ3res_u.resok.data.data_len = read_size;
+	if (read_arg->iov_release != resok->data.release) {
+		/* The FSAL replaced the release */
+		resok->data.release = read_arg->iov_release;
+		resok->data.release_data = read_arg->release_data;
+	}
 }
 
 struct nfs3_read_data {
@@ -84,7 +101,6 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 {
 	struct fsal_io_arg *read_arg = &data->read_arg;
 	READ3resfail *resfail = &data->res->res_read3.READ3res_u.resfail;
-	int i;
 
 	if (data->rc == NFS_REQ_OK) {
 		if (!op_ctx->fsal_export->exp_ops.fs_supports(
@@ -116,16 +132,17 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 			fsal_release_attrs(&attrs);
 		}
 
-		nfs_read_ok(data->res, read_arg->iov[0].iov_base,
-			    read_arg->io_amount, data->obj,
-			    read_arg->end_of_file);
+		nfs_read_ok(&data->res->res_read3.READ3res_u.resok, read_arg,
+			    data->obj);
 
 		goto out;
 	}
 
-	for (i = 0; i < read_arg->iov_count; ++i) {
-		gsh_free(read_arg->iov[i].iov_base);
-	}
+	/* Just in case... We won't need the FSAL's iovec and buffers if it used
+	 * them
+	 */
+	if (read_arg->iov_release != NULL)
+		read_arg->iov_release(read_arg->release_data);
 
 	/* If we are here, there was an error */
 	if (data->rc == NFS_REQ_DROP) {
@@ -142,7 +159,7 @@ static int nfs3_complete_read(struct nfs3_read_data *data)
 	if (data->obj)
 		data->obj->obj_ops->put_ref(data->obj);
 
-	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
+	server_stats_io_done(read_arg->io_request, read_arg->io_amount,
 			     (data->rc == NFS_REQ_OK) ?  true : false, false);
 
 	return data->rc;
@@ -248,6 +265,11 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	}
 }
 
+static void read3_io_data_release(void *)
+{
+	/* Nothing to do */
+}
+
 /**
  *
  * @brief The NFSPROC3_READ
@@ -280,6 +302,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	nfs_request_t *reqdata = container_of(req, nfs_request_t, svc);
 	int rc = NFS_REQ_OK;
 	uint32_t flags;
+	READ3resok *resok = &res->res_read3.READ3res_u.resok;
 
 	LogNFS3_Operation(COMPONENT_NFSPROTO, req, &arg->arg_read3.file,
 		" start: %"PRIx64 " len: %zu",
@@ -289,11 +312,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resfail->file_attributes.attributes_follow =  FALSE;
 
 	/* initialize for read of size 0 */
-	res->res_read3.READ3res_u.resok.eof = FALSE;
-	res->res_read3.READ3res_u.resok.count = 0;
-	res->res_read3.READ3res_u.resok.data.data_val = NULL;
-	res->res_read3.READ3res_u.resok.data.data_len = 0;
-	res->res_read3.status = NFS3_OK;
+	memset(&res->res_read3, 0, sizeof(res->res_read3));
 	obj = nfs3_FhandleToCache(&arg->arg_read3.file,
 				  &res->res_read3.status, &rc);
 
@@ -363,7 +382,11 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	if (size == 0) {
-		nfs_read_ok(res, NULL, 0, obj, 0);
+		struct fsal_io_arg read_arg;
+
+		memset(&read_arg, 0, sizeof(read_arg));
+
+		nfs_read_ok(&res->res_read3.READ3res_u.resok, &read_arg, obj);
 		goto return_ok;
 	}
 
@@ -373,19 +396,26 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto return_ok;
 	}
 
-	/* Set up args, allocate from heap, iov_count will be 1 */
-	read_data = gsh_calloc(1, sizeof(*read_data) + sizeof(struct iovec));
+	/* Set up result using internal iovec of length 1 that allows FSAL
+	 * layer to allocate the read buffer.
+	 */
+	resok->data.data_len = size;
+	resok->data.iovcnt = 1;
+	resok->data.iov = &resok->iov0;
+	resok->data.iov[0].iov_len = size;
+	resok->data.iov[0].iov_base = NULL;
+	resok->data.release = read3_io_data_release;
+
+	/* Set up args, allocate from heap */
+	read_data = gsh_calloc(1, sizeof(*read_data));
 	read_arg = &read_data->read_arg;
 
 	read_arg->info = NULL;
 	/** @todo for now pass NULL state */
 	read_arg->state = NULL;
 	read_arg->offset = offset;
-	read_arg->iov_count = 1;
-	read_arg->iov = (struct iovec *) (read_data + 1);
-	read_arg->iov[0].iov_len = size;
-	/* Must allocate buffer as a multiple of BYTES_PER_XDR_UNIT */
-	read_arg->iov[0].iov_base = gsh_malloc(RNDUP(size));
+	read_arg->iov_count = resok->data.iovcnt;
+	read_arg->iov = resok->data.iov;
 	read_arg->io_amount = 0;
 	read_arg->end_of_file = false;
 
@@ -398,7 +428,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 again:
 
 	/* Do the actual read */
-	obj->obj_ops->read2(obj, true, nfs3_read_cb, read_arg, read_data);
+	fsal_read2(obj, true, nfs3_read_cb, read_arg, read_data);
 
 	/* Only atomically set the flags if we actually call read2, otherwise
 	 * we will have indicated as having been DONE.
@@ -456,8 +486,5 @@ return_ok:
  */
 void nfs3_read_free(nfs_res_t *res)
 {
-	if ((res->res_read3.status == NFS3_OK)
-	    && (res->res_read3.READ3res_u.resok.data.data_len != 0)) {
-		gsh_free(res->res_read3.READ3res_u.resok.data.data_val);
-	}
+	/* Nothing to clean up. */
 }

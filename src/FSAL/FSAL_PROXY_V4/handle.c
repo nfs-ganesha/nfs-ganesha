@@ -2590,7 +2590,7 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 #define FSAL_READ2_NB_OP_ALLOC 3 /* SEQUENCE + PUTFH + READ */
 	nfs_argop4 argoparray[FSAL_READ2_NB_OP_ALLOC];
 	nfs_resop4 resoparray[FSAL_READ2_NB_OP_ALLOC];
-	READ4resok *rok;
+	READ4resok *resok;
 	size_t iov_len;
 
 	ph = container_of(obj_hdl, struct proxyv4_obj_handle, obj);
@@ -2606,12 +2606,23 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 	/* SEQUENCE */
 	proxyv4_get_client_sessionid(sid);
 	COMPOUNDV4_ARG_ADD_OP_SEQUENCE(opcnt, argoparray, sid, NB_RPC_SLOT);
+
 	/* prepare PUTFH */
 	COMPOUNDV4_ARG_ADD_OP_PUTFH(opcnt, argoparray, ph->fh4);
+
 	/* prepare READ */
-	rok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
-	rok->data.data_val = read_arg->iov[0].iov_base;
-	rok->data.data_len = iov_len;
+	resok = &resoparray[opcnt].nfs_resop4_u.opread.READ4res_u.resok4;
+
+	/*
+	 * Setup the resok struct with iovec using iov0. Because we are
+	 * decoding from an xdr_mem stream, there will only be one buffer.
+	 * We won't copy that buffer on decode.
+	 */
+	resok->data.data_len = read_arg->io_request;
+	resok->data.iovcnt = 1;
+	resok->data.iov = &resok->iov0;
+
+	/* Issue the read. */
 	if (bypass)
 		COMPOUNDV4_ARG_ADD_OP_READ_BYPASS(opcnt, argoparray,
 						  read_arg->offset,
@@ -2642,8 +2653,21 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 		return;
 	}
 
-	read_arg->end_of_file = rok->eof;
-	read_arg->io_amount = rok->data.data_len;
+	/* Copy the read buffer - unfortunately we can't avoid a data copy
+	 * here...
+	 */
+	assert(resok->data.iovcnt == 1);
+	assert(read_arg->iov_count == 1);
+
+	memcpy(read_arg->iov[0].iov_base,
+	       resok->data.iov[0].iov_base,
+	       resok->data.iov[0].iov_len);
+	read_arg->iov[0].iov_len = resok->data.iov[0].iov_len;
+
+	/* Fill in the rest of the return */
+	read_arg->end_of_file = resok->eof;
+	read_arg->io_amount = resok->data.iov[0].iov_len;
+
 	if (read_arg->info) {
 		read_arg->info->io_content.what = NFS4_CONTENT_DATA;
 		read_arg->info->io_content.data.d_offset = read_arg->offset +
@@ -2653,6 +2677,7 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl,
 		read_arg->info->io_content.data.d_data.data_val =
 			read_arg->iov[0].iov_base;
 	}
+
 	done_cb(obj_hdl, fsalstat(0, 0), read_arg, caller_arg);
 }
 

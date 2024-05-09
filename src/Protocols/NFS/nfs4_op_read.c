@@ -81,6 +81,8 @@ static enum nfs_req_result nfs4_complete_read(struct nfs4_read_data *data)
 	struct fsal_io_arg *read_arg = &data->read_arg;
 
 	if (data->res_READ4->status == NFS4_OK) {
+		READ4resok *resok = &data->res_READ4->READ4res_u.resok4;
+
 		if (nfs_param.core_param.getattrs_in_complete_read &&
 				!read_arg->end_of_file) {
 			/*
@@ -109,28 +111,49 @@ static enum nfs_req_result nfs4_complete_read(struct nfs4_read_data *data)
 		}
 
 		/* Is EOF met or not ? */
-		data->res_READ4->READ4res_u.resok4.eof = read_arg->end_of_file;
+		resok->eof = read_arg->end_of_file;
+		resok->data.data_len = read_arg->io_amount;
 
-		data->res_READ4->READ4res_u.resok4.data.data_len =
-			read_arg->io_amount;
-		data->res_READ4->READ4res_u.resok4.data.data_val =
-			read_arg->iov[0].iov_base;
+		if (read_arg->io_amount == 0) {
+			/* We won't need the FSAL's iovec and buffers if it used
+			 * them
+			 */
+			if (read_arg->iov_release != NULL)
+				read_arg->iov_release(read_arg->release_data);
+
+			/* We will use the iov we set up before the call, but
+			 * set the length of the buffer to 0. The
+			 * io_data->release is already set up.
+			 */
+			resok->data.iov[0].iov_len = 0;
+		} else {
+			if (read_arg->iov != resok->data.iov) {
+				/* FSAL returned a different iovector */
+				resok->data.iov = read_arg->iov;
+				resok->data.iovcnt = read_arg->iov_count;
+			}
+
+			if (read_arg->iov_release != resok->data.release) {
+				/* The FSAL replaced the release */
+				resok->data.release = read_arg->iov_release;
+				resok->data.release_data =
+							read_arg->release_data;
+			}
+		}
 
 		LogFullDebug(COMPONENT_NFS_V4,
 			     "NFS4_OP_READ: offset = %" PRIu64
 			     " read length = %zu eof=%u", read_arg->offset,
 			     read_arg->io_amount, read_arg->end_of_file);
 	} else {
-		int i;
-
-		for (i = 0; i < read_arg->iov_count; ++i) {
-			gsh_free(read_arg->iov[i].iov_base);
-		}
-
-		data->res_READ4->READ4res_u.resok4.data.data_val = NULL;
+		/* Just in case... We won't need the FSAL's iovec and
+		 * buffers if it used them
+		 */
+		if (read_arg->iov_release != NULL)
+			read_arg->iov_release(read_arg->release_data);
 	}
 
-	server_stats_io_done(read_arg->iov[0].iov_len, read_arg->io_amount,
+	server_stats_io_done(read_arg->io_request, read_arg->io_amount,
 			     (data->res_READ4->status == NFS4_OK) ? true :
 			     false, false);
 
@@ -342,13 +365,18 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 	void *buffer = NULL;
 	/* End of file flag */
 	bool eof = false;
+	READ4resok *resok = &res_READ4->READ4res_u.resok4;
 
 	/* Don't bother calling the FSAL if the read length is 0. */
 
 	if (arg_READ4->count == 0) {
-		res_READ4->READ4res_u.resok4.eof = FALSE;
-		res_READ4->READ4res_u.resok4.data.data_len = 0;
-		res_READ4->READ4res_u.resok4.data.data_val = NULL;
+
+		resok->eof = FALSE;
+		resok->data.data_len = 0;
+		resok->data.iovcnt = 1;
+		resok->data.iov = &resok->iov0;
+		resok->iov0.iov_len = 0;
+		resok->iov0.iov_base = NULL;
 		res_READ4->status = NFS4_OK;
 		return NFS_REQ_OK;
 	}
@@ -358,26 +386,31 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 	/* Must allocate buffer as a multiple of BYTES_PER_XDR_UNIT */
 	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count));
 
-	res_READ4->READ4res_u.resok4.data.data_val = buffer;
+	resok->iov0.iov_base = buffer;
+	resok->iov0.iov_len = arg_READ4->count;
+	resok->data.data_len = arg_READ4->count;
+	resok->data.iovcnt = 1;
+	resok->data.iov = &resok->iov0;
 
 	nfs_status = op_ctx->ctx_pnfs_ds->s_ops.dsh_read(
 				data->current_ds,
 				&arg_READ4->stateid,
 				arg_READ4->offset,
 				arg_READ4->count,
-				res_READ4->READ4res_u.resok4.data.data_val,
-				&res_READ4->READ4res_u.resok4.data.data_len,
+				resok->iov0.iov_base,
+				&resok->data.data_len,
 				&eof);
 
 	if (nfs_status != NFS4_OK) {
 		gsh_free(buffer);
-		res_READ4->READ4res_u.resok4.data.data_val = NULL;
+		resok->data.data_len = 0;
+		resok->iov0.iov_len = 0;
+		resok->iov0.iov_base = NULL;
+	} else {
+		resok->iov0.iov_len = resok->data.data_len;
 	}
 
-	if (eof)
-		res_READ4->READ4res_u.resok4.eof = TRUE;
-	else
-		res_READ4->READ4res_u.resok4.eof = FALSE;
+	resok->eof = eof;
 
 	res_READ4->status = nfs_status;
 
@@ -463,6 +496,11 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 	return nfsstat4_to_nfs_req_result(res_RPLUS->rpr_status);
 }
 
+static void read4_io_data_release(void *)
+{
+	/* Nothing to do */
+}
+
 static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 				     compound_data_t *data,
 				     struct nfs_resop4 *resp,
@@ -475,7 +513,6 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	uint64_t offset = 0;
 	uint64_t MaxRead = 0;
 	uint64_t MaxOffsetRead = 0;
-	void *bufferdata = NULL;
 	fsal_status_t fsal_status = {0, 0};
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
@@ -490,6 +527,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	 * since in that case we should go ahead and exit as expected.
 	 */
 	uint32_t flags = ASYNC_PROC_DONE;
+	READ4resok *resok = &res_READ4->READ4res_u.resok4;
 
 	res_READ4->status = NFS4_OK;
 
@@ -712,16 +750,17 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	if (size == 0) {
 		/** @todo Should we handle this case for READ_PLUS? */
 		/* A size = 0 can not lead to EOF */
-		res_READ4->READ4res_u.resok4.eof = false;
-		res_READ4->READ4res_u.resok4.data.data_len = 0;
-		res_READ4->READ4res_u.resok4.data.data_val = NULL;
+		resok->eof = false;
+		resok->data.data_len = 0;
+		resok->data.iovcnt = 1;
+		resok->data.iov = &resok->iov0;
+		resok->iov0.iov_len = 0;
+		resok->iov0.iov_base = NULL;
 		res_READ4->status = NFS4_OK;
 		goto out;
 	}
 
 	/* Some work is to be done */
-	bufferdata = gsh_malloc_aligned(4096, RNDUP(size));
-
 	if (!anonymous_started && data->minorversion == 0) {
 		owner = get_state_owner_ref(state_found);
 		if (owner != NULL) {
@@ -730,16 +769,24 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 		}
 	}
 
+	/* Set up result using internal iovec of length 1 that allows FSAL
+	 * layer to allocate the read buffer.
+	 */
+	resok->data.data_len = size;
+	resok->data.iovcnt = 1;
+	resok->data.iov = &resok->iov0;
+	resok->data.iov[0].iov_len = size;
+	resok->data.iov[0].iov_base = NULL;
+	resok->data.release = read4_io_data_release;
+
 	/* Set up args, allocate from heap, iov_len will be 1 */
-	read_data = gsh_calloc(1, sizeof(*read_data) + sizeof(struct iovec));
+	read_data = gsh_calloc(1, sizeof(*read_data));
 	LogFullDebug(COMPONENT_NFS_V4, "Allocated read_data %p", read_data);
 	read_arg = &read_data->read_arg;
 	read_arg->state = state_found;
 	read_arg->offset = offset;
-	read_arg->iov_count = 1;
-	read_arg->iov = (struct iovec *) (read_data + 1);
-	read_arg->iov[0].iov_len = size;
-	read_arg->iov[0].iov_base = bufferdata;
+	read_arg->iov_count = resok->data.iovcnt;
+	read_arg->iov = resok->data.iov;
 	read_arg->io_amount = 0;
 	read_arg->end_of_file = false;
 
@@ -758,7 +805,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 again:
 
 	/* Do the actual read */
-	obj->obj_ops->read2(obj, bypass, nfs4_read_cb, read_arg, read_data);
+	fsal_read2(obj, bypass, nfs4_read_cb, read_arg, read_data);
 
 	/* Only atomically set the flags if we actually call read2, otherwise
 	 * we will have indicated as having been DONE.
@@ -865,43 +912,6 @@ void xdr_READ4res_uio_release(struct xdr_uio *uio, u_int flags)
 	}
 }
 
-struct xdr_uio *xdr_READ4res_uio_setup(struct READ4resok *objp)
-{
-	struct xdr_uio *uio;
-	u_int size = objp->data.data_len;
-	/* The size to actually be written must be a multiple of
-	 * BYTES_PER_XDR_UNIT
-	 */
-	u_int size2 = RNDUP(size);
-	int i;
-
-	if (size2 != size) {
-		/* Must zero out extra bytes */
-		for (i = size; i < size2; i++)
-			objp->data.data_val[i] = 0;
-	}
-
-	uio = gsh_calloc(1, sizeof(struct xdr_uio) + sizeof(struct xdr_vio));
-	uio->uio_release = xdr_READ4res_uio_release;
-	uio->uio_count = 1;
-	uio->uio_vio[0].vio_base = objp->data.data_val;
-	uio->uio_vio[0].vio_head = objp->data.data_val;
-	uio->uio_vio[0].vio_tail = objp->data.data_val + size2;
-	uio->uio_vio[0].vio_wrap = objp->data.data_val + size2;
-	uio->uio_vio[0].vio_length = objp->data.data_len;
-	uio->uio_vio[0].vio_type = VIO_DATA;
-
-	/* Take over read data buffer */
-	objp->data.data_val = NULL;
-	objp->data.data_len = 0;
-
-	LogFullDebug(COMPONENT_NFS_V4,
-		     "Allocated %p, references %"PRIi32", count %d",
-		     uio, uio->uio_references, (int) uio->uio_count);
-
-	return uio;
-}
-
 /**
  * @brief Free data allocated for READ result.
  *
@@ -913,11 +923,7 @@ struct xdr_uio *xdr_READ4res_uio_setup(struct READ4resok *objp)
  */
 void nfs4_op_read_Free(nfs_resop4 *res)
 {
-	READ4res *resp = &res->nfs_resop4_u.opread;
-
-	if (resp->status == NFS4_OK)
-		if (resp->READ4res_u.resok4.data.data_val != NULL)
-			gsh_free(resp->READ4res_u.resok4.data.data_val);
+	/* Nothing to clean up. */
 }
 
 /**
