@@ -245,17 +245,18 @@ void destroy_custom_data_for_destroyed_xprt(SVCXPRT *xprt)
 		sizeof(sockaddr_str), sockaddr_str, sockaddr_str};
 	xprt_custom_data_t *xprt_data;
 
+	if (xprt->xp_u1 == NULL) {
+		LogDebug(COMPONENT_XPRT,
+		    "No custom data to destroy for the destroyed xprt");
+		return;
+	}
+
 	display_xprt_sockaddr(&db, xprt);
 	LogDebug(COMPONENT_XPRT,
 		"Processing custom data for destroyed xprt: %p with FD: %d, socket-addr: %s",
 		xprt, xprt->xp_fd, sockaddr_str);
 	assert(xprt->xp_flags & SVC_XPRT_FLAG_DESTROYED);
 
-	if (xprt->xp_u1 == NULL) {
-		LogInfo(COMPONENT_XPRT,
-			"No custom data to destroy for the destroyed xprt");
-		return;
-	}
 	xprt_data = (xprt_custom_data_t *) xprt->xp_u1;
 	assert(glist_empty(&xprt_data->nfs41_sessions_holder.sessions));
 	assert(xprt_data->status == DISSOCIATED_FROM_XPRT);
