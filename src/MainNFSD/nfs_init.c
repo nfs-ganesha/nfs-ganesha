@@ -262,7 +262,7 @@ static void enable_nfs_krb5(nfs_krb5_parameter_t krb5_param,
  * This functionality includes gss based authentication for forechannel
  * and gss based callbacks.
  */
-static void disable_nfs_krb5(nfs_krb5_parameter_t krb5_param
+static void disable_nfs_krb5(nfs_krb5_parameter_t krb5_param,
 	enum log_components log_component)
 {
 	char gss_error[MAXNAMLEN + 1];
