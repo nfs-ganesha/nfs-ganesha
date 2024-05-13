@@ -274,14 +274,7 @@ BuildRequires:  python3-installer
 %endif
 
 %if %{with unwind}
-%if ( 0%{?rhel} && 0%{?rhel} < 8 )
-Requires: libc6-dev
-%else
-Requires: libc-devel
-%endif
-%if ( 0%{?suse_version} )
 Requires: glibc-devel
-%endif
 %endif
 
 %if %{with gui_utils}
