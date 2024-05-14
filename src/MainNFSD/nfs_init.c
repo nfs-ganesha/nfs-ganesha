@@ -263,7 +263,7 @@ static void enable_nfs_krb5(nfs_krb5_parameter_t krb5_param,
  * and gss based callbacks.
  */
 static void disable_nfs_krb5(nfs_krb5_parameter_t krb5_param,
-	enum log_components log_component)
+	log_components_t log_component)
 {
 	char gss_error[MAXNAMLEN + 1];
 	OM_uint32 maj_stat, min_stat;
