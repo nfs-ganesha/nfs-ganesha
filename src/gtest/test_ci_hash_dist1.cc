@@ -34,6 +34,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/exception.hpp>
 #include <boost/program_options.hpp>
+/* Make sure urcu-bp.h is included as C++ */
+#include <urcu-bp.h>
 
 extern "C" {
 /* Don't include rpcent.h; it has C++ issues, and is unneeded */

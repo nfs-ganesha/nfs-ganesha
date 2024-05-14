@@ -24,6 +24,8 @@
  */
 
 #include "gtest/gtest.h"
+/* Make sure urcu-bp.h is included as C++ */
+#include <urcu-bp.h>
 
 extern "C" {
 /* Manually forward this, an 9P is not C++ safe */

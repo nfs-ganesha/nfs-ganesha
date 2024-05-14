@@ -20,7 +20,7 @@
 #
 #-------------------------------------------------------------------------------
 # Set CMAKE_CXX_FLAGS, for gtest presently
-set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=gnu++11 -fpermissive -Wnon-virtual-dtor -Wno-invalid-offsetof")
+set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -fpermissive -Wnon-virtual-dtor -Wno-invalid-offsetof")
 
 set(UNITTEST_LIBS ${GTEST_LIBRARIES} boost_program_options boost_system ${PTHREAD_LIBS})
 set(UNITTEST_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${PROJECT_SOURCE_DIR}/gtest -I${GTEST_INCLUDE_DIR} -fno-strict-aliasing")
