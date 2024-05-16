@@ -1278,7 +1278,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 		if (status.major == ERR_FSAL_STALE)
 			status.major = ERR_FSAL_NOENT;
 #ifdef USE_MONITORING
-		monitoring_mdcache_cache_miss(OPERATION, export_id);
+		monitoring__dynamic_mdcache_cache_miss(OPERATION, export_id);
 #endif  /* USE_MONITORING */
 		return status;
 	}
@@ -1333,7 +1333,7 @@ fsal_status_t mdc_lookup(mdcache_entry_t *mdc_parent, const char *name,
 			*new_entry = NULL;
 		}
 #ifdef USE_MONITORING
-		monitoring_mdcache_cache_hit(OPERATION, export_id);
+		monitoring__dynamic_mdcache_cache_hit(OPERATION, export_id);
 #endif  /* USE_MONITORING */
 		return status;
 	} else if (!uncached) {
@@ -1367,7 +1367,7 @@ out:
 	if (status.major == ERR_FSAL_STALE)
 		status.major = ERR_FSAL_NOENT;
 #ifdef USE_MONITORING
-	monitoring_mdcache_cache_miss(OPERATION, export_id);
+	monitoring__dynamic_mdcache_cache_miss(OPERATION, export_id);
 #endif  /* USE_MONITORING */
 	return status;
 }

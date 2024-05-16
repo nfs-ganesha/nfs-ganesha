@@ -1005,7 +1005,7 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	if (mdcache_is_attrs_valid(entry, attrs_out->request_mask)) {
 		/* Up-to-date */
 #ifdef USE_MONITORING
-		monitoring_mdcache_cache_hit(OPERATION, export_id);
+		monitoring__dynamic_mdcache_cache_hit(OPERATION, export_id);
 #endif  /* USE_MONITORING */
 		goto unlock;
 	}
@@ -1017,13 +1017,13 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	if (mdcache_is_attrs_valid(entry, attrs_out->request_mask)) {
 		/* Someone beat us to it */
 #ifdef USE_MONITORING
-		monitoring_mdcache_cache_hit(OPERATION, export_id);
+		monitoring__dynamic_mdcache_cache_hit(OPERATION, export_id);
 #endif  /* USE_MONITORING */
 		goto unlock;
 	}
 
 #ifdef USE_MONITORING
-	monitoring_mdcache_cache_miss(OPERATION, export_id);
+	monitoring__dynamic_mdcache_cache_miss(OPERATION, export_id);
 #endif  /* USE_MONITORING */
 
 	status = mdcache_refresh_attrs(

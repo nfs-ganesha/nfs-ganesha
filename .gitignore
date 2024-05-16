@@ -48,6 +48,7 @@ core.*
 *cmake_install.cmake
 libfsal*.so*
 libganesha_nfsd.so*
+libgmonitoring.so*
 Doxyfile
 *~
 *.swp

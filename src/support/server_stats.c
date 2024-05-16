@@ -64,7 +64,7 @@
 #include "nfs_convert.h"
 
 #ifdef USE_MONITORING
-#include "monitoring.h"
+#include "nfs_metrics.h"
 #endif
 
 #define NFS_pcp nfs_param.core_param
@@ -1564,8 +1564,9 @@ void server_stats_io_done(size_t requested,
 
 		if (export != NULL)
 			export_id = export->export_id;
-		monitoring_nfs_io(requested, transferred, success, is_write,
-				  export_id, client_ip);
+		monitoring__dynamic_observe_nfs_io(
+			requested, transferred, success, is_write, export_id,
+			client_ip);
 	}
 #endif
 }
@@ -3062,8 +3063,8 @@ static void record_v3_full_stats(struct svc_req *req,
 			client == NULL ? "" : client->hostaddr_str;
 		if (export != NULL)
 			export_id = export->export_id;
-		monitoring_nfs3_request(proc, request_time, status,
-					export_id, client_ip);
+		nfs_metrics__nfs3_request(proc, request_time, status, export_id,
+					client_ip);
 	}
 #endif
 
@@ -3106,7 +3107,7 @@ static void record_v4_full_stats(uint32_t proc,
 
 	if (export != NULL)
 		export_id = export->export_id;
-	monitoring_nfs4_request(proc, request_time, status, export_id,
+	nfs_metrics__nfs4_request(proc, request_time, status, export_id,
 				client_ip);
 #endif
 	if (proc >= NFS4_OP_LAST_ONE) {

@@ -29,31 +29,15 @@
 #include <algorithm>
 
 #include "prometheus/counter.h"
-#include "prometheus/exposer.h"
-#include "prometheus/family.h"
+#include "prometheus/gauge.h"
 #include "prometheus/histogram.h"
-#include "prometheus/registry.h"
 
 #include "monitoring.h"
-#include "nfs_convert.h"
-#include "log.h"
-
-#include "monitoring_internal.h"
+#include "exposer.h"
 
 /*
  * This file contains the C++ monitoring implementation for Ganesha.
  */
-
-// 24 size buckets: 2 bytes to 16 MB as powers of 2.
-static const std::initializer_list<double> requestSizeBuckets =
-{2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768,
- 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216};
-
-// 30 time buckets: 0.1 ms to 12 seconds. Generated with 50% increases.
-static const std::initializer_list<double> latencyBuckets =
-{0.1, 0.15, 0.225, 0.337, 0.506, 0.759, 1.13, 1.70, 2.56, 3.84, 5.76, 8.64,
- 12.9, 19.4, 29.1, 43.7, 65.6, 98.5, 147, 221, 332, 498, 748, 1122, 1683, 2525,
- 3787, 5681, 8522, 12783};
 
 static const char kClient[] = "client";
 static const char kExport[] = "export";
@@ -63,180 +47,200 @@ static const char kVersion[] = "version";
 
 namespace ganesha_monitoring {
 
-class Metrics {
+using CounterInt = prometheus::Counter<int64_t>;
+using GaugeInt = prometheus::Gauge<int64_t>;
+using HistogramInt = prometheus::Histogram<int64_t>;
+using HistogramDouble = prometheus::Histogram<double>;
+using LabelsMap = std::map<const std::string, const std::string>;
+
+static prometheus::Registry registry;
+static Exposer exposer(registry);
+
+// 24 size buckets: 2 bytes to 16 MB as powers of 2.
+static const HistogramInt::BucketBoundaries requestSizeBuckets =
+{2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768,
+ 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304, 8388608, 16777216};
+
+// 30 time buckets: 0.1 ms to 12 seconds. Generated with 50% increases.
+static const HistogramDouble::BucketBoundaries latencyBuckets =
+{0.1, 0.15, 0.225, 0.337, 0.506, 0.759, 1.13, 1.70, 2.56, 3.84, 5.76, 8.64,
+ 12.9, 19.4, 29.1, 43.7, 65.6, 98.5, 147, 221, 332, 498, 748, 1122, 1683, 2525,
+ 3787, 5681, 8522, 12783};
+
+class DynamicMetrics {
  public:
-  Metrics(prometheus::Registry &registry);
+  DynamicMetrics(prometheus::Registry &registry);
 
   // Counters
-  prometheus::Family<prometheus::Counter> &mdcacheCacheHitsTotal;
-  prometheus::Family<prometheus::Counter> &mdcacheCacheMissesTotal;
-  prometheus::Family<prometheus::Counter> &mdcacheCacheHitsByExportTotal;
-  prometheus::Family<prometheus::Counter> &mdcacheCacheMissesByExportTotal;
-  prometheus::Family<prometheus::Counter> &rpcsReceivedTotal;
-  prometheus::Family<prometheus::Counter> &rpcsCompletedTotal;
-  prometheus::Family<prometheus::Counter> &errorsByVersionOperationStatus;
+  CounterInt::Family &mdcacheCacheHitsTotal;
+  CounterInt::Family &mdcacheCacheMissesTotal;
+  CounterInt::Family &mdcacheCacheHitsByExportTotal;
+  CounterInt::Family &mdcacheCacheMissesByExportTotal;
+  CounterInt::Family &rpcsReceivedTotal;
+  CounterInt::Family &rpcsCompletedTotal;
+  CounterInt::Family &errorsByVersionOperationStatus;
 
   // Per client metrics.
   // Only track request and throughput rates to reduce memory overhead.
   // NFS request metrics below also generate latency percentiles, etc.
-  prometheus::Family<prometheus::Counter> &clientRequestsTotal;
-  prometheus::Family<prometheus::Counter> &clientBytesReceivedTotal;
-  prometheus::Family<prometheus::Counter> &clientBytesSentTotal;
+  CounterInt::Family &clientRequestsTotal;
+  CounterInt::Family &clientBytesReceivedTotal;
+  CounterInt::Family &clientBytesSentTotal;
 
   // Gauges
-  prometheus::Family<prometheus::Gauge> &rpcsInFlight;
-  prometheus::Family<prometheus::Gauge> &lastClientUpdate;
+  GaugeInt::Family &rpcsInFlight;
+  GaugeInt::Family &lastClientUpdate;
 
   // Per {operation} NFS request metrics.
-  prometheus::Family<prometheus::Counter> &requestsTotalByOperation;
-  prometheus::Family<prometheus::Counter> &bytesReceivedTotalByOperation;
-  prometheus::Family<prometheus::Counter> &bytesSentTotalByOperation;
-  prometheus::Family<prometheus::Histogram> &requestSizeByOperation;
-  prometheus::Family<prometheus::Histogram> &responseSizeByOperation;
-  prometheus::Family<prometheus::Histogram> &latencyByOperation;
+  CounterInt::Family &requestsTotalByOperation;
+  CounterInt::Family &bytesReceivedTotalByOperation;
+  CounterInt::Family &bytesSentTotalByOperation;
+  HistogramInt::Family &requestSizeByOperation;
+  HistogramInt::Family &responseSizeByOperation;
+  HistogramDouble::Family &latencyByOperation;
 
   // Per {operation, export_id} NFS request metrics.
-  prometheus::Family<prometheus::Counter> &requestsTotalByOperationExport;
-  prometheus::Family<prometheus::Counter> &bytesReceivedTotalByOperationExport;
-  prometheus::Family<prometheus::Counter> &bytesSentTotalByOperationExport;
-  prometheus::Family<prometheus::Histogram> &requestSizeByOperationExport;
-  prometheus::Family<prometheus::Histogram> &responseSizeByOperationExport;
-  prometheus::Family<prometheus::Histogram> &latencyByOperationExport;
+  CounterInt::Family &requestsTotalByOperationExport;
+  CounterInt::Family &bytesReceivedTotalByOperationExport;
+  CounterInt::Family &bytesSentTotalByOperationExport;
+  HistogramInt::Family &requestSizeByOperationExport;
+  HistogramInt::Family &responseSizeByOperationExport;
+  HistogramDouble::Family &latencyByOperationExport;
 };
 
-Metrics::Metrics(prometheus::Registry &registry) :
+DynamicMetrics::DynamicMetrics(prometheus::Registry &registry) :
   // Counters
   mdcacheCacheHitsTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("mdcache_cache_hits_total")
       .Help("Counter for total cache hits in mdcache.")
       .Register(registry)),
   mdcacheCacheMissesTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("mdcache_cache_misses_total")
       .Help("Counter for total cache misses in mdcache.")
       .Register(registry)),
   mdcacheCacheHitsByExportTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("mdcache_cache_hits_by_export_total")
       .Help("Counter for total cache hits in mdcache, by export.")
       .Register(registry)),
   mdcacheCacheMissesByExportTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("mdcache_cache_misses_by_export_total")
       .Help("Counter for total cache misses in mdcache, by export.")
       .Register(registry)),
   rpcsReceivedTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("rpcs_received_total")
       .Help("Counter for total RPCs received.")
       .Register(registry)),
   rpcsCompletedTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("rpcs_completed_total")
       .Help("Counter for total RPCs completed.")
       .Register(registry)),
   errorsByVersionOperationStatus(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("nfs_errors_total")
       .Help("Error count by version, operation and status.")
       .Register(registry)),
 
   // Per client metrics.
   clientRequestsTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("client_requests_total")
       .Help("Total requests by client.")
       .Register(registry)),
   clientBytesReceivedTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("client_bytes_received_total")
       .Help("Total request bytes by client.")
       .Register(registry)),
   clientBytesSentTotal(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("client_bytes_sent_total")
       .Help("Total response bytes sent by client.")
       .Register(registry)),
 
   // Gauges
   rpcsInFlight(
-      prometheus::BuildGauge()
+      prometheus::Builder<GaugeInt>()
       .Name("rpcs_in_flight")
       .Help("Number of NFS requests received or in flight.")
       .Register(registry)),
   lastClientUpdate(
-      prometheus::BuildGauge()
+      prometheus::Builder<GaugeInt>()
       .Name("last_client_update")
       .Help("Last update timestamp, per client.")
       .Register(registry)),
 
   // Per {operation} NFS request metrics.
   requestsTotalByOperation(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("nfs_requests_total")
       .Help("Total requests.")
       .Register(registry)),
   bytesReceivedTotalByOperation(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("nfs_bytes_received_total")
       .Help("Total request bytes.")
       .Register(registry)),
   bytesSentTotalByOperation(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("nfs_bytes_sent_total")
       .Help("Total response bytes.")
       .Register(registry)),
   requestSizeByOperation(
-      prometheus::BuildHistogram()
+      prometheus::Builder<HistogramInt>()
       .Name("nfs_request_size_bytes")
       .Help("Request size in bytes.")
       .Register(registry)),
   responseSizeByOperation(
-      prometheus::BuildHistogram()
+      prometheus::Builder<HistogramInt>()
       .Name("nfs_response_size_bytes")
       .Help("Response size in bytes.")
       .Register(registry)),
   latencyByOperation(
-      prometheus::BuildHistogram()
+      prometheus::Builder<HistogramDouble>()
       .Name("nfs_latency_ms")
       .Help("Request latency in ms.")
       .Register(registry)),
 
   // Per {operation, export_id} NFS request metrics.
   requestsTotalByOperationExport(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("nfs_requests_by_export_total")
       .Help("Total requests by export.")
       .Register(registry)),
   bytesReceivedTotalByOperationExport(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("nfs_bytes_received_by_export_total")
       .Help("Total request bytes by export.")
       .Register(registry)),
   bytesSentTotalByOperationExport(
-      prometheus::BuildCounter()
+      prometheus::Builder<CounterInt>()
       .Name("nfs_bytes_sent_by_export_total")
       .Help("Total response bytes by export.")
       .Register(registry)),
   requestSizeByOperationExport(
-      prometheus::BuildHistogram()
+      prometheus::Builder<HistogramInt>()
       .Name("nfs_request_size_by_export_bytes")
       .Help("Request size by export in bytes.")
       .Register(registry)),
   responseSizeByOperationExport(
-      prometheus::BuildHistogram()
+      prometheus::Builder<HistogramInt>()
       .Name("nfs_response_size_by_export_bytes")
       .Help("Response size by export in bytes.")
       .Register(registry)),
   latencyByOperationExport(
-      prometheus::BuildHistogram()
+      prometheus::Builder<HistogramDouble>()
       .Name("nfs_latency_ms_by_export")
       .Help("Request latency by export in ms.")
       .Register(registry)) {
 }
 
-static std::unique_ptr<Metrics> metrics;
+static std::unique_ptr<DynamicMetrics> dynamic_metrics;
 
 static std::string trimIPv6Prefix(const std::string input) {
   const std::string prefix("::ffff:");
@@ -257,61 +261,8 @@ const std::string GetExportLabel(export_id_t export_id) {
   return exportLabels[export_id];
 }
 
-std::unique_ptr<prometheus::Exposer> exposer;
-std::shared_ptr<prometheus::Registry> registry;
-
 static void toLowerCase(std::string &s) {
   std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-}
-
-static void observeNfsRequest(const char *operation,
-                              const nsecs_elapsed_t request_time,
-                              const char* version,
-                              const char* statusLabel,
-                              const export_id_t export_id,
-                              const char* client_ip) {
-  const int64_t latency_ms = request_time / NS_PER_MSEC;
-  std::string operationLowerCase = std::string(operation);
-  toLowerCase(operationLowerCase);
-  if (client_ip != NULL) {
-    std::string client(client_ip);
-    int64_t epoch =
-        std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
-    client = trimIPv6Prefix(client);
-    metrics->clientRequestsTotal
-        .Add({{kClient, client},
-              {kOperation, operationLowerCase}})
-        .Increment();
-    metrics->lastClientUpdate.Add({{kClient, client}}).Set(epoch);
-  }
-  metrics->errorsByVersionOperationStatus
-      .Add({{kVersion, version},
-            {kOperation, operationLowerCase},
-            {kStatus, statusLabel}})
-      .Increment();
-
-  // Observe metrics.
-  metrics->requestsTotalByOperation
-    .Add({{kOperation, operationLowerCase}})
-    .Increment();
-  metrics->latencyByOperation
-    .Add({{kOperation, operationLowerCase}}, latencyBuckets)
-    .Observe(latency_ms);
-
-  if (export_id == 0) {
-    return;
-  }
-
-  // Observe metrics, by export.
-  const std::string exportLabel = GetExportLabel(export_id);
-  metrics->requestsTotalByOperationExport
-    .Add({{kOperation, operationLowerCase}, {kExport, exportLabel}})
-    .Increment();
-  metrics->latencyByOperationExport
-    .Add({{kOperation, operationLowerCase},
-          {kExport, exportLabel}}, latencyBuckets)
-    .Observe(latency_ms);
 }
 
 /*
@@ -329,46 +280,68 @@ void monitoring_init(const uint16_t port) {
   static bool initialised;
   if (initialised)
     return;
-  std::ostringstream ss;
-  ss << "0.0.0.0:" << port;
-  std::string hostPort = ss.str();
-  LogEvent(COMPONENT_INIT, "Init monitoring at %s", hostPort.c_str());
-  exposer.reset(new prometheus::Exposer(hostPort));
-  registry = std::make_shared<prometheus::Registry>();
-  exposer->RegisterCollectable(registry);
-  metrics.reset(new Metrics(*registry));
+  exposer.start(port);
+  dynamic_metrics = std::make_unique<DynamicMetrics>(registry);
   initialised = true;
 }
 
-void monitoring_nfs3_request(const uint32_t proc,
-                             const nsecs_elapsed_t request_time,
-                             const nfsstat3 nfs_status,
-                             const export_id_t export_id,
-                             const char* client_ip) {
-  const char* version = "nfs3";
-  const char *operation = nfsproc3_to_str(proc);
-  const char *statusLabel = nfsstat3_to_str(nfs_status);
-  observeNfsRequest(operation, request_time, version, statusLabel, export_id,
-                    client_ip);
+void monitoring__dynamic_observe_nfs_request(
+                              const char *operation,
+                              nsecs_elapsed_t request_time,
+                              const char* version,
+                              const char* status_label,
+                              export_id_t export_id,
+                              const char* client_ip) {
+  const int64_t latency_ms = request_time / NS_PER_MSEC;
+  std::string operationLowerCase = std::string(operation);
+  toLowerCase(operationLowerCase);
+  if (client_ip != NULL) {
+    std::string client(client_ip);
+    int64_t epoch =
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    client = trimIPv6Prefix(client);
+    dynamic_metrics->clientRequestsTotal
+        .Add({{kClient, client},
+              {kOperation, operationLowerCase}})
+        .Increment();
+    dynamic_metrics->lastClientUpdate.Add({{kClient, client}}).Set(epoch);
+  }
+  dynamic_metrics->errorsByVersionOperationStatus
+      .Add({{kVersion, version},
+            {kOperation, operationLowerCase},
+            {kStatus, status_label}})
+      .Increment();
+
+  // Observe metrics.
+  dynamic_metrics->requestsTotalByOperation
+    .Add({{kOperation, operationLowerCase}})
+    .Increment();
+  dynamic_metrics->latencyByOperation
+    .Add({{kOperation, operationLowerCase}}, latencyBuckets)
+    .Observe(latency_ms);
+
+  if (export_id == 0) {
+    return;
+  }
+
+  // Observe metrics, by export.
+  const std::string exportLabel = GetExportLabel(export_id);
+  dynamic_metrics->requestsTotalByOperationExport
+    .Add({{kOperation, operationLowerCase}, {kExport, exportLabel}})
+    .Increment();
+  dynamic_metrics->latencyByOperationExport
+    .Add({{kOperation, operationLowerCase},
+          {kExport, exportLabel}}, latencyBuckets)
+    .Observe(latency_ms);
 }
 
-void monitoring_nfs4_request(const uint32_t op,
-                             const nsecs_elapsed_t request_time,
-                             const nfsstat4 status,
-                             const export_id_t export_id,
-                             const char* client_ip) {
-  const char* version = "nfs4";
-  const char *operation = nfsop4_to_str(op);
-  const char *statusLabel = nfsstat4_to_str(status);
-  observeNfsRequest(operation, request_time, version, statusLabel, export_id,
-                    client_ip);
-}
-
-void monitoring_nfs_io(const size_t bytes_requested,
-                       const size_t bytes_transferred,
-                       const bool success,
-                       const bool is_write,
-                       const export_id_t export_id,
+void monitoring__dynamic_observe_nfs_io(
+                       size_t bytes_requested,
+                       size_t bytes_transferred,
+                       bool success,
+                       bool is_write,
+                       export_id_t export_id,
                        const char* client_ip) {
   const std::string operation(is_write ? "write" : "read");
   const size_t bytes_received = (is_write ? 0 : bytes_transferred);
@@ -376,27 +349,27 @@ void monitoring_nfs_io(const size_t bytes_requested,
   if (client_ip != NULL) {
     std::string client(client_ip);
     client = trimIPv6Prefix(client);
-    metrics->clientBytesReceivedTotal
+    dynamic_metrics->clientBytesReceivedTotal
         .Add({{kClient, client},
               {kOperation, operation}})
         .Increment(bytes_received);
-    metrics->clientBytesSentTotal
+    dynamic_metrics->clientBytesSentTotal
         .Add({{kClient, client},
               {kOperation, operation}})
         .Increment(bytes_sent);
   }
 
   // Observe metrics.
-  metrics->bytesReceivedTotalByOperation
+  dynamic_metrics->bytesReceivedTotalByOperation
     .Add({{kOperation, operation}})
     .Increment(bytes_received);
-  metrics->bytesSentTotalByOperation
+  dynamic_metrics->bytesSentTotalByOperation
     .Add({{kOperation, operation}})
     .Increment(bytes_sent);
-  metrics->requestSizeByOperation
+  dynamic_metrics->requestSizeByOperation
     .Add({{kOperation, operation}}, requestSizeBuckets)
     .Observe(bytes_requested);
-  metrics->responseSizeByOperation
+  dynamic_metrics->responseSizeByOperation
     .Add({{kOperation, operation}}, requestSizeBuckets)
     .Observe(bytes_sent);
 
@@ -406,41 +379,41 @@ void monitoring_nfs_io(const size_t bytes_requested,
 
   // Observe by export metrics.
   const std::string exportLabel = GetExportLabel(export_id);
-  metrics->bytesReceivedTotalByOperationExport
+  dynamic_metrics->bytesReceivedTotalByOperationExport
     .Add({{kOperation, operation}, {kExport, exportLabel}})
     .Increment(bytes_received);
-  metrics->bytesSentTotalByOperationExport
+  dynamic_metrics->bytesSentTotalByOperationExport
     .Add({{kOperation, operation}, {kExport, exportLabel}})
     .Increment(bytes_sent);
-  metrics->requestSizeByOperationExport
+  dynamic_metrics->requestSizeByOperationExport
     .Add({{kOperation, operation}, {kExport, exportLabel}},
          requestSizeBuckets)
     .Observe(bytes_requested);
-  metrics->responseSizeByOperationExport
+  dynamic_metrics->responseSizeByOperationExport
     .Add({{kOperation, operation}, {kExport, exportLabel}},
          requestSizeBuckets)
     .Observe(bytes_sent);
 }
 
-void monitoring_mdcache_cache_hit(const char *operation,
-                                  const export_id_t export_id) {
-  metrics->mdcacheCacheHitsTotal.Add({{kOperation, operation}}).Increment();
+void monitoring__dynamic_mdcache_cache_hit(const char *operation,
+                                           export_id_t export_id) {
+  dynamic_metrics->mdcacheCacheHitsTotal.Add({{kOperation, operation}}).Increment();
   if (export_id != 0) {
     const std::string exportLabel = GetExportLabel(export_id);
-    metrics->mdcacheCacheHitsByExportTotal
+    dynamic_metrics->mdcacheCacheHitsByExportTotal
             .Add({{kExport, exportLabel},
                   {kOperation, operation}})
         .Increment();
   }
 }
 
-void monitoring_mdcache_cache_miss(const char *operation,
-                                   const export_id_t export_id) {
-  metrics->mdcacheCacheMissesTotal
+void monitoring__dynamic_mdcache_cache_miss(const char *operation,
+                                            export_id_t export_id) {
+  dynamic_metrics->mdcacheCacheMissesTotal
       .Add({{kOperation, operation}})
       .Increment();
   if (export_id != 0) {
-    metrics->mdcacheCacheMissesByExportTotal
+    dynamic_metrics->mdcacheCacheMissesByExportTotal
         .Add({{kExport, GetExportLabel(export_id)},
               {kOperation, operation}})
         .Increment();
@@ -448,15 +421,15 @@ void monitoring_mdcache_cache_miss(const char *operation,
 }
 
 void monitoring_rpc_received() {
-  metrics->rpcsReceivedTotal.Add({}).Increment();
+  dynamic_metrics->rpcsReceivedTotal.Add({}).Increment();
 }
 
 void monitoring_rpc_completed() {
-  metrics->rpcsCompletedTotal.Add({}).Increment();
+  dynamic_metrics->rpcsCompletedTotal.Add({}).Increment();
 }
 
 void monitoring_rpcs_in_flight(const uint64_t value) {
-  metrics->rpcsInFlight.Add({}).Set(value);
+  dynamic_metrics->rpcsInFlight.Add({}).Set(value);
 }
 
 }  // extern "C"

@@ -98,6 +98,9 @@ Requires: openSUSE-release
 @BCOND_LEGACY_PYTHON_INSTALL@ legacy_python_install
 %global use_legacy_python_install %{on_off_switch legacy_python_install}
 
+@BCOND_MONITORING@ monitoring
+%global use_monitoring %{on_off_switch monitoring}
+
 %global dev_version %{lua: s = string.gsub('@GANESHA_EXTRA_VERSION@', '^%-', ''); s2 = string.gsub(s, '%-', '.'); print((s2 ~= nil and s2 ~= '') and s2 or "0.1") }
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
@@ -156,6 +159,10 @@ Requires: libntirpc = @NTIRPC_VERSION_EMBED@
 BuildRequires:	libasan
 %endif
 Requires:	nfs-utils
+
+%if %{with monitoring}
+Requires:	gmonitoring
+%endif
 
 %if ( 0%{?with_rpcbind} )
 %if ( 0%{?fedora} ) || ( 0%{?rhel} && 0%{?rhel} >= 6 ) || ( 0%{?suse_version} )
@@ -218,6 +225,17 @@ Group: Applications/System
 %description mount-9P
 This package contains the mount.9P script that clients can use
 to simplify mounting to NFS-GANESHA. This is a 9p mount helper.
+%endif
+
+%if %{with monitoring}
+%package -n gmonitoring
+Summary: The NFS-GANESHA Monitoring module
+Group: Applications/System
+Provides: libgmonitoring.so
+
+%description -n gmonitoring
+The monitoring module contains metrics collectors and HTTP exposer
+in Prometheus format.
 %endif
 
 %package vfs
@@ -493,6 +511,10 @@ Url:		https://github.com/nfs-ganesha/ntirpc
 # for NFS client
 Requires:	libtirpc
 
+%if %{with monitoring}
+Requires:	gmonitoring
+%endif
+
 %description -n libntirpc
 This package contains a new implementation of the original libtirpc,
 transport-independent RPC (TI-RPC) library for NFS-Ganesha. It has
@@ -544,6 +566,7 @@ cmake .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY_V4=ON				\
 	-DUSE_DBUS=ON					\
+	-DUSE_MONITORING=%{use_monitoring}		\
 	-DUSE_9P=%{use_9P}				\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
 	-DUSE_MAN_PAGE=%{use_man_page}                  \
@@ -749,6 +772,11 @@ exit 0
 %if %{with man_page}
 %{_mandir}/*/ganesha-9p-config.8.gz
 %endif
+%endif
+
+%if %{with monitoring}
+%files -n gmonitoring
+%{_libdir}/libgmonitoring*
 %endif
 
 %files vfs

@@ -298,14 +298,8 @@ option(GSH_CAN_HOST_LOCAL_FS "Ganesha supports hosting local filesystems" ON)
 goption(USE_MONITORING "Build monitoring stack" OFF)
 gopt_test(USE_MONITORING)
 if(USE_MONITORING)
-  find_package(prometheus-cpp CONFIG ${USE_MONITORING_REQUIRED})
-  if(NOT prometheus-cpp_INCLUDE_DIR)
-    message(WARNING "prometheus not found; disabling USE_MONITORING")
-    set(USE_MONITORING OFF)
-  endif(NOT prometheus-cpp_INCLUDE_DIR)
   set(MONITORING_LIBRARIES
-    prometheus-cpp-pull
-    prometheus-cpp-core
+    gmonitoring
   )
 endif(USE_MONITORING)
 
@@ -1075,6 +1069,8 @@ endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_LESS "2.8" )
 include_directories(
   "${PROJECT_BINARY_DIR}/include"
   "${PROJECT_SOURCE_DIR}/include"
+  "${PROJECT_BINARY_DIR}/monitoring/include"
+  "${PROJECT_SOURCE_DIR}/monitoring/include"
   "${OS_INCLUDE_DIR}"
 )
 
@@ -1284,6 +1280,9 @@ add_subdirectory(support)
 add_subdirectory(os)
 if(USE_MONITORING)
   add_subdirectory(monitoring)
+  set(BCOND_MONITORING "%bcond_without")
+else(USE_MONITORING)
+  set(BCOND_MONITORING "%bcond_with")
 endif(USE_MONITORING)
 
 add_subdirectory(FSAL)

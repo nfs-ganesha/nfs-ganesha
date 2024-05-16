@@ -149,7 +149,6 @@
   mdcache_lru_release_entries;
   mdcache_param;
   merge_share;
-  monitoring_init;
   monitoring_worker_thread_max_increment;
   monitoring_worker_thread_min_increment;
   msg_fsal_err;
