@@ -402,8 +402,8 @@ struct io_hints {
 
 enum request_type {
 	UNKNOWN_REQUEST,
-	NFS_CALL,
 	NFS_REQUEST,
+	NFS_RELATED,
 #ifdef _USE_9P
 	_9P_REQUEST,
 #endif				/* _USE_9P */

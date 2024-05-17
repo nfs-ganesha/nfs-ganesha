@@ -232,7 +232,7 @@ static void nlm4_send_grant_msg(state_async_queue_t *arg)
 	get_gsh_export_ref(export);
 
 	init_op_context(&op_context, export, export->fsal_export, NULL,
-			NFS_V3, 0, NFS_REQUEST);
+			NFS_V3, 0, NFS_RELATED);
 
 	state_status = state_release_grant(cookie_entry);
 

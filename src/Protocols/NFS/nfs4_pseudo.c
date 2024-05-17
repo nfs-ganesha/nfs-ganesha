@@ -553,7 +553,7 @@ void create_pseudofs(void)
 
 	/* Initialize a root context */
 	init_op_context(&op_context, NULL, NULL, NULL,
-			NFS_V4, 0, NFS_REQUEST);
+			NFS_V4, 0, NFS_RELATED);
 	op_ctx->flags.pseudo_fsal_internal_lookup = true;
 
 	while (true) {
@@ -660,7 +660,7 @@ void pseudo_unmount_export(struct gsh_export *export)
 
 	init_op_context(&op_context, mounted_on_export,
 			mounted_on_export->fsal_export, NULL,
-			NFS_V4, 0, NFS_REQUEST);
+			NFS_V4, 0, NFS_RELATED);
 	op_ctx->flags.pseudo_fsal_internal_lookup = true;
 
 	if (is_export_pseudo(mounted_on_export) && junction_inode != NULL) {

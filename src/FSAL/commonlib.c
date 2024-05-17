@@ -3479,8 +3479,7 @@ void discard_op_context_export(struct saved_export_context *saved)
  * @param[in] caller_data    The caller address data, can be NULL
  * @param[in] nfs_vers       The NFS version
  * @param[in] nfs_minorvers  The minor version for 4.x
- * @param[in] req_type       UNKNOWN_REQUEST, NFS_CALL, NFS_REQUEST, or
- *                           _9P_REQUEST
+ * @param[in] req_type       UNKNOWN_REQUEST, NFS_REQUEST, _9P_REQUEST, etc.
  *
  */
 static uint32_t op_id;
