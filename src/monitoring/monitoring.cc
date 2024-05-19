@@ -533,18 +533,6 @@ void monitoring__dynamic_mdcache_cache_miss(const char *operation,
   }
 }
 
-void monitoring_rpc_received() {
-  dynamic_metrics->rpcsReceivedTotal.Add({}).Increment();
-}
-
-void monitoring_rpc_completed() {
-  dynamic_metrics->rpcsCompletedTotal.Add({}).Increment();
-}
-
-void monitoring_rpcs_in_flight(const uint64_t value) {
-  dynamic_metrics->rpcsInFlight.Add({}).Set(value);
-}
-
 }  // extern "C"
 
 }  // namespace ganesha_monitoring

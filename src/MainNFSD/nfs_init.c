@@ -81,6 +81,9 @@
 #include <urcu-bp.h>
 #include "conf_url.h"
 #include "FSAL/fsal_localfs.h"
+#ifdef USE_MONITORING
+#include "nfs_metrics.h"
+#endif
 
 pthread_mutexattr_t default_mutex_attr;
 pthread_rwlockattr_t default_rwlock_attr;
@@ -1021,6 +1024,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	dbus_export_init();
 	dbus_client_init();
 	dbus_cache_init();
+#endif
+
+#ifdef USE_MONITORING
+	nfs_metrics__init();
 #endif
 
 	/* acls cache may be needed by exports_pkginit */

@@ -105,6 +105,11 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 #define SCANDIR_CONST
 #endif
 
+#ifndef ARRAY_SIZE
+/* Assumes a is an array */
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
+#endif
+
 extern unsigned long PTHREAD_stack_size;
 
 static inline int PTHREAD_create(pthread_t *thread,

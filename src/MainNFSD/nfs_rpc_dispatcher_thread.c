@@ -76,7 +76,7 @@
 #endif
 
 #ifdef USE_MONITORING
-#include "monitoring.h"
+#include "nfs_metrics.h"
 #endif /* USE_MONITORING */
 
 #define NFS_options nfs_param.core_param.core_options
@@ -1569,8 +1569,8 @@ static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 	(void) atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
 #ifdef USE_MONITORING
-	monitoring_rpc_received();
-	monitoring_rpcs_in_flight(
+	nfs_metrics__rpc_received();
+	nfs_metrics__rpcs_in_flight(
 		nfs_health_.enqueued_reqs - nfs_health_.dequeued_reqs);
 #endif /* USE_MONITORING*/
 
@@ -1624,6 +1624,6 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 	(void) atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 
 #ifdef USE_MONITORING
-	monitoring_rpc_completed();
+	nfs_metrics__rpc_completed();
 #endif /* USE_MONITORING*/
 }

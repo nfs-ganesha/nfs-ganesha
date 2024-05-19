@@ -32,6 +32,50 @@
 #include "common_utils.h"
 #include "nfs_convert.h"
 
+static counter_metric_handle_t rpcs_received_total;
+static counter_metric_handle_t rpcs_completed_total;
+static gauge_metric_handle_t rpcs_inflight;
+
+static void register_rpcs_metrics(void)
+{
+	const metric_label_t labels[] = {};
+
+	rpcs_received_total = monitoring__register_counter(
+		"rpcs_received_total",
+		METRIC_METADATA("Number of NFS requests received",
+			METRIC_UNIT_NONE),
+		labels,
+		ARRAY_SIZE(labels));
+	rpcs_completed_total = monitoring__register_counter(
+		"rpcs_completed_total",
+		METRIC_METADATA("Number of NFS requests completed",
+			METRIC_UNIT_NONE),
+		labels,
+		ARRAY_SIZE(labels));
+	rpcs_inflight = monitoring__register_gauge(
+		"rpcs_in_flight",
+		METRIC_METADATA(
+			"Number of NFS requests received or in flight.",
+			METRIC_UNIT_NONE),
+		labels,
+		ARRAY_SIZE(labels));
+}
+
+void nfs_metrics__rpc_received(void)
+{
+	monitoring__counter_inc(rpcs_received_total, 1);
+}
+
+void nfs_metrics__rpc_completed(void)
+{
+	monitoring__counter_inc(rpcs_completed_total, 1);
+}
+
+void nfs_metrics__rpcs_in_flight(int64_t value)
+{
+	monitoring__gauge_set(rpcs_inflight, value);
+}
+
 void nfs_metrics__nfs3_request(uint32_t proc,
 				nsecs_elapsed_t request_time,
 				nfsstat3 nfs_status,
@@ -60,4 +104,9 @@ void nfs_metrics__nfs4_request(uint32_t op,
 	monitoring__dynamic_observe_nfs_request(
 		operation, request_time, version, statusLabel, export_id,
 		client_ip);
+}
+
+void nfs_metrics__init(void)
+{
+	register_rpcs_metrics();
 }

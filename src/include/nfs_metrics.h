@@ -35,6 +35,11 @@
 #include "nfsv41.h"
 #include "nfs23.h"
 
+void nfs_metrics__rpc_received(void);
+void nfs_metrics__rpc_completed(void);
+void nfs_metrics__rpcs_in_flight(int64_t value);
+void nfs_metrics__init(void);
+
 /*
  * The following two functions generate the following dynamic metrics,
  * exported both as total and per export.

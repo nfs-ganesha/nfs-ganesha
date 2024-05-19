@@ -209,11 +209,6 @@ void monitoring__dynamic_mdcache_cache_miss(
 				const char *operation,
 				export_id_t export_id);
 
-/* In flight RPC stats. */
-void monitoring_rpc_received(void);
-void monitoring_rpc_completed(void);
-void monitoring_rpcs_in_flight(const uint64_t value);
-
 
 #else  /* USE_MONITORING */
 
