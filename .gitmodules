@@ -1,3 +1,6 @@
 [submodule "src/libntirpc"]
 	path = src/libntirpc
 	url = https://github.com/nfs-ganesha/ntirpc.git
+[submodule "src/monitoring/prometheus-cpp-lite"]
+	path = src/monitoring/prometheus-cpp-lite
+	url = https://github.com/biaks/prometheus-cpp-lite.git
