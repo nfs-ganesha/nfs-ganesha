@@ -62,10 +62,7 @@
 #include <abstract_atomic.h>
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
-
-#ifdef USE_MONITORING
 #include "nfs_metrics.h"
-#endif
 
 #define NFS_pcp nfs_param.core_param
 #define NFS_program NFS_pcp.program
@@ -1440,6 +1437,8 @@ void server_stats_nfsv4_op_done(int proto_op,
 	now(&current_time);
 	time_diff = timespec_diff(start_time, &current_time);
 
+	nfs_metrics__nfs4_op_completed(proto_op, status, time_diff);
+
 	if (nfs_param.core_param.enable_FULLV4STATS)
 		record_v4_full_stats(proto_op, time_diff, status);
 
@@ -1498,6 +1497,8 @@ void server_stats_compound_done(int num_ops, int status)
 		return;
 	now(&current_time);
 	time_diff = timespec_diff(&op_ctx->start_time, &current_time);
+
+	nfs_metrics__nfs4_compound_completed(status, time_diff, num_ops);
 
 	if (client != NULL) {
 		struct server_stats *server_st;

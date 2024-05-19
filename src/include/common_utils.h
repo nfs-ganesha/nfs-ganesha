@@ -110,6 +110,12 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof(a[0]))
 #endif
 
+#ifndef CONCAT
+#define CONCAT_(A, B) A##B
+/** Macro-concatenate A and B (using ##, avoids macro expansion order issues) */
+#define CONCAT(A, B)  CONCAT_(A, B)
+#endif
+
 extern unsigned long PTHREAD_stack_size;
 
 static inline int PTHREAD_create(pthread_t *thread,
