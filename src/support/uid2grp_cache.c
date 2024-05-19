@@ -47,6 +47,7 @@
 #include "abstract_atomic.h"
 #include "nfs_core.h"
 #include <misc/queue.h>
+#include "idmapper_monitoring.h"
 
 /**
  * @brief User entry in the uid2grp cache
@@ -297,7 +298,11 @@ void uid2grp_add_user(struct group_data *gdata)
 		LogInfo(COMPONENT_IDMAPPER,
 			"Cache size limit violated, removing entry with least time validity");
 		groups_fifo_queue_head_node = TAILQ_FIRST(&groups_fifo_queue);
+		const time_t cached_duration = time(NULL) -
+			groups_fifo_queue_head_node->gdata->epoch;
 		uid2grp_remove_user(groups_fifo_queue_head_node);
+		idmapper_monitoring__evicted_cache_entity(
+			IDMAPPING_CACHE_ENTITY_USER_GROUPS, cached_duration);
 	}
 
 	if (name_node && id_node)

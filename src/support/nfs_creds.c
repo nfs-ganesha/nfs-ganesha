@@ -58,6 +58,7 @@
 #include "export_mgr.h"
 #include "uid2grp.h"
 #include "client_mgr.h"
+#include "idmapper_monitoring.h"
 
 /* Export permissions for root op context */
 uint32_t root_op_export_options = EXPORT_OPTION_ROOT |
@@ -253,6 +254,8 @@ static void rpcsec_gss_fetch_managed_groups(char *principal)
 			&op_ctx->caller_gdata)) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Attempt to fetch managed groups failed");
+			idmapper_monitoring__failure(
+				IDMAPPING_UID_TO_GROUPLIST, IDMAPPING_PWUTILS);
 			op_ctx->creds.caller_glen = 0;
 		}
 	} else {
@@ -262,6 +265,9 @@ static void rpcsec_gss_fetch_managed_groups(char *principal)
 				op_ctx->original_creds.caller_gid)) {
 			LogInfo(COMPONENT_DISPATCH,
 				"Attempt to fetch managed groups failed");
+			idmapper_monitoring__failure(
+				IDMAPPING_PRINCIPAL_TO_GROUPLIST,
+				IDMAPPING_NFSIDMAP);
 			op_ctx->creds.caller_glen = 0;
 		}
 #else
@@ -360,6 +366,9 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 				   &op_ctx->original_creds.caller_uid,
 				   &op_ctx->original_creds.caller_gid,
 				   gd)) {
+			idmapper_monitoring__failure(
+				IDMAPPING_PRINCIPAL_TO_UIDGID,
+				IDMAPPING_WINBIND);
 #else
 		if (!principal2uid(principal,
 				   &op_ctx->original_creds.caller_uid,
@@ -455,6 +464,8 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 		if (op_ctx->caller_gdata == NULL &&
 		    !uid2grp(op_ctx->original_creds.caller_uid,
 			     &op_ctx->caller_gdata)) {
+			idmapper_monitoring__failure(
+				IDMAPPING_UID_TO_GROUPLIST, IDMAPPING_PWUTILS);
 			/** @todo: do we really want to bail here? */
 			if (nfs_param.core_param.enable_rpc_cred_fallback) {
 				LogInfo(COMPONENT_DISPATCH,

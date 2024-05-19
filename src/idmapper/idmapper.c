@@ -60,6 +60,7 @@
 #include "nfs_core.h"
 #include "idmapper.h"
 #include "server_stats_private.h"
+#include "idmapper_monitoring.h"
 
 struct owner_domain_holder {
 	struct gsh_buffdesc domain;
@@ -309,6 +310,8 @@ bool idmapper_init(void)
 	idmapper_cleanup_element.clean = idmapper_cleanup;
 	RegisterCleanup(&idmapper_cleanup_element);
 
+	idmapper_monitoring__init();
+
 	return true;
 }
 
@@ -495,6 +498,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		bool looked_up = false;
 		char *namebuff = NULL;
 		struct gsh_buffdesc new_name;
+		struct timespec s_time, e_time;
 
 		/* We copy owner_domain to a static buffer to:
 		 * 1. Avoid holding owner_domain read lock during network calls,
@@ -550,15 +554,29 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 				struct group g;
 				struct group *gres;
 
+				now_mono(&s_time);
 				rc = getgrgid_r(id, &g, namebuff, new_name.len,
 						&gres);
+				now_mono(&e_time);
+				idmapper_monitoring__external_request(
+					IDMAPPING_GID_TO_GROUP,
+					IDMAPPING_PWUTILS,
+					rc == 0, &s_time, &e_time);
+
 				nulled = (gres == NULL);
 			} else {
 				struct passwd p;
 				struct passwd *pres;
 
+				now_mono(&s_time);
 				rc = getpwuid_r(id, &p, namebuff, new_name.len,
 						&pres);
+				now_mono(&e_time);
+				idmapper_monitoring__external_request(
+					IDMAPPING_UID_TO_UIDGID,
+					IDMAPPING_PWUTILS,
+					rc == 0, &s_time, &e_time);
+
 				nulled = (pres == NULL);
 			}
 
@@ -599,6 +617,11 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 						      namebuff,
 						      NFS4_MAX_DOMAIN_LEN + 1);
 			}
+			idmapper_monitoring__external_request(
+				group ? IDMAPPING_GID_TO_GROUP
+					: IDMAPPING_UID_TO_UIDGID,
+				IDMAPPING_NFSIDMAP, rc == 0, &s_time,
+				&e_time);
 			if (rc == 0) {
 				new_name.len = strlen(namebuff);
 				looked_up = true;
@@ -720,6 +743,7 @@ static int name_to_gid(const char *name, gid_t *gid)
 	struct group *gres = NULL;
 	char *buf;
 	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
+	struct timespec s_time, e_time;
 	int err;
 
 	if (buflen == -1)
@@ -735,7 +759,13 @@ static int name_to_gid(const char *name, gid_t *gid)
 	do {
 		buf = gsh_malloc(buflen);
 
+		now_mono(&s_time);
 		err = getgrnam_r(name, &g, buf, buflen, &gres);
+		now_mono(&e_time);
+		idmapper_monitoring__external_request(
+			IDMAPPING_GROUPNAME_TO_GROUP, IDMAPPING_PWUTILS,
+			err == 0, &s_time, &e_time);
+
 		if (err == ERANGE) {
 			buflen *= 16;
 			gsh_free(buf);
@@ -776,6 +806,7 @@ static int name_to_uid(const char *name, uint32_t *uid, gid_t *gid)
 	struct passwd *pres = NULL;
 	char *buf;
 	size_t buflen = sysconf(_SC_GETGR_R_SIZE_MAX);
+	struct timespec s_time, e_time;
 	int err = ERANGE;
 
 	if (!idmapping_enabled) {
@@ -790,7 +821,13 @@ static int name_to_uid(const char *name, uint32_t *uid, gid_t *gid)
 	while (buflen <= PWENT_MAX_SIZE) {
 		buf = gsh_malloc(buflen);
 
+		now_mono(&s_time);
 		err = getpwnam_r(name, &p, buf, buflen, &pres);
+		now_mono(&e_time);
+		idmapper_monitoring__external_request(
+			IDMAPPING_USERNAME_TO_UIDGID, IDMAPPING_PWUTILS,
+			err == 0, &s_time, &e_time);
+
 		/* We don't use any strings from the buffer, so free it */
 		gsh_free(buf);
 		if (err != ERANGE)
@@ -925,6 +962,7 @@ static bool idmapname2id(char *name, size_t len, uint32_t *id,
 {
 #ifdef USE_NFSIDMAP
 	int rc;
+	struct timespec s_time, e_time;
 
 	if (!idmapping_enabled) {
 		LogWarn(COMPONENT_IDMAPPER,
@@ -932,10 +970,20 @@ static bool idmapname2id(char *name, size_t len, uint32_t *id,
 		return false;
 	}
 
-	if (group)
+	if (group) {
+		now_mono(&s_time);
 		rc = nfs4_name_to_gid(name, id);
-	else
+		now_mono(&e_time);
+	} else {
+		now_mono(&s_time);
 		rc = nfs4_name_to_uid(name, id);
+		now_mono(&e_time);
+	}
+	idmapper_monitoring__external_request(
+		group ? IDMAPPING_GROUPNAME_TO_GROUP
+			: IDMAPPING_USERNAME_TO_UIDGID,
+		IDMAPPING_NFSIDMAP, rc == 0,
+		&s_time, &e_time);
 
 	if (rc == 0) {
 		return true;
@@ -1259,8 +1307,12 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				&gss_gid, &got_gid, NULL);
 		}
 
-		if (!success)
+		if (!success) {
+			idmapper_monitoring__failure(
+				IDMAPPING_PRINCIPAL_TO_UIDGID,
+				IDMAPPING_PWUTILS);
 			goto principal_not_found;
+		}
 
 		if (!got_gid) {
 			LogWarn(COMPONENT_IDMAPPER,
@@ -1271,6 +1323,7 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 
 	} else {
 #ifdef USE_NFSIDMAP
+		struct timespec s_time, e_time;
 		int err;
 
 		LogDebug(COMPONENT_IDMAPPER,
@@ -1278,15 +1331,22 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 
 		/* nfs4_gss_princ_to_ids required to extract uid/gid
 		   from gss creds */
+		now_mono(&s_time);
 		err = nfs4_gss_princ_to_ids("krb5", principal, &gss_uid,
 			&gss_gid);
+		now_mono(&e_time);
+		idmapper_monitoring__external_request(
+			IDMAPPING_PRINCIPAL_TO_UIDGID, IDMAPPING_NFSIDMAP,
+			err == 0, &s_time, &e_time);
 		if (err) {
 			LogWarn(COMPONENT_IDMAPPER,
 				"Could not resolve %s to uid using nfsidmap, err: %d",
 				principal, err);
+			idmapper_monitoring__failure(
+				IDMAPPING_PRINCIPAL_TO_UIDGID,
+				IDMAPPING_NFSIDMAP);
 
 #ifdef _MSPAC_SUPPORT
-			struct timespec s_time, e_time;
 			bool stats = nfs_param.core_param.enable_AUTHSTATS;
 			struct passwd *pwd;
 
@@ -1308,6 +1368,12 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 				    wbcAuthenticateUserEx(&params, &info,
 							  &error);
 				now(&e_time);
+				idmapper_monitoring__external_request(
+					IDMAPPING_MSPAC_TO_SID,
+					IDMAPPING_WINBIND,
+					WBC_ERROR_IS_OK(wbc_err),
+					&s_time, &e_time);
+
 				if (stats)
 					winbind_stats_update(&s_time, &e_time);
 				if (!WBC_ERROR_IS_OK(wbc_err)) {
@@ -1331,6 +1397,12 @@ bool principal2uid(char *principal, uid_t *uid, gid_t *gid)
 					wbcGetpwsid(&info->sids[0].sid,
 						    &pwd);
 				now(&e_time);
+				idmapper_monitoring__external_request(
+					IDMAPPING_SID_TO_UIDGID,
+					IDMAPPING_WINBIND,
+					WBC_ERROR_IS_OK(wbc_err),
+					&s_time, &e_time);
+
 				if (stats)
 					winbind_stats_update(&s_time, &e_time);
 				if (!WBC_ERROR_IS_OK(wbc_err)) {

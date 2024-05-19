@@ -40,6 +40,7 @@
 #include "idmapper.h"
 #include "nfs_core.h"
 #include <misc/queue.h>
+#include "idmapper_monitoring.h"
 
 /* Struct representing the negative cache entity */
 typedef enum negative_cache_entity_type {
@@ -228,6 +229,7 @@ static void idmapper_negative_cache_add_entity_by_name(
 	negative_cache_entity_t *old_entity, *new_entity, *cache_queue_head;
 	uint32_t max_cache_entities;
 	char *entity_type_string;
+	idmapping_cache_entity_t cache_entity;
 
 	new_entity = gsh_malloc(sizeof(negative_cache_entity_t) + name->len);
 	new_entity->name.addr = new_entity->name_buffer;
@@ -242,6 +244,7 @@ static void idmapper_negative_cache_add_entity_by_name(
 		max_cache_entities = nfs_param.directory_services_param
 			.negative_cache_users_max_count;
 		entity_type_string = (char *)"user";
+		cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_USER;
 		break;
 	case GROUP:
 		cache_tree = &gname_tree;
@@ -249,6 +252,7 @@ static void idmapper_negative_cache_add_entity_by_name(
 		max_cache_entities = nfs_param.directory_services_param
 			.negative_cache_groups_max_count;
 		entity_type_string = (char *)"group";
+		cache_entity = IDMAPPING_CACHE_ENTITY_NEGATIVE_GROUP;
 		break;
 	default:
 		LogFatal(COMPONENT_IDMAPPER,
@@ -277,7 +281,11 @@ static void idmapper_negative_cache_add_entity_by_name(
 			"Cache size limit violated, removing %s with least time validity",
 			entity_type_string);
 		cache_queue_head = TAILQ_FIRST(cache_queue);
+		const time_t cached_duration =
+			time(NULL) - cache_queue_head->epoch;
 		remove_negative_cache_entity(cache_queue_head, entity_type);
+		idmapper_monitoring__evicted_cache_entity(cache_entity,
+			cached_duration);
 	}
 }
 

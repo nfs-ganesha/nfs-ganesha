@@ -51,6 +51,7 @@
 #ifdef USE_NFSIDMAP
 #include <nfsidmap.h>
 #endif
+#include "idmapper_monitoring.h"
 
 /* Switch to enable or disable idmapping */
 extern bool idmapping_enabled;
@@ -104,6 +105,7 @@ static bool my_getgrouplist_alloc(char *user,
 	gid_t *groups = NULL;
 	struct timespec s_time, e_time;
 	bool stats = nfs_param.core_param.enable_AUTHSTATS;
+	int ret;
 
 	/* We call getgrouplist() with ngroups set to 1000 first. This should
 	 * reduce the number of getgrouplist() calls made to 1, for most cases.
@@ -123,7 +125,13 @@ static bool my_getgrouplist_alloc(char *user,
 	groups = gsh_malloc(ngroups * sizeof(gid_t));
 
 	now(&s_time);
-	if (getgrouplist(user, gid, groups, &ngroups) == -1) {
+	ret = getgrouplist(user, gid, groups, &ngroups);
+	now(&e_time);
+	idmapper_monitoring__external_request(
+		IDMAPPING_USERNAME_TO_GROUPLIST, IDMAPPING_PWUTILS,
+		ret != -1, &s_time, &e_time);
+
+	if (ret == -1) {
 		LogEvent(COMPONENT_IDMAPPER,
 			 "getgrouplist for user: %s failed retrying", user);
 
@@ -134,7 +142,13 @@ static bool my_getgrouplist_alloc(char *user,
 		groups = gsh_malloc(ngroups * sizeof(gid_t));
 
 		now(&s_time);
-		if (getgrouplist(user, gid, groups, &ngroups) == -1) {
+		ret = getgrouplist(user, gid, groups, &ngroups);
+		now(&e_time);
+		idmapper_monitoring__external_request(
+			IDMAPPING_USERNAME_TO_GROUPLIST, IDMAPPING_PWUTILS,
+			ret != -1, &s_time, &e_time);
+
+		if (ret == -1) {
 			LogWarn(COMPONENT_IDMAPPER,
 				"getgrouplist for user:%s failed, ngroups: %d",
 				user, ngroups);
@@ -142,12 +156,13 @@ static bool my_getgrouplist_alloc(char *user,
 			return false;
 		}
 
-		now(&e_time);
 		if (stats) {
 			gc_stats_update(&s_time, &e_time);
 			stats = false;
 		}
 	}
+
+	idmapper_monitoring__user_groups(ngroups);
 
 	if (ngroups != 0) {
 		/* Resize the buffer, if it fails, gsh_realloc will
@@ -160,7 +175,6 @@ static bool my_getgrouplist_alloc(char *user,
 		groups = NULL;
 	}
 
-	now(&e_time);
 	if (stats)
 		gc_stats_update(&s_time, &e_time);
 	gdata->groups = groups;
@@ -180,6 +194,7 @@ static struct group_data *uid2grp_allocate_by_name(
 	char *buff;
 	size_t buff_size;
 	int retval;
+	struct timespec s_time, e_time;
 
 	memcpy(namebuff, name->addr, name->len);
 	*(namebuff + name->len) = '\0';
@@ -192,7 +207,12 @@ static struct group_data *uid2grp_allocate_by_name(
 
 	while (buff_size <= PWENT_MAX_SIZE) {
 		buff = gsh_malloc(buff_size);
+		now_mono(&s_time);
 		retval = getpwnam_r(namebuff, &p, buff, buff_size, &pp);
+		now_mono(&e_time);
+		idmapper_monitoring__external_request(
+			IDMAPPING_USERNAME_TO_UIDGID, IDMAPPING_PWUTILS,
+			retval == 0, &s_time, &e_time);
 
 		if (retval != ERANGE)
 			break;
@@ -261,6 +281,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	char *buff;
 	size_t buff_size;
 	int retval;
+	struct timespec s_time, e_time;
 
 	buff_size = sysconf(_SC_GETPW_R_SIZE_MAX);
 	if (buff_size == -1) {
@@ -270,7 +291,12 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 
 	while (buff_size <= PWENT_MAX_SIZE) {
 		buff = gsh_malloc(buff_size);
+		now_mono(&s_time);
 		retval = getpwuid_r(uid, &p, buff, buff_size, &pp);
+		now_mono(&e_time);
+		idmapper_monitoring__external_request(
+			IDMAPPING_UID_TO_UIDGID, IDMAPPING_PWUTILS,
+			retval == 0, &s_time, &e_time);
 
 		if (retval != ERANGE)
 			break;
@@ -349,6 +375,7 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	int ngroups = default_ngroups;
 	gid_t *groups = NULL;
 	int ret;
+	struct timespec s_time, e_time;
 
 #ifdef _MSPAC_SUPPORT
 	/* TODO */
@@ -366,7 +393,11 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	 * the groups when ngroups is greater than 1000.
 	 */
 	groups = gsh_malloc(ngroups * sizeof(gid_t));
+	now_mono(&s_time);
 	ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups, &ngroups);
+	now_mono(&e_time);
+	idmapper_monitoring__external_request(IDMAPPING_PRINCIPAL_TO_GROUPLIST,
+		IDMAPPING_NFSIDMAP, ret == 0, &s_time, &e_time);
 
 	if (ret == -ERANGE) {
 		/* Try with the actual ngroups since user is part of more than
@@ -375,8 +406,13 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 		gsh_free(groups);
 		groups = gsh_malloc(ngroups * sizeof(gid_t));
 
+		now_mono(&s_time);
 		ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups,
 			&ngroups);
+		now_mono(&e_time);
+		idmapper_monitoring__external_request(
+			IDMAPPING_PRINCIPAL_TO_GROUPLIST,
+			IDMAPPING_NFSIDMAP, ret == 0, &s_time, &e_time);
 		if (ret) {
 			LogWarn(COMPONENT_IDMAPPER,
 				"Could not re-resolve principal %s to groups using nfsidmap, err: %d",
@@ -394,6 +430,8 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	LogDebug(COMPONENT_IDMAPPER,
 		"Resolved principal %s to %d groups using nfsidmap",
 		principal, ngroups);
+
+	idmapper_monitoring__user_groups(ngroups);
 
 	/* Resize or free the buffer as appropriate */
 	if (ngroups == 0) {

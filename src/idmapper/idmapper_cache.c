@@ -50,6 +50,7 @@
 #include "nfs_core.h"
 #include "abstract_atomic.h"
 #include "server_stats_private.h"
+#include "idmapper_monitoring.h"
 
 /**
  * @brief User entry in the IDMapper cache
@@ -493,7 +494,11 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 		LogDebug(COMPONENT_IDMAPPER,
 			"Cache size limit violated, removing user with least time validity");
 		user_fifo_queue_head_node = TAILQ_FIRST(&user_fifo_queue);
+		const time_t cached_duration = time(NULL) -
+			user_fifo_queue_head_node->epoch;
 		remove_cache_user(user_fifo_queue_head_node);
+		idmapper_monitoring__evicted_cache_entity(
+			IDMAPPING_CACHE_ENTITY_USER, cached_duration);
 	}
 	return true;
 }
@@ -566,7 +571,11 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 		LogDebug(COMPONENT_IDMAPPER,
 			"Cache size limit violated, removing group with least time validity");
 		group_fifo_queue_head_node = TAILQ_FIRST(&group_fifo_queue);
+		const time_t cached_duration = time(NULL) -
+			group_fifo_queue_head_node->epoch;
 		remove_cache_group(group_fifo_queue_head_node);
+		idmapper_monitoring__evicted_cache_entity(
+			IDMAPPING_CACHE_ENTITY_GROUP, cached_duration);
 	}
 	return true;
 }

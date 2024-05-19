@@ -1097,6 +1097,23 @@ static inline void now(struct timespec *ts)
 	}
 }
 
+/**
+ * @brief Get the monotonic time right now as a timespec
+ *
+ * CLOCK_MONOTONIC is more efficient than CLOCK_REALTIME.
+ *
+ * @param[out] ts Timespec struct
+ */
+static inline void now_mono(struct timespec *ts)
+{
+	const int rc = clock_gettime(CLOCK_MONOTONIC, ts);
+
+	if (rc != 0) {
+		LogFatal(COMPONENT_MAIN, "Failed to get timestamp");
+		assert(0);	/* if this is broken, we are toast so die */
+	}
+}
+
 /* The following definitions require some of the following */
 #include "idmapper.h"
 
