@@ -487,6 +487,12 @@ typedef struct nfs_core_param {
 #ifdef USE_MONITORING
 	/** Monitoring port number. */
 	uint16_t monitoring_port;
+	/** Enable creating metrics labels on the fly based on client-ip,
+	 * export name, etc.
+	 * Provides more debugging information, but significantly reduces
+	 * performance.
+	*/
+	bool enable_dynamic_metrics;
 #endif
 	/** if  Manage_Gids=True and group resolution fails,
 	 *  then use gid data from rpc request */

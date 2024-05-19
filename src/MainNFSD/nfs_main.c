@@ -525,7 +525,8 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef USE_MONITORING
-	monitoring_init(nfs_param.core_param.monitoring_port);
+	monitoring__init(nfs_param.core_param.monitoring_port,
+			nfs_param.core_param.enable_dynamic_metrics);
 #endif  /* USE_MONITORING */
 
 	/* initialize core subsystems and data structures */

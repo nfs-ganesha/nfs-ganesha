@@ -389,12 +389,14 @@ void monitoring_register_export_label(const export_id_t export_id,
   exportLabels[export_id] = std::string(label);
 }
 
-void monitoring_init(const uint16_t port) {
+void monitoring__init(uint16_t port, bool enable_dynamic_metrics)
+{
   static bool initialized;
   if (initialized)
     return;
+  if (enable_dynamic_metrics)
+    dynamic_metrics = std::make_unique<DynamicMetrics>(registry);
   exposer.start(port);
-  dynamic_metrics = std::make_unique<DynamicMetrics>(registry);
   initialized = true;
 }
 
@@ -405,6 +407,7 @@ void monitoring__dynamic_observe_nfs_request(
                               const char* status_label,
                               export_id_t export_id,
                               const char* client_ip) {
+  if (!dynamic_metrics) return;
   const int64_t latency_ms = request_time / NS_PER_MSEC;
   std::string operationLowerCase = std::string(operation);
   toLowerCase(operationLowerCase);
@@ -456,6 +459,7 @@ void monitoring__dynamic_observe_nfs_io(
                        bool is_write,
                        export_id_t export_id,
                        const char* client_ip) {
+  if (!dynamic_metrics) return;
   const std::string operation(is_write ? "write" : "read");
   const size_t bytes_received = (is_write ? 0 : bytes_transferred);
   const size_t bytes_sent = (is_write ? bytes_transferred : 0);
@@ -510,6 +514,7 @@ void monitoring__dynamic_observe_nfs_io(
 
 void monitoring__dynamic_mdcache_cache_hit(const char *operation,
                                            export_id_t export_id) {
+  if (!dynamic_metrics) return;
   dynamic_metrics->mdcacheCacheHitsTotal.Add({{kOperation, operation}}).Increment();
   if (export_id != 0) {
     const std::string exportLabel = GetExportLabel(export_id);
@@ -522,6 +527,7 @@ void monitoring__dynamic_mdcache_cache_hit(const char *operation,
 
 void monitoring__dynamic_mdcache_cache_miss(const char *operation,
                                             export_id_t export_id) {
+  if (!dynamic_metrics) return;
   dynamic_metrics->mdcacheCacheMissesTotal
       .Add({{kOperation, operation}})
       .Increment();

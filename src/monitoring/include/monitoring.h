@@ -168,8 +168,8 @@ histogram_buckets_t monitoring__buckets_exp2_compact(void);
  */
 void monitoring_register_export_label(export_id_t export_id, const char *label);
 
-/* Init monitoring export at TCP port <port>. */
-void monitoring_init(const uint16_t port);
+/* Inits monitoring module and exposes a Prometheus-format HTTP endpoint. */
+void monitoring__init(uint16_t port, bool enable_dynamic_metrics);
 
 /*
  * The following two functions generate the following metrics,

@@ -58,6 +58,11 @@ Rquota_Port (uint16, range 0 to UINT16_MAX, default 875)
 Monitoring_Port (uint16, range 0 to UINT16_MAX, default 9587)
     Port number used to export monitoring metrics.
 
+Enable_Dynamic_Metrics (bool, default true)
+    Whether to create metrics labels on the fly based on client-ip,
+    export name, etc. Provides more debugging information, but significantly
+    reduces performance. Enabled by default for backward compatibility.
+
 Bind_addr(IPv4 or IPv6 addr, default 0.0.0.0)
     The address to which to bind for our listening port.
 
