@@ -29,6 +29,7 @@
  */
 
 #include "connection_manager.h"
+#include "connection_manager_metrics.h"
 #include "client_mgr.h"
 #include "gsh_config.h"
 #include "xprt_handler.h"
@@ -105,6 +106,8 @@ change_state(connection_manager__client_t *client,
 	LogDebugClient(client, "Changing state: %d -> %d", client->state,
 		       new_state);
 	assert(is_transition_valid(client->state, new_state));
+	connection_manager_metrics__client_state_inc(new_state);
+	connection_manager_metrics__client_state_dec(client->state);
 	client->state = new_state;
 	PTHREAD_COND_broadcast(&client->cond_change);
 }
@@ -197,6 +200,7 @@ void connection_manager__client_init(connection_manager__client_t *client)
 	PTHREAD_COND_init(&client->cond_change, NULL);
 	glist_init(&client->connections);
 	client->connections_count = 0;
+	connection_manager_metrics__client_state_inc(client->state);
 }
 
 void connection_manager__client_fini(connection_manager__client_t *client)
@@ -205,6 +209,7 @@ void connection_manager__client_fini(connection_manager__client_t *client)
 	assert(client->connections_count == 0);
 	assert(glist_empty(&client->connections));
 	assert(client->state == CONNECTION_MANAGER__CLIENT_STATE__DRAINED);
+	connection_manager_metrics__client_state_dec(client->state);
 	PTHREAD_MUTEX_destroy(&client->mutex);
 	PTHREAD_COND_destroy(&client->cond_change);
 }
@@ -298,6 +303,10 @@ static enum connection_manager__drain_t try_drain_self(
 enum connection_manager__drain_t
 connection_manager__drain_and_disconnect_local(sockaddr_t *client_address)
 {
+	enum connection_manager__drain_t result;
+	struct timespec start_time;
+
+	now(&start_time);
 	struct gsh_client *const gsh_client =
 			get_gsh_client(client_address, /*lookup_only=*/true);
 	if (gsh_client == NULL) {
@@ -307,11 +316,11 @@ connection_manager__drain_and_disconnect_local(sockaddr_t *client_address)
 			sizeof(address_for_debugging));
 		LogDebug(COMPONENT_XPRT, "Client not found: %s",
 			 address_for_debugging);
-		return CONNECTION_MANAGER__DRAIN__SUCCESS_NO_CONNECTIONS;
+		result = CONNECTION_MANAGER__DRAIN__SUCCESS_NO_CONNECTIONS;
+		goto out;
 	}
 	connection_manager__client_t *const client =
 		&gsh_client->connection_manager;
-	enum connection_manager__drain_t result;
 
 	PTHREAD_MUTEX_lock(&client->mutex);
 	switch (client->state) {
@@ -365,6 +374,10 @@ connection_manager__drain_and_disconnect_local(sockaddr_t *client_address)
 	default:
 		LogFatalClient(client, "Unknown result: %d", result);
 	}
+
+out:
+	connection_manager_metrics__drain_local_client_done(
+		result, &start_time);
 	return result;
 }
 
@@ -465,6 +478,10 @@ static void try_activate_client_if_needed(
 enum connection_manager__connection_started_t
 connection_manager__connection_started(SVCXPRT *xprt)
 {
+	enum connection_manager__connection_started_t result;
+	struct timespec start_time;
+
+	now(&start_time);
 	sockaddr_t *const client_address = svc_getrpccaller(xprt);
 	struct gsh_client *const gsh_client =
 		get_gsh_client(client_address, /*lookup_only=*/false);
@@ -492,7 +509,8 @@ connection_manager__connection_started(SVCXPRT *xprt)
 		LogDebugConnection(connection,
 			"Connection is not managed by connection manager");
 		put_gsh_client(gsh_client);
-		return CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW;
+		result = CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW;
+		goto out;
 	}
 
 	PTHREAD_MUTEX_lock(&client->mutex);
@@ -504,7 +522,8 @@ connection_manager__connection_started(SVCXPRT *xprt)
 		connection->is_managed = false;
 		PTHREAD_MUTEX_unlock(&client->mutex);
 		put_gsh_client(gsh_client);
-		return CONNECTION_MANAGER__CONNECTION_STARTED__DROP;
+		result = CONNECTION_MANAGER__CONNECTION_STARTED__DROP;
+		goto out;
 	}
 
 	LogDebugConnection(connection, "Success (xp_refcnt %d)",
@@ -512,7 +531,12 @@ connection_manager__connection_started(SVCXPRT *xprt)
 	glist_add_tail(&client->connections, &connection->node);
 	client->connections_count++;
 	PTHREAD_MUTEX_unlock(&client->mutex);
-	return CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW;
+	result = CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW;
+
+out:
+	connection_manager_metrics__connection_started_done(
+		result, &start_time);
+	return result;
 }
 
 void connection_manager__connection_finished(const SVCXPRT *xprt)
@@ -541,4 +565,9 @@ void connection_manager__connection_finished(const SVCXPRT *xprt)
 	connection->xprt = NULL;
 	connection->gsh_client = NULL;
 	put_gsh_client(gsh_client);
+}
+
+void connection_manager__init(void)
+{
+	connection_manager_metrics__init();
 }

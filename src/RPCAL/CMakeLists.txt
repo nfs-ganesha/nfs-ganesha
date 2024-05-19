@@ -23,6 +23,7 @@
 
 SET(rpcal_STAT_SRCS
    connection_manager.c
+   connection_manager_metrics.c
    nfs_dupreq.c
    rpc_tools.c
 )

@@ -103,6 +103,9 @@ enum connection_manager__drain_t {
 	CONNECTION_MANAGER__DRAIN__FAILED,
 	/* Drain failed due to timeout */
 	CONNECTION_MANAGER__DRAIN__FAILED_TIMEOUT,
+
+	/* Number of drain results (for monitoring) */
+	CONNECTION_MANAGER__DRAIN__LAST,
 };
 
 typedef enum connection_manager__drain_t
@@ -155,6 +158,9 @@ enum connection_manager__client_state_t {
 	/* In this state, new connections will abort the local draining process
 	 * and transition back to ACTIVE state */
 	CONNECTION_MANAGER__CLIENT_STATE__DRAINING,
+
+	/* Number of client states (for monitoring) */
+	CONNECTION_MANAGER__CLIENT_STATE__LAST,
 };
 
 enum connection_manager__connection_started_t {
@@ -163,6 +169,9 @@ enum connection_manager__connection_started_t {
 	/* The draining process in other servers failed, the new connection
 	 * should be dropped */
 	CONNECTION_MANAGER__CONNECTION_STARTED__DROP,
+
+	/* Number of connection started results (for monitoring) */
+	CONNECTION_MANAGER__CONNECTION_STARTED__LAST,
 };
 
 typedef struct connection_manager__connection_t {
