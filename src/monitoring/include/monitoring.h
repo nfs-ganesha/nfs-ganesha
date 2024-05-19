@@ -21,10 +21,36 @@
  */
 
 /**
- * @brief Monitoring functions for NFS Ganesha.
+ * @brief Monitoring library for NFS Ganesha.
  *
  * Monitoring must fail gracefully.
  * Monitoring problems should not affect serving.
+ *
+ * This file contains two types of metrics:
+ * 1. Static metrics - metric definition is known at init time
+ * 2. Dynamic metrics - metrics that create new labels during running time, for
+ *    example, metrics that have a Client IP Address label.
+ *
+ * Static metrics (1) are preferable, since the Dynamic metrics (2) affect
+ * performance.
+ * The Dynamic metrics can be disabled by unsetting Enable_Dynamic_Metrics.
+ *
+ * We avoid using float/double values since updating them *atomically* also
+ * affects performance.
+ *
+ * Usage:
+ *  - Create a static metric during init time:
+ *      my_handle = monitoring__register_counter(...);
+ *  - Update the metric during running time:
+ *      monitoring__counter_inc(my_handle, 1);
+ *
+ * Naming convention:
+ *   For new metrics, please use "<module>__<metric>", for example:
+ *   "clients__lease_expire_count"
+ *
+ * See more:
+ *  - https://prometheus.io/docs/concepts/data_model/
+ *  - https://prometheus.io/docs/concepts/metric_types/
  */
 
 #ifndef GANESHA_MONITORING_H
@@ -35,6 +61,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "gsh_types.h"
 
 #ifdef __cplusplus
@@ -43,7 +70,98 @@ extern "C" {
 
 typedef uint16_t export_id_t;
 
+/* Metric value units. */
+#define METRIC_UNIT_NONE (NULL)
+#define METRIC_UNIT_MINUTE ("minute")
+#define METRIC_UNIT_SECOND ("sec")
+#define METRIC_UNIT_MILLISECOND ("ms")
+#define METRIC_UNIT_MICROSECOND ("us")
+#define METRIC_UNIT_NANOSECOND ("ns")
+
+#define METRIC_METADATA(DESCRIPTION, UNIT) \
+	((metric_metadata_t) { .description = (DESCRIPTION), .unit = (UNIT) })
+
+/* Metric help description */
+typedef struct metric_metadata {
+	const char *description; /* Helper message */
+	const char *unit;        /* Units like: second, byte */
+} metric_metadata_t;
+
+/* Label is a dimension in the metric family, for example "operation=GETATTR" */
+typedef struct metric_label {
+	const char *key;
+	const char *value;
+} metric_label_t;
+
+#define METRIC_LABEL(KEY, VALUE) \
+	((metric_label_t) { .key = (KEY), .value = (VALUE) })
+
+/* Buckets of (a,b,c) mean boundaries of: (-INF,a) [a,b) [b,c) [c, INF) */
+typedef struct histogram_buckets {
+	const int64_t *buckets;
+	uint16_t count;
+} histogram_buckets_t;
+
+/* C wrapper for prometheus::Counter<int64_t> pointer */
+typedef struct counter_metric_handle {
+	void *metric;
+} counter_metric_handle_t;
+
+/* C wrapper for prometheus::Gauge<int64_t> pointer */
+typedef struct gauge_metric_handle {
+	void *metric;
+} gauge_metric_handle_t;
+
+/* C wrapper for prometheus::Histogram<int64_t> pointer */
+typedef struct histogram_metric_handle {
+	void *metric;
+} histogram_metric_handle_t;
+
+
 #ifdef USE_MONITORING
+
+/* Registers and initializes a new static counter metric. */
+counter_metric_handle_t monitoring__register_counter(
+	const char *name,
+	metric_metadata_t metadata,
+	const metric_label_t *labels,
+	uint16_t num_labels);
+
+/* Registers and initializes a new static gauge metric. */
+gauge_metric_handle_t monitoring__register_gauge(
+	const char *name,
+	metric_metadata_t metadata,
+	const metric_label_t *labels,
+	uint16_t num_labels);
+
+/* Registers and initializes a new static histogram metric. */
+histogram_metric_handle_t monitoring__register_histogram(
+	const char *name,
+	metric_metadata_t metadata,
+	const metric_label_t *labels,
+	uint16_t num_labels,
+	histogram_buckets_t buckets);
+
+/* Increments counter metric by value. */
+void monitoring__counter_inc(counter_metric_handle_t, int64_t val);
+
+/* Increments gauge metric by value. */
+void monitoring__gauge_inc(gauge_metric_handle_t, int64_t val);
+
+/* Decrements gauge metric by value. */
+void monitoring__gauge_dec(gauge_metric_handle_t, int64_t val);
+
+/* Sets gauge metric value. */
+void monitoring__gauge_set(gauge_metric_handle_t, int64_t val);
+
+/* Observes a histogram metric value */
+void monitoring__histogram_observe(histogram_metric_handle_t, int64_t val);
+
+/* Returns default exp2 histogram buckets. */
+histogram_buckets_t monitoring__buckets_exp2(void);
+
+/* Returns compact exp2 histogram buckets (fewer compared to default). */
+histogram_buckets_t monitoring__buckets_exp2_compact(void);
 
 /* Allow FSALs to register a human readable label used for per-export metrics.
  * The default label (if the FSAL doesn't set one) is "exportid=<fsid_major>".
@@ -106,6 +224,51 @@ void monitoring_rpcs_in_flight(const uint64_t value);
 /* Wraps an expression to avoid *-unused warnings */
 #define UNUSED_EXPR(x) ((void)(x))
 
+#define monitoring__register_counter(			\
+	name, metadata, labels, num_labels)		\
+	({						\
+		UNUSED_EXPR(name);			\
+		UNUSED_EXPR(metadata);			\
+		UNUSED_EXPR(labels);			\
+		UNUSED_EXPR(num_labels);		\
+		(counter_metric_handle_t) { 0 };	\
+	})
+#define monitoring__register_gauge(			\
+	name, metadata, labels, num_labels)		\
+	({						\
+		UNUSED_EXPR(name);			\
+		UNUSED_EXPR(metadata);			\
+		UNUSED_EXPR(labels);			\
+		UNUSED_EXPR(num_labels);		\
+		(gauge_metric_handle_t) { 0 };		\
+	})
+#define monitoring__register_histogram(			\
+	name, metadata, labels, num_labels, buckets)	\
+	({						\
+		UNUSED_EXPR(name);			\
+		UNUSED_EXPR(metadata);			\
+		UNUSED_EXPR(labels);			\
+		UNUSED_EXPR(num_labels);		\
+		UNUSED_EXPR(buckets);			\
+		(histogram_metric_handle_t) { 0 };	\
+	})
+#define monitoring__counter_inc(metric, value)		\
+	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
+#define monitoring__gauge_inc(metric, value)		\
+	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
+#define monitoring__gauge_dec(metric, value)		\
+	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
+#define monitoring__gauge_set(metric, value)		\
+	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
+#define monitoring__histogram_observe(metric, value)	\
+	({ UNUSED_EXPR(metric); UNUSED_EXPR(value); })
+#define monitoring__buckets_exp2()			\
+	((histogram_buckets_t) { 0 })
+#define monitoring__buckets_exp2_compact()		\
+	((histogram_buckets_t) { 0 })
+#define monitoring__init(port) ({ UNUSED_EXPR(port); })
+#define monitoring_register_export_label(export_id, label) \
+	({ UNUSED_EXPR(export_id); UNUSED_EXPR(label); })
 #define monitoring__dynamic_observe_nfs_request(	\
 	operation, request_time, version, status_label, export_id, client_ip) \
 	({						\

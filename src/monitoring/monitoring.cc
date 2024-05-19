@@ -265,11 +265,124 @@ static void toLowerCase(std::string &s) {
   std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
 
+/**
+ * @brief Formats full description from metadata into output buffer.
+ *
+ * @note description character array needs to be provided by the caller,
+ * the function populates a string into the character array.
+ */
+static const std::string get_description(const metric_metadata_t &metadata) {
+  std::ostringstream description;
+  description << metadata.description;
+  if (metadata.unit != METRIC_UNIT_NONE) {
+    description << " [" << metadata.unit << "]";
+  }
+
+  return description.str();
+}
+
+static const LabelsMap get_labels(const metric_label_t *labels,
+                                  uint16_t num_labels) {
+  LabelsMap labels_map;
+  for (uint16_t i = 0; i < num_labels; i++) {
+    labels_map.emplace(labels[i].key, labels[i].value);
+  }
+  return labels_map;
+}
+
+template <typename X, typename Y> static X convert_to_handle(Y *metric) {
+  void *const ptr = static_cast<void *>(metric);
+  return { ptr };
+}
+
+template <typename X, typename Y> static X *convert_from_handle(Y handle) {
+  void *const ptr = handle.metric;
+  return static_cast<X *>(ptr);
+}
+
 /*
  * Functions used from NFS Ganesha below.
  */
 
 extern "C" {
+
+histogram_buckets_t monitoring__buckets_exp2(void) {
+  static const int64_t buckets[] = {
+      1,         2,         4,         8,        16,       32,       64,
+      128,       256,       512,       1024,     2048,     4096,     8192,
+      16384,     32768,     65536,     131072,   262144,   524288,   1048576,
+      2097152,   4194304,   8388608,   16777216, 33554432, 67108864, 134217728,
+      268435456, 536870912, 1073741824};
+  return { buckets, sizeof(buckets) / sizeof(*buckets) };
+}
+
+histogram_buckets_t monitoring__buckets_exp2_compact(void) {
+  static const int64_t buckets[] = {10,    20,    40,     80,    160,   320,
+                                    640,   1280,  2560,   5120,  10240, 20480,
+                                    40960, 81920, 163840, 327680};
+  return { buckets, sizeof(buckets) / sizeof(*buckets) };
+}
+
+counter_metric_handle_t monitoring__register_counter(
+    const char *name, metric_metadata_t metadata, const metric_label_t *labels,
+    uint16_t num_labels) {
+  auto &counter = prometheus::Builder<CounterInt>()
+                      .Name(name)
+                      .Help(get_description(metadata))
+                      .Register(registry)
+                      .Add(get_labels(labels, num_labels));
+  return convert_to_handle<counter_metric_handle_t>(&counter);
+}
+
+gauge_metric_handle_t
+monitoring__register_gauge(const char *name, metric_metadata_t metadata,
+                                  const metric_label_t *labels,
+                                  uint16_t num_labels) {
+  auto &gauge = prometheus::Builder<GaugeInt>()
+                    .Name(name)
+                    .Help(get_description(metadata))
+                    .Register(registry)
+                    .Add(get_labels(labels, num_labels));
+  return convert_to_handle<gauge_metric_handle_t>(&gauge);
+}
+
+histogram_metric_handle_t monitoring__register_histogram(
+    const char *name, metric_metadata_t metadata, const metric_label_t *labels,
+    uint16_t num_labels, histogram_buckets_t buckets) {
+  const auto &buckets_vector = HistogramInt::BucketBoundaries(
+      buckets.buckets, buckets.buckets + buckets.count);
+  auto &histogram = prometheus::Builder<HistogramInt>()
+                        .Name(name)
+                        .Help(get_description(metadata))
+                        .Register(registry)
+                        .Add(get_labels(labels, num_labels), buckets_vector);
+  return convert_to_handle<histogram_metric_handle_t>(&histogram);
+}
+
+void monitoring__counter_inc(
+    counter_metric_handle_t handle, int64_t value) {
+  convert_from_handle<CounterInt>(handle)->Increment(value);
+}
+
+void monitoring__gauge_inc(gauge_metric_handle_t handle,
+                                                 int64_t value) {
+  convert_from_handle<GaugeInt>(handle)->Increment(value);
+}
+
+void monitoring__gauge_dec(gauge_metric_handle_t handle,
+                                                 int64_t value) {
+  convert_from_handle<GaugeInt>(handle)->Decrement(value);
+}
+
+void monitoring__gauge_set(gauge_metric_handle_t handle,
+                                        int64_t value) {
+  convert_from_handle<GaugeInt>(handle)->Set(value);
+}
+
+void monitoring__histogram_observe(
+    histogram_metric_handle_t handle, int64_t value) {
+  convert_from_handle<HistogramInt>(handle)->Observe(value);
+}
 
 void monitoring_register_export_label(const export_id_t export_id,
                                       const char* label) {
@@ -277,12 +390,12 @@ void monitoring_register_export_label(const export_id_t export_id,
 }
 
 void monitoring_init(const uint16_t port) {
-  static bool initialised;
-  if (initialised)
+  static bool initialized;
+  if (initialized)
     return;
   exposer.start(port);
   dynamic_metrics = std::make_unique<DynamicMetrics>(registry);
-  initialised = true;
+  initialized = true;
 }
 
 void monitoring__dynamic_observe_nfs_request(
