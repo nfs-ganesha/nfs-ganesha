@@ -175,10 +175,13 @@ extern struct log_component_info LogComponents[COMPONENT_COUNT];
 				 NIV_NULL, format, ## args)
 
 #define LogFatal(component, format, args...) \
-	DisplayLogComponentLevel(component, __FILE__, \
-				 __LINE__, \
-				 __func__, \
-				 NIV_FATAL, format, ## args)
+	do { \
+		DisplayLogComponentLevel(component, __FILE__, \
+					__LINE__, \
+					__func__, \
+					NIV_FATAL, format, ## args); \
+		abort(); \
+	} while (0)
 
 #define LogMajor(component, format, args...) \
 	do { \
