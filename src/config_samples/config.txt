@@ -902,6 +902,10 @@ CEPH {}
 
 	client_oc(bool, default false)
 
+	async(bool, default false)
+
+	zerocopy(bool, default false)
+
 GPFS {}
 -------
 

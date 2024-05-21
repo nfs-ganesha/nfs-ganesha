@@ -95,14 +95,30 @@ struct ceph_fsal_module CephFSM = {
 		#endif
 			.readdir_plus = true,
 			.xattr_support = true,
-			/* Change the following to true to support zero copy
-			 * read.
-			 */
+#ifdef USE_FSAL_CEPH_FS_ZEROCOPY_IO
+			.allocate_own_read_buffer = true,
+#else
 			.allocate_own_read_buffer = false,
+#endif
 			.expire_time_parent = -1,
 		}
 	}
 };
+
+static int ceph_conf_commit(void *node, void *link_mem, void *self_struct,
+			    struct config_error_type *err_type)
+{
+	struct ceph_fsal_module *CephFSM = self_struct;
+
+	if (CephFSM->client_oc && CephFSM->zerocopy) {
+		LogWarn(COMPONENT_FSAL,
+			"client_oc and zerocopy are incompatible");
+		err_type->invalid = true;
+		return 1;
+	}
+
+	return 0;
+}
 
 static struct config_item ceph_items[] = {
 	CONF_ITEM_PATH("ceph_conf", 1, MAXPATHLEN, NULL,
@@ -110,6 +126,8 @@ static struct config_item ceph_items[] = {
 	CONF_ITEM_MODE("umask", 0,
 			ceph_fsal_module, fsal.fs_info.umask),
 	CONF_ITEM_BOOL("client_oc", false, ceph_fsal_module, client_oc),
+	CONF_ITEM_BOOL("async", false, ceph_fsal_module, async),
+	CONF_ITEM_BOOL("zerocopy", false, ceph_fsal_module, zerocopy),
 	CONFIG_EOL
 };
 
@@ -120,7 +138,7 @@ static struct config_block ceph_block = {
 	.blk_desc.flags = CONFIG_UNIQUE,  /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = ceph_items,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = ceph_conf_commit
 };
 
 /* Module methods

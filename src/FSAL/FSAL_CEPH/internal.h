@@ -65,6 +65,8 @@ struct ceph_fsal_module {
 	struct fsal_obj_ops handle_ops;
 	char *conf_path;
 	bool client_oc;
+	bool async;
+	bool zerocopy;
 };
 extern struct ceph_fsal_module CephFSM;
 

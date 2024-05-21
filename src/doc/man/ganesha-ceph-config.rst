@@ -65,6 +65,12 @@ client_oc(bool, default false)
     Enable or disable client_oc (object cache). This defaults to false because
     Ganesha runs better with it disabled.
 
+async(bool, default false)
+    Enable ceph async operations (read and write).
+
+zerocopy(bool, default false)
+    Enable ceph zero copy I/O. Zero copy and client_oc are incompatible.
+
 See also
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)
