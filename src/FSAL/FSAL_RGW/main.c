@@ -42,6 +42,15 @@
 
 static const char *module_name = "RGW";
 
+#if ((LIBRGW_FILE_VER_MAJOR > 1) || \
+	((LIBRGW_FILE_VER_MAJOR == 1) && \
+	 ((LIBRGW_FILE_VER_MINOR > 1) || \
+	  ((LIBRGW_FILE_VER_MINOR == 1) && (LIBRGW_FILE_VER_EXTRA >= 4)))))
+#define HAVE_DIRENT_OFFSETOF 1
+#else
+#define HAVE_DIRENT_OFFSETOF 0
+#endif
+
 /**
  * RGW global module object.
  */
@@ -70,7 +79,9 @@ struct rgw_fsal_module RGWFSM = {
 			.maxwrite = FSAL_MAXIOSIZE,
 			.umask = 0,
 			.rename_changes_key = true,
-			.compute_readdir_cookie = true,
+			#if HAVE_DIRENT_OFFSETOF
+				.compute_readdir_cookie = true,
+			#endif
 			.whence_is_name = true,
 			.expire_time_parent = -1,
 #ifdef USE_FSAL_RGW_XATTRS

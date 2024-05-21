@@ -131,7 +131,15 @@ struct rgw_cb_arg {
 	attrmask_t attrmask;
 };
 
-static int rgw_cb(const char *name, void *arg, uint64_t offset,
+#if ((LIBRGW_FILE_VER_MAJOR > 1) || \
+	((LIBRGW_FILE_VER_MAJOR == 1) && \
+	 ((LIBRGW_FILE_VER_MINOR > 2) || \
+	  ((LIBRGW_FILE_VER_MINOR == 2) && (LIBRGW_FILE_VER_EXTRA >= 1)))))
+static int
+#else
+static bool
+#endif
+rgw_cb(const char *name, void *arg, uint64_t offset,
 	struct stat *st, uint32_t st_mask, uint32_t flags)
 {
 	struct rgw_cb_arg *rgw_cb_arg = arg;
@@ -216,6 +224,16 @@ static fsal_status_t rgw_fsal_readdir(struct fsal_obj_handle *dir_hdl,
 }
 
 
+#if ((LIBRGW_FILE_VER_MAJOR > 1) || \
+	((LIBRGW_FILE_VER_MAJOR == 1) && \
+	 ((LIBRGW_FILE_VER_MINOR > 1) || \
+	  ((LIBRGW_FILE_VER_MINOR == 1) && (LIBRGW_FILE_VER_EXTRA >= 4)))))
+#define HAVE_DIRENT_OFFSETOF 1
+#else
+#define HAVE_DIRENT_OFFSETOF 0
+#endif
+
+#if HAVE_DIRENT_OFFSETOF
 /**
  * @brief Project cookie offset for a dirent name
  *
@@ -257,6 +275,7 @@ static fsal_cookie_t rgw_fsal_compute_cookie(
 
 	return offset;
 }
+#endif /* HAVE_DIRENT_OFFSETOF */
 
 /**
  * @brief Help sort dirents.
@@ -1925,7 +1944,9 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 #endif
 	ops->mkdir = rgw_fsal_mkdir;
 	ops->readdir = rgw_fsal_readdir;
+#if HAVE_DIRENT_OFFSETOF
 	ops->compute_readdir_cookie = rgw_fsal_compute_cookie;
+#endif
 	ops->dirent_cmp = rgw_fsal_dirent_cmp;
 	ops->getattrs = getattrs;
 	ops->rename = rgw_fsal_rename;
