@@ -41,6 +41,8 @@ if (NOT CEPH_FS_CEPH_STATX)
      )
 endif(NOT CEPH_FS_CEPH_STATX)
 
+message(STATUS "CEPHFS_INCLUDE_DIR = ${CEPHFS_INCLUDE_DIR}")
+
 include_directories(${CEPHFS_INCLUDE_DIR})
 
 add_library(fsalceph MODULE ${fsalceph_LIB_SRCS})
