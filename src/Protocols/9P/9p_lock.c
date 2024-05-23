@@ -177,6 +177,7 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 					((openflags & FSAL_O_WRITE) == 0))) {
 			/* Open in wrong mode - return error */
 			STATELOCK_unlock(pfid->pentry);
+			nfs_put_grace_status();
 			status = _9P_LOCK_ERROR;
 			break;
 		}
