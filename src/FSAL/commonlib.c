@@ -2957,8 +2957,7 @@ fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming)
 		 * so we can skip it.
 		 */
 		bump_fd_lru(fsal_fd);
-		PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
-		atomic_dec_int32_t(&fsal_fd->fd_work);
+		fsal_complete_fd_work(fsal_fd);
 		/* Use fsalstat to avoid LogInfo... */
 		return fsalstat(ERR_FSAL_DELAY, EBUSY);
 	}
@@ -2983,8 +2982,7 @@ fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming)
 			 * it so we skip it.
 			 */
 			bump_fd_lru(fsal_fd);
-			PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
-			atomic_dec_int32_t(&fsal_fd->fd_work);
+			fsal_complete_fd_work(fsal_fd);
 			/* Use fsalstat to avoid LogInfo... */
 			return fsalstat(ERR_FSAL_DELAY, EBUSY);
 		}

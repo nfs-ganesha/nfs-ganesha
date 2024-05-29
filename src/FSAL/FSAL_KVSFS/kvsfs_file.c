@@ -72,7 +72,7 @@ static fsal_status_t kvsfs_open_by_handle(struct fsal_obj_handle *obj_hdl,
 	fsal_fd = &my_fd->fsal_fd;
 
 	/* Indicate we want to do fd work (can't fail since not reclaiming) */
-	(void) fsal_start_fd_work(fsal_fd, false);
+	fsal_start_fd_work_no_reclaim(fsal_fd);
 
 	if (state != NULL) {
 		/* Prepare to take the share reservation, but only if we are

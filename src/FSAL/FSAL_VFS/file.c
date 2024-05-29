@@ -427,7 +427,7 @@ static fsal_status_t vfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Indicate we want to do fd work (can't fail since not reclaiming) */
-	(void) fsal_start_fd_work(fsal_fd, false);
+	fsal_start_fd_work_no_reclaim(fsal_fd);
 
 	old_openflags = my_fd->fsal_fd.openflags;
 

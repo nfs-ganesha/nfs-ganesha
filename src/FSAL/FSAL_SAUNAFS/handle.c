@@ -453,7 +453,7 @@ openByHandle(struct fsal_obj_handle *objectHandle, struct state_t *state,
 	fsalFd = &saunafsFd->fsalFd;
 
 	/* Indicate we want to do fd work (can't fail since not reclaiming) */
-	(void)fsal_start_fd_work(fsalFd, false);
+	fsal_start_fd_work_no_reclaim(fsalFd);
 
 	oldOpenflags = saunafsFd->fsalFd.openflags;
 

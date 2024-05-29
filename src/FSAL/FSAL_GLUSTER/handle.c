@@ -1496,7 +1496,7 @@ static fsal_status_t glusterfs_open2_by_handle(
 #endif
 
 	/* Indicate we want to do fd work (can't fail since not reclaiming) */
-	(void) fsal_start_fd_work(fsal_fd, false);
+	fsal_start_fd_work_no_reclaim(fsal_fd);
 
 	old_openflags = my_fd->fsal_fd.openflags;
 

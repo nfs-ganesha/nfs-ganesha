@@ -279,6 +279,17 @@ fsal_status_t fsal_complete_io(struct fsal_obj_handle *obj_hdl,
 			       struct fsal_fd *fsal_fd);
 
 fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming);
+
+static inline void fsal_start_fd_work_no_reclaim(struct fsal_fd *fsal_fd)
+{
+	fsal_status_t rc;
+
+	rc = fsal_start_fd_work(fsal_fd, false);
+
+	if (rc.major != ERR_FSAL_NO_ERROR)
+		LogFatal(COMPONENT_FSAL, "Unexpected failure.");
+}
+
 void fsal_complete_fd_work(struct fsal_fd *fsal_fd);
 void insert_fd_lru(struct fsal_fd *fsal_fd);
 void bump_fd_lru(struct fsal_fd *fsal_fd);

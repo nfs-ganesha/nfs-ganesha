@@ -750,7 +750,7 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 	fsal_fd = &lzfs_fd->fsal_fd;
 
 	/* Indicate we want to do fd work (can't fail since not reclaiming) */
-	(void) fsal_start_fd_work(fsal_fd, false);
+	fsal_start_fd_work_no_reclaim(fsal_fd);
 
 	old_openflags = lzfs_fd->fsal_fd.openflags;
 

@@ -1594,7 +1594,7 @@ static fsal_status_t mem_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 		my_fd = &myself->mh_file.fd;
 
 	/* Indicate we want to do fd work (can't fail since not reclaiming) */
-	(void) fsal_start_fd_work(my_fd, false);
+	fsal_start_fd_work_no_reclaim(my_fd);
 
 	old_openflags = my_fd->openflags;
 

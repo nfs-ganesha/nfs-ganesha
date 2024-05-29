@@ -210,7 +210,7 @@ open_by_handle(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	fsal_fd = &my_fd->fsal_fd;
 
 	/* Indicate we want to do fd work (can't fail since not reclaiming) */
-	(void) fsal_start_fd_work(fsal_fd, false);
+	fsal_start_fd_work_no_reclaim(fsal_fd);
 
 	old_openflags = my_fd->fsal_fd.openflags;
 
