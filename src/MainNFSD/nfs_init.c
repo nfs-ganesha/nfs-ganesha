@@ -397,7 +397,7 @@ bool reread_config(void)
 
 	/* Update the export configuration */
 	status = reread_exports(config_struct, &err_type);
-	if (status < 0) {
+	if (status < 0 || !config_error_is_harmless(&err_type)) {
 		LogCrit(COMPONENT_CONFIG, "Error while parsing EXPORT entries");
 		return false;
 	}
