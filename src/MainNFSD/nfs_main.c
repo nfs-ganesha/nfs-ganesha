@@ -74,7 +74,13 @@ bool config_errors_fatal;
 
 /* command line syntax */
 
-static const char options[] = "v@L:N:S:f:p:FRTE:ChI:x";
+#ifdef USE_LTTNG
+#define LTTNG_OPTION "G"
+#else
+#define LTTNG_OPTION
+#endif /* USE_LTTNG */
+
+static const char options[] = "v@L:N:S:f:p:FRTE:ChI:x" LTTNG_OPTION;
 static const char usage[] =
 	"Usage: %s [-hd][-L <logfile>][-N <dbg_lvl>][-f <config_file>]\n"
 	"\t[-v]                display version information\n"
@@ -91,6 +97,9 @@ static const char usage[] =
 	"\t[-C]                dump trace when segfault\n"
 	"\t[-x]                fatal exit if there are config errors on startup\n"
 	"\t[-h]                display this help\n"
+#ifdef USE_LTTNG
+	"\t[-G]                Load LTTNG traces\n"
+#endif /* USE_LTTNG */
 	"----------------- Signals ----------------\n"
 	"SIGHUP     : Reload LOG and EXPORT config\n"
 	"SIGTERM    : Cleanly terminate the program\n"
@@ -121,6 +130,36 @@ static int valid_stack_size(unsigned long stack_size)
 			return 1;
 	return 0;
 }
+
+#ifdef USE_LTTNG
+
+static void load_lttng(void)
+{
+	void *dl = NULL;
+	#if defined(LINUX) && !defined(SANITIZE_ADDRESS)
+	dl = dlopen("libganesha_trace.so", RTLD_NOW | RTLD_LOCAL
+		| RTLD_DEEPBIND);
+#elif defined(BSDBASED) || defined(SANITIZE_ADDRESS)
+	dl = dlopen("libganesha_trace.so", RTLD_NOW | RTLD_LOCAL);
+#endif
+	if (dl == NULL) {
+		fprintf(stderr, "Failed to load libganesha_trace.so\n");
+		exit(1);
+	}
+
+#if defined(LINUX) && !defined(SANITIZE_ADDRESS)
+	dl = dlopen("libntirpc_tracepoints.so", RTLD_NOW | RTLD_LOCAL
+		| RTLD_DEEPBIND);
+#elif defined(BSDBASED) || defined(SANITIZE_ADDRESS)
+	dl = dlopen("libntirpc_tracepoints.so", RTLD_NOW | RTLD_LOCAL);
+#endif
+	if (dl == NULL) {
+		fprintf(stderr, "Failed to load libntirpc_tracepoints.so\n");
+		exit(1);
+	}
+}
+
+#endif /* USE_LTTNG */
 
 /**
  * main: simply the main function.
@@ -196,6 +235,11 @@ int main(int argc, char *argv[])
 			/* Default Log */
 			log_path = main_strdup("log_path", optarg);
 			break;
+#ifdef USE_LTTNG
+		case 'G':
+			load_lttng();
+			break;
+#endif /* USE_LTTNG */
 
 		case 'N':
 			/* debug level */

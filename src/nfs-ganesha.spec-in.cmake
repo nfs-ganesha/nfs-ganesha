@@ -905,7 +905,7 @@ exit 0
 
 %if %{with lttng}
 %files lttng
-%{_libdir}/ganesha/libganesha_trace*
+%{_libdir}/libganesha_trace*
 %endif
 
 %if %{with utils}
