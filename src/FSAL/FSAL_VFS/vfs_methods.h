@@ -428,4 +428,8 @@ static inline void vfs_restore_ganesha_credentials(const struct fsal_module
 		fsal_restore_ganesha_credentials();
 }
 
+fsal_status_t find_fd(struct fsal_fd **out_fd, struct fsal_obj_handle *obj_hdl,
+		      struct fsal_fd *tmp_fd, struct state_t *state,
+		      fsal_openflags_t openflags, bool bypass);
+
 #endif			/* VFS_METHODS_H */

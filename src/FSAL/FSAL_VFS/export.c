@@ -94,6 +94,10 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 				      fsal_dynamicfsinfo_t *infop)
 {
 	struct statvfs buffstatvfs;
+	fsal_status_t status = {ERR_FSAL_NO_ERROR, 0};
+	struct fsal_fd *out_fd = NULL;
+	struct vfs_fd *my_fd;
+	struct vfs_fd temp_fd = { FSAL_FD_INIT, -1 };
 	fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
 	int retval = 0;
 
@@ -106,10 +110,20 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 			 obj_hdl->fsal->name, obj_hdl->fs->fsal->name);
 		retval = EXDEV;
 		fsal_error = posix2fsal_error(retval);
-		goto out;
+		goto exit;
 	}
 
-	retval = statvfs(obj_hdl->fs->path, &buffstatvfs);
+	status = find_fd(&out_fd, obj_hdl, &temp_fd.fsal_fd, NULL, FSAL_O_ANY,
+			 false);
+	if (FSAL_IS_ERROR(status)) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "fsal_start_io failed returning %s",
+			     fsal_err_txt(status));
+		goto exit;
+	}
+
+	my_fd = container_of(out_fd, struct vfs_fd, fsal_fd);
+	retval = fstatvfs(my_fd->fd, &buffstatvfs);
 
 	if (retval < 0) {
 		fsal_error = posix2fsal_error(errno);
@@ -127,6 +141,10 @@ static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
 	infop->time_delta.tv_nsec = FSAL_DEFAULT_TIME_DELTA_NSEC;
 
  out:
+	status = fsal_complete_io(obj_hdl, out_fd);
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io returned %s",
+		     fsal_err_txt(status));
+ exit:
 	return fsalstat(fsal_error, retval);
 }
 
