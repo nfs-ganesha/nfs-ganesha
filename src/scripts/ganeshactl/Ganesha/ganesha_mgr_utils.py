@@ -93,7 +93,7 @@ class ClientMgr():
         for client in client_array:
             '''
             return format of ShowClients
-            [<client_ip>, [["NFSv3", <data>], ["MNT", <data>], ["NMLv4", <data>],
+            [<client_ip>, [["NFSv3", <data>], ["MNT", <data>], ["NLMv4", <data>],
             ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
             ["NFSv42", <data>], ["9P", <data>]],
             ["Open", <data>, "Lock", <data>, "Delegation", <data>],
@@ -111,7 +111,7 @@ class ClientMgr():
             clt = Client(ClientIP=str(client[0]),
                          HasNFSv3=cl_.get('NFSv3', 0),
                          HasMNT=cl_.get('MNT', 0),
-                         HasNLM4=cl_.get('NMLv4', 0),
+                         HasNLM4=cl_.get('NLMv4', 0),
                          HasRQUOTA=cl_.get('RQUOTA', 0),
                          HasNFSv40=cl_.get('NFSv40', 0),
                          HasNFSv41=cl_.get('NFSv41', 0),
@@ -237,7 +237,7 @@ class ExportMgr():
         for export in export_array:
             '''
             export format from ShowExports
-            [exp_id, path, [["NFSv3", <data>], ["MNT", <data>], ["NMLv4", <data>],
+            [exp_id, path, [["NFSv3", <data>], ["MNT", <data>], ["NLMv4", <data>],
             ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
             ["NFSv42", <data>], ["9P", <data>]], [<lastime>, <nsecs>]]
             convert index:2 to dict and use it
@@ -254,7 +254,7 @@ class ExportMgr():
                          ExportPath=str(export[1]),
                          HasNFSv3=exp_stat.get('NFSv3', 0),
                          HasMNT=exp_stat.get('MNT', 0),
-                         HasNLM4=exp_stat.get('NMLv4', 0),
+                         HasNLM4=exp_stat.get('NLMv4', 0),
                          HasRQUOTA=exp_stat.get('RQUOTA', 0),
                          HasNFSv40=exp_stat.get('NFSv40', 0),
                          HasNFSv41=exp_stat.get('NFSv41', 0),

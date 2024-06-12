@@ -1700,7 +1700,7 @@ void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 #endif
 #ifdef _USE_NLM
 	stats_available = st->nlm4 != 0;
-	protocol = "NMLv4";
+	protocol = "NLMv4";
 	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
 					       &stats_available);
 #endif
