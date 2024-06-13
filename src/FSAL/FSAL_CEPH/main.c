@@ -105,6 +105,7 @@ static struct config_item ceph_items[] = {
 		ceph_fsal_module, conf_path),
 	CONF_ITEM_MODE("umask", 0,
 			ceph_fsal_module, fsal.fs_info.umask),
+	CONF_ITEM_BOOL("client_oc", false, ceph_fsal_module, client_oc),
 	CONFIG_EOL
 };
 
@@ -499,6 +500,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 				   struct config_error_type *err_type,
 				   const struct fsal_up_vector *up_ops)
 {
+	/* The ceph module */
+	struct ceph_fsal_module *my_module =
+			container_of(module_in, struct ceph_fsal_module, fsal);
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The internal export object */
@@ -653,6 +657,17 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		LogCrit(COMPONENT_FSAL,
 			"Unable to set Ceph client_acl_type: %s",
 			strerror(-ceph_status));
+		goto error;
+	}
+
+	ceph_status = ceph_conf_set(cm->cmount, "client_oc",
+				    my_module->client_oc ? "true" : "false");
+
+	if (ceph_status) {
+		status.major = ERR_FSAL_INVAL;
+		LogCrit(COMPONENT_FSAL,
+			"Unable to set Ceph client_oc: %d",
+			ceph_status);
 		goto error;
 	}
 

@@ -900,6 +900,8 @@ CEPH {}
 
 	umask(mode, range 0 to 0777, default 0)
 
+	client_oc(bool, default false)
+
 GPFS {}
 -------
 
@@ -938,7 +940,7 @@ RGW {}
 	startup of the FSAL's radosgw instance.
 
 	* ceph_conf -- optional full-path to the Ceph configuration
-      file (equivalent to passing "-c /path/to/ceph.conf" to any
+	  file (equivalent to passing "-c /path/to/ceph.conf" to any
 	  Ceph binary
 
 	* name -- optional instance name (equivalent to passing
