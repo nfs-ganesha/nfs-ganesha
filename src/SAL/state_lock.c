@@ -2827,22 +2827,13 @@ recheck_for_conflicting_entries:
 	return status;
 }
 
-/**
- * @brief Release a lock
- *
- * @param[in] obj      File to unlock
- * @param[in] state         Associated state_t (if any)
- * @param[in] owner         Owner of lock
- * @param[in] state_applies Indicator if nsm_state is relevant
- * @param[in] nsm_state     NSM state number
- * @param[in] lock          Lock description
- */
-state_status_t state_unlock(struct fsal_obj_handle *obj,
-			    state_t *state,
-			    state_owner_t *owner,
-			    bool state_applies,
-			    int32_t nsm_state,
-			    fsal_lock_param_t *lock)
+/* Like state_unlock- but assumes obj state lock is taken */
+static state_status_t state_unlock_internal(struct fsal_obj_handle *obj,
+					state_t *state,
+					state_owner_t *owner,
+					bool state_applies,
+					int32_t nsm_state,
+					fsal_lock_param_t *lock)
 {
 	bool empty = false;
 	bool removed = false;
@@ -2853,8 +2844,6 @@ state_status_t state_unlock(struct fsal_obj_handle *obj,
 			lock);
 		return STATE_BAD_TYPE;
 	}
-
-	STATELOCK_lock(obj);
 
 	/* If lock list is empty, there really isn't any work for us to do. */
 	if (glist_empty(&obj->state_hdl->file.lock_list)) {
@@ -2930,9 +2919,95 @@ state_status_t state_unlock(struct fsal_obj_handle *obj,
 		dump_all_locks("All locks (after unlock)");
 
  out_unlock:
+	return status;
+}
+
+/**
+ * @brief Release a lock
+ *
+ * @param[in] obj      File to unlock
+ * @param[in] state         Associated state_t (if any)
+ * @param[in] owner         Owner of lock
+ * @param[in] state_applies Indicator if nsm_state is relevant
+ * @param[in] nsm_state     NSM state number
+ * @param[in] lock          Lock description
+ */
+state_status_t state_unlock(struct fsal_obj_handle *obj,
+			    state_t *state,
+			    state_owner_t *owner,
+			    bool state_applies,
+			    int32_t nsm_state,
+			    fsal_lock_param_t *lock)
+{
+	state_status_t status;
+
+	STATELOCK_lock(obj);
+
+	status = state_unlock_internal(obj, state, owner, state_applies,
+			nsm_state, lock);
+
 	STATELOCK_unlock(obj);
 
 	return status;
+}
+
+/**
+ * @brief Release all locks in a state
+ * Assumes obj state lock is taken
+ *
+ * @param[in] obj      File to unlock
+ * @param[in] state      The state
+ */
+void state_unlock_all(struct fsal_obj_handle *obj, state_t *state)
+{
+	/* The state lock associated with the state */
+	struct state_lock *locks;
+	/* Specific lock entry */
+	state_lock_entry_t *lock_entry;
+	state_status_t status = 0;
+
+	if (state->state_type != STATE_TYPE_LOCK) {
+		/* Only relevant for lock state */
+		return;
+	}
+	locks = &state->state_data.lock;
+
+	while (true) {
+		PTHREAD_MUTEX_lock(&state->state_mutex);
+
+		lock_entry = glist_first_entry(
+				&locks->state_locklist,
+				struct state_lock_entry_t,
+				sle_state_locks);
+
+		if (lock_entry == NULL) {
+			PTHREAD_MUTEX_unlock(&state->state_mutex);
+			break;
+		}
+
+		lock_entry_inc_ref(lock_entry);
+
+		/* Move this state to the end of the list
+		 * (this will help if errors occur)
+		 */
+		glist_move_tail(&locks->state_locklist,
+				&lock_entry->sle_state_locks);
+
+		PTHREAD_MUTEX_unlock(&state->state_mutex);
+
+		status = state_unlock_internal(state->state_obj, state,
+					       state->state_owner,
+					       false, 0, &lock_entry->sle_lock);
+
+		lock_entry_dec_ref(lock_entry);
+
+		if (status != STATE_SUCCESS) {
+			LogCrit(COMPONENT_STATE,
+				"Failed to unlock lock in a state. This will be retried (status = %s)",
+				state_err_str(status));
+			continue;
+		}
+	}
 }
 
 /**

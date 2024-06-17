@@ -249,25 +249,20 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	STATELOCK_lock(state_obj);
 
-	/* Check is held locks remain */
-	glist_for_each(glist, &state_found->state_data.share.share_lockstates) {
+	/* Clean all associated lock states */
+	glist_for_each_safe(glist, glistn,
+			    &state_found->state_data.share.share_lockstates) {
 		state_t *lock_state =
 				glist_entry(glist, state_t,
 					    state_data.lock.state_sharelist);
 
-		if (!glist_empty(&lock_state->state_data.lock.state_locklist)) {
-			/* Is this actually what we want to do, rather
-			 * than freeing all locks on close?
-			 * Especially since the next thing we do is
-			 * go through and release any lock states.
-			 */
-			res_CLOSE4->status = NFS4ERR_LOCKS_HELD;
+		inc_state_t_ref(lock_state);
 
-			STATELOCK_unlock(state_obj);
-			LogDebug(COMPONENT_STATE,
-				 "NFS4 Close with existing locks");
-			goto out;
-		}
+		state_unlock_all(state_obj, lock_state);
+
+		state_del_locked(lock_state);
+
+		dec_state_t_ref(lock_state);
 	}
 
 	if (data->minorversion == 0) {
@@ -284,19 +279,6 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		       all_zero,
 		       sizeof(res_CLOSE4->CLOSE4res_u.open_stateid.other));
 		res_CLOSE4->CLOSE4res_u.open_stateid.seqid = UINT32_MAX;
-	}
-
-	/* File is closed, release the corresponding lock states */
-	glist_for_each_safe(glist, glistn,
-			    &state_found->state_data.share.share_lockstates) {
-		state_t *lock_state =
-				glist_entry(glist, state_t,
-					    state_data.lock.state_sharelist);
-
-		/* If the FSAL supports extended ops, this will result in
-		 * closing any open files the FSAL has for this lock state.
-		 */
-		state_del_locked(lock_state);
 	}
 
 	/* File is closed, release the corresponding state. If the FSAL
@@ -321,8 +303,6 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		nfs_State_PrintAll();
 		nfs4_owner_PrintAll();
 	}
-
- out:
 
 	/* Save the response in the open owner */
 	if (data->minorversion == 0) {

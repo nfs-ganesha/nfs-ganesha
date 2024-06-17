@@ -633,6 +633,8 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 				bool state_applies,
 				int32_t state);
 
+void state_unlock_all(struct fsal_obj_handle *obj, state_t *state);
+
 void state_nfs4_owner_unlock_all(state_owner_t *owner);
 
 void state_export_unlock_all(void);
