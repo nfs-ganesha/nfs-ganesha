@@ -176,30 +176,6 @@ const char *str_lockt(fsal_lock_t ltype)
 /**
  * @brief Return string for blocking status
  *
- * @param[in] blocking The blocking status
- *
- * @return String for blocking status.
- */
-const char *str_blocking(state_blocking_t blocking)
-{
-	switch (blocking) {
-	case STATE_NON_BLOCKING:
-		return "NON_BLOCKING  ";
-	case STATE_NLM_BLOCKING:
-		return "NLM_BLOCKING  ";
-	case STATE_NFSV4_BLOCKING:
-		return "NFSV4_BLOCKING";
-	case STATE_GRANTING:
-		return "GRANTING      ";
-	case STATE_CANCELED:
-		return "CANCELED      ";
-	}
-	return "unknown       ";
-}
-
-/**
- * @brief Return string for blocking status
- *
  * @param[in] blocked Blocking status
  *
  * @return String for blocking status.
@@ -208,17 +184,35 @@ const char *str_blocked(state_blocking_t blocked)
 {
 	switch (blocked) {
 	case STATE_NON_BLOCKING:
-		return "GRANTED       ";
-	case STATE_NLM_BLOCKING:
-		return "NLM_BLOCKING  ";
-	case STATE_NFSV4_BLOCKING:
-		return "NFSV4_BLOCKING";
-	case STATE_GRANTING:
-		return "GRANTING      ";
+		return "NON_BLOCKING";
+	case STATE_BLOCKING:
+		return "BLOCKING    ";
+	case STATE_AVAILABLE:
+		return "AVAILABLE   ";
 	case STATE_CANCELED:
-		return "CANCELED      ";
+		return "CANCELED    ";
 	}
-	return "unknown       ";
+	return "unknown     ";
+}
+
+/**
+ * @brief Return string for protocol type
+ *
+ * @param[in] lock protocol type
+ *
+ * @return String for lock protocol type.
+ */
+const char *str_protocol(lock_protocol_t protocol)
+{
+	switch (protocol) {
+	case LOCK_NLM:
+		return "LOCK_NLM  ";
+	case LOCK_NFSv4:
+		return "LOCK_NFSv4";
+	case LOCK_9P:
+		return "LOCK_9P   ";
+	}
+	return "unknown   ";
 }
 
 const char *str_block_type(state_block_type_t btype)
@@ -290,6 +284,7 @@ log_entry_ref_count(const char *reason, state_lock_entry_t *le,
 			"%s Entry: %p obj=%p, fileid=%" PRIu64
 			", export=%u, type=%s, start=0x%"PRIx64
 			", end=0x%"PRIx64
+			", protocol %s"
 			", blocked=%s/%p/%s, state=%p, refcount=%"PRIu32
 			", owner={%s}",
 			reason, le, le->sle_obj,
@@ -298,6 +293,7 @@ log_entry_ref_count(const char *reason, state_lock_entry_t *le,
 			str_lockt(le->sle_lock.lock_type),
 			le->sle_lock.lock_start,
 			lock_end(&le->sle_lock),
+			str_protocol(le->sle_protocol),
 			str_blocked(le->sle_blocked), le->sle_block_data,
 			le->sle_block_data
 			    ? str_block_type(le->sle_block_data->sbd_block_type)
@@ -527,6 +523,7 @@ void dump_all_locks(const char *label)
 static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 						   struct gsh_export *export,
 						   state_blocking_t blocked,
+						   lock_protocol_t protocol,
 						   state_owner_t *owner,
 						   state_t *state,
 						   fsal_lock_param_t *lock)
@@ -545,6 +542,7 @@ static state_lock_entry_t *create_state_lock_entry(struct fsal_obj_handle *obj,
 	new_entry->sle_ref_count = 1;
 	new_entry->sle_obj = obj;
 	new_entry->sle_blocked = blocked;
+	new_entry->sle_protocol = protocol;
 	new_entry->sle_owner = owner;
 	new_entry->sle_state = state;
 	new_entry->sle_lock = *lock;
@@ -616,6 +614,7 @@ state_lock_entry_t_dup(state_lock_entry_t *orig_entry)
 	return create_state_lock_entry(orig_entry->sle_obj,
 				       orig_entry->sle_export,
 				       orig_entry->sle_blocked,
+				       orig_entry->sle_protocol,
 				       orig_entry->sle_owner,
 				       orig_entry->sle_state,
 				       &orig_entry->sle_lock);
@@ -766,8 +765,7 @@ recheck_for_conflicting_entries:
 		LogEntry("Checking", found_entry);
 
 		/* Skip blocked or cancelled locks */
-		if (found_entry->sle_blocked == STATE_NLM_BLOCKING
-		    || found_entry->sle_blocked == STATE_NFSV4_BLOCKING
+		if (found_entry->sle_blocked == STATE_BLOCKING
 		    || found_entry->sle_blocked == STATE_CANCELED)
 			continue;
 
@@ -836,7 +834,7 @@ static void merge_lock_entry(struct state_hdl *ostate,
 	struct glist_head *glist;
 	struct glist_head *glistn;
 
-	/* lock_entry might be STATE_NON_BLOCKING or STATE_GRANTING */
+	/* lock_entry might be STATE_NON_BLOCKING */
 
 	glist_for_each_safe(glist, glistn, &ostate->file.lock_list) {
 		check_entry = glist_entry(glist, state_lock_entry_t, sle_list);
@@ -1207,10 +1205,11 @@ int display_lock_cookie_entry(struct display_buffer *dspbuf,
 		b_left = display_printf(
 			dspbuf,
 			"} type=%s start=0x%"PRIx64" end=0x%"
-			PRIx64" blocked=%s}",
+			PRIx64" protocol=%s, blocked=%s}",
 			str_lockt(he->sce_lock_entry->sle_lock.lock_type),
 			he->sce_lock_entry->sle_lock.lock_start,
 			lock_end(&he->sce_lock_entry->sle_lock),
+			str_protocol(he->sce_lock_entry->sle_protocol),
 			str_blocked(he->sce_lock_entry->sle_blocked));
 	} else {
 		b_left = display_printf(dspbuf, "<NULL>}");
@@ -1507,12 +1506,14 @@ state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj,
 		 */
 		if (status == STATE_LOCK_BLOCKED)
 			LogDebug(COMPONENT_STATE,
-				 "Unable to lock FSAL for %s lock, error=%s",
+				 "Unable to lock FSAL for %s/%s lock, error=%s",
+				 str_protocol(lock_entry->sle_protocol),
 				 str_blocked(lock_entry->sle_blocked),
 				 state_err_str(status));
 		else
 			LogMajor(COMPONENT_STATE,
-				 "Unable to lock FSAL for %s lock, error=%s",
+				 "Unable to lock FSAL for %s/%s lock, error=%s",
+				 str_protocol(lock_entry->sle_protocol),
 				 str_blocked(lock_entry->sle_blocked),
 				 state_err_str(status));
 
@@ -1716,7 +1717,7 @@ void state_complete_grant(state_cookie_entry_t *cookie_entry)
 	STATELOCK_lock(obj);
 
 	/* We need to make sure lock is ready to be granted */
-	if (lock_entry->sle_blocked == STATE_GRANTING) {
+	if (lock_entry->sle_blocked == STATE_AVAILABLE) {
 		/* Mark lock as granted */
 		lock_entry->sle_blocked = STATE_NON_BLOCKING;
 
@@ -1763,7 +1764,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 		/* Nothing to do if already granted */
 		LogEntry("Lock already granted", lock_entry);
 		return;
-	} else if (lock_entry->sle_blocked == STATE_GRANTING) {
+	} else if (lock_entry->sle_blocked == STATE_AVAILABLE) {
 		/* Should not happen, but just in case... Nothing to do. */
 		LogEntry("Lock grant already in progress", lock_entry);
 		return;
@@ -1780,7 +1781,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 		 * for acquiring a reference to the lock entry if needed.
 		 */
 		blocked = lock_entry->sle_blocked;
-		lock_entry->sle_blocked = STATE_GRANTING;
+		lock_entry->sle_blocked = STATE_AVAILABLE;
 		if (lock_entry->sle_block_data->sbd_grant_type ==
 		    STATE_GRANT_NONE)
 			lock_entry->sle_block_data->sbd_grant_type =
@@ -1870,8 +1871,7 @@ static void grant_blocked_locks(struct state_hdl *ostate)
 	glist_for_each_safe(glist, glistn, &ostate->file.lock_list) {
 		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
 
-		if (found_entry->sle_blocked != STATE_NLM_BLOCKING
-		    && found_entry->sle_blocked != STATE_NFSV4_BLOCKING)
+		if (found_entry->sle_blocked != STATE_BLOCKING)
 			continue;
 
 		/* Found a blocked entry for this file,
@@ -2077,7 +2077,7 @@ state_status_t state_release_grant(state_cookie_entry_t *cookie_entry)
 	 * It's (remotely) possible that due to latency, we might end up
 	 * processing two GRANTED_RSP calls at the same time.
 	 */
-	if (lock_entry->sle_blocked == STATE_GRANTING) {
+	if (lock_entry->sle_blocked == STATE_AVAILABLE) {
 		/* Mark lock as canceled */
 		lock_entry->sle_blocked = STATE_CANCELED;
 
@@ -2440,6 +2440,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 			  state_owner_t *owner,
 			  state_t *state,
 			  state_blocking_t blocking,
+			  lock_protocol_t protocol,
 			  state_block_data_t **bdata,
 			  fsal_lock_param_t *lock,
 			  state_owner_t **holder,
@@ -2579,9 +2580,9 @@ recheck_for_conflicting_entries:
 					goto recheck_for_conflicting_entries;
 				}
 
-				if (blocking != STATE_NLM_BLOCKING) {
+				if (blocking != STATE_BLOCKING) {
 					copy_conflict(found_entry, holder,
-						      conflict);
+							  conflict);
 				}
 				allow = false;
 				overlap = true;
@@ -2593,7 +2594,7 @@ recheck_for_conflicting_entries:
 		    && found_entry->sle_lock.lock_start <= lock->lock_start
 		    && found_entry->sle_lock.lock_type == lock->lock_type
 		    && (found_entry->sle_blocked == STATE_NON_BLOCKING
-			|| found_entry->sle_blocked == STATE_GRANTING)) {
+			|| found_entry->sle_blocked == STATE_AVAILABLE)) {
 			/* Found an entry that entirely overlaps the new entry
 			 * (and due to the preceding test does not prevent
 			 * granting this lock - therefore there can't be any
@@ -2605,7 +2606,7 @@ recheck_for_conflicting_entries:
 				 * GRANTING state.
 				 */
 				if (found_entry->sle_blocked
-				    == STATE_GRANTING) {
+				    == STATE_AVAILABLE) {
 					/* Need to handle completion of granting
 					 * of this lock because a GRANT was in
 					 * progress. This could be a client
@@ -2654,7 +2655,7 @@ recheck_for_conflicting_entries:
 	}
 
 	/* Decide how to proceed */
-	if (blocking == STATE_NLM_BLOCKING) {
+	if ((blocking == STATE_BLOCKING) && (protocol == LOCK_NLM)) {
 		/* do_lock_op will handle FSAL_OP_LOCKB for those FSALs that
 		 * do not support async blocking locks. It will make a
 		 * non-blocking call in that case, and it will return
@@ -2724,6 +2725,7 @@ recheck_for_conflicting_entries:
 	found_entry = create_state_lock_entry(obj,
 					op_ctx->ctx_export,
 					STATE_NON_BLOCKING,
+					protocol,
 					owner,
 					state,
 					lock);

@@ -183,8 +183,8 @@ int _9p_lock(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 
 		state_status = state_lock(pfid->pentry, powner, pfid->state,
-					  STATE_NON_BLOCKING, NULL, &lock,
-					  NULL, NULL);
+					  STATE_NON_BLOCKING, LOCK_9P, NULL,
+					  &lock, NULL, NULL);
 		STATELOCK_unlock(pfid->pentry);
 		nfs_put_grace_status();
 

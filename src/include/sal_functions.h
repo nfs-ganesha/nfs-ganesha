@@ -612,6 +612,7 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 state_status_t state_lock(struct fsal_obj_handle *obj,
 			  state_owner_t *owner,
 			  state_t *state, state_blocking_t blocking,
+			  lock_protocol_t protocol,
 			  state_block_data_t **block_data,
 			  fsal_lock_param_t *lock,
 			  /* owner that holds conflicting lock */

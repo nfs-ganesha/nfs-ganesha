@@ -859,11 +859,21 @@ extern hash_table_t *ht_unconfirmed_client_id;
 
 typedef enum state_blocking_t {
 	STATE_NON_BLOCKING,
-	STATE_NLM_BLOCKING,
-	STATE_NFSV4_BLOCKING,
-	STATE_GRANTING,
+	STATE_BLOCKING,
+	STATE_AVAILABLE,
 	STATE_CANCELED
 } state_blocking_t;
+
+/**
+ * @brief Lock protocol type
+ */
+
+typedef enum lock_protocol_t {
+	LOCK_NLM,
+	LOCK_NFSv4,
+	LOCK_9P
+} lock_protocol_t;
+
 
 /**
  * @brief Grant callback
@@ -940,6 +950,7 @@ struct state_lock_entry_t {
 	state_owner_t *sle_owner;	/* Lock owner */
 	state_t *sle_state;	/*< Associated lock state */
 	state_blocking_t sle_blocked;	/*< Blocking status */
+	lock_protocol_t sle_protocol; /*< Protocol type */
 	int32_t sle_ref_count;	/*< Reference count */
 	fsal_lock_param_t sle_lock;	/*< Lock description */
 	pthread_mutex_t sle_mutex;	/*< Mutex to protect the structure */

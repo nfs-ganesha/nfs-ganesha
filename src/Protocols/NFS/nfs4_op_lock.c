@@ -142,7 +142,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	/* Convert lock parameters to internal types */
 	switch (arg_LOCK4->locktype) {
 	case READW_LT:
-		blocking = STATE_NFSV4_BLOCKING;
+		blocking = STATE_BLOCKING;
 		/* Fall through */
 
 	case READ_LT:
@@ -150,7 +150,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 		break;
 
 	case WRITEW_LT:
-		blocking = STATE_NFSV4_BLOCKING;
+		blocking = STATE_BLOCKING;
 		/* Fall through */
 
 	case WRITE_LT:
@@ -658,6 +658,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 				  lock_owner,
 				  lock_state,
 				  blocking,
+				  LOCK_NFSv4,
 				  NULL,	/* No block data for now */
 				  &lock_desc,
 				  &conflict_owner,

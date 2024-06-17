@@ -147,8 +147,9 @@ int nlm4_Lock(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	state_status = state_lock(obj,
 				  nlm_owner,
 				  nlm_state,
-				  arg->block ? STATE_NLM_BLOCKING :
+				  arg->block ? STATE_BLOCKING :
 					       STATE_NON_BLOCKING,
+				  LOCK_NLM,
 				  arg->block ? &pblock_data : NULL,
 				  &lock,
 				  NULL, /* We don't need conflict info */
