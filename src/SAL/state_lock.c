@@ -637,7 +637,7 @@ static inline void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
  *
  * @param[in,out] lock_entry Entry to release
  */
-static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
+void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 {
 	int32_t refcount = atomic_dec_int32_t(&lock_entry->sle_ref_count);
 
@@ -653,15 +653,41 @@ static void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 		if (lock_entry->sle_block_data != NULL) {
 			/* need to remove from the state_blocked_locks list */
 			PTHREAD_MUTEX_lock(&blocked_locks_mutex);
+
+			/* While waiting for the blocked_locks_mutex, refcount
+			 * might have increased, and so we can't release the
+			 * lock entry */
+			refcount = atomic_fetch_int32_t(
+					&lock_entry->sle_ref_count);
+			if (refcount != 0) {
+				LogEntryRefCount(
+					"Refcount not zero after acquiring lock. Not freeing entry",
+					lock_entry, refcount);
+				PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
+				return;
+			}
+
 			glist_del(&lock_entry->sle_block_data->sbd_list);
 			PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
+
 			gsh_free(lock_entry->sle_block_data);
 		}
+
 #ifdef DEBUG_SAL
 		PTHREAD_MUTEX_lock(&all_locks_mutex);
 		glist_del(&lock_entry->sle_all_locks);
 		PTHREAD_MUTEX_unlock(&all_locks_mutex);
 #endif
+
+		if (lock_entry->sle_owner != NULL) {
+			dec_state_owner_ref(lock_entry->sle_owner);
+			lock_entry->sle_owner = NULL;
+		}
+
+		if (lock_entry->sle_state != NULL) {
+			dec_state_t_ref(lock_entry->sle_state);
+			lock_entry->sle_state = NULL;
+		}
 
 		lock_entry->sle_obj->obj_ops->put_ref(lock_entry->sle_obj);
 		put_gsh_export(lock_entry->sle_export);
@@ -717,10 +743,6 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 		glist_del(&lock_entry->sle_owner_locks);
 
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
-
-		dec_state_owner_ref(owner);
-		if (lock_entry->sle_state != NULL)
-			dec_state_t_ref(lock_entry->sle_state);
 	}
 
 	if (lock_entry->sle_blocked != STATE_NON_BLOCKING &&
@@ -733,7 +755,6 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 		lock_entry->sle_blocked = STATE_CANCELED;
 	}
 
-	lock_entry->sle_owner = NULL;
 	glist_del(&lock_entry->sle_list);
 	lock_entry_dec_ref(lock_entry);
 }
@@ -1691,6 +1712,29 @@ void grant_blocked_lock_immediate(struct state_hdl *ostate,
 	grant_blocked_locks(ostate);
 }
 
+static void grant_nfsv4_blocking_lock(struct fsal_obj_handle *obj,
+		  state_lock_entry_t *lock_entry)
+{
+	state_status_t status = do_lock_op(obj, lock_entry->sle_state,
+			FSAL_OP_LOCKB,
+			lock_entry->sle_owner,
+			&lock_entry->sle_lock,
+			NULL,
+			NULL,
+			false);
+	if (status != STATE_SUCCESS) {
+		LogMajor(COMPONENT_STATE,
+			 "Unable to lock a granted lock, error=%s",
+			 state_err_str(status));
+	}
+
+	PTHREAD_MUTEX_lock(&blocked_locks_mutex);
+	glist_del(&lock_entry->sle_block_data->sbd_list);
+	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
+
+	grant_blocked_lock_immediate(obj->state_hdl, lock_entry);
+}
+
 /**
  * @brief Finish granting a lock
  *
@@ -1787,8 +1831,7 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 			lock_entry->sle_block_data->sbd_grant_type =
 			    STATE_GRANT_INTERNAL;
 
-		status = call_back(lock_entry->sle_obj,
-				   lock_entry);
+		status = call_back(lock_entry->sle_obj, lock_entry);
 
 		if (status == STATE_LOCK_BLOCKED) {
 			/* The lock is still blocked, restore it's type and
@@ -1803,13 +1846,17 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 		}
 
 		/* At this point, we no longer need the entry on the
-		 * blocked lock list.
+		 * blocked lock list in nlm, in nfsv4 we still need it to
+		 * poll in case it is never requested by client after grant
+		 * so that we could cancel it.
 		 */
-		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
+		if (lock_entry->sle_protocol == LOCK_NLM) {
+			PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
-		glist_del(&lock_entry->sle_block_data->sbd_list);
+			glist_del(&lock_entry->sle_block_data->sbd_list);
 
-		PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
+			PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
+		}
 
 		if (status == STATE_SUCCESS)
 			return;
@@ -1831,20 +1878,23 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
  * @param[in] block_data Data describing blocked lock
  */
 
-void process_blocked_lock_upcall(state_block_data_t *block_data)
+void process_blocked_lock_upcall(state_lock_entry_t *lock_entry)
 {
-	state_lock_entry_t *lock_entry = block_data->sbd_lock_entry;
-
 	/* A lock entry reference was taken when this work was scheduled. */
 
 	STATELOCK_lock(lock_entry->sle_obj);
 
+	if (glist_null(&lock_entry->sle_list)) {
+		LogEntry(
+			"Received up-call for lock entry that was already removed from the lock list. Ignoring",
+			 lock_entry);
+		goto out_upcall;
+	}
+
 	try_to_grant_lock(lock_entry);
 
+ out_upcall:
 	STATELOCK_unlock(lock_entry->sle_obj);
-
-	/* We are done with the lock_entry, release the reference now. */
-	lock_entry_dec_ref(lock_entry);
 }
 
 /**
@@ -1963,10 +2013,15 @@ void cancel_blocked_lock(struct fsal_obj_handle *obj,
 		 * following request will release it. The upcall
 		 * processing code can just ignore the granted lock, if
 		 * a lock isn't found in the state_blocked_lock list.
+		 * This is only true for nlm, as in nfsv4 lockers only
+		 * become holders after a direct lock request which would have
+		 * meant we wouldn't have reached here but to the unlock path
 		 *
 		 * @todo: Maybe an issue if this was a lock upgrade?
 		 */
-		state_status = do_lock_op(obj,
+		if (lock_entry->sle_protocol == LOCK_NLM) {
+			state_status =
+				do_lock_op(obj,
 					  lock_entry->sle_state,
 					  FSAL_OP_UNLOCK,
 					  lock_entry->sle_owner,
@@ -1974,12 +2029,12 @@ void cancel_blocked_lock(struct fsal_obj_handle *obj,
 					  NULL,	/* no conflict expected */
 					  NULL,
 					  false); /* overlap not relevant */
-
-		if (state_status != STATE_SUCCESS) {
-			/* lock was probably not granted */
-			LogFullDebug(COMPONENT_STATE,
-				     "Unable to unlock a blocked lock %d",
-				     state_status);
+			if (state_status != STATE_SUCCESS) {
+				/* lock was probably not granted */
+				LogFullDebug(COMPONENT_STATE,
+					     "Unable to unlock a blocked lock %d",
+					     state_status);
+			}
 		}
 	}
 
@@ -2395,9 +2450,11 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 			LogFullDebug(COMPONENT_STATE, "Lock success");
 			break;
 		case STATE_LOCK_CONFLICT:
-			LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
-				"Conflict from FSAL",
-				obj, *holder, conflict);
+			if (holder != NULL && conflict != NULL) {
+				LogLock(COMPONENT_STATE, NIV_FULL_DEBUG,
+					"Conflict from FSAL",
+					obj, *holder, conflict);
+			}
 			break;
 		case STATE_ESTALE:
 			LogDebug(COMPONENT_STATE,
@@ -2419,6 +2476,167 @@ state_status_t state_test(struct fsal_obj_handle *obj,
 
 	return status;
 }
+
+/**
+ * @brief Cancel lock on given file
+ *
+ * @param[in]  obj	File to operate on
+ * @param[in]  owner	Lock operation
+ * @param[in]  lock	Lock description
+ */
+static void state_cancel_internal(struct fsal_obj_handle *obj,
+	    state_owner_t *owner, fsal_lock_param_t *lock)
+{
+	struct glist_head *glist;
+	state_lock_entry_t *found_entry;
+
+	/* If lock list is empty, there really isn't any work for us to do. */
+	if (glist_empty(&obj->state_hdl->file.lock_list)) {
+		LogDebug(COMPONENT_STATE,
+			 "Cancel success on file with no locks");
+
+		return;
+	}
+
+	glist_for_each(glist, &obj->state_hdl->file.lock_list) {
+		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
+
+		if (different_owners(found_entry->sle_owner, owner))
+			continue;
+
+		/* Can not cancel a lock once it is granted */
+		if (found_entry->sle_blocked == STATE_NON_BLOCKING)
+			continue;
+
+		if (different_lock(&found_entry->sle_lock, lock))
+			continue;
+
+		/* Cancel the blocked lock */
+		cancel_blocked_lock(obj, found_entry);
+
+		/* Check to see if we can grant any blocked locks. */
+		grant_blocked_locks(obj->state_hdl);
+
+		break;
+	}
+}
+
+/**
+ * @brief handle the case where requested lock is either contained or overlaps
+ * an existing lock
+ *
+ * @param[in]  obj		File to operate on
+ * @param[in]  owner		Lock operation
+ * @param[in]  state		state_t associated with lock if any
+ * @param[in]  blocking		lock block type
+ * @param[in]  lock		Lock description
+ * @param[in]  found_entry	entry to check for
+ * @param[in]  found_entry_end	end of entry
+ * @param[in]  range_end	end of range to test for
+ * @param[out] overlap		Hint that lock overlaps
+ * @param[out] lock_granted	Was lock granted from cache
+ * @param[out] lock_cancel	Was request treated as a lock cancel
+ */
+static void handle_contained_range_if_present(struct fsal_obj_handle *obj,
+				      state_owner_t *owner,
+				      state_t *state,
+				      state_blocking_t blocking,
+				      fsal_lock_param_t *lock,
+				      state_lock_entry_t *found_entry,
+				      uint64_t found_entry_end,
+				      uint64_t range_end,
+				      bool *overlap,
+				      bool *lock_granted,
+				      bool *lock_cancel)
+{
+	*lock_granted = false;
+	*lock_cancel = false;
+	if (found_entry_end < range_end ||
+	    found_entry->sle_lock.lock_start > lock->lock_start ||
+	    found_entry->sle_lock.lock_type != lock->lock_type) {
+		/* Lock is not fully overlap or contained */
+		return;
+	}
+	if (different_owners(found_entry->sle_owner, owner)) {
+		/* Found a compatible lock with a different lock owner
+		 * that fully overlaps, set hint if conflicting lock exists.
+		 */
+		LogEntry("Found overlapping", found_entry);
+		*overlap = true;
+		return;
+	}
+
+	if (found_entry->sle_blocked == STATE_AVAILABLE &&
+	    found_entry->sle_protocol == LOCK_NLM) {
+		/* Need to handle completion of granting
+		 * of this lock because a GRANT was in
+		 * progress. This could be a client
+		 * retrying a blocked lock due to
+		 * mis-trust of server. If the client
+		 * also accepts the GRANT_MSG with a
+		 * GRANT_RESP, that will be just fine.
+		 */
+		LogEntry("Immediate grant for", found_entry);
+		grant_blocked_lock_immediate(obj->state_hdl, found_entry);
+	} else if (found_entry->sle_blocked == STATE_AVAILABLE &&
+		   found_entry->sle_protocol == LOCK_NFSv4) {
+		/* Nfsv4 locks can only be granted by an exact match */
+		if (different_lock(&found_entry->sle_lock, lock)) {
+			return;
+		} else {
+			LogEntry("Immediate grant for", found_entry);
+			grant_nfsv4_blocking_lock(obj, found_entry);
+		}
+	} else if ((found_entry->sle_blocked == STATE_BLOCKING) &&
+		    (found_entry->sle_protocol == LOCK_NFSv4) &&
+		    (blocking == STATE_NON_BLOCKING) &&
+		    (!different_lock(&found_entry->sle_lock, lock))) {
+		/* In Nfsv4 when client sends same lock but changes from
+		 * blocking to non blocking we need to remove the lock from
+		 * non blocking list, and return the lock result */
+
+		LogEntry("cancel blocked lock", found_entry);
+		/* Cancel the blocked lock */
+		cancel_blocked_lock(obj, found_entry);
+
+		/* Check to see if we can grant any blocked locks. */
+		grant_blocked_locks(obj->state_hdl);
+		*lock_cancel = true;
+		return;
+	} else if (found_entry->sle_blocked != STATE_NON_BLOCKING) {
+		return;
+	}
+	/* Found an entry that entirely overlaps the new entry
+	 * (and due to the preceding test does not prevent
+	 * granting this lock - therefore there can't be any
+	 * other locks that would prevent granting this lock
+	 */
+	*lock_granted = true;
+
+
+	LogEntry("Found existing", found_entry);
+
+	if (found_entry->sle_state != state) {
+		state_t *old_state = NULL;
+
+		LogFullDebug(COMPONENT_STATE,
+		"Existing lock entry has old state");
+
+		old_state = found_entry->sle_state;
+		found_entry->sle_state = state;
+		inc_state_t_ref(state);
+
+		if (old_state != NULL)
+			dec_state_t_ref(old_state);
+
+		glist_add_tail(
+		 &state->state_data.lock.state_locklist,
+		 &found_entry->sle_state_locks);
+
+		LogEntry("sle after state change", found_entry);
+	}
+}
+
 
 /**
  * @brief Attempt to acquire a lock
@@ -2450,6 +2668,7 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	struct glist_head *glist;
 	struct glist_head *glist_n;
 	state_lock_entry_t *found_entry;
+	state_lock_entry_t *new_entry;
 	uint64_t found_entry_end;
 	uint64_t range_end = lock_end(lock);
 	struct fsal_export *fsal_export = op_ctx->fsal_export;
@@ -2457,6 +2676,8 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 	state_status_t status = 0;
 	bool async;
 	state_block_data_t *block_data;
+	bool lock_granted;
+	bool lock_cancel;
 
 	if (blocking != STATE_NON_BLOCKING) {
 		/* First search for a blocked request. Client can ignore the
@@ -2466,7 +2687,8 @@ state_status_t state_lock(struct fsal_obj_handle *obj,
 		 */
 		glist_for_each(glist, &obj->state_hdl->file.lock_list) {
 			found_entry =
-			    glist_entry(glist, state_lock_entry_t, sle_list);
+				glist_entry(glist, state_lock_entry_t,
+						sle_list);
 
 			if (different_owners(found_entry->sle_owner, owner))
 				continue;
@@ -2520,7 +2742,7 @@ recheck_for_conflicting_entries:
 		 * a lock on this file via a different export.
 		 */
 		if (found_entry->sle_export != op_ctx->ctx_export
-		    && !different_owners(found_entry->sle_owner, owner)) {
+			&& !different_owners(found_entry->sle_owner, owner)) {
 			struct tmp_export_paths tmp = {NULL, NULL};
 
 			tmp_get_exp_paths(&tmp, found_entry->sle_export);
@@ -2545,15 +2767,16 @@ recheck_for_conflicting_entries:
 		found_entry_end = lock_end(&found_entry->sle_lock);
 
 		if (!(lock->lock_reclaim)
-		    && (found_entry_end >= lock->lock_start)
-		    && (found_entry->sle_lock.lock_start <= range_end)) {
+			&& (found_entry_end >= lock->lock_start)
+			&& (found_entry->sle_lock.lock_start <= range_end)
+			&& allow) {
 			/* lock overlaps see if we can allow:
 			 * allow if neither lock is exclusive or
 			 * the owner is the same
 			 */
 			if ((found_entry->sle_lock.lock_type == FSAL_LOCK_W
-			     || lock->lock_type == FSAL_LOCK_W)
-			    && different_owners(found_entry->sle_owner,
+				 || lock->lock_type == FSAL_LOCK_W)
+				&& different_owners(found_entry->sle_owner,
 						owner)) {
 				/* Found a conflicting lock, break out of loop.
 				 * Also indicate overlap hint.
@@ -2562,17 +2785,19 @@ recheck_for_conflicting_entries:
 				LogList("Locks", obj,
 					&obj->state_hdl->file.lock_list);
 				state_owner_t *cf_own = found_entry->sle_owner;
-				nfs_client_id_t *client_id =
-				    cf_own->so_owner.so_nfs4_owner.so_clientrec;
+				state_nfs4_owner_t *owner =
+						&cf_own->so_owner.so_nfs4_owner;
+				nfs_client_id_t *c_id =
+						owner->so_clientrec;
 
 				if ((atomic_fetch_uint32_t(
 					&num_of_curr_expired_clients))
-				    && (cf_own->so_type
+					&& (cf_own->so_type
 					>= STATE_OPEN_OWNER_NFSV4)
-				    && client_id->marked_for_delayed_cleanup) {
+					&& c_id->marked_for_delayed_cleanup) {
 					/* Release the state lock, to clean */
 					STATELOCK_unlock(obj);
-					reap_expired_client_list(client_id);
+					reap_expired_client_list(c_id);
 					/* Acquire back the state lock */
 					STATELOCK_lock(obj);
 
@@ -2586,76 +2811,29 @@ recheck_for_conflicting_entries:
 				}
 				allow = false;
 				overlap = true;
-				break;
+				/* We must continue as the request can be an
+				 * nfsv4 cancel request
+				 */
+				continue;
 			}
 		}
 
-		if (found_entry_end >= range_end
-		    && found_entry->sle_lock.lock_start <= lock->lock_start
-		    && found_entry->sle_lock.lock_type == lock->lock_type
-		    && (found_entry->sle_blocked == STATE_NON_BLOCKING
-			|| found_entry->sle_blocked == STATE_AVAILABLE)) {
-			/* Found an entry that entirely overlaps the new entry
-			 * (and due to the preceding test does not prevent
-			 * granting this lock - therefore there can't be any
-			 * other locks that would prevent granting this lock
-			 */
-			if (!different_owners(found_entry->sle_owner, owner)) {
-				/* The lock actually has the same owner, we're
-				 * done, other than dealing with a lock in
-				 * GRANTING state.
-				 */
-				if (found_entry->sle_blocked
-				    == STATE_AVAILABLE) {
-					/* Need to handle completion of granting
-					 * of this lock because a GRANT was in
-					 * progress. This could be a client
-					 * retrying a blocked lock due to
-					 * mis-trust of server. If the client
-					 * also accepts the GRANT_MSG with a
-					 * GRANT_RESP, that will be just fine.
-					 */
-					grant_blocked_lock_immediate(
-						obj->state_hdl, found_entry);
-				}
+		handle_contained_range_if_present(obj, owner, state,
+			blocking, lock, found_entry, found_entry_end,
+			range_end, &overlap, &lock_granted, &lock_cancel);
 
-				LogEntry("Found existing", found_entry);
-
-				if (found_entry->sle_state != state) {
-					state_t *old_state = NULL;
-
-					LogFullDebug(COMPONENT_STATE,
-					"Existing lock entry has old state");
-
-					old_state = found_entry->sle_state;
-					found_entry->sle_state = state;
-					inc_state_t_ref(state);
-
-					if (old_state != NULL)
-						dec_state_t_ref(old_state);
-
-					glist_add_tail(
-					 &state->state_data.lock.state_locklist,
-					 &found_entry->sle_state_locks);
-
-					LogEntry("sle after state change",
-							found_entry);
-				}
-
-				status = STATE_SUCCESS;
-				return status;
-			}
-
-			/* Found a compatible lock with a different lock owner
-			 * that fully overlaps, set hint.
-			 */
-			LogEntry("Found overlapping", found_entry);
-			overlap = true;
+		if (lock_granted) {
+			status = STATE_SUCCESS;
+			return status;
+		}
+		if (lock_cancel) {
+			status = STATE_LOCK_BLOCKED;
+			return status;
 		}
 	}
 
 	/* Decide how to proceed */
-	if ((blocking == STATE_BLOCKING) && (protocol == LOCK_NLM)) {
+	if (blocking == STATE_BLOCKING) {
 		/* do_lock_op will handle FSAL_OP_LOCKB for those FSALs that
 		 * do not support async blocking locks. It will make a
 		 * non-blocking call in that case, and it will return
@@ -2722,7 +2900,7 @@ recheck_for_conflicting_entries:
 	/* Create the new lock entry.
 	 * Provisionally mark this lock as granted.
 	 */
-	found_entry = create_state_lock_entry(obj,
+	new_entry = create_state_lock_entry(obj,
 					op_ctx->ctx_export,
 					STATE_NON_BLOCKING,
 					protocol,
@@ -2740,13 +2918,13 @@ recheck_for_conflicting_entries:
 	if (allow || async) {
 		/* Prepare to make call to FSAL for this lock */
 		status = do_lock_op(obj,
-				    state,
-				    lock_op,
-				    owner,
-				    lock,
-				    allow ? holder : NULL,
-				    allow ? conflict : NULL,
-				    overlap);
+					state,
+					lock_op,
+					owner,
+					lock,
+					allow ? holder : NULL,
+					allow ? conflict : NULL,
+					overlap);
 	} else {
 		/* FSAL does not support async blocking locks and we have
 		 * a blocking lock within Ganesha, no need to make an
@@ -2758,23 +2936,23 @@ recheck_for_conflicting_entries:
 	if (status == STATE_SUCCESS) {
 		/* Merge any touching or overlapping locks into this one */
 		LogEntry("FSAL lock acquired, merging locks for",
-			 found_entry);
+				new_entry);
 
-		merge_lock_entry(obj->state_hdl, found_entry);
+		merge_lock_entry(obj->state_hdl, new_entry);
 
 		/* Insert entry into lock list */
-		LogEntry("New lock", found_entry);
+		LogEntry("New lock", new_entry);
 
 		glist_add_tail(&obj->state_hdl->file.lock_list,
-			       &found_entry->sle_list);
+				   &new_entry->sle_list);
 
 		/* A lock downgrade could unblock blocked locks */
 		grant_blocked_locks(obj->state_hdl);
 	} else if (status == STATE_LOCK_CONFLICT) {
-		LogEntry("Conflict in FSAL for", found_entry);
+		LogEntry("Conflict in FSAL for", new_entry);
 
 		/* Discard lock entry */
-		remove_from_locklist(found_entry);
+		remove_from_locklist(new_entry);
 	} else if (status == STATE_LOCK_BLOCKED) {
 		/* We are going to use the bdata, set it to NULL so that
 		 * the caller doesn't free it!
@@ -2783,17 +2961,18 @@ recheck_for_conflicting_entries:
 		*bdata = NULL;
 
 		/* Mark entry as blocking and attach block_data */
-		found_entry->sle_block_data = block_data;
-		found_entry->sle_blocked = blocking;
-		block_data->sbd_lock_entry = found_entry;
+		new_entry->sle_block_data = block_data;
+		new_entry->sle_blocked = blocking;
+		block_data->sbd_lock_entry = new_entry;
 		if (async) {
 			/* Allow FSAL to signal when lock is granted or
 			 * available for retry.
 			 */
 			block_data->sbd_block_type = STATE_BLOCK_ASYNC;
 		} else if (allow) {
-			/* Actively poll for the lock. */
-			block_data->sbd_block_type = STATE_BLOCK_POLL;
+			/* Actively poll for the lock only for nlm locks. */
+			block_data->sbd_block_type = (protocol == LOCK_NLM) ?
+					STATE_BLOCK_ASYNC : STATE_BLOCK_POLL;
 		} else {
 			/* Ganesha will attempt to grant the lock when
 			 * a conflicting lock is released.
@@ -2802,10 +2981,10 @@ recheck_for_conflicting_entries:
 		}
 
 		/* Insert entry into lock list */
-		LogEntry("FSAL block for", found_entry);
+		LogEntry("FSAL block for", new_entry);
 
 		glist_add_tail(&obj->state_hdl->file.lock_list,
-			       &found_entry->sle_list);
+				   &new_entry->sle_list);
 
 		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
@@ -2823,7 +3002,7 @@ recheck_for_conflicting_entries:
 				 state_err_str(status));
 
 		/* Discard lock entry */
-		remove_from_locklist(found_entry);
+		remove_from_locklist(new_entry);
 	}
 
 	return status;
@@ -3024,9 +3203,6 @@ void state_unlock_all(struct fsal_obj_handle *obj, state_t *state)
 state_status_t state_cancel(struct fsal_obj_handle *obj,
 			    state_owner_t *owner, fsal_lock_param_t *lock)
 {
-	struct glist_head *glist;
-	state_lock_entry_t *found_entry;
-
 	if (obj->type != REGULAR_FILE) {
 		LogLock(COMPONENT_STATE, NIV_DEBUG,
 			"Bad Cancel",
@@ -3036,40 +3212,66 @@ state_status_t state_cancel(struct fsal_obj_handle *obj,
 
 	STATELOCK_lock(obj);
 
-	/* If lock list is empty, there really isn't any work for us to do. */
-	if (glist_empty(&obj->state_hdl->file.lock_list)) {
-		LogDebug(COMPONENT_STATE,
-			 "Cancel success on file with no locks");
+	state_cancel_internal(obj, owner, lock);
 
-		goto out_unlock;
-	}
-
-	glist_for_each(glist, &obj->state_hdl->file.lock_list) {
-		found_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-
-		if (different_owners(found_entry->sle_owner, owner))
-			continue;
-
-		/* Can not cancel a lock once it is granted */
-		if (found_entry->sle_blocked == STATE_NON_BLOCKING)
-			continue;
-
-		if (different_lock(&found_entry->sle_lock, lock))
-			continue;
-
-		/* Cancel the blocked lock */
-		cancel_blocked_lock(obj, found_entry);
-
-		/* Check to see if we can grant any blocked locks. */
-		grant_blocked_locks(obj->state_hdl);
-
-		break;
-	}
-
- out_unlock:
 	STATELOCK_unlock(obj);
 
 	return STATE_SUCCESS;
+}
+
+/**
+ * @brief Release a lock if blocked
+ *
+ * @param[in] lock_entry lock entry to cancel
+ */
+state_status_t state_cancel_blocked(state_lock_entry_t *lock_entry)
+{
+	state_status_t status;
+
+	STATELOCK_lock(lock_entry->sle_obj);
+	switch (lock_entry->sle_blocked) {
+	case STATE_BLOCKING:
+		state_cancel_internal(lock_entry->sle_obj,
+				      lock_entry->sle_owner,
+				      &lock_entry->sle_lock);
+		status = STATE_SUCCESS;
+		break;
+
+	case STATE_AVAILABLE:
+		switch (lock_entry->sle_protocol) {
+		case LOCK_NFSv4:
+			state_cancel_internal(lock_entry->sle_obj,
+					      lock_entry->sle_owner,
+					      &lock_entry->sle_lock);
+			status = STATE_SUCCESS;
+			break;
+
+		case LOCK_NLM:
+			status = STATE_LOCKED;
+			break;
+
+		default:
+			LogFatal(COMPONENT_STATE, "Got an protocol type %s",
+					str_protocol(lock_entry->sle_blocked));
+		}
+		break;
+
+	case STATE_NON_BLOCKING:
+		status = STATE_LOCKED;
+		break;
+
+	case STATE_CANCELED:
+		status = STATE_SUCCESS;
+		break;
+
+	default:
+		LogFatal(COMPONENT_STATE, "Got an unexpected block type %s",
+				str_blocked(lock_entry->sle_blocked));
+	}
+
+	STATELOCK_unlock(lock_entry->sle_obj);
+
+	return status;
 }
 
 #ifdef _USE_NLM
@@ -3577,6 +3779,105 @@ void state_export_unlock_all(void)
 }
 
 /**
+ * @brief handle nlm lock polling logic
+ *
+ * @param[in] pblock lock block data
+ * @param[in] found_entry entry to poll
+ */
+
+static void handle_nlm_lock(state_block_data_t *pblock,
+		state_lock_entry_t *found_entry)
+{
+	/* Check if right type */
+	if (pblock->sbd_block_type != STATE_BLOCK_POLL)
+		return;
+
+	/* Schedule async processing, leave the lock on the blocked
+	 * lock list since we might not succeed in granting this lock.
+	 */
+	pblock->sbd_grant_type = STATE_GRANT_POLL;
+
+	/* Since we're scheduling this block to be handled in
+	 * another thread, we need to hold a reference on the
+	 * lock entry to prevent the entry from release before
+	 * we are done processing.
+	 */
+	lock_entry_inc_ref(found_entry);
+
+	if (state_block_schedule(found_entry) != STATE_SUCCESS) {
+		LogMajor(COMPONENT_STATE,
+			 "Unable to schedule lock notification.");
+		/* scheduling failed, release the reference to lock entry */
+		lock_entry_dec_ref(found_entry);
+	}
+
+	LogEntry("Blocked Lock found", found_entry);
+}
+
+/* It looks like when we report OPEN4_RESULT_MAY_NOTIFY_LOCK, the client polls
+ * exactly every lease time. This creates a race where the poll request arrives
+ * after we cancel the lock. For this reason, we add a small time buffer.
+ */
+#define POLL_TIME_CANCEL_BUFFER_SEC (5)
+
+/**
+ * @brief handle nfsv4 lock polling logic
+ *
+ * @param[in] pblock lock block data
+ * @param[in] found_entry entry to poll
+ * @param[in] check_time time we performed the poll
+ */
+
+static void handle_nfsv4_lock(state_block_data_t *pblock,
+		state_lock_entry_t *found_entry, time_t check_time)
+{
+	assert(found_entry->sle_protocol == LOCK_NFSv4);
+	if (found_entry->sle_blocked == STATE_AVAILABLE) {
+		const uint64_t expire_time =
+			pblock->sbd_prot.sbd_v4.snbd_notified_eligible_time +
+			nfs_param.nfsv4_param.lease_lifetime +
+			POLL_TIME_CANCEL_BUFFER_SEC;
+
+		if (check_time < expire_time)
+			return;
+
+		/* Since we are scheduling this lock to be unlocked in
+		* another thread, we need to hold a reference on the
+		* lock entry to prevent the entry from being released
+		* before we are done processing.
+		*/
+		lock_entry_inc_ref(found_entry);
+
+		if (state_block_cancel_schedule(found_entry) != STATE_SUCCESS) {
+			LogMajor(COMPONENT_STATE, "Unable to schedule cancel.");
+			/* scheduling failed, release the reference to lock
+			* entry */
+			lock_entry_dec_ref(found_entry);
+		}
+	} else {
+		/* We set minimum time between polls to be twice the lease time,
+		 * but this is just an internal parameter
+		 */
+		const uint32_t min_time_between_polls =
+			2 * nfs_param.nfsv4_param.lease_lifetime;
+		const uint64_t next_poll_time =
+			pblock->sbd_prot.sbd_v4.snbd_last_poll_time +
+			min_time_between_polls;
+		if (check_time < next_poll_time)
+			return;
+
+		lock_entry_inc_ref(found_entry);
+		if (test_blocking_lock_eligibility_schedule(found_entry) !=
+				STATE_SUCCESS) {
+			LogMajor(COMPONENT_STATE,
+				"Unable to schedule lock elgibility test.");
+			lock_entry_dec_ref(found_entry);
+		}
+	}
+}
+
+
+/**
  * @brief Poll any blocked locks of type STATE_BLOCK_POLL
  *
  * @param[in] ctx Fridge Thread Context
@@ -3590,8 +3891,8 @@ void blocked_lock_polling(struct fridgethr_context *ctx)
 	state_block_data_t *pblock;
 
 	SetNameFunction("lk_poll");
-
 	PTHREAD_MUTEX_lock(&blocked_locks_mutex);
+	time_t check_time = time(NULL);
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
 		LogBlockedList("Blocked Lock List",
@@ -3606,28 +3907,12 @@ void blocked_lock_polling(struct fridgethr_context *ctx)
 		if (found_entry == NULL)
 			continue;
 
-		/* Check if right type */
-		if (pblock->sbd_block_type != STATE_BLOCK_POLL)
-			continue;
+		/* Check if this is a non polled nfsv4 lock*/
+		if (found_entry->sle_protocol == LOCK_NFSv4)
+			handle_nfsv4_lock(pblock, found_entry, check_time);
+		else
+			handle_nlm_lock(pblock, found_entry);
 
-		/* Schedule async processing, leave the lock on the blocked
-		 * lock list since we might not succeed in granting this lock.
-		 */
-		pblock->sbd_grant_type = STATE_GRANT_POLL;
-
-		if (state_block_schedule(pblock) != STATE_SUCCESS) {
-			LogMajor(COMPONENT_STATE,
-				 "Unable to schedule lock notification.");
-		} else {
-			/* Since we scheduled this block to be handled in
-			 * another thread, we need to hold a reference on the
-			 * lock entry to prevent the entry from release before
-			 * we are done processing.
-			 */
-			lock_entry_inc_ref(found_entry);
-		}
-
-		LogEntry("Blocked Lock found", found_entry);
 	}			/* glist_for_each_safe */
 
 	PTHREAD_MUTEX_unlock(&blocked_locks_mutex);
@@ -3678,16 +3963,20 @@ static void find_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 		 * not find this lock entry and hit the LogFatal below...
 		 */
 		pblock->sbd_grant_type = grant_type;
-		if (state_block_schedule(pblock) != STATE_SUCCESS) {
+
+		/* Since we are scheduling this block to be handled in
+		 * another thread, we need to hold a reference on the
+		 * lock entry to prevent the entry from releasing before
+		 * we are done processing.
+		 */
+		lock_entry_inc_ref(found_entry);
+
+		if (state_block_schedule(found_entry) != STATE_SUCCESS) {
 			LogMajor(COMPONENT_STATE,
 				 "Unable to schedule lock notification.");
-		} else {
-			/* Since we scheduled this block to be handled in
-			 * another thread, we need to hold a reference on the
-			 * lock entry to preventthe entry from release before
-			 * we are done processing.
-			 */
-			lock_entry_inc_ref(found_entry);
+			/* scheduling failed, release the reference to lock
+			 * entry */
+			lock_entry_dec_ref(found_entry);
 		}
 
 		LogEntry("Blocked Lock found", found_entry);

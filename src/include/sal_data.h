@@ -894,6 +894,15 @@ typedef struct state_nlm_block_data_t {
 						   FH buffer */
 } state_nlm_block_data_t;
 
+/**
+ * @brief NFSv4 specific Blocking lock data
+ */
+
+typedef struct state_nfsv4_block_data_t {
+	time_t snbd_notified_eligible_time; /* Only valid for available locks */
+	time_t snbd_last_poll_time; /* Only valid for blocked locks */
+} state_nfsv4_block_data_t;
+
 extern struct glist_head state_blocked_locks;
 
 /**
@@ -930,7 +939,7 @@ struct state_block_data_t {
 	state_lock_entry_t *sbd_lock_entry;	/*< Details of lock */
 	union {
 		state_nlm_block_data_t sbd_nlm; /*< NLM block data */
-		void *sbd_v4;			/*< NFSv4 block data */
+		state_nfsv4_block_data_t sbd_v4; /*< NFSv4 block data */
 	} sbd_prot;
 };
 

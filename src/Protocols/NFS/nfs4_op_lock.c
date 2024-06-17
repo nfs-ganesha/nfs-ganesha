@@ -38,6 +38,7 @@
 #include "nfs_proto_tools.h"
 #include "gsh_list.h"
 #include "export_mgr.h"
+#include "nfs_rpc_callback.h"
 
 static const char *lock_tag = "LOCK";
 
@@ -57,6 +58,52 @@ static const char *lock_tag = "LOCK";
  */
 
 #define SUCCESS_RESP_SIZE (sizeof(nfsstat4) + sizeof(stateid4))
+
+static void notify_granted_completion(rpc_call_t *call)
+{
+	nfs41_release_single(call);
+}
+
+static state_status_t nfsv4_granted_callback(struct fsal_obj_handle *obj,
+		state_lock_entry_t *lock_entry)
+{
+	LogFullDebug(COMPONENT_NFS_V4_LOCK, "Sending granted callback");
+
+	int ret;
+	nfs_cb_argop4 argop;
+	CB_NOTIFY_LOCK4args *argslock = &argop.nfs_cb_argop4_u.opcbnotify_lock;
+	state_nfsv4_block_data_t *bdata =
+			&lock_entry->sle_block_data->sbd_prot.sbd_v4;
+
+	argop.argop = NFS4_OP_CB_NOTIFY_LOCK;
+	if (!nfs4_FSALToFhandle(true, &argslock->cnla_fh, obj,
+			lock_entry->sle_export)) {
+		LogCrit(COMPONENT_NFS_V4_LOCK, "Failed allocating handle");
+		return STATE_LOCK_BLOCKED;
+	}
+	argslock->cnla_lock_owner.owner.owner_val =
+		gsh_calloc(1, lock_entry->sle_owner->so_owner_len);
+	argslock->cnla_lock_owner.owner.owner_len =
+		lock_entry->sle_owner->so_owner_len;
+	memcpy(argslock->cnla_lock_owner.owner.owner_val,
+		lock_entry->sle_owner->so_owner_val,
+		lock_entry->sle_owner->so_owner_len);
+
+	argslock->cnla_lock_owner.clientid =
+		lock_entry->sle_owner->so_owner.so_nfs4_owner.so_clientid;
+
+	ret = nfs_rpc_cb_single(
+		lock_entry->sle_owner->so_owner.so_nfs4_owner.so_clientrec,
+		&argop, NULL, notify_granted_completion, NULL);
+	LogDebug(COMPONENT_FSAL_UP, "nfs_rpc_cb_single returned %d", ret);
+
+	bdata->snbd_notified_eligible_time = time(NULL);
+
+	gsh_free(argslock->cnla_lock_owner.owner.owner_val);
+	nfs4_freeFH(&argslock->cnla_fh);
+
+	return STATE_SUCCESS;
+}
 
 enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 				 compound_data_t *data,
@@ -109,6 +156,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 	uint64_t maxfilesize =
 	    op_ctx->fsal_export->exp_ops.fs_maxfilesize(op_ctx->fsal_export);
 	bool new_lock_state = false;
+	state_block_data_t *pblock_data = NULL;
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCK handler ----------------------");
@@ -652,6 +700,12 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 		goto out2;
 	}
 
+	if (blocking == STATE_BLOCKING) {
+		pblock_data = gsh_calloc(1, sizeof(*pblock_data));
+		pblock_data->sbd_granted_callback = nfsv4_granted_callback;
+		pblock_data->sbd_prot.sbd_v4.snbd_last_poll_time = time(NULL);
+		pblock_data->sbd_prot.sbd_v4.snbd_notified_eligible_time = 0;
+	}
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	 * lock into SAL (and FSAL). */
 	state_status = state_lock(obj,
@@ -659,16 +713,22 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 				  lock_state,
 				  blocking,
 				  LOCK_NFSv4,
-				  NULL,	/* No block data for now */
+				  &pblock_data,
 				  &lock_desc,
 				  &conflict_owner,
 				  &conflict_desc);
+	/* If we didn't block, release the block data. Note that
+	 * state_lock() would set pblock_data to NULL if the lock was
+	 * blocked!
+	 */
+	gsh_free(pblock_data);
 
 	if (state_status != STATE_SUCCESS) {
 		LogDebug(COMPONENT_NFS_V4_LOCK, "LOCK failed with status %s",
 			 state_err_str(state_status));
 
-		if (state_status == STATE_LOCK_CONFLICT) {
+		if (state_status == STATE_LOCK_CONFLICT ||
+				state_status == STATE_LOCK_BLOCKED) {
 			/* A conflicting lock from a different lock_owner,
 			 * returns NFS4ERR_DENIED, but check that the
 			 * response will fit, if not, return response error.
@@ -694,8 +754,9 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op,
 					    lock_tag);
 		}
 
-		if (new_lock_state) {
-			/* Need to destroy new state */
+		if (new_lock_state && state_status != STATE_LOCK_BLOCKED) {
+			/* Keep the state only if it the lock was granted or
+			   blocked */
 			state_del_locked(lock_state);
 		}
 

@@ -65,24 +65,98 @@ struct fridgethr *state_poll_fridge;
 
 static void state_blocked_lock_caller(struct fridgethr_context *ctx)
 {
-	state_block_data_t *block = ctx->arg;
+	state_lock_entry_t *lock_entry = ctx->arg;
 	struct gsh_export *export;
 	bool set_op_ctx = false;
 	struct req_op_context op_context;
 
-	export = block->sbd_lock_entry->sle_export;
+	export = lock_entry->sle_export;
 	if (export_ready(export)) {
 		get_gsh_export_ref(export);
 		/* Initialize a root context, need to get a valid export. */
-		init_op_context(&op_context, export, export->fsal_export,
-				NULL, 0, 0, UNKNOWN_REQUEST);
+		init_op_context(&op_context, export, export->fsal_export, NULL,
+				0, 0, UNKNOWN_REQUEST);
 		set_op_ctx = true;
 	}
 
-	process_blocked_lock_upcall(block);
+	process_blocked_lock_upcall(lock_entry);
+
+	/* We are done with the lock_entry, release the reference now. */
+	lock_entry_dec_ref(lock_entry);
 
 	if (set_op_ctx)
 		release_op_context();
+}
+
+/**
+ * @brief Process and cancel blocked lock request
+ *
+ * @param[in] ctx Thread fridge context, containing arguments.
+ */
+
+static void state_blocked_lock_cancel(struct fridgethr_context *ctx)
+{
+	state_lock_entry_t *lock_entry = ctx->arg;
+	struct gsh_export *export;
+	struct req_op_context op_context;
+
+	export = lock_entry->sle_export;
+	if (!export_ready(export)) {
+		LogCrit(COMPONENT_STATE,
+			"export not ready for a lock that we want to cancel");
+		return;
+	}
+	get_gsh_export_ref(export);
+	/* Initialize a root context, need to get a valid export. */
+	init_op_context(&op_context, export, export->fsal_export, NULL,
+		0, 0, UNKNOWN_REQUEST);
+	state_status_t ret = state_cancel_blocked(lock_entry);
+
+	LogFullDebug(COMPONENT_STATE, "unlock returned %d", ret);
+
+	/* We are done with the lock_entry, release the reference now. */
+	lock_entry_dec_ref(lock_entry);
+
+	release_op_context();
+}
+
+/**
+ * @brief Test blocking lock eligibility and send granted callback on success
+ *
+ * This can be useful in case the original callback hasn't reached the client.
+ *
+ * @param[in] ctx Thread fridge context, containing arguments.
+ */
+
+static void test_blocking_lock_eligibility(struct fridgethr_context *ctx)
+{
+	state_lock_entry_t *lock_entry = ctx->arg;
+	struct gsh_export *export;
+	struct req_op_context op_context;
+
+	export = lock_entry->sle_export;
+	if (!export_ready(export)) {
+		LogCrit(COMPONENT_STATE,
+			"export not ready for the lock that we want to test");
+		lock_entry_dec_ref(lock_entry);
+		return;
+	}
+	get_gsh_export_ref(export);
+	/* Initialize a root context, needed to get a valid export. */
+	init_op_context(&op_context, export, export->fsal_export, NULL,
+		0, 0, UNKNOWN_REQUEST);
+
+	state_status_t lock_test_status = state_test(
+		lock_entry->sle_obj, lock_entry->sle_state,
+		lock_entry->sle_owner, &lock_entry->sle_lock,
+		/* holder */ NULL, /* conflict */ NULL);
+	LogFullDebug(COMPONENT_STATE, "lock test returned %d",
+			lock_test_status);
+	if (lock_test_status == STATE_SUCCESS)
+		process_blocked_lock_upcall(lock_entry);
+
+	lock_entry_dec_ref(lock_entry);
+	release_op_context();
 }
 
 /**
@@ -128,15 +202,60 @@ state_status_t state_async_schedule(state_async_queue_t *arg)
  *
  * @return State status.
  */
-state_status_t state_block_schedule(state_block_data_t *block)
+state_status_t state_block_schedule(state_lock_entry_t *found_entry)
 {
 	int rc;
 
-	LogFullDebug(COMPONENT_STATE, "Schedule notification %p", block);
+	LogFullDebug(COMPONENT_STATE, "Schedule notification %p", found_entry);
 
 	rc = fridgethr_submit(state_async_fridge, state_blocked_lock_caller,
-			      block);
+			      found_entry);
 
+	if (rc != 0)
+		LogMajor(COMPONENT_STATE, "Unable to schedule request: %d", rc);
+
+	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+}
+
+/**
+ * @brief Schedule a cancel
+ *
+ * @param[in] lock cancel to schedule
+ *
+ * @return State status.
+ */
+state_status_t state_block_cancel_schedule(state_lock_entry_t *lock_entry)
+{
+	int rc;
+
+	LogFullDebug(COMPONENT_STATE, "Schedule unlock %p", lock_entry);
+
+	rc = fridgethr_submit(state_async_fridge, state_blocked_lock_cancel,
+			lock_entry);
+
+	if (rc != 0)
+		LogMajor(COMPONENT_STATE, "Unable to schedule request: %d", rc);
+
+	return rc == 0 ? STATE_SUCCESS : STATE_SIGNAL_ERROR;
+}
+
+/**
+ * @brief Schedule a blocking lock eligibility test
+ *
+ * @param[in] lock to schedule the eligibility test for
+ *
+ * @return State status.
+ */
+state_status_t test_blocking_lock_eligibility_schedule(
+		state_lock_entry_t *lock_entry)
+{
+	int rc;
+
+	LogFullDebug(COMPONENT_STATE,
+			"Schedule blocking lock eligibility test %p",
+			lock_entry);
+	rc = fridgethr_submit(state_async_fridge,
+			test_blocking_lock_eligibility, lock_entry);
 	if (rc != 0)
 		LogMajor(COMPONENT_STATE, "Unable to schedule request: %d", rc);
 

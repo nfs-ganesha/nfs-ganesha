@@ -1444,6 +1444,12 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_OPEN4->OPEN4res_u.resok4.rflags |= OPEN4_RESULT_LOCKTYPE_POSIX;
 
+	if (op_ctx->fsal_export->exp_ops.fs_supports(
+		op_ctx->fsal_export, fso_lock_support_async_block)) {
+		res_OPEN4->OPEN4res_u.resok4.rflags |=
+				OPEN4_RESULT_MAY_NOTIFY_LOCK;
+	}
+
 	LogFullDebug(COMPONENT_STATE, "NFS4 OPEN returning NFS4_OK");
 
 	/* regular exit */

@@ -644,6 +644,10 @@ void state_lock_wipe(struct state_hdl *hstate);
 
 void cancel_all_nlm_blocked(void);
 
+state_status_t state_cancel_blocked(state_lock_entry_t *lock_entry);
+
+void lock_entry_dec_ref(state_lock_entry_t *);
+
 /******************************************************************************
  *
  * NFSv4 State Management functions
@@ -896,7 +900,14 @@ void state_export_unshare_all(void);
 state_status_t state_async_schedule(state_async_queue_t *arg);
 
 /* Schedule lock notifications */
-state_status_t state_block_schedule(state_block_data_t *block);
+state_status_t state_block_schedule(state_lock_entry_t *lock_entry);
+
+/* Schedule unlock for non polled lock */
+state_status_t state_block_cancel_schedule(state_lock_entry_t *lock_entry);
+
+/* Schedule lock eligibility test */
+state_status_t test_blocking_lock_eligibility_schedule(
+		state_lock_entry_t *lock_entry);
 
 /* Signal Async Work */
 void signal_async_work(void);
@@ -910,7 +921,7 @@ void grant_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 void available_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 				   fsal_lock_param_t *lock);
 
-void process_blocked_lock_upcall(state_block_data_t *block_data);
+void process_blocked_lock_upcall(state_lock_entry_t *lock_entry);
 
 void blocked_lock_polling(struct fridgethr_context *ctx);
 
