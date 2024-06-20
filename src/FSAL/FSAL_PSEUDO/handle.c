@@ -42,7 +42,7 @@
 #include "common_utils.h"
 
 /* Atomic uint64_t that is used to generate inode numbers in the Pseudo FS */
-uint64_t inode_number;
+uint64_t inode_number = 1;
 
 #define V4_FH_OPAQUE_SIZE (NFS4_FHSIZE - sizeof(struct file_handle_v4))
 
@@ -181,6 +181,7 @@ static struct pseudo_fsal_obj_handle
 	struct pseudo_fsal_obj_handle *hdl;
 	char path[MAXPATHLEN] = "\0";
 	struct display_buffer pathbuf = {sizeof(path), path, path};
+	uint64_t fileid = 0;
 	int rc;
 
 	hdl = gsh_calloc(1, sizeof(struct pseudo_fsal_obj_handle) +
@@ -223,7 +224,9 @@ static struct pseudo_fsal_obj_handle
 	hdl->attributes.fsid.major = 0;
 	hdl->attributes.fsid.minor = 0;
 
-	hdl->obj_handle.fileid = atomic_postinc_uint64_t(&inode_number);
+	if (strcmp(name, "/") != 0)
+		fileid = atomic_postinc_uint64_t(&inode_number);
+	hdl->obj_handle.fileid = fileid;
 	hdl->attributes.fileid = hdl->obj_handle.fileid;
 
 	hdl->attributes.mode = attrs->mode & (~S_IFMT & 0xFFFF) &
