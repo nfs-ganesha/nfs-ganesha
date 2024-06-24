@@ -240,21 +240,23 @@ try_drain_self(connection_manager__client_t *client, uint32_t timeout_sec)
 	/* TODO: Extends client state lease (see explanation in header) */
 
 	const struct glist_head *node;
-
+	/* start draining connections */
 	glist_for_each(node, &client->connections)
 	{
-		const connection_manager__connection_t *const connection =
+		connection_manager__connection_t *const connection =
 			glist_entry(node, connection_manager__connection_t,
 				    node);
 		LogDebugConnection(connection,
 				   "Destroying connection (xp_refcnt %d)",
 				   connection->xprt->xp_refcnt);
 		assert(connection->is_managed);
+		if (connection->is_destroyed)
+			continue;
+		connection->is_destroyed = true;
 		update_socket_linger(connection);
-		shutdown(connection->xprt->xp_fd, SHUT_RDWR);
 		SVC_DESTROY(connection->xprt);
+		connection->destroy_start = time(NULL);
 	}
-
 	LogDebugClient(client,
 		       "Waiting for %d connections to terminate, timeout=%d",
 		       client->connections_count, timeout_sec);
@@ -291,11 +293,27 @@ try_drain_self(connection_manager__client_t *client, uint32_t timeout_sec)
 
 	if (client->state == CONNECTION_MANAGER__CLIENT_STATE__DRAINED) {
 		return CONNECTION_MANAGER__DRAIN__SUCCESS;
-	} else {
-		return wait_result == CONDITION_WAIT__TIMEOUT ?
-				     CONNECTION_MANAGER__DRAIN__FAILED_TIMEOUT :
-				     CONNECTION_MANAGER__DRAIN__FAILED;
 	}
+
+	/* Check for stuck connections */
+	glist_for_each(node, &client->connections)
+	{
+		const connection_manager__connection_t *const connection =
+			glist_entry(node, connection_manager__connection_t,
+				    node);
+		const int delta = time(NULL) - connection->destroy_start;
+
+		if (delta >
+			nfs_param.core_param.connection_manager_timeout_sec *
+			CONNECTION_MANAGER__DRAIN_MAX_EXPECTED_ITERATIONS) {
+			LogWarnConnection(connection, "Stuck for %d", delta);
+			return CONNECTION_MANAGER__DRAIN__FAILED_STUCK;
+		}
+	}
+
+	return wait_result == CONDITION_WAIT__TIMEOUT ?
+		       CONNECTION_MANAGER__DRAIN__FAILED_TIMEOUT :
+		       CONNECTION_MANAGER__DRAIN__FAILED;
 }
 
 enum connection_manager__drain_t
@@ -543,6 +561,8 @@ connection_manager__connection_started(SVCXPRT *xprt)
 	 * if we do not end up managing the client.
 	 */
 	connection->gsh_client = gsh_client;
+	connection->is_destroyed = false;
+	connection->destroy_start = 0;
 
 	connection->is_managed = should_manage_connection(client_address);
 	if (!connection->is_managed) {

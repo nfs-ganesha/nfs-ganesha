@@ -91,6 +91,8 @@
 
 #include "common_utils.h"
 
+#define CONNECTION_MANAGER__DRAIN_MAX_EXPECTED_ITERATIONS 15
+
 enum connection_manager__drain_t {
 	/* Drain was successful */
 	CONNECTION_MANAGER__DRAIN__SUCCESS = 0,
@@ -103,6 +105,8 @@ enum connection_manager__drain_t {
 	CONNECTION_MANAGER__DRAIN__FAILED,
 	/* Drain failed due to timeout */
 	CONNECTION_MANAGER__DRAIN__FAILED_TIMEOUT,
+	/* Drain failed due to a connection that did not drain */
+	CONNECTION_MANAGER__DRAIN__FAILED_STUCK,
 
 	/* Number of drain results (for monitoring) */
 	CONNECTION_MANAGER__DRAIN__LAST,
@@ -183,6 +187,9 @@ typedef struct connection_manager__connection_t {
 	struct gsh_client *gsh_client;
 	/* connections list in connection_manager__client_t */
 	struct glist_head node;
+	/* This connection started draining and is no longer usable */
+	bool is_destroyed;
+	time_t destroy_start;
 } connection_manager__connection_t;
 
 typedef struct connection_manager__client_t {

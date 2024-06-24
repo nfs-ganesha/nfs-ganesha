@@ -75,6 +75,8 @@ stringify_drain_result(enum connection_manager__drain_t result)
 		return "SUCCESS_NO_CONNECTIONS";
 	case CONNECTION_MANAGER__DRAIN__FAILED:
 		return "FAILED";
+	case CONNECTION_MANAGER__DRAIN__FAILED_STUCK:
+		return "STUCK";
 	case CONNECTION_MANAGER__DRAIN__FAILED_TIMEOUT:
 		return "FAILED_TIMEOUT";
 	default:
