@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
 	/* Echo our PID into pidfile: this serves as a lock to prevent */
 	/* multiple instances from starting, so any failure creating   */
 	/* this file is a fatal error.                                 */
-	pidfile = open(nfs_pidfile_path, O_CREAT | O_RDWR, 0644);
+	pidfile = open(nfs_pidfile_path, O_CREAT | O_RDWR | O_TRUNC, 0644);
 	if (pidfile == -1) {
 		LogFatal(COMPONENT_MAIN,
 			"open(%s, O_CREAT | O_RDWR, 0644) failed for pid file, errno was: %s (%d)",
