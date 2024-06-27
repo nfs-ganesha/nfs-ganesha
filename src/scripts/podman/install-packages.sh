@@ -92,6 +92,23 @@ install_debian()
 
 install_rh()
 {
+	# Why can't the official images be fixed so they still work?  :-o
+	# Reference: https://stackoverflow.com/questions/70984003/centos-8-stream
+	case "$ID" in
+	centos)
+		case "$VERSION_ID" in
+		8)
+			mirror="http://mirror.centos.org"
+			vault="http://vault.centos.org"
+			sed -i \
+			    -e 's|mirrorlist|#mirrorlist|g' \
+			    -e "s|#baseurl=${mirror}|baseurl=${vault}|g" \
+			    /etc/yum.repos.d/CentOS-*
+			;;
+		esac
+		;;
+	esac
+
 	case "$ID" in
 	fedora)
 		:
