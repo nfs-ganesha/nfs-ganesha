@@ -53,6 +53,7 @@ extern struct nfs_init nfs_init;
 
 extern pthread_t gsh_dbus_thrid;
 
+void nfs_prereq_init_mutexes(void);
 void nfs_init_init(void);
 void nfs_init_cleanup(void);
 void nfs_init_complete(void);

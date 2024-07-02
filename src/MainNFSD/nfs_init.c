@@ -524,18 +524,7 @@ static void init_crash_handlers(void)
 	install_sighandler(SIGQUIT, crash_handler);
 }
 
-/**
- * @brief Initialize NFSd prerequisites
- *
- * @param[in] program_name Name of the program
- * @param[in] host_name    Server host name
- * @param[in] debug_level  Debug level
- * @param[in] log_path     Log path
- * @param[in] dump_trace   Dump trace when segfault
- */
-void nfs_prereq_init(const char *program_name, const char *host_name,
-		     int debug_level, const char *log_path, bool dump_trace,
-		     unsigned long stack_size)
+void nfs_prereq_init_mutexes(void)
 {
 	PTHREAD_MUTEXATTR_init(&default_mutex_attr);
 #if defined(__linux__)
@@ -549,6 +538,22 @@ void nfs_prereq_init(const char *program_name, const char *host_name,
 				&default_rwlock_attr,
 				PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP);
 #endif
+}
+
+/**
+ * @brief Initialize NFSd prerequisites
+ *
+ * @param[in] program_name Name of the program
+ * @param[in] host_name    Server host name
+ * @param[in] debug_level  Debug level
+ * @param[in] log_path     Log path
+ * @param[in] dump_trace   Dump trace when segfault
+ */
+void nfs_prereq_init(const char *program_name, const char *host_name,
+		     int debug_level, const char *log_path, bool dump_trace,
+		     unsigned long stack_size)
+{
+	nfs_prereq_init_mutexes();
 
 	PTHREAD_stack_size = stack_size;
 
