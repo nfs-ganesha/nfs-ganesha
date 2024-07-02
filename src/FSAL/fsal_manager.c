@@ -67,6 +67,22 @@
 pthread_mutex_t fsal_lock;
 GLIST_HEAD(fsal_list);
 
+void initialize_fsal_lock(void)
+{
+	PTHREAD_MUTEX_init(&fsal_lock, NULL);
+#if GSH_CAN_HOST_LOCAL_FS
+	PTHREAD_RWLOCK_init(&fs_lock, NULL);
+#endif
+}
+
+void destroy_fsal_lock(void)
+{
+	PTHREAD_MUTEX_destroy(&fsal_lock);
+#if GSH_CAN_HOST_LOCAL_FS
+	PTHREAD_RWLOCK_destroy(&fs_lock);
+#endif
+}
+
 /**
  * @{
  *
@@ -224,11 +240,7 @@ int start_fsals(config_file_t in_config,
 {
 	int rc;
 
-	PTHREAD_MUTEX_init(&fsal_lock, NULL);
-#if GSH_CAN_HOST_LOCAL_FS
-	PTHREAD_RWLOCK_init(&fs_lock, NULL);
-#endif
-
+	initialize_fsal_lock();
 	init_ctx_refstr();
 
 	rc = load_config_from_parse(in_config,

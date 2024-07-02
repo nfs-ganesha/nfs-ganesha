@@ -41,6 +41,9 @@ extern struct fsal_pnfs_ds_ops def_pnfs_ds_ops;
 
 extern pthread_mutex_t fsal_lock;
 
+void initialize_fsal_lock(void);
+void destroy_fsal_lock(void);
+
 extern struct glist_head fsal_list;
 
 /* Definitions for static FSALs */
