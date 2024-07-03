@@ -931,11 +931,15 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 	 * If we can't get them, we will check below for lease invalidity.
 	 * Note that calling get_state_obj_export_owner_refs with a NULL
 	 * state2 returns false.
+	 *
+	 * NOTE: Don't ask for obj2 if fsal_obj is NULL. We won't need obj2 in
+	 *       that case, and we may not have an op_ctx to release the object
+	 *       reference.
 	 */
 	if (!get_state_obj_export_owner_refs(state2,
-					       &obj2,
-					       NULL,
-					       &owner2)) {
+					     fsal_obj != NULL ? &obj2 : NULL,
+					     NULL,
+					     &owner2)) {
 		/* We matched this server's epoch, but could not find the
 		 * stateid. Chances are, the client was expired and the state
 		 * has all been freed.
@@ -1164,10 +1168,11 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 
  success:
 
-	if (obj2 != NULL) {
+	if (obj2 != NULL)
 		obj2->obj_ops->put_ref(obj2);
+
+	if (owner2 != NULL)
 		dec_state_owner_ref(owner2);
-	}
 
 	*state = state2;
 	return NFS4_OK;
@@ -1181,10 +1186,11 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 
  replay:
 
-	if (obj2 != NULL) {
+	if (obj2 != NULL)
 		obj2->obj_ops->put_ref(obj2);
+
+	if (owner2 != NULL)
 		dec_state_owner_ref(owner2);
-	}
 
 	data->current_stateid_valid = false;
 	return status;
