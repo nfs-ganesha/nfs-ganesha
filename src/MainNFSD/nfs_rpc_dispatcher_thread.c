@@ -409,6 +409,31 @@ const svc_xprt_fun_t udp_dispatch[] = {
 #endif
 };
 
+static enum xprt_stat nfs_rpc_dispatch_remote_addr_set_tcp(SVCXPRT *xprt)
+{
+	char remote_addr_str[SOCK_NAME_MAX] = "\0";
+	struct display_buffer remote_addr_dbuf = {
+		sizeof(remote_addr_str), remote_addr_str, remote_addr_str};
+	display_sockaddr(&remote_addr_dbuf, &xprt->xp_remote.ss);
+
+	char proxy_addr_str[SOCK_NAME_MAX] = "\0";
+	struct display_buffer proxy_addr_dbuf_p = {
+		sizeof(proxy_addr_str), proxy_addr_str, proxy_addr_str};
+	display_sockaddr(&proxy_addr_dbuf_p, &xprt->xp_proxy.ss);
+
+	LogInfo(COMPONENT_DISPATCH,
+		"fd %d: remote_address_is_set received for xprt %p. Remote address %s, HaProxy address %s",
+		xprt->xp_fd, xprt, remote_addr_str, proxy_addr_str);
+	if (connection_manager__connection_started(xprt) !=
+	    CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW) {
+		LogWarn(COMPONENT_DISPATCH,
+			"fs - %d: xprt %p failed on connection_started.",
+			xprt->xp_fd, xprt);
+		return XPRT_DIED;
+	}
+	return XPRT_IDLE;
+}
+
 static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH,
@@ -428,12 +453,10 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 		nfs_rpc_unref_user_data);
 
 	connection_manager__connection_init(xprt);
-	if (connection_manager__connection_started(xprt) !=
-	    CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW) {
-		return XPRT_DIED;
-	}
 
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
+	xprt->xp_dispatch.remote_addr_set_cb =
+			nfs_rpc_dispatch_remote_addr_set_tcp;
 	return nfs_rpc_tcp_user_data(xprt);
 }
 
