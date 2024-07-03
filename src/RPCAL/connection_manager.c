@@ -475,6 +475,34 @@ static void try_activate_client_if_needed(
 	}
 }
 
+void connection_manager__connection_init(SVCXPRT *xprt)
+{
+	LogInfo(COMPONENT_XPRT, "fd %d: Connection init for xprt %p",
+		xprt->xp_fd, xprt);
+	connection_manager__connection_t *const connection =
+		xprt_to_connection(xprt);
+	if (!connection) {
+		LogFatal(COMPONENT_XPRT,
+			"fd %d: Must call nfs_rpc_alloc_user_data before calling %s",
+			xprt->xp_fd, __func__);
+	}
+	/* No need to hold XPRT refcount, because the connection struct is
+	 * stored in the XPRT custom user data. When the XPRT is destroyed it
+	 * calls connection_manager__connection_finished  */
+	connection->xprt = xprt;
+
+	connection->is_managed = false;
+	/* connection_init is called when the connection is just established.
+	 * However, till the first packet on the connection, which can be a
+	 * proxy protocol packet, arrives at the connection, the remote address
+	 * is not determined, and therefore calling to svc_getrpccaller should
+	 * not be used till then.
+	 * When the svc_vc handles the first packet, it knows what is the
+	 * remote address and update any upper layer registered for this
+	 * notification.    */
+	connection->gsh_client = NULL;
+}
+
 enum connection_manager__connection_started_t
 connection_manager__connection_started(SVCXPRT *xprt)
 {
@@ -497,12 +525,13 @@ connection_manager__connection_started(SVCXPRT *xprt)
 		xprt->xp_fd, __func__);
 	}
 
-	/* refcount is released in connection_manager__connection_finished */
-	connection->gsh_client = gsh_client;
-	/* No need to hold XPRT refcount, because the connection struct is
-	 * stored in the XPRT custom user data. When the XPRT is destroyed it
-	 * calls connection_manager__connection_finished */
-	connection->xprt = xprt;
+	/* assert that connecton_init function was called before.
+	 * The init function should have set the xprt in the connection. */
+	if (connection->xprt != xprt) {
+		LogFatalClient(client,
+			"found connection xprt %p is differnet from given xprt %p ",
+			connection->xprt, xprt);
+	}
 
 	connection->is_managed = should_manage_connection(client_address);
 	if (!connection->is_managed) {

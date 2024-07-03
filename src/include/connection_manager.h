@@ -219,11 +219,19 @@ void connection_manager__client_init(connection_manager__client_t *);
 void connection_manager__client_fini(connection_manager__client_t *);
 
 /**
- * Called when a new connection is created
+ * Called when a new connection is created.
+ */
+void connection_manager__connection_init(SVCXPRT *);
+
+/**
+ * Called after connection_init and when client address is determined.
+ * Client address could be obtained on connection establish, however, in case of
+ * proxy protocol, client address can be obtained with the first request
+ * received on the connection.
  * When this module is enabled, this method blocks until all the other Ganesha
  * servers in the cluster drain and close the connections by this client
  * Might fail when timeout is reached, and in that case the connection is
- * destroyed
+ * destroyed.
  * In case there are any draining processes in progress
  * (connection_manager__drain_and_disconnect_local), they are aborted so the new
  * connection gets the priority.

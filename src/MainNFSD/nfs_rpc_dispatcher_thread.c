@@ -427,6 +427,7 @@ static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 	(void)SVC_CONTROL(xprt, SVCSET_XP_UNREF_USER_DATA,
 		nfs_rpc_unref_user_data);
 
+	connection_manager__connection_init(xprt);
 	if (connection_manager__connection_started(xprt) !=
 	    CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW) {
 		return XPRT_DIED;
