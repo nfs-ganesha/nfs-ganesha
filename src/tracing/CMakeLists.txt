@@ -24,14 +24,7 @@ include_directories(
 )
 
 set(ganesha_trace_LIB_SRCS
-  fsal_ceph.c
-  fsal_mem.c
-  logger.c
-  mdcache.c
-  nfs4.c
-  nfs_rpc.c
-  state.c
-  fsal_gluster.c
+  lttng_probes.c
 )
 
 add_library(ganesha_trace MODULE ${ganesha_trace_LIB_SRCS})
@@ -42,3 +35,7 @@ target_link_libraries(ganesha_trace
 )
 
 install(TARGETS ganesha_trace COMPONENT tracing DESTINATION ${FSAL_DESTINATION} )
+
+add_library(ganesha_trace_symbols INTERFACE)
+target_sources(ganesha_trace_symbols INTERFACE ${CMAKE_CURRENT_LIST_DIR}/lttng_defines.c)
+target_link_libraries(ganesha_trace_symbols INTERFACE ${LTTNG_LIBRARIES})

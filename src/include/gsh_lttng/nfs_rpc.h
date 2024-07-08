@@ -24,6 +24,7 @@
 #define GANESHA_LTTNG_NFS_RPC_H
 
 #include <lttng/tracepoint.h>
+#include "nfs_core.h"
 
 /**
  * @brief Trace the start of the rpc_execute function

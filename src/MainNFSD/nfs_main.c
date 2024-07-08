@@ -48,35 +48,6 @@
 #include "conf_url.h"
 #include "sal_functions.h"
 
-/**
- * @brief LTTng trace enabling magic
- *
- * Every trace include file must be added here regardless whether it
- * is actually used in this source file.  The file must also be
- * included ONLY ONCE.  Failure to do so will create interesting
- * build time failure messages.  The key bit is the definitions of
- * TRACEPOINT_DEFINE and TRACEPOINT_PROBE_DYNAMIC_LINKAGE that are here
- * to trigger the global definitions as a shared object with the right
- * (weak) symbols to make the module loading optional.
- *
- * If and when this file gets some tracepoints of its own, the include
- * here is necessary and sufficient.
- */
-
-#ifdef USE_LTTNG
-#define TRACEPOINT_DEFINE
-#define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
-
-#include "gsh_lttng/logger.h"
-#include "gsh_lttng/mdcache.h"
-#include "gsh_lttng/nfs_rpc.h"
-#include "gsh_lttng/nfs4.h"
-#include "gsh_lttng/state.h"
-#include "gsh_lttng/fsal_mem.h"
-#include "gsh_lttng/fsal_gluster.h"
-#include "gsh_lttng/fsal_ceph.h"
-#endif /* USE_LTTNG */
-
 #ifdef USE_MONITORING
 #include "monitoring.h"
 #endif  /* USE_MONITORING */

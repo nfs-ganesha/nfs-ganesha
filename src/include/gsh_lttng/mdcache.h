@@ -50,7 +50,6 @@ TRACEPOINT_EVENT(
 		ctf_integer(int, line, line)
 		ctf_integer_hex(void *, obj_handle, obj_handle)
 		ctf_integer_hex(void *, sub_handle, sub_handle)
-		ctf_string(active_refcnt, active_refcnt)
 		ctf_integer(int32_t, refcnt, refcnt)
 		ctf_integer(int32_t, active_refcnt, active_refcnt)
 	)

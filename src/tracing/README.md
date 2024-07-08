@@ -56,22 +56,19 @@ to time as needed.  There are two paths for adding tracepoints.
 
 Creating a New Component
 ------------------------
-Two files must be created and a number of other files must be edited to create
-a new tracepoint component.
+In order to create a new component, create a new header file under
+`src/include/gsh_lttng`. The tracepoint itself is defined in this file,
+this is the bulk of the work.
+Note that the file has a specific format.  It is best to copy and edit an
+existing file so as to get all the necessary definitions in the right places.
+There can be any number of tracepoint definitions but each one *must* have a
+`TRACEPOINT_EVENT` and `TRACEPOINT_LOGLEVEL` defined (after it).
 
-The tracepoint itself is created as a new include (.h) file in
-`src/include/gsh_lttng`.  This is the bulk of the work.  Note that the
-file has a specific form.  It is best to copy and edit an existing file so as
-to get all the necessary definitions in the right places.  There can be any
-number of tracepoint definitions but each one *must* have a `TRACEPOINT_EVENT`
-and `TRACEPOINT_LOGLEVEL` defined (after it).
+Once you created the header file, you need to include it in
+`src/tracing/lttng_defines.c` and `src/tracing/lttng_probes.c`. This is required
+in order to compile your code with the tracepoints.
 
-The tracepoint include file has a companion file in src/tracing that includes
-the header after defining `TRACEPOINT_CREATE_PROBES`.  Add this file to the
-sources list in tracing/CMakeLists.txt so that it gets built into the tracing
-module.
-
-Every source file that will use these tracepoints must also include the specific
+Every source file that uses these tracepoints must also include the specific
 include file(s) for the tracepoint component(s).  Note that components are
 defined separately.  Both the #include and the tracepoints themselves should be
 wrapped with an `#ifdef USE_LTTNG`.
@@ -79,11 +76,6 @@ wrapped with an `#ifdef USE_LTTNG`.
 The CMakeLists.txt file of a source sub-directory should be edited to add a
 conditional `include_directories` command so that `LTTNG_INCLUDE_DIR` will added
 to the includes path.
-
-The last step in adding a component is to add an `#include` of the new header
-in `MainNFSD/nfs_main.c`.  This bit is LTTng magic to set up the dynamic linkage.
-Every component header file is listed here ONLY ONCE.  This includes any
-tracepoints that may be added to `nfs_main.c`.
 
 Adding New Tracepoints
 ----------------------

@@ -17,5 +17,25 @@
  *
  */
 
-#define TRACEPOINT_CREATE_PROBES
+/* This file creates LTTNG tracepoints weak symbols. These are empty weak
+ * functions that are overloaded by libganesha_trace.so. This allows us
+ * to compile with LTTNG, but only enable it when we load libganesha_trace.so.
+ *
+ * Build targets that call tracepoints need to link with this file, by linking
+ * with ganesha_trace_symbols. This will allow them to compile.
+ */
+#ifdef USE_LTTNG
+
+#define TRACEPOINT_DEFINE
+#define TRACEPOINT_PROBE_DYNAMIC_LINKAGE
+
+#include "gsh_lttng/fsal_ceph.h"
+#include "gsh_lttng/fsal_gluster.h"
+#include "gsh_lttng/fsal_mem.h"
+#include "gsh_lttng/logger.h"
+#include "gsh_lttng/mdcache.h"
 #include "gsh_lttng/nfs4.h"
+#include "gsh_lttng/nfs_rpc.h"
+#include "gsh_lttng/state.h"
+
+#endif /* USE_LTTNG */
