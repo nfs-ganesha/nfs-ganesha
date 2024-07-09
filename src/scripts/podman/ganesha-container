@@ -59,7 +59,6 @@ list_versions()
 	cat <<EOF
 almalinux 8
 almalinux 9
-centos 7
 centos 8
 centos 9
 debian 10
@@ -72,7 +71,6 @@ fedora 40
 rockylinux 8
 rockylinux 9
 sle 15.5
-ubuntu 18.04
 ubuntu 20.04
 ubuntu 22.04
 ubuntu 24.04
