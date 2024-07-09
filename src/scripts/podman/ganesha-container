@@ -183,7 +183,9 @@ container_1()
 	if ! podman image inspect "$tag" >/dev/null 2>&1; then
 		buildah bud \
 			-t "$tag" \
-			--build-arg IMAGE="$image"
+			--build-arg IMAGE="$image" \
+			--build-arg USER_ID="$(id -u)" \
+			--build-arg GROUP_ID="$(id -g)"
 	fi
 	f='{{.State.Running}}'
 	if running=$(podman container inspect \
