@@ -18,16 +18,22 @@
 # with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Create a podman container with Ganesha build depencies installed,
-# for the given distro (and optional version) and launch bash if stdin
-# is a tty.
+# Create a podman container with NFS-Ganesha build depencies
+# installed, for the given distro (and optional version).
 #
-# * If stdin is not a tty then a command can be piped to the shell
+# * If no further arguments (except perhaps --) are given, launch an
+#   interactive bash session (if stdin is a tty).
 #
-# * "all" can be used to construct all supported containers, stopping
-#   on first failure.  This can be useful for priming a test
-#   environment.  It can also run a command in each container - to run
-#   a shell pipeline use sh -c "<pipeline>".
+# * If further arguments are given then they are passed to the
+# * container as a command.
+#
+# * "all" with a command runs the command in each container - to run a
+#   shell pipeline use sh -l -c "<pipeline>".  The "-l" is needed for
+#   the SLE container to have a workable environment.
+#
+# * "all" with no further arguments can be used to construct all
+#   supported containers.  This can be useful for priming a test
+#   environment.
 #
 # Please maintain this as a plain /bin/sh script that passes
 # ShellCheck.
@@ -40,7 +46,10 @@ set -eu
 usage()
 {
 	cat <<EOF
-usage: $0 { <distro> [<version>] | all  [ <cmd>... ] }
+usage: $0 { <distro> [ <version> ] | all | delete-all } [ [ -- ] <cmd>... ]
+
+If <cmd> is provided and <version> is omitted then -- must be used
+before <cmd>, otherwise -- is optional.
 
 supported distros:
 
@@ -129,12 +138,11 @@ distro="$1"
 shift
 
 if [ "$distro" != "all" ] && [ "$distro" != "delete-all" ]; then
-	if [ $# -eq 1 ]; then
+	if [ $# -ge 1 ] && [ "$1" != "--" ]; then
 		version="$1"
-	elif [ $# -eq 0 ]; then
-		version=$(default_version "$distro")
+		shift
 	else
-		usage
+		version=$(default_version "$distro")
 	fi
 
 	validate_distro_version
@@ -260,6 +268,10 @@ container_foreach()
 
 workdir="$PWD"
 
+if [ $# -ge 1 ] && [ "$1" = "--" ]; then
+	shift
+fi
+
 case "$distro" in
 list)
 	list_versions
@@ -271,6 +283,6 @@ delete-all)
 	container_foreach delete-all
 	;;
 *)
-	container_1 "$distro" "$version"
+	container_1 "$distro" "$version" "$@"
 	;;
 esac
