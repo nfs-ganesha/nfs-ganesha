@@ -1114,6 +1114,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	 */
 	while (true) {
 		state_owner_t *owner;
+		int32_t refcount;
 
 		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
@@ -1149,11 +1150,11 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 
 		state_nfs4_owner_unlock_all(owner);
 
-		if (isFullDebug(COMPONENT_CLIENTID)) {
+		refcount = atomic_fetch_int32_t(&owner->so_refcount);
+
+		if ((refcount > 1) || (isFullDebug(COMPONENT_CLIENTID))) {
 			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
-			int32_t refcount =
-			    atomic_fetch_int32_t(&owner->so_refcount);
 
 			display_owner(&dspbuf, owner);
 
@@ -1181,6 +1182,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	 */
 	while (true) {
 		state_owner_t *owner;
+		int32_t refcount;
 
 		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
@@ -1215,11 +1217,11 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 
 		release_openstate(owner);
 
-		if (isFullDebug(COMPONENT_CLIENTID)) {
+		refcount = atomic_fetch_int32_t(&owner->so_refcount);
+
+		if ((refcount > 1) || (isFullDebug(COMPONENT_CLIENTID))) {
 			char str[LOG_BUFF_LEN] = "\0";
 			struct display_buffer dspbuf = {sizeof(str), str, str};
-			int32_t refcount =
-			    atomic_fetch_int32_t(&owner->so_refcount);
 
 			display_owner(&dspbuf, owner);
 
