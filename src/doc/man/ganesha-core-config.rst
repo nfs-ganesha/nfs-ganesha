@@ -320,9 +320,9 @@ MaxRPCSendBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 MaxRPCRecvBufferSize(uint32, range 1 to 1048576*9, default 1048576)
     Size of RPC receive buffer.
 
-RPC_Max_RDMA_Connections(uint32, range 1 to 1024, default 16)
+RPC_Max_RDMA_Connections(uint32, range 1 to 1024, default 64)
     Maximum number of RDMA connections for TIRPC. Limiting the number of RDMA
-    connections to 16 by default to avoid memory exhaustion.
+    connections to 64 by default to avoid memory exhaustion.
 
 MaxRPCRdmaSqDepth(uint32, range 1 to 4096, default 1024)
     Max size of RDMA send queue.

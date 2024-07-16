@@ -128,7 +128,7 @@ NFS_CORE_PARAM {}
 
 	MaxRPCRecvBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 
-	RPC_Max_RDMA_Connections(uint32, range 1 to 1024, default 16)
+	RPC_Max_RDMA_Connections(uint32, range 1 to 1024, default 64)
 
 	MaxRPCRdmaSqDepth(uint32, range 1 to 4096, default 1024)
 

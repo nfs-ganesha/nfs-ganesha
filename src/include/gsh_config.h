@@ -382,8 +382,7 @@ typedef struct nfs_core_param {
 		/** RDMA credits */
 		uint32_t rdma_credits;
 		/** Maximum number of RDMA connections for TIRPC.
-		    Defaults to 16 and settable by
-		    RPC_Max_RDMA_Connections. */
+		    Defaults to 64 and settable by RPC_Max_RDMA_Connections. */
 		uint32_t max_rdma_connections;
 #endif
 		struct {
