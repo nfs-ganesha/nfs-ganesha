@@ -608,9 +608,6 @@ void Create_RDMA(protos prot)
 	/* Hook xp_free_user_data (finalize/free private data) */
 	(void)SVC_CONTROL(tcp_xprt[prot], SVCSET_XP_FREE_USER_DATA,
 			  nfs_rpc_free_user_data);
-
-	(void)svc_rqst_evchan_reg(rpc_evchan[RDMA_UREG_CHAN].chan_id,
-				  tcp_xprt[prot], SVC_RQST_FLAG_XPRT_UREG);
 }
 #endif
 

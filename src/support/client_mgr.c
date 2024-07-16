@@ -184,6 +184,10 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 			       sizeof(cl->hostaddr_str));
 	}
 
+	LogDebug(COMPONENT_HASHTABLE,
+		 "Inserting new gsh_client with IP(%s) hash(%lu)",
+		 cl->hostaddr_str, hash);
+
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.cip_lock);
 	node = avltree_insert(&cl->node_k, &client_by_ip.t);
 	if (node) {
