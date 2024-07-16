@@ -330,7 +330,7 @@ MaxRPCRdmaSqDepth(uint32, range 1 to 4096, default 1024)
 MaxRPCRdmaRqDepth(uint32, range 1 to 4096, default 1024)
     Max size of RDMA receive queue.
 
-MaxRPCRdmaCredits(uint32, range 1 to 4096, default 1024)
+MaxRPCRdmaCredits(uint32, range 1 to 4096, default 64)
     Max credits of RDMA channel, representing the max number of outstanding
     NFS operations on the channel.
 

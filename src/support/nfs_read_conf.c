@@ -285,8 +285,7 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("MaxRPCRdmaRqDepth", 1, 4096,
 		       1024,
 		       nfs_core_param, rpc.rdma_rq_depth),
-	CONF_ITEM_UI32("MaxRPCRdmaCredits", 1, 4096,
-		       1024,
+	CONF_ITEM_UI32("MaxRPCRdmaCredits", 1, 4096, 64,
 		       nfs_core_param, rpc.rdma_credits),
 #endif
 	CONF_ITEM_UI32("rpc_ioq_thrdmin", 2, 1024*128, 2,

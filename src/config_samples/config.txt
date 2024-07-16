@@ -134,7 +134,7 @@ NFS_CORE_PARAM {}
 
 	MaxRPCRdmaRqDepth(uint32, range 1 to 4096, default 1024)
 
-	MaxRPCRdmaCredits(uint32, range 1 to 4096, default 1024)
+	MaxRPCRdmaCredits(uint32, range 1 to 4096, default 64)
 
 	RPC_Ioq_ThrdMax(uint32, range 2 to 1024*128 default 200)
 
