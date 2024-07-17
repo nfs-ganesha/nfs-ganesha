@@ -291,11 +291,11 @@ void mdc_clean_entry(mdcache_entry_t *entry)
 				     export_per_entry);
 		export = expmap->exp;
 
-		PTHREAD_RWLOCK_wrlock(&export->mdc_exp_lock);
+		PTHREAD_MUTEX_lock(&export->mdc_exp_lock);
 
 		mdc_remove_export_map(expmap);
 
-		PTHREAD_RWLOCK_unlock(&export->mdc_exp_lock);
+		PTHREAD_MUTEX_unlock(&export->mdc_exp_lock);
 	}
 
 	/* Clear out first_export */
@@ -380,7 +380,7 @@ again:
 	/* We have the write lock and did not find
 	 * this export on the list, add it.
 	 */
-	PTHREAD_RWLOCK_wrlock(&export->mdc_exp_lock);
+	PTHREAD_MUTEX_lock(&export->mdc_exp_lock);
 
 	/* Check for unexport again, this prevents an interlock issue where
 	 * we passed above, but now unexport is in progress. This is required
@@ -392,7 +392,7 @@ again:
 		/* In the process of unexporting, don't allow creating a new
 		 * export mapping. Return a stale error.
 		 */
-		PTHREAD_RWLOCK_unlock(&export->mdc_exp_lock);
+		PTHREAD_MUTEX_unlock(&export->mdc_exp_lock);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		return fsalstat(ERR_FSAL_STALE, ESTALE);
 	}
@@ -411,7 +411,7 @@ again:
 	glist_add_tail(&entry->export_list, &expmap->export_per_entry);
 	glist_add_tail(&export->entry_list, &expmap->entry_per_export);
 
-	PTHREAD_RWLOCK_unlock(&export->mdc_exp_lock);
+	PTHREAD_MUTEX_unlock(&export->mdc_exp_lock);
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }

@@ -91,7 +91,7 @@ struct mdcache_fsal_export {
 	/** The list of cache entries belonging to this export */
 	struct glist_head entry_list;
 	/** Lock protecting entry_list */
-	pthread_rwlock_t mdc_exp_lock;
+	pthread_mutex_t mdc_exp_lock;
 	/** Flags for the export. */
 	uint8_t flags;
 	/** Mapping of ck -> name for whence-is-name */

@@ -103,13 +103,13 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 
 	/* Next, clean up our cache entries on the export */
 	while (true) {
-		PTHREAD_RWLOCK_rdlock(&exp->mdc_exp_lock);
+		PTHREAD_MUTEX_lock(&exp->mdc_exp_lock);
 		expmap = glist_first_entry(&exp->entry_list,
 					   struct entry_export_map,
 					   entry_per_export);
 
 		if (unlikely(expmap == NULL)) {
-			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+			PTHREAD_MUTEX_unlock(&exp->mdc_exp_lock);
 			break;
 		}
 
@@ -130,11 +130,11 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 		 * that it takes the LRU lane lock, keeping it from racing with
 		 * lru_lane_run() */
 		mdcache_lru_ref(entry, LRU_ACTIVE_REF | LRU_PROMOTE);
-		PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+		PTHREAD_MUTEX_unlock(&exp->mdc_exp_lock);
 
 		/* Must get attr_lock before mdc_exp_lock */
 		PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-		PTHREAD_RWLOCK_wrlock(&exp->mdc_exp_lock);
+		PTHREAD_MUTEX_lock(&exp->mdc_exp_lock);
 
 		mdc_remove_export_map(expmap);
 
@@ -150,7 +150,7 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 
 			/* We must not hold entry->attr_lock across
 			 * try_cleanup_push (LRU lane lock order) */
-			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+			PTHREAD_MUTEX_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 			LogFullDebug(COMPONENT_EXPORT,
 				     "Disposing of entry %p",
@@ -168,7 +168,7 @@ static void mdcache_unexport(struct fsal_export *exp_hdl,
 				&entry->first_export_id,
 				(int32_t) expmap->exp->mfe_exp.export_id);
 
-			PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+			PTHREAD_MUTEX_unlock(&exp->mdc_exp_lock);
 			PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 			LogFullDebug(COMPONENT_EXPORT,
@@ -218,7 +218,7 @@ static void mdcache_unmount(struct fsal_export *parent_exp_hdl,
 	/* Take locks to perform unmap. Must get attr_lock before mdc_exp_lock
 	 */
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	PTHREAD_RWLOCK_wrlock(&exp->mdc_exp_lock);
+	PTHREAD_MUTEX_lock(&exp->mdc_exp_lock);
 
 	glist_for_each(glist, &entry->export_list) {
 		expmap = glist_entry(glist,
@@ -262,7 +262,7 @@ static void mdcache_unmount(struct fsal_export *parent_exp_hdl,
 
 		/* We must not hold entry->attr_lock across
 		 * try_cleanup_push (LRU lane lock order) */
-		PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+		PTHREAD_MUTEX_unlock(&exp->mdc_exp_lock);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 		LogFullDebug(COMPONENT_EXPORT,
 			     "Disposing of entry %p",
@@ -280,7 +280,7 @@ static void mdcache_unmount(struct fsal_export *parent_exp_hdl,
 			&entry->first_export_id,
 			(int32_t) expmap->exp->mfe_exp.export_id);
 
-		PTHREAD_RWLOCK_unlock(&exp->mdc_exp_lock);
+		PTHREAD_MUTEX_unlock(&exp->mdc_exp_lock);
 		PTHREAD_RWLOCK_unlock(&entry->attr_lock);
 
 		LogFullDebug(COMPONENT_EXPORT,
@@ -331,7 +331,7 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 
 	gsh_free(exp->name);
 
-	PTHREAD_RWLOCK_destroy(&exp->mdc_exp_lock);
+	PTHREAD_MUTEX_destroy(&exp->mdc_exp_lock);
 	PTHREAD_MUTEX_destroy(&exp->dirent_map.dm_mtx);
 
 	gsh_free(exp);	/* elvis has left the building */

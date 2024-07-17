@@ -195,7 +195,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	myself->mfe_exp.fsal = &MDCACHE.module;
 
 	glist_init(&myself->entry_list);
-	PTHREAD_RWLOCK_init(&myself->mdc_exp_lock, NULL);
+	PTHREAD_MUTEX_init(&myself->mdc_exp_lock, NULL);
 	PTHREAD_MUTEX_init(&myself->dirent_map.dm_mtx, NULL);
 
 	status = sub_fsal->m_ops.create_export(sub_fsal,
