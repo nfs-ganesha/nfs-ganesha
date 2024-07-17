@@ -65,7 +65,7 @@
  */
 typedef struct cih_partition {
 	uint32_t part_ix;
-	pthread_rwlock_t cih_lock;
+	pthread_mutex_t cih_lock;
 	struct avltree t;
 	struct avltree_node **cache;
 #ifdef ENABLE_LOCKTRACE
@@ -234,7 +234,7 @@ typedef struct cih_latch {
 static inline void
 cih_hash_release(cih_latch_t *latch)
 {
-	PTHREAD_RWLOCK_unlock(&(latch->cp->cih_lock));
+	PTHREAD_MUTEX_unlock(&(latch->cp->cih_lock));
 }
 
 /**
@@ -254,9 +254,9 @@ cih_latch_entry(mdcache_key_t *key, cih_latch_t *latch, uint32_t flags,
 	    cih_partition_of_scalar(&cih_fhcache, key->hk);
 
 	if (flags & CIH_GET_WLOCK)
-		PTHREAD_RWLOCK_wrlock(&cp->cih_lock);	/* SUBTREE_WLOCK */
+		PTHREAD_MUTEX_lock(&cp->cih_lock);	/* SUBTREE_WLOCK */
 	else
-		PTHREAD_RWLOCK_rdlock(&cp->cih_lock);	/* SUBTREE_RLOCK */
+		PTHREAD_MUTEX_lock(&cp->cih_lock);	/* SUBTREE_RLOCK */
 
 #ifdef ENABLE_LOCKTRACE
 	cp->locktrace.func = (char *)func;
@@ -394,7 +394,7 @@ cih_remove_checked(mdcache_entry_t *entry)
 	bool unref = false;
 	bool freed = false;
 
-	PTHREAD_RWLOCK_wrlock(&cp->cih_lock);
+	PTHREAD_MUTEX_lock(&cp->cih_lock);
 	node = cih_fhcache_inline_lookup(&cp->t, &entry->fh_hk.node_k);
 	if (entry->fh_hk.inavl && node) {
 		LogFullDebug(COMPONENT_MDCACHE,
@@ -410,7 +410,7 @@ cih_remove_checked(mdcache_entry_t *entry)
 		/* return sentinel ref */
 		unref = true;
 	}
-	PTHREAD_RWLOCK_unlock(&cp->cih_lock);
+	PTHREAD_MUTEX_unlock(&cp->cih_lock);
 
 	if (unref) {
 		/* We can't unref with the lock held, in case this is the last

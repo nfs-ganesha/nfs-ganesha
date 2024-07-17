@@ -81,7 +81,7 @@ cih_pkginit(void)
 	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
 		cp = &cih_fhcache.partition[ix];
 		cp->part_ix = ix;
-		PTHREAD_RWLOCK_init(&cp->cih_lock, NULL);
+		PTHREAD_MUTEX_init(&cp->cih_lock, NULL);
 		avltree_init(&cp->t, cih_fh_cmpf, 0 /* must be 0 */);
 		cp->cache =
 			gsh_calloc(cih_fhcache.cache_sz,
@@ -105,7 +105,7 @@ cih_pkgdestroy(void)
 		if (avltree_first(&cih_fhcache.partition[ix].t) != NULL)
 			LogMajor(COMPONENT_MDCACHE,
 				 "MDCACHE AVL tree not empty");
-		PTHREAD_RWLOCK_destroy(&cih_fhcache.partition[ix].cih_lock);
+		PTHREAD_MUTEX_destroy(&cih_fhcache.partition[ix].cih_lock);
 		gsh_free(cih_fhcache.partition[ix].cache);
 	}
 	/* Destroy the partition table */
