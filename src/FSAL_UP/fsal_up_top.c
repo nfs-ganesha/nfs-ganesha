@@ -281,6 +281,7 @@ static state_status_t create_file_recall(struct fsal_obj_handle *obj,
 
 		if ((s->state_type != STATE_TYPE_LAYOUT)
 		    || (s->state_data.layout.state_layout_type != type)) {
+			dec_state_owner_ref(owner);
 			continue;
 		}
 
@@ -332,6 +333,9 @@ static state_status_t create_file_recall(struct fsal_obj_handle *obj,
 
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
+
+			/* @todo - this doesn't look right, looks like
+			 * references could be leaked */
 			inc_state_t_ref(s);
 			found = true;
 		}
