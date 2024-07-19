@@ -398,7 +398,11 @@ void _state_del_locked(state_t *state, const char *func, int line)
 	obj = get_state_obj_ref_locked(state);
 
 	if (obj == NULL) {
-		LogDebug(COMPONENT_STATE,
+		/* There actually is no longer a path for obj to be NULL except
+		 * via the call to this function that wins any race and is
+		 * proceeding.
+		 */
+		LogFatal(COMPONENT_STATE,
 			 "Entry for state is stale");
 		PTHREAD_MUTEX_unlock(&state->state_mutex);
 		return;
@@ -631,7 +635,7 @@ bool get_state_obj_export_owner_refs(state_t *state,
 
 	LogFullDebug(COMPONENT_STATE,
 		     "state %p state_obj %p state_export %p state_owner %p",
-		     state, &state->state_obj, state->state_export,
+		     state, state->state_obj, state->state_export,
 		     state->state_owner);
 
 	if (obj != NULL) {

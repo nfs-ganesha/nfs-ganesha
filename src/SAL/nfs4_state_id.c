@@ -201,7 +201,7 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 
 	b_left = display_printf(dspbuf,
 				" obj=%p type=%s seqid=%"PRIu32" owner={",
-				&state->state_obj,
+				state->state_obj,
 				str_state_type(state),
 				state->state_seqid);
 
