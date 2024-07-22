@@ -333,6 +333,7 @@ void free_nfs4_owner(state_owner_t *owner)
 	PTHREAD_MUTEX_unlock(&nfs4_owner->so_clientrec->cid_mutex);
 
 	dec_client_id_ref(nfs4_owner->so_clientrec);
+	nfs4_owner->so_clientrec = NULL;
 }
 
 static hash_parameter_t nfs4_owner_param = {
