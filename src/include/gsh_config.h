@@ -665,6 +665,7 @@ typedef struct nfs_version4_parameter {
 	 * in memory, beyond which Ganesha would start reaping & expire it off.
 	 */
 	uint64_t max_alive_time_for_expired_client;
+
 } nfs_version4_parameter_t;
 
 typedef struct directory_services_param {

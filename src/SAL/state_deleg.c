@@ -56,6 +56,10 @@
 #include "nfs_convert.h"
 #include "fsal_convert.h"
 
+/* Keeps track of total number of files delegated */
+int32_t g_total_num_files_delegated;
+int32_t g_max_files_delegatable;
+
 /**
  * @brief Initialize new delegation state as argument for state_add()
  *
@@ -248,6 +252,8 @@ void deleg_heuristics_recall(struct fsal_obj_handle *obj,
 			statistics->fds_curr_delegations,
 			statistics->fds_deleg_type);
 		statistics->fds_deleg_type = OPEN_DELEGATE_NONE;
+		DEC_G_Total_Num_Files_Delegated(
+			statistics->fds_curr_delegations);
 	}
 
 	/* Update delegation stats for client. */
@@ -404,6 +410,24 @@ bool should_we_grant_deleg(struct state_hdl *ostate, nfs_client_id_t *client,
 							WND4_CONTENTION;
 		return false;
 	}
+
+	/* Deny delegations on this file if this is the first delegation
+	 * and we have reached the maximum number of files we can delegate
+	 * We have reached the maximum number of files we can delegate
+	 * if atomic_add_unless below returns false
+	 */
+	if ((file_stats->fds_curr_delegations == 0) &&
+		!atomic_add_unless_int32_t(&g_total_num_files_delegated, 1,
+			g_max_files_delegatable)){
+		LogFullDebug(COMPONENT_STATE,
+			"Can't delegate file since Files_Delegatable_Percent limit is hit");
+		resok->delegation.open_delegation4_u.od_whynone.ond_why =
+								WND4_RESOURCE;
+		return false;
+	}
+	LogFullDebug(COMPONENT_STATE,
+		"total_num_files_delegated is %d",
+		atomic_fetch_int32_t(&g_total_num_files_delegated));
 
 	LogDebug(COMPONENT_STATE, "Let's delegate!!");
 	return true;

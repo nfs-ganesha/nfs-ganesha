@@ -125,6 +125,7 @@
   gsh_refstr_alloc;
   gsh_refstr_put;
   gsh_refstr_release;
+  g_max_files_delegatable;
   g_nodeid;
   hashtable_deletelatched;
   hashtable_for_each;

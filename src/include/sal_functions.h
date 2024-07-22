@@ -850,6 +850,21 @@ nfsstat4 handle_deleg_getattr(struct fsal_obj_handle *obj,
 int cbgetattr_impl(struct fsal_obj_handle *obj, nfs_client_id_t *client,
 		   struct gsh_export *ctx_exp);
 
+/**
+ * @brief Decrement g_total_num_files_delegated if the file has no delegations
+ * @note st_lock is held
+ */
+#define DEC_G_Total_Num_Files_Delegated(curr_delegations)\
+	do {\
+		if ((curr_delegations == 0)) {\
+			int32_t new_total_num_files_delegated =\
+				atomic_dec_int32_t(\
+				&g_total_num_files_delegated);\
+			LogFullDebug(COMPONENT_STATE,\
+				"num_files_delegated decremented to %"PRId32,\
+				new_total_num_files_delegated);\
+		} \
+	} while (0)
 /******************************************************************************
  *
  * Layout functions

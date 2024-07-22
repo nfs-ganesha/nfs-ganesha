@@ -440,6 +440,9 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	if (!ostate) {
 		LogFullDebug(COMPONENT_NFS_V4_LOCK, "Could not get file state");
 		whynone->ond_why = WND4_RESOURCE;
+		/* passing 0 current delegations since we don't have
+		 * ostate and file handle */
+		DEC_G_Total_Num_Files_Delegated(0);
 		return;
 	}
 
@@ -474,6 +477,8 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 			 "get delegation call failed to add state with status %s",
 			 state_err_str(state_status));
 		whynone->ond_why = WND4_RESOURCE;
+		DEC_G_Total_Num_Files_Delegated(
+			ostate->file.fdeleg_stats.fds_curr_delegations);
 		return;
 	}
 	new_state->state_seqid++;
@@ -485,6 +490,13 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 	/* acquire_lease_lock() gets the delegation from FSAL */
 	state_status = acquire_lease_lock(ostate, clientowner, new_state);
 	if (state_status != STATE_SUCCESS) {
+		/* Decrement total num_files_delegated even if this is a
+		 * reclaim if fds_curr_delegations is equal to zero and we
+		 * can't acquire the lease lock. This is the convention
+		 * followed in update_delegation_stats
+		 * following the same here */
+		DEC_G_Total_Num_Files_Delegated(
+			ostate->file.fdeleg_stats.fds_curr_delegations);
 		if (args->claim.claim != CLAIM_PREVIOUS) {
 			LogDebug(COMPONENT_NFS_V4_LOCK,
 				 "get delegation call added state but failed to lock with status %s",

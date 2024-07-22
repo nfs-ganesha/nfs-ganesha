@@ -118,6 +118,10 @@ Dirmap_HWMark(uint32, range 1 to UINT32_MAX, default 10000)
     on the number of simultaneous readdirs that may be in progress on an export
     for a whence-is-name FSAL (currently only FSAL_RGW)
 
+Files_Delegatable_Percent(int32, range 10 to 90, default 90)
+    Total number of files ganesha can delegate to clients as a percent of
+    Entries_HWMark
+
 See also
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)

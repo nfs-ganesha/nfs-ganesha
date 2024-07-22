@@ -129,6 +129,9 @@ struct mdcache_parameter {
 	/** High water mark for dirent mapping entries.  Defaults to 10000,
 	    settable by Dirmap_HWMark. */
 	uint32_t dirmap_hwmark;
+	/** Total number of files ganesha can delegate to clients
+	    as a percent of Entries_HWMark */
+	int32_t files_delegatable_percent;
 };
 
 extern struct mdcache_parameter mdcache_param;

@@ -1260,6 +1260,9 @@ typedef struct nfs_grace_start {
 
 extern pool_t *state_owner_pool;	/*< Pool for NFSv4 files's open owner */
 
+extern int g_total_num_files_delegated;
+extern int g_max_files_delegatable;
+
 #ifdef DEBUG_SAL
 extern struct glist_head state_v4_all;
 extern struct glist_head state_owners_all;
