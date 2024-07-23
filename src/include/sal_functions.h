@@ -300,7 +300,7 @@ extern uint32_t num_of_curr_expired_clients;
 int reap_expired_client_list(nfs_client_id_t *clientid);
 void remove_client_from_expired_client_list(nfs_client_id_t *active_clientid);
 
-#define DISPLAY_CLIENTID_SIZE 36
+#define DISPLAY_CLIENTID_SIZE 37 /* 36 chars + null terminator */
 int display_clientid(struct display_buffer *dspbuf, clientid4 clientid);
 clientid4 new_clientid(void);
 void new_clientid_verifier(char *verf);
