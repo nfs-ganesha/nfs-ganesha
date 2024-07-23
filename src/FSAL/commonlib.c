@@ -2599,7 +2599,6 @@ fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 								bypass);
 
 		if (FSAL_IS_ERROR(status)) {
-			PTHREAD_RWLOCK_unlock(&obj_hdl->obj_lock);
 			LogDebug(COMPONENT_FSAL,
 				 "check_share_conflict_and_update_locked failed with %s",
 				 fsal_err_txt(status));
