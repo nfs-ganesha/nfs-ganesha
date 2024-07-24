@@ -2216,7 +2216,7 @@ fsal_status_t reopen_fsal_fd(struct fsal_obj_handle *obj_hdl,
 	}
 
 	/* Indicate we are done with fd work and signal any waiters. */
-	atomic_dec_int32_t(&fsal_fd->fd_work);
+	bool io_can_start = (atomic_dec_int32_t(&fsal_fd->fd_work) == 0);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "%p done fd work - io_work = %"PRIi32
@@ -2228,8 +2228,10 @@ fsal_status_t reopen_fsal_fd(struct fsal_obj_handle *obj_hdl,
 	/* Wake up at least one thread waiting to do fd work */
 	PTHREAD_COND_signal(&fsal_fd->fd_work_cond);
 
-	/* Wake up all threads waiting to do io work */
-	PTHREAD_COND_broadcast(&fsal_fd->io_work_cond);
+	if (io_can_start) {
+		/* Wake up all threads waiting to do io work */
+		PTHREAD_COND_broadcast(&fsal_fd->io_work_cond);
+	}
 
 	return status;
 }
@@ -2399,6 +2401,14 @@ retry:
 				/* fsal_fd is in wrong mode and we aren't
 				 * allowed to reopen, so return EBUSY.
 				 */
+
+				/* Wake up at least one thread waiting to do fd
+				 * work
+				 */
+				PTHREAD_COND_signal(&fsal_fd->fd_work_cond);
+				/* Wake up all threads waiting to do io work */
+				PTHREAD_COND_broadcast(&fsal_fd->io_work_cond);
+
 				PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
 				/* Use fsalstat to avoid LogInfo... */
 				status = fsalstat(ERR_FSAL_DELAY, EBUSY);
@@ -3008,7 +3018,7 @@ fsal_status_t fsal_start_fd_work(struct fsal_fd *fsal_fd, bool is_reclaiming)
 void fsal_complete_fd_work(struct fsal_fd *fsal_fd)
 {
 	/* Indicate we are done with fd work and signal any waiters. */
-	atomic_dec_int32_t(&fsal_fd->fd_work);
+	bool io_can_start = (atomic_dec_int32_t(&fsal_fd->fd_work) == 0);
 
 	LogFullDebug(COMPONENT_FSAL,
 		     "%p done fd work io_work = %"PRIi32" fd_work = %"PRIi32,
@@ -3019,8 +3029,10 @@ void fsal_complete_fd_work(struct fsal_fd *fsal_fd)
 	/* Wake up at least one thread waiting to do fd work */
 	PTHREAD_COND_signal(&fsal_fd->fd_work_cond);
 
-	/* Wake up all threads waiting to do io work */
-	PTHREAD_COND_broadcast(&fsal_fd->io_work_cond);
+	if (io_can_start) {
+		/* Wake up all threads waiting to do io work */
+		PTHREAD_COND_broadcast(&fsal_fd->io_work_cond);
+	}
 
 	/* Completely done, release the mutex. */
 	PTHREAD_MUTEX_unlock(&fsal_fd->work_mutex);
