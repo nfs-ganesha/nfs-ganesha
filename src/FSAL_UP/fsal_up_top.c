@@ -1547,8 +1547,9 @@ state_status_t delegrecall_impl(struct fsal_obj_handle *obj)
 		if (client_id->cid_confirmed != EXPIRED_CLIENT_ID &&
 		    !reserve_lease(client_id)) {
 			PTHREAD_MUTEX_unlock(&client_id->cid_mutex);
-			/* Let's release the ref &*/
+			/* Let's release the client and export ref */
 			dec_client_id_ref(client_id);
+			put_gsh_export(drc_ctx->drc_exp);
 
 			LogDebug(COMPONENT_FSAL_UP,
 				"Failed to reserve client's lease.");
