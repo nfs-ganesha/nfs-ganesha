@@ -27,6 +27,7 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
+#include <shared_mutex>
 
 #include "prometheus/counter.h"
 #include "prometheus/gauge.h"
@@ -250,15 +251,53 @@ static std::string trimIPv6Prefix(const std::string input) {
   return input;
 }
 
-static std::map<export_id_t, std::string> exportLabels;
+// SimpleMap is a simple thread-safe wrapper of std::map.
+template<class K, class T=std::string>
+class SimpleMap {
+    public:
+        SimpleMap(std::function<T(const K& k)> get_value)
+          : get_value_(get_value){ }
 
-const std::string GetExportLabel(export_id_t export_id) {
-  if (exportLabels.find(export_id) == exportLabels.end()) {
+        T GetOrInsert(const K& k) {
+          std::shared_lock rlock(mutex_);
+          auto iter = map_.find(k);
+          if (iter != map_.end()) {
+            return iter->second;
+          }
+          rlock.unlock();
+          std::unique_lock wlock(mutex_);
+          iter = map_.find(k);
+          if (iter != map_.end()) {
+            return iter->second;
+          }
+          auto v = get_value_(k);
+          map_.emplace(k, v);
+          return v;
+        }
+
+        // @ret whether the key already exists
+        bool InsertOrUpdate(const K& k, const T& v) {
+          std::unique_lock wlock(mutex_);
+          bool exist = map_.find(k) != map_.end();
+          map_[k] = v;
+          return exist;
+        }
+
+    private:
+        std::function<T(const K& k)> get_value_;
+
+        std::shared_mutex mutex_;
+        std::map<K, T> map_;
+};
+
+static SimpleMap<export_id_t, std::string> exportLabels([](const export_id_t& export_id){
     std::ostringstream ss;
     ss << "export_id=" << export_id;
-    exportLabels[export_id] = ss.str();
-  }
-  return exportLabels[export_id];
+    return ss.str();
+});
+
+static std::string GetExportLabel(export_id_t export_id) {
+  return exportLabels.GetOrInsert(export_id);
 }
 
 static void toLowerCase(std::string &s) {
@@ -386,7 +425,7 @@ void monitoring__histogram_observe(
 
 void monitoring_register_export_label(const export_id_t export_id,
                                       const char* label) {
-  exportLabels[export_id] = std::string(label);
+  exportLabels.InsertOrUpdate(export_id, std::string(label));
 }
 
 void monitoring__init(uint16_t port, bool enable_dynamic_metrics)
