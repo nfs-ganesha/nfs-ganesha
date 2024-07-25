@@ -35,6 +35,11 @@ SET(fsalproxy_v3_LIB_SRCS
 add_library(fsalproxy_v3 MODULE ${fsalproxy_v3_LIB_SRCS} $<TARGET_OBJECTS:nfs_mnt_xdr>)
 add_sanitizers(fsalproxy_v3)
 
+if (USE_LTTNG)
+add_dependencies(fsalproxy_v3 gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 target_link_libraries(fsalproxy_v3
   ganesha_nfsd
   ${SYSTEM_LIBRARIES}

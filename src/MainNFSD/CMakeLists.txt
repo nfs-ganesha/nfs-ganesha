@@ -90,6 +90,11 @@ add_library(MainServices OBJECT ${MainServices_STAT_SRCS})
 add_sanitizers(MainServices)
 set_target_properties(MainServices PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(MainServices gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 # FSAL core sources
 # fsal_manager and fsal_destroyer are the only objects referenced by the
 # core server all the rest are for the common support of fsal plugins.

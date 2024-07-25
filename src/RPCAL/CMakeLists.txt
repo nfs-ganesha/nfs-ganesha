@@ -36,4 +36,9 @@ add_library(rpcal OBJECT ${rpcal_STAT_SRCS})
 add_sanitizers(rpcal)
 set_target_properties(rpcal PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(rpcal gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############

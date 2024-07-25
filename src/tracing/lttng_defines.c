@@ -38,4 +38,8 @@
 #include "gsh_lttng/nfs_rpc.h"
 #include "gsh_lttng/state.h"
 
+#ifndef LTTNG_PARSING
+#include "gsh_lttng/generated_traces/generated_lttng.h"
+#endif /* LTTNG_PARSING */
+
 #endif /* USE_LTTNG */

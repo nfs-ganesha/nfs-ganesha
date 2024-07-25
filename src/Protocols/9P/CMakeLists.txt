@@ -62,4 +62,9 @@ add_library(9p OBJECT ${9p_STAT_SRCS})
 add_sanitizers(9p)
 set_target_properties(9p PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(9p gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############

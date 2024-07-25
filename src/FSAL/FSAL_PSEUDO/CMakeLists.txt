@@ -38,4 +38,9 @@ add_library(fsalpseudo OBJECT ${fsalpseudo_LIB_SRCS})
 add_sanitizers(fsalpseudo)
 set_target_properties(fsalpseudo PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(fsalpseudo gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############

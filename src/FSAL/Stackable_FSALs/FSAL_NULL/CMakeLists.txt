@@ -39,6 +39,11 @@ SET(fsalnull_LIB_SRCS
 add_library(fsalnull MODULE ${fsalnull_LIB_SRCS})
 add_sanitizers(fsalnull)
 
+if (USE_LTTNG)
+add_dependencies(fsalnull gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 target_link_libraries(fsalnull
   ganesha_nfsd
   ${LDFLAG_DISALLOW_UNDEF}

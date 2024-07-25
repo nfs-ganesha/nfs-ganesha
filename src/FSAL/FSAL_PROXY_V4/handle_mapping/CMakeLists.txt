@@ -33,6 +33,11 @@ SET(handlemapping_STAT_SRCS
 add_library(handlemapping STATIC ${handlemapping_STAT_SRCS})
 add_sanitizers(handlemapping)
 
+if (USE_LTTNG)
+add_dependencies(handlemapping gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 
 ########### next target ###############
 
@@ -73,12 +78,12 @@ target_link_libraries(test_handle_mapping handlemapping hashtable log common_uti
 #check_PROGRAMS              = test_handle_mapping_db test_handle_mapping
 #test_handle_mapping_db_SOURCES      = test_handle_mapping_db.c
 #test_handle_mapping_db_LDADD        = libhandlemapping.la $(top_srcdir)/HashTable/libhashtable.la  $(top_srcdir)/Log/liblog.la \
-#					$(top_srcdir)/Common/libcommon_utils.la -lsqlite3 
+#					$(top_srcdir)/Common/libcommon_utils.la -lsqlite3
 #
 #
 #test_handle_mapping_SOURCES      = test_handle_mapping.c
 #test_handle_mapping_LDADD        = libhandlemapping.la $(top_srcdir)/HashTable/libhashtable.la $(top_srcdir)/Log/liblog.la \
-#					$(top_srcdir)/Common/libcommon_utils.la -lsqlite3 
+#					$(top_srcdir)/Common/libcommon_utils.la -lsqlite3
 #
 #new: clean all
 #

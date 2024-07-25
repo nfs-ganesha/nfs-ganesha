@@ -38,6 +38,11 @@ add_library(string_utils OBJECT ${string_utils_STAT_SRCS})
 add_sanitizers(string_utils)
 set_target_properties(string_utils PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(string_utils gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 # hash function libraries
 
 set(hash_SRCS
@@ -49,6 +54,10 @@ add_library(hash OBJECT ${hash_SRCS})
 add_sanitizers(hash)
 set_target_properties(hash PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(hash gsh_trace_header_generate)
+endif (USE_LTTNG)
+
 # uid2grp mapper
 set( uid2grp_SRCS
      uid2grp.c
@@ -59,6 +68,10 @@ add_library(uid2grp OBJECT ${uid2grp_SRCS})
 add_sanitizers(uid2grp)
 set_target_properties(uid2grp PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(uid2grp gsh_trace_header_generate)
+endif (USE_LTTNG)
+
 # netgroup cache
 set(netgroup_cache_SRCS
     netgroup_cache.c
@@ -66,6 +79,11 @@ set(netgroup_cache_SRCS
 add_library(netgroup_cache OBJECT ${netgroup_cache_SRCS})
 add_sanitizers(netgroup_cache)
 set_target_properties(netgroup_cache PROPERTIES COMPILE_FLAGS "-fPIC")
+
+if (USE_LTTNG)
+add_dependencies(netgroup_cache gsh_trace_header_generate)
+endif (USE_LTTNG)
+
 
 ########### next target ###############
 
@@ -97,5 +115,9 @@ endif(ERROR_INJECTION)
 add_library(support OBJECT ${support_STAT_SRCS})
 add_sanitizers(support)
 set_target_properties(support PROPERTIES COMPILE_FLAGS "-fPIC")
+
+if (USE_LTTNG)
+add_dependencies(support gsh_trace_header_generate)
+endif (USE_LTTNG)
 
 ########### install files ###############

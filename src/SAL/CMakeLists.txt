@@ -58,6 +58,11 @@ add_library(sal OBJECT ${sal_STAT_SRCS})
 add_sanitizers(sal)
 set_target_properties(sal PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(sal gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 if(USE_RADOS_RECOV)
   set(sal_RADOS_SRCS
     recovery/recovery_rados_kv.c

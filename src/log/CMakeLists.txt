@@ -46,6 +46,11 @@ add_library(log OBJECT ${log_STAT_SRCS})
 add_sanitizers(log)
 set_target_properties(log PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(log gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### next target ###############
 
 SET(test_liblog_SRCS

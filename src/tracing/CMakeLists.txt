@@ -39,3 +39,10 @@ install(TARGETS ganesha_trace COMPONENT tracing DESTINATION ${LIB_INSTALL_DIR} )
 add_library(ganesha_trace_symbols INTERFACE)
 target_sources(ganesha_trace_symbols INTERFACE ${CMAKE_CURRENT_LIST_DIR}/lttng_defines.c)
 target_link_libraries(ganesha_trace_symbols INTERFACE ${LTTNG_LIBRARIES})
+
+add_custom_target(gsh_trace_header_generate
+  DEPENDS ntirpc_generate_lttng_trace_headers gsh_generate_lttng_trace_headers
+)
+
+add_dependencies(ganesha_trace_symbols gsh_trace_header_generate)
+add_dependencies(ganesha_trace gsh_trace_header_generate)

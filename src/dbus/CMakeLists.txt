@@ -36,4 +36,9 @@ add_library(gshdbus OBJECT ${gshdbus_STAT_SRCS})
 add_sanitizers(gshdbus)
 set_target_properties(gshdbus PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(gshdbus gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############

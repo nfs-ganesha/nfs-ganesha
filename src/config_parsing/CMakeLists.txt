@@ -59,6 +59,11 @@ add_library(config_parsing OBJECT
   ${FLEX_ConfigScanner_OUTPUTS}
 )
 
+if (USE_LTTNG)
+add_dependencies(config_parsing gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 add_sanitizers(config_parsing)
 set_target_properties(config_parsing PROPERTIES COMPILE_FLAGS "-fPIC")
 

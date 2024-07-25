@@ -122,6 +122,11 @@ add_library(nfsproto OBJECT ${nfsproto_STAT_SRCS})
 add_sanitizers(nfsproto)
 set_target_properties(nfsproto PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(nfsproto gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 set(nfs4callbackSRCS
    nfs4_cb_Compound.c
 )
@@ -129,5 +134,10 @@ set(nfs4callbackSRCS
 add_library(nfs4callbacks OBJECT ${nfs4callbackSRCS})
 add_sanitizers(nfs4callbacks)
 set_target_properties(nfs4callbacks PROPERTIES COMPILE_FLAGS "-fPIC")
+
+if (USE_LTTNG)
+add_dependencies(nfs4callbacks gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
 
 ########### install files ###############

@@ -43,6 +43,11 @@ SET(fsalsaunafs_LIB_SRCS
 add_library(fsalsaunafs MODULE ${fsalsaunafs_LIB_SRCS})
 add_sanitizers(fsalsaunafs)
 
+if (USE_LTTNG)
+add_dependencies(fsalsaunafs gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 target_link_libraries(fsalsaunafs ${SAUNAFS_CLIENT_LIB})
 
 set_target_properties(fsalsaunafs PROPERTIES VERSION 4.0.0 SOVERSION 4)

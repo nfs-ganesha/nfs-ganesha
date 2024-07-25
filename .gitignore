@@ -81,3 +81,7 @@ src/tools/multilock/ml_console
 src/tools/multilock/ml_glusterfs_client
 src/tools/multilock/ml_posix_client
 .DS_Store
+src/compile_commands.json
+gsh_lttng_generation_rules.cmake
+gsh_lttng_generation_file_properties.cmake
+gsh_generated_include

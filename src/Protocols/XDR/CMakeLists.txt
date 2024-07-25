@@ -42,4 +42,9 @@ add_library(nfs_mnt_xdr OBJECT ${nfs_mnt_xdr_STAT_SRCS})
 add_sanitizers(nfs_mnt_xdr)
 set_target_properties(nfs_mnt_xdr PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(nfs_mnt_xdr gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############

@@ -41,4 +41,9 @@ add_library(nlm OBJECT ${nlm_STAT_SRCS})
 add_sanitizers(nlm)
 set_target_properties(nlm PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(nlm gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############

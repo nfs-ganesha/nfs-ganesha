@@ -40,4 +40,9 @@ add_library(cidr OBJECT ${cidr_STAT_SRCS})
 add_sanitizers(cidr)
 set_target_properties(cidr PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(cidr gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############

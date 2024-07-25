@@ -1031,8 +1031,45 @@ if(USE_LTTNG)
   # if your LTTng is not in a standard place
   find_package(LTTng ${USE_LTTNG_REQUIRED})
   if(LTTNG_FOUND)
-    include_directories(${LTTNG_INCLUDE_DIR})
+
+    if(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
+      # We must create compile_commands.json for lttng trace generation
+      set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+    endif(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
+
+    set(CMAKE_C_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
+
+    execute_process(
+	COMMAND ${CMAKE_COMMAND} -E make_directory
+		"${CMAKE_CURRENT_BINARY_DIR}/gsh_generated_include/gsh_lttng/generated_traces/"
+	COMMAND_ERROR_IS_FATAL ANY
+    )
+
+    include_directories(
+      ${LTTNG_INCLUDE_DIR}
+      "${CMAKE_CURRENT_SOURCE_DIR}/libntirpc/src/lttng/generator/include/"
+      "${CMAKE_CURRENT_BINARY_DIR}/gsh_generated_include/"
+      "${CMAKE_CURRENT_BINARY_DIR}/libntirpc/ntirpc_generated_include/"
+    )
     add_definitions(-DUSE_LTTNG)
+
+    # Generate build rules for trace generator
+    execute_process(
+      COMMAND bash -c "${CMAKE_CURRENT_SOURCE_DIR}/libntirpc/src/lttng/generator/generate_cmake_rules.py \
+          --project_path ${CMAKE_CURRENT_SOURCE_DIR} \
+          --provider_include_base_path gsh_lttng/generated_traces/ \
+          --unique_prefix gsh \
+          --filter_out libntirpc \
+          --traces_output_dir ${CMAKE_CURRENT_BINARY_DIR}/gsh_generated_include/gsh_lttng/generated_traces/ \
+          --include_path ${CMAKE_CURRENT_SOURCE_DIR}/include:${CMAKE_CURRENT_SOURCE_DIR}/libntirpc/ntirpc:${CMAKE_CURRENT_SOURCE_DIR}/libntirpc/src/lttng/generator/include/:${CMAKE_CURRENT_BINARY_DIR}/gsh_generated_include/:${CMAKE_CURRENT_BINARY_DIR}/libntirpc/ntirpc_generated_include/ \
+          --targets_output_path ${CMAKE_CURRENT_BINARY_DIR}/gsh_lttng_generation_rules.cmake \
+          --file_properties_output_path ${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake"
+
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+
+    include("${CMAKE_CURRENT_BINARY_DIR}/gsh_lttng_generation_rules.cmake")
+    include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
   else(LTTNG_FOUND)
     message(WARNING "LTTng libraries not found. Disabling USE_LTTNG")
     set(USE_LTTNG OFF)

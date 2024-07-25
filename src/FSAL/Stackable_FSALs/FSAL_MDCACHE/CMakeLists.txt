@@ -56,4 +56,9 @@ add_library(fsalmdcache OBJECT ${fsalmdcache_LIB_SRCS})
 add_sanitizers(fsalmdcache)
 set_target_properties(fsalmdcache PROPERTIES COMPILE_FLAGS "-fPIC")
 
+if (USE_LTTNG)
+add_dependencies(fsalmdcache gsh_trace_header_generate)
+include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
+endif (USE_LTTNG)
+
 ########### install files ###############
