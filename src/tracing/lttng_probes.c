@@ -33,15 +33,6 @@
 
 #define TRACEPOINT_CREATE_PROBES
 
-#include "gsh_lttng/fsal_ceph.h"
-#include "gsh_lttng/fsal_gluster.h"
-#include "gsh_lttng/fsal_mem.h"
-#include "gsh_lttng/logger.h"
-#include "gsh_lttng/mdcache.h"
-#include "gsh_lttng/nfs4.h"
-#include "gsh_lttng/nfs_rpc.h"
-#include "gsh_lttng/state.h"
-
 #ifndef LTTNG_PARSING
 #include "gsh_lttng/generated_traces/generated_lttng.h"
 #endif /* LTTNG_PARSING */

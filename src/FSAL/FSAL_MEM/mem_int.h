@@ -29,8 +29,10 @@
 
 #include "avltree.h"
 #include "gsh_list.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/fsal_mem.h"
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/fsalmem.h"
 #endif
 
 struct mem_fsal_obj_handle;
@@ -163,20 +165,21 @@ fsal_status_t mem_update_export(struct fsal_module *fsal_hdl,
 
 const char *str_async_type(uint32_t async_type);
 
-#define mem_free_handle(h) _mem_free_handle(h, __func__, __LINE__)
+#define mem_free_handle(h) \
+	do { \
+		GSH_UNIQUE_AUTO_TRACEPOINT(fsalmem, mem_free, TRACE_DEBUG, \
+			"Freeing handle. hdl: {}, name: {}", h, \
+			TP_STR(h->m_name)); \
+		_mem_free_handle(h); \
+	} while (0)
 /**
  * @brief Free a MEM handle
  *
  * @note mfe_exp_lock MUST be held for write
  * @param[in] hdl	Handle to free
  */
-static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl,
-				    const char *func, int line)
+static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl)
 {
-#ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_free, func, line, hdl, hdl->m_name);
-#endif
-
 	glist_del(&hdl->mfo_exp_entry);
 	hdl->mfo_exp = NULL;
 

@@ -43,9 +43,11 @@
 #include "export_mgr.h"
 #include "pnfs_utils.h"
 #include "sal_data.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/fsal_gluster.h"
-#endif
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/fsal_gl.h"
+#endif /* LTTNG_PARSING */
 
 /* The default location of gfapi log
  * if glfs_log param is not defined in
@@ -267,10 +269,9 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 	}
 
 	*pub_handle = &objhandle->handle;
-#ifdef USE_LTTNG
-	tracepoint(fsalgl, gl_handle, __func__, __LINE__,
-		   &objhandle->handle);
-#endif
+
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, gl_handle, TRACE_DEBUG,
+		"Handle: {}", &objhandle->handle);
  out:
 	if (status.major != ERR_FSAL_NO_ERROR)
 		gluster_cleanup_vars(glhandle);
@@ -330,10 +331,8 @@ fsal_status_t glfs2fsal_handle(struct glusterfs_export *glfs_export,
 	}
 
 	*pub_handle = &objhandle->handle;
-#ifdef USE_LTTNG
-	tracepoint(fsalgl, gl_handle, __func__, __LINE__,
-		   &objhandle->handle);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, gl_handle, TRACE_DEBUG,
+		"Handle: {}", &objhandle->handle);
  out:
 #ifdef GLTIMING
 	now(&e_time);

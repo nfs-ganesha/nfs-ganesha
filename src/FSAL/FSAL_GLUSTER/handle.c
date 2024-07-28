@@ -36,9 +36,11 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 #include "fsal_types.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/fsal_gluster.h"
-#endif
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/fsal_gl.h"
+#endif /* LTTNG_PARSING */
 
 /* fsal_obj_handle common methods
  */
@@ -1225,10 +1227,8 @@ fsal_status_t glusterfs_close_my_fd(struct glusterfs_fd *my_fd)
 			SET_GLUSTER_CREDS_MY_FD(glfs_export, my_fd);
 		}
 
-#ifdef USE_LTTNG
-		tracepoint(fsalgl, close_fd, __func__, __LINE__,
-			   my_fd->glfd);
-#endif
+		GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, close_fd, TRACE_DEBUG,
+			"Close fd: {}", my_fd->glfd);
 
 		rc = glfs_close(my_fd->glfd);
 
@@ -1391,10 +1391,9 @@ fsal_status_t glusterfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 
 	SET_GLUSTER_LEASE_ID(my_fd);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalgl, open_fd, __func__, __LINE__, posix_flags,
-		   myself->globalfd.glfd);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, close_fd, TRACE_DEBUG,
+			"Open fd: {}, posix_flags: {}", myself->globalfd.glfd,
+			posix_flags);
 
 out:
 #ifdef GLTIMING
@@ -1963,9 +1962,9 @@ static fsal_status_t glusterfs_open2(
 		     "glusterfs_copy_my_fd %s returned %s",
 		     name, msg_fsal_err(status.major));
 
-#ifdef USE_LTTNG
-	tracepoint(fsalgl, open_fd, __func__, __LINE__, p_flags, my_fd->glfd);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, close_fd, TRACE_DEBUG,
+			"Open fd: {}, posix_flags: {}", my_fd->glfd,
+			p_flags);
 
 open:
 	if (created && attrib_set->valid_mask != 0) {
@@ -2036,10 +2035,8 @@ fileerr:
 	 * in the floowing obj_ops->release().
 	 */
 
-#ifdef USE_LTTNG
-	tracepoint(fsalgl, close_fd, __func__, __LINE__,
-		   my_fd->glfd);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, close_fd, TRACE_DEBUG,
+			"Close fd: {}", my_fd->glfd);
 	glusterfs_close_my_fd(my_fd);
 
 direrr:
@@ -3061,10 +3058,8 @@ static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
 	}
 
 
-#ifdef USE_LTTNG
-	tracepoint(fsalgl, close_fd, __func__, __LINE__,
-		   my_fd->glfd);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_gl, close_fd, TRACE_DEBUG,
+			"Close fd: {}", my_fd->glfd);
 
 	return close_fsal_fd(obj_hdl, &my_fd->fsal_fd, false);
 }

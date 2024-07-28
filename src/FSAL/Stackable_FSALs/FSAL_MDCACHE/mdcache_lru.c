@@ -59,10 +59,12 @@
 #include "gsh_intrinsic.h"
 #include "sal_functions.h"
 #include "nfs_exports.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/mdcache.h"
-#endif
 #include "sys_resource.h"
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/mdcache.h"
+#endif
 
 /**
  *
@@ -124,13 +126,15 @@ struct lru_q_lane {
 #define QLOCK(qlane) \
 	do { \
 		PTHREAD_MUTEX_lock(&(qlane)->ql_mtx); \
-		tracepoint(mdcache, qlock, __func__, __LINE__, qlane); \
+		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, qlock, TRACE_DEBUG, \
+			"QLOCK. qlane: {}", qlane); \
 	} while (0)
 
 #define QUNLOCK(qlane) \
 	do { \
+		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, qunlock, TRACE_DEBUG, \
+			"QUNLOCK. qlane: {}", qlane); \
 		PTHREAD_MUTEX_unlock(&(qlane)->ql_mtx); \
-		tracepoint(mdcache, qunlock, __func__, __LINE__, qlane); \
 	} while (0)
 #else
 #define QLOCK(qlane) \
@@ -710,12 +714,14 @@ lru_reap_impl(enum lru_q_id qid)
 		mdcache_lru_ref(entry, LRU_TEMP_REF);
 #endif
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
+		const int32_t active_refcnt =
+			atomic_fetch_int32_t(&entry->lru.active_refcnt);
 		entry = container_of(lru, mdcache_entry_t, lru);
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_ref,
-		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
-		   refcnt, atomic_fetch_int32_t(&entry->lru.active_refcnt));
-#endif
+		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
+			"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
+			&entry->obj_handle, entry->sub_handle, refcnt,
+			active_refcnt);
+
 		QUNLOCK(qlane);
 
 		if (unlikely(refcnt != (LRU_SENTINEL_REFCOUNT + 1))) {
@@ -738,11 +744,11 @@ lru_reap_impl(enum lru_q_id qid)
 			/* it worked */
 			struct lru_q *q = lru_queue_of(entry);
 
-#ifdef USE_LTTNG
-			tracepoint(mdcache, mdc_lru_reap, __func__,
-				   __LINE__, &entry->obj_handle,
-				   entry->lru.refcnt);
-#endif
+			GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_reap,
+				TRACE_DEBUG,
+				"lru unref. handle: {}, refcnt: {}",
+				&entry->obj_handle, entry->lru.refcnt);
+
 			LRU_DQ(lru, q);
 			entry->lru.qid = LRU_ENTRY_NONE;
 			QUNLOCK(qlane);
@@ -877,11 +883,10 @@ lru_reap_chunk_impl(enum lru_q_id qid, mdcache_entry_t *parent)
 			CHUNK_LRU_DQ(lru, lq);
 			chunk->chunk_lru.qid = LRU_ENTRY_NONE;
 
-#ifdef USE_LTTNG
-			tracepoint(mdcache, mdc_lru_reap_chunk,
-				   __func__, __LINE__,
-				   &entry->obj_handle, chunk);
-#endif
+			GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_reap_chunk,
+				TRACE_DEBUG,
+				"lru unref. handle: {}, chunk: {}",
+				&entry->obj_handle, chunk);
 
 			/* Clean the chunk out and indicate the directory
 			 * is no longer completely populated.  We don't
@@ -1145,11 +1150,12 @@ static inline int lru_run_lane(int lane)
 
 		/* Get refcount of the entry now */
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_ref,
-		   __func__, __LINE__, &entry->obj_handle, entry->sub_handle,
-		   refcnt, atomic_fetch_int32_t(&entry->lru.active_refcnt));
-#endif
+		const int32_t active_refcnt =
+			atomic_fetch_int32_t(&entry->lru.active_refcnt);
+		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
+			"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
+			&entry->obj_handle, entry->sub_handle, refcnt,
+			active_refcnt);
 
 		/* check refcnt in range */
 		if (unlikely(refcnt == 1)) {
@@ -1776,11 +1782,10 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle,
 		nentry->lru.flags |= LRU_EVER_PROMOTED;
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_get,
-		  __func__, __LINE__, &nentry->obj_handle, sub_handle,
-		  nentry->lru.refcnt);
-#endif
+	GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_get, TRACE_DEBUG,
+		"lru unref. handle: {}, sub handle: {}, refcnt: {}",
+		&nentry->obj_handle, sub_handle,
+		nentry->lru.refcnt);
 	return nentry;
 }
 
@@ -1822,15 +1827,10 @@ void mdcache_lru_insert_active(mdcache_entry_t *entry)
 void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		      int line)
 {
-#ifdef USE_LTTNG
 	int32_t refcnt, active_refcnt;
-#endif
 
 	/* Always take a normal reference so unref to 0 works right */
-#ifdef USE_LTTNG
-	refcnt =
-#endif
-	atomic_inc_int32_t(&entry->lru.refcnt);
+	refcnt = atomic_inc_int32_t(&entry->lru.refcnt);
 
 	if (flags & LRU_ACTIVE_REF) {
 		/* Each active reference is in addition to a normal
@@ -1838,17 +1838,13 @@ void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		 * to an entry being a active reference such that when that
 		 * active reference is dropped, cleanup will occur.
 		 */
-#ifdef USE_LTTNG
-		active_refcnt =
-#endif
-		atomic_inc_int32_t(&entry->lru.active_refcnt);
+		active_refcnt = atomic_inc_int32_t(&entry->lru.active_refcnt);
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_ref,
-		   func, line, &entry->obj_handle, entry->sub_handle,
-		   refcnt, active_refcnt);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
+			"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
+			&entry->obj_handle, entry->sub_handle, refcnt,
+			active_refcnt);
 
 	if (flags & LRU_PROMOTE) {
 		/* If entry is ever promoted, remember that. */
@@ -1925,12 +1921,12 @@ _mdcache_lru_unref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 					   LRU_SENTINEL_HELD);
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_unref,
-		   func, line, &entry->obj_handle, entry->sub_handle,
-		   atomic_fetch_int32_t(&entry->lru.refcnt),
-		   atomic_fetch_int32_t(&entry->lru.active_refcnt));
-#endif
+	const int32_t refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
+	const int32_t active_refcnt =
+		atomic_fetch_int32_t(&entry->lru.active_refcnt);
+	GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
+		"lru unref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
+		&entry->obj_handle, entry->sub_handle, refcnt, active_refcnt);
 
 	/* Each active reference is in addition to a normal reference. This
 	 * allows the possibility of the final reference to an entry being an

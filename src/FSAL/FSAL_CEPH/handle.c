@@ -49,9 +49,11 @@
 #include "statx_compat.h"
 #include "nfs_core.h"
 #include "linux/falloc.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/fsal_ceph.h"
-#endif
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/fsal_ceph.h"
+#endif /* LTTNG_PARSING */
 
 /*
  * If the inode has a mode that doesn't allow writes, then the follow-on
@@ -90,10 +92,8 @@ static void ceph_fsal_release(struct fsal_obj_handle *obj_hdl)
 				obj_hdl, fsal_err_txt(st),
 				strerror(st.minor), st.minor);
 		}
-#ifdef USE_LTTNG
-		tracepoint(fsalceph, ceph_close, __func__, __LINE__,
-			   obj_hdl->fileid);
-#endif
+		GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_release, TRACE_DEBUG,
+			"CEPH release handle. fileid: {}", obj_hdl->fileid);
 	}
 
 	if (obj != export->root)
@@ -130,10 +130,8 @@ static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 
 	LogFullDebug(COMPONENT_FSAL, "Lookup %s", path);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_lookup, __func__, __LINE__,
-		   path, NULL, 0);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_lookup, TRACE_DEBUG,
+		"Lookup. path: {}", TP_STR(path));
 
 	rc = fsal_ceph_ll_lookup(export->cmount, dir->i, path, &i, &stx,
 					!!attrs_out, &op_ctx->creds);
@@ -147,10 +145,9 @@ static fsal_status_t ceph_fsal_lookup(struct fsal_obj_handle *dir_pub,
 
 	*obj_pub = &obj->handle;
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_lookup, __func__, __LINE__,
-		   path, &obj->handle, stx.stx_ino);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_lookup, TRACE_DEBUG,
+		"Lookup. path: {}, handle: {}, ino: {}", TP_STR(path),
+		&obj->handle, stx.stx_ino);
 
 	return fsalstat(0, 0);
 }
@@ -309,10 +306,8 @@ static fsal_status_t ceph_fsal_readdir(struct fsal_obj_handle *dir_pub,
 		}
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_readdir, __func__, __LINE__,
-		   dir_pub->fileid, rfiles);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_readdir, TRACE_DEBUG,
+		"Readdir. fileid: {}, rfiles: {}", dir_pub->fileid, rfiles);
 
  closedir:
 
@@ -435,10 +430,9 @@ static fsal_status_t ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl,
 
 	FSAL_SET_MASK(attrib->valid_mask, ATTR_MODE);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_mkdir, __func__, __LINE__,
-		   name, &obj->handle, stx.stx_ino);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_mkdir, TRACE_DEBUG,
+		"MKdir. name: {}, handle: {}, ino: {}", TP_STR(name),
+		&obj->handle, stx.stx_ino);
 
 	return status;
 }
@@ -559,10 +553,9 @@ static fsal_status_t ceph_fsal_mknode(
 
 	FSAL_SET_MASK(attrib->valid_mask, ATTR_MODE);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_mknod, __func__, __LINE__,
-		   name, nodetype, &obj->handle, stx.stx_ino);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_mknod, TRACE_DEBUG,
+		"Mknode. name: {}, node type: {}, handle: {}, ino: {}",
+		TP_STR(name), nodetype, &obj->handle, stx.stx_ino);
 
 	return status;
 #else
@@ -755,10 +748,9 @@ static fsal_status_t ceph_fsal_getattrs(struct fsal_obj_handle *handle_pub,
 	}
 #endif				/* CEPHFS_POSIX_ACL */
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_getattrs, __func__, __LINE__,
-		   stx.stx_ino, stx.stx_size, stx.stx_mode);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_getattrs, TRACE_DEBUG,
+		"Getattrs. ino: {}, size: {}, mode: {}", stx.stx_ino,
+		stx.stx_size, stx.stx_mode);
 
 	ceph2fsal_attributes(&stx, attrs);
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -920,10 +912,9 @@ static fsal_status_t ceph_fsal_unlink(struct fsal_obj_handle *dir_pub,
 		return ceph2fsal_error(rc);
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_unlink, __func__, __LINE__,
-		   name, object_file_type_to_str(obj_pub->type));
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_unlink, TRACE_DEBUG,
+		"Unlink. name: {}, type: {}", TP_STR(name),
+		obj_pub->type);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 }
@@ -1061,10 +1052,8 @@ static fsal_status_t ceph_fsal_close(struct fsal_obj_handle *obj_hdl)
 
 	status = close_fsal_fd(obj_hdl, &handle->fd.fsal_fd, false);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_close, __func__, __LINE__,
-		   obj_hdl->fileid);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_close, TRACE_DEBUG,
+		"Unlink. fileid: {}", obj_hdl->fileid);
 
 	return status;
 }
@@ -1501,10 +1490,9 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 				     fsal_err_txt(status));
 		}
 
-#ifdef USE_LTTNG
-		tracepoint(fsalceph, ceph_open, __func__, __LINE__,
-			   name, *new_obj, stx.stx_ino, "opend");
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_opened, TRACE_DEBUG,
+		"Opened. name: {}, handle: {}, ino: {}", TP_STR(name),
+		*new_obj, stx.stx_ino);
 
 		return status;
 	}
@@ -1632,10 +1620,9 @@ static fsal_status_t ceph_fsal_open2(struct fsal_obj_handle *obj_hdl,
 
 	*new_obj = &hdl->handle;
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_open, __func__, __LINE__,
-		   name, &hdl->handle, stx.stx_ino, "created");
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_created, TRACE_DEBUG,
+		"Created. name: {}, handle: {}, ino: {}", TP_STR(name),
+		*new_obj, stx.stx_ino);
 
 	if (created && attrib_set->valid_mask != 0) {
 		/* Set attributes using our newly opened file descriptor as the
@@ -1881,10 +1868,9 @@ resume:
 					     FSAL_O_READ, FSAL_O_CLOSED);
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_read, __func__, __LINE__,
-		   obj_hdl->fileid, cb_info->result);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_read, TRACE_DEBUG,
+		"Read. fileid: {}, result: {}", obj_hdl->fileid,
+		cb_info->result);
 
 	cbi->done_cb(obj_hdl, status, read_arg, cbi->caller_arg);
 
@@ -2048,10 +2034,9 @@ static void ceph_fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		read_arg->io_amount = result;
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_read, __func__, __LINE__,
-		   obj_hdl->fileid, result);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_read, TRACE_DEBUG,
+		"Read. fileid: {}, result: {}", obj_hdl->fileid,
+		result);
 	goto out;
 
 old_style:
@@ -2075,10 +2060,9 @@ old_style:
 		offset += nb_read;
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_read, __func__, __LINE__,
-		   obj_hdl->fileid, nb_read);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_read, TRACE_DEBUG,
+		"Read. fileid: {}, nb_read: {}", obj_hdl->fileid,
+		nb_read);
 
 #if 0
 	/** @todo
@@ -2201,10 +2185,9 @@ resume:
 					     FSAL_O_WRITE, FSAL_O_CLOSED);
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_write, __func__, __LINE__,
-		   obj_hdl->fileid, cb_info->result);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_write, TRACE_DEBUG,
+		"Write. fileid: {}, result: {}", obj_hdl->fileid,
+		cb_info->result);
 
 	cbi->done_cb(obj_hdl, status, write_arg, cbi->caller_arg);
 
@@ -2357,11 +2340,10 @@ static void ceph_fsal_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			write_arg->fsal_stable = false;
 		}
 	}
-#endif
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_write, __func__, __LINE__,
-		   obj_hdl->fileid, nb_written);
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_write, TRACE_DEBUG,
+		"Write. fileid: {}, nb_written: {}", obj_hdl->fileid,
+		nb_written);
 #endif
 
 #if USE_FSAL_CEPH_FS_NONBLOCKING_IO
@@ -2431,10 +2413,8 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	 */
 	retval = ceph_ll_sync_inode(export->cmount, myself->i, 0);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_commit, __func__, __LINE__,
-		   obj_hdl->fileid);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_commit, TRACE_DEBUG,
+		"Write. fileid: {}", obj_hdl->fileid);
 
 	return ceph2fsal_error(retval);
 }
@@ -2483,10 +2463,8 @@ static fsal_status_t ceph_fsal_commit2(struct fsal_obj_handle *obj_hdl,
 	if (retval < 0)
 		status = ceph2fsal_error(retval);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_commit, __func__, __LINE__,
-		   obj_hdl->fileid);
-#endif
+	GSH_UNIQUE_AUTO_TRACEPOINT(fsal_ceph, ceph_commit, TRACE_DEBUG,
+		"Write. fileid: {}", obj_hdl->fileid);
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
@@ -2666,10 +2644,8 @@ static fsal_status_t ceph_fsal_lock_op2(struct fsal_obj_handle *obj_hdl,
 
 	/* Fall through (retval == 0) */
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_lock, __func__, __LINE__,
-		   obj_hdl->fileid, lock_op);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_lock, TRACE_DEBUG,
+		"Lock. fileid: {}, lock_op: {}", obj_hdl->fileid, lock_op);
 
  err:
 
@@ -2766,10 +2742,8 @@ static fsal_status_t ceph_fsal_lease_op2(struct fsal_obj_handle *obj_hdl,
 	retval = ceph_ll_delegation(export->cmount, my_fd->fd, cmd,
 				    ceph_deleg_cb, obj_hdl);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_lease, __func__, __LINE__,
-		   obj_hdl->fileid, cmd);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_lease, TRACE_DEBUG,
+		"Lease. fileid: {}, cmd: {}", obj_hdl->fileid, cmd);
 
 	status2 = fsal_complete_io(obj_hdl, out_fd);
 
@@ -2972,10 +2946,9 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	rc = fsal_ceph_ll_setattr(export->cmount, myself->i, &stx, mask,
 					&op_ctx->creds);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_setattrs, __func__, __LINE__,
-		   stx.stx_ino, stx.stx_size, stx.stx_mode);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_setattrs, TRACE_DEBUG,
+		"Setattrs. ino: {}, size: {}, mode: {}", stx.stx_ino,
+		stx.stx_size, stx.stx_mode);
 
 	if (rc < 0) {
 		LogDebug(COMPONENT_FSAL,
@@ -3164,10 +3137,9 @@ static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 	if (retval < 0)
 		status = ceph2fsal_error(retval);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalceph, ceph_falloc, __func__, __LINE__,
-		   obj_hdl->fileid, mode, offset, length);
-#endif
+	GSH_AUTO_TRACEPOINT(fsal_ceph, ceph_falloc, TRACE_DEBUG,
+		"Falloc. fileid: {}, mode: {}, offset: {}, length: {}",
+		obj_hdl->fileid, mode, offset, length);
 
  out:
 

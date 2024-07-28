@@ -46,8 +46,9 @@
 #include "pnfs_utils.h"
 #include <time.h>
 
-#ifdef USE_LTTNG
-#include "gsh_lttng/nfs_rpc.h"
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs_rpc.h"
 #endif
 
 static enum nfs_req_result nfs4_default_resume(struct nfs_argop4 *op,
@@ -696,10 +697,9 @@ enum nfs_req_result complete_op(compound_data_t *data, nfsstat4 *status,
 	 */
 	*status = thisres->nfs_resop4_u.opaccess.status;
 
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, v4op_end, data->oppos, data->opcode,
-		   data->opname, nfsstat4_to_str(*status));
-#endif
+	GSH_AUTO_TRACEPOINT(nfs_rpc, v4op_end, TRACE_INFO,
+			"v4 op end. op pos: {}, op: {}, res: {}",
+			data->oppos, data->opcode, *status);
 
 	LogCompoundFH(data);
 
@@ -904,10 +904,9 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 	/***************************************************************
 	 * Make the actual op call                                     *
 	 **************************************************************/
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, v4op_start, data->oppos,
-		   data->opcode, data->opname);
-#endif
+	GSH_AUTO_TRACEPOINT(nfs_rpc, v4op_start, TRACE_INFO,
+			"v4 op start. op pos: {}, op: {}",
+			data->oppos, data->opcode);
 
 	result = (optabv4[data->opcode].funct) (thisarg, data, thisres);
 

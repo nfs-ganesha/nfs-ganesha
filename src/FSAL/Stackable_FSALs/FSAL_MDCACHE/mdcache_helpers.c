@@ -50,12 +50,14 @@
 #include "mdcache_lru.h"
 #include "mdcache_hash.h"
 #include "mdcache_avl.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/mdcache.h"
-#endif
 #ifdef USE_MONITORING
 #include "monitoring.h"
 #endif  /* USE_MONITORING */
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/mdcache.h"
+#endif
 
 #define mdc_chunk_first_dirent(c) \
 	glist_first_entry(&(c)->dirents, mdcache_dir_entry_t, chunk_list)
@@ -2684,11 +2686,11 @@ again:
 				whence);
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_readdir_populate,
-		   __func__, __LINE__, &directory->obj_handle,
-		   directory->sub_handle, whence);
-#endif
+	GSH_AUTO_TRACEPOINT(mdcache, mdc_readdir_populate, TRACE_DEBUG,
+		"Readdir poulate for obj handle: {}, sub handle: {}, whence: {}",
+		&directory->obj_handle, directory->sub_handle,
+		whence);
+
 	subcall(
 		readdir_status = directory->sub_handle->obj_ops->readdir(
 			directory->sub_handle, whence_ptr, &state,
@@ -2928,11 +2930,8 @@ fsal_status_t mdcache_readdir_chunked(mdcache_entry_t *directory,
 	bool whence_is_name = op_ctx->fsal_export->exp_ops.fs_supports(
 				op_ctx->fsal_export, fso_whence_is_name);
 
-
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_readdir,
-		   __func__, __LINE__, &directory->obj_handle);
-#endif
+	GSH_AUTO_TRACEPOINT(mdcache, mdc_readdir, TRACE_DEBUG,
+		"Readdir for obj handle: {}", &directory->obj_handle);
 
 	LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 			"Starting chunked READDIR for %p, MDCACHE_TRUST_CONTENT %s, MDCACHE_TRUST_DIR_CHUNKS %s",
@@ -3349,11 +3348,11 @@ again:
 			return status;
 		}
 
-#ifdef USE_LTTNG
-		tracepoint(mdcache, mdc_readdir_cb,
-			   __func__, __LINE__, dirent->name, &entry->obj_handle,
-			   entry->sub_handle, entry->lru.refcnt);
-#endif
+		GSH_AUTO_TRACEPOINT(mdcache, mdc_readdir_cb, TRACE_DEBUG,
+			"Calling readdir callback. Obj handle: {}, sub handle: {}, refcount: {}",
+			&directory->obj_handle,
+			entry->sub_handle, entry->lru.refcnt);
+
 		cb_result = cb(dirent->name, &entry->obj_handle, &attrs,
 			       dir_state, dirent->ck);
 
@@ -3496,11 +3495,11 @@ _mdcache_kill_entry(mdcache_entry_t *entry,
 	}
 
 	freed = cih_remove_checked(entry); /* !reachable, drop sentinel ref */
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_kill_entry,
-		   function, line, &entry->obj_handle, entry->lru.refcnt,
-		   freed);
-#endif
+
+	GSH_AUTO_TRACEPOINT(mdcache, mdc_kill_entry, TRACE_DEBUG,
+			"Removed entry. Obj handle: {}, refcount: {}, freed: {}",
+			&entry->obj_handle,
+			entry->lru.refcnt, freed);
 
 	if (!freed) {
 		/* queue for cleanup */

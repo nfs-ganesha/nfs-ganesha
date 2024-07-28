@@ -42,8 +42,10 @@
 #include "nfs_creds.h"
 #include "client_mgr.h"
 #include "fsal.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/nfs4.h"
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
 #endif
 
 #define log_channel_attributes(component, chan_attrs, name) \
@@ -458,9 +460,8 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	       nfs41_session->session_id,
 	       NFS4_SESSIONID_SIZE);
 
-#ifdef USE_LTTNG
-	tracepoint(nfs4, session_ref, __func__, __LINE__, nfs41_session, 2);
-#endif
+	GSH_AUTO_TRACEPOINT(nfs4, session_create, TRACE_INFO,
+		"Create session. Session: {}, refcount: 2", nfs41_session);
 
 	if (!nfs41_Session_Set(nfs41_session)) {
 		LogDebug(component, "Could not insert session into table");

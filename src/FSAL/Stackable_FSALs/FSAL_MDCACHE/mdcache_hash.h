@@ -53,8 +53,10 @@
 #include "mdcache_lru.h"
 #include "city.h"
 #include <libgen.h>
-#ifdef USE_LTTNG
-#include "gsh_lttng/mdcache.h"
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/mdcache.h"
 #endif
 
 /**
@@ -361,10 +363,9 @@ cih_set_latched(mdcache_entry_t *entry, cih_latch_t *latch,
 
 	(void)avltree_insert(&entry->fh_hk.node_k, &cp->t);
 	entry->fh_hk.inavl = true;
-#ifdef USE_LTTNG
-	tracepoint(mdcache, mdc_lru_insert, __func__, __LINE__,
-		   &entry->obj_handle, entry->lru.refcnt);
-#endif
+	GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_insert, TRACE_DEBUG,
+		"LRU insert. Obj: {}, refcnt: {}",
+		&entry->obj_handle, entry->lru.refcnt);
 
 	if (likely(flags & CIH_SET_UNLOCK))
 		cih_hash_release(latch);
@@ -394,10 +395,11 @@ cih_remove_checked(mdcache_entry_t *entry)
 	if (entry->fh_hk.inavl && node) {
 		LogFullDebug(COMPONENT_MDCACHE,
 			     "Unhashing entry %p", entry);
-#ifdef USE_LTTNG
-		tracepoint(mdcache, mdc_lru_remove, __func__, __LINE__,
-			   &entry->obj_handle, entry->lru.refcnt);
-#endif
+
+		GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_remove_checked,
+			TRACE_DEBUG, "LRU remove. Obj: {}, refcnt: {}",
+			&entry->obj_handle, entry->lru.refcnt);
+
 		avltree_remove(node, &cp->t);
 		cp->cache[cih_cache_offsetof(&cih_fhcache,
 					     entry->fh_hk.key.hk)] = NULL;
@@ -440,10 +442,11 @@ cih_remove_latched(mdcache_entry_t *entry, cih_latch_t *latch, uint32_t flags)
 	if (entry->fh_hk.inavl) {
 		LogFullDebug(COMPONENT_MDCACHE,
 			     "Unhashing entry %p", entry);
-#ifdef USE_LTTNG
-		tracepoint(mdcache, mdc_lru_remove, __func__, __LINE__,
-			   &entry->obj_handle, entry->lru.refcnt);
-#endif
+
+		GSH_AUTO_TRACEPOINT(mdcache, mdc_lru_remove_latched,
+			TRACE_DEBUG, "LRU remove. Obj: {}, refcnt: {}",
+			&entry->obj_handle, entry->lru.refcnt);
+
 		avltree_remove(&entry->fh_hk.node_k, &cp->t);
 		cp->cache[cih_cache_offsetof(&cih_fhcache,
 					     entry->fh_hk.key.hk)] = NULL;

@@ -65,9 +65,11 @@
 #include "xprt_handler.h"
 #include "connection_manager.h"
 
-#ifdef USE_LTTNG
-#include "gsh_lttng/nfs_rpc.h"
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs_rpc.h"
 #endif
+#include "gsh_xprt_tracepoint.h"
 
 #ifdef __APPLE__
 #include <sys/socketvar.h>
@@ -327,9 +329,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NFS(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "NFS UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
-#endif
+
+	GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(nfs_rpc, before_recv, TRACE_INFO, xprt,
+		"nfs udp dispatch");
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NFS;
 	return SVC_RECV(xprt);
 }
@@ -340,9 +342,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_MNT(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "MOUNT UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
-#endif
+	GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(nfs_rpc, before_recv, TRACE_INFO, xprt,
+		"mnt udp dispatch");
+
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_MNT;
 	return SVC_RECV(xprt);
 }
@@ -354,9 +356,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_NLM(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "NLM UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
-#endif
+	GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(nfs_rpc, before_recv, TRACE_INFO, xprt,
+		"nlm udp dispatch");
+
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_NLM;
 	return SVC_RECV(xprt);
 }
@@ -368,9 +370,9 @@ static enum xprt_stat nfs_rpc_dispatch_udp_RQUOTA(SVCXPRT *xprt)
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "RQUOTA UDP request for SVCXPRT %p fd %d",
 		     xprt, xprt->xp_fd);
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, before_recv, __func__, __LINE__, xprt);
-#endif
+	GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(nfs_rpc, before_recv, TRACE_INFO, xprt,
+		"rquota udp dispatch");
+
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_RQUOTA;
 	return SVC_RECV(xprt);
 }

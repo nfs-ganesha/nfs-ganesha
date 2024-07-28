@@ -41,8 +41,10 @@
 #include "nfs_proto_functions.h"
 #include "sal_functions.h"
 #include "xprt_handler.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/nfs4.h"
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
 #endif
 
 /**
@@ -264,9 +266,8 @@ void nfs41_Build_sessionid(clientid4 *clientid, char *sessionid)
 int32_t _inc_session_ref(nfs41_session_t *session, const char *func, int line)
 {
 	int32_t refcnt = atomic_inc_int32_t(&session->refcount);
-#ifdef USE_LTTNG
-	tracepoint(nfs4, session_ref, func, line, session, refcnt);
-#endif
+	GSH_AUTO_TRACEPOINT(nfs4, incref, TRACE_INFO,
+		"Session incref. Session: {}, refcount: {}", session, refcnt);
 	return refcnt;
 }
 
@@ -274,9 +275,8 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 {
 	int i;
 	int32_t refcnt = atomic_dec_int32_t(&session->refcount);
-#ifdef USE_LTTNG
-	tracepoint(nfs4, session_unref, func, line, session, refcnt);
-#endif
+	GSH_AUTO_TRACEPOINT(nfs4, decref, TRACE_INFO,
+		"Session decref. Session: {}, refcount: {}", session, refcnt);
 
 	assert(refcnt >= 0);
 

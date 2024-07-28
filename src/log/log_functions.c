@@ -64,9 +64,6 @@
 #include "config_parsing.h"
 #include "sal_functions.h"
 
-#ifdef USE_LTTNG
-#include "gsh_lttng/logger.h"
-#endif
 
 /*
  * The usual PTHREAD_RWLOCK_xxx macros log messages for tracing if FULL
@@ -1457,11 +1454,6 @@ void display_log_component_level(log_components_t component, const char *file,
 
 	if (b_left > 0)
 		b_left = display_vprintf(&dsp_log, format, arguments);
-
-#ifdef USE_LTTNG
-	tracepoint(ganesha_logger, log,
-		   component, level, file, line, function, message);
-#endif
 
 	PTHREAD_RWLOCK_rdlock(&log_rwlock);
 

@@ -48,9 +48,11 @@
 #include "export_mgr.h"
 #include <misc/portable.h>
 
-#ifdef USE_LTTNG
-#include "gsh_lttng/fsal_mem.h"
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/fsalmem.h"
 #endif
+
 /* helpers to/from other MEM objects
  */
 
@@ -183,9 +185,9 @@ static struct state_t *mem_alloc_state(struct fsal_export *exp_hdl,
 
 	init_fsal_fd(fsal_fd, FSAL_FD_STATE, op_ctx->fsal_export);
 
-#ifdef USE_LTTNG
-	tracepoint(fsalmem, mem_alloc_state, __func__, __LINE__, state);
-#endif
+	GSH_AUTO_TRACEPOINT(fsalmem, mem_alloc_state, TRACE_DEBUG,
+		"Allocated state: {}", state);
+
 	return state;
 }
 

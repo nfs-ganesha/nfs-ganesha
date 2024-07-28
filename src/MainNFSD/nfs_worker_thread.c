@@ -62,9 +62,11 @@
 #include "server_stats.h"
 #include "uid2grp.h"
 
-#ifdef USE_LTTNG
-#include "gsh_lttng/nfs_rpc.h"
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs_rpc.h"
 #endif
+#include "gsh_xprt_tracepoint.h"
 
 #define NFS_pcp nfs_param.core_param
 #define NFS_options NFS_pcp.core_options
@@ -734,9 +736,9 @@ void free_args(nfs_request_t *reqdata)
 	clean_credentials();
 	release_op_context();
 
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, end, reqdata);
-#endif
+
+	GSH_AUTO_TRACEPOINT(nfs_rpc, end, TRACE_INFO,
+		"Rpc end. request: {}", reqdata);
 }
 
 enum nfs_req_result complete_request(nfs_request_t *reqdata,
@@ -778,9 +780,9 @@ enum nfs_req_result complete_request(nfs_request_t *reqdata,
 	reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
 				reqdesc->xdr_encode_func;
 
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, before_reply, __func__, __LINE__, xprt);
-#endif
+	GSH_XPRT_AUTO_TRACEPOINT(nfs_rpc, before_reply, TRACE_INFO, xprt,
+		"Before reply");
+
 	if (svc_sendreply(&reqdata->svc) >= XPRT_DIED) {
 		LogDebug(COMPONENT_DISPATCH,
 			 "NFS DISPATCHER: FAILURE: Error while calling svc_sendreply on a new request. rpcxid=%"
@@ -812,9 +814,8 @@ enum nfs_req_result complete_request(nfs_request_t *reqdata,
 
 void complete_request_instrumentation(nfs_request_t *reqdata)
 {
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, op_end, reqdata);
-#endif
+	GSH_AUTO_TRACEPOINT(nfs_rpc, op_end, TRACE_INFO,
+		"Op end. request: {}", reqdata);
 }
 
 /** @brief Completion of async RPC dispatch
@@ -854,10 +855,9 @@ enum nfs_req_result process_dupreq(nfs_request_t *reqdata,
 	reqdata->svc.rq_msg.RPCM_ack.ar_results.proc =
 				reqdata->funcdesc->xdr_encode_func;
 
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, before_reply, __func__, __LINE__,
-		   reqdata->svc.rq_xprt);
-#endif
+	GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(nfs_rpc, before_reply, TRACE_INFO,
+		reqdata->svc.rq_xprt, "Before reply");
+
 	xprt_rc = svc_sendreply(&reqdata->svc);
 
 	if (xprt_rc >= XPRT_DIED) {
@@ -912,9 +912,8 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 	if (retry)
 		goto retry_after_drc_suspend;
 
-#ifdef USE_LTTNG
-	tracepoint(nfs_rpc, start, reqdata);
-#endif
+	GSH_AUTO_TRACEPOINT(nfs_rpc, start, TRACE_INFO,
+		"Rpc start. request: {}", reqdata);
 
 	if ((xprt->xp_proxy.ss.ss_family == AF_INET ||
 	     xprt->xp_proxy.ss.ss_family == AF_INET6) &&
@@ -1548,12 +1547,11 @@ retry_after_drc_suspend:
 
  null_op:
 
-#ifdef USE_LTTNG
-		tracepoint(nfs_rpc, op_start, reqdata,
-			   reqdesc->funcname,
+		GSH_AUTO_TRACEPOINT(nfs_rpc, op_start, TRACE_INFO,
+			"Op start. request: {}, func: {}, export_id: {}",
+			reqdata, TP_STR(reqdesc->funcname),
 			   (op_ctx->ctx_export != NULL
 			    ? op_ctx->ctx_export->export_id : -1));
-#endif
 
 		rc = reqdesc->service_function(arg_nfs, &reqdata->svc,
 					       reqdata->res_nfs);
@@ -1744,14 +1742,11 @@ enum xprt_stat nfs_rpc_valid_NFS(struct svc_req *req)
 			container_of(req, struct nfs_request, svc);
 	int lo_vers;
 	int hi_vers;
-#ifdef USE_LTTNG
-	SVCXPRT *xprt = reqdata->svc.rq_xprt;
 
-	tracepoint(nfs_rpc, valid, __func__, __LINE__, xprt,
-		   (unsigned int) req->rq_msg.cb_prog,
-		   (unsigned int) req->rq_msg.cb_vers,
-		   (unsigned int) reqdata->svc.rq_msg.cb_proc);
-#endif
+	GSH_AUTO_TRACEPOINT(nfs_rpc, valid, TRACE_INFO,
+		"Valid nfs req. xprt_ptr: {}, cb_prog: {}, cb_vers: {} cb_proc: {}",
+		reqdata->svc.rq_xprt, req->rq_msg.cb_prog,
+		req->rq_msg.cb_vers, reqdata->svc.rq_msg.cb_proc);
 
 	reqdata->funcdesc = &invalid_funcdesc;
 

@@ -53,8 +53,10 @@
 #include "fsal_up.h"
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
-#ifdef USE_LTTNG
-#include "gsh_lttng/state.h"
+
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/state.h"
 #endif
 
 #ifdef DEBUG_SAL
@@ -230,9 +232,8 @@ state_status_t _state_add_impl(struct fsal_obj_handle *obj,
 	obj->obj_ops->get_ref(obj);
 	PTHREAD_MUTEX_unlock(&pnew_state->state_mutex);
 
-#ifdef USE_LTTNG
-	tracepoint(state, add, func, line, obj, pnew_state);
-#endif
+	GSH_AUTO_TRACEPOINT(state, add, TRACE_INFO,
+		"State add. Obj: {}, new state: {}", obj, pnew_state);
 
 	/* Add state to list for owner */
 	PTHREAD_MUTEX_lock(&owner_input->so_mutex);
@@ -408,9 +409,8 @@ void _state_del_locked(state_t *state, const char *func, int line)
 		return;
 	}
 
-#ifdef USE_LTTNG
-	tracepoint(state, delete, func, line, obj, state);
-#endif
+	GSH_AUTO_TRACEPOINT(state, delete, TRACE_INFO,
+		"State delete. Obj: {}, state: {}", obj, state);
 
 	export = state->state_export;
 	owner = state->state_owner;
