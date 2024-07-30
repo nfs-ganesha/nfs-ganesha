@@ -79,3 +79,4 @@ src/tools/multilock/ml_cephfs_client
 src/tools/multilock/ml_console
 src/tools/multilock/ml_glusterfs_client
 src/tools/multilock/ml_posix_client
+.DS_Store
