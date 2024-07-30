@@ -766,7 +766,7 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 	case STATE_LOCK_OWNER_UNKNOWN:
 		return
 		    display_printf(dspbuf,
-				   "%s powner=%p: refcount=%d",
+				   "%s powner=%p: so_refcount=%d",
 				   state_owner_type_to_str(owner->so_type),
 				   owner,
 				   atomic_fetch_int32_t(&owner->so_refcount));

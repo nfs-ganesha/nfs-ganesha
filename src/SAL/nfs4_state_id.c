@@ -214,7 +214,7 @@ int display_stateid(struct display_buffer *dspbuf, state_t *state)
 		return b_left;
 
 	return display_printf(dspbuf,
-			      "} refccount=%"PRId32,
+			      "} state_refcount=%"PRId32,
 			      atomic_fetch_int32_t(&state->state_refcount));
 }
 

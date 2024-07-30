@@ -80,7 +80,7 @@ int display_9p_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " refcount=%d",
+	return display_printf(dspbuf, " so_refcount=%d",
 			      atomic_fetch_int32_t(&owner->so_refcount));
 }
 
