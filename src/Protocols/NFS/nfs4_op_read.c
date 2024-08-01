@@ -496,7 +496,7 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 	return nfsstat4_to_nfs_req_result(res_RPLUS->rpr_status);
 }
 
-static void read4_io_data_release(void *)
+static void read4_io_data_release(void *release_data)
 {
 	/* Nothing to do */
 }

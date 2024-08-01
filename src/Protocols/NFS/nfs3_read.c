@@ -265,7 +265,7 @@ static void nfs3_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	}
 }
 
-static void read3_io_data_release(void *)
+static void read3_io_data_release(void *release_data)
 {
 	/* Nothing to do */
 }
