@@ -507,8 +507,10 @@ static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
 		}
 
 		/* Free the buffers that had been allocated */
-		for (ix = 0; ix < uio->uio_count; ix++)
-			gsh_free(uio->uio_vio[ix].vio_base);
+		for (ix = 0; ix < uio->uio_count; ix++) {
+			if (!(op_ctx && op_ctx->is_rdma_buff_used))
+				gsh_free(uio->uio_vio[ix].vio_base);
+		}
 	}
 
 	gsh_free(uio);
