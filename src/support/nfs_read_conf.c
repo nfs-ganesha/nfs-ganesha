@@ -279,12 +279,6 @@ static struct config_item core_params[] = {
 #ifdef _USE_NFS_RDMA
 	CONF_ITEM_UI32("RPC_Max_RDMA_Connections", 1, 1024, 64,
 		       nfs_core_param, rpc.max_rdma_connections),
-	CONF_ITEM_UI32("MaxRPCRdmaSqDepth", 1, 4096,
-		       1024,
-		       nfs_core_param, rpc.rdma_sq_depth),
-	CONF_ITEM_UI32("MaxRPCRdmaRqDepth", 1, 4096,
-		       1024,
-		       nfs_core_param, rpc.rdma_rq_depth),
 	CONF_ITEM_UI32("MaxRPCRdmaCredits", 1, 4096, 64,
 		       nfs_core_param, rpc.rdma_credits),
 #endif

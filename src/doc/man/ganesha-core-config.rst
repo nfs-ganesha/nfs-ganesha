@@ -324,12 +324,6 @@ RPC_Max_RDMA_Connections(uint32, range 1 to 1024, default 64)
     Maximum number of RDMA connections for TIRPC. Limiting the number of RDMA
     connections to 64 by default to avoid memory exhaustion.
 
-MaxRPCRdmaSqDepth(uint32, range 1 to 4096, default 1024)
-    Max size of RDMA send queue.
-
-MaxRPCRdmaRqDepth(uint32, range 1 to 4096, default 1024)
-    Max size of RDMA receive queue.
-
 MaxRPCRdmaCredits(uint32, range 1 to 4096, default 64)
     Max credits of RDMA channel, representing the max number of outstanding
     NFS operations on the channel.

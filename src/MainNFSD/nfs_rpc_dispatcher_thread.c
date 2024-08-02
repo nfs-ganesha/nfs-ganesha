@@ -590,8 +590,6 @@ void Create_RDMA(protos prot)
 
 	snprintf(str, 20, "%d", nfs_param.core_param.port[P_NFS_RDMA]);
 	rpc_rdma_xa.port = strdup(str);
-	rpc_rdma_xa.sq_depth = nfs_param.core_param.rpc.rdma_sq_depth;
-	rpc_rdma_xa.rq_depth = nfs_param.core_param.rpc.rdma_rq_depth;
 	rpc_rdma_xa.credits = nfs_param.core_param.rpc.rdma_credits;
 
 	/* This has elements of both UDP and TCP setup */
