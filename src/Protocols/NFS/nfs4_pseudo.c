@@ -345,7 +345,7 @@ bool pseudo_mount_export(struct gsh_export *export)
 	 * Also, nothing to actually do for Pseudo Root
 	 * (defer checking pseudopath for Pseudo Root until we have refstr.
 	 */
-	if (!export_can_be_mounted(export) || export->export_id == 0)
+	if (!export_can_be_mounted(export))
 		return true;
 
 	/* Initialize state and it's op_context.
