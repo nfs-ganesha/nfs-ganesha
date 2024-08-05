@@ -2674,6 +2674,7 @@ void gsh_libunwind(void)
 	LogMajor(COMPONENT_INIT, "BACKTRACE:");
 
 	do {
+		n = 0;
 		ip = sp = 0;
 		unw_get_reg(&cursor, UNW_REG_IP, &ip);
 		unw_get_reg(&cursor, UNW_REG_SP, &sp);
@@ -2688,6 +2689,7 @@ void gsh_libunwind(void)
 						" #%u %s + %#llx [ip=%#llx] [sp=%#llx]\n",
 						i, procname, (long long)off,
 						(long long)ip, (long long) sp);
+					if (n > 0)
 						write(fd, buffer, n);
 				} else {
 					LogMajor(COMPONENT_INIT,
@@ -2700,10 +2702,11 @@ void gsh_libunwind(void)
 			/* case -UNW_ENOINFO: */
 			/* case -UNW_EUNSPEC: */
 				if (fd != -1) {
-					snprintf(buffer, sizeof(buffer),
+					n = snprintf(buffer, sizeof(buffer),
 						" #%u %s [ip=%#llx] [sp=%#llx]\n",
 						i, "<unknown symbol>",
 						(long long)ip, (long long) sp);
+					if (n > 0)
 						write(fd, buffer, n);
 				} else {
 					LogMajor(COMPONENT_INIT,
