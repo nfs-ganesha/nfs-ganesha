@@ -906,6 +906,9 @@ exit 0
 %if %{with lttng}
 %files lttng
 %{_libdir}/libganesha_trace*
+%if ! %{with system_ntirpc}
+%{_libdir}/libntirpc_tracepoints.so
+%endif
 %endif
 
 %if %{with utils}
