@@ -284,8 +284,8 @@ log_entry_ref_count(const char *reason, state_lock_entry_t *le,
 			"%s Entry: %p obj=%p, fileid=%" PRIu64
 			", export=%u, type=%s, start=0x%"PRIx64
 			", end=0x%"PRIx64
-			", protocol %s"
-			", blocked=%s/%p/%s, state=%p, refcount=%"PRIu32
+			", protocol %s, blocked=%s/%p/%s"
+			", state=%p, sle_refcount=%"PRIu32
 			", owner={%s}",
 			reason, le, le->sle_obj,
 			(uint64_t) le->sle_obj->fileid,
@@ -629,7 +629,7 @@ static inline void lock_entry_inc_ref(state_lock_entry_t *lock_entry)
 {
 	int32_t refcount = atomic_inc_int32_t(&lock_entry->sle_ref_count);
 
-	LogEntryRefCount("Increment refcount", lock_entry, refcount);
+	LogEntryRefCount("Increment sle_ref_count", lock_entry, refcount);
 }
 
 /**
@@ -642,8 +642,8 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 	int32_t refcount = atomic_dec_int32_t(&lock_entry->sle_ref_count);
 
 	LogEntryRefCount(refcount != 0
-			 ? "Decrement refcount"
-			 : "Decrement refcount and freeing",
+			 ? "Decrement sle_ref_count"
+			 : "Decrement sle_ref_count and freeing",
 			 lock_entry, refcount);
 
 	assert(refcount >= 0);

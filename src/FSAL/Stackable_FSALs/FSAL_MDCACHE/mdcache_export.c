@@ -322,7 +322,7 @@ static void mdcache_exp_release(struct fsal_export *exp_hdl)
 	fsal_put(fsal_hdl);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s refcount %"PRIu32,
+		     "FSAL %s fsal_refcount %"PRIu32,
 		     fsal_hdl->name,
 		     atomic_fetch_int32_t(&fsal_hdl->refcount));
 

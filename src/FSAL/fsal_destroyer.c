@@ -96,7 +96,7 @@ static void shutdown_pnfs_ds(struct fsal_module *fsal)
 
 		if (refcount != 0) {
 			LogDebug(COMPONENT_FSAL,
-				 "Extra references (%"PRIi32") hanging around.",
+				 "Extra ds refs (%"PRIi32") hanging around.",
 				 refcount);
 			atomic_store_int32_t(&ds->ds_refcount, 0);
 		}
@@ -121,7 +121,7 @@ static void shutdown_export(struct fsal_export *export)
 	fsal_put(fsal);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s refcount %"PRIu32,
+		     "FSAL %s fsal_refcount %"PRIu32,
 		     fsal->name,
 		     atomic_fetch_int32_t(&fsal->refcount));
 }
@@ -172,7 +172,7 @@ void destroy_fsals(void)
 
 		if (refcount != 0) {
 			LogCrit(COMPONENT_FSAL,
-				"Extra references (%"PRIi32
+				"Extra fsal references (%"PRIi32
 				") hanging around to FSAL %s",
 				refcount, m->name);
 			/**

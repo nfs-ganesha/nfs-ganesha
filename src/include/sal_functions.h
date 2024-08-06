@@ -426,7 +426,7 @@ static inline void inc_state_t_ref(struct state_t *state)
 	int32_t refcount = atomic_inc_int32_t(&state->state_refcount);
 
 	LogFullDebug(COMPONENT_STATE,
-		     "State %p refcount now %"PRIi32,
+		     "State %p state_refcount now %"PRIi32,
 		     state, refcount);
 }
 

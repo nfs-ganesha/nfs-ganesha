@@ -89,14 +89,14 @@ static int unload_fsal(struct fsal_module *fsal_hdl)
 	int32_t refcount = atomic_fetch_int32_t(&fsal_hdl->refcount);
 
 	LogDebug(COMPONENT_FSAL,
-		 "refcount = %"PRIi32,
+		 "fsal_refcount = %"PRIi32,
 		 refcount);
 
 	PTHREAD_MUTEX_lock(&fsal_lock);
 
 	if (refcount != 0 || !glist_empty(&fsal_hdl->exports)) {
 		LogCrit(COMPONENT_FSAL,
-			"Can not unload FSAL %s refcount=%"PRIi32,
+			"Can not unload FSAL %s fsal_refcount=%"PRIi32,
 			fsal_hdl->name, refcount);
 		goto err;
 	}

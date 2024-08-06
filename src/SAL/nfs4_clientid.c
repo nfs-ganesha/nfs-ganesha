@@ -194,7 +194,7 @@ int display_client_id_rec(struct display_buffer *dspbuf,
 
 	b_left = display_printf(
 		dspbuf,
-		"} %s Client={",
+		"} %s ClientRec={",
 		clientid_confirm_state_to_str(clientid->cid_confirmed));
 
 	if (b_left <= 0)
@@ -211,7 +211,7 @@ int display_client_id_rec(struct display_buffer *dspbuf,
 		delta = time(NULL) - clientid->cid_last_renew;
 
 	b_left = display_printf(dspbuf,
-				"} t_delta=%d reservations=%d refcount=%d files_opened=%u,",
+				"} t_delta=%d reservations=%d cid_refcount=%d files_opened=%u,",
 				delta, clientid->cid_lease_reservations,
 				atomic_fetch_int32_t(&clientid->cid_refcount),
 				atomic_fetch_uint32_t(
@@ -283,7 +283,7 @@ int32_t inc_client_id_ref(nfs_client_id_t *clientid)
 
 		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Increment refcount Clientid {%s} to %" PRId32,
+			     "Increment cid_refcount Clientid {%s} to %" PRId32,
 			     str, cid_refcount);
 	}
 
@@ -386,7 +386,7 @@ int32_t dec_client_id_ref(nfs_client_id_t *clientid)
 	cid_refcount = atomic_dec_int32_t(&clientid->cid_refcount);
 
 	LogFullDebug(COMPONENT_CLIENTID,
-		     "Decrement refcount Clientid {%s} refcount to %" PRId32,
+		     "Decrement refcount Clientid {%s} cid_refcount to %d",
 		     str, cid_refcount);
 
 	assert(cid_refcount >= 0);
@@ -401,7 +401,7 @@ int32_t dec_client_id_ref(nfs_client_id_t *clientid)
 	if (clientid->cid_confirmed == EXPIRED_CLIENT_ID) {
 		/* Is not in any hash table, so we can just delete it */
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Free Clientid refcount now=0 {%s}", str);
+			     "Free Clientid cid_refcount now=0 {%s}", str);
 
 		free_client_id(clientid);
 	} else {
@@ -999,7 +999,6 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	hash_table_t *ht_expire;
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = {sizeof(str), str, str};
-	bool str_valid = false;
 	struct req_op_context op_context;
 
 	/* Initialize op_context */
@@ -1029,30 +1028,31 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 			/* We have an expired client to be added to list */
 			atomic_inc_uint32_t(&num_of_curr_expired_clients);
 
-		/* Take a ref for clientid and add to list */
-		inc_client_id_ref(clientid);
-		clientid->marked_for_delayed_cleanup = true;
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+			/* Take a ref for clientid and add to list */
+			inc_client_id_ref(clientid);
+			clientid->marked_for_delayed_cleanup = true;
+			PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
-		if (isFullDebug(COMPONENT_CLIENTID)) {
-			display_client_id_rec(&dspbuf, clientid);
-			LogFullDebug(COMPONENT_CLIENTID,
-			"Adding Expired Client{%s} for delayed cleanup, Threshold(%u) Curr_Expired(%u).",
-			str, nfs_param.nfsv4_param.expired_client_threshold,
-			atomic_fetch_uint32_t(&num_of_curr_expired_clients));
+			if (isFullDebug(COMPONENT_CLIENTID)) {
+				display_client_id_rec(&dspbuf, clientid);
+				LogFullDebug(COMPONENT_CLIENTID,
+					"Adding Expired Client{%s} for delayed cleanup, Threshold(%u) Curr_Expired(%u).",
+					str,
+					nfs_param.nfsv4_param.expired_client_threshold,
+					atomic_fetch_uint32_t(&num_of_curr_expired_clients));
+			}
+			PTHREAD_MUTEX_lock(&expired_client_ids_list_lock);
+			/* Sort entries based on cid_last_renew */
+			glist_insert_sorted(&expired_client_ids_list,
+					&clientid->expired_client,
+					&expired_client_item_compare);
+			PTHREAD_MUTEX_unlock(&expired_client_ids_list_lock);
+				if (isDebug(COMPONENT_CLIENTID))
+					print_expired_client_list();
+
+			release_op_context();
+			return false;
 		}
-		PTHREAD_MUTEX_lock(&expired_client_ids_list_lock);
-		/* Sort entries based on cid_last_renew */
-		glist_insert_sorted(&expired_client_ids_list,
-				    &clientid->expired_client,
-				    &expired_client_item_compare);
-		PTHREAD_MUTEX_unlock(&expired_client_ids_list_lock);
-			if (isDebug(COMPONENT_CLIENTID))
-				print_expired_client_list();
-
-		release_op_context();
-		return false;
-	}
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
@@ -1159,11 +1159,12 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 
 			if (refcount > 1)
 				LogWarn(COMPONENT_CLIENTID,
-					"Expired State, Possibly extra references to {%s}",
+					"Expired State - Lock Owners, Possibly extra references to {%s}",
 					str);
 			else
 				LogFullDebug(COMPONENT_CLIENTID,
-					     "Expired State for {%s}", str);
+					     "Expired State - Lock Owners, for {%s}",
+					     str);
 		}
 
 		dec_state_owner_ref(owner);
@@ -1224,11 +1225,12 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 
 			if (refcount > 1)
 				LogFatal(COMPONENT_CLIENTID,
-					 "Expired State, Possibly extra references to {%s}",
+					 "Expired State - Open Owners, Possibly extra references to {%s}",
 					 str);
 			else
 				LogFullDebug(COMPONENT_CLIENTID,
-					     "Expired State for {%s}", str);
+					     "Expired State - Open Owners, for {%s}",
+					     str);
 		}
 
 		dec_state_owner_ref(owner);
@@ -1254,6 +1256,7 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 							       session_link);
 
 			if (!nfs41_Session_Del(session)) {
+				display_reset_buffer(&dspbuf);
 				display_client_id_rec(&dspbuf, clientid);
 				LogCrit(COMPONENT_SESSIONS,
 					"Expire session failed for {%s}",
@@ -1277,11 +1280,11 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 	}
 
 	if (isDebug(COMPONENT_CLIENTID)) {
+		display_reset_buffer(&dspbuf);
 		display_client_id_rec(&dspbuf, clientid);
 		LogDebug(COMPONENT_CLIENTID,
 			 "Expired (done), about to release last reference {%s}",
 			 str);
-		str_valid = true;
 	}
 
 	/* Release the hash table reference to the clientid. */
@@ -1289,8 +1292,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid,
 		(void)dec_client_id_ref(clientid);
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
-		if (!str_valid)
-			display_printf(&dspbuf, "clientid %p", clientid);
+		display_reset_buffer(&dspbuf);
+		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID,
 			     "Expired (done), released last reference {%s}",
 			     str);
@@ -1344,7 +1347,6 @@ int reap_expired_client_list(nfs_client_id_t *conflicted_client)
 			    expired_client_n, &expired_client_ids_list) {
 		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = {sizeof(str), str, str};
-		bool str_valid = false;
 
 		/* The client to expire finally */
 		struct nfs_client_id_t *expired_client =
@@ -1389,7 +1391,6 @@ int reap_expired_client_list(nfs_client_id_t *conflicted_client)
 			display_client_id_rec(&dspbuf, expired_client);
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "Expired Client is %s", str);
-			str_valid = true;
 		}
 
 		/* Get the client record */
@@ -1415,12 +1416,10 @@ int reap_expired_client_list(nfs_client_id_t *conflicted_client)
 		}
 
 		if (isFullDebug(COMPONENT_CLIENTID)) {
-			if (!str_valid)
-				display_printf(&dspbuf, "clientid %p",
-					       expired_client);
-
+			display_reset_buffer(&dspbuf);
+			display_client_id_rec(&dspbuf, expired_client);
 			LogFullDebug(COMPONENT_CLIENTID,
-				     "Delayed reaper, expired {%s}", str);
+				     "Delayed reaper, Expired {%s}", str);
 		}
 
 		glist_del(&expired_client->expired_client);
@@ -1641,7 +1640,7 @@ int display_client_record(struct display_buffer *dspbuf,
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " refcount=%" PRId32,
+	return display_printf(dspbuf, " cr_refcount=%" PRId32,
 			      atomic_fetch_int32_t(&record->cr_refcount));
 }
 
@@ -1660,7 +1659,7 @@ int32_t inc_client_record_ref(nfs_client_record_t *record)
 		struct display_buffer dspbuf = {sizeof(str), str, str};
 
 		display_client_record(&dspbuf, record);
-		LogFullDebug(COMPONENT_CLIENTID, "Increment refcount {%s}",
+		LogFullDebug(COMPONENT_CLIENTID, "Increment cr_refcount {%s}",
 			     str);
 	}
 
@@ -1706,7 +1705,7 @@ int32_t dec_client_record_ref(nfs_client_record_t *record)
 
 	if (refcount > 0) {
 		LogFullDebug(COMPONENT_CLIENTID,
-			     "Decrement refcount now=%" PRId32 " {%s}",
+			     "Decrement cr_refcount now=%" PRId32 " {%s}",
 			     refcount, str);
 
 		return refcount;

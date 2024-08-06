@@ -140,7 +140,7 @@ void mdcache_export_uninit(void)
 	fsal_put(sub_export->fsal);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s refcount %"PRIu32,
+		     "FSAL %s fsal_refcount %"PRIu32,
 		     sub_export->fsal->name,
 		     atomic_fetch_int32_t(&sub_export->fsal->refcount));
 
@@ -215,7 +215,7 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	fsal_get(myself->mfe_exp.fsal);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s refcount %"PRIu32,
+		     "FSAL %s fsal_refcount %"PRIu32,
 		     myself->mfe_exp.fsal->name,
 		     atomic_fetch_int32_t(&myself->mfe_exp.fsal->refcount));
 

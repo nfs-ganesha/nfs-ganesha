@@ -698,7 +698,7 @@ void _get_gsh_export_ref(struct gsh_export *a_export,
 
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
 			NIV_FULL_DEBUG,
-			"get export ref for id %" PRIu16 " %s, refcount = %"
+			"get export ref for id %" PRIu16 " %s, exp_refcount = %"
 			PRIi64,
 			a_export->export_id,
 			tmp_export_path(&tmp_path),
@@ -729,7 +729,7 @@ void _put_gsh_export(struct gsh_export *export, bool config,
 
 		DisplayLogComponentLevel(COMPONENT_EXPORT, file, line, function,
 			NIV_FULL_DEBUG,
-			"put export ref for id %" PRIu16 " %s, refcount = %"
+			"put export ref for id %" PRIu16 " %s, exp_refcount = %"
 			PRIi64,
 			export->export_id,
 			tmp_export_path(&tmp_path),

@@ -103,7 +103,7 @@ int display_nsm_client(struct display_buffer *dspbuf, state_nsm_client_t *key)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " ssc_client=%p %s refcount=%d",
+	return display_printf(dspbuf, " ssc_client=%p %s ssc_refcount=%d",
 			      key->ssc_client,
 			      atomic_fetch_int32_t(&key->ssc_monitored)
 					? "monitored" : "unmonitored",
@@ -307,7 +307,7 @@ int display_nlm_client(struct display_buffer *dspbuf, state_nlm_client_t *key)
 	if (b_left <= 0)
 		return b_left;
 
-	return display_printf(dspbuf, " type=%s refcount=%d",
+	return display_printf(dspbuf, " type=%s slc_refcount=%d",
 			      xprt_type_to_str(key->slc_client_type),
 			      atomic_fetch_int32_t(&key->slc_refcount));
 }
@@ -732,7 +732,7 @@ void _inc_nsm_client_ref(state_nsm_client_t *client,
 	if (strvalid) {
 		DisplayLogComponentLevel(
 			COMPONENT_STATE, file, line, function, NIV_FULL_DEBUG,
-			"Increment refcount now=%" PRId32 " {%s}",
+			"Increment ssc_refcount now=%" PRId32 " {%s}",
 			refcount, str);
 	}
 }
@@ -789,7 +789,7 @@ void _dec_nsm_client_ref(state_nsm_client_t *client,
 			DisplayLogComponentLevel(
 				COMPONENT_STATE, file, line, function,
 				NIV_FULL_DEBUG,
-				"Decrement refcount now=%" PRId32 " {%s}",
+				"Decrement ssc_refcount now=%" PRId32 " {%s}",
 				refcount, str);
 		}
 
@@ -1108,7 +1108,7 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 	if (refcount > 0) {
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,
-				     "Decrement refcount now=%" PRId32 " {%s}",
+				     "Decrement slc_refcount now=%" PRId32 " {%s}",
 				     refcount, str);
 
 		return;

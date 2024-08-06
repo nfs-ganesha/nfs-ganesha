@@ -507,7 +507,7 @@ void dec_nfs4_state_ref(struct state_t *state)
 	if (refcount > 0) {
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,
-				     "Decrement refcount now=%" PRId32 " {%s}",
+				     "Decrement state_refcount now=%d {%s}",
 				     refcount, str);
 
 		return;

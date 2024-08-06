@@ -798,7 +798,7 @@ void inc_state_owner_ref(state_owner_t *owner)
 
 	if (str_valid)
 		LogFullDebug(COMPONENT_STATE,
-			     "Increment refcount now=%" PRId32 " {%s}",
+			     "Increment so_refcount now=%" PRId32 " {%s}",
 			     refcount, str);
 }
 
@@ -909,7 +909,7 @@ void dec_state_owner_ref(state_owner_t *owner)
 	if (refcount != 0) {
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,
-				     "Decrement refcount now=%" PRId32 " {%s}",
+				     "Decrement so_refcount now=%d {%s}",
 				     refcount, str);
 
 		assert(refcount > 0);
@@ -1113,7 +1113,7 @@ state_owner_t *get_state_owner(care_t care, state_owner_t *key,
 				display_owner(&dspbuf, owner);
 
 			LogFullDebug(COMPONENT_STATE,
-				     "Found {%s} refcount now=%" PRId32,
+				     "Found {%s} so_refcount now=%" PRId32,
 				     str, refcount);
 		}
 		return owner;
@@ -1240,11 +1240,11 @@ bool hold_state_owner_ref(state_owner_t *owner)
 	if (str_valid) {
 		if (refcount == 0) {
 			LogFullDebug(COMPONENT_STATE,
-				     "Did not increment refcount from 0 {%s}",
+				     "Did not increment so_refcount from 0 {%s}",
 				     str);
 		} else {
 			LogFullDebug(COMPONENT_STATE,
-				     "Increment refcount now=%" PRId32 " {%s}",
+				     "Increment so_refcount now=%d {%s}",
 				     refcount, str);
 		}
 	}

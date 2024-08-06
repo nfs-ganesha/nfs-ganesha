@@ -69,7 +69,7 @@ static void release(struct fsal_export *exp_hdl)
 	fsal_put(sub_fsal);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s refcount %"PRIu32,
+		     "FSAL %s fsal_refcount %"PRIu32,
 		     sub_fsal->name,
 		     atomic_fetch_int32_t(&sub_fsal->refcount));
 
@@ -485,7 +485,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 	fsal_put(fsal_stack);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s refcount %"PRIu32,
+		     "FSAL %s fsal_refcount %"PRIu32,
 		     fsal_stack->name,
 		     atomic_fetch_int32_t(&fsal_stack->refcount));
 

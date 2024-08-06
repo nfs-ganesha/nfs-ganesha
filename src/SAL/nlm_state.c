@@ -260,7 +260,7 @@ void dec_nlm_state_ref(state_t *state)
 	if (refcount > 0) {
 		if (str_valid)
 			LogFullDebug(COMPONENT_STATE,
-				     "Decrement refcount now=%" PRId32 " {%s}",
+				     "Decrement state_refcount now=%d {%s}",
 				     refcount, str);
 
 		return;

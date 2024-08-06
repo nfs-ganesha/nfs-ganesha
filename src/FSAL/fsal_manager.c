@@ -409,7 +409,7 @@ int load_fsal(const char *name,
 	fsal_get(fsal);
 
 	LogFullDebug(COMPONENT_FSAL,
-		     "FSAL %s refcount %"PRIu32,
+		     "FSAL %s fsal_refcount %"PRIu32,
 		     name, atomic_fetch_int32_t(&fsal->refcount));
 
 	fsal->path = dl_path;
@@ -457,7 +457,7 @@ struct fsal_module *lookup_fsal(const char *name)
 			PTHREAD_MUTEX_unlock(&fsal_lock);
 			op_ctx->fsal_module = fsal;
 			LogFullDebug(COMPONENT_FSAL,
-				     "FSAL %s refcount %"PRIu32,
+				     "FSAL %s fsal_refcount %"PRIu32,
 				     name,
 				     atomic_fetch_int32_t(&fsal->refcount));
 			return fsal;
@@ -571,7 +571,7 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 	if (refcount != 0) {
 		/* this would be very bad */
 		LogCrit(COMPONENT_FSAL,
-			"Unregister FSAL %s with non-zero refcount=%"PRIi32,
+			"Unregister FSAL %s with non-zero fsal_refcount=%d",
 			fsal_hdl->name, refcount);
 		return EBUSY;
 	}
@@ -667,7 +667,7 @@ int fsal_load_init(void *node, const char *name, struct fsal_module **fsal_hdl,
 			fsal_put(*fsal_hdl);
 			err_type->fsal = true;
 			LogFullDebug(COMPONENT_FSAL,
-				     "FSAL %s refcount %"PRIu32,
+				     "FSAL %s fsal_refcount %"PRIu32,
 				     name,
 				     atomic_fetch_int32_t(
 						&(*fsal_hdl)->refcount));

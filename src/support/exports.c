@@ -621,7 +621,7 @@ static int fsal_cfg_commit(void *node, void *link_mem, void *self_struct,
 			export->cfg_pseudopath,
 			export->cfg_fullpath);
 		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL %s refcount %"PRIu32,
+			     "FSAL %s fsal_refcount %"PRIu32,
 			     fsal->name,
 			     atomic_fetch_int32_t(&fsal->refcount));
 		err_type->cur_exp_create_err = true;
@@ -723,7 +723,7 @@ static int fsal_update_cfg_commit(void *node, void *link_mem, void *self_struct,
 			export->cfg_pseudopath,
 			export->cfg_fullpath);
 		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL %s refcount %"PRIu32,
+			     "FSAL %s fsal_refcount %"PRIu32,
 			     fsal->name,
 			     atomic_fetch_int32_t(&fsal->refcount));
 		err_type->cur_exp_create_err = true;
@@ -1525,7 +1525,7 @@ int pseudofs_fsal_commit(void *self_struct, struct config_error_type *err_type)
 				"Could not create FSAL export for %s",
 				export->cfg_fullpath);
 			LogFullDebug(COMPONENT_FSAL,
-				     "FSAL %s refcount %"PRIu32,
+				     "FSAL %s fsal_refcount %"PRIu32,
 				     fsal_hdl->name,
 				     atomic_fetch_int32_t(&fsal_hdl->refcount));
 			err_type->invalid = true;
@@ -2421,7 +2421,7 @@ static int build_default_root(struct config_error_type *err_type)
 				"Could not create FSAL export for %s",
 				export->cfg_fullpath);
 			LogFullDebug(COMPONENT_FSAL,
-				     "FSAL %s refcount %"PRIu32,
+				     "FSAL %s fsal_refcount %"PRIu32,
 				     fsal_hdl->name,
 				     atomic_fetch_int32_t(&fsal_hdl->refcount));
 			goto err_out;
@@ -2438,7 +2438,7 @@ static int build_default_root(struct config_error_type *err_type)
 		LogCrit(COMPONENT_CONFIG,
 			"Failed to insert pseudo root   In use??");
 		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL %s refcount %"PRIu32,
+			     "FSAL %s fsal_refcount %"PRIu32,
 			     fsal_hdl->name,
 			     atomic_fetch_int32_t(&fsal_hdl->refcount));
 		goto err_out;
@@ -2723,7 +2723,7 @@ void free_export_resources(struct gsh_export *export, bool config)
 		export->fsal_export->exp_ops.release(export->fsal_export);
 		fsal_put(fsal);
 		LogFullDebug(COMPONENT_FSAL,
-			     "FSAL %s refcount %"PRIu32,
+			     "FSAL %s fsal_refcount %"PRIu32,
 			     fsal->name,
 			     atomic_fetch_int32_t(&fsal->refcount));
 	}
