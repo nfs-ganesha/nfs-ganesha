@@ -488,6 +488,9 @@ static void *sigmgr_thread(void *UnusedArg)
 
 static void crash_handler(int signo, siginfo_t *info, void *ctx)
 {
+	/* Already in the process of shutting down, skip backtraces & cores */
+	if (admin_shutdown)
+		return;
 #ifdef USE_UNWIND
 	gsh_libunwind();
 #else
