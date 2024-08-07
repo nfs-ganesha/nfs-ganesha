@@ -35,7 +35,6 @@
  * @return true if the counter was decremented to zero and the mutex locked.
  */
 
-#if defined(GCC_ATOMIC_FUNCTIONS) | defined(GCC_SYNC_FUNCTIONS)
 static inline
 bool PTHREAD_MUTEX_dec_int64_t_and_lock(int64_t *var,
 					pthread_mutex_t *lock)
@@ -49,7 +48,6 @@ bool PTHREAD_MUTEX_dec_int64_t_and_lock(int64_t *var,
 	PTHREAD_MUTEX_unlock(lock);
 	return false;
 }
-#endif
 
 /**
  * @brief Decrement an uint64_t refcounter and take mutex if zero.
@@ -60,7 +58,6 @@ bool PTHREAD_MUTEX_dec_int64_t_and_lock(int64_t *var,
  * @return true if the counter was decremented to zero and the mutex locked.
  */
 
-#if defined(GCC_ATOMIC_FUNCTIONS) | defined(GCC_SYNC_FUNCTIONS)
 static inline
 bool PTHREAD_MUTEX_dec_uint64_t_and_lock(uint64_t *var,
 					 pthread_mutex_t *lock)
@@ -74,7 +71,6 @@ bool PTHREAD_MUTEX_dec_uint64_t_and_lock(uint64_t *var,
 	PTHREAD_MUTEX_unlock(lock);
 	return false;
 }
-#endif
 
 /**
  * @brief Decrement an int32_t refcounter and take mutex if zero.
@@ -85,7 +81,6 @@ bool PTHREAD_MUTEX_dec_uint64_t_and_lock(uint64_t *var,
  * @return true if the counter was decremented to zero and the mutex locked.
  */
 
-#if defined(GCC_ATOMIC_FUNCTIONS) | defined(GCC_SYNC_FUNCTIONS)
 static inline
 bool PTHREAD_MUTEX_dec_int32_t_and_lock(int32_t *var,
 					pthread_mutex_t *lock)
@@ -99,7 +94,6 @@ bool PTHREAD_MUTEX_dec_int32_t_and_lock(int32_t *var,
 	PTHREAD_MUTEX_unlock(lock);
 	return false;
 }
-#endif
 
 /**
  * @brief Decrement an uint32_t refcounter and take mutex if zero.
@@ -110,7 +104,6 @@ bool PTHREAD_MUTEX_dec_int32_t_and_lock(int32_t *var,
  * @return true if the counter was decremented to zero and the mutex locked.
  */
 
-#if defined(GCC_ATOMIC_FUNCTIONS) | defined(GCC_SYNC_FUNCTIONS)
 static inline
 bool PTHREAD_MUTEX_dec_uint32_t_and_lock(uint32_t *var,
 					 pthread_mutex_t *lock)
@@ -124,6 +117,5 @@ bool PTHREAD_MUTEX_dec_uint32_t_and_lock(uint32_t *var,
 	PTHREAD_MUTEX_unlock(lock);
 	return false;
 }
-#endif
 
 #endif				/* !ATOMIC_UTILS_H */
