@@ -463,7 +463,8 @@ struct state_t *nfs4_State_Get_Obj(struct fsal_obj_handle *obj,
  ******************************************************************************/
 
 int reserve_lease(nfs_client_id_t *clientid);
-bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update);
+bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update,
+			     state_owner_t **owner);
 void update_lease(nfs_client_id_t *clientid);
 bool valid_lease(nfs_client_id_t *clientid, bool is_from_reaper);
 /******************************************************************************

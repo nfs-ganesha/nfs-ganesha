@@ -89,7 +89,7 @@ enum nfs_req_result nfs4_op_renew(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Check if the lease is already expired, if not update it. */
-	if (!reserve_lease_or_expire(clientid, true)) {
+	if (!reserve_lease_or_expire(clientid, true, NULL)) {
 		res_RENEW4->status = NFS4ERR_EXPIRED;
 	} else {
 		/** @todo - it doesn't look like this cb_channel stuff is

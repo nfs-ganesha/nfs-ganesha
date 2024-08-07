@@ -86,7 +86,7 @@ enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
 		goto out2;
 	}
 
-	if (!reserve_lease_or_expire(nfs_client_id, false)) {
+	if (!reserve_lease_or_expire(nfs_client_id, false, NULL)) {
 		dec_client_id_ref(nfs_client_id);
 
 		res_RELEASE_LOCKOWNER4->status = NFS4ERR_EXPIRED;

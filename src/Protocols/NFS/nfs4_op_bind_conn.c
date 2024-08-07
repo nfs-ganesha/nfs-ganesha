@@ -139,7 +139,7 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 		 "BIND_CONN_TO_SESSION session=%p", session);
 
 	/* Check if lease is expired and reserve it */
-	if (!reserve_lease_or_expire(session->clientid_record, false)) {
+	if (!reserve_lease_or_expire(session->clientid_record, false, NULL)) {
 		dec_session_ref(session);
 		res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4ERR_EXPIRED;
 

@@ -177,7 +177,7 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	if (data->minorversion == 0 &&
-	    !reserve_lease_or_expire(clientid, false)) {
+	    !reserve_lease_or_expire(clientid, false, NULL)) {
 		res_LOCKT4->status = NFS4ERR_EXPIRED;
 		goto out_clientid;
 	}

@@ -149,11 +149,13 @@ int reserve_lease(nfs_client_id_t *clientid)
  *
  * @param[in] clientid   Client record to check lease for
  * @param[in] update     Indicate that lease should also be updated if valid
+ * @param[in] st_owner   Pass down the ref-ed state_owner
  *
  * @return true if lease is valid, false if not.
  *
  */
-bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update)
+bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update,
+			     state_owner_t **st_owner)
 {
 	unsigned int valid;
 
@@ -175,7 +177,16 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update)
 	}
 
 	if (valid == 0) {
-		/* Expire the lease */
+		/* Let's expire the lease */
+
+		/* Drop the Reference on st_owner, else nfs_client_id_expire
+		 * would not be able to clear the state owners
+		 */
+		if (st_owner != NULL) {
+			dec_state_owner_ref(*st_owner);
+			*st_owner = NULL;
+		}
+
 		/* Get the client record. */
 		nfs_client_record_t *client_rec =  clientid->cid_client_record;
 

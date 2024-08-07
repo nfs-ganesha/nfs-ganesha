@@ -1362,7 +1362,7 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Check if lease is expired and reserve it */
 	if (data->minorversion == 0 &&
-	    !reserve_lease_or_expire(clientid, false)) {
+	    !reserve_lease_or_expire(clientid, false, NULL)) {
 		res_OPEN4->status = NFS4ERR_EXPIRED;
 		LogDebug(COMPONENT_NFS_V4, "Lease expired");
 		goto out3;
