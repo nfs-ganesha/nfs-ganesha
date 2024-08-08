@@ -737,7 +737,7 @@ mdcache_new_entry(struct mdcache_fsal_export *export,
 	}
 
 	/* See if someone raced us. */
-	oentry = cih_get_by_key_latch(&key, &latch, CIH_GET_WLOCK, __func__,
+	oentry = cih_get_by_key_latch(&key, &latch, CIH_GET_NONE, __func__,
 					__LINE__);
 	if (oentry) {
 		/* Entry is already in the cache, do not add it. */
@@ -1011,7 +1011,7 @@ mdcache_find_keyed_reason(mdcache_key_t *key, mdcache_entry_t **entry,
 	}
 
 	*entry = cih_get_by_key_latch(key, &latch,
-					CIH_GET_RLOCK | CIH_GET_UNLOCK_ON_MISS,
+					CIH_GET_UNLOCK_ON_MISS,
 					__func__, __LINE__);
 	if (likely(*entry)) {
 		fsal_status_t status;

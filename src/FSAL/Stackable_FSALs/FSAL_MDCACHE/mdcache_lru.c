@@ -725,8 +725,7 @@ lru_reap_impl(enum lru_q_id qid)
 		}
 		/* potentially reclaimable */
 		/* entry must be unreachable from CIH when recycled */
-		cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
-				    __func__, __LINE__);
+		cih_latch_entry(&entry->fh_hk.key, &latch, __func__, __LINE__);
 		QLOCK(qlane);
 		refcnt = atomic_fetch_int32_t(&entry->lru.refcnt);
 		/* there are two cases which permit reclaim,
@@ -1060,8 +1059,7 @@ mdcache_lru_cleanup_try_push(mdcache_entry_t *entry)
 	struct lru_q_lane *qlane = &LRU[lru->lane];
 	cih_latch_t latch;
 
-	cih_latch_entry(&entry->fh_hk.key, &latch, CIH_GET_WLOCK,
-			    __func__, __LINE__);
+	cih_latch_entry(&entry->fh_hk.key, &latch, __func__, __LINE__);
 	QLOCK(qlane);
 
 	/* Take the attr lock, so we can check that this entry is still

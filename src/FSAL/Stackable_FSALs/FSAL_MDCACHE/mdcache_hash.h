@@ -217,8 +217,6 @@ cih_hash_key(mdcache_key_t *key,
 }
 
 #define CIH_GET_NONE           0x0000
-#define CIH_GET_RLOCK          0x0001
-#define CIH_GET_WLOCK          0x0002
 #define CIH_GET_UNLOCK_ON_MISS 0x0004
 
 /**
@@ -245,7 +243,7 @@ cih_hash_release(cih_latch_t *latch)
  * @param flags [in] Flags
  */
 static inline void
-cih_latch_entry(mdcache_key_t *key, cih_latch_t *latch, uint32_t flags,
+cih_latch_entry(mdcache_key_t *key, cih_latch_t *latch,
 		const char *func, int line)
 {
 	cih_partition_t *cp;
@@ -253,10 +251,7 @@ cih_latch_entry(mdcache_key_t *key, cih_latch_t *latch, uint32_t flags,
 	latch->cp = cp =
 	    cih_partition_of_scalar(&cih_fhcache, key->hk);
 
-	if (flags & CIH_GET_WLOCK)
-		PTHREAD_MUTEX_lock(&cp->cih_lock);	/* SUBTREE_WLOCK */
-	else
-		PTHREAD_MUTEX_lock(&cp->cih_lock);	/* SUBTREE_RLOCK */
+	PTHREAD_MUTEX_lock(&cp->cih_lock);	/* SUBTREE_LOCK */
 
 #ifdef ENABLE_LOCKTRACE
 	cp->locktrace.func = (char *)func;
@@ -285,7 +280,7 @@ cih_get_by_key_latch(mdcache_key_t *key, cih_latch_t *latch,
 	struct avltree_node *node;
 	void **cache_slot;
 
-	cih_latch_entry(key, latch, flags, func, line);
+	cih_latch_entry(key, latch, func, line);
 
 	k_entry.fh_hk.key = *key;
 

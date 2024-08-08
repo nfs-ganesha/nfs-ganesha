@@ -134,7 +134,7 @@ mdc_up_try_release(const struct fsal_up_vector *vec,
 		     CIH_HASH_KEY_PROTOTYPE);
 
 	entry = cih_get_by_key_latch(&key, &latch,
-				     CIH_GET_WLOCK | CIH_GET_UNLOCK_ON_MISS,
+				     CIH_GET_UNLOCK_ON_MISS,
 				     __func__, __LINE__);
 	if (!entry) {
 		LogDebug(COMPONENT_MDCACHE, "no entry found");
