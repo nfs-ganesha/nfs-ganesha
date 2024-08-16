@@ -293,6 +293,8 @@ struct io_data {
 	u_int data_len;
 	/** Count of iovec structures in the io vector */
 	u_int iovcnt;
+	/** Size of last iov buffer */
+	size_t last_iov_buf_size;
 	/** The actual io vector */
 	struct iovec *iov;
 };
@@ -303,7 +305,7 @@ bool xdr_io_data(XDR *xdrs, io_data *objp);
 /**
  * API to get the buffer to fill the IO Payloads
  */
-void *get_buffer_for_io_response(uint64_t size);
+void *get_buffer_for_io_response(uint64_t size, size_t *buffer_size);
 
 #ifdef __cplusplus
 }

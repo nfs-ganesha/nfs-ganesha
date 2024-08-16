@@ -249,7 +249,7 @@ int nfs3_readdir(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		}
 	}
 
-	tracker.entries = get_buffer_for_io_response(tracker.mem_avail);
+	tracker.entries = get_buffer_for_io_response(tracker.mem_avail, NULL);
 	/* If buffer was not assigned, let's allocate it */
 	if (tracker.entries == NULL)
 		tracker.entries = gsh_malloc(tracker.mem_avail);

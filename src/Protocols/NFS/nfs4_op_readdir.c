@@ -673,7 +673,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	/* Prepare to read the entries */
 	tracker.mem_avail = maxcount - READDIR_RESP_BASE_SIZE;
 	tracker.max_count = dircount;
-	tracker.entries = get_buffer_for_io_response(tracker.mem_avail);
+	tracker.entries = get_buffer_for_io_response(tracker.mem_avail, NULL);
 	/* If buffer was not assigned, let's allocate it */
 	if (tracker.entries == NULL)
 		tracker.entries = gsh_malloc(tracker.mem_avail);

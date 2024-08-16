@@ -404,6 +404,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	resok->data.iov = &resok->iov0;
 	resok->data.iov[0].iov_len = size;
 	resok->data.iov[0].iov_base = NULL;
+	resok->data.last_iov_buf_size = 0;
 	resok->data.release = read3_io_data_release;
 
 	/* Set up args, allocate from heap */
@@ -416,6 +417,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	read_arg->offset = offset;
 	read_arg->iov_count = resok->data.iovcnt;
 	read_arg->iov = resok->data.iov;
+	read_arg->last_iov_buf_size = &resok->data.last_iov_buf_size;
 	read_arg->io_amount = 0;
 	read_arg->end_of_file = false;
 

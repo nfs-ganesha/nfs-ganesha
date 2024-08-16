@@ -1946,7 +1946,8 @@ void fsal_read2(struct fsal_obj_handle *obj_hdl,
 
 	/* Check if someone else want's to allocate the buffer */
 	read_arg->iov[0].iov_base =
-			get_buffer_for_io_response(read_arg->iov[0].iov_len);
+			get_buffer_for_io_response(read_arg->iov[0].iov_len,
+			    read_arg->last_iov_buf_size);
 
 	if (read_arg->iov[0].iov_base != NULL) {
 		/* Someone wanted to allocate the buffer, use it. */

@@ -1551,6 +1551,7 @@ struct fsal_io_arg {
 	uint64_t offset;	/**< Offset into file to read */
 	size_t io_request;	/**< requested length of I/O */
 	int iov_count;		/**< Number of vectors in iov */
+	size_t *last_iov_buf_size;	/**< Size of last iov buffer */
 	struct iovec *iov;	/**< Vector of buffers to fill */
 };
 

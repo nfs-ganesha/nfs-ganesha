@@ -777,6 +777,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	resok->data.iov = &resok->iov0;
 	resok->data.iov[0].iov_len = size;
 	resok->data.iov[0].iov_base = NULL;
+	resok->data.last_iov_buf_size = 0;
 	resok->data.release = read4_io_data_release;
 
 	/* Set up args, allocate from heap, iov_len will be 1 */
@@ -786,6 +787,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	read_arg->state = state_found;
 	read_arg->offset = offset;
 	read_arg->iov_count = resok->data.iovcnt;
+	read_arg->last_iov_buf_size = &resok->data.last_iov_buf_size;
 	read_arg->iov = resok->data.iov;
 	read_arg->io_amount = 0;
 	read_arg->end_of_file = false;

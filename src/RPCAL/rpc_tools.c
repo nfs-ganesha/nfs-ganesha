@@ -499,7 +499,7 @@ static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
 		 */
 		io_data->release(io_data->release_data);
 	} else {
-		if (uio->uio_u1 != NULL) {
+		if (uio->uio_u3 != NULL) {
 			/* Don't free the last buffer! It was allocated along
 			 * with uio..
 			 */
@@ -572,6 +572,20 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 	if (size != size2) {
 		/* grab the last N bytes of last buffer into extra */
 		size_t n = size % BYTES_PER_XDR_UNIT;
+
+		/* Check if last buffer has space */
+		if (objp->last_iov_buf_size >=
+		    (uio->uio_vio[last].vio_length + n)) {
+			uio->uio_vio[last].vio_tail =
+			    uio->uio_vio[last].vio_tail + n;
+			uio->uio_vio[last].vio_wrap =
+			    uio->uio_vio[last].vio_wrap + n;
+			uio->uio_vio[last].vio_length =
+			    uio->uio_vio[last].vio_length + n;
+			uio->uio_count--;
+			goto putbufs;
+		}
+
 		char *p = uio->uio_vio[last].vio_base +
 			  uio->uio_vio[last].vio_length - n;
 		char *extra = (char *) uio + sizeof(struct xdr_uio) +
@@ -611,9 +625,10 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 			     uio->uio_vio[i].vio_length);
 
 		/* Remember so we don't free... */
-		uio->uio_u1 = extra;
+		uio->uio_u3 = extra;
 	}
 
+putbufs:
 	LogFullDebug(COMPONENT_DISPATCH,
 		     "Allocated %p, references %"PRIi32", count %d",
 		     uio, uio->uio_references, (int) uio->uio_count);
@@ -782,7 +797,7 @@ bool xdr_io_data(XDR *xdrs, io_data *objp)
  *
  * @returns The address of the buffer to fill the payload
  */
-void *get_buffer_for_io_response(uint64_t size)
+void *get_buffer_for_io_response(uint64_t size, size_t *buffer_size)
 {
 #ifdef _USE_NFS_RDMA
 	struct nfs_request *nfs_req;
@@ -801,6 +816,8 @@ void *get_buffer_for_io_response(uint64_t size)
 			 req->data_chunk, req->data_chunk_length,
 			 req, req->rq_xprt);
 		assert(size <= req->data_chunk_length);
+		if (buffer_size)
+			*buffer_size = req->data_chunk_length;
 		op_ctx->is_rdma_buff_used = true;
 		return req->data_chunk;
 	}
