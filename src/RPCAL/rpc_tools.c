@@ -686,6 +686,9 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 	/* Get the current position in the stream */
 	start = XDR_GETPOS(xdrs);
 
+	/* For rdma_reads data received separately, so get data buffer */
+	start = XDR_GETSTARTDATAPOS(xdrs, start, objp->data_len);
+
 	/* Find out how many buffers the data occupies */
 	objp->iovcnt = XDR_IOVCOUNT(xdrs, start, objp->data_len);
 
@@ -754,8 +757,10 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 	/* We're done with the vio */
 	gsh_free(vio);
 
+
 	/* Now advance the position past the data (rounding up data_len) */
-	if (!XDR_SETPOS(xdrs, start + RNDUP(objp->data_len))) {
+	if (!XDR_SETPOS(xdrs,
+	    XDR_GETENDDATAPOS(xdrs, start, RNDUP(objp->data_len)))) {
 		gsh_free(objp->iov);
 		objp->iov = NULL;
 		return false;
