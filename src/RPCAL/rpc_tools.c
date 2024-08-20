@@ -489,7 +489,7 @@ static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
 	if (--uio->uio_references != 0)
 		return;
 
-	if (io_data->release != NULL) {
+	if (io_data && (io_data->release != NULL)) {
 		/* Handle the case where the io_data comes with its
 		 * own release method.
 		 *
@@ -514,6 +514,8 @@ static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
 	}
 
 	gsh_free(uio);
+	if (io_data)
+		gsh_free(io_data);
 }
 
 static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
@@ -543,7 +545,14 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 			 count * sizeof(struct xdr_vio) + extra);
 	uio->uio_release = xdr_io_data_uio_release;
 	uio->uio_count = count;
-	uio->uio_u2 = objp;
+	if (objp->release && objp->release_data) {
+		/* Create a copy of io_data, since send path could be async */
+		io_data *objp_copy = gsh_calloc(1, sizeof(io_data));
+
+		objp_copy->release = objp->release;
+		objp_copy->release_data = objp->release_data;
+		uio->uio_u2 = objp_copy;
+	}
 
 	for (i = 0; i < objp->iovcnt; i++) {
 		size_t i_size = objp->iov[i].iov_len;

@@ -1895,10 +1895,7 @@ fsal_status_t get_optional_attrs(struct fsal_obj_handle *obj_hdl,
 
 static void fsal_iov_release(void *release_data)
 {
-	struct fsal_io_arg *io_arg = release_data;
-
-	gsh_free(io_arg->iov[0].iov_base);
-	io_arg->iov[0].iov_base = NULL;
+	gsh_free(release_data);
 }
 
 /**
@@ -1963,7 +1960,7 @@ void fsal_read2(struct fsal_obj_handle *obj_hdl,
 					gsh_malloc(read_arg->iov[0].iov_len);
 		/* Set up release function */
 		read_arg->iov_release = fsal_iov_release;
-		read_arg->release_data = read_arg;
+		read_arg->release_data = read_arg->iov[0].iov_base;
 	}
 
 call_read2:
