@@ -714,9 +714,9 @@ lru_reap_impl(enum lru_q_id qid)
 		mdcache_lru_ref(entry, LRU_TEMP_REF);
 #endif
 		refcnt = atomic_inc_int32_t(&lru->refcnt);
+		entry = container_of(lru, mdcache_entry_t, lru);
 		const int32_t active_refcnt =
 			atomic_fetch_int32_t(&entry->lru.active_refcnt);
-		entry = container_of(lru, mdcache_entry_t, lru);
 		GSH_UNIQUE_AUTO_TRACEPOINT(mdcache, mdc_lru_ref, TRACE_DEBUG,
 			"lru ref. handle: {}, sub handle: {}, refcnt: {}, active_refcnt: {}",
 			&entry->obj_handle, entry->sub_handle, refcnt,
