@@ -533,10 +533,16 @@ connection_manager__connection_started(SVCXPRT *xprt)
 			connection->xprt, xprt);
 	}
 
+	/* We need connection->gsh_client set here, we will NULL it back out
+	 * if we do not end up managing the client.
+	 */
+	connection->gsh_client = gsh_client;
+
 	connection->is_managed = should_manage_connection(client_address);
 	if (!connection->is_managed) {
 		LogDebugConnection(connection,
 			"Connection is not managed by connection manager");
+		connection->gsh_client = NULL;
 		put_gsh_client(gsh_client);
 		result = CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW;
 		goto out;
@@ -550,6 +556,7 @@ connection_manager__connection_started(SVCXPRT *xprt)
 				  client->state);
 		connection->is_managed = false;
 		PTHREAD_MUTEX_unlock(&client->mutex);
+		connection->gsh_client = NULL;
 		put_gsh_client(gsh_client);
 		result = CONNECTION_MANAGER__CONNECTION_STARTED__DROP;
 		goto out;
