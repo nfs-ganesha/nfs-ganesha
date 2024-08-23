@@ -54,6 +54,108 @@ You will also need to pull in the libntirpc submodule:
 
     git submodule update --init
 
+TESTING
+
+Patches should be tested before submission. Some tests that are easy to run are:
+
+Connectathon (cthon04)
+
+https://wiki.linux-nfs.org/wiki/index.php/Connectathon_test_suite
+
+Ideally should be run for both NFSv3 and NFSv4.x even if you don't support
+both.
+
+pynfs
+
+https://wiki.linux-nfs.org/wiki/index.php/Pynfs
+
+The pynfs tests must be run for both 4.0 and 4.1, the 4.1 tests do not include
+a lot of the basic functionality that is tested by 4.0. There are also some
+Ganesha specific tests.
+
+I (Frank Filz - maintainer) personally run:
+
+./testserver.py -v --outfile /home/ffilz/ganesha/pynfs-results/TESTOUT.nfs4.0.all-ganesha-RD12-LOCK8c.2024-08-23.log --maketree 127.0.0.1:/export/test1/pynfs --showomit --secure --rundeps all ganesha RD12 LOCK8c
+
+and 
+
+./testserver.py -v --outfile /home/ffilz/ganesha/pynfs-results/TESTOUT.nfs4.1.all-ganesha.2024-08-23.log --maketree 127.0.0.1:/export/test1/pynfs --showomit --rundeps all ganesha
+
+As of V6.0 I get the following non-success results when run against FSAL_VFS:
+
+For 4.0:
+
+**************************************************
+GSS2     st_gss.testInconsistentGssSeqnum                         : OMIT
+           Dependency function _using_gss failed
+GSS6     st_gss.testHighSeqNum                                    : OMIT
+           Dependency function _using_gss failed
+GSS5     st_gss.testBadVersion                                    : OMIT
+           Dependency function _using_gss failed
+GSS3     st_gss.testBadVerfChecksum                               : OMIT
+           Dependency function _using_gss failed
+GSS8     st_gss.testBadService                                    : OMIT
+           Dependency function _using_gss failed
+GSS7     st_gss.testBadProcedure                                  : OMIT
+           Dependency function _using_gss failed
+GSS1     st_gss.testBadGssSeqnum                                  : OMIT
+           Dependency function _using_gss failed
+GSS4     st_gss.testBadDataChecksum                               : OMIT
+           Dependency function _using_gss failed
+WRT18    st_write.testChangeGranularityWrite                      : FAILURE
+           consecutive SETATTR(mode)'s don't all change change
+           attribute
+SATT9    st_setattr.testNonUTF8                                   : UNSUPPORTED
+           FATTR4_MIMETYPE not supported
+RD5a     st_read.testVeryLargeOffset                              : FAILURE
+           Reading file /b'export/test1/pynfs/tree/file' should
+           return NFS4_OK, instead got NFS4ERR_FBIG
+LOCK8c   st_lock.testNonzeroLockSeqid                             : WARNING
+           LOCK with newlockowner's lockseqid=1 should return
+           NFS4ERR_BAD_SEQID, instead got NFS4_OK
+LOCK20   st_lock.testBlockTimeout                                 : FAILURE
+           Grabbing lock after another owner let his 'turn'
+           expire should return NFS4_OK, instead got
+           NFS4ERR_DENIED
+ACL10    st_acl.testLargeACL                                      : OMIT
+           Dependency ACL0 st_acl.testACLsupport had status
+           UNSUPPORTED.
+ACL0     st_acl.testACLsupport                                    : UNSUPPORTED
+           FATTR4_ACL not supported
+ACL5     st_acl.testACL                                           : OMIT
+           Dependency ACL0 st_acl.testACLsupport had status
+           UNSUPPORTED.
+**************************************************
+Command line asked for 614 of 679 tests
+Of those: 10 Skipped, 3 Failed, 3 Warned, 598 Passed
+
+For 4.1:
+
+**************************************************
+SEQ6     st_sequence.testRequestTooBig                            : FAILURE
+           OP_LOOKUP should return NFS4ERR_REQ_TOO_BIG, instead
+           got NFS4ERR_NAMETOOLONG
+CSESS21  st_create_session.testCallbackVersion                    : FAILURE
+           No CB_NULL sent
+CSESS20  st_create_session.testCallbackProgram                    : FAILURE
+           No CB_NULL sent
+EID9     st_exchange_id.testLeasePeriod                           : FAILURE
+           OP_CREATE_SESSION should return
+           NFS4ERR_STALE_CLIENTID, instead got NFS4_OK
+**************************************************
+Command line asked for 179 of 262 tests
+Of those: 0 Skipped, 4 Failed, 0 Warned, 175 Passed
+
+There are some other tests mentioned on the Linux NFS Wiki:
+
+https://wiki.linux-nfs.org/wiki/index.php/Main_Page
+
+I also have two versions of the pjdfstests that have been modified to run
+better against Ganesha:
+
+https://github.com/ffilz/pjdfstest
+https://github.com/ffilz/ntfs-3g-pjd-fstest
+
 PREPARING FOR PATCH SUBMISSION:
 
 We also have several commit hooks, please install them:
