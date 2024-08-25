@@ -359,6 +359,12 @@ static fsal_status_t fsal_check_setattr_perms(struct fsal_obj_handle *obj,
 			 need_write_acl, need_write_data, need_write_attr);
 	}
 
+	if (access_check == 0) {
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		note = " (No permission required)";
+		goto out;
+	}
+
 	if (current->acl) {
 		status = obj->obj_ops->test_access(obj, access_check, NULL,
 						   NULL, false);
