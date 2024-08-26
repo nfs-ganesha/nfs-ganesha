@@ -148,6 +148,7 @@ static const struct op_name op_names_v4[] = {
 	[NFS4_OP_DEALLOCATE] = {.name = "OP_DEALLOCATE",},
 	[NFS4_OP_IO_ADVISE] = {.name = "OP_IO_ADVISE",},
 	[NFS4_OP_LAYOUTERROR] = {.name = "OP_LAYOUTERROR",},
+	[NFS4_OP_LAYOUTSTATS] = {.name = "OP_LAYOUTSTATS",},
 	[NFS4_OP_OFFLOAD_CANCEL] = {.name = "OP_OFFLOAD_CANCEL",},
 	[NFS4_OP_OFFLOAD_STATUS] = {.name = "OP_OFFLOAD_STATUS",},
 	[NFS4_OP_READ_PLUS] = {.name = "OP_READ_PLUS",},
