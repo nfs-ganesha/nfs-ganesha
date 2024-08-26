@@ -253,4 +253,6 @@ void connection_manager__connection_finished(const SVCXPRT *);
 enum connection_manager__drain_t
 connection_manager__drain_and_disconnect_local(sockaddr_t *);
 
+void connection_manager__init(void);
+
 #endif /* CONNECTION_MANAGER_H */

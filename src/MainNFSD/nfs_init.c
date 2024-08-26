@@ -830,6 +830,8 @@ int init_server_pkgs(void)
 		return -1;
 	}
 	LogEvent(COMPONENT_INIT, "ID Mapper successfully initialized.");
+
+	connection_manager__init();
 	return 0;
 }
 
