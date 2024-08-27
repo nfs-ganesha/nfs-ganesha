@@ -873,11 +873,26 @@ static enum xprt_stat nfs_rpc_process_request(nfs_request_t *reqdata,
 			(struct rpc_gss_cred *)reqdata->svc.rq_msg.rq_cred_body;
 
 		LogFullDebug(COMPONENT_DISPATCH,
-			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%" PRIu32
-			     ") %s",
+			     "RPCSEC_GSS no_dispatch=%d gc->gc_proc=(%u) %s %s",
 			     no_dispatch, gc->gc_proc,
-			     str_gc_proc(gc->gc_proc));
-
+			     str_gc_proc(gc->gc_proc),
+			     gc->gc_svc == RPCSEC_GSS_SVC_NONE ? "krb5"
+			     : gc->gc_svc == RPCSEC_GSS_SVC_INTEGRITY ? "krb5i"
+			     : gc->gc_svc == RPCSEC_GSS_SVC_PRIVACY ? "krb5p"
+			     : "unknown");
+#ifdef _USE_NFS_RDMA
+		if (get_port(svc_getrpclocal(xprt)) ==
+			nfs_param.core_param.port[P_NFS_RDMA] &&
+			gc->gc_svc == RPCSEC_GSS_SVC_PRIVACY) {
+				LogCrit(COMPONENT_DISPATCH,
+					"NFS over RDMA transport is not supported for GSS flavour krb5p, failing the request !!!");
+				/* mount.nfs gets Protocol not
+				 * supported errors
+				 */
+				return svcerr_progvers(&reqdata->svc,
+						       NFS_V4, NFS_V4);
+		}
+#endif
 		if (no_dispatch) {
 			/* In case of `RPCSEC_GSS_DATA` procedure, if we
 			 * received an AUTH_OK response with `no_dispatch` set
