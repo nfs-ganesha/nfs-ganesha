@@ -1937,6 +1937,8 @@ static void mem_async_complete(struct fridgethr_context *ctx)
 	async_arg->done_cb(async_arg->obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0),
 			   async_arg->io_arg, async_arg->caller_arg);
 
+	destroy_fsal_fd(&async_arg->temp_fd);
+
 	release_op_context();
 
 	gsh_free(async_arg);
@@ -2085,14 +2087,14 @@ void mem_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 
 exit:
 
+	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), read_arg, caller_arg);
+
+	destroy_fsal_fd(&async_arg->temp_fd);
+
 	/* Now free the async arg since we are done with it. */
 	gsh_free(async_arg);
 
-	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), read_arg, caller_arg);
-
 bye:
-
-	destroy_fsal_fd(&async_arg->temp_fd);
 
 	if (async_stall_delay > 0) {
 		/* We have been asked to stall the calling thread, whether we
@@ -2246,14 +2248,14 @@ void mem_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 
 exit:
 
+	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), write_arg, caller_arg);
+
+	destroy_fsal_fd(&async_arg->temp_fd);
+
 	/* Now free the async arg since we are done with it. */
 	gsh_free(async_arg);
 
-	done_cb(obj_hdl, fsalstat(ERR_FSAL_NO_ERROR, 0), write_arg, caller_arg);
-
 bye:
-
-	destroy_fsal_fd(&async_arg->temp_fd);
 
 	if (async_stall_delay > 0) {
 		/* We have been asked to stall the calling thread, whether we
