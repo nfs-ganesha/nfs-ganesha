@@ -2135,7 +2135,6 @@ fsal_status_t vfs_setattr2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		 */
 		if ((off_t)attrib_set->filesize < 0) {
 			errno = EFBIG;
-			retval = -1;
 			func = "truncate";
 			LogDebug(COMPONENT_FSAL,
 				 "filesize %" PRIx64 " as off_t is < 0",
