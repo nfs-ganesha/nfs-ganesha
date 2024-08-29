@@ -453,6 +453,29 @@ static void ino_release_cb(void *handle, vinodeno_t vino)
 	PTHREAD_RWLOCK_unlock(&cmount_lock);
 }
 
+/* Callback for inode invalidation. This callback is triggered when ceph client
+ * cache is invalidated due to file attribute change */
+static void ino_invalidate_cb(void *handle, vinodeno_t vino,
+		int64_t offset, int64_t len)
+{
+	struct ceph_mount *cm = handle;
+	struct ceph_handle_key key;
+	struct gsh_buffdesc fh_desc;
+
+	LogDebug(COMPONENT_FSAL,
+		 "libcephfs asking to invalidate 0x%lx:0x%lx:0x%lx",
+		 cm->cm_fscid, vino.snapid.val, vino.ino.val);
+	key.hhdl.chk_ino = vino.ino.val;
+	key.hhdl.chk_snap = vino.snapid.val;
+	key.hhdl.chk_fscid = cm->cm_fscid;
+	key.export_id = cm->cm_export_id;
+	fh_desc.addr = &key;
+	fh_desc.len = sizeof(key);
+	cm->cm_export->export.up_ops->invalidate(
+				cm->cm_export->export.up_ops, &fh_desc,
+				FSAL_UP_INVALIDATE_CACHE);
+}
+
 static mode_t umask_cb(void *handle)
 {
 	mode_t umask = CephFSM.fsal.fs_info.umask;
@@ -465,6 +488,7 @@ static mode_t umask_cb(void *handle)
 static void register_callbacks(struct ceph_mount *cm)
 {
 	struct ceph_client_callback_args args = { .handle = cm,
+						  .ino_cb = ino_invalidate_cb,
 						  .ino_release_cb =
 							  ino_release_cb,
 						  .umask_cb = umask_cb };
