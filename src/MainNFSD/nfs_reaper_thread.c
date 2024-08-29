@@ -215,7 +215,7 @@ static size_t get_current_rss(void)
 	static long page_size;
 	int rc, fd;
 	char buf[1024];
-	long vsize = 0, rss = 0;
+	unsigned long vsize = 0, rss = 0;
 
 	if (page_size == 0) {
 		page_size = sysconf(_SC_PAGESIZE);
@@ -235,14 +235,14 @@ static size_t get_current_rss(void)
 		goto out;
 
 	buf[rc] = '\0';
-	rc = sscanf(buf, "%ld %ld", &vsize, &rss);
+	rc = sscanf(buf, "%lu %lu", &vsize, &rss);
 	if (rc != 2) {
 		LogEvent(COMPONENT_MEMLEAKS,
 			 "Failed to read data from /proc/self/statm");
 	}
 out:
 	close(fd);
-	return ((uint64_t)rss * page_size) / (1024 * 1024);
+	return (rss * page_size) / (1024 * 1024);
 }
 
 static void reap_malloc_frag(void)
