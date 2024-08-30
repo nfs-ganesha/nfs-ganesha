@@ -308,12 +308,17 @@ connection_manager__drain_and_disconnect_local(sockaddr_t *client_address)
 	struct gsh_client *const gsh_client =
 		get_gsh_client(client_address, /*lookup_only=*/true);
 	if (gsh_client == NULL) {
-		char address_for_debugging[SOCK_NAME_MAX];
+		if (isDebug(COMPONENT_XPRT)) {
+			char address_for_debugging[SOCK_NAME_MAX];
+			bool ok;
 
-		sprint_sockip(client_address, address_for_debugging,
-			      sizeof(address_for_debugging));
-		LogDebug(COMPONENT_XPRT, "Client not found: %s",
-			 address_for_debugging);
+			ok = sprint_sockip(client_address,
+					   address_for_debugging,
+					   sizeof(address_for_debugging));
+
+			LogDebug(COMPONENT_XPRT, "Client not found: %s",
+				 ok ? address_for_debugging : "<unknown>");
+		}
 		result = CONNECTION_MANAGER__DRAIN__SUCCESS_NO_CONNECTIONS;
 		goto out;
 	}
