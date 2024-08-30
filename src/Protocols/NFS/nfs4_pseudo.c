@@ -501,13 +501,13 @@ bool pseudo_mount_export(struct gsh_export *export)
 
 	rcu_read_unlock();
 
-	PTHREAD_RWLOCK_unlock(&state.obj->state_hdl->jct_lock);
-
 	LogDebug(
 		COMPONENT_EXPORT,
 		"BUILDING PSEUDOFS: Export_Id %d Path %s Pseudo Path %s junction %p",
 		export->export_id, state.st_fullpath, state.st_pseudopath,
 		state.obj->state_hdl->dir.junction_export);
+
+	PTHREAD_RWLOCK_unlock(&state.obj->state_hdl->jct_lock);
 
 	result = true;
 
