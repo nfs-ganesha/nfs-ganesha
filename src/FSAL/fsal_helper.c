@@ -1679,6 +1679,16 @@ fsal_status_t fsal_open2(struct fsal_obj_handle *in_obj, struct state_t *state,
 				       createmode >= FSAL_EXCLUSIVE, &reason);
 
 	if (FSAL_IS_ERROR(status)) {
+		if (status.major == ERR_FSAL_ACCESS &&
+		    createmode >= FSAL_EXCLUSIVE) {
+			/* Returning ACCESS err on exclusive open when the file
+			 * exists and we don't have permission to open it
+			 * doesn't make sense. This means that it is not an
+			 * exclusive replay and in this case we should return
+			 * EXIST and not ACCESS. */
+			status = fsalstat(ERR_FSAL_EXIST, 0);
+		}
+
 		LogDebug(COMPONENT_FSAL, "Not opening file %s%s", reason,
 			 fsal_err_txt(status));
 		return status;
