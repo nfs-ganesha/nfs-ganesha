@@ -541,6 +541,16 @@ typedef struct nfs_core_param {
 	    (as a comma-separated list of 3,4.0,4.1,4.2) */
 	unsigned int nfs_rdma_supported_protocol_versions;
 #endif
+	/** In linux, we need to set PR_SET_IO_FLUSHER to avoid a potential
+	 * deadlock when mounting ganesha locally in a system that nears out
+	 * memory. This is not possible due to lacking permissions in some
+	 * environments (specifically unprivileged containers). If you are
+	 * running in an unprivileged environment and you are sure your use
+	 * case doesn't require setting PR_SET_IO_FLUSHER, you can enable this
+	 * option and Ganesha will not fail on startup if it can't set it.
+	 * For more info, see:
+	 * https://git.kernel.org/torvalds/p/8d19f1c8e1937baf74e1962aae9f90fa3aeab463 */
+	bool allow_set_io_flusher_fail;
 } nfs_core_parameter_t;
 
 /** @} */

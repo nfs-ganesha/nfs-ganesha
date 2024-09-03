@@ -220,6 +220,8 @@ NFS_CORE_PARAM {}
 
 	Connection_Manager_Timeout_sec(uint32, range 0 to UINT32_MAX, default 2*60)
 
+	Allow_Set_Io_Flusher_Fail(bool, default false)
+
 NFS_IP_NAME {}
 --------------
 

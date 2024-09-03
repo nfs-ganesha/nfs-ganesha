@@ -486,21 +486,6 @@ int main(int argc, char *argv[])
 		goto fatal_die;
 	}
 
-#ifdef LINUX
-	/* Set thread I/O flusher, see
-	 * https://git.kernel.org/torvalds/p/8d19f1c8e1937baf74e1962aae9f90fa3aeab463
-	 */
-	if (prctl(PR_SET_IO_FLUSHER, 1, 0, 0, 0) == -1) {
-		if (errno != EINVAL) {
-			LogFatal(
-				COMPONENT_MAIN,
-				"Error setting prctl PR_SET_IO_FLUSHER flag: %s",
-				strerror(errno));
-			goto fatal_die;
-		}
-	}
-#endif
-
 	/* init URL package */
 	config_url_init();
 
@@ -557,6 +542,32 @@ int main(int argc, char *argv[])
 			"Error setting parameters from configuration file.");
 		goto fatal_die;
 	}
+
+#ifdef LINUX
+	/* Set thread I/O flusher, see
+	 * https://git.kernel.org/torvalds/p/8d19f1c8e1937baf74e1962aae9f90fa3aeab463
+	 */
+	if (prctl(PR_SET_IO_FLUSHER, 1, 0, 0, 0) == -1) {
+		if (errno == EPERM) {
+			if (nfs_param.core_param.allow_set_io_flusher_fail)
+				LogWarn(COMPONENT_MAIN,
+					"Failed to set PR_SET_IO_FLUSHER due to EPERM, ignoring...");
+			else {
+				LogFatal(
+					COMPONENT_MAIN,
+					"Failed to PR_SET_IO_FLUSHER with EPERM. Take a look at config option allow_set_io_flusher_fail to see if you should allow it");
+				goto fatal_die;
+			}
+		} else if (errno != EINVAL) {
+			LogFatal(
+				COMPONENT_MAIN,
+				"Error setting prctl PR_SET_IO_FLUSHER flag: %s",
+				strerror(errno));
+			goto fatal_die;
+		}
+	}
+
+#endif
 
 #ifdef USE_MONITORING
 	monitoring__init(nfs_param.core_param.monitoring_port,
