@@ -211,6 +211,26 @@ static nfsstat4 getdevicelist(struct fsal_export *export_pub, layouttype4 type,
 	return NFS4_OK;
 }
 
+static void fs_verifier(struct fsal_export *exp_hdl,
+			struct gsh_buffdesc *verf_desc)
+{
+	struct readlink_arg varg;
+	unsigned int rc = 0;
+	int errsv = 0;
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
+
+	varg.fd = export_fd;
+	varg.buffer = (char *)verf_desc;
+	varg.size = sizeof(struct gsh_buffdesc);
+
+	rc = gpfs_ganesha(OPENHANDLE_GET_VERIFIER, &varg);
+	errsv = errno;
+	if (rc != 0)
+		LogDebug(COMPONENT_PNFS, "rc %d err %d", rc, errsv);
+}
+
 /**
  * @brief set export options
  * @param ops reference to struct export_ops
@@ -222,6 +242,7 @@ void export_ops_pnfs(struct export_ops *ops)
 	ops->fs_layout_blocksize = fs_layout_blocksize;
 	ops->fs_maximum_segments = fs_maximum_segments;
 	ops->fs_loc_body_size = fs_loc_body_size;
+	ops->get_write_verifier = fs_verifier;
 }
 
 /**
