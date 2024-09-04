@@ -175,7 +175,7 @@ static nfsstat4 open4_validate_claim(compound_data_t *data,
 				*grace_ref = true;
 			} else {
 				status = want_grace ? NFS4ERR_NO_GRACE :
-						      NFS4ERR_GRACE;
+							    NFS4ERR_GRACE;
 			}
 		} else {
 			*grace_ref = false;
@@ -1320,8 +1320,8 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		 arg_OPEN4->owner.clientid);
 
 	retval = nfs_client_id_get_confirmed(data->minorversion == 0 ?
-						     arg_OPEN4->owner.clientid :
-						     data->session->clientid,
+							   arg_OPEN4->owner.clientid :
+							   data->session->clientid,
 					     &clientid);
 
 	if (retval != CLIENT_ID_SUCCESS) {
@@ -1445,7 +1445,7 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_OPEN4->OPEN4res_u.resok4.cinfo.atomic =
 		is_parent_pre_attrs_valid && is_parent_post_attrs_valid ? TRUE :
-									  FALSE;
+										FALSE;
 
 	/* Handle open stateid/seqid for success */
 	update_stateid(file_state, &res_OPEN4->OPEN4res_u.resok4.stateid, data,

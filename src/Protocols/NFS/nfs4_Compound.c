@@ -807,7 +807,7 @@ enum nfs_req_result process_one_op(compound_data_t *data, nfsstat4 *status)
 			   " %s is %s",
 			   data->oppos, data->argarray_len - 1,
 			   session_compare ? "same session as SEQUENCE" :
-					     "different session from SEQUENCE",
+						   "different session from SEQUENCE",
 			   bad_pos ? "not last op in compound" : "opk");
 
 		if (bad_pos) {
@@ -1424,8 +1424,8 @@ void nfs4_Compound_FreeOne(nfs_resop4 *res)
 	int opcode;
 
 	opcode = (res->resop != NFS4_OP_ILLEGAL) ?
-			 res->resop :
-			 0; /* opcode 0 for illegals */
+			       res->resop :
+			       0; /* opcode 0 for illegals */
 	optabv4[opcode].free_res(res);
 }
 
