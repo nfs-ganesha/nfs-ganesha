@@ -958,11 +958,8 @@ check_it:
 				/* We don't expect this, but, just in case...
 				 * Update and release already reserved lease.
 				 */
-				PTHREAD_MUTEX_lock(
-					&data->preserved_clientid->cid_mutex);
-				update_lease(data->preserved_clientid);
-				PTHREAD_MUTEX_unlock(
-					&data->preserved_clientid->cid_mutex);
+				update_lease_simple(data->preserved_clientid);
+
 				data->preserved_clientid = NULL;
 			}
 
@@ -1042,13 +1039,7 @@ check_it:
 			/* We don't expect this to happen, but, just in case...
 			 * Update and release already reserved lease.
 			 */
-			PTHREAD_MUTEX_lock(
-				&data->preserved_clientid->cid_mutex);
-
-			update_lease(data->preserved_clientid);
-
-			PTHREAD_MUTEX_unlock(
-				&data->preserved_clientid->cid_mutex);
+			update_lease_simple(data->preserved_clientid);
 
 			data->preserved_clientid = NULL;
 		}

@@ -1045,9 +1045,7 @@ handle_recall_response(struct delegrecall_context *p_cargs,
 static inline void
 free_delegrecall_context(struct delegrecall_context *deleg_ctx)
 {
-	PTHREAD_MUTEX_lock(&deleg_ctx->drc_clid->cid_mutex);
-	update_lease(deleg_ctx->drc_clid);
-	PTHREAD_MUTEX_unlock(&deleg_ctx->drc_clid->cid_mutex);
+	update_lease_simple(deleg_ctx->drc_clid);
 
 	put_gsh_export(deleg_ctx->drc_exp);
 
@@ -1622,9 +1620,7 @@ struct cbgetattr_context {
 static inline void
 free_cbgetattr_context(struct cbgetattr_context *cbgetattr_ctx)
 {
-	PTHREAD_MUTEX_lock(&cbgetattr_ctx->clid->cid_mutex);
-	update_lease(cbgetattr_ctx->clid);
-	PTHREAD_MUTEX_unlock(&cbgetattr_ctx->clid->cid_mutex);
+	update_lease_simple(cbgetattr_ctx->clid);
 
 	put_gsh_export(cbgetattr_ctx->ctx_export);
 

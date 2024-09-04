@@ -159,6 +159,7 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update,
 			     state_owner_t **st_owner)
 {
 	unsigned int valid;
+	bool unexpire;
 
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 
@@ -222,9 +223,14 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update,
 	}
 
 	if (update)
-		update_lease(clientid);
+		unexpire = update_lease(clientid);
+	else
+		unexpire = false;
 
 	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+
+	if (unexpire)
+		remove_client_from_expired_client_list(clientid);
 
 	return true;
 }
@@ -238,11 +244,15 @@ bool reserve_lease_or_expire(nfs_client_id_t *clientid, bool update,
  *
  * @param[in] clientid The clientid record to update
  *
- * @return 1 if lease is valid, 0 if not.
+ * @return true  if remove_client_from_expired_client_list must be called
+ *               after releasing cid_mutex.
+ *         false otherwise
  *
  */
-void update_lease(nfs_client_id_t *clientid)
+bool update_lease(nfs_client_id_t *clientid)
 {
+	bool unexpire = false;
+
 	clientid->cid_lease_reservations--;
 
 	/* Renew lease when last reservation is released */
@@ -250,10 +260,9 @@ void update_lease(nfs_client_id_t *clientid)
 		clientid->cid_last_renew = time(NULL);
 		/* Once the lease timer is updated then the client is active and
 		 * if the unresponsive client was marked as expired earlier,
-		 * then moving it out of the expired client list
+		 * then request caller to move it out of the expired client list
 		 */
-		if (clientid->marked_for_delayed_cleanup)
-			remove_client_from_expired_client_list(clientid);
+		unexpire = clientid->marked_for_delayed_cleanup;
 	}
 
 	if (isFullDebug(COMPONENT_CLIENTID)) {
@@ -263,6 +272,8 @@ void update_lease(nfs_client_id_t *clientid)
 		display_client_id_rec(&dspbuf, clientid);
 		LogFullDebug(COMPONENT_CLIENTID, "Update Lease %s", str);
 	}
+
+	return unexpire;
 }
 
 /** @} */

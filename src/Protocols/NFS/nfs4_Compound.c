@@ -1045,11 +1045,7 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 	/* If we have reserved a lease, update it and release it */
 	if (data->preserved_clientid != NULL) {
 		/* Update and release lease */
-		PTHREAD_MUTEX_lock(&data->preserved_clientid->cid_mutex);
-
-		update_lease(data->preserved_clientid);
-
-		PTHREAD_MUTEX_unlock(&data->preserved_clientid->cid_mutex);
+		update_lease_simple(data->preserved_clientid);
 	}
 
 	if (status != NFS4_OK)

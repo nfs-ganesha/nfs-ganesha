@@ -89,6 +89,12 @@ uint32_t num_of_curr_expired_clients;
  * @brief Global list to store expired client IDs and it's mutex
  */
 struct glist_head expired_client_ids_list;
+
+/**
+ * @brief Mutex to protect the above list. This mutex MUST NOT be taken while
+ *        holding the cid_mutex. Taking the cid_mutex while holding this mutex
+ *        is OK and expected.
+ */
 pthread_mutex_t expired_client_ids_list_lock;
 
 /**
@@ -942,6 +948,8 @@ void print_expired_client_list(void)
 /**
  * @brief Remove client from expired client list.
  *
+ * NOTE: Must not be called with cid_mutex held (lock ordering).
+ *
  * @param[in] active_clientid The client id of interest
  *
  * @retval NA
@@ -954,6 +962,7 @@ void remove_client_from_expired_client_list(nfs_client_id_t *active_clientid)
 	struct glist_head *expired_client_n = NULL;
 
 	PTHREAD_MUTEX_lock(&expired_client_ids_list_lock);
+
 	glist_for_each_safe(expired_client_i, expired_client_n,
 			    &expired_client_ids_list)
 	{
@@ -967,12 +976,18 @@ void remove_client_from_expired_client_list(nfs_client_id_t *active_clientid)
 		}
 
 		/* Found the client to be removed */
+		PTHREAD_MUTEX_lock(&expired_client->cid_mutex);
+
 		glist_del(&expired_client->expired_client);
 		expired_client->marked_for_delayed_cleanup = false;
+		atomic_dec_uint32_t(&num_of_curr_expired_clients);
+
+		PTHREAD_MUTEX_unlock(&expired_client->cid_mutex);
+
 		/* Drop ref of the expired_client as it's gone valid */
 		dec_client_id_ref(expired_client);
-		atomic_dec_uint32_t(&num_of_curr_expired_clients);
 	}
+
 	PTHREAD_MUTEX_unlock(&expired_client_ids_list_lock);
 }
 
@@ -1030,6 +1045,10 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale,
 			/* Take a ref for clientid and add to list */
 			inc_client_id_ref(clientid);
 			clientid->marked_for_delayed_cleanup = true;
+
+			/* Drop the cid_mutex now so it is safe to take the
+			 * expired_client_ids_list_lock mutex.
+			 */
 			PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
 			if (isFullDebug(COMPONENT_CLIENTID)) {
@@ -1314,6 +1333,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale,
  *
  * Once the threshold of number of expired clients reaches,
  * this API is invoked to actually start cleaning them up.
+ *
+ * NOTE: Must not be called with the cid_mutex held (lock ordering).
  *
  * @param[in] conflicted_client The conflicted client id to expire.
  *				If passed NULL, judge and clean all expired

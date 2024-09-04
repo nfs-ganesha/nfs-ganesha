@@ -1475,11 +1475,8 @@ out2:
 		nfs_put_grace_status();
 
 	/* Update the lease before exit */
-	if (data->minorversion == 0) {
-		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
-		update_lease(clientid);
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-	}
+	if (data->minorversion == 0)
+		update_lease_simple(clientid);
 
 	if (file_state != NULL)
 		dec_state_t_ref(file_state);

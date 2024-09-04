@@ -244,11 +244,9 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 out_clientid:
 	/* Update the lease before exit */
-	if (data->minorversion == 0) {
-		PTHREAD_MUTEX_lock(&clientid->cid_mutex);
-		update_lease(clientid);
-		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
-	}
+	if (data->minorversion == 0)
+		update_lease_simple(clientid);
+
 	dec_client_id_ref(clientid);
 out:
 	nfs_put_grace_status();

@@ -122,11 +122,7 @@ enum nfs_req_result nfs4_op_release_lockowner(struct nfs_argop4 *op,
 out1:
 
 	/* Update the lease before exit */
-	PTHREAD_MUTEX_lock(&nfs_client_id->cid_mutex);
-
-	update_lease(nfs_client_id);
-
-	PTHREAD_MUTEX_unlock(&nfs_client_id->cid_mutex);
+	update_lease_simple(nfs_client_id);
 
 	dec_client_id_ref(nfs_client_id);
 
