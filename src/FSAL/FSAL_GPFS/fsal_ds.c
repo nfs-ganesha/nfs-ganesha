@@ -336,11 +336,40 @@ static nfsstat4 ds_commit(struct fsal_ds_handle *const ds_pub,
 			  const offset4 offset, const count4 count,
 			  verifier4 *const writeverf)
 {
+	/* The private 'full' DS handle */
+	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
+	struct gpfs_file_handle *gpfs_handle = &ds->wire;
+	struct fsync_arg arg = { 0 };
+	unsigned int *fh;
+	int retval;
+	struct gpfs_fsal_export *exp = container_of(
+		op_ctx->fsal_export, struct gpfs_fsal_export, export);
+	int export_fd = exp->export_fd;
+
+	fh = (int *)&(gpfs_handle->f_handle);
+
 	memset(writeverf, 0, NFS4_VERIFIER_SIZE);
 
-	LogCrit(COMPONENT_PNFS, "Commits should go to MDS\n");
-	/* GPFS asked for COMMIT to go to the MDS */
-	return NFS4ERR_INVAL;
+	arg.mountdirfd = export_fd;
+	arg.handle = gpfs_handle;
+	arg.offset = offset;
+	arg.length = count;
+	arg.verifier4 = (int32_t *)writeverf;
+
+	LogDebug(
+		COMPONENT_PNFS,
+		"fh len %d type %d key %d: %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		gpfs_handle->handle_size, gpfs_handle->handle_type,
+		gpfs_handle->handle_key_size, fh[0], fh[1], fh[2], fh[3], fh[4],
+		fh[5], fh[6], fh[7], fh[8], fh[9]);
+
+	if (gpfs_ganesha(OPENHANDLE_FSYNC, &arg) == -1)
+		retval = errno;
+
+	LogDebug(COMPONENT_PNFS, "write retval %d verifier %d-%d\n", retval,
+		 arg.verifier4[0], arg.verifier4[1]);
+
+	return NFS4_OK;
 }
 
 /**
