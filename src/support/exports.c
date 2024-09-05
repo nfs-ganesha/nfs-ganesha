@@ -1221,7 +1221,7 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 			probe_exp->update_remount = true;
 		}
 
-		if (mount_status_changed && export->is_mounted) {
+		if (mount_status_changed && probe_exp->is_mounted) {
 			/* Mark this export to be unmounted during the prune
 			 * phase, it will also be added to the remount work if
 			 * appropriate.
