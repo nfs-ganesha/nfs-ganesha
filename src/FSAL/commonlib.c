@@ -1442,8 +1442,8 @@ pthread_mutex_t fsal_fd_mutex;
 pthread_cond_t fsal_fd_cond;
 struct glist_head fsal_fd_global_lru = GLIST_HEAD_INIT(fsal_fd_global_lru);
 int32_t fsal_fd_global_counter;
-uint32_t fsal_fd_state_counter;
-uint32_t fsal_fd_temp_counter;
+int32_t fsal_fd_state_counter;
+int32_t fsal_fd_temp_counter;
 time_t lru_run_interval;
 bool Cache_FDs;
 static struct fridgethr *fd_lru_fridge;
@@ -3530,7 +3530,7 @@ void fd_usage_summarize_dbus(DBusMessageIter *iter)
 	fd_state = atomic_fetch_uint32_t(&fd_lru_state.fd_state);
 
 	global_fds = atomic_fetch_int32_t(&fsal_fd_global_counter);
-	state_fds = atomic_fetch_uint32_t(&fsal_fd_state_counter);
+	state_fds = atomic_fetch_int32_t(&fsal_fd_state_counter);
 
 	/* Gets open v4 FD counts by traversing all the HT
 	 * to get all clientIDs and count their open states
