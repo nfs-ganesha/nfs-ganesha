@@ -126,8 +126,9 @@ static bool idmapper_set_owner_domain(void)
 	}
 #endif /* USE_NFSIDMAP */
 	if (nfs_param.nfsv4_param.use_getpwnam)
-		strcpy(domain_addr,
-		       nfs_param.directory_services_param.domainname);
+		strlcpy(domain_addr,
+		       nfs_param.directory_services_param.domainname,
+		       NFS4_MAX_DOMAIN_LEN+1);
 
 	/* Return false if domain was not initialised through above
 	 * conditions
@@ -493,7 +494,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		PTHREAD_RWLOCK_unlock(group ? &idmapper_group_lock :
 					      &idmapper_user_lock);
 		int rc;
-		int size;
+		size_t size;
 		bool looked_up = false;
 		char *namebuff = NULL;
 		struct gsh_buffdesc new_name;
@@ -513,6 +514,8 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 		       owner_domain_len);
 		owner_domain_addr[owner_domain_len] = '\0';
 		PTHREAD_RWLOCK_unlock(&owner_domain.lock);
+
+		new_name.len = 0;
 
 		if (nfs_param.nfsv4_param.use_getpwnam) {
 			if (group)
@@ -607,6 +610,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 			}
 		} else {
 #ifdef USE_NFSIDMAP
+			now_mono(&s_time);
 			if (group) {
 				rc = nfs4_gid_to_name(id, owner_domain_addr,
 						      namebuff,
@@ -616,6 +620,7 @@ static bool xdr_encode_nfs4_princ(XDR *xdrs, uint32_t id, bool group)
 						      namebuff,
 						      NFS4_MAX_DOMAIN_LEN + 1);
 			}
+			now_mono(&e_time);
 			idmapper_monitoring__external_request(
 				group ? IDMAPPING_GID_TO_GROUP :
 					IDMAPPING_UID_TO_UIDGID,
