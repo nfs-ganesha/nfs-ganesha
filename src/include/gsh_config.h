@@ -395,7 +395,7 @@ typedef struct nfs_core_param {
 		} gss;
 	} rpc;
 	/** Polling interval for blocked lock polling thread. */
-	time_t blocked_lock_poller_interval;
+	int64_t blocked_lock_poller_interval;
 	/** Protocols to support.  Should probably be renamed.
 	    Defaults to CORE_OPTION_ALL_VERS and is settable with
 	    NFS_Protocols (as a comma-separated list of 3 and 4.) */
@@ -456,7 +456,7 @@ typedef struct nfs_core_param {
 	/** How long the server will trust information it got by
 	    calling getgroups() when "Manage_Gids = TRUE" is
 	    used in a export entry. */
-	time_t manage_gids_expiration;
+	int64_t manage_gids_expiration;
 	/** Path to the directory containing server specific
 	    modules.  In particular, this is where FSALs live. */
 	char *ganesha_modules_loc;
@@ -685,9 +685,9 @@ typedef struct directory_services_param {
 	/** Whether to enable idmapping. Defaults to true. */
 	bool idmapping_active;
 	/** Cache validity in seconds for idmapped user entries */
-	time_t idmapped_user_time_validity;
+	int64_t idmapped_user_time_validity;
 	/** Cache validity in seconds for idmapped group entries */
-	time_t idmapped_group_time_validity;
+	int64_t idmapped_group_time_validity;
 	/** Max number of cached idmapped users */
 	uint32_t cache_users_max_count;
 	/** Max number of cached idmapped groups */
@@ -695,13 +695,13 @@ typedef struct directory_services_param {
 	/** Max number of cached user-groups entries */
 	uint32_t cache_user_groups_max_count;
 	/** Cache validity in seconds for negative entries */
-	time_t negative_cache_time_validity;
+	int64_t negative_cache_time_validity;
 	/** Max number of negative cache users (that failed idmapping) */
 	uint32_t negative_cache_users_max_count;
 	/** Max number of negative cache groups (that failed idmapping) */
 	uint32_t negative_cache_groups_max_count;
 	/** Cache reaping interval in seconds for idmapped users and groups */
-	time_t cache_reaping_interval;
+	int64_t cache_reaping_interval;
 	/** Whether to use fully qualified names for idmapping with pw-utils.
 	    Defaults to false. */
 	bool pwutils_use_fully_qualified_names;
