@@ -28,6 +28,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "gsh_list.h"
+#include "avltree.h"
+#include "city.h"
 
 /**
  * @brief Configuration parser data structures
@@ -79,14 +81,15 @@ struct file_list {
 
 /*
  * Symbol table
- * Every token the scanner keeps goes here.  It is a linear
- * list but we don't need much more than that.  What we do
+ * Every token the scanner keeps goes here.  It is an avl
+ * tree but we don't need much more than that.  What we do
  * need is an accounting of all that memory so we can free it
  * when the parser barfs and leaves stuff on its FSM stack.
  */
 
 struct token_tab {
-	struct token_tab *next;
+	struct avltree_node token_node;
+	u_int64_t token_hash;
 	char token[];
 };
 
@@ -104,8 +107,8 @@ struct config_root {
 	struct config_node root;
 	char *conf_dir;
 	struct file_list *files;
-	struct token_tab *tokens;
 	uint64_t generation;
+	bool token_tree_initialized;
 };
 
 /*
@@ -125,6 +128,17 @@ char *save_token(char *token, bool esc, struct parser_state *st);
 int ganesha_yyparse(struct parser_state *st);
 int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st);
 void ganeshun_yy_cleanup_parser(struct parser_state *st);
+
+static inline int token_compare_hash(const u_int64_t key1, const u_int16_t key2,
+				     const char *token1, const char *token2)
+{
+	if (key1 < key2)
+		return -1;
+	else if (key1 > key2)
+		return 1;
+	else
+		return strcmp(token1, token2);
+}
 
 /**
  * Error reporting

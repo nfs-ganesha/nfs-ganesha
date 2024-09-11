@@ -37,40 +37,55 @@
 #include "abstract_mem.h"
 
 /**
- * @brief Insert a scanner token into the token table
- *
- * Look up the token in the list matching case insensitive.
- * If there is a match, return a pointer to the token in the table.
- * Otherwise, allocate space, link it and return the pointer.
- * if 'esc' == true, this is a double quoted string which needs to
- * be filtered.  Turn the escaped non-printable into the non-printable.
- *
- * @param token [IN] pointer to the yytext token from flex
- * @param esc [IN] bool, filter if true
- * @param st [IN] pointer to parser state
- * @return pointer to persistent storage for token or NULL;
+ *  AVL tree of tokens with keys
+ *  being the hash of tokens
  */
+static struct avltree token_tree;
 
-char *save_token(char *token, bool esc, struct parser_state *st)
+static inline int token_cmpf_hash(const struct avltree_node *lhs,
+				  const struct avltree_node *rhs)
 {
-	struct token_tab *tokp, *new_tok;
+	struct token_tab *lk, *rk;
 
-	for (tokp = st->root_node->tokens; tokp != NULL; tokp = tokp->next) {
-		if (strcmp(token, tokp->token) == 0)
-			return tokp->token;
-	}
-	new_tok = gsh_calloc(1, (sizeof(struct token_tab) + strlen(token) + 1));
-	if (new_tok == NULL)
+	lk = avltree_container_of(lhs, struct token_tab, token_node);
+	rk = avltree_container_of(rhs, struct token_tab, token_node);
+
+	return token_compare_hash(lk->token_hash, rk->token_hash, lk->token,
+				  rk->token);
+}
+
+static inline struct token_tab *
+avltree_inline_hash_lookup(const struct avltree_node *key)
+{
+	struct avltree_node *node;
+
+	node = avltree_inline_lookup(key, &token_tree, token_cmpf_hash);
+
+	if (node != NULL)
+		return avltree_container_of(node, struct token_tab, token_node);
+	else
 		return NULL;
-	if (esc) {
-		char *sp, *dp;
-		int c;
+}
 
-		sp = token;
-		dp = new_tok->token;
-		c = *sp++;
+/**
+ *  Sanitize the token string
+ */
+void sanitize_token_str(char *token, int esc)
+{
+	char *sp, *dp;
+	int c;
+	size_t token_len;
+
+	sp = token;
+	dp = token; /* Change dp to point to token itself */
+	token_len = strlen(token);
+
+	c = *sp++;
+
+	if (esc) {
 		if (c == '\"')
 			c = *sp++; /* gobble leading '"' from regexp */
+
 		while (c != '\0') {
 			if (c == '\\') {
 				c = *sp++;
@@ -91,18 +106,63 @@ char *save_token(char *token, bool esc, struct parser_state *st)
 				}
 			} else if (c == '"' && *sp == '\0')
 				break; /* skip trailing '"' from regexp */
+
 			*dp++ = c;
 			c = *sp++;
 		}
+		*dp = '\0'; /* Null-terminate the string*/
 	} else {
 		if (*token == '\'') /* skip and chomp "'" in an SQUOTE */
 			token++;
-		strcpy(new_tok->token, token);
-		if (new_tok->token[strlen(new_tok->token) - 1] == '\'')
-			new_tok->token[strlen(new_tok->token) - 1] = '\0';
+
+		if (token[token_len - 1] == '\'')
+			token[token_len - 1] = '\0';
 	}
-	new_tok->next = st->root_node->tokens;
-	st->root_node->tokens = new_tok;
+}
+
+/**
+ * @brief Insert a scanner token into the token table
+ *
+ * Look up the token in the avl tree matching case insensitive.
+ * If there is a match, return a pointer to the token in the table.
+ * Otherwise, allocate space, link it and return the pointer.
+ * if 'esc' == true, this is a double quoted string which needs to
+ * be filtered.  Turn the escaped non-printable into the non-printable.
+ *
+ * @param token [IN] pointer to the yytext token from flex
+ * @param esc [IN] bool, filter if true
+ * @param st [IN] pointer to parser state
+ * @return pointer to persistent storage for token or NULL;
+ */
+char *save_token(char *token, bool esc, struct parser_state *st)
+{
+	struct token_tab *ret_tok, *new_tok;
+	u_int64_t hash;
+	size_t token_len;
+
+	sanitize_token_str(token, esc);
+	token_len = strlen(token);
+	hash = CityHash64(token, token_len);
+
+	if (!st->root_node->token_tree_initialized) {
+		avltree_init(&token_tree, token_cmpf_hash, 0);
+		st->root_node->token_tree_initialized = true;
+	}
+
+	new_tok = gsh_calloc(1, (sizeof(struct token_tab) + token_len + 1));
+	if (new_tok == NULL)
+		return NULL;
+
+	strcpy(new_tok->token, token);
+	new_tok->token_hash = hash;
+	ret_tok = avltree_inline_hash_lookup(&new_tok->token_node);
+
+	if (ret_tok != NULL) {
+		gsh_free(new_tok);
+		return ret_tok->token;
+	}
+
+	avltree_insert(&new_tok->token_node, &token_tree);
 	return new_tok->token;
 }
 
@@ -180,11 +240,23 @@ static void print_node(FILE *output, struct config_node *node,
 	}
 }
 
+static void print_token_tree(FILE *output, struct avltree_node *node)
+{
+	struct token_tab *token;
+
+	if (node == NULL)
+		return;
+
+	print_token_tree(output, node->left);
+	token = avltree_container_of(node, struct token_tab, token_node);
+	fprintf(output, "      <TOKEN>%s</TOKEN>\n", token->token);
+	print_token_tree(output, node->right);
+}
+
 void print_parse_tree(FILE *output, struct config_root *tree)
 {
 	struct config_node *node;
 	struct file_list *file;
-	struct token_tab *token;
 	struct glist_head *nsi, *nsn;
 
 	assert(tree->root.type == TYPE_ROOT);
@@ -197,8 +269,7 @@ void print_parse_tree(FILE *output, struct config_root *tree)
 			file->pathname);
 	fprintf(output, "   </CONFIGURATION_FILES>\n");
 	fprintf(output, "   <TOKEN_TABLE>\n");
-	for (token = tree->tokens; token != NULL; token = token->next)
-		fprintf(output, "      <TOKEN>%s</TOKEN>\n", token->token);
+	print_token_tree(output, token_tree.root);
 	fprintf(output, "   </TOKEN_TABLE>\n");
 	fprintf(output, "</SUMMARY>\n");
 	fprintf(output, "<PARSE_TREE>\n");
@@ -236,10 +307,22 @@ static void free_node(struct config_node *node)
 	return;
 }
 
+static void free_token_tree(struct avltree_node *node)
+{
+	struct token_tab *token;
+
+	if (node == NULL)
+		return;
+
+	free_token_tree(node->left);
+	free_token_tree(node->right);
+	token = avltree_container_of(node, struct token_tab, token_node);
+	gsh_free(token);
+}
+
 void free_parse_tree(struct config_root *tree)
 {
 	struct file_list *file, *next_file;
-	struct token_tab *token, *next_token;
 	struct config_node *node;
 	struct glist_head *nsi, *nsn;
 
@@ -259,12 +342,7 @@ void free_parse_tree(struct config_root *tree)
 		gsh_free(file);
 		file = next_file;
 	}
-	token = tree->tokens;
-	while (token != NULL) {
-		next_token = token->next;
-		gsh_free(token);
-		token = next_token;
-	}
+	free_token_tree(token_tree.root);
 	gsh_free(tree);
 	return;
 }
