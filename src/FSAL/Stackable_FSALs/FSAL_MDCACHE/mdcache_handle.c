@@ -824,13 +824,13 @@ out:
  * @param[in] need_acl		Indicates if the ACL needs updating.
  * @param[in] need_fslocations	Indicates if the fslocations are needed.
  * @param[in] need_seclabel	Indicates if security label is needed.
- * @param[in] invalidate	Invalidate the dirent cache if the entry is a
- *				directory.
+ * @param[in/out] invalidate	Caller wants to know if it should Invalidate the
+ *				dirent cache.
  */
 
 fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 				    bool need_fslocations, bool need_seclabel,
-				    bool invalidate)
+				    bool *invalidate)
 {
 	struct fsal_attrlist attrs;
 	fsal_status_t status = { 0, 0 };
@@ -838,6 +838,10 @@ fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 	bool file_deleg = false;
 	cbgetattr_t *cbgetattr;
 	uint32_t original_generation;
+
+	/* Assume no invalidation. */
+	if (invalidate != NULL)
+		*invalidate = false;
 
 	/* Use this to detect if we should invalidate a directory. */
 	oldmtime = entry->attrs.mtime;
@@ -938,11 +942,10 @@ out:
 	LogAttrlist(COMPONENT_MDCACHE, NIV_FULL_DEBUG, "attrs ", &entry->attrs,
 		    true);
 
-	if (invalidate && entry->obj_handle.type == DIRECTORY &&
+	if (invalidate != NULL && entry->obj_handle.type == DIRECTORY &&
 	    gsh_time_cmp(&oldmtime, &entry->attrs.mtime) != 0) {
-		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
-		mdcache_dirent_invalidate_all(entry);
-		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+		/* Request caller to invalidate */
+		*invalidate = true;
 	}
 
 	return status;
@@ -964,6 +967,7 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	mdcache_entry_t *entry =
 		container_of(obj_hdl, mdcache_entry_t, obj_handle);
 	fsal_status_t status = { 0, 0 };
+	bool invalidate = false;
 
 #ifdef USE_MONITORING
 	const char *OPERATION = "getattr";
@@ -1000,7 +1004,7 @@ static fsal_status_t mdcache_getattrs(struct fsal_obj_handle *obj_hdl,
 	status = mdcache_refresh_attrs(
 		entry, (attrs_out->request_mask & ATTR_ACL) != 0,
 		(attrs_out->request_mask & ATTR4_FS_LOCATIONS) != 0,
-		(attrs_out->request_mask & ATTR4_SEC_LABEL) != 0, true);
+		(attrs_out->request_mask & ATTR4_SEC_LABEL) != 0, &invalidate);
 
 	if (FSAL_IS_ERROR(status)) {
 		/* We failed to fetch any attributes. Pass that fact back to
@@ -1020,6 +1024,12 @@ unlock:
 unlock_no_attrs:
 
 	PTHREAD_RWLOCK_unlock(&entry->attr_lock);
+
+	if (invalidate) {
+		PTHREAD_RWLOCK_wrlock(&entry->content_lock);
+		mdcache_dirent_invalidate_all(entry);
+		PTHREAD_RWLOCK_unlock(&entry->content_lock);
+	}
 
 	if (FSAL_IS_ERROR(status) && (status.major == ERR_FSAL_STALE))
 		mdcache_kill_entry(entry);
@@ -1069,7 +1079,7 @@ static fsal_status_t mdcache_setattr2(struct fsal_obj_handle *obj_hdl,
 	}
 
 	PTHREAD_RWLOCK_wrlock(&entry->attr_lock);
-	status2 = mdcache_refresh_attrs(entry, need_acl, false, false, false);
+	status2 = mdcache_refresh_attrs(entry, need_acl, false, false, NULL);
 	if (FSAL_IS_ERROR(status2)) {
 		/* Assume that the cache is bogus now */
 		atomic_clear_uint32_t_bits(&entry->mde_flags,
