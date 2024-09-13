@@ -266,6 +266,12 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
 
 	vfs_sub_getattrs_release(attrib);
 
+	if (fd == -1) {
+		LogDebug(COMPONENT_FSAL,
+			 "skipping acl check when called for referrals");
+		goto out;
+	}
+
 	e_acl = acl_get_fd(fd);
 	if (e_acl == (acl_t)NULL) {
 		status = fsalstat(posix2fsal_error(errno), errno);
