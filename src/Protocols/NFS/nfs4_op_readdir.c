@@ -79,6 +79,17 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
 	}
 }
 
+/* Base response of READDIR res ok includes nfsstat4, and verifier. This is the
+ * part of the data that is not serialized with struct dirlist4 */
+#define READDIR_RESOK_BASE_SIZE (sizeof(nfsstat4) + sizeof(verifier4))
+
+/* Base response of dirlist4 It includes entry termination and eof */
+#define DIR_LIST4_BASE_SIZE (2 * BYTES_PER_XDR_UNIT)
+
+/* Base response size includes READDIR_RESOK_BASE_SIZE and
+ * DIR_LIST4_BASE_SIZE. */
+#define READDIR_RESP_BASE_SIZE (READDIR_RESOK_BASE_SIZE + DIR_LIST4_BASE_SIZE)
+
 /* The base size of a readdir entry includes cookie, name length, and the
  * indicator if a next entry follows.
  */
@@ -113,14 +124,17 @@ fsal_errors_t nfs4_readdir_callback(void *opaque, struct fsal_obj_handle *obj,
 	fsal_status_t fsal_status;
 	fsal_accessflags_t access_mask_attr = 0;
 	u_int pos_start = xdr_getpos(&tracker->xdr);
-	u_int mem_left = tracker->mem_avail - pos_start;
+	/* We must leave space to deserialize DIR_LIST4_BASE_SIZE */
+	u_int mem_avail = tracker->mem_avail - DIR_LIST4_BASE_SIZE;
 	component4 name;
 	bool_t res_false = false;
 	bool_t lock_dir = false;
 	struct fsal_obj_handle *saved_current_obj = NULL;
 
+	assert(mem_avail >= pos_start);
 	LogFullDebug(COMPONENT_NFS_READDIR, "Entry %s pos %d mem_left %d",
-		     cb_parms->name, (int)pos_start, (int)mem_left);
+		     cb_parms->name, (int)pos_start,
+		     (int)(mem_avail - pos_start));
 
 	memset(&args, 0, sizeof(args));
 
@@ -305,7 +319,7 @@ not_junction:
 	}
 
 	/* Bits that don't require allocation */
-	if (mem_left < BASE_ENTRY_SIZE) {
+	if (xdr_getpos(&tracker->xdr) + BASE_ENTRY_SIZE > mem_avail) {
 		if (!tracker->has_entries) {
 			tracker->error = NFS4ERR_TOOSMALL;
 		}
@@ -315,8 +329,6 @@ not_junction:
 		goto failure;
 	}
 
-	mem_left -= BASE_ENTRY_SIZE;
-
 	/* The filename.  We don't use str2utf8 because that has an
 	 * additional copy into a buffer before copying into the
 	 * destination.
@@ -324,7 +336,9 @@ not_junction:
 	name.utf8string_len = strlen(cb_parms->name);
 	name.utf8string_val = (char *)cb_parms->name;
 
-	if (mem_left < RNDUP(name.utf8string_len)) {
+	if (xdr_getpos(&tracker->xdr) + BASE_ENTRY_SIZE +
+		    RNDUP(name.utf8string_len) >
+	    mem_avail) {
 		if (!tracker->has_entries) {
 			tracker->error = NFS4ERR_TOOSMALL;
 		}
@@ -411,8 +425,7 @@ not_junction:
 	data->current_obj = obj;
 	if (!xdr_encode_entry4(&tracker->xdr, &args, tracker->req_attr, cookie,
 			       &name) ||
-	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) >=
-		    tracker->mem_avail) {
+	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) > mem_avail) {
 		/* We had an overflow */
 		LogFullDebug(
 			COMPONENT_NFS_READDIR,
@@ -438,8 +451,8 @@ skip:
 
 		if (!xdr_nfs4_fattr_fill_error(&tracker->xdr, tracker->req_attr,
 					       cookie, &name, &args) ||
-		    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) >=
-			    tracker->mem_avail) {
+		    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) >
+			    mem_avail) {
 			/* We had an overflow */
 			LogFullDebug(
 				COMPONENT_NFS_READDIR,
@@ -494,12 +507,6 @@ void xdr_dirlist4_uio_release(struct xdr_uio *uio, u_int flags)
 		gsh_free(uio);
 	}
 }
-
-/* Base response size includes nfsstat4, eof, verifier and termination of
- * entries list.
- */
-#define READDIR_RESP_BASE_SIZE \
-	(sizeof(nfsstat4) + sizeof(verifier4) + 2 * BYTES_PER_XDR_UNIT)
 
 /**
  * @brief NFS4_OP_READDIR
@@ -562,8 +569,8 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	if (nfs_param.core_param.readdir_res_size < maxcount)
 		maxcount = nfs_param.core_param.readdir_res_size;
 
-	if (maxcount > (arg_READDIR4->maxcount + sizeof(nfsstat4)))
-		maxcount = arg_READDIR4->maxcount + sizeof(nfsstat4);
+	if (maxcount > (arg_READDIR4->maxcount))
+		maxcount = arg_READDIR4->maxcount;
 
 	/* Use the dircount from the request as the max number of entries if
 	 * lower than the configured max.
@@ -670,7 +677,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	}
 
 	/* Prepare to read the entries */
-	tracker.mem_avail = maxcount - READDIR_RESP_BASE_SIZE;
+	tracker.mem_avail = maxcount - READDIR_RESOK_BASE_SIZE;
 	tracker.max_count = dircount;
 	tracker.entries = get_buffer_for_io_response(tracker.mem_avail, NULL);
 	/* If buffer was not assigned, let's allocate it */
@@ -719,17 +726,9 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 		goto out_destroy;
 	}
 
-	/* Set the op response size to be accounted for, maxcount was the
-	 * maximum space that mem_avail started from before we deducted
-	 * READDIR_RESP_BASE_SIZE and the space used for each entry.
-	 *
-	 * So the formula below is equivalent to:
-	 *
-	 *     maxcount - maxcount + READDIR_RESP_BASE_SIZE + space for entries
-	 *
-	 * So maxcount disappears and all that is left is the actual size.
-	 */
-	data->op_resp_size = maxcount - tracker.mem_avail;
+	/* Response size is the space we used for the entires + the response
+	 * base size. */
+	data->op_resp_size = xdr_getpos(&tracker.xdr) + READDIR_RESP_BASE_SIZE;
 
 	if (tracker.has_entries) {
 		struct xdr_uio *uio;
