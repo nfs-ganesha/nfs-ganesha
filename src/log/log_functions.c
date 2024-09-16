@@ -350,6 +350,7 @@ void Cleanup(void)
 
 void Fatal(void)
 {
+	gsh_backtrace();
 	_exit(2);
 }
 
