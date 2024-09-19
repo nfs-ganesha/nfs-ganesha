@@ -71,7 +71,7 @@ Chunks_LWMark(uint32, range 1 to UINT32_MAX, default 1000)
 LRU_Run_Interval(uint32, range 1 to 24 * 3600, default 90)
     Base interval in seconds between runs of the LRU cleaner thread.
 
-Cache_FDs(bool, true)
+Cache_FDs(bool, default true)
     If "Cache_FDs" is set to false, the reaper thread aggressively
     closes FDs , significantly reducing the number of open FDs.
     This will help to maintain a minimal number of open FDs.
