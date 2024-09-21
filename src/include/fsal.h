@@ -655,7 +655,7 @@ fsal_status_t fsal_listxattr_helper(const char *buf, size_t listlen,
 
 struct fd_lru_parameter {
 	/** Base interval in seconds between runs of the LRU cleaner
-	    thread. Defaults to 60, settable with LRU_Run_Interval. */
+	    thread. Defaults to 90, settable with LRU_Run_Interval. */
 	uint32_t lru_run_interval;
 	/**  If Cache_FDs is false then FDs will remained cached till the LRU
 	 *   reaper thread invokes and tries to close the FDs.

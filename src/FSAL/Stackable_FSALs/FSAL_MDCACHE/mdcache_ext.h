@@ -82,7 +82,7 @@ struct mdcache_parameter {
 	    settable by Chunks_HWMark. */
 	uint32_t chunks_lwmark;
 	/** Base interval in seconds between runs of the LRU cleaner
-	    thread. Defaults to 60, settable with LRU_Run_Interval. */
+	    thread. Defaults to 90, settable with LRU_Run_Interval. */
 	uint32_t lru_run_interval;
 	/** If "Cache_FDs" is set to false, the reaper thread aggressively
 	 *  closes FDs , significantly reducing the number of open FDs.
