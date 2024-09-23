@@ -2561,6 +2561,12 @@ fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 
 	status = wait_to_start_io(obj_hdl, my_fd, openflags, !open_any,
 				  !open_any);
+	if (!FSAL_IS_ERROR(status)) {
+		*out_fd = my_fd;
+		return status;
+	}
+	LogDebug(COMPONENT_FSAL, "wait_to_start_io failed with %s",
+		 fsal_err_txt(status));
 
 	if (status.major == ERR_FSAL_DELAY) {
 		/* We can't use the global fd, use the tmp_fd. We don't need
@@ -2570,22 +2576,16 @@ fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 		status = fsal_reopen_fd(
 			obj_hdl, open_any ? FSAL_O_READ : openflags, tmp_fd);
 
-		if (!FSAL_IS_ERROR(status))
+		if (!FSAL_IS_ERROR(status)) {
 			tmp_fd->close_on_complete = true;
-
-		*out_fd = tmp_fd;
-	} else {
-		*out_fd = my_fd;
+			*out_fd = tmp_fd;
+			return status;
+		}
+		LogDebug(COMPONENT_FSAL, "fsal_reopen_fd failed with %s",
+			 fsal_err_txt(status));
 	}
 
-	if (!FSAL_IS_ERROR(status))
-		return status;
-
 	/* Can't proceed... */
-	LogDebug(COMPONENT_FSAL, "%s failed with %s",
-		 *out_fd == my_fd ? "wait_to_start_io" : "fsal_reopen_fd",
-		 fsal_err_txt(status));
-
 	if (!open_any && share != NULL) {
 		/* Release the share reservation now by updating the counters.
 		 */
