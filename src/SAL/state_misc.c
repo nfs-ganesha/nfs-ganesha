@@ -51,6 +51,11 @@
 #include "nfs_core.h"
 #include "sal_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/state.h"
+#endif
+
 struct glist_head cached_open_owners = GLIST_HEAD_INIT(cached_open_owners);
 
 pthread_mutex_t cached_open_owners_lock;
@@ -796,6 +801,9 @@ void inc_state_owner_ref(state_owner_t *owner)
 		LogFullDebug(COMPONENT_STATE,
 			     "Increment so_refcount now=%" PRId32 " {%s}",
 			     refcount, str);
+
+	GSH_AUTO_TRACEPOINT(state, incref, TRACE_INFO,
+			    "State ({}) incref. Refcount={}", owner, refcount);
 }
 
 /**
@@ -807,6 +815,9 @@ void free_state_owner(state_owner_t *owner)
 {
 	char str[LOG_BUFF_LEN] = "\0";
 	struct display_buffer dspbuf = { sizeof(str), str, str };
+
+	GSH_AUTO_TRACEPOINT(state, free, TRACE_INFO, "State ({}) free. Type={}",
+			    owner, owner->so_type);
 
 	switch (owner->so_type) {
 #ifdef _USE_NLM
@@ -901,6 +912,9 @@ void dec_state_owner_ref(state_owner_t *owner)
 	}
 
 	refcount = atomic_dec_int32_t(&owner->so_refcount);
+
+	GSH_AUTO_TRACEPOINT(state, decref, TRACE_INFO,
+			    "State ({}) decref. Refcount={}", owner, refcount);
 
 	if (refcount != 0) {
 		if (str_valid)
@@ -1230,6 +1244,9 @@ bool hold_state_owner_ref(state_owner_t *owner)
 
 	refcount = atomic_inc_unless_0_int32_t(&owner->so_refcount);
 
+	GSH_AUTO_TRACEPOINT(state, hold_state, TRACE_INFO,
+			    "State ({}) hold. Refcount={}", owner, refcount);
+
 	if (str_valid) {
 		if (refcount == 0) {
 			LogFullDebug(
@@ -1324,6 +1341,10 @@ void dump_all_owners(void)
 void state_release_export(struct gsh_export *export)
 {
 	struct req_op_context op_context;
+
+	GSH_AUTO_TRACEPOINT(state, release_export, TRACE_INFO,
+			    "Release all export states for export_id={}",
+			    export->export_id);
 
 	/* Get a ref to the export and initialize op_context */
 	get_gsh_export_ref(export);

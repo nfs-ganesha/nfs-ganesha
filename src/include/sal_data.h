@@ -51,6 +51,8 @@
 #include "fsal_pnfs.h"
 #include "config_parsing.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+
 #ifdef _USE_9P
 /* define u32 and related types independent of SAL and 9P */
 #include "9p_types.h"
@@ -809,6 +811,18 @@ struct nfs_client_id_t {
 					    intended to be cleaned up from the
 					    delayed cleanup list */
 };
+
+#define GSH_CLIENT_ID_AUTO_TRACEPOINT(prov, event, log_level, _client_id,    \
+				      format, ...)                           \
+	do {                                                                 \
+		const int32_t __ref_count =                                  \
+			atomic_fetch_int32_t(&_client_id->cid_refcount);     \
+		GSH_AUTO_TRACEPOINT(                                         \
+			prov, event, log_level,                              \
+			"client_id={},confirmed={},ref_count={} | " format,  \
+			_client_id->cid_clientid, _client_id->cid_confirmed, \
+			__ref_count, ##__VA_ARGS__);                         \
+	} while (0)
 
 /**
  * @brief Client owner record for verification and replacement

@@ -43,6 +43,11 @@
 #include "export_mgr.h"
 #include "pnfs_utils.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief Set the saved entry in the context
  *
@@ -129,6 +134,8 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 {
 	SAVEFH4res *const res_SAVEFH = &resp->nfs_resop4_u.opsavefh;
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_savefh_start, TRACE_INFO, "SAVEFH start");
+
 	/* First of all, set the reply to zero to make sure it contains no
 	 * parasite information
 	 */
@@ -196,6 +203,8 @@ enum nfs_req_result nfs4_op_savefh(struct nfs_argop4 *op, compound_data_t *data,
 
 	res_SAVEFH->status = NFS4_OK;
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_savefh_end, TRACE_INFO,
+			    "SAVEFH res: status={}", res_SAVEFH->status);
 	return NFS_REQ_OK;
 } /* nfs4_op_savefh */
 

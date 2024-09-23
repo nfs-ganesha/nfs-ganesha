@@ -44,6 +44,11 @@
 #include "sal_functions.h"
 #include "nfs_creds.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief The NFS4_OP_SETATTR operation.
  *
@@ -69,6 +74,10 @@ enum nfs_req_result nfs4_op_setattr(struct nfs_argop4 *op,
 	state_t *state_found = NULL;
 	state_t *state_open = NULL;
 	const time_t S_NSECS = 1000000000UL;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_setattr_start, TRACE_INFO,
+			    "SETATTR arg: seqid={}",
+			    arg_SETATTR4->stateid.seqid);
 
 	resp->resop = NFS4_OP_SETATTR;
 	res_SETATTR4->status = NFS4_OK;
@@ -235,6 +244,8 @@ done:
 	if (state_open != NULL)
 		dec_state_t_ref(state_open);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_setattr_end, TRACE_INFO,
+			    "SETATTR res: status={}", res_SETATTR4->status);
 	return nfsstat4_to_nfs_req_result(res_SETATTR4->status);
 } /* nfs4_op_setattr */
 

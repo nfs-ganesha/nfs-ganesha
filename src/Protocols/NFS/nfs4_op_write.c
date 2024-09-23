@@ -45,6 +45,11 @@
 #include "server_stats.h"
 #include "export_mgr.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 struct nfs4_write_data {
 	/** Results for write */
 	WRITE4res *res_WRITE4;
@@ -262,6 +267,12 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	 * since in that case we should go ahead and exit as expected.
 	 */
 	uint32_t flags = ASYNC_PROC_DONE;
+
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_write_start, TRACE_INFO,
+		"WRITE arg: stateid={} offset={} stable={} data_len={}",
+		arg_WRITE4->stateid.seqid, arg_WRITE4->offset,
+		arg_WRITE4->stable, arg_WRITE4->data.data_len);
 
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_WRITE;
@@ -549,6 +560,12 @@ out:
 		return rc;
 	}
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_write_end, TRACE_INFO,
+		"WRITE res: status={} count={} committed={} writeverf={}",
+		res_WRITE4->status, res_WRITE4->WRITE4res_u.resok4.count,
+		res_WRITE4->WRITE4res_u.resok4.committed,
+		TP_VERIFIER(res_WRITE4->WRITE4res_u.resok4.writeverf));
 	return nfsstat4_to_nfs_req_result(res_WRITE4->status);
 } /* nfs4_op_write */
 

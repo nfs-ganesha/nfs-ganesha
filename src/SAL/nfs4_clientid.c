@@ -52,6 +52,11 @@
 #include "city.h"
 #include "client_mgr.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief Hashtable used to cache NFSv4 clientids
  */
@@ -278,6 +283,10 @@ int32_t inc_client_id_ref(nfs_client_id_t *clientid)
 {
 	int32_t cid_refcount = atomic_inc_int32_t(&clientid->cid_refcount);
 
+	GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, incref_client_id, TRACE_INFO,
+				      clientid, "Incref client id. refcount={}",
+				      cid_refcount);
+
 	if (isFullDebug(COMPONENT_CLIENTID)) {
 		char str[LOG_BUFF_LEN] = "\0";
 		struct display_buffer dspbuf = { sizeof(str), str, str };
@@ -330,6 +339,9 @@ bool client_id_has_state(nfs_client_id_t *clientid)
 
 void free_client_id(nfs_client_id_t *clientid)
 {
+	GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, free_client_id, TRACE_INFO,
+				      clientid, "Free client id");
+
 	assert(atomic_fetch_int32_t(&clientid->cid_refcount) == 0);
 
 	/* This is where we finally let go of the client record. */
@@ -393,6 +405,9 @@ int32_t dec_client_id_ref(nfs_client_id_t *clientid)
 		display_client_id_rec(&dspbuf, clientid);
 
 	cid_refcount = atomic_dec_int32_t(&clientid->cid_refcount);
+
+	GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, client_decref, TRACE_INFO, clientid,
+				      "Decref, refcount={}", cid_refcount);
 
 	LogFullDebug(COMPONENT_CLIENTID,
 		     "Decrement refcount Clientid {%s} cid_refcount to %d", str,
@@ -703,8 +718,16 @@ int remove_confirmed_client_id(nfs_client_id_t *clientid)
 			 "Could not remove unconfirmed clientid %" PRIx64
 			 " error=%s",
 			 clientid->cid_clientid, hash_table_err_to_str(rc));
+		GSH_CLIENT_ID_AUTO_TRACEPOINT(
+			nfs4, remove_confirmed_client_id_failed, TRACE_ERR,
+			clientid,
+			"Could not remove unconfirmed clientid. error={}", rc);
 		return rc;
 	}
+
+	GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, remove_confirmed_client_id,
+				      TRACE_INFO, clientid,
+				      "Remove confirmed client id");
 
 	clientid->cid_client_record->cr_confirmed_rec = NULL;
 
@@ -744,8 +767,17 @@ int remove_unconfirmed_client_id(nfs_client_id_t *clientid)
 			"Could not remove unconfirmed clientid %" PRIx64
 			" error=%s",
 			clientid->cid_clientid, hash_table_err_to_str(rc));
+		GSH_CLIENT_ID_AUTO_TRACEPOINT(
+			nfs4, remove_unconfirmed_client_id_failed, TRACE_ERR,
+			clientid,
+			"Could not remove ununconfirmed clientid. error={}",
+			rc);
 		return rc;
 	}
+
+	GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, remove_unconfirmed_client_id,
+				      TRACE_INFO, clientid,
+				      "Remove unconfirmed client id");
 
 	/* XXX prevents calling remove_confirmed before removed_confirmed,
 	 * if we failed to maintain the invariant that the cases are
@@ -845,6 +877,9 @@ clientid_status_t nfs_client_id_confirm(nfs_client_id_t *clientid,
 	clientid->cid_client_record->cr_confirmed_rec = clientid;
 
 	nfs4_add_clid(clientid);
+
+	GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, confirm_client_id, TRACE_INFO,
+				      clientid, "Client id confirmed");
 
 	return CLIENT_ID_SUCCESS;
 }
@@ -1016,6 +1051,9 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale,
 	struct display_buffer dspbuf = { sizeof(str), str, str };
 	struct req_op_context op_context;
 
+	GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, expire_client_start, TRACE_INFO,
+				      clientid, "nfs_client_id_expire start");
+
 	/* Initialize op_context */
 	init_op_context_simple(&op_context, NULL, NULL);
 
@@ -1079,6 +1117,8 @@ bool nfs_client_id_expire(nfs_client_id_t *clientid, bool make_stale,
 	if (isDebug(COMPONENT_CLIENTID)) {
 		display_client_id_rec(&dspbuf, clientid);
 		LogDebug(COMPONENT_CLIENTID, "Expiring {%s}", str);
+		GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, expire_client, TRACE_INFO,
+					      clientid, "Expiring client");
 	}
 
 	if ((clientid->cid_confirmed == CONFIRMED_CLIENT_ID) ||
@@ -1351,18 +1391,25 @@ int reap_expired_client_list(nfs_client_id_t *conflicted_client)
 	nfs_client_record_t *client_rec;
 	int count = 0;
 
+	const uint32_t curr_expired_clients =
+		atomic_fetch_uint32_t(&num_of_curr_expired_clients);
+	GSH_AUTO_TRACEPOINT(
+		nfs4, reap_expired_client_list, TRACE_INFO,
+		"expired_client_threshold={}, curr_expired_clients={}",
+		nfs_param.nfsv4_param.expired_client_threshold,
+		curr_expired_clients);
+
 	/* If feature disabled or no expired clients present
 	 * then skip the expired list reaper task
 	 */
 	if (!((nfs_param.nfsv4_param.expired_client_threshold) &&
-	      (atomic_fetch_uint32_t(&num_of_curr_expired_clients)))) {
+	      (curr_expired_clients))) {
 		return count;
 	} else {
 		LogFullDebug(
 			COMPONENT_CLIENTID,
 			"Reaping expired client list with client(%p) Curr_Expired(%u) Threshold(%u)",
-			conflicted_client,
-			atomic_fetch_uint32_t(&num_of_curr_expired_clients),
+			conflicted_client, curr_expired_clients,
 			nfs_param.nfsv4_param.expired_client_threshold);
 	}
 
@@ -1399,6 +1446,9 @@ int reap_expired_client_list(nfs_client_id_t *conflicted_client)
 			PTHREAD_MUTEX_unlock(&expired_client_ids_list_lock);
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "No expired clients ready for cleanup");
+			GSH_AUTO_TRACEPOINT(
+				nfs4, reap_no_expired, TRACE_INFO,
+				"No expired clients ready for cleanup");
 			return count;
 		}
 
@@ -1409,6 +1459,10 @@ int reap_expired_client_list(nfs_client_id_t *conflicted_client)
 			LogFullDebug(COMPONENT_CLIENTID,
 				     "Skipping client(%p), as it's gone valid.",
 				     expired_client);
+			GSH_CLIENT_ID_AUTO_TRACEPOINT(
+				nfs4, reap_skipping, TRACE_INFO, expired_client,
+				"Skipping client {}, as it's gone valid",
+				expired_client->cid_clientid);
 			glist_del(&expired_client->expired_client);
 			expired_client->marked_for_delayed_cleanup = false;
 			/* Drop ref of the expired_client as it's gone valid */
@@ -1421,6 +1475,10 @@ int reap_expired_client_list(nfs_client_id_t *conflicted_client)
 			display_client_id_rec(&dspbuf, expired_client);
 			LogFullDebug(COMPONENT_CLIENTID, "Expired Client is %s",
 				     str);
+			GSH_CLIENT_ID_AUTO_TRACEPOINT(nfs4, reap_expired_client,
+						      TRACE_INFO,
+						      expired_client,
+						      "Expiring client");
 		}
 
 		/* Get the client record */

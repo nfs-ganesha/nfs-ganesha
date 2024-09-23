@@ -40,6 +40,11 @@
 #include "sal_functions.h"
 #include "nfs_creds.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 int get_raddr(SVCXPRT *xprt)
 {
 	sockaddr_t *ss = svc_getrpclocal(xprt);
@@ -110,12 +115,22 @@ enum nfs_req_result nfs4_op_exchange_id(struct nfs_argop4 *op,
 	/* Arguments and response */
 	EXCHANGE_ID4args *const arg_EXCHANGE_ID4 =
 		&op->nfs_argop4_u.opexchange_id;
+	client_owner4 *const clientowner = &arg_EXCHANGE_ID4->eia_clientowner;
 	EXCHANGE_ID4res *const res_EXCHANGE_ID4 =
 		&resp->nfs_resop4_u.opexchange_id;
 	EXCHANGE_ID4resok *const res_EXCHANGE_ID4_ok =
 		&resp->nfs_resop4_u.opexchange_id.EXCHANGE_ID4res_u.eir_resok4;
 	uint32_t resp_size = EXCHANGE_ID_BASE_RESP_SIZE;
 	int owner_len, scope_len;
+
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_exchange_id_start, TRACE_INFO,
+		"EXCHANGE_ID arg: verifier={} ownerid={} flags={} state_protect={}",
+		TP_VERIFIER(arg_EXCHANGE_ID4->eia_clientowner.co_verifier),
+		TP_BYTE_ARR(clientowner->co_ownerid.co_ownerid_val,
+			    clientowner->co_ownerid.co_ownerid_len),
+		arg_EXCHANGE_ID4->eia_flags,
+		arg_EXCHANGE_ID4->eia_state_protect.spa_how);
 
 	resp->resop = NFS4_OP_EXCHANGE_ID;
 
@@ -425,6 +440,14 @@ out:
 	/* Release our reference to the client record */
 	dec_client_record_ref(client_record);
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_exchange_id_end, TRACE_INFO,
+		"EXCHANGE_ID res: status={} clientid={} flags={} sequenceid={} state_protect={} minor_id={}",
+		res_EXCHANGE_ID4->eir_status, res_EXCHANGE_ID4_ok->eir_clientid,
+		res_EXCHANGE_ID4_ok->eir_flags,
+		res_EXCHANGE_ID4_ok->eir_sequenceid,
+		res_EXCHANGE_ID4_ok->eir_state_protect.spr_how,
+		res_EXCHANGE_ID4_ok->eir_server_owner.so_minor_id);
 	return nfsstat4_to_nfs_req_result(res_EXCHANGE_ID4->eir_status);
 }
 

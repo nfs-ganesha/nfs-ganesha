@@ -43,6 +43,11 @@
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief Always fail
  *
@@ -59,6 +64,8 @@ enum nfs_req_result nfs4_op_illegal(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
+	GSH_AUTO_TRACEPOINT(nfs4, op_illegal, TRACE_INFO, "OP_ILLEGAL");
+
 	resp->resop = NFS4_OP_ILLEGAL;
 	resp->nfs_resop4_u.opillegal.status = NFS4ERR_OP_ILLEGAL;
 
@@ -94,6 +101,8 @@ enum nfs_req_result nfs4_op_notsupp(struct nfs_argop4 *op,
 				    compound_data_t *data,
 				    struct nfs_resop4 *resp)
 {
+	GSH_AUTO_TRACEPOINT(nfs4, op_notsupp, TRACE_INFO, "OP_NOTSUPP");
+
 	resp->resop = op->argop;
 	resp->nfs_resop4_u.opillegal.status = NFS4ERR_NOTSUPP;
 

@@ -49,6 +49,11 @@
 #include "nfs_file_handle.h"
 #include "export_mgr.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief NFS4_OP_CREATE, creates a non-regular entry
  *
@@ -77,6 +82,17 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t fsal_status;
 	object_file_type_t type;
 	bool is_parent_pre_attrs_valid, is_parent_post_attrs_valid;
+
+	/* We don't print the linkdata because it might be considered
+	   Core Customer Content */
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_create_start, TRACE_INFO,
+		"CREATE arg: type={} specdata1={} specdata2={} name[{}]={}",
+		arg_CREATE4->objtype.type,
+		arg_CREATE4->objtype.createtype4_u.devdata.specdata1,
+		arg_CREATE4->objtype.createtype4_u.devdata.specdata2,
+		arg_CREATE4->objname.utf8string_len,
+		TP_UTF8STR_TRUNCATED(arg_CREATE4->objname));
 
 	memset(&sattr, 0, sizeof(sattr));
 	fsal_prepare_attrs(&parent_pre_attrs, ATTR_CHANGE);
@@ -316,6 +332,13 @@ out:
 		obj_new->obj_ops->put_ref(obj_new);
 	}
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_create_end, TRACE_INFO,
+		"CREATE res: status={} before={} after={} atomic={}",
+		res_CREATE4->status,
+		res_CREATE4->CREATE4res_u.resok4.cinfo.before,
+		res_CREATE4->CREATE4res_u.resok4.cinfo.after,
+		res_CREATE4->CREATE4res_u.resok4.cinfo.atomic);
 	return nfsstat4_to_nfs_req_result(res_CREATE4->status);
 } /* nfs4_op_create */
 

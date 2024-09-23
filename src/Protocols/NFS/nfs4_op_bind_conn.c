@@ -34,6 +34,11 @@
 #include "nfs_convert.h"
 #include "nfs_proto_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief Bind connection to the session's backchannel
  */
@@ -105,6 +110,12 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 {
 	BIND_CONN_TO_SESSION4args *const arg_BIND_CONN_TO_SESSION4 =
 		&op->nfs_argop4_u.opbind_conn_to_session;
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_bind_conn_start, TRACE_INFO,
+		"BIND_CONN_TO_SESSION arg: session={} dir={} rdma={}",
+		TP_SESSION(arg_BIND_CONN_TO_SESSION4->bctsa_sessid),
+		arg_BIND_CONN_TO_SESSION4->bctsa_dir,
+		arg_BIND_CONN_TO_SESSION4->bctsa_use_conn_in_rdma_mode);
 	BIND_CONN_TO_SESSION4res *const res_BIND_CONN_TO_SESSION4 =
 		&resp->nfs_resop4_u.opbind_conn_to_session;
 	BIND_CONN_TO_SESSION4resok *const resok_BIND_CONN_TO_SESSION4 =
@@ -229,6 +240,14 @@ enum nfs_req_result nfs4_op_bind_conn(struct nfs_argop4 *op,
 	op_ctx->clientid = &data->session->clientid;
 
 	res_BIND_CONN_TO_SESSION4->bctsr_status = NFS4_OK;
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_bind_conn_end, TRACE_INFO,
+		"BIND_CONN_TO_SESSION res: status={} session={} dir={} rdma={}",
+		res_BIND_CONN_TO_SESSION4->bctsr_status,
+		TP_SESSION(resok_BIND_CONN_TO_SESSION4->bctsr_sessid),
+		resok_BIND_CONN_TO_SESSION4->bctsr_dir,
+		resok_BIND_CONN_TO_SESSION4->bctsr_use_conn_in_rdma_mode);
+
 	return NFS_REQ_OK;
 } /* nfs4_op_bind_conn */
 

@@ -37,6 +37,11 @@
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief The NFS4_OP_DESTROY_SESSION operation
@@ -62,6 +67,10 @@ enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *op,
 	DESTROY_SESSION4res *const res_DESTROY_SESSION4 =
 		&resp->nfs_resop4_u.opdestroy_session;
 	nfs41_session_t *session;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_destroy_session_start, TRACE_INFO,
+			    "DESTROY_SESSION arg: session={}",
+			    TP_SESSION(arg_DESTROY_SESSION4->dsa_sessionid));
 
 	resp->resop = NFS4_OP_DESTROY_SESSION;
 	res_DESTROY_SESSION4->dsr_status = NFS4_OK;
@@ -95,6 +104,9 @@ enum nfs_req_result nfs4_op_destroy_session(struct nfs_argop4 *op,
 	/* Release ref taken in get_pointer */
 	dec_session_ref(session);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_destroy_session_end, TRACE_INFO,
+			    "DESTROY_SESSION res: status={}",
+			    res_DESTROY_SESSION4->dsr_status);
 	return nfsstat4_to_nfs_req_result(res_DESTROY_SESSION4->dsr_status);
 } /* nfs41_op_destroy_session */
 

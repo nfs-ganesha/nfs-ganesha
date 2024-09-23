@@ -40,6 +40,11 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief Implementation of NFS4_OP_NVERIFY
@@ -63,6 +68,9 @@ enum nfs_req_result nfs4_op_nverify(struct nfs_argop4 *op,
 	fattr4 file_attr4;
 	int rc = 0;
 	struct fsal_attrlist attrs;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_nverify_start, TRACE_INFO,
+			    "NVERIFY start");
 
 	resp->resop = NFS4_OP_NVERIFY;
 	res_NVERIFY4->status = NFS4_OK;
@@ -116,6 +124,9 @@ enum nfs_req_result nfs4_op_nverify(struct nfs_argop4 *op,
 	}
 
 	nfs4_Fattr_Free(&file_attr4);
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_nverify_end, TRACE_INFO,
+			    "NVERIFY res: status={}", res_NVERIFY4->status);
 	return nfsstat4_to_nfs_req_result(res_NVERIFY4->status);
 } /* nfs4_op_nverify */
 

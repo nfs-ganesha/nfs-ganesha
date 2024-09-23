@@ -96,4 +96,19 @@ static inline void gsh_empty_function(const char *unused, ...)
 #endif /* TP_INT_ARR */
 
 #endif /* USE_LTTNG */
+
+#define TP_SESSION(byte_array) TP_BYTE_ARR((byte_array), NFS4_SESSIONID_SIZE)
+#define TP_VERIFIER(byte_array) TP_BYTE_ARR((byte_array), NFS4_VERIFIER_SIZE)
+
+#define TP_CHARS_LIMIT 16 /* Avoid copying too many chars */
+#define TP_UTF8STR_TRUNCATED(utf8str)            \
+	TP_VAR_STR_ARR((utf8str).utf8string_val, \
+		       MIN((utf8str).utf8string_len, TP_CHARS_LIMIT))
+#define TP_BYTE_ARR_TRUNCATED(data, len) \
+	TP_BYTE_ARR((data), MIN((len), TP_CHARS_LIMIT))
+
+#define TP_CINFO_FORMAT "atomic={} before={} after={}"
+#define TP_CINFO_ARGS_EXPAND(cinfo) \
+	(cinfo).atomic, (cinfo).before, (cinfo).after
+
 #endif /* __GSH_LTTNG_H__ */

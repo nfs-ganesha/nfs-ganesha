@@ -44,6 +44,11 @@
 #include "export_mgr.h"
 #include "nfs_proto_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief NFS4_OP_LOOKUP
  *
@@ -71,6 +76,11 @@ enum nfs_req_result nfs4_op_lookup(struct nfs_argop4 *op, compound_data_t *data,
 	struct fsal_obj_handle *file_obj = NULL;
 	/* Status code from fsal */
 	fsal_status_t status = { 0, 0 };
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_lookup_start, TRACE_INFO,
+			    "LOOKUP arg: name[{}]={}",
+			    arg_LOOKUP4->objname.utf8string_len,
+			    TP_UTF8STR_TRUNCATED(arg_LOOKUP4->objname));
 
 	resp->resop = NFS4_OP_LOOKUP;
 	res_LOOKUP4->status = NFS4_OK;
@@ -236,6 +246,8 @@ out:
 	if (file_obj)
 		file_obj->obj_ops->put_ref(file_obj);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_lookup_end, TRACE_INFO,
+			    "LOOKUP res: status={}", res_LOOKUP4->status);
 	return nfsstat4_to_nfs_req_result(res_LOOKUP4->status);
 } /* nfs4_op_lookup */
 

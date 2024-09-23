@@ -42,6 +42,11 @@
 #include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief The NFS4_OP_PUTROOTFH operation.
@@ -68,6 +73,9 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 	struct gsh_export *root_export;
 
 	PUTROOTFH4res *const res_PUTROOTFH4 = &resp->nfs_resop4_u.opputrootfh;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_putrootfh_start, TRACE_INFO,
+			    "PUTROOTFH start");
 
 	/* First of all, set the reply to zero to make sure
 	 * it contains no parasite information
@@ -143,6 +151,8 @@ enum nfs_req_result nfs4_op_putrootfh(struct nfs_argop4 *op,
 	LogHandleNFS4("NFS4 PUTROOTFH CURRENT FH: ", &data->currentFH);
 
 	res_PUTROOTFH4->status = NFS4_OK;
+	GSH_AUTO_TRACEPOINT(nfs4, op_putrootfh_end, TRACE_INFO,
+			    "PUTROOTFH res: status={}", res_PUTROOTFH4->status);
 	return NFS_REQ_OK;
 } /* nfs4_op_putrootfh */
 

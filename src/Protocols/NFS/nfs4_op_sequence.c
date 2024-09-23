@@ -38,6 +38,11 @@
 #include "nfs_proto_tools.h"
 #include "nfs_proto_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief check whether request is real a replay
  *
@@ -138,6 +143,13 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 
 	nfs41_session_t *session;
 	nfs41_session_slot_t *slot;
+
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_sequence_start, TRACE_INFO,
+		"SEQUENCE arg: session={} sequence={} slotid={} highest_slotid={} cachethis={}",
+		TP_SESSION(arg_SEQUENCE4->sa_sessionid),
+		arg_SEQUENCE4->sa_sequenceid, arg_SEQUENCE4->sa_slotid,
+		arg_SEQUENCE4->sa_highest_slotid, arg_SEQUENCE4->sa_cachethis);
 
 	resp->resop = NFS4_OP_SEQUENCE;
 	res_SEQUENCE4->sr_status = NFS4_OK;
@@ -326,6 +338,13 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 
 	(void)check_session_conn(session, data, true);
 
+	const SEQUENCE4resok *const reok =
+		&res_SEQUENCE4->SEQUENCE4res_u.sr_resok4;
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_sequence_end, TRACE_INFO,
+		"SEQUENCE res: status={} session={} sequence={} slotid={} status_flags={}",
+		res_SEQUENCE4->sr_status, TP_SESSION(reok->sr_sessionid),
+		reok->sr_sequenceid, reok->sr_slotid, reok->sr_status_flags);
 	return NFS_REQ_OK;
 } /* nfs41_op_sequence */
 

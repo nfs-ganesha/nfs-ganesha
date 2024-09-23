@@ -41,6 +41,11 @@
 #include "nfs_file_handle.h"
 #include "gsh_types.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief The NFS4_OP_READLINK operation.
  *
@@ -64,6 +69,9 @@ enum nfs_req_result nfs4_op_readlink(struct nfs_argop4 *op,
 	fsal_status_t fsal_status = { 0, 0 };
 	struct gsh_buffdesc link_buffer = { .addr = NULL, .len = 0 };
 	uint32_t resp_size;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_readlink_start, TRACE_INFO,
+			    "READLINK start");
 
 	resp->resop = NFS4_OP_READLINK;
 	res_READLINK4->status = NFS4_OK;
@@ -106,6 +114,10 @@ enum nfs_req_result nfs4_op_readlink(struct nfs_argop4 *op,
 
 	data->op_resp_size = resp_size;
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_readlink_end, TRACE_INFO,
+		"READLINK res: status={} len={}", res_READLINK4->status,
+		res_READLINK4->READLINK4res_u.resok4.link.utf8string_len);
 	return nfsstat4_to_nfs_req_result(res_READLINK4->status);
 } /* nfs4_op_readlink */
 

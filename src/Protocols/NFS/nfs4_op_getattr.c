@@ -46,6 +46,11 @@
 #include "nfs_convert.h"
 #include "sal_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief Gets attributes for an entry in the FSAL.
  *
@@ -72,6 +77,12 @@ enum nfs_req_result nfs4_op_getattr(struct nfs_argop4 *op,
 		&res_GETATTR4->GETATTR4res_u.resok4.obj_attributes;
 	nfs_client_id_t *deleg_client = NULL;
 	struct fsal_obj_handle *obj = data->current_obj;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_getattr_start, TRACE_INFO,
+			    "GETATTR arg: len={} map={}",
+			    arg_GETATTR4->attr_request.bitmap4_len,
+			    TP_UINT_ARR(arg_GETATTR4->attr_request.map,
+					BITMAP4_MAPLEN));
 
 	/* This is a NFS4_OP_GETTAR */
 	resp->resop = NFS4_OP_GETATTR;
@@ -215,6 +226,11 @@ out:
 		data->op_resp_size = sizeof(nfsstat4);
 	}
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_getattr_end, TRACE_INFO,
+		"GETATTR res: status={} len={} map={}", res_GETATTR4->status,
+		obj_attributes->attrmask.bitmap4_len,
+		TP_UINT_ARR(obj_attributes->attrmask.map, BITMAP4_MAPLEN));
 	return nfsstat4_to_nfs_req_result(res_GETATTR4->status);
 } /* nfs4_op_getattr */
 

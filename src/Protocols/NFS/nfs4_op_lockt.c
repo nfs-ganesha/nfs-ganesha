@@ -43,6 +43,11 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief The NFS4_OP_LOCKT operation
@@ -89,6 +94,13 @@ enum nfs_req_result nfs4_op_lockt(struct nfs_argop4 *op, compound_data_t *data,
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCKT handler ----------------------------");
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_lockt_start, TRACE_INFO,
+		"LOCKT arg: type={} offset={} length={} owner[{}]={}",
+		arg_LOCKT4->locktype, arg_LOCKT4->offset, arg_LOCKT4->length,
+		arg_LOCKT4->owner.owner.owner_len,
+		TP_BYTE_ARR_TRUNCATED(arg_LOCKT4->owner.owner.owner_val,
+				      arg_LOCKT4->owner.owner.owner_len));
 
 	/* Initialize to sane default */
 	resp->resop = NFS4_OP_LOCKT;
@@ -250,6 +262,21 @@ out_clientid:
 	dec_client_id_ref(clientid);
 out:
 	nfs_put_grace_status();
+
+	if (res_LOCKT4->status == NFS4ERR_DENIED) {
+		const LOCK4denied *const denied =
+			&res_LOCKT4->LOCKT4res_u.denied;
+		GSH_AUTO_TRACEPOINT(
+			nfs4, op_lockt_end_denied, TRACE_INFO,
+			"LOCKT denied: status={} offset={} length={} type={} owner[{}] = {}",
+			res_LOCKT4->status, denied->offset, denied->length,
+			denied->locktype, denied->owner.owner.owner_len,
+			TP_BYTE_ARR_TRUNCATED(denied->owner.owner.owner_val,
+					      denied->owner.owner.owner_len));
+	} else
+		GSH_AUTO_TRACEPOINT(nfs4, op_lockt_end, TRACE_INFO,
+				    "LOCKT res: status={}", res_LOCKT4->status);
+
 	return nfsstat4_to_nfs_req_result(res_LOCKT4->status);
 } /* nfs4_op_lockt */
 

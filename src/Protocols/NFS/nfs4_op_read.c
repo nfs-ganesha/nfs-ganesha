@@ -50,6 +50,11 @@
 #include "export_mgr.h"
 #include "gsh_rpc.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 struct nfs4_read_data {
 	/** Results for read */
 	READ4res *res_READ4;
@@ -846,7 +851,14 @@ out:
 enum nfs_req_result nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 				 struct nfs_resop4 *resp)
 {
+	READ4args *const arg_READ4 = &op->nfs_argop4_u.opread;
+	READ4res *const res_READ4 = &resp->nfs_resop4_u.opread;
 	enum nfs_req_result rc;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_read_start, TRACE_INFO,
+			    "READ arg: stateid={} offset={} count={}",
+			    arg_READ4->stateid.seqid, arg_READ4->offset,
+			    arg_READ4->count);
 
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
@@ -877,6 +889,10 @@ enum nfs_req_result nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 		data->op_data = NULL;
 	}
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_read_end, TRACE_INFO,
+			    "READ res: rc={} status={} datalen={}", rc,
+			    res_READ4->status,
+			    res_READ4->READ4res_u.resok4.data.data_len);
 	return rc;
 }
 

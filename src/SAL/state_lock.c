@@ -50,6 +50,10 @@
 #include "sal_functions.h"
 /*#include "nlm_util.h"*/
 #include "export_mgr.h"
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/lock.h"
+#endif
 
 /**
  * @page state_lock_entry_locking state_lock_entry_t locking rule
@@ -1800,6 +1804,9 @@ void try_to_grant_lock(state_lock_entry_t *lock_entry)
 				STATE_GRANT_INTERNAL;
 
 		status = call_back(lock_entry->sle_obj, lock_entry);
+		LOCK_AUTO_TRACEPOINT(lock_entry, granted_callback, TRACE_INFO,
+				     "Sent granted callback and got {}",
+				     status);
 
 		if (status == STATE_LOCK_BLOCKED) {
 			/* The lock is still blocked, restore it's type and
@@ -1962,6 +1969,9 @@ static void cancel_blocked_lock(struct fsal_obj_handle *obj,
 				   lock_entry->sle_owner, &lock_entry->sle_lock,
 				   NULL, /* no conflict expected */
 				   NULL, false); /* overlap not relevant */
+
+		LOCK_AUTO_TRACEPOINT(lock_entry, cancel_request_end, TRACE_INFO,
+				     "cancel request end {}", state_status);
 
 		if (state_status != STATE_SUCCESS) {
 			/* Unable to cancel,
@@ -2381,6 +2391,8 @@ state_status_t state_test(struct fsal_obj_handle *obj, state_t *state,
 	state_status_t status = 0;
 
 	LogLock(COMPONENT_STATE, NIV_FULL_DEBUG, "TEST", obj, owner, lock);
+	LOCK__REQUEST_AUTO_TRACEPOINT(lock, obj, test_request_start, TRACE_INFO,
+				      "test request started");
 
 	STATELOCK_lock(obj);
 
@@ -2419,6 +2431,8 @@ state_status_t state_test(struct fsal_obj_handle *obj, state_t *state,
 			break;
 		}
 	}
+	LOCK__REQUEST_AUTO_TRACEPOINT(lock, obj, test_request_end, TRACE_INFO,
+				      "test request ended {}", status);
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS))
 		LogList("Lock List", obj, &obj->state_hdl->file.lock_list);
@@ -2448,6 +2462,8 @@ static void state_cancel_internal(struct fsal_obj_handle *obj,
 
 		return;
 	}
+	LOCK__REQUEST_AUTO_TRACEPOINT(lock, obj, cancel_request_start,
+				      TRACE_INFO, "cancel request started");
 
 	glist_for_each(glist, &obj->state_hdl->file.lock_list)
 	{
@@ -2524,6 +2540,8 @@ static void handle_contained_range_if_present(
 		 * GRANT_RESP, that will be just fine.
 		 */
 		LogEntry("Immediate grant for", found_entry);
+		LOCK_AUTO_TRACEPOINT(found_entry, immediate_grant1, TRACE_INFO,
+				     "Immediate grant");
 		grant_blocked_lock_immediate(obj->state_hdl, found_entry);
 	} else if (found_entry->sle_blocked == STATE_AVAILABLE &&
 		   found_entry->sle_protocol == LOCK_NFSv4) {
@@ -2531,6 +2549,8 @@ static void handle_contained_range_if_present(
 		if (different_lock(&found_entry->sle_lock, lock)) {
 			return;
 		} else {
+			LOCK_AUTO_TRACEPOINT(found_entry, immediate_grant2,
+					     TRACE_INFO, "Immediate grant");
 			LogEntry("Immediate grant for", found_entry);
 			grant_nfsv4_blocking_lock(obj, found_entry);
 		}
@@ -2542,6 +2562,8 @@ static void handle_contained_range_if_present(
 		 * blocking to non blocking we need to remove the lock from
 		 * non blocking list, and return the lock result */
 
+		LOCK_AUTO_TRACEPOINT(found_entry, cancel_blocked, TRACE_INFO,
+				     "cancel blocked lock");
 		LogEntry("cancel blocked lock", found_entry);
 		/* Cancel the blocked lock */
 		cancel_blocked_lock(obj, found_entry);
@@ -2619,6 +2641,8 @@ state_status_t state_lock(struct fsal_obj_handle *obj, state_owner_t *owner,
 	bool lock_granted;
 	bool lock_cancel;
 
+	LOCK__REQUEST_AUTO_TRACEPOINT(lock, obj, lock_request_start, TRACE_INFO,
+				      "lock request started");
 	if (blocking != STATE_NON_BLOCKING) {
 		/* First search for a blocked request. Client can ignore the
 		 * blocked request and keep sending us new lock request again
@@ -2671,6 +2695,8 @@ state_status_t state_lock(struct fsal_obj_handle *obj, state_owner_t *owner,
 			 * polling.
 			 */
 			LogEntry("Found blocked", found_entry);
+			LOCK_AUTO_TRACEPOINT(found_entry, found_blocked,
+					     TRACE_INFO, "Found blocked");
 			status = STATE_LOCK_BLOCKED;
 			return status;
 		}
@@ -2722,6 +2748,9 @@ recheck_for_conflicting_entries:
 				/* Found a conflicting lock, break out of loop.
 				 * Also indicate overlap hint.
 				 */
+				LOCK_AUTO_TRACEPOINT(found_entry, lock_conflict,
+						     TRACE_INFO,
+						     "Found conflict");
 				LogEntry("Conflicts with", found_entry);
 				LogList("Locks", obj,
 					&obj->state_hdl->file.lock_list);
@@ -2865,6 +2894,9 @@ recheck_for_conflicting_entries:
 		 */
 		status = STATE_LOCK_BLOCKED;
 	}
+	LOCK__REQUEST_AUTO_TRACEPOINT(lock, obj, lock_request, TRACE_INFO,
+				      "lock request ended with status {}",
+				      status);
 
 	if (status == STATE_SUCCESS) {
 		/* Merge any touching or overlapping locks into this one */
@@ -2966,6 +2998,9 @@ state_unlock_internal(struct fsal_obj_handle *obj, state_t *state,
 		goto out_unlock;
 	}
 
+	LOCK__REQUEST_AUTO_TRACEPOINT(lock, obj, unlock_request_start,
+				      TRACE_INFO, "unlock request started");
+
 	LogFullDebug(
 		COMPONENT_STATE,
 		"----------------------------------------------------------------------");
@@ -3005,6 +3040,8 @@ state_unlock_internal(struct fsal_obj_handle *obj, state_t *state,
 			    NULL, /* no conflict expected */
 			    NULL, false);
 
+	LOCK__REQUEST_AUTO_TRACEPOINT(lock, obj, unlock_request_end, TRACE_INFO,
+				      "lock request started {}", status);
 	if (status != STATE_SUCCESS)
 		LogMajor(COMPONENT_STATE, "Unable to unlock FSAL, error=%s",
 			 state_err_str(status));
@@ -3755,8 +3792,16 @@ static void handle_nfsv4_lock(state_block_data_t *pblock,
 			nfs_param.nfsv4_param.lease_lifetime +
 			POLL_TIME_CANCEL_BUFFER_SEC;
 
-		if (check_time < expire_time)
+		if (check_time < expire_time) {
+			LOCK_AUTO_TRACEPOINT(
+				found_entry, lock_poll_unexpired, TRACE_INFO,
+				"lock not expired check_time {} expire {}",
+				check_time, expire_time);
 			return;
+		}
+		LOCK_AUTO_TRACEPOINT(found_entry, lock_poll_expired, TRACE_INFO,
+				     "lock not expired check_time {} expire {}",
+				     check_time, expire_time);
 
 		/* Since we are scheduling this lock to be unlocked in
 		* another thread, we need to hold a reference on the
@@ -3780,8 +3825,17 @@ static void handle_nfsv4_lock(state_block_data_t *pblock,
 		const uint64_t next_poll_time =
 			pblock->sbd_prot.sbd_v4.snbd_last_poll_time +
 			min_time_between_polls;
-		if (check_time < next_poll_time)
+		if (check_time < next_poll_time) {
+			LOCK_AUTO_TRACEPOINT(
+				found_entry, lock_poll_not_check, TRACE_INFO,
+				"poll eligibility check_time {} next_poll_time {}",
+				check_time, next_poll_time);
 			return;
+		}
+		LOCK_AUTO_TRACEPOINT(
+			found_entry, lock_poll_check, TRACE_INFO,
+			"poll eligibility check_time {} next_poll_time {}",
+			check_time, next_poll_time);
 
 		lock_entry_inc_ref(found_entry);
 		if (test_blocking_lock_eligibility_schedule(found_entry) !=

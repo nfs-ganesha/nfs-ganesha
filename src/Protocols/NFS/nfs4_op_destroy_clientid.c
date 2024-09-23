@@ -38,6 +38,11 @@
 #include "nfs_proto_functions.h"
 #include "nfs_core.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief The NFS4_OP_DESTROY_CLIENTID operation.
@@ -63,6 +68,10 @@ enum nfs_req_result nfs4_op_destroy_clientid(struct nfs_argop4 *op,
 	nfs_client_id_t *conf = NULL, *unconf = NULL, *found = NULL;
 	clientid4 clientid;
 	int rc;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_destroy_clientid_start, TRACE_INFO,
+			    "DESTROY_CLIENTID arg: clientid={}",
+			    arg_DESTROY_CLIENTID4->dca_clientid);
 
 	resp->resop = NFS4_OP_DESTROY_CLIENTID;
 
@@ -208,7 +217,9 @@ cleanup:
 		dec_client_id_ref(found);
 
 out:
-
+	GSH_AUTO_TRACEPOINT(nfs4, op_destroy_clientid_end, TRACE_INFO,
+			    "DESTROY_CLIENTID res: status={}",
+			    res_DESTROY_CLIENTID4->dcr_status);
 	return nfsstat4_to_nfs_req_result(res_DESTROY_CLIENTID4->dcr_status);
 }
 

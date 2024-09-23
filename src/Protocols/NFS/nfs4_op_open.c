@@ -46,6 +46,11 @@
 #include "export_mgr.h"
 #include "nfs_rpc_callback.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 static const char *open_tag = "OPEN";
 
 /**
@@ -1265,6 +1270,13 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		arg_OPEN4->claim.claim, arg_OPEN4->openhow.opentype,
 		arg_OPEN4->share_deny, arg_OPEN4->share_access);
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_open_start, TRACE_INFO,
+		"OPEN arg: claim={} opentype={} howmode={} share_deny={} share_access={} seqid={}",
+		arg_OPEN4->claim.claim, arg_OPEN4->openhow.opentype,
+		arg_OPEN4->openhow.openflag4_u.how.mode, arg_OPEN4->share_deny,
+		arg_OPEN4->share_access, arg_OPEN4->seqid);
+
 	resp->resop = NFS4_OP_OPEN;
 	res_OPEN4->status = NFS4_OK;
 	res_OPEN4->OPEN4res_u.resok4.rflags = 0;
@@ -1499,6 +1511,15 @@ out2:
 out3:
 
 	dec_client_id_ref(clientid);
+
+	const OPEN4resok *const resok = &res_OPEN4->OPEN4res_u.resok4;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_open_end, TRACE_INFO,
+			    "OPEN res: status={} stateid={} " TP_CINFO_FORMAT
+			    " rflags={} delegation={}",
+			    res_OPEN4->status, resok->stateid.seqid,
+			    TP_CINFO_ARGS_EXPAND(resok->cinfo), resok->rflags,
+			    resok->delegation.delegation_type);
 
 	return nfsstat4_to_nfs_req_result(res_OPEN4->status);
 } /* nfs4_op_open */

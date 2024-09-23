@@ -47,6 +47,11 @@
 #include "nfs_proto_tools.h"
 #include "gsh_list.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief The NFS4_OP_FREE_STATEID operation.
@@ -75,6 +80,15 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 	struct saved_export_context saved;
 	struct gsh_export *export;
 	struct fsal_obj_handle *obj;
+
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_free_stateid_start, TRACE_INFO,
+		"FREE_STATEID arg: seqid={} other={}",
+		arg_FREE_STATEID4->fsa_stateid.seqid,
+		TP_BYTE_ARR(arg_FREE_STATEID4->fsa_stateid.other,
+			    sizeof(arg_FREE_STATEID4->fsa_stateid.other) /
+				    sizeof(arg_FREE_STATEID4->fsa_stateid
+						   .other[0])));
 
 	resp->resop = NFS4_OP_FREE_STATEID;
 
@@ -121,6 +135,9 @@ enum nfs_req_result nfs4_op_free_stateid(struct nfs_argop4 *op,
 	obj->obj_ops->put_ref(obj);
 	restore_op_context_export(&saved);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_free_stateid_end, TRACE_INFO,
+			    "FREE_STATEID res: status={}",
+			    res_FREE_STATEID4->fsr_status);
 	return nfsstat4_to_nfs_req_result(res_FREE_STATEID4->fsr_status);
 
 } /* nfs41_op_free_stateid */

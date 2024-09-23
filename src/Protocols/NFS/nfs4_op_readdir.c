@@ -36,6 +36,11 @@
 #include "nfs_convert.h"
 #include "export_mgr.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief Opaque bookkeeping structure for NFSv4 readdir
  *
@@ -529,6 +534,12 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	bool use_cookie_verifier =
 		op_ctx_export_has_option(EXPORT_OPTION_USE_COOKIE_VERIFIER);
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_readir_start, TRACE_INFO,
+		"READDIR arg: cookie={} verifier={} dircount={} maxcount={}",
+		arg_READDIR4->cookie, TP_VERIFIER(arg_READDIR4->cookieverf),
+		arg_READDIR4->dircount, arg_READDIR4->maxcount);
+
 	resp->resop = NFS4_OP_READDIR;
 	res_READDIR4->status = NFS4_OK;
 
@@ -801,6 +812,12 @@ out:
 
 	LogDebug(COMPONENT_NFS_READDIR, "Returning %s",
 		 nfsstat4_to_str(res_READDIR4->status));
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_readir_end, TRACE_INFO,
+		"READDIR res: status={} verifier={} eof={}",
+		res_READDIR4->status,
+		TP_VERIFIER(res_READDIR4->READDIR4res_u.resok4.cookieverf),
+		res_READDIR4->READDIR4res_u.resok4.reply.eof);
 
 	return nfsstat4_to_nfs_req_result(res_READDIR4->status);
 } /* nfs4_op_readdir */

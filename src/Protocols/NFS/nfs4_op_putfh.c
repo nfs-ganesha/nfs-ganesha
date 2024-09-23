@@ -47,6 +47,11 @@
 #include "nfs_file_handle.h"
 #include "pnfs_utils.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 static int nfs4_ds_putfh(compound_data_t *data)
 {
 	struct file_handle_v4 *v4_handle =
@@ -251,6 +256,8 @@ enum nfs_req_result nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	/* Convenience alias for response */
 	PUTFH4res *const res_PUTFH4 = &resp->nfs_resop4_u.opputfh;
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_putfh_start, TRACE_INFO, "PUTFH start");
+
 	resp->resop = NFS4_OP_PUTFH;
 
 	/* First check the handle.  If it is rubbish, we go no further
@@ -277,6 +284,8 @@ enum nfs_req_result nfs4_op_putfh(struct nfs_argop4 *op, compound_data_t *data,
 	else
 		res_PUTFH4->status = nfs4_mds_putfh(data);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_putfh_end, TRACE_INFO,
+			    "PUTFH res: status={}", res_PUTFH4->status);
 	return nfsstat4_to_nfs_req_result(res_PUTFH4->status);
 } /* nfs4_op_putfh */
 

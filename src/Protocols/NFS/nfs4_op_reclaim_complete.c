@@ -52,6 +52,11 @@
 #include "sal_data.h"
 #include "sal_functions.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief The NFS4_OP_RECLAIM_COMPLETE4 operation.
@@ -72,11 +77,15 @@ enum nfs_req_result nfs4_op_reclaim_complete(struct nfs_argop4 *op,
 					     compound_data_t *data,
 					     struct nfs_resop4 *resp)
 {
-	RECLAIM_COMPLETE4args *const arg_RECLAIM_COMPLETE4
-		__attribute__((unused)) = &op->nfs_argop4_u.opreclaim_complete;
+	RECLAIM_COMPLETE4args *const arg_RECLAIM_COMPLETE4 =
+		&op->nfs_argop4_u.opreclaim_complete;
 	RECLAIM_COMPLETE4res *const res_RECLAIM_COMPLETE4 =
 		&resp->nfs_resop4_u.opreclaim_complete;
 	nfs_client_id_t *clientid = data->session->clientid_record;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_reclaim_complete_start, TRACE_INFO,
+			    "RECLAIM COMPLETE args: rca_one_fs={}",
+			    arg_RECLAIM_COMPLETE4->rca_one_fs);
 
 	resp->resop = NFS4_OP_RECLAIM_COMPLETE;
 
@@ -97,6 +106,9 @@ enum nfs_req_result nfs4_op_reclaim_complete(struct nfs_argop4 *op,
 			atomic_inc_int32_t(&reclaim_completes);
 	}
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_reclaim_complete_end, TRACE_INFO,
+			    "RECLAIM COMPLETE rs: status={}",
+			    res_RECLAIM_COMPLETE4->rcr_status);
 	return NFS_REQ_OK;
 } /* nfs41_op_reclaim_complete */
 

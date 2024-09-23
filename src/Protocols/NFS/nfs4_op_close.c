@@ -41,6 +41,11 @@
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /* Tag passed to state functions */
 static const char *close_tag = "CLOSE";
 
@@ -157,6 +162,9 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	LogDebug(COMPONENT_STATE,
 		 "Entering NFS v4 CLOSE handler ----------------------------");
+	GSH_AUTO_TRACEPOINT(nfs4, op_close_start, TRACE_INFO,
+			    "CLOSE arg: seqid={} open_stateid={}",
+			    arg_CLOSE4->seqid, arg_CLOSE4->open_stateid.seqid);
 
 	memset(res_CLOSE4, 0, sizeof(CLOSE4res));
 	resp->resop = NFS4_OP_CLOSE;
@@ -297,6 +305,10 @@ out2:
 	state_obj->obj_ops->put_ref(state_obj);
 	dec_state_t_ref(state_found);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_close_end, TRACE_INFO,
+			    "CLOSE arg: status={} open_stateid={}",
+			    res_CLOSE4->status,
+			    res_CLOSE4->CLOSE4res_u.open_stateid.seqid);
 	return nfsstat4_to_nfs_req_result(res_CLOSE4->status);
 } /* nfs4_op_close */
 

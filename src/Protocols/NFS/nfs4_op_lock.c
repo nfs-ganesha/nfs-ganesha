@@ -40,6 +40,11 @@
 #include "export_mgr.h"
 #include "nfs_rpc_callback.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 static const char *lock_tag = "LOCK";
 
 /**
@@ -159,6 +164,32 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCK handler ----------------------");
+
+	if (arg_LOCK4->locker.new_lock_owner) {
+		GSH_AUTO_TRACEPOINT(
+			nfs4, op_lock_start_new, TRACE_INFO,
+			"LOCK arg: type={} reclaim={} offset={} length={} open_seqid={} stateid={} lock_seqid={}",
+			arg_LOCK4->locktype, arg_LOCK4->reclaim,
+			arg_LOCK4->offset, arg_LOCK4->length,
+			arg_open_owner->open_seqid,
+			arg_open_owner->open_stateid.seqid,
+			arg_open_owner->lock_seqid);
+		GSH_AUTO_TRACEPOINT(
+			nfs4, op_lock_start_owner, TRACE_INFO,
+			"LOCK arg: owner[{}]={}",
+			arg_open_owner->lock_owner.owner.owner_len,
+			TP_BYTE_ARR_TRUNCATED(
+				arg_open_owner->lock_owner.owner.owner_val,
+				arg_open_owner->lock_owner.owner.owner_len));
+	} else
+		GSH_AUTO_TRACEPOINT(
+			nfs4, op_lock_start_existing, TRACE_INFO,
+			"LOCK arg: type={} reclaim={} offset={} length={} stateid={} seqid={}",
+			arg_LOCK4->locktype, arg_LOCK4->reclaim,
+			arg_LOCK4->offset, arg_LOCK4->length,
+			arg_LOCK4->locker.locker4_u.lock_owner.lock_stateid
+				.seqid,
+			arg_LOCK4->locker.locker4_u.lock_owner.lock_seqid);
 
 	/* Initialize to sane starting values */
 	resp->resop = NFS4_OP_LOCK;
@@ -791,6 +822,29 @@ out2:
 
 	if (clientid != NULL)
 		dec_client_id_ref(clientid);
+
+	if (res_LOCK4->status == NFS4_OK)
+		GSH_AUTO_TRACEPOINT(
+			nfs4, op_lock_end_ok, TRACE_INFO,
+			"LOCK res: status={} stateid={}", res_LOCK4->status,
+			res_LOCK4->LOCK4res_u.resok4.lock_stateid.seqid);
+	else if (res_LOCK4->status == NFS4ERR_DENIED) {
+		const lock_owner4 *const owner =
+			&res_LOCK4->LOCK4res_u.denied.owner;
+		GSH_AUTO_TRACEPOINT(
+			nfs4, op_lock_end_denied, TRACE_INFO,
+			"LOCK conflict: status={} offset={} length={} type={} clientid={}",
+			res_LOCK4->status, res_LOCK4->LOCK4res_u.denied.offset,
+			res_LOCK4->LOCK4res_u.denied.length,
+			res_LOCK4->LOCK4res_u.denied.locktype, owner->clientid);
+		GSH_AUTO_TRACEPOINT(
+			nfs4, op_lock_end_denied_owner, TRACE_INFO,
+			"LOCK conflict: owner[{}]={}", owner->owner.owner_len,
+			TP_BYTE_ARR_TRUNCATED(owner->owner.owner_val,
+					      owner->owner.owner_len));
+	} else
+		GSH_AUTO_TRACEPOINT(nfs4, op_lock_end_err, TRACE_INFO,
+				    "LOCK res: status={}", res_LOCK4->status);
 
 	return nfsstat4_to_nfs_req_result(res_LOCK4->status);
 } /* nfs4_op_lock */

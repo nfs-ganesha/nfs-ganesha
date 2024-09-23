@@ -43,6 +43,11 @@
 #include "export_mgr.h"
 #include "pnfs_utils.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  *
  * @brief The NFS4_OP_RESTOREFH operation.
@@ -76,6 +81,8 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 	LogFullDebugOpaque(COMPONENT_FILEHANDLE, "Saved FH %s", LEN_FH_STR,
 			   data->savedFH.nfs_fh4_val,
 			   data->savedFH.nfs_fh4_len);
+	GSH_AUTO_TRACEPOINT(nfs4, op_restorefh_start, TRACE_INFO,
+			    "RESTOREFH start");
 
 	/* If there is no savedFH, then return an error */
 	if (nfs4_Is_Fh_Empty(&(data->savedFH)) == NFS4ERR_NOFILEHANDLE) {
@@ -144,7 +151,8 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 	}
 
 	LogHandleNFS4("RESTORE FH: Current FH ", &data->currentFH);
-
+	GSH_AUTO_TRACEPOINT(nfs4, op_restorefh_end, TRACE_INFO,
+			    "RESTOREFH res: status={}", res_RESTOREFH->status);
 	return NFS_REQ_OK;
 } /* nfs4_op_restorefh */
 

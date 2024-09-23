@@ -214,6 +214,14 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	LogInfo(component,
 		"CREATE_SESSION client addr=%s clientid=%s -------------------",
 		str_client_addr, str_clientid4);
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_create_session_start, TRACE_INFO,
+		"CREATE_SESSION arg: clientid={} sequence={} flags={} cb_program={} sec_parms_len={}",
+		arg_CREATE_SESSION4->csa_clientid,
+		arg_CREATE_SESSION4->csa_sequence,
+		arg_CREATE_SESSION4->csa_flags,
+		arg_CREATE_SESSION4->csa_cb_program,
+		arg_CREATE_SESSION4->csa_sec_parms.csa_sec_parms_len);
 
 	/* First try to look up unconfirmed record */
 	rc = nfs_client_id_get_unconfirmed(clientid, &unconf);
@@ -680,6 +688,13 @@ out:
 	PTHREAD_MUTEX_unlock(&client_record->cr_mutex);
 	/* Release our reference to the client record and return */
 	dec_client_record_ref(client_record);
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_create_session_end, TRACE_INFO,
+		"CREATE_SESSION res: status={} session={} sequence={} flags={}",
+		res_CREATE_SESSION4->csr_status,
+		TP_SESSION(res_CREATE_SESSION4ok->csr_sessionid),
+		res_CREATE_SESSION4ok->csr_sequence,
+		res_CREATE_SESSION4ok->csr_flags);
 	return nfsstat4_to_nfs_req_result(res_CREATE_SESSION4->csr_status);
 }
 

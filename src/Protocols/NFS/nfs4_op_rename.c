@@ -45,6 +45,11 @@
 #include "sal_functions.h"
 #include "fsal.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief The NFS4_OP_RENAME operation
  *
@@ -69,6 +74,13 @@ enum nfs_req_result nfs4_op_rename(struct nfs_argop4 *op, compound_data_t *data,
 		newdir_pre_attrs_out, newdir_post_attrs_out;
 	bool is_olddir_pre_attrs_valid, is_olddir_post_attrs_valid,
 		is_newdir_pre_attrs_valid, is_newdir_post_attrs_valid;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_rename_start, TRACE_INFO,
+			    "RENAME args: oldname[{}]={} newname[{}]={}",
+			    arg_RENAME4->oldname.utf8string_len,
+			    TP_UTF8STR_TRUNCATED(arg_RENAME4->oldname),
+			    arg_RENAME4->newname.utf8string_len,
+			    TP_UTF8STR_TRUNCATED(arg_RENAME4->newname));
 
 	resp->resop = NFS4_OP_RENAME;
 	res_RENAME4->status = NFS4_OK;
@@ -181,6 +193,15 @@ out:
 	fsal_release_attrs(&newdir_pre_attrs_out);
 	fsal_release_attrs(&newdir_post_attrs_out);
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_rename_end, TRACE_INFO,
+		"RENAME res: status={} source_cinfo: " TP_CINFO_FORMAT
+		" target_cinfo: " TP_CINFO_FORMAT,
+		res_RENAME4->status,
+		TP_CINFO_ARGS_EXPAND(
+			res_RENAME4->RENAME4res_u.resok4.source_cinfo),
+		TP_CINFO_ARGS_EXPAND(
+			res_RENAME4->RENAME4res_u.resok4.target_cinfo));
 	return nfsstat4_to_nfs_req_result(res_RENAME4->status);
 }
 

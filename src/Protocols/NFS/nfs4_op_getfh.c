@@ -39,6 +39,11 @@
 #include "nfs_file_handle.h"
 #include "nfs_convert.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief The NFS4_OP_GETFH operation
  *
@@ -120,6 +125,8 @@ out:
 		data->op_resp_size = sizeof(nfsstat4);
 	}
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_getfh_end, TRACE_INFO,
+			    "GETFH res: status={}", res_GETFH->status);
 	return nfsstat4_to_nfs_req_result(res_GETFH->status);
 } /* nfs4_op_getfh */
 

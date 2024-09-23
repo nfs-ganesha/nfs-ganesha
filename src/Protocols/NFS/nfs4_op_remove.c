@@ -43,6 +43,11 @@
 #include "sal_functions.h"
 #include "fsal.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief The NFS4_OP_REMOVE operation.
  *
@@ -65,6 +70,11 @@ enum nfs_req_result nfs4_op_remove(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t fsal_status = { 0, 0 };
 	struct fsal_attrlist parent_pre_attrs, parent_post_attrs;
 	bool is_parent_pre_attrs_valid, is_parent_post_attrs_valid;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_remove_start, TRACE_INFO,
+			    "REMOVE args: target[{}]={}",
+			    arg_REMOVE4->target.utf8string_len,
+			    TP_UTF8STR_TRUNCATED(arg_REMOVE4->target));
 
 	resp->resop = NFS4_OP_REMOVE;
 
@@ -139,7 +149,10 @@ out_put_grace:
 
 	nfs_put_grace_status();
 out:
-
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_remove_end, TRACE_INFO,
+		"REMOVE res: status={} " TP_CINFO_FORMAT, res_REMOVE4->status,
+		TP_CINFO_ARGS_EXPAND(res_REMOVE4->REMOVE4res_u.resok4.cinfo));
 	return nfsstat4_to_nfs_req_result(res_REMOVE4->status);
 } /* nfs4_op_remove */
 

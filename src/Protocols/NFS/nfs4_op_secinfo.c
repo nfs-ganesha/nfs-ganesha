@@ -42,6 +42,11 @@
 #include "sal_functions.h"
 #include "export_mgr.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 #ifdef _HAVE_GSSAPI
 /* flavor, oid len, qop, service */
 #define GSS_RESP_SIZE (4 * BYTES_PER_XDR_UNIT)
@@ -83,6 +88,11 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 	uint32_t resp_size = RESP_SIZE;
 	int idx = 0;
 	struct gsh_export *junction_export = NULL;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_secinfo_start, TRACE_INFO,
+			    "SECINFO arg: name[{}]={}",
+			    arg_SECINFO4->name.utf8string_len,
+			    TP_UTF8STR_TRUNCATED(arg_SECINFO4->name));
 
 	resp->resop = NFS4_OP_SECINFO;
 	res_SECINFO4->status = NFS4_OK;
@@ -302,6 +312,10 @@ out:
 	if (obj_src)
 		obj_src->obj_ops->put_ref(obj_src);
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_secinfo_end, TRACE_INFO,
+		"SECINFO res: status={} len={}", res_SECINFO4->status,
+		res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_len);
 	return nfsstat4_to_nfs_req_result(res_SECINFO4->status);
 } /* nfs4_op_secinfo */
 

@@ -45,6 +45,11 @@
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 static const char *locku_tag = "LOCKU";
 
 /**
@@ -84,6 +89,12 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 
 	LogDebug(COMPONENT_NFS_V4_LOCK,
 		 "Entering NFS v4 LOCKU handler ----------------------------");
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_locku_start, TRACE_INFO,
+		"LOCKU arg: type={} seqid={} stateid={} offset={} length={}",
+		arg_LOCKU4->locktype, arg_LOCKU4->seqid,
+		arg_LOCKU4->lock_stateid.seqid, arg_LOCKU4->offset,
+		arg_LOCKU4->length);
 
 	/* Initialize to sane default */
 	resp->resop = NFS4_OP_LOCKU;
@@ -227,6 +238,10 @@ out3:
 
 	dec_state_t_ref(state_found);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_locku_end, TRACE_INFO,
+			    "LOCKU res: status={} stateid={}",
+			    res_LOCKU4->status,
+			    res_LOCKU4->LOCKU4res_u.lock_stateid.seqid);
 	return nfsstat4_to_nfs_req_result(res_LOCKU4->status);
 } /* nfs4_op_locku */
 

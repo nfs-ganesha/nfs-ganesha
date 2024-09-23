@@ -47,6 +47,11 @@
 #include "nfs_file_handle.h"
 #include "nfs_proto_tools.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief NFS4_OP_ACCESS, checks for file's accessibility.
  *
@@ -64,6 +69,8 @@ enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 				   struct nfs_resop4 *resp)
 {
 	ACCESS4args *const arg_ACCESS4 = &op->nfs_argop4_u.opaccess;
+	GSH_AUTO_TRACEPOINT(nfs4, op_access_start, TRACE_INFO,
+			    "ACCESS arg: access={}", arg_ACCESS4->access);
 	ACCESS4res *const res_ACCESS4 = &resp->nfs_resop4_u.opaccess;
 	fsal_status_t status;
 	uint32_t max_access =
@@ -104,6 +111,11 @@ enum nfs_req_result nfs4_op_access(struct nfs_argop4 *op, compound_data_t *data,
 	else
 		res_ACCESS4->status = nfs4_Errno_status(status);
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_access_end, TRACE_INFO,
+			    "ACCESS res: status={} access={} supported={}",
+			    res_ACCESS4->status,
+			    res_ACCESS4->ACCESS4res_u.resok4.access,
+			    res_ACCESS4->ACCESS4res_u.resok4.supported);
 	return nfsstat4_to_nfs_req_result(res_ACCESS4->status);
 } /* nfs4_op_access */
 

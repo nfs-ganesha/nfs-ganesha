@@ -589,6 +589,31 @@ void log_lock(log_components_t component, log_levels_t debug,
 	log_lock(component, debug, reason, obj, owner, lock, (char *)__FILE__, \
 		 __LINE__, (char *)__func__)
 
+#define LOCK_RQST_FMT \
+	"lock: [ptr = {},id = {},type = {},start = {},length = {}]"
+#define LOCK_RQST_VARS(_lock, _handle)                            \
+	(_lock), (uint64_t)(_handle)->fileid, (_lock)->lock_type, \
+		(_lock)->lock_start, (_lock)->lock_length
+
+#define LOCK__REQUEST_AUTO_TRACEPOINT(_lock, _handle, event, log_level, \
+				      format, ...)                      \
+	GSH_AUTO_TRACEPOINT(lock, event, log_level,                     \
+			    LOCK_RQST_FMT " | " format,                 \
+			    LOCK_RQST_VARS(_lock, _handle), ##__VA_ARGS__)
+
+#define LOCK_FMT \
+	"lock: [fileid = {},type = {},start = {},length = {}, blocked={}]"
+#define LOCK_VARS(_lock)                                                   \
+	((uint64_t)_lock->sle_obj->fileid), _lock->sle_lock.lock_type,     \
+		_lock->sle_lock.lock_start, (_lock)->sle_lock.lock_length, \
+		(_lock->sle_block_data ?                                   \
+			 _lock->sle_block_data->sbd_block_type :           \
+			 STATE_BLOCK_NONE)
+
+#define LOCK_AUTO_TRACEPOINT(_lock, event, log_level, format, ...)         \
+	GSH_AUTO_TRACEPOINT(lock, event, log_level, LOCK_FMT " | " format, \
+			    LOCK_VARS((_lock)), ##__VA_ARGS__)
+
 void dump_all_locks(const char *label);
 
 state_status_t state_add_grant_cookie(struct fsal_obj_handle *obj, void *cookie,

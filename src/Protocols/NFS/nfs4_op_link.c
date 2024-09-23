@@ -49,6 +49,11 @@
 #include "nfs_convert.h"
 #include "nfs_file_handle.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief The NFS4_OP_LINK operation.
  *
@@ -72,6 +77,11 @@ enum nfs_req_result nfs4_op_link(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_status_t status = { 0, 0 };
 	struct fsal_attrlist destdir_pre_attrs, destdir_post_attrs;
 	bool is_destdir_pre_attrs_valid, is_destdir_post_attrs_valid;
+
+	GSH_AUTO_TRACEPOINT(nfs4, op_link_start, TRACE_INFO,
+			    "LINK arg: newname[{}]={}",
+			    arg_LINK4->newname.utf8string_len,
+			    TP_UTF8STR_TRUNCATED(arg_LINK4->newname));
 
 	resp->resop = NFS4_OP_LINK;
 	res_LINK4->status = NFS4_OK;
@@ -154,6 +164,10 @@ out:
 	fsal_release_attrs(&destdir_pre_attrs);
 	fsal_release_attrs(&destdir_post_attrs);
 
+	GSH_AUTO_TRACEPOINT(
+		nfs4, op_link_end, TRACE_INFO,
+		"LINK res: status={} " TP_CINFO_FORMAT, res_LINK4->status,
+		TP_CINFO_ARGS_EXPAND(res_LINK4->LINK4res_u.resok4.cinfo));
 	return nfsstat4_to_nfs_req_result(res_LINK4->status);
 } /* nfs4_op_link */
 

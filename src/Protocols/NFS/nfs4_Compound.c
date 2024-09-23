@@ -1265,6 +1265,10 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	LogDebug(COMPONENT_NFS_V4,
 		 "COMPOUND: There are %d operations, res = %p, tag = %s",
 		 argarray_len, res, data->tagname);
+	GSH_AUTO_TRACEPOINT(
+		nfs_rpc, compound_start, TRACE_INFO,
+		"COMPOUND: There are {} operations, minor = {}, tag = {}",
+		argarray_len, compound4_minor, TP_STR(data->tagname));
 
 	/* Check for empty COMPOUND request */
 	if (argarray_len == 0) {

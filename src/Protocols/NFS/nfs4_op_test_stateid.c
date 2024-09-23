@@ -47,6 +47,11 @@
 #include "nfs_proto_tools.h"
 #include "gsh_list.h"
 
+#include "gsh_lttng/gsh_lttng.h"
+#if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
+#include "gsh_lttng/generated_traces/nfs4.h"
+#endif
+
 /**
  * @brief The NFS4_OP_TEST_STATEID operation.
  *
@@ -75,6 +80,9 @@ enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
 	nfsstat4 ret;
 	TEST_STATEID4resok *res;
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_test_stateid_start, TRACE_INFO,
+			    "TEST STATEID start");
+
 	/* Lock are not supported */
 	resp->resop = NFS4_OP_TEST_STATEID;
 	res_TEST_STATEID4->tsr_status = NFS4_OK;
@@ -102,6 +110,9 @@ enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
 
 	res->tsr_status_codes.tsr_status_codes_len = nr_stateids;
 
+	GSH_AUTO_TRACEPOINT(nfs4, op_test_stateid_end, TRACE_INFO,
+			    "TEST STATEID res: status={}",
+			    res_TEST_STATEID4->tsr_status);
 	return NFS_REQ_OK;
 } /* nfs41_op_lock */
 
