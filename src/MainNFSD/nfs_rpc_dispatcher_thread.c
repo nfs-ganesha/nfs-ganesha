@@ -426,7 +426,7 @@ static enum xprt_stat nfs_rpc_dispatch_remote_addr_set_tcp(SVCXPRT *xprt)
 	if (connection_manager__connection_started(xprt) !=
 	    CONNECTION_MANAGER__CONNECTION_STARTED__ALLOW) {
 		LogWarn(COMPONENT_DISPATCH,
-			"fs - %d: xprt %p failed on connection_started.",
+			"fd - %d: xprt %p failed on connection_started.",
 			xprt->xp_fd, xprt);
 		return XPRT_DIED;
 	}
