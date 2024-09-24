@@ -1798,7 +1798,7 @@ void mdcache_lru_insert_active(mdcache_entry_t *entry)
 void _mdcache_lru_ref(mdcache_entry_t *entry, uint32_t flags, const char *func,
 		      int line)
 {
-	int32_t refcnt, active_refcnt;
+	int32_t refcnt, active_refcnt = -999;
 
 	/* Always take a normal reference so unref to 0 works right */
 	refcnt = atomic_inc_int32_t(&entry->lru.refcnt);
