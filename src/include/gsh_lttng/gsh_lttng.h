@@ -52,25 +52,27 @@ extern __thread struct req_op_context *op_ctx;
 			nfs_param.core_param.unique_server_id;             \
                                                                            \
 		uint32_t _op_id_ = op_ctx != NULL ? op_ctx->op_id : 0;     \
-		AUTO_TRACEPOINT(prov_name, event_name, log_level,          \
-				__FILE__                                   \
-				":" LINE_AS_STRING                         \
-				" | server_id={} | op_id={} | " format,    \
-				_server_id_, _op_id_, ##__VA_ARGS__);      \
+		AUTO_TRACEPOINT(                                           \
+			prov_name, event_name, log_level,                  \
+			__FILE__                                           \
+			":" LINE_AS_STRING                                 \
+			" | {fnc} | server_id={} | op_id={} | " format,    \
+			_server_id_, _op_id_, ##__VA_ARGS__);              \
 	} while (0)
 
-#define GSH_UNIQUE_AUTO_TRACEPOINT(prov_name, event_name, log_level, format,   \
-				   ...)                                        \
-	do {                                                                   \
-		const uint32_t _server_id_ =                                   \
-			nfs_param.core_param.unique_server_id;                 \
-                                                                               \
-		uint32_t _op_id_ = op_ctx != NULL ? op_ctx->op_id : 0;         \
-		UNIQUE_AUTO_TRACEPOINT(prov_name, event_name, log_level,       \
-				       __FILE__                                \
-				       ":" LINE_AS_STRING                      \
-				       " | server_id={} | op_id={} | " format, \
-				       _server_id_, _op_id_, ##__VA_ARGS__);   \
+#define GSH_UNIQUE_AUTO_TRACEPOINT(prov_name, event_name, log_level, format, \
+				   ...)                                      \
+	do {                                                                 \
+		const uint32_t _server_id_ =                                 \
+			nfs_param.core_param.unique_server_id;               \
+                                                                             \
+		uint32_t _op_id_ = op_ctx != NULL ? op_ctx->op_id : 0;       \
+		UNIQUE_AUTO_TRACEPOINT(                                      \
+			prov_name, event_name, log_level,                    \
+			__FILE__                                             \
+			":" LINE_AS_STRING                                   \
+			" | {fnc} | server_id={} | op_id={} | " format,      \
+			_server_id_, _op_id_, ##__VA_ARGS__);                \
 	} while (0)
 
 #else /* USE_LTTNG */
