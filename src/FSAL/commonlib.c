@@ -1446,6 +1446,7 @@ int32_t fsal_fd_state_counter;
 int32_t fsal_fd_temp_counter;
 time_t lru_run_interval;
 bool Cache_FDs;
+bool close_fast;
 static struct fridgethr *fd_lru_fridge;
 
 uint32_t lru_try_one(void)
@@ -1967,6 +1968,7 @@ fsal_status_t fd_lru_pkginit(struct fd_lru_parameter *params)
 	required_progress = params->required_progress;
 	lru_run_interval = params->lru_run_interval;
 	Cache_FDs = params->Cache_FDs;
+	close_fast = params->close_fast;
 
 	memset(&frp, 0, sizeof(struct fridgethr_params));
 	frp.thr_max = 1;
@@ -2559,6 +2561,9 @@ fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 		}
 	}
 
+	if (close_fast)
+		goto skip_global_fd;
+
 	status = wait_to_start_io(obj_hdl, my_fd, openflags, !open_any,
 				  !open_any);
 	if (!FSAL_IS_ERROR(status)) {
@@ -2568,7 +2573,9 @@ fsal_status_t fsal_start_global_io(struct fsal_fd **out_fd,
 	LogDebug(COMPONENT_FSAL, "wait_to_start_io failed with %s",
 		 fsal_err_txt(status));
 
-	if (status.major == ERR_FSAL_DELAY) {
+skip_global_fd:
+
+	if (status.major == ERR_FSAL_DELAY || close_fast) {
 		/* We can't use the global fd, use the tmp_fd. We don't need
 		 * any synchronization as the tmp_fd is private to the
 		 * particular operation.

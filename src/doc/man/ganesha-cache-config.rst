@@ -80,6 +80,12 @@ Cache_FDs(bool, default true)
     LRU reaper thread closes FDs only when the current open FD count
     reaches or exceeds the "fds_lowat" threshold.
 
+    Note, this setting has no effect when Close_Fast is set to true.
+
+Close_Fast(bool, default false)
+    Whether to close files immediately after opening files and using them for
+    read/write/commit.
+
 FD_Limit_Percent(uint32, range 0 to 100, default 99)
     The percentage of the system-imposed maximum of file descriptors at which
     Ganesha will deny requests.

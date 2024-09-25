@@ -1546,6 +1546,7 @@ void init_fds_limit(void)
 
 	fd_lru_parameter.lru_run_interval = mdcache_param.lru_run_interval;
 	fd_lru_parameter.Cache_FDs = mdcache_param.Cache_FDs;
+	fd_lru_parameter.close_fast = mdcache_param.close_fast;
 	fd_lru_parameter.fd_limit_percent = mdcache_param.fd_limit_percent;
 	fd_lru_parameter.fd_hwmark_percent = mdcache_param.fd_hwmark_percent;
 	fd_lru_parameter.fd_lwmark_percent = mdcache_param.fd_lwmark_percent;
@@ -1629,6 +1630,7 @@ fsal_status_t mdcache_lru_pkginit(void)
 
 	fd_lru_parameter.lru_run_interval = mdcache_param.lru_run_interval;
 	fd_lru_parameter.Cache_FDs = mdcache_param.Cache_FDs;
+	fd_lru_parameter.close_fast = mdcache_param.close_fast;
 	fd_lru_parameter.fd_limit_percent = mdcache_param.fd_limit_percent;
 	fd_lru_parameter.fd_hwmark_percent = mdcache_param.fd_hwmark_percent;
 	fd_lru_parameter.fd_lwmark_percent = mdcache_param.fd_lwmark_percent;

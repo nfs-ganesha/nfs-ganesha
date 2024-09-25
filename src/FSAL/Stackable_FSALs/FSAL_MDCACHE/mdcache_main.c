@@ -466,5 +466,4 @@ void mdcache_utilization(DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 #endif /* USE_DBUS */
-
 /** @} */

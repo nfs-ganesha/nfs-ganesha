@@ -91,8 +91,14 @@ struct mdcache_parameter {
 	 *  If "Cache_FDs" is set to true (default), FDs are cached, and the
 	 *  LRU reaper thread closes FDs only when the current open FD count
 	 *  reaches or exceeds the "fds_lowat" threshold.
-	 */
+	 *
+	 *  Note, this setting has no effect when Close_Fast is set to true. */
 	bool Cache_FDs;
+	/**
+	 * Whether to close files immediately after opening files and
+	 * using them for read/write/commit. Defaults to false,
+	 * settable with Close_Fast. */
+	bool close_fast;
 	/** The percentage of the system-imposed maximum of file
 	    descriptors at which Ganesha will deny requests.
 	    Defaults to 99, settable with FD_Limit_Percent. */

@@ -862,6 +862,8 @@ MDCACHE {}
 
 	Cache_FDs(bool, default true)
 
+	Close_Fast(bool, default false)
+
 	FD_Limit_Percent(uint32, range 0 to 100, default 99)
 
 	FD_HWMark_Percent(uint32, range 0 to 100, default 90)

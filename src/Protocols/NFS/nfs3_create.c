@@ -204,8 +204,10 @@ out:
 	fsal_release_attrs(&parent_post_attrs);
 
 	/* return references */
-	if (file_obj)
+	if (file_obj) {
+		fsal_close2(file_obj);
 		file_obj->obj_ops->put_ref(file_obj);
+	}
 
 	if (parent_obj)
 		parent_obj->obj_ops->put_ref(parent_obj);
