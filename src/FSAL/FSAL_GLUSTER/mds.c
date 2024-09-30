@@ -222,7 +222,7 @@ static nfsstat4 pnfs_layout_get(struct fsal_obj_handle *obj_pub, XDR *loc_body,
 	ds_desc.len = sizeof(struct glfs_ds_wire);
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
 					     &op_ctx->ctx_export->export_id, 1,
-					     &ds_desc);
+					     &ds_desc, false);
 	if (nfs_status) {
 		LogMajor(COMPONENT_PNFS,
 			 "Failed to encode nfsv4_1_file_layout.");

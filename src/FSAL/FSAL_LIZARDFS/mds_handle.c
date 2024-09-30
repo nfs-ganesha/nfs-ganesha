@@ -66,7 +66,7 @@ static nfsstat4 lzfs_fsal_layoutget(struct fsal_obj_handle *obj_pub,
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, layout_util,
 					     0, 0,
 					     &op_ctx->ctx_export->export_id, 1,
-					     &ds_desc);
+					     &ds_desc, false);
 	if (nfs_status) {
 		LogMajor(COMPONENT_PNFS,
 			 "Failed to encode nfsv4_1_file_layout.");

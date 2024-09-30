@@ -216,7 +216,8 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 				 nfl_util4 util, const uint32_t first_idx,
 				 const offset4 ptrn_ofst,
 				 const uint16_t *ds_ids, const uint32_t num_fhs,
-				 const struct gsh_buffdesc *fhs);
+				 const struct gsh_buffdesc *fhs,
+				 const bool_t same_fh);
 
 nfsstat4 FSAL_encode_v4_multipath(XDR *xdrs, const uint32_t num_hosts,
 				  const fsal_multipath_member_t *hosts);

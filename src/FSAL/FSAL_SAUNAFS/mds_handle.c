@@ -85,7 +85,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *objectHandle, XDR *xdrStream,
 
 	status = FSAL_encode_file_layout(xdrStream, &deviceid, layoutUtil, 0, 0,
 					 &op_ctx->ctx_export->export_id, 1,
-					 &dsBuffer);
+					 &dsBuffer, false);
 
 	if (status) {
 		LogMajor(COMPONENT_PNFS,

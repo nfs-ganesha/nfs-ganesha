@@ -338,7 +338,7 @@ static nfsstat4 kvsfs_layoutget(struct fsal_obj_handle *obj_hdl, XDR *loc_body,
 
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util, 0, 0,
 					     &op_ctx->ctx_export->export_id, 1,
-					     &ds_desc);
+					     &ds_desc, false);
 	if (nfs_status) {
 		LogCrit(COMPONENT_PNFS,
 			"Failed to encode nfsv4_1_file_layout.");

@@ -275,6 +275,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl, XDR *loc_body,
 	struct pnfs_filelayout_layout file_layout;
 	/* Width of each stripe on the file */
 	uint32_t stripe_width = 0;
+	uint32_t num_fh = 0;
 	/* Utility parameter */
 	nfl_util4 util = 0;
 	/* The last byte that can be accessed through pNFS */
@@ -348,7 +349,8 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl, XDR *loc_body,
 	res->segment.length = NFS4_UINT64_MAX;
 
 	stripe_width = file_layout.lg_stripe_unit;
-	util |= stripe_width | NFL4_UFLG_COMMIT_THRU_MDS;
+	num_fh = file_layout.lg_fh_length;
+	util |= stripe_width;
 
 	deviceid.fsal_id = file_layout.device_id.fsal_id;
 	deviceid.device_id2 = file_layout.device_id.device_id2;
@@ -367,7 +369,7 @@ static nfsstat4 layoutget(struct fsal_obj_handle *obj_hdl, XDR *loc_body,
 	nfs_status = FSAL_encode_file_layout(loc_body, &deviceid, util,
 					     file_layout.lg_first_stripe_index,
 					     0, &op_ctx->ctx_export->export_id,
-					     1, &ds_desc);
+					     num_fh, &ds_desc, true);
 	if (nfs_status) {
 		if (arg->maxcount <=
 		    op_ctx->fsal_export->exp_ops.fs_loc_body_size(

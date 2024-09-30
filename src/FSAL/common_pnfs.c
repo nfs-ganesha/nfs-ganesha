@@ -245,13 +245,15 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 				 nfl_util4 util, const uint32_t first_idx,
 				 const offset4 ptrn_ofst,
 				 const uint16_t *ds_ids, const uint32_t num_fhs,
-				 const struct gsh_buffdesc *fhs)
+				 const struct gsh_buffdesc *fhs,
+				 const bool_t same_fh)
 {
 	/* Index for traversing FH array */
 	size_t i = 0;
 	/* NFS status code */
 	nfsstat4 nfs_status = 0;
-	offset4 *p_ofst = (offset4 *)&ptrn_ofst; /* kill compile warnings */
+	offset4 offset = ptrn_ofst;
+	offset4 *p_ofst = &offset;
 
 	if (!xdr_fsal_deviceid(xdrs, (struct pnfs_deviceid *)deviceid)) {
 		LogMajor(COMPONENT_PNFS, "Failed encoding deviceid.");
@@ -286,8 +288,13 @@ nfsstat4 FSAL_encode_file_layout(XDR *xdrs,
 		handle.nfs_fh4_len = sizeof(buffer);
 		memset(buffer, 0, sizeof(buffer));
 
-		nfs_status =
-			make_file_handle_ds(fhs + i, *(ds_ids + i), &handle);
+		if (same_fh)
+			nfs_status =
+				make_file_handle_ds(fhs, *(ds_ids), &handle);
+		else
+			nfs_status = make_file_handle_ds(fhs + i, *(ds_ids + i),
+							 &handle);
+
 		if (nfs_status != NFS4_OK) {
 			LogMajor(COMPONENT_PNFS, "Failed converting FH %zu.",
 				 i);
