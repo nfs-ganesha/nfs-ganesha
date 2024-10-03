@@ -73,9 +73,6 @@ fsal_status_t fsal_internal_close(int fd, void *owner, int cflags)
 {
 	struct close_file_arg carg;
 
-	/* fd should not be less than 3 */
-	assert(fd >= 3);
-
 	carg.mountdirfd = fd;
 	carg.close_fd = fd;
 	carg.close_flags = cflags;

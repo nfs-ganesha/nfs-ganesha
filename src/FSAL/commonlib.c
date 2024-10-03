@@ -3142,6 +3142,10 @@ static void set_op_context_export_fsal_no_release(struct gsh_export *exp,
 	op_ctx->ctx_pnfs_ds = pds;
 
 	rcu_read_lock();
+	if (op_ctx->ctx_pnfs_ds) {
+		LogDebug(COMPONENT_FILEHANDLE, "need an extra hold for DS");
+		pnfs_ds_get_ref(op_ctx->ctx_pnfs_ds);
+	}
 
 	if (op_ctx->ctx_export != NULL && op_ctx->ctx_export->fullpath) {
 		op_ctx->ctx_fullpath = gsh_refstr_get(
