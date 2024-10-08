@@ -773,6 +773,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	read_data = gsh_calloc(1, sizeof(*read_data));
 	LogFullDebug(COMPONENT_NFS_V4, "Allocated read_data %p", read_data);
 	read_arg = &read_data->read_arg;
+	read_arg->info = info;
 	read_arg->state = state_found;
 	read_arg->offset = offset;
 	read_arg->iov_count = resok->data.iovcnt;
