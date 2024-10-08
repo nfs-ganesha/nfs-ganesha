@@ -1266,8 +1266,11 @@ static void lru_run(struct fridgethr_context *ctx)
 				atomic_fetch_uint64_t(&lru_state.entries_used),
 				lru_state.entries_release_size);
 
+			EXPORT_ADMIN_LOCK();
 			released = mdcache_lru_release_entries(
 				lru_state.entries_release_size);
+			EXPORT_ADMIN_UNLOCK();
+
 			LogFullDebug(COMPONENT_MDCACHE_LRU,
 				     "Actually release %zd entries", released);
 		} else {
