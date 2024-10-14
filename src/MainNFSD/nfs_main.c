@@ -438,7 +438,7 @@ int main(int argc, char *argv[])
 	/* Echo our PID into pidfile: this serves as a lock to prevent */
 	/* multiple instances from starting, so any failure creating   */
 	/* this file is a fatal error.                                 */
-	pidfile = open(nfs_pidfile_path, O_CREAT | O_RDWR | O_TRUNC, 0644);
+	pidfile = open(nfs_pidfile_path, O_CREAT | O_RDWR, 0644);
 	if (pidfile == -1) {
 		LogFatal(
 			COMPONENT_MAIN,
@@ -458,6 +458,13 @@ int main(int argc, char *argv[])
 			LogFatal(COMPONENT_MAIN,
 				 "fcntl(%d) failed, Ganesha already started",
 				 pidfile);
+			goto fatal_die;
+		}
+
+		if (ftruncate(pidfile, 0) == -1) {
+			LogFatal(COMPONENT_MAIN,
+				 "ftruncate(%d) failed, errno was: %s (%d)",
+				 pidfile, strerror(errno), errno);
 			goto fatal_die;
 		}
 
