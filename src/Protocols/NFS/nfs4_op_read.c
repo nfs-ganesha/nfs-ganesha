@@ -123,8 +123,11 @@ static enum nfs_req_result nfs4_complete_read(struct nfs4_read_data *data)
 			/* We won't need the FSAL's iovec and buffers if it used
 			 * them
 			 */
-			if (read_arg->iov_release != NULL)
+			if (read_arg->iov_release != NULL) {
 				read_arg->iov_release(read_arg->release_data);
+				read_arg->iov[0].iov_base = NULL;
+				read_arg->iov_release = NULL;
+			}
 
 			/* We will use the iov we set up before the call, but
 			 * set the length of the buffer to 0. The

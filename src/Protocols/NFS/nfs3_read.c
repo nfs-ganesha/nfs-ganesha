@@ -57,8 +57,11 @@ static void nfs_read_ok(READ3resok *resok, struct fsal_io_arg *read_arg,
 
 	if (read_arg->io_amount == 0) {
 		/* We won't need the FSAL's iovec and buffers if it used them */
-		if (read_arg->iov_release != NULL)
+		if (read_arg->iov_release != NULL) {
 			read_arg->iov_release(read_arg->release_data);
+			read_arg->iov[0].iov_base = NULL;
+			read_arg->iov_release = NULL;
+		}
 
 		/* We will use the iov we set up before the call, but set the
 		 * length of the buffer to 0. The io_data->release is already
