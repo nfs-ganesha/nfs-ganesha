@@ -52,6 +52,7 @@ static void nfs_read_ok(READ3resok *resok, struct fsal_io_arg *read_arg,
 	/* Build Post Op Attributes */
 	nfs_SetPostOpAttr(obj, &resok->file_attributes, NULL);
 
+	resok->data.data_len = read_arg->io_amount;
 	resok->count = read_arg->io_amount;
 	resok->eof = read_arg->end_of_file;
 
