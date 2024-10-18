@@ -1650,11 +1650,14 @@ ceph_fsal_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 fileerr:
 
 	/* Close the file we just opened. */
-	(void)ceph_close_my_fd(my_fd);
+	if (my_fd)
+		(void)ceph_close_my_fd(my_fd);
 
 	/* Release the handle we just allocated. */
-	(*new_obj)->obj_ops->release(*new_obj);
-	*new_obj = NULL;
+	if (*new_obj) {
+		(*new_obj)->obj_ops->release(*new_obj);
+		*new_obj = NULL;
+	}
 
 	if (created) {
 		/* Remove the file we just created */
