@@ -191,6 +191,7 @@ void monitoring__dynamic_observe_nfs_io(size_t bytes_requested,
 					bool is_write, export_id_t export_id,
 					const char *client_ip);
 
+void monitoring__update_thread_counts(uint32_t available, int32_t schedulable);
 /* MDCache hit rates. */
 void monitoring__dynamic_mdcache_cache_hit(const char *operation,
 					   export_id_t export_id);

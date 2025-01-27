@@ -51,6 +51,7 @@ namespace ganesha_monitoring
 
 using CounterInt = prometheus::Counter<int64_t>;
 using GaugeInt = prometheus::Gauge<int64_t>;
+using GaugeDouble = prometheus::Gauge<double>;
 using HistogramInt = prometheus::Histogram<int64_t>;
 using HistogramDouble = prometheus::Histogram<double>;
 using LabelsMap = std::map<const std::string, const std::string>;
@@ -95,6 +96,9 @@ class DynamicMetrics {
 	// Gauges
 	GaugeInt::Family &rpcsInFlight;
 	GaugeInt::Family &lastClientUpdate;
+	GaugeInt::Family &threadAvailable;
+	GaugeInt::Family &threadSchedulable;
+	GaugeDouble::Family &threadUtilization;
 
 	// Per {operation} NFS request metrics.
 	CounterInt::Family &requestsTotalByOperation;
@@ -177,8 +181,22 @@ DynamicMetrics::DynamicMetrics(prometheus::Registry &registry)
 				   .Name("last_client_update")
 				   .Help("Last update timestamp, per client.")
 				   .Register(registry))
-	,
+	, threadAvailable(prometheus::Builder<GaugeInt>()
+				  .Name("number_of_threads_available")
+				  .Help("Total no of threads available")
+				  .Register(registry))
+	, threadSchedulable(
+		  prometheus::Builder<GaugeInt>()
+			  .Name("number_of_threads_schedulable")
+			  .Help("Total no of threads schedulable till now")
+			  .Register(registry))
+	, threadUtilization(
+		  prometheus::Builder<GaugeDouble>()
+			  .Name("percentage_of_threads_in_utilization")
+			  .Help("Percentage of threads are in use case: (available/schedulable)*100")
+			  .Register(registry))
 
+	,
 	// Per {operation} NFS request metrics.
 	requestsTotalByOperation(prometheus::Builder<CounterInt>()
 					 .Name("nfs_requests_total")
@@ -460,6 +478,19 @@ void monitoring__init(uint16_t port, bool enable_dynamic_metrics)
 		dynamic_metrics = std::make_unique<DynamicMetrics>(registry);
 	exposer.start(port);
 	initialized = true;
+}
+
+void monitoring__update_thread_counts(uint32_t available, int32_t schedulable)
+{
+	dynamic_metrics->threadAvailable.Add({}).Set(available);
+	dynamic_metrics->threadSchedulable.Add({}).Set(schedulable);
+	// Calculate utilization percentage
+	if (schedulable > 0) {
+		double utilization = (available * 100.0) / schedulable;
+		dynamic_metrics->threadUtilization.Add({}).Set(utilization);
+	} else {
+		dynamic_metrics->threadUtilization.Add({}).Set(0);
+	}
 }
 
 void monitoring__dynamic_observe_nfs_request(const char *operation,

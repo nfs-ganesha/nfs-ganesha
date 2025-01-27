@@ -418,6 +418,12 @@ void SetNameFunction(const char *nom)
 	clientip = NULL;
 }
 
+void gsh_mon_threadfun(uint32_t available, int32_t schedulable)
+{
+	LogInfo(COMPONENT_LOG,"Threads schedulable are %d an available threads are %d",schedulable,available);
+
+}
+
 /*
  * Sets the IP of the Client for this thread.
  * Make sure ip_str is valid for the duration of the thread
@@ -2671,6 +2677,7 @@ void gsh_backtrace(void)
 	}
 	PTHREAD_RWLOCK_unlock(&log_rwlock);
 }
+
 
 bool _ratelimit(struct ratelimit_state *rs, int *missed)
 {

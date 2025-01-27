@@ -129,6 +129,11 @@ tirpc_pkg_params ntirpc_pp = {
 	gsh_malloc_aligned__,
 	gsh_calloc__,
 	gsh_realloc__,
+#ifdef USE_MONITORING
+	monitoring__update_thread_counts,
+#else
+	gsh_mon_threadfun,
+#endif
 };
 
 #ifdef _USE_9P
