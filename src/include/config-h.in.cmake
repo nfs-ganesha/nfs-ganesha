@@ -111,6 +111,8 @@
 #cmakedefine USE_FSAL_CEPH_LOOKUP_VINO 1
 #cmakedefine USE_FSAL_RGW_MOUNT2 1
 #cmakedefine USE_FSAL_RGW_XATTRS 1
+#cmakedefine USE_FSAL_CEPH_FSCRYPT 1
+#cmakedefine HAVE_LINUX_FSCRYPT_H 1
 #cmakedefine ENABLE_LOCKTRACE 1
 #cmakedefine SANITIZE_ADDRESS 1
 #cmakedefine DEBUG_MDCACHE 1

@@ -38,6 +38,9 @@
 #endif
 #include <fcntl.h>
 #include <sys/xattr.h>
+#ifdef HAVE_LINUX_FSCRYPT_H
+#include <linux/fscrypt.h>
+#endif
 #include <cephfs/libcephfs.h>
 #include "fsal.h"
 #include "fsal_types.h"
@@ -49,6 +52,9 @@
 #include "statx_compat.h"
 #include "nfs_core.h"
 #include "linux/falloc.h"
+
+/* anti-bug pattern: does not take typename (considered unsafe) */
+#define safe_sizeof(v) (size##of v)
 
 #include "gsh_lttng/gsh_lttng.h"
 #if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
@@ -3132,6 +3138,71 @@ static void ceph_fsal_handle_to_key(struct fsal_obj_handle *handle_pub,
 	fh_desc->len = sizeof(handle->key);
 }
 
+#ifdef USE_FSAL_CEPH_FSCRYPT
+static void init_policy(char *kid, struct fscrypt_policy_v2 *policy)
+{
+	memset(policy, 0, safe_sizeof(*policy));
+	policy->version = FSCRYPT_POLICY_V2;
+	policy->contents_encryption_mode = FSCRYPT_MODE_AES_256_XTS;
+	policy->filenames_encryption_mode = FSCRYPT_MODE_AES_256_CTS;
+	policy->flags = FSCRYPT_POLICY_FLAGS_PAD_32;
+	memcpy(policy->master_key_identifier, kid, FSCRYPT_KEY_IDENTIFIER_SIZE);
+}
+#endif
+
+static fsal_status_t ceph_fsal_control(struct fsal_obj_handle *obj_hdl,
+				       int operation, void *data)
+{
+	fsal_status_t status;
+
+	struct ceph_export *export =
+		container_of(op_ctx->fsal_export, struct ceph_export, export);
+	struct ceph_handle *myself =
+		container_of(obj_hdl, struct ceph_handle, handle);
+#ifdef USE_FSAL_CEPH_FSCRYPT
+	struct fscrypt_policy_v2 policy[1];
+	char kid[FSCRYPT_KEY_IDENTIFIER_SIZE];
+#endif
+
+	switch (operation) {
+#ifdef USE_FSAL_CEPH_FSCRYPT
+	case FSCRYPT_SETKEY: {
+		struct io_fscrypt_setkey *key = data;
+		int retval = 0;
+
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		retval = ceph_add_fscrypt_key(export->cmount, key->data,
+					      key->keylen, kid, 0);
+		if (retval < 0) {
+			status = ceph2fsal_error(retval);
+			break;
+		}
+		init_policy(kid, policy);
+		retval = ceph_ll_set_fscrypt_policy_v2(export->cmount,
+						       myself->i, policy);
+		if (retval < 0) {
+			status = ceph2fsal_error(retval);
+			break;
+		}
+		myself->is_encrypted = 1;
+	} break;
+	case FSCRYPT_VERIFY_NOT_ENCRYPTED: {
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		if (myself->is_encrypted) {
+			status = fsalstat(ERR_FSAL_NOTSUPP, ENODATA);
+		}
+	} break;
+#endif
+	default:
+		LogDebug(
+			COMPONENT_FSAL,
+			"CONTROL unsupported op=%d; hdl=%p export=%p myself=%p data=%p",
+			operation, obj_hdl, export, myself, data);
+		status = fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
+	}
+	return status;
+}
+
 #ifdef USE_CEPH_LL_FALLOCATE
 static fsal_status_t ceph_fsal_fallocate(struct fsal_obj_handle *obj_hdl,
 					 state_t *state, uint64_t offset,
@@ -3459,6 +3530,7 @@ void handle_ops_init(struct fsal_obj_ops *ops)
 #ifdef CEPH_PNFS
 	handle_ops_pnfs(ops);
 #endif /* CEPH_PNFS */
+	ops->control = ceph_fsal_control;
 #ifdef USE_CEPH_LL_FALLOCATE
 	ops->fallocate = ceph_fsal_fallocate;
 #endif
