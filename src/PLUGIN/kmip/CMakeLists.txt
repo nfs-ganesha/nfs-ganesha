@@ -20,6 +20,26 @@
 #
 #-------------------------------------------------------------------------------
 
-# if(something?)
-  add_subdirectory(kmip)
-# endif(something?)
+add_definitions(
+  -D__USE_GNU
+)
+
+set(plugin_kmip_SRCS
+  ${plugin_kmip_SRCS}
+  kmip_fscrypt.c
+  )
+add_library(kmip_fscrypt MODULE ${plugin_kmip_SRCS})
+add_sanitizers(kmip_fscrypt)
+target_link_libraries(kmip_fscrypt PRIVATE
+  ganesha_nfsd
+  ${SYSTEM_LIBRARIES}
+  ${LDFLAG_DISALLOW_UNDEF})
+# include_directories(${RADOS_INCLUDE_DIR})
+
+target_include_directories(kmip_fscrypt PRIVATE "${CMAKE_SOURCE_DIR}/libkmip")
+target_link_libraries(kmip_fscrypt PRIVATE kmip
+    OpenSSL::SSL OpenSSL::Crypto)
+
+set_target_properties(kmip_fscrypt PROPERTIES SOVERSION
+  "${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}")
+install(TARGETS kmip_fscrypt LIBRARY COMPONENT plugin DESTINATION ${FSAL_DESTINATION})

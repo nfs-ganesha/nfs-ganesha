@@ -136,6 +136,7 @@ BuildRequires:	flex
 BuildRequires:	pkgconfig
 BuildRequires:	userspace-rcu-devel
 BuildRequires:	krb5-devel
+BuildRequires:	openssl-devel
 %if %{with rados_recov} || %{with rados_urls}
 BuildRequires: librados-devel >= 0.61
 %endif
@@ -755,6 +756,7 @@ exit 0
 %files
 %{_bindir}/ganesha.nfsd
 %{_libdir}/libganesha_nfsd.so*
+%{_libdir}/ganesha/libkmip_fscrypt*
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha
