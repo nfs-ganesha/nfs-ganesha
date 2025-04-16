@@ -85,6 +85,7 @@ static char *filter_string(char *src, int esc);
 static int new_file(char *filename, struct parser_state *st);
 static int process_dir(char *d_name, struct parser_state *st);
 static int fetch_url(char *name_tok, struct parser_state *st);
+static int plugin_obj(char *filename, struct parser_state *st);
 static int pop_file(struct parser_state *st);
 
 %}
@@ -152,7 +153,7 @@ URLTYPES     (rados)
 INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 
 /* INCLUDE state is used for picking the name of the include file */
-%START YY_INIT DEFINITION TERM INCLUDE URL INCL_DIR
+%START YY_INIT DEFINITION TERM INCLUDE URL INCL_DIR PLUGIN
 
 %%
 %{
@@ -256,6 +257,39 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 			yyterminate();
 		BEGIN YY_INIT;
 		DEBUG_LEX("done fetch url\n");
+	}
+}
+
+<YY_INIT>"%plugin" { /* include file start */
+	DEBUG_LEX("PLUGIN\n");
+	BEGIN PLUGIN;
+	/* not a token, return nothing */
+}
+
+<PLUGIN>{INCLPATH} {
+
+	{
+		int c;
+
+		DEBUG_LEX("Calling plugin_obj with unquoted %s\n", yytext);
+		c = plugin_obj(yytext, stp);
+		if (c == ENOMEM)
+			yyterminate();
+		BEGIN YY_INIT;
+		DEBUG_LEX("done plugin_obj\n");
+	}
+}
+
+<PLUGIN>\"{INCLPATH}\" {
+	{
+		int c;
+
+		DEBUG_LEX("Calling plugin_obj with quoted %s\n", yytext);
+		c = plugin_obj(yytext, stp);
+		if (c == ENOMEM)
+			yyterminate();
+		BEGIN YY_INIT;
+		DEBUG_LEX("done plugin_obj\n");
 	}
 }
 
@@ -559,8 +593,7 @@ static int process_dir(char *d_name, struct parser_state *st)
 	d = opendir(dir_path);
 	if (d)
 	{
-		while ((dir = readdir(d)) != NULL)
-		{
+		while ((dir = readdir(d)) != NULL) {
 			if (strlen(dir->d_name) + dir_strlen + 1 > MAXPATHLEN)
 			{
 				DEBUG_LEX("Warning: Path(%s/%s) length is > %d, \
@@ -761,6 +794,45 @@ errout:
 
 	return rc;
 } /* fetch_url() */
+
+/* plugin_obj */
+static int plugin_obj(char *name_tok, struct parser_state *st)
+{
+	struct config_root *confroot = st->root_node;
+	char *filename = NULL;
+	int rc = ENOMEM;
+	void *yyscanner = st->scanner;
+	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+
+	filename = gsh_strdup(name_tok);
+
+	if (!filename) {
+		goto errout;
+	}
+
+	rc = config_plugin_load(filename);
+	if (rc != 0) {
+		config_parse_error(yylloc, st,
+			"ignoring failed plugin (%s): %s",
+			filename, strerror(rc));
+		goto errout;
+	}
+
+errout:
+	switch(rc) {
+	case 0:
+		break;
+	case ENOMEM:
+		st->err_type->resource = true;
+		break;
+	default:
+		st->err_type->scan = true;
+		break;
+	}
+	gsh_free(filename);
+
+	return rc;
+} /* plugin_obj() */
 
 static int pop_file(struct parser_state *st)
 {

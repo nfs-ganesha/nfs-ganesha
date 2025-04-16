@@ -1,5 +1,7 @@
 { global:
   ace_count;
+  add_export_extension;
+  add_to_export_callbacks;
   admin_halt;
   admin_shutdown;
   async_deleg_transition_handler;
@@ -242,6 +244,8 @@
   ReadExports;
   reaper_wake;
   RegisterCleanup;
+  register_config;
+  register_config_locked;
   register_fsal;
   register_url_provider;
   release_log_facility;
@@ -254,7 +258,9 @@
   resolve_posix_filesystem;
   populate_posix_file_systems;
   ReturnLevelAscii;
+  read_plugin_config;
   re_index_fs_fsid;
+  remove_export_extension;
   root_op_export_set;
   root_op_export_options;
   set_common_verifier;
@@ -272,6 +278,8 @@
   unclaim_all_export_maps;
   unclaim_fs;
   unix2fsal_mode;
+  unregister_config;
+  unregister_config_locked;
   unregister_fsal;
   up_async_layoutrecall;
   up_async_lock_avail;

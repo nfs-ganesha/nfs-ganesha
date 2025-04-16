@@ -622,6 +622,78 @@ static void *pseudofs_client_init(void *link_mem, void *self_struct)
 }
 
 /**
+ * @brief Call any pending root callbacks posted by extensions.
+ *
+ * @param exp [IN] the export
+ *
+ * @return 0 if successful otherwise err.
+ */
+
+int process_export_root_callbacks(struct gsh_export *export,
+				  struct fsal_obj_handle *obj)
+{
+	struct exp_root_callback *callback_p;
+	int my_status;
+
+	while ((callback_p = glist_first_entry(&export->exp_root_callbacks,
+					       struct exp_root_callback,
+					       link))) {
+		glist_del(&callback_p->link);
+		my_status = callback_p->sw->cb(callback_p, obj);
+		if (my_status) {
+			LogCrit(COMPONENT_EXPORT,
+				"ExportId=%u callback failed rc=%d",
+				export->export_id, my_status);
+			return my_status;
+		}
+	}
+	return 0;
+}
+
+bool process_export_root_callbacks_cb(struct gsh_export *export, void *arg)
+{
+	int rc;
+	bool restore_op_ctx = false;
+	struct req_op_context op_context[1];
+
+	if (!glist_empty(&export->exp_root_callbacks)) {
+		if (op_ctx == NULL || op_ctx->ctx_export != export) {
+			/* MDCACHE needs an opctx that points to this export
+			 */
+			get_gsh_export_ref(export);
+			init_op_context_simple(op_context, export,
+					       export->fsal_export);
+			restore_op_ctx = true;
+		}
+	}
+	rc = process_export_root_callbacks(export, export->exp_root_obj);
+	if (rc) {
+		export->config_gen = 0;
+		export->update_prune_unmount = true;
+	}
+
+	if (restore_op_ctx) {
+		/* And restore to the original op context */
+		release_op_context();
+	}
+	return true;
+}
+
+/**
+ * @brief Call all pending root callbacks on all exports.
+ *
+ * Called after rereading export configuration, some may be new.
+ * Call any pending root callbacks.  In case of error,
+ * mark the export for pruning.
+ */
+
+void process_extension_callbacks(void)
+{
+	foreach_gsh_export(process_export_root_callbacks_cb, true, NULL)
+		;
+}
+
+/**
  * @brief Commit this CLIENT block
  *
  * Validate "Clients" token(s) and perms.
@@ -2472,6 +2544,11 @@ static struct config_item export_params[] = {
 	CONFIG_EOL
 };
 
+static struct config_item unrelax_export_params[] = {
+	/* everything should be marked "found" at this point */
+	CONFIG_EOL
+};
+
 /**
  * @brief Table of EXPORT update block parameters
  */
@@ -2646,6 +2723,7 @@ static struct config_block export_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
 	.blk_desc.name = "EXPORT",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_RELAX,
 	.blk_desc.u.blk.init = export_init,
 	.blk_desc.u.blk.params = export_params,
 	.blk_desc.u.blk.commit = export_commit,
@@ -2675,10 +2753,24 @@ struct config_block update_export_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
 	.blk_desc.name = "EXPORT",
 	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_RELAX,
 	.blk_desc.u.blk.init = export_init,
 	.blk_desc.u.blk.params = export_update_params,
 	.blk_desc.u.blk.commit = update_export_commit,
 	.blk_desc.u.blk.display = export_display
+};
+
+/**
+ * @brief Top level definition to finalize export block parsing
+ */
+
+static struct config_block unrelax_export_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.%d",
+	.blk_desc.name = "EXPORT",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = unrelax_export_params,
+	.blk_desc.u.blk.commit = noop_conf_commit,
 };
 
 /**
@@ -2966,6 +3058,20 @@ int ReadExports(config_file_t in_config, struct config_error_type *err_type)
 		return -1;
 	}
 
+	rc = load_export_extensions(in_config, err_type);
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "Export extensions error");
+		return -1;
+	}
+
+	/* now check just for un-handled parameters. */
+	rc = load_config_from_parse(in_config, &unrelax_export_param, "", false,
+				    err_type);
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "Export finalize error");
+		return -1;
+	}
+
 	rc = build_default_root(err_type);
 	if (rc < 0) {
 		LogCrit(COMPONENT_CONFIG, "No pseudo root!");
@@ -3027,6 +3133,24 @@ int reread_exports(config_file_t in_config, struct config_error_type *err_type)
 		goto out;
 	}
 
+	rc = load_export_extensions(in_config, err_type);
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "Export extensions error");
+		num_exp = -1;
+		goto out;
+	}
+
+	/* now check just for un-handled parameters. */
+	rc = load_config_from_parse(in_config, &unrelax_export_param, "", false,
+				    err_type);
+	if (rc < 0) {
+		LogCrit(COMPONENT_CONFIG, "Export finalize error");
+		num_exp = -1;
+		goto out;
+	}
+
+	process_extension_callbacks();
+
 	generation = get_config_generation(in_config);
 
 	/* Prune the pseudofs of all exports that will be unexported (defunct)
@@ -3061,6 +3185,7 @@ void free_export_resources(struct gsh_export *export, bool config)
 {
 	struct req_op_context op_context;
 	bool restore_op_ctx = false;
+	struct exp_root_callback *callback_p;
 
 	LogDebug(COMPONENT_EXPORT, "Free resources for export %p id %d path %s",
 		 export, export->export_id, export->cfg_fullpath);
@@ -3098,6 +3223,13 @@ void free_export_resources(struct gsh_export *export, bool config)
 #ifdef ENABLE_QOS
 	qos_free_mem(export, QOS_EXPORT);
 #endif
+	while ((callback_p = glist_first_entry(&export->exp_root_callbacks,
+					       struct exp_root_callback,
+					       link))) {
+		glist_del(&callback_p->link);
+		callback_p->sw->free(callback_p);
+	}
+
 	/* free strings here */
 	gsh_free(export->cfg_fullpath);
 	gsh_free(export->cfg_pseudopath);
@@ -3310,6 +3442,20 @@ int init_export_root(struct gsh_export *export)
 			"Lookup failed on path, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
 			export->export_id, CTX_FULLPATH(op_ctx),
 			msg_fsal_err(fsal_status.major), fsal_status.minor);
+		goto out;
+	}
+
+	my_status = process_export_root_callbacks(export, obj);
+
+	if (my_status) {
+		fsal_status = fsalstat(ERR_FSAL_PERM, my_status);
+
+		LogCrit(COMPONENT_EXPORT,
+			"Root callbacks failed, ExportId=%u Path=%s FSAL_ERROR=(%s,%u)",
+			export->export_id, CTX_FULLPATH(op_ctx),
+			msg_fsal_err(fsal_status.major), fsal_status.minor);
+		obj->obj_ops->release(obj);
+		obj = 0;
 		goto out;
 	}
 
@@ -3843,4 +3989,18 @@ no_export:
 		/* Release lock */
 		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
 	}
+}
+
+/**
+ * @brief Add a export callback which will be called after
+ *        the root object is set.
+ */
+
+void add_to_export_callbacks(struct gsh_export *export,
+			     struct exp_root_callback_sw *sw,
+			     struct exp_root_callback *callback)
+{
+	callback->_exp = export;
+	callback->sw = sw;
+	glist_add_tail(&export->exp_root_callbacks, &callback->link);
 }

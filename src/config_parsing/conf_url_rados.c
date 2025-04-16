@@ -20,6 +20,7 @@
  * ---------------------------------------
  */
 
+#include "config_parsing.h"
 #include "conf_url.h"
 #include "conf_url_rados.h"
 #include <stdio.h>

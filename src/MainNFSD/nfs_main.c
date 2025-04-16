@@ -548,6 +548,12 @@ int main(int argc, char *argv[])
 		goto fatal_die;
 	}
 
+	if (read_plugin_config(nfs_config_struct, &err_type) < 0) {
+		LogCrit(COMPONENT_INIT,
+			"Error while parsing plugin extensions configuration");
+		goto fatal_die;
+	}
+
 	/* We need all the fsal modules loaded so we can have
 	 * the list available at exports parsing time.
 	 */

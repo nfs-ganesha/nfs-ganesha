@@ -48,4 +48,22 @@ void config_url_release(FILE *f, char *fbuf);
 int gsh_rados_url_setup_watch(void);
 void gsh_rados_url_shutdown_watch(void);
 
+struct plugin_module {
+	struct glist_head link;
+};
+
+struct gsh_config_provider {
+	struct glist_head link;
+	int (*init_block)(config_file_t, struct config_error_type *);
+	void (*config_shutdown)(void);
+	int (*config_fetch)(const char *config, FILE **f, char **fbuf);
+};
+int register_config_locked(struct gsh_config_provider *);
+int register_config(struct gsh_config_provider *);
+int unregister_config_locked(struct gsh_config_provider *);
+int unregister_config(struct gsh_config_provider *);
+
+int config_plugin_load(char *);
+int read_plugin_config(config_file_t foo, struct config_error_type *);
+
 #endif /* CONF_URL_H */

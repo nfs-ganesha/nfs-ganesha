@@ -225,6 +225,7 @@ struct gsh_export *alloc_export(void)
 	glist_init(&export->exp_nlm_share_list);
 	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
+	glist_init(&export->exp_root_callbacks);
 
 	/* Take an initial refcount */
 	export->refcnt = 1;

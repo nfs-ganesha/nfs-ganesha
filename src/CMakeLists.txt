@@ -1347,6 +1347,7 @@ InstallPackageConfigFile(${GANESHA_TOP_CMAKE_DIR}/config_samples/ganesha.conf.ex
 
 add_subdirectory(log)
 add_subdirectory(config_parsing)
+add_subdirectory(PLUGIN)
 add_subdirectory(test)
 add_subdirectory(avl)
 add_subdirectory(hashtable)

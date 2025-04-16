@@ -150,6 +150,8 @@ char *nfs_pidfile_path = GANESHA_PIDFILE_PATH;
 char cid_server_owner[MAXNAMLEN + 1]; /* max hostname length */
 char *cid_server_scope;
 
+struct glist_head export_extensions;
+
 /**
  * @brief Reread the configuration file to accomplish update of options.
  *
@@ -1380,6 +1382,7 @@ void nfs_init_init(void)
 	PTHREAD_MUTEX_init(&nfs_init.init_mutex, NULL);
 	PTHREAD_COND_init(&nfs_init.init_cond, NULL);
 	nfs_init.init_complete = false;
+	glist_init(&export_extensions);
 }
 
 void nfs_init_cleanup(void)
@@ -1455,4 +1458,33 @@ bool nfs_health(void)
 	healthstats.dequeued_reqs = newdeq;
 
 	return healthy;
+}
+
+void add_export_extension(struct export_extension *extension)
+{
+	glist_add_tail(&export_extensions, &extension->link);
+}
+
+void remove_export_extension(struct export_extension *extension)
+{
+	glist_del(&extension->link);
+}
+
+int load_export_extensions(config_file_t in_config,
+			   struct config_error_type *err_type)
+{
+	int rc;
+	int r = 0;
+	struct glist_head *gl;
+	struct export_extension *extension_p;
+
+	glist_for_each(gl, &export_extensions) {
+		extension_p = glist_entry(gl, struct export_extension, link);
+		rc = extension_p->sw->load(extension_p, in_config, err_type);
+		if (rc < 0) {
+			return rc;
+		}
+		r += rc;
+	}
+	return r;
 }
