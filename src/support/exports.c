@@ -1757,6 +1757,8 @@ static int export_commit_common(void *node, void *link_mem, void *self_struct,
 
 		copy_gsh_export(probe_exp, export);
 
+		update_export_metadata_metric(probe_exp);
+
 		/* We will need to dispose of the config export since we
 		 * updated the existing export.
 		 */
@@ -3743,6 +3745,9 @@ void release_export(struct gsh_export *export, bool config)
 	export->fsal_export->exp_ops.unexport(export->fsal_export, obj);
 
 	if (!config) {
+		/* Remove the export metadata metric for the live export. */
+		cleanup_export_metadata_metric(export);
+
 		/* Remove the mapping to the export now that cleanup is
 		 * complete.
 		 */

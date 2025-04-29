@@ -43,6 +43,7 @@
 #include "fsal.h"
 #include <pthread.h>
 #include "mem_components.h"
+#include "monitoring.h"
 
 #ifndef EXPORT_MGR_H
 #define EXPORT_MGR_H
@@ -240,6 +241,7 @@ struct gsh_export {
 	bool update_prune_unmount;
 	/** Due to an update, this export will need to be remounted. */
 	bool update_remount;
+	gauge_metric_handle_t metadata_metric; /* Prometheus metric handle */
 };
 
 /* Private state for config_errs_to_dbus and config_errs_to_grpc */
@@ -362,6 +364,8 @@ struct glist_head *get_exportlist_head(void);
 }
 #endif
 
+void update_export_metadata_metric(struct gsh_export *exp);
+void cleanup_export_metadata_metric(struct gsh_export *exp);
 /**
  * @brief Advisory check of export readiness.
  *

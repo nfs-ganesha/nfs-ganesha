@@ -63,12 +63,14 @@
 #include "abstract_mem.h"
 #include "abstract_atomic.h"
 #include "gsh_intrinsic.h"
+#include "gsh_refstr.h"
 #include "nfs_exports.h"
 #include "nfs_proto_functions.h"
 #include "pnfs_utils.h"
 #include "idmapper.h"
 #include "sal_functions.h"
 #include "server_stats_grpc.h"
+#include "monitoring.h"
 
 /** Mutex to serialize export admin operations.
  */
@@ -93,6 +95,12 @@ struct export_by_id {
 	pthread_rwlock_t eid_lock;
 	struct avltree t;
 	struct avltree_node *cache[EXPORT_BY_ID_CACHE_SIZE];
+};
+
+struct export_labels {
+	const char *sectype;
+	const char *transport;
+	const char *access;
 };
 
 static struct export_by_id export_by_id;
@@ -240,6 +248,113 @@ struct gsh_export *alloc_export(void)
 
 	return export;
 }
+/**
+ * @brief Extract dynamic label values from an export config.
+ *
+ * This function analyzes the export's permission options to determine
+ * the transport type (TCP/UDP/RDMA), access type (rw/ro/no), and security
+ * type (sys/krb5/krb5i/krb5p) that should be attached as labels
+ * to Prometheus metrics.
+ *
+ * @param export Pointer to the gsh_export structure.
+ *
+ * @return Struct containing strings for access, transport, and sectype.
+ */
+
+static struct export_labels get_export_labels(struct gsh_export *export)
+{
+	struct export_labels labels = { .sectype = "unknown",
+					.transport = "unknown",
+					.access = "unknown" };
+
+	uint32_t opts = export->export_perms.options;
+
+	/* Access */
+	switch (opts & EXPORT_OPTION_ACCESS_MASK) {
+	case EXPORT_OPTION_RW_ACCESS:
+		labels.access = "rw";
+		break;
+	case EXPORT_OPTION_READ_ACCESS:
+		labels.access = "ro";
+		break;
+	case EXPORT_OPTION_NO_ACCESS:
+		labels.access = "no";
+		break;
+	default:
+		labels.access = "unknown";
+		break;
+	}
+
+	/* Transport */
+	if (opts & EXPORT_OPTION_TCP)
+		labels.transport = "tcp";
+	else if (opts & EXPORT_OPTION_UDP)
+		labels.transport = "udp";
+	else if (opts & EXPORT_OPTION_RDMA)
+		labels.transport = "rdma";
+
+	/* Sectype */
+	if (opts & EXPORT_OPTION_AUTH_UNIX)
+		labels.sectype = "sys";
+	else if (opts & (EXPORT_OPTION_RPCSEC_GSS_PRIV |
+			 EXPORT_OPTION_RPCSEC_GSS_INTG |
+			 EXPORT_OPTION_RPCSEC_GSS_NONE)) {
+		if (opts & EXPORT_OPTION_RPCSEC_GSS_PRIV)
+			labels.sectype = "krb5p";
+		else if (opts & EXPORT_OPTION_RPCSEC_GSS_INTG)
+			labels.sectype = "krb5i";
+		else
+			labels.sectype = "krb5";
+	}
+
+	return labels;
+}
+
+/**
+ * @brief Register the ganesha_export_metadata Prometheus metric.
+ *
+ * Labels are dynamically populated based on the export configuration.
+ */
+void update_export_metadata_metric(struct gsh_export *export)
+{
+	struct export_labels labels_info = get_export_labels(export);
+	const char *path = nfs_param.core_param.mount_path_pseudo
+				   ? export->cfg_pseudopath
+				   : export->cfg_fullpath;
+	struct gsh_refstr *path_label = gsh_refstr_dup(path, MEM_COMP_EXPORT);
+
+	const char *fsal_name = "unknown";
+
+	if (export->fsal_export && export->fsal_export->fsal)
+		fsal_name = export->fsal_export->fsal->name;
+
+	const metric_label_t labels[] = {
+		METRIC_LABEL("instance", nfs_param.nfsv4_param.domainname),
+		METRIC_LABEL("fsal", fsal_name),
+		METRIC_LABEL("sectype", labels_info.sectype),
+		METRIC_LABEL("transport", labels_info.transport),
+		METRIC_LABEL("access", labels_info.access),
+		METRIC_LABEL("export_path", gsh_refstr_get(path_label)->gr_val)
+	};
+
+	export->metadata_metric = monitoring__register_gauge(
+		"ganesha_export_metadata",
+		METRIC_METADATA("Metadata about export", METRIC_UNIT_NONE),
+		labels, ARRAY_SIZE(labels));
+
+	monitoring__gauge_set(export->metadata_metric, 1);
+
+	/* Release the reference after registering the metric */
+	gsh_refstr_put(path_label);
+}
+
+/**
+ * @brief Cleanup export metadata metric
+ */
+void cleanup_export_metadata_metric(struct gsh_export *export)
+{
+	monitoring__gauge_remove(export->metadata_metric);
+}
 
 /**
  * @brief Insert an export list entry into the export manager
@@ -266,6 +381,8 @@ bool insert_gsh_export(struct gsh_export *export)
 		PTHREAD_RWLOCK_unlock(&export_by_id.eid_lock);
 		return false;
 	}
+
+	update_export_metadata_metric(export);
 
 	/* take an additional ref for the sentinel reference... */
 	get_gsh_export_ref(export);
