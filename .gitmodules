@@ -1,3 +1,7 @@
 [submodule "src/libntirpc"]
 	path = src/libntirpc
 	url = https://github.com/nfs-ganesha/ntirpc.git
+[submodule "src/libkmip"]
+	path = src/libkmip
+	url = https://github.com/ceph/libkmip
+	branch = ceph-main
