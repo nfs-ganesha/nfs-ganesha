@@ -1030,6 +1030,7 @@ fsal_status_t mdcache_seek(struct fsal_obj_handle *obj_hdl,
 			   struct io_info *info);
 fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,
 				struct io_hints *hints);
+fsal_status_t mdcache_control(struct fsal_obj_handle *obj_hdl, int, void *);
 fsal_status_t mdcache_close(struct fsal_obj_handle *obj_hdl);
 fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 			    struct state_t *state, fsal_openflags_t openflags,

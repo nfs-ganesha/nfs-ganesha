@@ -99,6 +99,30 @@ fsal_status_t mdcache_io_advise(struct fsal_obj_handle *obj_hdl,
 }
 
 /**
+ * @brief Control
+ *
+ * Delegate to sub-FSAL
+ *
+ * @param[in]  obj_hdl      File on which to act
+ * @param[in] operation     What to do
+ * @param[in] void          parameters for doing it
+ *
+ * @return FSAL status.
+ */
+fsal_status_t mdcache_control(struct fsal_obj_handle *obj_hdl, int operation,
+			      void *data)
+{
+	mdcache_entry_t *entry =
+		container_of(obj_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	subcall(status = entry->sub_handle->obj_ops->control(entry->sub_handle,
+							     operation, data));
+
+	return status;
+}
+
+/**
  * @brief Close a file
  *
  * @param[in] obj_hdl	File to close

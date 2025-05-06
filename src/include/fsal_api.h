@@ -388,6 +388,15 @@ struct fsal_dsh_ops;
 #define SEEK_HOLE 4
 #endif
 
+/* control oeprations */
+#define FSCRYPT_SETKEY ((((int)'f') << 24) + 1)
+#define FSCRYPT_VERIFY_NOT_ENCRYPTED ((((int)'f') << 24) + 2)
+#define MAX_FSCRYPT_KEY_SIZE 64
+struct io_fscrypt_setkey {
+	int keylen;
+	unsigned char data[MAX_FSCRYPT_KEY_SIZE];
+};
+
 struct io_info {
 	contents io_content;
 	uint32_t io_advise;
@@ -2140,6 +2149,20 @@ struct fsal_obj_ops {
 	fsal_status_t (*fallocate)(struct fsal_obj_handle *obj_hdl,
 				   struct state_t *state, uint64_t offset,
 				   uint64_t length, bool allocate);
+
+	/**
+ * @brief Function to issue a miscellaneous operation (such as fscrypt setkey)
+ *
+ * @param[in]  obj_hdl     File on which to operate
+ * @param[in]  operation   What to do
+ * @param[in|out]  void *  op specific data.
+ *
+ * @return FSAL status.
+ */
+
+	fsal_status_t (*control)(struct fsal_obj_handle *obj_hdl, int operation,
+				 void *data);
+
 	/**@}*/
 
 	/**@{*/
@@ -3238,8 +3261,8 @@ static inline void export_root_object_get(struct fsal_obj_handle *obj_hdl)
  */
 static inline void export_root_object_put(struct fsal_obj_handle *obj_hdl)
 {
-	int32_t __attribute__((unused)) ref =
-		atomic_dec_int32_t(&obj_hdl->exp_refcnt);
+	int32_t __attribute__((unused))
+	ref = atomic_dec_int32_t(&obj_hdl->exp_refcnt);
 
 	assert(ref >= 0);
 }
