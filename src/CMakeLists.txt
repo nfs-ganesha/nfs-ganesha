@@ -177,6 +177,7 @@ EXECUTE_PROCESS( COMMAND hostname
 
 find_package(Toolchain REQUIRED)
 find_package(Sanitizers)
+find_package(OpenSSL REQUIRED)
 
 # Add maintainer mode for (mainly) strict builds
 include(${GANESHA_TOP_CMAKE_DIR}/cmake/maintainer_mode.cmake)
@@ -1380,6 +1381,9 @@ endif(USE_LTTNG)
 
 add_subdirectory(scripts)
 add_subdirectory(doc)
+
+add_subdirectory(libkmip)
+set_property(TARGET kmip PROPERTY POSITION_INDEPENDENT_CODE ON)
 # display configuration vars
 
 message(STATUS)

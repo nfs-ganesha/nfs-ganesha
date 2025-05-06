@@ -82,6 +82,7 @@ install_debian()
 		libkrb5-dev \
 		$libnsl_pkg \
 		liburcu-dev \
+		libssl-dev \
 		python3 \
 		$python3_distutils \
 		pyqt5-dev-tools \
@@ -180,6 +181,7 @@ install_rh()
 		libnfsidmap-devel \
 		libnsl2-devel \
 		libuuid-devel \
+		openssl-devel \
 		"$python_pkg" \
 		"${python_pkg}-qt5-devel" \
 		rsync \
@@ -211,6 +213,7 @@ install_suse()
 	       libnsl-devel \
 	       liburcu-devel \
 	       libuuid-devel \
+	       libopenssl-devel \
 	       nfsidmap-devel \
 	       python3 \
 	       rsync \
