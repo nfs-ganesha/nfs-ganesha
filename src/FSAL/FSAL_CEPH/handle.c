@@ -2789,7 +2789,7 @@ static fsal_status_t ceph_fsal_setattr2(struct fsal_obj_handle *obj_hdl,
 	/* Test if size is being set, make sure file is regular and if so,
 	 * require a read/write file descriptor.
 	 */
-	if (state != NULL &&
+	if (state == NULL &&
 	    FSAL_TEST_MASK(attrib_set->valid_mask, ATTR_SIZE)) {
 		if (obj_hdl->type != REGULAR_FILE) {
 			LogFullDebug(COMPONENT_FSAL,
