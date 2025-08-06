@@ -204,6 +204,11 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	if (op_ctx->export_perms.options & EXPORT_OPTION_AUTH_NONE)
 		auth_flavor[index_auth++] = AUTH_NONE;
 
+#ifdef USE_TLS
+	if (op_ctx->export_perms.options & EXPORT_OPTION_TLS ||
+	    op_ctx->export_perms.options & EXPORT_OPTION_MTLS)
+		auth_flavor[index_auth++] = AUTH_TLS;
+#endif
 	if (isDebug(COMPONENT_NFSPROTO)) {
 		char str[LEN_FH_STR];
 		struct display_buffer dspbuf = { sizeof(str), str, str };

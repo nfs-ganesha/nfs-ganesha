@@ -166,6 +166,9 @@ extern struct config_block nfs_ip_name;
 #ifdef _HAVE_GSSAPI
 extern struct config_block krb5_param;
 #endif
+#ifdef USE_TLS
+extern struct config_block tls_core;
+#endif
 extern struct config_block version4_param;
 extern struct config_block directory_services_param;
 

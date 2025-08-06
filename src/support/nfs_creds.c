@@ -754,6 +754,34 @@ nfsstat4 nfs4_export_check_access(struct svc_req *req)
 				       : "unknown client");
 		return NFS4ERR_WRONGSEC;
 	}
+#ifdef USE_TLS
+	/* Test if export requires TLS  */
+	if (((op_ctx->export_perms.options & EXPORT_OPTION_TLS) != 0) &&
+	    (!(req->rq_xprt->xp_tls.tls_established))) {
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+			   "[TLS] Auth not allowed on Export_Id %" PRId32
+			   " %s for client %s - TLS required",
+			   op_ctx->ctx_export->export_id,
+			   CTX_PSEUDOPATH(op_ctx),
+			   op_ctx->client ? op_ctx->client->hostaddr_str
+					  : "unknown client");
+		return NFS4ERR_WRONGSEC;
+	}
+
+	/* Test if export requires mTLS  */
+	if (((op_ctx->export_perms.options & EXPORT_OPTION_MTLS) != 0) &&
+	    (!(req->rq_xprt->xp_tls.tls_established) ||
+	     !(req->rq_xprt->xp_tls.mtls))) {
+		LogInfoAlt(COMPONENT_NFS_V4, COMPONENT_EXPORT,
+			   "[TLS] NFS auth not allowed on Export_Id %" PRId32
+			   " %s for client %s - MTLS required",
+			   op_ctx->ctx_export->export_id,
+			   CTX_PSEUDOPATH(op_ctx),
+			   op_ctx->client ? op_ctx->client->hostaddr_str
+					  : "unknown client");
+		return NFS4ERR_WRONGSEC;
+	}
+#endif
 
 	/* Get creds */
 	return nfs_req_creds(req);

@@ -44,6 +44,10 @@ SecType(enum list, default [none, sys])
     Possible values:
         none, sys, krb5, krb5i, krb5p
 
+XprtSec(enum, default none)
+    Possible values:
+        none, tls, mtls
+
 PrivilegedPort(bool, default false)
 
 Manage_Gids(bool, default false)
@@ -366,6 +370,10 @@ Transports(enum list, values [UDP, TCP, RDMA], default [TCP])
 SecType(enum list, default [none, sys, krb5, krb5i, krb5p])
     Possible values:
         none, sys, krb5, krb5i, krb5p
+
+XprtSec(enum, default none)
+    Possible values:
+        none, tls, mtls
 
 PrivilegedPort(bool, default false)
 

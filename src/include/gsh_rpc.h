@@ -61,6 +61,9 @@ extern "C" {
 #include <rpc/auth_gss.h>
 #include <rpc/gss_internal.h> /* XXX */
 #endif
+#ifdef USE_TLS
+#include <rpc/tls.h>
+#endif
 #include <rpc/svc_rqst.h>
 #include <rpc/rpc_msg.h>
 

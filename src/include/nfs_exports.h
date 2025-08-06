@@ -176,10 +176,24 @@ struct exportlist_client_entry {
 #define EXPORT_OPTION_RPCSEC_GSS_PRIV \
 	0x00010000 /*< RPCSEC_GSS PRIVACY supported */
 
+/* Transport Security Options - Used with XprtSec parameter */
+#define EXPORT_OPTION_TLS 0x00020000 /*< Transport TLS supported */
+
+#define EXPORT_OPTION_MTLS 0x00040000 /*< Transport MTLS supported */
+
 #define EXPORT_OPTION_AUTH_TYPES                                         \
 	(EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX |             \
 	 EXPORT_OPTION_RPCSEC_GSS_NONE | EXPORT_OPTION_RPCSEC_GSS_INTG | \
 	 EXPORT_OPTION_RPCSEC_GSS_PRIV)
+
+#ifdef USE_TLS
+#define EXPORT_OPTION_XPRT_TYPES (EXPORT_OPTION_TLS | EXPORT_OPTION_MTLS)
+#else
+#define EXPORT_OPTION_XPRT_TYPES 0
+#endif
+
+#define EXPORT_OPTION_XPRT_DEFAULTS 0 /*< No transport security by default */
+
 #define EXPORT_OPTION_AUTH_DEFAULTS \
 	(EXPORT_OPTION_AUTH_NONE | EXPORT_OPTION_AUTH_UNIX)
 
@@ -212,7 +226,7 @@ struct exportlist_client_entry {
 						    altgrp in AUTH_SYS creds */
 #define EXPORT_OPTION_NO_READDIR_PLUS 0x80000000 /*< Disallow readdir plus */
 
-#define EXPORT_OPTION_PERM_UNUSED 0x08860000
+#define EXPORT_OPTION_PERM_UNUSED 0x08800000
 
 #define READ_ACCESS_CHECK_POLICY_PRE (1 << 0)
 #define READ_ACCESS_CHECK_POLICY_POST (1 << 1)

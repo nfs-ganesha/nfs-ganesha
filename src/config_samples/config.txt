@@ -34,6 +34,7 @@ RADOS_URLS {}
 QOS_DEFAULT_CONFIG {}
 (*) KMIP {}
 (*) KMIP { HOST {} }
+TLS_CONFIG {}
 
 Notably the following FSALs do not have a global config block:
 
@@ -393,6 +394,8 @@ EXPORT_DEFAULTS {}
 	SecType(enum list, values [none, sys, krb5, krb5i, krb5p],
 	        default [none, sys])
 
+	XprtSec(enum, values [none, tls, mtls], default none)
+
 	PrivilegedPort(bool, default false)
 
 	Manage_Gids(bool, default false)
@@ -737,6 +740,8 @@ PSEUDOFS {}
 
 	SecType(enum list, values [none, sys, krb5, krb5i, krb5p],
 	        default [none, sys, krb5, krb5i, krb5p])
+
+	XprtSec(enum , values [none, tls, mtls], default [none])
 
 	PrivilegedPort(bool, default false)
 
@@ -1411,3 +1416,34 @@ KMIP { HOST  {} }
 	servername(string, defaults to addr)
 
 	verify_hostname(string, defaults to servername or addr)
+
+TLS_CONFIG {}
+---------------------
+	Enable_TLS(bool, default false)
+
+	TLS_CA_File(path, default "")
+        eg : TLS_CA_File = "/etc/ganesha/tls/ca.crt";
+
+	TLS_Cert_File(path, default "")
+        eg: TLS_Cert_File = "/etc/ganesha/tls/ganesha.crt";
+
+	TLS_Key_File(path, default "")
+        eg : TLS_Key_File = "/etc/ganesha/tls/ganesha.key";
+
+	TLS_Ciphers(string, default NULL)
+	eg for backend as openssl :
+		TLS_Ciphers = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384";
+	eg for backend as gnutls :
+	        TLS_Ciphers = ":-CIPHER-ALL:+AES-256-GCM";
+
+	TLS_Min_Version(string, "TLSv1.3")
+        options = "TLSv1.3", "TLSv1.2";
+		eg: TLS_Min_Version = "TLSv1.3"
+
+	Enable_KTLS(bool, default true)
+	To enable and disable KTLS transferes.
+	Note : Currently applicable for only openssl.
+	       If user want to enable/disable ktls for gnutls use gnutls config file.
+
+	Enable_debug(bool, default true)
+	To enable TLS library callback prints and full debugging logs for TLS.

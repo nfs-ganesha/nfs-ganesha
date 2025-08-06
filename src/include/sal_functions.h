@@ -359,6 +359,7 @@ int32_t dec_client_record_ref(nfs_client_record_t *record);
 nfs_client_record_t *get_client_record(const char *const value,
 				       const size_t len,
 				       const uint32_t pnfs_flags,
+				       const uint32_t flags,
 				       const sockaddr_t *server_addr,
 				       const sockaddr_t *client_addr);
 

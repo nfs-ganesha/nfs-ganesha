@@ -115,6 +115,9 @@
 #cmakedefine HAVE_LINUX_FSCRYPT_H 1
 #cmakedefine ENABLE_LOCKTRACE 1
 #cmakedefine SANITIZE_ADDRESS 1
+#cmakedefine USE_TLS 1
+#cmakedefine USE_OPENSSL 1
+#cmakedefine USE_GNUTLS 1
 #cmakedefine DEBUG_MDCACHE 1
 #cmakedefine ENABLE_QOS 1
 #cmakedefine USE_RADOS_RECOV 1
@@ -131,6 +134,9 @@
 #define NFS_V4_RECOV_ROOT "@SYSSTATEDIR@/lib/nfs/ganesha"
 #define NFS_V4_RECOV_DIR "v4recov"
 #define NFS_V4_OLD_DIR "v4old"
+#define TLS_CA_FILE "@SYSCONFDIR@/ganesha/tls/ca.crt"
+#define TLS_CERT_FILE "@SYSCONFDIR@/ganesha/tls/ganesha.crt"
+#define TLS_KEY_FILE "@SYSCONFDIR@/ganesha/tls/ganesha.key"
 /**
  * @brief Default value for krb5_param.ccache_dir
  */

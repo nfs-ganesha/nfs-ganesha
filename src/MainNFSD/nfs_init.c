@@ -143,6 +143,10 @@ pthread_t _9p_rdma_dispatcher_thrid;
 pthread_t nfs_rdma_dispatcher_thrid;
 #endif
 
+#ifdef USE_TLS
+tls_config_t tls_config;
+#endif
+
 char *nfs_config_path = GANESHA_CONFIG_PATH;
 
 char *nfs_pidfile_path = GANESHA_PIDFILE_PATH;
@@ -748,6 +752,21 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 			"Error while parsing NFS/KRB5 configuration for RPCSEC_GSS");
 		return -1;
 	}
+#endif
+
+#ifdef USE_TLS
+	/* TLS global parameters - validation handled by tls_config_commit() */
+	(void)load_config_from_parse(parse_tree, &tls_core, &tls_config, true,
+				     err_type);
+	if (!config_error_is_harmless(err_type)) {
+		LogCrit(COMPONENT_INIT,
+			"Error while parsing TLS configuration");
+		return -1;
+	}
+
+	/* Initialize TLS if enabled */
+	if (tls_config.enabled == true)
+		tls_init(&tls_config);
 #endif
 
 	/* Directory Services specific configuration */
@@ -1371,6 +1390,9 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	/* Regular exit */
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
 
+#ifdef USE_TLS
+	tls_cleanup();
+#endif
 	nfs_init_cleanup();
 
 	Cleanup();

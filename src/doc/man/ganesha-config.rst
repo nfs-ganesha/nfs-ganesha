@@ -221,6 +221,10 @@ KMIP {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-fscrypt-config <ganesha-fscrypt-config>`\(8) for usage
 
+TLS_CONFIG {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-tls-config <ganesha-tls-config>`\(8) for usage
+
 EXAMPLE
 ==========================================================
 Along with "ganesha.conf", for each installed FSAL, a sample config file is added at:
@@ -245,3 +249,4 @@ See also
 :doc:`ganesha-export-config <ganesha-export-config>`\(8)
 :doc:`ganesha-qos-config <ganesha-qos-config>`\(8)
 :doc:`ganesha-fscrypt-config <ganesha-fscrypt-config>`\(8)
+:doc:`ganesha-tls-config <ganesha-tls-config>`\(8)

@@ -856,6 +856,10 @@ struct nfs_client_id_t {
 			__ref_count, ##__VA_ARGS__);                         \
 	} while (0)
 
+#define EXCHGID4_FLAG_TLS_ESTABLISHED 0x00000001
+#define EXCHGID4_FLAG_MTLS_ESTABLISHED 0x00000002
+#define EXCHGID4_FLAG_TLS_MASK 0x00000003
+
 /**
  * @brief Client owner record for verification and replacement
  *
@@ -885,6 +889,9 @@ struct nfs_client_record_t {
 				     different pNFS flags as
 				     disjoint. Linux client stupidity
 				     forces us to do so. */
+	uint32_t cr_extra_flags; /*< used in case of same client connection
+				   biffurcation.
+				   Used in TLS/MTLS/NON-TLS from same client.*/
 	int cr_client_val_len; /*< Length of owner */
 #ifdef __cplusplus
 	char cr_client_val[1];
