@@ -113,6 +113,14 @@ Reaper_Work_Per_Lane(uint32, range 1 to UINT32_MAX, default 50)
     This is the number of handles per lane to scan when performing LRU
     maintenance.  This task is performed by the Reaper thread.
 
+Num_LRU_Lanes(uint32, range 1 to 10000, default 17)
+    The number of lanes in mdcache LRU. Each lane has its own qlane lock and
+    a set of queues. The value should be a prime number.
+
+Num_Chunk_LRU_Lanes(uint32, range 1 to 10000, default 17)
+    The number of lanes in mdcache chunk LRU. Each lane has its own qlane lock
+    and a set of queues. The value should be a prime number.
+
 Biggest_Window(uint32, range 1 to 100, default 40)
     The largest window (as a percentage of the system-imposed limit on FDs) of
     work that we will do in extremis.

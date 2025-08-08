@@ -40,6 +40,7 @@
 #include "fsal.h"
 #include "mdcache_int.h"
 #include "config_parsing.h"
+#include "mdcache_lru.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -88,6 +89,10 @@ static struct config_item mdcache_params[] = {
 		       reaper_work),
 	CONF_ITEM_UI32("Reaper_Work_Per_Lane", 1, UINT32_MAX, 50,
 		       mdcache_parameter, reaper_work_per_lane),
+	CONF_ITEM_UI32("Num_LRU_Lanes", 1, 10000, LRU_DEFAULT_N_Q_LANES,
+		       mdcache_parameter, num_lru_lanes),
+	CONF_ITEM_UI32("Num_Chunk_LRU_Lanes", 1, 10000, LRU_DEFAULT_N_Q_LANES,
+		       mdcache_parameter, num_chunk_lru_lanes),
 	CONF_ITEM_UI32("Biggest_Window", 1, 100, 40, mdcache_parameter,
 		       biggest_window),
 	CONF_ITEM_UI32("Required_Progress", 1, 50, 5, mdcache_parameter,

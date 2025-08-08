@@ -1060,6 +1060,10 @@ MDCACHE {}
 
 	Reaper_Work_Per_Lane(uint32, range 1 to UINT32_MAX, default 50)
 
+	Num_LRU_Lanes(uint32, range 1 to 10000, default 17)
+
+	Num_Chunk_LRU_Lanes(uint32, range 1 to 10000, default 17)
+
 	Biggest_Window(uint32, range 1 to 100, default 40)
 
 	Required_Progress(uint32, range 1 to 50, default 5)

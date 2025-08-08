@@ -126,6 +126,15 @@ struct mdcache_parameter {
 	/** The amount of work for the reaper thread to do per-lane
 	    under normal conditions. Settable with Repaper_Work_Per_Thread */
 	uint32_t reaper_work_per_lane;
+	/** Number of lanes for the entry LRU. Only affects the entry LRU,
+	 *  not the directory CHUNK_LRU. Defaults to 17, settable with
+	 *  Num_LRU_Lanes.
+	 */
+	uint32_t num_lru_lanes;
+	/** Number of lanes for the directory chunk LRU. Defaults to 17,
+	 *  settable with Num_Chunk_LRU_Lanes.
+	 */
+	uint32_t num_chunk_lru_lanes;
 	/** The largest window (as a percentage of the system-imposed
 	    limit on FDs) of work that we will do in extremis.
 	    Defaults to 40, settable with Biggest_Window */

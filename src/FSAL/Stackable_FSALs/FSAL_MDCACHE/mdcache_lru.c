@@ -149,8 +149,10 @@ struct lru_q_lane {
  * processing onto L2 constrains oscillation in this algorithm.
  */
 
-static struct lru_q_lane LRU[LRU_N_Q_LANES];
-static struct lru_q_lane CHUNK_LRU[LRU_N_Q_LANES];
+static struct lru_q_lane *LRU;
+static uint32_t lru_n_q_lanes;
+static struct lru_q_lane *CHUNK_LRU;
+static uint32_t chunk_lru_n_q_lanes;
 
 /**
  * The refcount mechanism distinguishes 3 key object states:
@@ -180,7 +182,9 @@ static struct fridgethr *lru_fridge;
 static const uint32_t FD_FALLBACK_LIMIT = 0x400;
 
 /* Some helper macros */
-#define LRU_NEXT(n) (atomic_inc_uint32_t(&(n)) % LRU_N_Q_LANES)
+#define LRU_NEXT(n) (atomic_inc_uint32_t(&(n)) % lru_n_q_lanes)
+
+#define CHUNK_LRU_NEXT(n) (atomic_inc_uint32_t(&(n)) % chunk_lru_n_q_lanes)
 
 /* Delete lru, use iif the current thread is not the LRU
  * thread.  The node being removed is lru, glist a pointer to L1's q,
@@ -221,28 +225,32 @@ static inline void lru_init_queues(void)
 {
 	int ix;
 
-	for (ix = 0; ix < LRU_N_Q_LANES; ++ix) {
-		struct lru_q_lane *qlane;
+	/* Set dynamic lane count from configuration and allocate LRU */
+	lru_n_q_lanes = mdcache_param.num_lru_lanes;
+	LRU = gsh_calloc(lru_n_q_lanes, sizeof(struct lru_q_lane));
 
-		/* Initialize mdcache_entry_t LRU */
-		qlane = &LRU[ix];
+	/* For chunks, use configured chunk lanes */
+	chunk_lru_n_q_lanes = mdcache_param.num_chunk_lru_lanes;
+	CHUNK_LRU = gsh_calloc(chunk_lru_n_q_lanes, sizeof(struct lru_q_lane));
 
-		/* one mutex per lane */
+	/* Initialize entry LRU lanes (dynamic) */
+	for (ix = 0; ix < (int)lru_n_q_lanes; ++ix) {
+		struct lru_q_lane *qlane = &LRU[ix];
+
 		PTHREAD_MUTEX_init(&qlane->ql_mtx, NULL);
 
-		/* init lane queues */
 		lru_init_queue(&LRU[ix].L1, LRU_ENTRY_L1);
 		lru_init_queue(&LRU[ix].L2, LRU_ENTRY_L2);
 		lru_init_queue(&LRU[ix].cleanup, LRU_ENTRY_CLEANUP);
 		lru_init_queue(&LRU[ix].ACTIVE, LRU_ENTRY_ACTIVE);
+	}
 
-		/* Initialize dir_chunk LRU */
-		qlane = &CHUNK_LRU[ix];
+	/* Initialize dir_chunk LRU lanes (dynamic) */
+	for (ix = 0; ix < (int)chunk_lru_n_q_lanes; ++ix) {
+		struct lru_q_lane *qlane = &CHUNK_LRU[ix];
 
-		/* one mutex per lane */
 		PTHREAD_MUTEX_init(&qlane->ql_mtx, NULL);
 
-		/* init lane queues */
 		lru_init_queue(&CHUNK_LRU[ix].L1, LRU_ENTRY_L1);
 		lru_init_queue(&CHUNK_LRU[ix].L2, LRU_ENTRY_L2);
 		lru_init_queue(&CHUNK_LRU[ix].cleanup, LRU_ENTRY_CLEANUP);
@@ -253,16 +261,22 @@ static inline void lru_destroy_queues(void)
 {
 	int ix;
 
-	for (ix = 0; ix < LRU_N_Q_LANES; ++ix) {
-		struct lru_q_lane *qlane;
+	/* Destroy entry LRU lanes (dynamic) */
+	if (LRU != NULL) {
+		for (ix = 0; ix < (int)lru_n_q_lanes; ++ix) {
+			PTHREAD_MUTEX_destroy(&LRU[ix].ql_mtx);
+		}
+		gsh_free(LRU);
+		LRU = NULL;
+	}
 
-		/* Destroy mdcache_entry_t LRU */
-		qlane = &LRU[ix];
-		PTHREAD_MUTEX_destroy(&qlane->ql_mtx);
-
-		/* Destroy dir_chunk LRU */
-		qlane = &CHUNK_LRU[ix];
-		PTHREAD_MUTEX_destroy(&qlane->ql_mtx);
+	/* Destroy dir_chunk LRU lanes (dynamic) */
+	if (CHUNK_LRU != NULL) {
+		for (ix = 0; ix < (int)chunk_lru_n_q_lanes; ++ix) {
+			PTHREAD_MUTEX_destroy(&CHUNK_LRU[ix].ql_mtx);
+		}
+		gsh_free(CHUNK_LRU);
+		CHUNK_LRU = NULL;
 	}
 }
 
@@ -353,10 +367,10 @@ static inline struct lru_q *chunk_lru_queue_of(struct dir_chunk *chunk)
  *
  * @return The LRU lane in which that entry should be stored.
  */
-static inline uint32_t lru_lane_of(void *entry)
+static inline uint32_t lru_lane_of(void *ptr, uint32_t num_lanes)
 {
-	return (uint32_t)((((uintptr_t)entry) / 2 * sizeof(uintptr_t)) %
-			  LRU_N_Q_LANES);
+	return (uint32_t)((((uintptr_t)ptr) / (2 * sizeof(uintptr_t))) %
+			  num_lanes);
 }
 
 /**
@@ -688,7 +702,8 @@ static inline mdcache_lru_t *lru_reap_impl(enum lru_q_id qid)
 	int ix;
 
 	lane = LRU_NEXT(reap_lane);
-	for (ix = 0; ix < LRU_N_Q_LANES; ++ix, lane = LRU_NEXT(reap_lane)) {
+	for (ix = 0; ix < (int)lru_n_q_lanes;
+	     ++ix, lane = LRU_NEXT(reap_lane)) {
 		qlane = &LRU[lane];
 		lq = (qid == LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
 
@@ -818,10 +833,10 @@ static inline mdcache_lru_t *lru_reap_chunk_impl(enum lru_q_id qid,
 	int ix;
 	int32_t refcnt;
 
-	lane = LRU_NEXT(chunk_reap_lane);
+	lane = CHUNK_LRU_NEXT(chunk_reap_lane);
 
-	for (ix = 0; ix < LRU_N_Q_LANES;
-	     ++ix, lane = LRU_NEXT(chunk_reap_lane)) {
+	for (ix = 0; ix < (int)chunk_lru_n_q_lanes;
+	     ++ix, lane = CHUNK_LRU_NEXT(chunk_reap_lane)) {
 		qlane = &CHUNK_LRU[lane];
 		lq = (qid == LRU_ENTRY_L1) ? &qlane->L1 : &qlane->L2;
 
@@ -972,7 +987,7 @@ struct dir_chunk *mdcache_get_chunk(mdcache_entry_t *parent,
 
 	chunk->chunk_lru.refcnt = 2;
 	chunk->chunk_lru.cf = 0;
-	chunk->chunk_lru.lane = lru_lane_of(chunk);
+	chunk->chunk_lru.lane = lru_lane_of(chunk, chunk_lru_n_q_lanes);
 
 	/* Enqueue into MRU of L2.
 	 *
@@ -1252,7 +1267,7 @@ static void lru_run(struct fridgethr_context *ctx)
 	/* Loop over all lanes to perform L1 to L2 demotion. Track the work
 	 * done for logging.
 	 */
-	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
+	for (lane = 0; lane < (int)lru_n_q_lanes; ++lane) {
 		LogDebug(COMPONENT_MDCACHE_LRU,
 			 "Demoting up to %d entries from lane %d",
 			 lru_state.per_lane_work, lane);
@@ -1310,8 +1325,8 @@ static void lru_run(struct fridgethr_context *ctx)
 		 "After work, count:%" PRIu64 " new_thread_wait=%" PRIu64,
 		 atomic_fetch_uint64_t(&lru_state.entries_used),
 		 ((uint64_t)threadwait));
-	LogFullDebug(COMPONENT_MDCACHE_LRU, "totalwork=%d lanes=%d", totalwork,
-		     LRU_N_Q_LANES);
+	LogFullDebug(COMPONENT_MDCACHE_LRU, "totalwork=%d lanes=%u", totalwork,
+		     lru_n_q_lanes);
 }
 
 /**
@@ -1420,7 +1435,7 @@ static void chunk_lru_run(struct fridgethr_context *ctx)
 		     lru_state.chunks_used);
 
 	/* Total chunks demoted to L2 between all lanes and all current runs. */
-	for (lane = 0; lane < LRU_N_Q_LANES; ++lane) {
+	for (lane = 0; lane < (int)chunk_lru_n_q_lanes; ++lane) {
 		LogFullDebug(
 			COMPONENT_MDCACHE_LRU,
 			"Reaping up to %d chunks from lane %zd totalwork=%zd",
@@ -1596,9 +1611,9 @@ fsal_status_t mdcache_lru_pkginit(void)
 
 	if (mdcache_param.reaper_work) {
 		/* Backwards compatibility */
-		lru_state.per_lane_work =
-			(mdcache_param.reaper_work + LRU_N_Q_LANES - 1) /
-			LRU_N_Q_LANES;
+		lru_state.per_lane_work = (mdcache_param.reaper_work +
+					   mdcache_param.num_lru_lanes - 1) /
+					  mdcache_param.num_lru_lanes;
 	} else {
 		/* New parameter */
 		lru_state.per_lane_work = mdcache_param.reaper_work_per_lane;
@@ -1762,7 +1777,7 @@ mdcache_entry_t *mdcache_lru_get(struct fsal_obj_handle *sub_handle,
 	nentry->lru.refcnt = 2;
 	nentry->lru.active_refcnt = 1;
 	nentry->lru.cf = 0;
-	nentry->lru.lane = lru_lane_of(nentry);
+	nentry->lru.lane = lru_lane_of(nentry, lru_n_q_lanes);
 	nentry->lru.flags = LRU_SENTINEL_HELD;
 	nentry->sub_handle = sub_handle;
 
