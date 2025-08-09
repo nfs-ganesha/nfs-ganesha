@@ -32,10 +32,19 @@ PROXY_V4 {}
 RADOS_KV {}
 RADOS_URLS {}
 QOS_DEFAULT_CONFIG {}
+(*) KMIP {}
+(*) KMIP { HOST {} }
 
 Notably the following FSALs do not have a global config block:
 
 PSEUDO, NULL, GLUSTER
+
+(*) It is possible to load plugins to extend supported capabilities,
+and such plugins can optionally add configuration parameters.
+There is presently only one such plugin, "kmip_fscrypt."
+In order to activate this plugin, add the following line,
+	%plugin kmip_fscrypt
+then additional parameters noted below may be used.
 
 NFS_CORE_PARAM {}
 -----------------
@@ -521,6 +530,13 @@ EXPORT {}
 		* Attr_Expiration_Time is evaluated when an MDCACHE entry
 		  is created, so the dynamic effect of this option may
 		  be constrained to new entries.
+
+	kmip_key_id(string, default NULL)
+
+		* This parameter is only available with the "kmip_fscrypt"
+		  plugin, and presently only useful with the ceph fsal.
+		  For more information, see the documentation file
+		  "ganesha-fscrypt-config.rst".
 
 
 EXPORT { CLIENT  {} }
@@ -1358,3 +1374,40 @@ QOS_DEFAULT_CONFIG {}
 
 	client_read_tokens_renew_time(uint64, range 3600 to UINT64_MAX,
 				      default 86400)
+
+KMIP {}
+--------
+
+	This block is only available with the "kmip_fscrypt" plugin.
+	These options are more thorougly described in the documentation
+	file "ganesha-fscrypt-config.rst".
+
+	cert(string, default NULL)
+
+	key(string, default NULL)
+
+	ca(string, no default)
+
+	cert_chain(string, default NULL)
+
+	user(string, default NULL)
+
+	password(string, default NULL)
+
+	protocol(string, default "1.1")
+
+	idle_timeout(uint32,  range 1 to 3600, default 7)
+
+KMIP { HOST  {} }
+------------------------------
+
+	This block is only available with the "kmip_fscrypt" plugin.
+	At least one such block must be present to make kmip useful.
+
+	addr(string, default localhost)
+
+	port(uint16, default 5696)
+
+	servername(string, defaults to addr)
+
+	verify_hostname(string, defaults to servername or addr)

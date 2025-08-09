@@ -98,6 +98,21 @@ Filenames or directory or URLs may optionally use '"'::
 In the case of rados:// URLs, providing a two-component URL indicates that
 the default namespace should be used.
 
+Plugins
+--------------------------------------------------------------------------------
+A plugin may be loaded into ganesha using the '%plugin' directive.::
+
+    %plugin plugin-name
+
+The plugin is read from the same directory as FSALs, which
+depending on build parameters is something like "/usr/lib64/ganesha".
+There is one restriction; currently this pathanem can't be changed
+using the Plugins_Dir option.
+Plugins may add extra global blocks that can be parsed, or
+modify the operation of one or more exports.
+
+One plugin is presently provided, kmip_fscrypt.  For details,
+:doc:`ganesha-fscrypt-config <ganesha-fscrypt-config>`\(8).
 
 Reloading Config
 --------------------------------------------------------------------------------
@@ -202,6 +217,10 @@ QOS_DEFAULT_CONFIG {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-qos-config <ganesha-qos-config>`\(8) for usage
 
+KMIP {}
+--------------------------------------------------------------------------------
+Refer to :doc:`ganesha-fscrypt-config <ganesha-fscrypt-config>`\(8) for usage
+
 EXAMPLE
 ==========================================================
 Along with "ganesha.conf", for each installed FSAL, a sample config file is added at:
@@ -225,3 +244,4 @@ See also
 :doc:`ganesha-core-config <ganesha-core-config>`\(8)
 :doc:`ganesha-export-config <ganesha-export-config>`\(8)
 :doc:`ganesha-qos-config <ganesha-qos-config>`\(8)
+:doc:`ganesha-fscrypt-config <ganesha-fscrypt-config>`\(8)

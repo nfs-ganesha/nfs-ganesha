@@ -95,4 +95,5 @@ See also
 :doc:`ganesha-log-config <ganesha-log-config>`\(8)
 :doc:`ganesha-core-config <ganesha-core-config>`\(8)
 :doc:`ganesha-export-config <ganesha-export-config>`\(8)
+:doc:`ganesha-fscrypt-config <ganesha-fscrypt-config>`\(8)
 
