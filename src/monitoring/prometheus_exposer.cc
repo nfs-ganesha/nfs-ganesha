@@ -39,8 +39,11 @@
 #include <proc/readproc.h>
 #endif
 
+#include <sys/time.h>
 #include "prometheus_exposer.h"
 #include "dynamic_metrics.h"
+#include "nfs_core.h"
+#include "nfs_metrics.h"
 
 #ifdef USE_MONITORING
 
@@ -277,6 +280,8 @@ void *PrometheusExposer::server_thread(void *arg)
 	PrometheusExposer *const exposer =
 		static_cast<PrometheusExposer *>(arg);
 	char buffer[1024];
+	struct timeval current_time;
+	uint64_t elapsed_seconds;
 
 	while (exposer->running_) {
 		const int client_fd = TEMP_FAILURE_RETRY(
@@ -315,6 +320,11 @@ void *PrometheusExposer::server_thread(void *arg)
 		if (nfs_param.core_param.enable_dynamic_metrics)
 			update_mem_info();
 #endif
+		gettimeofday(&current_time, nullptr);
+		elapsed_seconds =
+			(current_time.tv_sec - nfs_ServerBootTime.tv_sec);
+
+		monitoring__gauge_set(ganesha_uptime_info, elapsed_seconds);
 	}
 	return NULL;
 }
@@ -363,7 +373,6 @@ void update_mem_info()
 		dynamic_metrics__mem_info(proc_info);
 }
 #endif
-
 } /* extern "C" */
 
 } /* namespace ganesha_monitoring */

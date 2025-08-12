@@ -35,7 +35,7 @@
 #include "nfsv41.h"
 #include "nfs23.h"
 enum nfs_req_result;
-extern gauge_metric_handle_t ganesha_info;
+extern gauge_metric_handle_t ganesha_uptime_info;
 
 void nfs_metrics__nfs4_op_completed(nfs_opnum4, nfsstat4, nsecs_elapsed_t);
 void nfs_metrics__gss_request_dropped(void);

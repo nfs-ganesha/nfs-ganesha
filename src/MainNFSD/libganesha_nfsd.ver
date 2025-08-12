@@ -218,6 +218,7 @@
   nfs_recovery_get_nodeid;
   nfs_recovery_fsal_reclaim_client;
   nfs_ServerBootTime;
+  ganesha_uptime_info;
   nfs_ServerEpoch;
   nfs_set_param_from_conf;
   nfs_start;

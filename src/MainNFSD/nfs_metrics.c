@@ -158,7 +158,9 @@ enum nfsstat4_index {
 static counter_metric_handle_t rpcs_received_total;
 static counter_metric_handle_t rpcs_completed_total;
 static gauge_metric_handle_t rpcs_inflight;
-gauge_metric_handle_t ganesha_info;
+gauge_metric_handle_t ganesha_uptime_info;
+static gauge_metric_handle_t ganesha_build_info;
+
 /* NFSv4 Operation Metrics */
 static histogram_metric_handle_t nfsv4_op_latency[NFS4_OP_LAST_ONE]
 						 [NFSSTAT4_INDEX_LAST];
@@ -191,16 +193,24 @@ static const nfsstat4 index_to_nfsstat4[] = {
 
 void register_ganesha_info_metrics(const char *server_scope)
 {
-	const metric_label_t labels[] = {
+	const metric_label_t build_labels[] = {
 		METRIC_LABEL("GANESHA_VERSION", _GIT_DESCRIBE),
 		METRIC_LABEL("BUILT_TIME", __DATE__ " " __TIME__),
 		METRIC_LABEL("SERVER_SCOPE", server_scope)
 	};
-	ganesha_info = monitoring__register_gauge(
+	const metric_label_t labels[] = {};
+
+	ganesha_build_info = monitoring__register_gauge(
 		"ganesha_build_info",
 		METRIC_METADATA("Current ganesha build info", METRIC_UNIT_NONE),
+		build_labels, ARRAY_SIZE(build_labels));
+
+	monitoring__gauge_set(ganesha_build_info, 1);
+	ganesha_uptime_info = monitoring__register_gauge(
+		"ganesha_uptime_seconds",
+		METRIC_METADATA("No.of minutes ganesha has been running",
+				METRIC_UNIT_SECOND),
 		labels, ARRAY_SIZE(labels));
-	monitoring__gauge_set(ganesha_info, 1);
 }
 static void register_nfsv4_operation_metrics(nfs_opnum4 opcode,
 					     enum nfsstat4_index statcode_index)
