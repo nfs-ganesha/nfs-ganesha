@@ -51,6 +51,7 @@ core.*
 libfsal*.so*
 libganesha_nfsd.so*
 libganesha_monitoring.a
+libganesha_monitoring.so*
 libganesha_trace.so*
 Doxyfile
 *~
