@@ -64,9 +64,6 @@
 #include "nfs_convert.h"
 #include "nfs_metrics.h"
 
-#define NFS_pcp nfs_param.core_param
-#define NFS_program NFS_pcp.program
-
 #ifdef USE_DBUS
 
 struct op_name {

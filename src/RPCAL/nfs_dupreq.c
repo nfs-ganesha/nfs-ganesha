@@ -54,9 +54,6 @@
 #define DUPREQ_NOCACHE_NORES ((void *)0x03)
 #define DUPREQ_MAX_RETRIES 5
 
-#define NFS_pcp nfs_param.core_param
-#define NFS_program NFS_pcp.program
-
 pool_t *dupreq_pool;
 pool_t *nfs_res_pool;
 pool_t *tcp_drc_pool; /* pool of per-connection DRC objects */

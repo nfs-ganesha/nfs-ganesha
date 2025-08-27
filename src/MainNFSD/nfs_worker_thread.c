@@ -70,10 +70,6 @@
 
 #include "nfs_metrics.h"
 
-#define NFS_pcp nfs_param.core_param
-#define NFS_options NFS_pcp.core_options
-#define NFS_program NFS_pcp.program
-
 const nfs_function_desc_t invalid_funcdesc = {
 	.service_function = nfs_null,
 	.free_function = nfs_null_free,

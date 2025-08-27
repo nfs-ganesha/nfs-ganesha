@@ -80,9 +80,6 @@
 #include "monitoring.h"
 #include "nfs_metrics.h"
 
-#define NFS_options nfs_param.core_param.core_options
-#define NFS_program nfs_param.core_param.program
-
 /**
  * TI-RPC event channels.  Each channel is a thread servicing an event
  * demultiplexer.

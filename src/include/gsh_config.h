@@ -781,6 +781,10 @@ typedef struct nfs_param {
 
 extern nfs_parameter_t nfs_param;
 
+#define NFS_pcp nfs_param.core_param
+#define NFS_options NFS_pcp.core_options
+#define NFS_program NFS_pcp.program
+
 #endif /* GSH_CONFIG_H */
 
 /** @} */

@@ -2886,7 +2886,6 @@ void log_all_exports(log_levels_t level, int line, const char *func)
  * @return A negative value on error,
  *         the number of export entries else.
  */
-#define NFS_options nfs_param.core_param.core_options
 
 int ReadExports(config_file_t in_config, struct config_error_type *err_type)
 {
