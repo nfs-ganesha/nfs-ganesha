@@ -354,6 +354,7 @@ goption(PROXYV4_HANDLE_MAPPING "enable NFSv3 handle mapping for PROXY_V4 FSAL" O
 option(DEBUG_MDCACHE "Add various asserts to mdcache" OFF)
 option(ENABLE_QOS "QOS feature enablement" OFF)
 option(USE_PRIO_INHERIT "Priority inversion enablement" OFF)
+option(ENABLE_CLUSTER_QOS "Cluster QOS feature enablement" OFF)
 
 # Debug symbols (-g) build flag
 option(DEBUG_SYMS "include debug symbols to binaries (-g option)" OFF)
@@ -428,6 +429,12 @@ if(INTERNAL_STATD)
         message(FATAL_ERROR "Cannot set INTERNAL_STATD without USE_NLM")
     endif(NOT USE_NLM)
 endif(INTERNAL_STATD)
+
+if(ENABLE_CLUSTER_QOS)
+	if(NOT ENABLE_QOS)
+		message(FATAL_ERROR "Cannot set CLUSTER_QOS without QOS")
+	endif(NOT ENABLE_QOS)
+endif(ENABLE_CLUSTER_QOS)
 
 # Enable RQUOTA support
 option(USE_RQUOTA "enable RQUOTA support" ON)
@@ -1588,6 +1595,7 @@ message(STATUS "PROXYV4_HANDLE_MAPPING = ${PROXYV4_HANDLE_MAPPING}")
 message(STATUS "DEBUG_MDCACHE = ${DEBUG_MDCACHE}")
 message(STATUS "ENABLE_QOS = ${ENABLE_QOS}")
 message(STATUS "USE_PRIO_INHERIT = ${USE_PRIO_INHERIT}")
+message(STATUS "ENABLE_CLUSTER_QOS = ${ENABLE_CLUSTER_QOS}")
 message(STATUS "DEBUG_SYMS = ${DEBUG_SYMS}")
 message(STATUS "COVERAGE = ${COVERAGE}")
 message(STATUS "ENFORCE_GCC = ${ENFORCE_GCC}")

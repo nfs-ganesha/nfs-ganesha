@@ -78,6 +78,9 @@ typedef enum protos {
 #ifdef _USE_NFS_RDMA
 	P_NFS_RDMA, /*< NFS over RPC/RDMA */
 #endif
+#ifdef ENABLE_CLUSTER_QOS
+	P_CQOS, /*< Cluster level QoS */
+#endif
 	P_COUNT /*< Number of protocols */
 } protos;
 
@@ -101,7 +104,10 @@ typedef enum protos {
  * @brief Default NFS Over RDMA Port.
  */
 #define NFS_RDMA_PORT 20049
-
+/**
+ * @brief Default Cluster QoS Port.
+ */
+#define CQOS_PORT 18189
 /**
  * @brief Default value for _9p_param.nb_worker
  */

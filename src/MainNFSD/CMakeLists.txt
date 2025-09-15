@@ -94,6 +94,13 @@ if(ENABLE_QOS)
     )
 endif(ENABLE_QOS)
 
+if(ENABLE_QOS AND ENABLE_CLUSTER_QOS)
+  SET(MainServices_STAT_SRCS
+    ${MainServices_STAT_SRCS}
+    nfs_cluster_qos.c
+    )
+endif(ENABLE_QOS AND ENABLE_CLUSTER_QOS)
+
 add_library(MainServices OBJECT ${MainServices_STAT_SRCS})
 add_sanitizers(MainServices)
 set_target_properties(MainServices PROPERTIES COMPILE_FLAGS "-fPIC")
@@ -184,6 +191,15 @@ if(USE_RQUOTA)
     $<TARGET_OBJECTS:rquota>
   )
 endif(USE_RQUOTA)
+
+if(ENABLE_QOS)
+if(ENABLE_CLUSTER_QOS)
+  set(ganesha_nfsd_OBJS
+    ${ganesha_nfsd_OBJS}
+    $<TARGET_OBJECTS:cqos>
+  )
+endif(ENABLE_CLUSTER_QOS)
+endif(ENABLE_QOS)
 
 if(USE_NFSACL3)
   set(ganesha_nfsd_OBJS

@@ -56,6 +56,7 @@
 #include "config_parsing.h"
 #include "pwnam_wrappers.h"
 #include "nfs_qos.h"
+#include "nfs_cluster_qos.h"
 
 /**
  * @brief Core configuration parameters
@@ -266,12 +267,45 @@ void remove_self_cluster_members(void)
 	freeifaddrs(ifap);
 }
 
+#ifdef ENABLE_CLUSTER_QOS
+void populate_cqos_hosts(void)
+{
+	struct glist_head *glist;
+	struct base_client_entry *client;
+	struct cqos_ceph_nodes *cli;
+
+	if (glist_empty(&nfs_param.core_param.cluster_members))
+		return;
+
+	glist_for_each(glist, &nfs_param.core_param.cluster_members) {
+	      client = glist_entry(glist, struct base_client_entry, cle_list);
+
+		cli = gsh_calloc(1, sizeof(struct cqos_ceph_nodes));
+		glist_init(&cli->node_list);
+		cli->fd = -1;
+		cli->clnt = NULL;
+
+		cli->node_addr = client->cidr->ip_addr;
+
+		glist_add_tail(&cqos_hosts, &cli->node_list);
+	}
+}
+#endif
+
 static int core_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
 	LogDebug(COMPONENT_CONFIG, "NFS_CORE_PARAM commit");
 
 	remove_self_cluster_members();
+
+#ifdef ENABLE_CLUSTER_QOS
+	/*
+	 * Cluster QoS global structures needs to be initialized
+	 * with cluster_members details
+	 */
+	populate_cqos_hosts();
+#endif
 
 	Log_ClientList_Level(COMPONENT_CONFIG, NIV_INFO, "Cluster_Members",
 			     &nfs_param.core_param.cluster_members);
@@ -313,6 +347,10 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI16("Rquota_Port", 0, UINT16_MAX, RQUOTA_PORT,
 		       nfs_core_param, port[P_RQUOTA]),
 #endif
+#ifdef ENABLE_CLUSTER_QOS
+	CONF_ITEM_UI16("Cqos_Port", 0, UINT16_MAX, CQOS_PORT,
+		       nfs_core_param, port[P_CQOS]),
+#endif
 #ifdef _USE_NFS_RDMA
 	CONF_ITEM_UI16("NFS_RDMA_Port", 0, UINT16_MAX, NFS_RDMA_PORT,
 		       nfs_core_param, port[P_NFS_RDMA]),
@@ -337,6 +375,10 @@ static struct config_item core_params[] = {
 #ifdef _USE_RQUOTA
 	CONF_ITEM_UI32("Rquota_Program", 1, INT32_MAX, RQUOTAPROG,
 		       nfs_core_param, program[P_RQUOTA]),
+#endif
+#ifdef ENABLE_CLUSTER_QOS
+	CONF_ITEM_UI32("Cqos_Program", 1, INT32_MAX, CQOSPROG,
+		       nfs_core_param, program[P_CQOS]),
 #endif
 #ifdef USE_NFSACL3
 	CONF_ITEM_UI32("NFSACL_Program", 1, INT32_MAX, NFSACLPROG,
@@ -524,6 +566,12 @@ static struct config_item_list qos_types_supported[] = {
 static struct config_item qos_global_params[] = {
 	CONF_ITEM_BOOL("enable_qos", false, qos_block_config, enable_qos),
 
+#if ENABLE_CLUSTER_QOS
+	CONF_ITEM_BOOL("enable_cluster_qos", true, qos_block_config,
+			enable_cluster_qos),
+	CONF_ITEM_UI32("cqos_msg_interval", CQOS_MIN_MSGTIME, CQOS_MAX_MSGTIME,
+		       CQOS_DEF_MSGTIME, qos_block_config, cqos_msg_interval),
+#endif
 	CONF_ITEM_BOOL("enable_tokens", false, qos_block_config, enable_tokens),
 	CONF_ITEM_BOOL("enable_bw_control", false, qos_block_config,
 		       enable_bw_control),
@@ -622,6 +670,7 @@ struct config_block qos_core = {
 };
 
 #endif
+
 /**
  * @brief Kerberos/GSSAPI parameters
  */

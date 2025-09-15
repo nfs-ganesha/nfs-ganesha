@@ -142,5 +142,8 @@ enum xprt_stat nfs_rpc_valid_NFS_RDMA(struct svc_req *);
 #ifdef _INTERNAL_STATD
 enum xprt_stat nfs_rpc_valid_SMMON(struct svc_req *req);
 #endif
+#ifdef ENABLE_CLUSTER_QOS
+enum xprt_stat nfs_rpc_valid_CQOS(struct svc_req *);
+#endif
 
 #endif /* !NFS_INIT_H */

@@ -59,6 +59,33 @@
 #define QOS_MAX_REFRESH_TIME (UINT64_MAX)
 #define QOS_DEF_TOKEN_REFRESH_TIME (3600 * 24) /* Per 24 hours */
 
+#define DELAY_MSEC 1000
+#define USEC_IN_SEC (1000 * 1000)
+
+#define BW_DELAY_MSEC 2
+#define BW_DELAY_USEC (BW_DELAY_MSEC * 1000)
+
+/* export level IO will be pushed down for future 5msec
+ * Ensures even at heavy load, qos thread able to process enough IO's
+ */
+#define BW_EXPORT_FU_IO (BW_DELAY_USEC * 5)
+
+/* Client level IO will be rescheduled to export bucket till
+ * current time + 5 times the BW_EXPORT_FU_IO
+ * This ensures even at load time enough IO's are schedules
+ * from client bucket to export bucket in one iteration
+ */
+#define BW_CLIENT_FU_IO (BW_EXPORT_FU_IO * 5)
+
+/*  Indicates token refersh should happen every 1 sec */
+#define TOKEN_REFRESH_DELAY (DELAY_MSEC / BW_DELAY_MSEC)
+
+#define IOPS_DELAY_MSEC 5
+#define IOPS_DELAY_USEC (BW_DELAY_MSEC * 1000)
+#define IOPS_EXPORT_FU_IO (IOPS_DELAY_USEC * 5)
+#define IOPS_CLIENT_FU_IO (IOPS_EXPORT_FU_IO * 5)
+
+
 /* qos_type_supported should be used in config comparisons */
 enum qos_type_supported {
 	QOS_NOT_ENABLED = 0,
@@ -143,11 +170,26 @@ typedef struct qos_bucket {
 	/* IO lock */
 	pthread_mutex_t lock;
 	uint32_t num_ios_waiting;
+
+#if ENABLE_CLUSTER_QOS
+	/* Cluster QoS params */
+	bool bw_subscribed;
+	bool iops_subscribed;
+	uint64_t bw_consumed_intime;
+	uint64_t iops_consumed_intime;
+	uint64_t bw_last_published_time;
+	uint64_t iops_last_published_time;
+#endif
 } qos_bucket_t;
 
 /* This is a configuration stucture, not used while processing IO */
 typedef struct qos_block_config {
 	bool enable_qos;
+
+#if ENABLE_CLUSTER_QOS
+	bool enable_cluster_qos;
+	uint32_t cqos_msg_interval;
+#endif
 
 	bool enable_tokens;
 	bool enable_bw_control;
@@ -224,6 +266,13 @@ typedef struct Qos_Class {
 	bool enabled_iops_metric;
 	bool enabled_tokens_metric;
 #endif
+#if ENABLE_CLUSTER_QOS
+	/* cluster QoS stores subscribed nodes
+	 * for export/client in an avl tree in
+	 * qos_class of export/client
+	 */
+	struct avltree cqos_subnodes;
+#endif
 } qos_class_t;
 
 void qos_perexport_insert(struct gsh_export *export,
@@ -241,6 +290,16 @@ qos_status_t qos_process(uint64_t size, void *caller_data,
 			 compound_data_t *data, qos_op_type_t op_type,
 			 bool is_ds);
 qos_status_t qos_process_iops(compound_data_t *data);
+qos_bucket_t *qos_get_bw_bucket(qos_class_t *qos_class,
+				qos_op_type_t op_type);
+qos_bucket_t *qos_get_iops_bucket(qos_class_t *qos_class,
+				qos_op_type_t op_type);
+uint64_t get_time_in_usec(void);
 void qos_init(void);
 void shutdown_qos(void);
+void check_cqos_bw_subscription(qos_class_t *qos_class, qos_op_type_t op_type,
+				qos_class_type_t class_type);
+void check_cqos_iops_subscription(qos_class_t *qos_class,
+				qos_op_type_t op_type,
+				qos_class_type_t class_type);
 #endif

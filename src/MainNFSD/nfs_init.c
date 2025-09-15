@@ -83,6 +83,7 @@
 #include "FSAL/fsal_localfs.h"
 #include "nfs_qosmgr.h"
 #include "nfs_qos.h"
+#include "nfs_cluster_qos.h"
 #include "nfs_metrics.h"
 #include "sal_metrics.h"
 
@@ -742,6 +743,20 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 		qos_init();
 
 #endif
+
+#ifdef ENABLE_CLUSTER_QOS
+	/*
+	 * Cluster qos should be initialized only if QoS is enabled, and
+	 * user should provide one Ip address of each available ceph node
+	 * in the cluster.
+	 */
+	if (qos_block_config.enable_qos &&
+	    qos_block_config.enable_cluster_qos &&
+	    !glist_empty(&cqos_hosts)) {
+		cluster_qos_init();
+	}
+#endif
+
 
 	/* Worker parameters: ip/name hash table and expiration
 	 * for each entry

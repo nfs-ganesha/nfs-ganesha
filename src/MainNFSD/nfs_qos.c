@@ -33,6 +33,7 @@
  */
 #include "nfs_core.h"
 #include "nfs_qos.h"
+#include "nfs_cluster_qos.h"
 
 #ifdef USE_MONITORING
 #include "ip_utils.h"
@@ -54,30 +55,6 @@
  * This is compile time config */
 #define BW_SYNC_ENABLE 0
 #define BW_ASYNC_ENABLE !BW_SYNC_ENABLE
-
-#define DELAY_MSEC 1000
-#define USEC_IN_SEC (1000 * 1000)
-
-#define BW_DELAY_MSEC 2
-#define BW_DELAY_USEC (BW_DELAY_MSEC * 1000)
-
-/* export level IO will be pushed down for future 5msec
- * Ensures even at heavy load, qos thread able to process enough IO's */
-#define BW_EXPORT_FU_IO (BW_DELAY_USEC * 5)
-
-/* Client level IO will be rescheduled to export bucket till
- * current time + 5 times the BW_EXPORT_FU_IO
- * This ensures even at load time enough IO's are schedules
- * from client bucket to export bucket in one iteration*/
-#define BW_CLIENT_FU_IO (BW_EXPORT_FU_IO * 5)
-
-/*  Indicates token refersh should happen every 1 sec */
-#define TOKEN_REFRESH_DELAY (DELAY_MSEC / BW_DELAY_MSEC)
-
-#define IOPS_DELAY_MSEC 5
-#define IOPS_DELAY_USEC (BW_DELAY_MSEC * 1000)
-#define IOPS_EXPORT_FU_IO (IOPS_DELAY_USEC * 5)
-#define IOPS_CLIENT_FU_IO (IOPS_EXPORT_FU_IO * 5)
 
 /* Monitoring related macros used for labeling*/
 #ifdef USE_MONITORING
@@ -215,7 +192,7 @@ qos_svc_rcb get_qos_resume_func(qos_op_type_t op_type)
  *
  * @return Current time in microseconds.
  */
-static inline uint64_t get_time_in_usec(void)
+uint64_t get_time_in_usec(void)
 {
 	struct timespec ts;
 
@@ -277,6 +254,9 @@ qos_class_t *allocate_qos_class(qos_class_type_t class_type)
 	glist_init(&node->wbucket.io_waitlist_qos_iops);
 	glist_init(&node->clients);
 	glist_init(&node->client_entries);
+#if ENABLE_CLUSTER_QOS
+	avltree_init(&node->cqos_subnodes, cqos_addr_cmpf, 0);
+#endif
 	return node;
 }
 
@@ -471,9 +451,17 @@ static inline void release_wait_ios(struct glist_head *head,
  * @param [in] counter1 Pointer to a counter for the number of waiting I/Os.
  * @param [in] counter2 Pointer to another counter for the number of wait I/Os.
  */
+
+#if ENABLE_CLUSTER_QOS
 static inline void execute_qos_expired_timers(struct glist_head *head,
-					      unsigned int *counter1,
-					      unsigned int *counter2)
+						unsigned int *counter1,
+						unsigned int *counter2,
+						uint64_t *cqos_value)
+#else
+static inline void execute_qos_expired_timers(struct glist_head *head,
+						unsigned int *counter1,
+						unsigned int *counter2)
+#endif
 {
 	uint64_t ctime = get_time_in_usec();
 	struct glist_head *glist, *glistn;
@@ -482,6 +470,10 @@ static inline void execute_qos_expired_timers(struct glist_head *head,
 	glist_for_each_safe(glist, glistn, head) {
 		entry = glist_entry(glist, timer_entry_t, timer_list);
 		if (entry->expiry <= ctime) {
+#if ENABLE_CLUSTER_QOS
+			if (cqos_initialized)
+				*cqos_value += entry->size;
+#endif
 			resume_timer_entry(entry);
 			--*counter1;
 			--*counter2;
@@ -534,7 +526,7 @@ static inline qos_bucket_t *qos_get_token_bucket(qos_class_t *qos_class,
  * @param [in] op_type Type of the operation (read/write)
  * @return Pointer to the bandwidth bucket, or NULL if not found
  */
-static inline qos_bucket_t *qos_get_bw_bucket(qos_class_t *qos_class,
+qos_bucket_t *qos_get_bw_bucket(qos_class_t *qos_class,
 					      qos_op_type_t op_type)
 {
 	if (!qos_class->bw_enabled)
@@ -552,7 +544,7 @@ static inline qos_bucket_t *qos_get_bw_bucket(qos_class_t *qos_class,
  * @param [in] op_type Type of the operation (read/write)
  * @return Pointer to the IOPS bucket, or NULL if not found
  */
-static inline qos_bucket_t *qos_get_iops_bucket(qos_class_t *qos_class,
+qos_bucket_t *qos_get_iops_bucket(qos_class_t *qos_class,
 						qos_op_type_t op_type)
 {
 	if (!qos_class->iops_enabled)
@@ -1791,7 +1783,14 @@ static inline qos_status_t qos_process_bw(qos_bucket_t *bucket, uint64_t bytes,
 			bucket->bw_ldct += required_time;
 		else
 			bucket->bw_ldct = ctime + required_time;
-
+#if ENABLE_CLUSTER_QOS
+		/*
+		 * If I/O is not suspended then we increment counter with bytes
+		 * else, we will update counter when it resumes.
+		 */
+		if (cqos_initialized && (bucket->bw_subscribed == true))
+			bucket->bw_consumed_intime += bytes;
+#endif
 		/* TASK not scheduled in QOS queue, but accounting is done for
 		 * this IO, now this IO will take the default path */
 		return QOS_TASK_NOT_SUSPENDED;
@@ -2055,6 +2054,13 @@ static inline qos_status_t qos_process_pe(uint64_t rsize, void *caller_data,
 	}
 	if (is_ds && !op_ctx->ctx_export->qos_class->ds_enabled)
 		return QOS_TASK_NOT_SUSPENDED;
+
+#if ENABLE_CLUSTER_QOS
+	if (cqos_initialized) {
+		check_cqos_bw_subscription(op_ctx->ctx_export->qos_class,
+					   op_type, QOS_EXPORT);
+	}
+#endif
 	return qos_check_pe_pc(op_ctx->ctx_export->qos_class, rsize, op_type,
 			       caller_data, data);
 }
@@ -2083,6 +2089,12 @@ static inline qos_status_t qos_process_pc(uint64_t rsize, void *caller_data,
 	}
 	if (is_ds && !op_ctx->client->qos_class->ds_enabled)
 		return QOS_TASK_NOT_SUSPENDED;
+#if ENABLE_CLUSTER_QOS
+	if (cqos_initialized) {
+		check_cqos_bw_subscription(op_ctx->client->qos_class,
+					   op_type, QOS_CLIENT);
+	}
+#endif
 	return qos_check_pe_pc(op_ctx->client->qos_class, rsize, op_type,
 			       caller_data, data);
 }
@@ -2121,6 +2133,12 @@ static inline qos_status_t qos_process_pepc(uint64_t rsize, void *caller_data,
 	}
 	if (is_ds && !qos_class->ds_enabled)
 		return ret;
+
+#if ENABLE_CLUSTER_QOS
+	if (cqos_initialized) {
+		check_cqos_bw_subscription(qos_class, op_type, QOS_EXPORT);
+	}
+#endif
 	/* Is QOS disabled for this particular export */
 	if (qos_class->bw_enabled || qos_class->token_enabled) {
 		/* func call reassures the client is the in export list */
@@ -2244,6 +2262,9 @@ static inline void refresh_qos_client(struct glist_head *clients,
 	bool epd = 0;
 	SVCXPRT *rq_xprt = NULL;
 	struct gsh_client *gsh_client = NULL;
+#if ENABLE_CLUSTER_QOS
+	uint64_t cqos_value = 0;
+#endif
 
 	glist_for_each_safe(glist, glistn, clients) {
 		client = glist_entry(glist, qos_client_entry_t, token_ex_cl);
@@ -2255,9 +2276,15 @@ static inline void refresh_qos_client(struct glist_head *clients,
 			release_wait_ios(&client->io_waitlist_qos,
 					 &client->num_ios_waiting, counter2);
 		} else if (client->num_ios_waiting) {
+#if ENABLE_CLUSTER_QOS
+			execute_qos_expired_timers(&client->io_waitlist_qos,
+						   &client->num_ios_waiting,
+						   counter2, &cqos_value);
+#else
 			execute_qos_expired_timers(&client->io_waitlist_qos,
 						   &client->num_ios_waiting,
 						   counter2);
+#endif
 		}
 
 		if (!client->num_ios_waiting) {
@@ -2415,9 +2442,14 @@ static inline void refresh_qos_token(void)
 static inline void resume_bw_bucket_io(qos_bucket_t *bucket)
 {
 	uint32_t dummy_counter = UINT32_MAX;
-
+#if ENABLE_CLUSTER_QOS
+	execute_qos_expired_timers(&(bucket->io_waitlist_qos_bc),
+				   &(bucket->num_ios_waiting), &dummy_counter,
+				   &(bucket->bw_consumed_intime));
+#else
 	execute_qos_expired_timers(&(bucket->io_waitlist_qos_bc),
 				   &(bucket->num_ios_waiting), &dummy_counter);
+#endif
 }
 
 /**
@@ -2474,6 +2506,10 @@ static inline void resume_bw_io_pepc(qos_class_t *qos_class,
 		bucket->data_consumed += io_entry->size;
 		--bucket->num_ios_waiting;
 
+#if ENABLE_CLUSTER_QOS
+		if (cqos_initialized)
+			bucket->bw_consumed_intime += io_entry->size;
+#endif
 		resume_timer_entry(io_entry);
 		if (bucket->bw_ldct >= (ctime + check_delay))
 			break;
@@ -2641,6 +2677,14 @@ int qos_iops_check(compound_data_t *data, qos_bucket_t *bucket)
 	/* The whole compound has been Accounted for */
 	if (timeout <= ctime) {
 		bucket->iops_consumed += num_ops;
+#if ENABLE_CLUSTER_QOS
+	/*
+	 * If I/O is not suspended then we increment counter with bytes
+	 * else, we will update counter when it resumes.
+	 */
+	if (cqos_initialized && (bucket->iops_subscribed == true))
+		bucket->iops_consumed_intime += num_ops;
+#endif
 		return QOS_TASK_NOT_SUSPENDED;
 	} else {
 		qos_iops_suspend_task(bucket, data, num_ops, timeout);
@@ -2681,7 +2725,10 @@ qos_status_t qos_process_iops_pe(compound_data_t *data, uint32_t op_type)
 		ret = QOS_TASK_NOT_SUSPENDED;
 		goto out;
 	}
-
+#if ENABLE_CLUSTER_QOS
+	if (cqos_initialized)
+		check_cqos_iops_subscription(qos_class, op_type, QOS_EXPORT);
+#endif
 	PTHREAD_MUTEX_lock(&qos_class->lock);
 	ret = qos_iops_check(data, bucket);
 #ifdef USE_MONITORING
@@ -2729,6 +2776,10 @@ qos_status_t qos_process_iops_pc(compound_data_t *data, uint32_t op_type)
 		ret = QOS_TASK_NOT_SUSPENDED;
 		goto out;
 	}
+#if ENABLE_CLUSTER_QOS
+	if (cqos_initialized)
+		check_cqos_iops_subscription(qos_class, op_type, QOS_CLIENT);
+#endif
 	PTHREAD_MUTEX_lock(&qos_class->lock);
 	ret = qos_iops_check(data, bucket);
 #ifdef USE_MONITORING
@@ -2787,7 +2838,12 @@ qos_status_t qos_process_iops_pepc(compound_data_t *data, uint32_t op_type)
 
 		if (bucket == NULL)
 			goto out;
-
+#if ENABLE_CLUSTER_QOS
+		if (cqos_initialized) {
+			check_cqos_iops_subscription(qos_class, op_type,
+						     QOS_EXPORT);
+		}
+#endif
 		data->qos_flags |= IS_QOS_IOPS_ACCOUNTED;
 		qos_iops_suspend_task(bucket, data, data->argarray_len,
 				      get_time_in_usec());
@@ -2856,8 +2912,14 @@ static inline void resume_iops_bucket(qos_bucket_t *bucket)
 {
 	uint32_t dummy_counter = UINT32_MAX;
 
+#if ENABLE_CLUSTER_QOS
+	execute_qos_expired_timers(&(bucket->io_waitlist_qos_iops),
+				   &(bucket->num_ios_waiting), &dummy_counter,
+				   &(bucket->iops_consumed_intime));
+#else
 	execute_qos_expired_timers(&(bucket->io_waitlist_qos_iops),
 				   &(bucket->num_ios_waiting), &dummy_counter);
+#endif
 }
 
 /**
@@ -3019,6 +3081,10 @@ static inline void resume_iops_pepc(qos_class_t *qos_class,
 
 		bucket->iops_consumed += io_entry->size;
 		--bucket->num_ios_waiting;
+#if ENABLE_CLUSTER_QOS
+		if (cqos_initialized)
+			bucket->iops_consumed_intime += io_entry->size;
+#endif
 		resume_timer_entry(io_entry);
 
 		if (bucket->iops_ldct >= (ctime + check_delay))

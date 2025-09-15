@@ -19,40 +19,19 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #
 #-------------------------------------------------------------------------------
-
 ########### next target ###############
 
-SET(nfs_mnt_xdr_STAT_SRCS
-   xdr_mount.c
-   xdr_nfs23.c
-   xdr_nfsv41.c
-   xdr_nlm4.c
-   xdr_nsm.c
-   xdr_nfsacl.c
+SET(cqos_STAT_SRCS
+	cqos_pubsub.c
+	cqos_Null.c
 )
 
-if(USE_RQUOTA)
-  SET(nfs_mnt_xdr_STAT_SRCS
-    ${nfs_mnt_xdr_STAT_SRCS}
-    xdr_rquota.c
-  )
-endif(USE_RQUOTA)
-
-if (ENABLE_QOS)
-if (ENABLE_CLUSTER_QOS)
-   SET(nfs_mnt_xdr_STAT_SRCS
-     ${nfs_mnt_xdr_STAT_SRCS}
-     xdr_cqos.c
-    )
-endif (ENABLE_CLUSTER_QOS)
-endif (ENABLE_QOS)
-
-add_library(nfs_mnt_xdr OBJECT ${nfs_mnt_xdr_STAT_SRCS})
-add_sanitizers(nfs_mnt_xdr)
-set_target_properties(nfs_mnt_xdr PROPERTIES COMPILE_FLAGS "-fPIC")
+add_library(cqos OBJECT ${cqos_STAT_SRCS})
+add_sanitizers(cqos)
+set_target_properties(cqos PROPERTIES COMPILE_FLAGS "-fPIC")
 
 if (USE_LTTNG)
-add_dependencies(nfs_mnt_xdr gsh_trace_header_generate)
+add_dependencies(cqos gsh_trace_header_generate)
 include("${CMAKE_BINARY_DIR}/gsh_lttng_generation_file_properties.cmake")
 endif (USE_LTTNG)
 

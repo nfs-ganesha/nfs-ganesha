@@ -544,6 +544,25 @@ const nfs_function_desc_t smmon_func_desc[] = {
 			.dispatch_behaviour = NEEDS_CRED },
 };
 #endif
+#ifdef ENABLE_CLUSTER_QOS
+const nfs_function_desc_t cqos_func_desc[] = {
+	[CQOSPROC_PUBSUB_NULL] = {
+				.service_function = cqos_Null,
+				.free_function = cqos_Null_Free,
+				.xdr_decode_func = (xdrproc_t) xdr_void,
+				.xdr_encode_func = (xdrproc_t) xdr_void,
+				.funcname = "CQOS_PUBSUB_NULL",
+				.dispatch_behaviour = NOTHING_SPECIAL},
+	[CQOSPROC_PUBSUB_MSG] = {
+				.service_function = cqos_rpc_msg_recv,
+				.free_function = cqos_rpc_msg_Free,
+				.xdr_decode_func =
+				(xdrproc_t) xdr_cluster_qos_msg,
+				.xdr_encode_func = (xdrproc_t) xdr_void,
+				.funcname = "CQOS_PUBSUB_MSG",
+				.dispatch_behaviour = NOTHING_SPECIAL},
+};
+#endif
 
 #ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
@@ -1983,5 +2002,21 @@ enum xprt_stat nfs_rpc_valid_NFS_RDMA(struct svc_req *req)
 	}
 
 	return nfs_rpc_valid_NFS(req);
+}
+#endif
+
+#ifdef ENABLE_CLUSTER_QOS
+enum xprt_stat nfs_rpc_valid_CQOS(struct svc_req *req)
+{
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
+	SVCXPRT *xprt = reqdata->svc.rq_xprt;
+
+	if (get_port(svc_getrpclocal(xprt)) ==
+		nfs_param.core_param.port[P_CQOS]) {
+		reqdata->funcdesc =
+			&cqos_func_desc[req->rq_msg.cb_proc];
+		return nfs_rpc_process_request(reqdata, false);
+	}
+	return nfs_rpc_noproc(reqdata);
 }
 #endif

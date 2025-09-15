@@ -122,6 +122,11 @@ int nlm4_Free_All(nfs_arg_t *, struct svc_req *, nfs_res_t *);
  */
 #endif
 
+#ifdef ENABLE_CLUSTER_QOS
+int cqos_rpc_msg_recv(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res);
+int cqos_Null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res);
+#endif
+
 #ifdef _USE_RQUOTA
 int rquota_Null(nfs_arg_t *, struct svc_req *, nfs_res_t *);
 
@@ -503,6 +508,11 @@ void nlm4_Unlock_Free(nfs_res_t *);
 void nlm4_Sm_Notify_Free(nfs_res_t *);
 void nlm4_Granted_Res_Free(nfs_res_t *);
 void nlm4_Free_All_Free(nfs_res_t *);
+#endif
+
+#ifdef ENABLE_CLUSTER_QOS
+void cqos_rpc_msg_Free(nfs_res_t *res);
+void cqos_Null_Free(nfs_res_t *res);
 #endif
 
 #ifdef _USE_RQUOTA

@@ -83,6 +83,9 @@ Requires: openSUSE-release
 @BCOND_QOS@ qos
 %global use_qos %{on_off_switch qos}
 
+@BCOND_CLUSTER_QOS@ cluster_qos
+%global use_cluster_qos %{on_off_switch cluster_qos}
+
 @BCOND_MAN_PAGE@ man_page
 %global use_man_page %{on_off_switch man_page}
 
@@ -596,6 +599,7 @@ cmake3 .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_PRIO_INHERIT=%{use_prio_inherit}          \
 	-DUSE_OPENSSL=%{use_openssl}                    \
 	-DUSE_GNUTLS=%{use_gnutls}                      \
+	-DENABLE_CLUSTER_QOS=%{use_cluster_qos}                         \
 	-DUSE_9P_RDMA=%{use_rdma}			\
 	-DUSE_LTTNG=%{use_lttng}			\
 	-DUSE_UNWIND=%{use_unwind}			\
