@@ -26,6 +26,9 @@
 
 #include <time.h>
 
+#ifdef USE_MONITORING
+#include "nfs_metrics.h"
+#endif
 #define IS_QOS_IO (1 << 0)
 #define IS_QOS_IO_READ_BYPASS (1 << 1)
 #define IS_QOS_COMPOUND_IO (1 << 3)
@@ -132,6 +135,11 @@ typedef struct qos_bucket {
 	uint64_t tokens_consumed;
 	uint64_t tokens_renew_time; /*   In useconds */
 
+#ifdef USE_MONITORING
+	struct gauge_metric_handle bw_metric_handler;
+	struct gauge_metric_handle iops_metric_handler;
+	struct gauge_metric_handle tokens_metric_handler;
+#endif
 	/* IO lock */
 	pthread_mutex_t lock;
 	uint32_t num_ios_waiting;
@@ -211,6 +219,11 @@ typedef struct Qos_Class {
 	bool combined_rw_bw_control;
 	bool combined_rw_iops_control;
 	bool combined_rw_token_control;
+#ifdef USE_MONITORING
+	bool enabled_bw_metric;
+	bool enabled_iops_metric;
+	bool enabled_tokens_metric;
+#endif
 } qos_class_t;
 
 void qos_perexport_insert(struct gsh_export *export,
