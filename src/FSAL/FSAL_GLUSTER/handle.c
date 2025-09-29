@@ -64,8 +64,6 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 	now(&s_time);
 #endif
 
-	fsal_obj_handle_fini(&objhandle->handle, true);
-
 	if (obj_hdl->type == REGULAR_FILE) {
 		fsal_status_t st;
 
@@ -78,6 +76,8 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 				st.minor);
 		}
 	}
+
+	fsal_obj_handle_fini(&objhandle->handle, true);
 
 	if (my_fd->creds.caller_garray) {
 		gsh_free(my_fd->creds.caller_garray);
