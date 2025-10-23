@@ -120,6 +120,78 @@ static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp);
 static void nfs_release_nlm_state(char *release_ip, sockaddr_t *release_addr);
 static void nfs_release_v4_clients(char *ip, sockaddr_t *ip_saddr);
 
+#define OPAQUE_BYTES_RECOV_FLAGS                                  \
+	(OPAQUE_BYTES_0x | OPAQUE_BYTES_INVALID_LEN |             \
+	 OPAQUE_BYTES_INVALID_NULL | OPAQUE_BYTES_INVALID_EMPTY | \
+	 OPAQUE_BYTES_NO_TRUNC)
+
+static inline void convert_opaque_val(struct display_buffer *dspbuf,
+				      void *value, int len)
+{
+	int ret;
+
+	ret = display_opaque_value_max_impl(dspbuf, value, len, dspbuf->b_size,
+					    "/", OPAQUE_BYTES_RECOV_FLAGS);
+	assert(ret > 0);
+}
+
+/**
+ * @brief generate a name that identifies this client
+ *
+ * This name will be used to know that a client was talking to the
+ * server before a restart so that it will be allowed to do reclaims
+ * during grace period.
+ *
+ * @param[in] clientid  Client record
+ * @param[in/out] len   Length of resulting name
+ *
+ * @return NULL if failure or the created clid name string
+ */
+
+char *nfs4_create_clid_name(nfs_client_id_t *clientid, size_t *len)
+{
+	nfs_client_record_t *cl_rec = clientid->cid_client_record;
+	const char *str_client_addr = "(unknown)";
+	char cidstr[PATH_MAX], *encoded;
+	struct display_buffer dspbuf = { sizeof(cidstr), cidstr, cidstr };
+	int total_size, cidstr_len, str_client_addr_len, rc;
+
+	/* get the caller's IP addr */
+	if (clientid->gsh_client != NULL)
+		str_client_addr = clientid->gsh_client->hostaddr_str;
+
+	rc = display_opaque_value_max_impl(&dspbuf, cl_rec->cr_client_val,
+					   cl_rec->cr_client_val_len,
+					   dspbuf.b_size, "/",
+					   OPAQUE_BYTES_RECOV_FLAGS);
+
+	if (rc <= 0)
+		LogFatal(COMPONENT_RECOVERY, "Failure to encode clientid");
+
+	cidstr_len = display_buffer_len(&dspbuf);
+	str_client_addr_len = strlen(str_client_addr);
+
+	total_size = cidstr_len + str_client_addr_len + 2;
+
+	encoded = gsh_malloc(total_size);
+
+	/* format is %s-(%d:%s) client_address-(cidstr_len:cid_str)
+	 * Note that cidstr is already in the form (%d:%s), so building the
+	 * encoded string is simple.
+	 */
+	memcpy(encoded, str_client_addr, str_client_addr_len);
+	encoded[str_client_addr_len] = '-';
+	memcpy(encoded + str_client_addr_len + 1, cidstr, cidstr_len + 1);
+
+	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+		    "Created clientid encoding [%s]", encoded);
+
+	if (len != NULL)
+		*len = total_size - 1;
+
+	return encoded;
+}
+
 clid_entry_t *nfs4_add_clid_entry(char *cl_name, bool reclaim_complete)
 {
 	clid_entry_t *new_ent = gsh_malloc(sizeof(clid_entry_t));
@@ -303,7 +375,8 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 
 		/* If we're already in a grace period then we're done */
 		if (was_grace) {
-			LogDebug(COMPONENT_RECOVERY, "Already in grace");
+			LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+				    "Already in grace");
 			break;
 		}
 
@@ -413,6 +486,7 @@ int nfs_start_grace(nfs_grace_start_t *gsp)
 			}
 		}
 	}
+
 out:
 	PTHREAD_MUTEX_unlock(&grace_mutex);
 	return ret;
@@ -583,7 +657,8 @@ void nfs_try_lift_grace(void)
 		in_grace = (rc_count != clid_count);
 
 	if (clid_count == 0) {
-		LogDebug(COMPONENT_RECOVERY, "0 clients");
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "0 clients");
 		if (handling_zero_clients) {
 			/* Handle special condition of 0 clients connected to
 			 * this Ganesha. Need to avoid situation of immediatley
@@ -596,9 +671,11 @@ void nfs_try_lift_grace(void)
 			 */
 			in_grace = true;
 			handling_zero_clients = false;
-			LogDebug(COMPONENT_RECOVERY, "Extending the grace");
+			LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+				    "Extending the grace");
 		} else
-			LogDebug(COMPONENT_RECOVERY, "Ending the grace");
+			LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+				    "Ending the grace");
 	}
 
 	/* Otherwise, wait for the timeout */
@@ -805,7 +882,8 @@ void nfs4_chk_clid_impl(nfs_client_id_t *clientid, clid_entry_t **clid_ent_arg)
 	glist_for_each(node, &clid_list) {
 		clid_ent = glist_entry(node, clid_entry_t, cl_list);
 		if (check_clid(clientid, clid_ent)) {
-			if (isDebug(COMPONENT_CLIENTID)) {
+			if (isDebug(COMPONENT_CLIENTID) ||
+			    isDebug(COMPONENT_RECOVERY)) {
 				char str[LOG_BUFF_LEN] = "\0";
 				struct display_buffer dspbuf = { sizeof(str),
 								 str, str };
@@ -1074,8 +1152,8 @@ static void nlm_release(state_nsm_client_t *nsm_cp)
 
 	err = state_nlm_notify(nsm_cp, false, 0);
 	if (err != STATE_SUCCESS)
-		LogDebug(COMPONENT_STATE, "state_nlm_notify failed with %d",
-			 err);
+		LogDebugAlt(COMPONENT_STATE, COMPONENT_RECOVERY,
+			    "state_nlm_notify failed with %d", err);
 	dec_nsm_client_ref(nsm_cp);
 }
 #endif /* _USE_NLM */
@@ -1097,7 +1175,8 @@ static void nfs_release_nlm_state(char *release_ip, sockaddr_t *release_addr)
 	if (!nfs_param.core_param.enable_NLM)
 		return;
 
-	LogDebug(COMPONENT_STATE, "Release all NLM locks");
+	LogDebugAlt(COMPONENT_STATE, COMPONENT_RECOVERY,
+		    "Release all NLM locks");
 
 	cancel_all_nlm_blocked();
 
@@ -1105,8 +1184,8 @@ static void nfs_release_nlm_state(char *release_ip, sockaddr_t *release_addr)
 	for (i = 0; i < ht->parameter.index_size; i++) {
 		head_rbt = &ht->partitions[i].rbt;
 restart:
-		LogDebug(COMPONENT_STATE, "Trying lock on %p",
-			 &ht->partitions[i].ht_lock);
+		LogDebugAlt(COMPONENT_STATE, COMPONENT_RECOVERY,
+			    "Trying lock on %p", &ht->partitions[i].ht_lock);
 		PTHREAD_RWLOCK_wrlock(&ht->partitions[i].ht_lock);
 		/* go through all entries in the red-black-tree */
 		RBT_LOOP(head_rbt, pn)
@@ -1135,7 +1214,7 @@ static bool ip_match(sockaddr_t *ip, nfs_client_id_t *cid)
 	bool rc;
 	sockaddr_t *saddr = &cid->cid_client_record->cr_server_addr;
 
-	if (isFullDebug(COMPONENT_STATE)) {
+	if (isFullDebug(COMPONENT_RECOVERY)) {
 		char addr1[SOCK_NAME_MAX] = "\0";
 		char addr2[SOCK_NAME_MAX] = "\0";
 		struct display_buffer db1 = { sizeof(addr1), addr1, addr1 };

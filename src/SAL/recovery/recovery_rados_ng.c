@@ -188,7 +188,7 @@ static void rados_ng_add_clid(nfs_client_id_t *clientid)
 	int ret;
 
 	rados_kv_create_key(clientid, ckey, sizeof(ckey));
-	cval = rados_kv_create_val(clientid, NULL);
+	cval = nfs4_create_clid_name(clientid, NULL);
 
 	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY, "adding %s :: %s",
 		    ckey, cval);
@@ -295,8 +295,9 @@ static void rados_ng_read_recov_clids_takeover(
 
 	if (!gsp) {
 		takeover = false;
-		LogDebug(COMPONENT_RECOVERY, "Recovery object in use %s",
-			 rados_recov_oid->gr_val);
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "Recovery object in use %s",
+			    rados_recov_oid->gr_val);
 		rados_ng_read_recov_clids_recover(add_clid_entry,
 						  add_rfh_entry);
 		return;
@@ -345,8 +346,8 @@ static void rados_ng_read_recov_clids_takeover(
 
 	takeover = true;
 
-	LogDebug(COMPONENT_RECOVERY, "Recovery object in use %s",
-		 object_takeover);
+	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+		    "Recovery object in use %s", object_takeover);
 
 	ret = rados_kv_traverse(rados_ng_pop_clid_entry, &args,
 				object_takeover);
@@ -366,8 +367,8 @@ static void rados_ng_cleanup_old(void)
 	struct gsh_refstr *recov_oid;
 
 	if (no_cleanup) {
-		LogDebug(COMPONENT_RECOVERY,
-			 "Recovery object was not set properly, no cleanup");
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "Recovery object was not set properly, no cleanup");
 		no_cleanup = false;
 	}
 	PTHREAD_MUTEX_lock(&grace_op_lock);
@@ -381,14 +382,16 @@ static void rados_ng_cleanup_old(void)
 		rcu_read_lock();
 		recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
 		rcu_read_unlock();
-		LogDebug(COMPONENT_RECOVERY, "Recovery object to be cleaned %s",
-			 recov_oid->gr_val);
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "Recovery object to be cleaned %s",
+			    recov_oid->gr_val);
 		ret = rados_write_op_operate(grace_op, rados_recov_io_ctx,
 					     recov_oid->gr_val, NULL, 0);
 		gsh_refstr_put(recov_oid);
 	} else {
-		LogDebug(COMPONENT_RECOVERY, "Recovery object to be cleaned %s",
-			 object_takeover);
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "Recovery object to be cleaned %s",
+			    object_takeover);
 		ret = rados_write_op_operate(grace_op, rados_recov_io_ctx,
 					     object_takeover, NULL, 0);
 	}

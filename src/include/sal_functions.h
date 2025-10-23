@@ -1083,6 +1083,7 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
 void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
 
 /* Recovery backend management */
+char *nfs4_create_clid_name(nfs_client_id_t *clientid, size_t *len);
 const char *recovery_backend_str(enum recovery_backend recovery_backend);
 int nfs4_recovery_init(void);
 void nfs4_recovery_shutdown(void);

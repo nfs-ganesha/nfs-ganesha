@@ -94,7 +94,6 @@ static inline void rados_kv_create_key(nfs_client_id_t *clientid, char *key,
 	(void)snprintf(key, size, "%lu", (uint64_t)clientid->cid_clientid);
 }
 
-char *rados_kv_create_val(nfs_client_id_t *clientid, size_t *len);
 int rados_kv_traverse(pop_clid_entry_t callback, struct pop_args *args,
 		      const char *object);
 void rados_kv_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle);

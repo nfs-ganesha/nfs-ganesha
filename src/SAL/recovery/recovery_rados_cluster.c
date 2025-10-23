@@ -177,13 +177,13 @@ static void rados_cluster_end_grace(void)
 	wop = rados_create_write_op();
 	rados_write_op_remove(wop);
 	if (!takeover) {
-		LogDebug(COMPONENT_RECOVERY, "Recovery object removed: %s",
-			 old_oid->gr_val);
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "Recovery object removed: %s", old_oid->gr_val);
 		ret = rados_write_op_operate(wop, rados_recov_io_ctx,
 					     old_oid->gr_val, NULL, 0);
 	} else {
-		LogDebug(COMPONENT_RECOVERY, "Recovery object removed: %s",
-			 object_takeover_old);
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "Recovery object removed: %s", object_takeover_old);
 		ret = rados_write_op_operate(wop, rados_recov_io_ctx,
 					     object_takeover_old, NULL, 0);
 	}
@@ -334,8 +334,8 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 			 ret);
 		return;
 	}
-	LogDebug(COMPONENT_RECOVERY, "After joining grace, cur=%ld, rec=%ld",
-		 cur, rec);
+	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+		    "After joining grace, cur=%ld, rec=%ld", cur, rec);
 
 	/*
 	 * Recovery db names are like "rec-cccccccccccccccc:hostname" OR
@@ -363,8 +363,8 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	else
 		(void)snprintf(recov_oid->gr_val, new_len, "rec-%16.16lx:%s",
 			       cur, nodeid);
-	LogDebug(COMPONENT_RECOVERY, "New recovery object %s",
-		 recov_oid->gr_val);
+	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+		    "New recovery object %s", recov_oid->gr_val);
 	gsh_refstr_get(recov_oid);
 	rcu_set_pointer(&rados_recov_oid, recov_oid);
 
@@ -376,8 +376,7 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 	gsh_refstr_put(recov_oid);
 	rados_release_write_op(wop);
 	if (ret < 0) {
-		LogEvent(COMPONENT_RECOVERY,
-			 "Failed to create recovery object");
+		LogEvent(COMPONENT_RECOVERY, "Failed to create recovery db");
 		return;
 	};
 
@@ -390,8 +389,9 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
 		else
 			(void)snprintf(old_oid->gr_val, old_len,
 				       "rec-%16.16lx:%s", rec, nodeid);
-		LogDebug(COMPONENT_RECOVERY,
-			 "Recovery object for reclaim use %s", old_oid->gr_val);
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "Recovery object for reclaim use %s",
+			    old_oid->gr_val);
 		rcu_set_pointer(&rados_recov_old_oid, old_oid);
 		ret = rados_kv_traverse(rados_ng_pop_clid_entry, &args,
 					old_oid->gr_val);
@@ -458,7 +458,7 @@ static void rados_set_client_cb(struct rbt_node *pn, void *arg)
 
 	kvp->keys[kvp->num] = gsh_strdup(ckey);
 	kvp->vals[kvp->num] =
-		rados_kv_create_val(clientid, &kvp->lens[kvp->num]);
+		nfs4_create_clid_name(clientid, &kvp->lens[kvp->num]);
 
 	++kvp->num;
 }
@@ -603,8 +603,8 @@ static void rados_cluster_set_enforcing(void)
 	ret = rados_grace_enforcing_on(rados_recov_io_ctx,
 				       rados_kv_param.grace_oid, nodeid, &cur,
 				       &rec);
-	LogDebug(COMPONENT_RECOVERY, "Grace table has cur = %ld, rec=%ld", cur,
-		 rec);
+	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+		    "Grace table has cur = %ld, rec=%ld", cur, rec);
 	if (ret)
 		LogEvent(COMPONENT_RECOVERY,
 			 "Failed to set enforcing for %s: %d", nodeid, ret);
@@ -621,8 +621,8 @@ static bool rados_cluster_grace_enforcing(void)
 			 "%s: Grace enforcing check failed, ret=%d", __func__,
 			 ret);
 	else
-		LogDebug(COMPONENT_RECOVERY,
-			 "%s: Grace enforcing check succeeds", __func__);
+		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
+			    "%s: Grace enforcing check succeeds", __func__);
 	return (ret == 0);
 }
 

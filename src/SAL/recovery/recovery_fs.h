@@ -19,6 +19,7 @@
 
 #ifndef _RECOVERY_FS_H
 #define _RECOVERY_FS_H
+
 /*
  * Select bits from recovery_fs.c that we can reuse elsewhere
  */
