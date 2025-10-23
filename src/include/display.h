@@ -195,6 +195,9 @@ static inline int display_printf(struct display_buffer *dspbuf, const char *fmt,
 /* Return -1 on EMPTTY target */
 #define OPAQUE_BYTES_INVALID_EMPTY 0x10
 
+/* Return -1 if len > max */
+#define OPAQUE_BYTES_NO_TRUNC 0x20
+
 int display_opaque_bytes_flags(struct display_buffer *dspbuf, void *value,
 			       int len, int flags);
 
@@ -214,8 +217,15 @@ static inline int display_opaque_bytes(struct display_buffer *dspbuf,
 	return display_opaque_bytes_flags(dspbuf, value, len, OPAQUE_BYTES_0x);
 }
 
-int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
-			     int len, int max);
+int display_opaque_value_max_impl(struct display_buffer *dspbuf, void *value,
+				  int len, int max, char *notprint, int flags);
+
+static inline int display_opaque_value_max(struct display_buffer *dspbuf,
+					   void *value, int len, int max)
+{
+	return display_opaque_value_max_impl(dspbuf, value, len, max, NULL,
+					     OPAQUE_BYTES_0x);
+}
 
 /**
  * @brief Display a number of opaque bytes as a hex string.

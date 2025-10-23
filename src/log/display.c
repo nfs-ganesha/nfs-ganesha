@@ -393,10 +393,12 @@ int display_opaque_bytes_flags(struct display_buffer *dspbuf, void *value,
  * @brief Display a number of opaque bytes as a hex string, limiting the number
  *        of bytes used from the opaque value.
  *
- * @param[in,out] dspbuf The buffer.
- * @param[in]     value  The bytes to display
- * @param[in]     len    The number of bytes to display
- * @param[in]     max    Max number of bytes from the opaque value to display
+ * @param[in,out] dspbuf   The buffer.
+ * @param[in]     value    The bytes to display
+ * @param[in]     len      The number of bytes to display
+ * @param[in]     max      Max number of bytes from the opaque value to display
+ * @param[in]     notprint Additional set of characters not considered printable
+ * @param[in]     flags    Flags indicating options for display
  *
  * @return the bytes remaining in the buffer.
  *
@@ -405,8 +407,8 @@ int display_opaque_bytes_flags(struct display_buffer *dspbuf, void *value,
  * the number of bytes to use from the opaque value.
  *
  */
-int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
-			     int len, int max)
+int display_opaque_value_max_impl(struct display_buffer *dspbuf, void *value,
+				  int len, int max, char *notprint, int flags)
 {
 	unsigned int i = 0;
 	int b_left = display_start(dspbuf);
@@ -416,16 +418,28 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
 		return b_left;
 
 	/* Check that the length is ok */
-	if (len < 0)
-		return display_printf(dspbuf, "(invalid len=%d)", len);
+	if (len < 0) {
+		if (flags & OPAQUE_BYTES_INVALID_LEN)
+			return -1;
+		else
+			return display_printf(dspbuf, "(invalid len=%d)", len);
+	}
 
 	/* If the value is NULL, display NULL value. */
-	if (value == NULL)
-		return display_cat(dspbuf, "(NULL)");
+	if (value == NULL) {
+		if (flags & OPAQUE_BYTES_INVALID_NULL)
+			return -1;
+		else
+			return display_cat(dspbuf, "(NULL)");
+	}
 
 	/* If the value is empty, display EMPTY value. */
-	if (len == 0)
-		return display_cat(dspbuf, "(EMPTY)");
+	if (len == 0) {
+		if (flags & OPAQUE_BYTES_INVALID_EMPTY)
+			return -1;
+		else
+			return display_cat(dspbuf, "(EMPTY)");
+	}
 
 	/* Display the length of the value. */
 	b_left = display_printf(dspbuf, "(%d:", len);
@@ -433,12 +447,19 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
 	if (b_left <= 0)
 		return b_left;
 
-	if (len > max)
-		cpy = max;
+	if (len > max) {
+		if (flags & OPAQUE_BYTES_NO_TRUNC)
+			return -1;
+		else
+			cpy = max;
+	}
 
-	/* Determine if the value is entirely printable characters. */
+	/* Determine if the value is entirely printable characters that are not
+	 * in any set of characters also considered non-printable.
+	 */
 	for (i = 0; i < len; i++)
-		if (!isprint(((char *)value)[i]))
+		if (!isprint(((char *)value)[i]) ||
+		    (notprint && strchr(notprint, ((char *)value)[i])))
 			break;
 
 	if (i == len) {
@@ -448,7 +469,7 @@ int display_opaque_value_max(struct display_buffer *dspbuf, void *value,
 		 */
 		b_left = display_len_cat(dspbuf, value, cpy);
 	} else {
-		b_left = display_opaque_bytes(dspbuf, value, cpy);
+		b_left = display_opaque_bytes_flags(dspbuf, value, cpy, flags);
 	}
 
 	if (b_left <= 0)
