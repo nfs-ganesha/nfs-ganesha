@@ -103,10 +103,9 @@ const char *xprt_type_to_str(xprt_type_t type)
 
 void copy_xprt_addr(sockaddr_t *addr, SVCXPRT *xprt)
 {
-	struct netbuf *phostaddr = svc_getcaller_netbuf(xprt);
+	sockaddr_t *xp_addr = svc_getrpccaller(xprt);
 
-	assert(phostaddr->len <= sizeof(sockaddr_t) && phostaddr->buf != NULL);
-	memcpy(addr, phostaddr->buf, phostaddr->len);
+	memcpy(addr, xp_addr, sizeof(*addr));
 }
 
 static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
