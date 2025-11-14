@@ -456,6 +456,48 @@ bool is_loopback(sockaddr_t *addr)
 }
 
 /**
+ *
+ * @brief Test if addr is inaddrany
+ *
+ * @param[in] addr      Address
+ *
+ * @return Comparator true/false,
+ */
+bool is_inaddrany(sockaddr_t *addr)
+{
+	struct sockaddr_in6 *ip6addr = (struct sockaddr_in6 *)addr;
+
+	if (addr->ss_family == AF_INET) {
+		struct sockaddr_in *inaddr = (struct sockaddr_in *)addr;
+
+		return inaddr->sin_addr.s_addr == INADDR_ANY;
+	} else if (addr->ss_family != AF_INET6) {
+		return false;
+	}
+
+	/* If the client socket is IPv4, then it is wrapped into a
+	 * ::ffff:a.b.c.d IPv6 address. We check this here.
+	 * This kind of address is shaped like this:
+	 * |---------------------------------------------------------------|
+	 * |   80 bits = 10 bytes  | 16 bits = 2 bytes | 32 bits = 4 bytes |
+	 * |---------------------------------------------------------------|
+	 * |            0          |        FFFF       |    IPv4 address   |
+	 * |---------------------------------------------------------------|
+	 *
+	 * An IPv4 loop back address is 127.b.c.d, so we only need to examine
+	 * the first byte past ::ffff, or s6_addr[12].
+	 *
+	 * Otherwise we compare to ::1
+	 */
+	return (!memcmp(ip6addr->sin6_addr.s6_addr, ten_bytes_all_0, 10) &&
+		(ip6addr->sin6_addr.s6_addr[10] == 0xFF) &&
+		(ip6addr->sin6_addr.s6_addr[11] == 0xFF) &&
+		(*(in_addr_t *)&ip6addr->sin6_addr.s6_addr[12] ==
+		 INADDR_ANY)) ||
+	       IN6_IS_ADDR_UNSPECIFIED(ip6addr->sin6_addr.s6_addr);
+}
+
+/**
  * @brief Allocate a CIDR struct
  *
  * @return CIDR struct

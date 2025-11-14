@@ -161,31 +161,6 @@ static void load_lttng(void)
 
 #endif /* USE_LTTNG */
 
-#ifdef USE_MONITORING
-/* Function to check if the passed in sockaddr_t is holding INADDR_ANY */
-static bool if_ip_addr_any(const sockaddr_t *addr)
-{
-	if (addr->ss_family == AF_INET6) {
-		struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)addr;
-		bool addr_any = true;
-
-		for (int i = 0; i < 16; i++) {
-			if (addr6->sin6_addr.__in6_u.__u6_addr8[i] != 0) {
-				addr_any = false;
-				break;
-			}
-		}
-		return addr_any;
-	} else {
-		/* IPv4 */
-		if (((struct sockaddr_in *)addr)->sin_addr.s_addr == INADDR_ANY)
-			return true;
-		else
-			return false;
-	}
-}
-#endif
-
 /**
  * main: simply the main function.
  *
@@ -613,7 +588,7 @@ int main(int argc, char *argv[])
 		if (nfs_param.core_param.enable_dynamic_metrics)
 			dynamic_metrics__init();
 		/* if monitoring_addr is not set, then make use of bind_addr */
-		if (if_ip_addr_any(&nfs_param.core_param.monitoring_addr)) {
+		if (is_inaddrany(&nfs_param.core_param.monitoring_addr)) {
 			LogEvent(COMPONENT_MAIN,
 				 "Using Bind_Addr as Monitoring_Addr");
 			prometheus_exposer__start(

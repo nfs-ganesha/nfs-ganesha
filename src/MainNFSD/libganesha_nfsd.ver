@@ -156,6 +156,7 @@
   insert_fd_lru;
   ip_str_to_sockaddr;
   is_filesystem_exported;
+  is_inaddrany;
   is_op_context_conditional_flag_set;
   load_config_from_node;
   load_config_from_parse;
