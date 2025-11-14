@@ -86,6 +86,12 @@ extern "C" {
  * display_cat append a simple string to the buffer
  *
  * There are variants of these functions.
+ *
+ * All display functions return the following set of values:
+ *
+ * -1 if there is some problem rendering the buffer unusable.
+ * 0 if the buffer has overflowed.
+ * >0 indicates the bytes remaining (including one byte for '\0').
  */
 
 /**
@@ -102,12 +108,57 @@ struct display_buffer {
 	char *b_start; /*< Start of the buffer */
 };
 
+/**
+ * @brief Compute the bytes remaining in a buffer.
+ *
+ * @param[in,out] dspbuf The buffer.
+ *
+ * @retval -1 if there is some problem rendering the buffer unusable.
+ * @retval 0 if the buffer has overflowed.
+ * @retval >0 indicates the bytes remaining (including one byte for '\0').
+ */
 int display_buffer_remain(struct display_buffer *dspbuf);
 
+/**
+ * @brief Prepare to append to buffer.
+ *
+ * @param[in,out] dspbuf The buffer.
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ * This routine validates the buffer, then checks if the buffer is already full
+ * in which case it will mark the buffer as overflowed and finish up the buffer.
+ *
+ */
 int display_start(struct display_buffer *dspbuf);
 
+/**
+ * @brief Finish up a buffer after appending to it.
+ *
+ * @param[in,out] dspbuf The buffer.
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ * After a buffer has been appended to, check for overflow.
+ *
+ * This should be called by every routine that actually copies bytes into a
+ * display_buffer. It must not be called by routines that use other display
+ * routines to build a buffer (since the last such routine executed will
+ * have called this routine).
+ *
+ */
 int display_finish(struct display_buffer *dspbuf);
 
+/**
+ * @brief Force overflow on a buffer after appending to it.
+ *
+ * @param[in,out] dspbuf The buffer.
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ * After a buffer has been appended to, check for overflow.
+ *
+ */
 int display_force_overflow(struct display_buffer *dspbuf);
 
 /**
@@ -150,6 +201,16 @@ static inline size_t display_buffer_len(struct display_buffer *dspbuf)
 	}
 }
 
+/**
+ * @brief Format a string into the buffer.
+ *
+ * @param[in,out] dspbuf The buffer.
+ * @param[in]     fmt    The format string
+ * @param[in]     args   The va_list args
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ */
 int display_vprintf(struct display_buffer *dspbuf, const char *fmt,
 		    va_list args);
 
@@ -198,6 +259,17 @@ static inline int display_printf(struct display_buffer *dspbuf, const char *fmt,
 /* Return -1 if len > max */
 #define OPAQUE_BYTES_NO_TRUNC 0x20
 
+/**
+ * @brief Display a number of opaque bytes as a hex string.
+ *
+ * @param[in,out] dspbuf The buffer.
+ * @param[in]     value  The bytes to display
+ * @param[in]     len    The number of bytes to display
+ * @param[in]     flags  Flags indicating options for display
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ */
 int display_opaque_bytes_flags(struct display_buffer *dspbuf, void *value,
 			       int len, int flags);
 
@@ -217,9 +289,42 @@ static inline int display_opaque_bytes(struct display_buffer *dspbuf,
 	return display_opaque_bytes_flags(dspbuf, value, len, OPAQUE_BYTES_0x);
 }
 
+/**
+ * @brief Display a number of opaque bytes as a hex string, limiting the number
+ *        of bytes used from the opaque value.
+ *
+ * @param[in,out] dspbuf   The buffer.
+ * @param[in]     value    The bytes to display
+ * @param[in]     len      The number of bytes to display
+ * @param[in]     max      Max number of bytes from the opaque value to display
+ * @param[in]     notprint Additional set of characters not considered printable
+ * @param[in]     flags    Flags indicating options for display
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ * This routine also attempts to detect a printable value and if so, displays
+ * that instead of converting value to a hex string. It uses min(len,max) as
+ * the number of bytes to use from the opaque value.
+ *
+ */
 int display_opaque_value_max_impl(struct display_buffer *dspbuf, void *value,
 				  int len, int max, char *notprint, int flags);
 
+/**
+ * @brief Display a number of opaque bytes as a hex string, limiting the number
+ *        of bytes used from the opaque value.
+ *
+ * Wrapper for above function with no additional non-printable characters and
+ * OPAQUE_BYTES_0x flag set.
+ *
+ * @param[in,out] dspbuf   The buffer.
+ * @param[in]     value    The bytes to display
+ * @param[in]     len      The number of bytes to display
+ * @param[in]     max      Max number of bytes from the opaque value to display
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ */
 static inline int display_opaque_value_max(struct display_buffer *dspbuf,
 					   void *value, int len, int max)
 {
@@ -245,6 +350,16 @@ static inline int display_opaque_value(struct display_buffer *dspbuf,
 	return display_opaque_value_max(dspbuf, value, len, len);
 }
 
+/**
+ * @brief Append a length delimited string to the buffer.
+ *
+ * @param[in,out] dspbuf The buffer.
+ * @param[in]     str    The string
+ * @param[in]     len    The length of the string
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ */
 int display_len_cat(struct display_buffer *dspbuf, const char *str, int len);
 
 /**
@@ -261,6 +376,24 @@ static inline int display_cat(struct display_buffer *dspbuf, const char *str)
 	return display_len_cat(dspbuf, str, strlen(str));
 }
 
+/**
+ * @brief Append a null delimited string to the buffer, truncating it.
+ *
+ * @param[in,out] dspbuf The buffer.
+ * @param[in]     str    The string
+ * @param[in]     max    Truncate the string to this maximum length
+ *
+ * @return the bytes remaining in the buffer.
+ *
+ * This routine is useful when the caller wishes to append a string to
+ * the buffer, but rather than truncating the string at the end of the buffer,
+ * the caller desires the string to be truncated to some shorter length (max).
+ *
+ * If the string is truncated, that will be indicated with "..." characters.
+ * Basically this routine makes a sub-display buffer of max+1 bytes and uses
+ * display_cat to achieve the truncation.
+ *
+ */
 int display_cat_trunc(struct display_buffer *dspbuf, char *str, size_t max);
 
 /** @} */
