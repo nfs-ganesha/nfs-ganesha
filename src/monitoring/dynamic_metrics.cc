@@ -196,22 +196,22 @@ DynamicMetrics::DynamicMetrics(prometheus::Registry &registry)
 			  .Register(registry))
 	, memoryrss(
 		  prometheus::BuildGauge()
-			  .Name("nfs_memory_resident_ram_size")
+			  .Name("memory_resident_ram_size")
 			  .Help("Phyical RAM size utilizaed by ganesha Units: MB")
 			  .Register(registry))
 	, memoryvirtualsize(
 		  prometheus::BuildGauge()
-			  .Name("nfs_virtual_ram_size")
+			  .Name("virtual_ram_size")
 			  .Help("Virtual RAM size utilized by ganesha Units: GB")
 			  .Register(registry))
 	, memoryswapsize(
 		  prometheus::BuildGauge()
-			  .Name("nfs_memory_swap_size")
+			  .Name("memory_swap_size")
 			  .Help("swap size utilized by ganesha Units: KB")
 			  .Register(registry))
 	, cpuutilization(
 		  prometheus::BuildGauge()
-			  .Name("nfs_cpu_utilization")
+			  .Name("cpu_utilization")
 			  .Help("cpu utilized by ganesha Units: percentage")
 			  .Register(registry))
 	,
