@@ -1133,6 +1133,29 @@ struct state_hdl {
 	(shdl->dir.jct_pseudopath ? shdl->dir.jct_pseudopath->gr_val : NULL)
 
 /**
+ * @brief Check to see if an object is a junction
+ *
+ * @param[in] obj	Object to check
+ * @return true if junction, false otherwise
+ */
+static inline bool obj_is_junction(struct fsal_obj_handle *obj)
+{
+	bool res = false;
+
+	if (obj->type != DIRECTORY)
+		return false;
+
+	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
+
+	if ((obj->state_hdl->dir.junction_export != NULL ||
+	     atomic_fetch_int32_t(&obj->state_hdl->dir.exp_root_refcount) != 0))
+		res = true;
+	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
+
+	return res;
+}
+
+/**
  * @brief Description of a layout segment
  */
 

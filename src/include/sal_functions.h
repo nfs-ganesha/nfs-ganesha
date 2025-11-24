@@ -503,6 +503,7 @@ static inline void update_lease_simple(nfs_client_id_t *clientid)
 }
 
 bool valid_lease(nfs_client_id_t *clientid, bool is_from_reaper);
+
 /******************************************************************************
  *
  * NFSv4 Owner functions
@@ -918,6 +919,7 @@ bool atomic_remove_revoked_and_clear_flags(const stateid4 *stateid,
 				new_total_num_files_delegated);                \
 		}                                                              \
 	} while (0)
+
 /******************************************************************************
  *
  * Layout functions
@@ -1026,29 +1028,6 @@ void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
 const char *recovery_backend_str(enum recovery_backend recovery_backend);
 int nfs4_recovery_init(void);
 void nfs4_recovery_shutdown(void);
-
-/**
- * @brief Check to see if an object is a junction
- *
- * @param[in] obj	Object to check
- * @return true if junction, false otherwise
- */
-static inline bool obj_is_junction(struct fsal_obj_handle *obj)
-{
-	bool res = false;
-
-	if (obj->type != DIRECTORY)
-		return false;
-
-	PTHREAD_RWLOCK_rdlock(&obj->state_hdl->jct_lock);
-
-	if ((obj->state_hdl->dir.junction_export != NULL ||
-	     atomic_fetch_int32_t(&obj->state_hdl->dir.exp_root_refcount) != 0))
-		res = true;
-	PTHREAD_RWLOCK_unlock(&obj->state_hdl->jct_lock);
-
-	return res;
-}
 
 typedef clid_entry_t *(*add_clid_entry_hook)(char *, bool);
 typedef rdel_fh_t *(*add_rfh_entry_hook)(clid_entry_t *, char *);
