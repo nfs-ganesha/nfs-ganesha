@@ -67,9 +67,42 @@ struct notify {
 };
 typedef struct notify notify;
 
+/* The NLM related recovery types are not implemented yet, however, the code is
+ * set to recognize them so if the various options are turned off, they will be
+ * recognized and ignored (with message) in the recovery database to avoid
+ * their being interpreted as an NFSv4.x clientid entry.
+ */
+enum recovery_type {
+	NFS4_CLID_ENTRY,
+	NSM_STATE_ENTRY,
+	NLM_CLIENT_ENTRY,
+	NLM_CALLBACK_ENTRY,
+	NLM_SM_MON_ENTRY,
+	NLM_RPCBIND_UDP_ENTRY,
+	NLM_RPCBIND_TCP_ENTRY,
+};
+
+static inline enum recovery_type entry_recovery_type(char *entry)
+{
+	if (strncmp(entry, "NSM_STATE-", 10) == 0)
+		return NSM_STATE_ENTRY;
+	else if (strncmp(entry, "NLM-", 4) == 0)
+		return NLM_CLIENT_ENTRY;
+	else if (strncmp(entry, "LOCAL_NLM_CB", 12) == 0)
+		return NLM_CALLBACK_ENTRY;
+	else if (strncmp(entry, "LOCAL_SM_MON-", 13) == 0)
+		return NLM_SM_MON_ENTRY;
+	else if (strncmp(entry, "LOCAL_NLM_BIND_UDP", 18) == 0)
+		return NLM_RPCBIND_UDP_ENTRY;
+	else if (strncmp(entry, "LOCAL_NLM_BIND_TCP", 18) == 0)
+		return NLM_RPCBIND_TCP_ENTRY;
+	return NFS4_CLID_ENTRY;
+}
+
 extern bool nsm_monitor(state_nsm_client_t *host);
 extern bool nsm_unmonitor(state_nsm_client_t *host);
 extern void nsm_unmonitor_all(void);
+
 extern int nsm_notify(char *host, int state);
 
 /* the xdr functions */

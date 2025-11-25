@@ -229,6 +229,7 @@
   object_file_type_to_str;
   op_ctx;
   open_dir_by_path_walk;
+  parse_nlm_entry;
   pnfs_ds_insert;
   pnfs_ds_put;
   pnfs_ds_remove;

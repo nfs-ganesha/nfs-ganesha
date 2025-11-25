@@ -39,4 +39,24 @@ enum recovery_backend {
  */
 #define RECOVERY_BACKEND_DEFAULT RECOVERY_BACKEND_FS
 
+/*******************************************************************************
+ *
+ * RECOVERY ENTRY FORMATS
+ *
+ * All current recovery databases use the same format for the actual recovery
+ * entry. The Rados backends also are keyed by clientid4 value, but that is
+ * separate.
+ *
+ * Length Delimited String (LSTR{}) Format (for use below):
+ *
+ * len:string
+ * %d:%s
+ *
+ * NFSv4 clid Name Format:
+ *
+ *    <IP>-(LSTR{cliid})
+ *    "%s-(%d:%s)"
+ *
+ ******************************************************************************/
+
 #endif /* GSH_RECOVERY_H */

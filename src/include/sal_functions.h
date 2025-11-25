@@ -43,6 +43,7 @@
 #include "sal_data.h"
 #include "fsal.h"
 #include "gsh_recovery.h"
+#include "nsm.h"
 
 #include "gsh_lttng/gsh_lttng.h"
 #if defined(USE_LTTNG) && !defined(LTTNG_PARSING)
@@ -1077,6 +1078,9 @@ void nfs4_add_clid(nfs_client_id_t *);
 void nfs4_rm_clid(nfs_client_id_t *);
 void nfs4_chk_clid(nfs_client_id_t *);
 void nfs41_reclaim_complete_clid(nfs_client_id_t *);
+
+/* NLM Client stable-storage database management */
+bool parse_nlm_entry(char *entry, enum recovery_type recovery_type);
 
 /* Delegation revocation tracking */
 bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);

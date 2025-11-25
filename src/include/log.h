@@ -414,6 +414,39 @@ static inline bool isLevel(log_components_t comp, log_levels_t lvl)
 		}                                                             \
 	} while (0)
 
+#define LogDebugAlt3(comp1, comp2, comp3, format, ...)                        \
+	do {                                                                  \
+		if (isLevel(comp1, NIV_DEBUG) || isLevel(comp2, NIV_DEBUG) || \
+		    isLevel(comp3, NIV_DEBUG)) {                              \
+			log_components_t component =                          \
+				component_log_level[comp1] >= NIV_DEBUG       \
+					? comp1                               \
+					: comp2;                              \
+									     \
+			DisplayLogComponentLevel(component, __FILE__,        \
+						 __LINE__, __func__,         \
+						 NIV_DEBUG, format,          \
+						 ##__VA_ARGS__);             \
+		}                                                            \
+	} while (0)
+
+#define LogFullDebugAlt3(comp1, comp2, comp3, format, ...)                    \
+	do {                                                                  \
+		if (isLevel(comp1, NIV_FULL_DEBUG) ||                         \
+		    isLevel(comp2, NIV_FULL_DEBUG) ||                         \
+		    isLevel(comp3, NIV_FULL_DEBUG)) {                         \
+			log_components_t component =                          \
+				component_log_level[comp1] >= NIV_FULL_DEBUG  \
+					? comp1                               \
+					: comp2;                              \
+									      \
+			DisplayLogComponentLevel(component, __FILE__,         \
+						 __LINE__, __func__,          \
+						 NIV_FULL_DEBUG, format,      \
+						 ##__VA_ARGS__);              \
+		}                                                             \
+	} while (0)
+
 /*
  *  Re-export component logging to TI-RPC internal logging
  */
