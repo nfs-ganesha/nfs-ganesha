@@ -1085,18 +1085,15 @@ void nfs4_record_revoke(nfs_client_id_t *, nfs_fh4 *);
 /* Recovery backend management */
 char *nfs4_create_clid_name(nfs_client_id_t *clientid, size_t *len);
 const char *recovery_backend_str(enum recovery_backend recovery_backend);
+clid_entry_t *nfs4_add_clid_entry(char *cl_name, bool reclaim_complete);
+rdel_fh_t *nfs4_add_rfh_entry(clid_entry_t *clid_ent, char *rfh_name);
 int nfs4_recovery_init(void);
 void nfs4_recovery_shutdown(void);
-
-typedef clid_entry_t *(*add_clid_entry_hook)(char *, bool);
-typedef rdel_fh_t *(*add_rfh_entry_hook)(clid_entry_t *, char *);
 
 struct nfs4_recovery_backend {
 	int (*recovery_init)(void);
 	void (*recovery_shutdown)(void);
-	void (*recovery_read_clids)(nfs_grace_start_t *gsp,
-				    add_clid_entry_hook add_clid,
-				    add_rfh_entry_hook add_rfh);
+	void (*recovery_read_clids)(nfs_grace_start_t *gsp);
 	void (*add_clid)(nfs_client_id_t *);
 	void (*rm_clid)(nfs_client_id_t *);
 	void (*reclaim_complete)(nfs_client_id_t *);

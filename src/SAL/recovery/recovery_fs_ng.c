@@ -227,9 +227,7 @@ static int fs_ng_create_recov_dir(void)
  *
  * @return POSIX error codes.
  */
-static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str,
-				       add_clid_entry_hook add_clid_entry,
-				       add_rfh_entry_hook add_rfh_entry)
+static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str)
 {
 	struct dirent *dentp;
 	DIR *dp;
@@ -282,8 +280,7 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str,
 		memcpy(build_clid + clid_str_len, dentp->d_name,
 		       segment_len + 1);
 
-		rc = fs_ng_read_recov_clids_impl(sub_path, build_clid,
-						 add_clid_entry, add_rfh_entry);
+		rc = fs_ng_read_recov_clids_impl(sub_path, build_clid);
 
 		/* after recursion, if the subdir has no non-hidden
 		 * directory this is the end of this clientid str. Add
@@ -334,7 +331,7 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str,
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
 			if ((len == (cid_len + 2)) && (ptr2[len - 1] == ')')) {
-				new_ent = add_clid_entry(build_clid, true);
+				new_ent = nfs4_add_clid_entry(build_clid, true);
 				LogDebugAlt(COMPONENT_CLIENTID,
 					    COMPONENT_RECOVERY,
 					    "added %s to clid list",
@@ -350,31 +347,23 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str,
 	return num;
 }
 
-static void fs_ng_read_recov_clids_recover(add_clid_entry_hook add_clid_entry,
-					   add_rfh_entry_hook add_rfh_entry)
-{
-	int rc;
-
-	rc = fs_ng_read_recov_clids_impl(v4_recov_link, NULL, add_clid_entry,
-					 add_rfh_entry);
-	if (rc == -1) {
-		LogEvent(COMPONENT_RECOVERY,
-			 "Failed to read v4 recovery dir (%s)", v4_recov_link);
-		return;
-	}
-}
-
 /**
  * @brief Load clients for recovery, with no lock
  *
  * @param[in] nodeid Node, on takeover
  */
-static void fs_ng_read_recov_clids(nfs_grace_start_t *gsp,
-				   add_clid_entry_hook add_clid_entry,
-				   add_rfh_entry_hook add_rfh_entry)
+static void fs_ng_read_recov_clids(nfs_grace_start_t *gsp)
 {
 	if (!gsp) {
-		fs_ng_read_recov_clids_recover(add_clid_entry, add_rfh_entry);
+		int rc;
+
+		rc = fs_ng_read_recov_clids_impl(v4_recov_link, NULL);
+
+		if (rc == -1) {
+			LogEvent(COMPONENT_RECOVERY,
+				 "Failed to read v4 recovery dir (%s)",
+				 v4_recov_link);
+		}
 		return;
 	}
 
@@ -421,8 +410,7 @@ static void fs_ng_read_recov_clids(nfs_grace_start_t *gsp,
 	LogEvent(COMPONENT_RECOVERY, "Recovery for nodeid %d dir (%s)",
 		 gsp->nodeid, path);
 
-	rc = fs_ng_read_recov_clids_impl(path, NULL, add_clid_entry,
-					 add_rfh_entry);
+	rc = fs_ng_read_recov_clids_impl(path, NULL);
 	if (rc == -1) {
 		LogEvent(COMPONENT_RECOVERY,
 			 "Failed to read v4 recovery dir (%s)", path);

@@ -79,9 +79,7 @@ static void default_end_grace(void)
 {
 }
 
-static void default_recovery_read_clids(nfs_grace_start_t *gsp,
-					add_clid_entry_hook add_clid_entry,
-					add_rfh_entry_hook add_rfs_entry)
+static void default_recovery_read_clids(nfs_grace_start_t *gsp)
 {
 }
 
@@ -831,6 +829,8 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
  *
  * This function would be called when a client expires.
  *
+ * @param[in] clientid Client record
+ *
  */
 void nfs4_rm_clid(nfs_client_id_t *clientid)
 {
@@ -944,8 +944,7 @@ static void nfs4_recovery_load_clids(nfs_grace_start_t *gsp)
 	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
 		    "Load recovery cli %p", gsp);
 
-	recovery_backend->recovery_read_clids(gsp, nfs4_add_clid_entry,
-					      nfs4_add_rfh_entry);
+	recovery_backend->recovery_read_clids(gsp);
 	LogEvent(COMPONENT_RECOVERY, "Load client info completed from backend");
 }
 

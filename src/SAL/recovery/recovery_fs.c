@@ -662,8 +662,7 @@ static bool fs_check_reclaim_complete(const char *clid_path)
  * @param[in] del Delete after populating
  */
 static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent, char *path,
-				     char *tgtdir, bool del,
-				     add_rfh_entry_hook add_rfh_entry)
+				     char *tgtdir, bool del)
 {
 	struct dirent *dentp;
 	DIR *dp;
@@ -715,7 +714,7 @@ static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent, char *path,
 		}
 
 		/* Ignore the beginning \x1 and copy the rest (file handle) */
-		new_ent = add_rfh_entry(clid_ent, dentp->d_name + 1);
+		new_ent = nfs4_add_rfh_entry(clid_ent, dentp->d_name + 1);
 
 		LogFullDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
 				"revoked handle: %s", new_ent->rdfh_handle_str);
@@ -767,9 +766,7 @@ static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent, char *path,
  * @return POSIX error codes.
  */
 static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
-				    char *tgtdir, int takeover,
-				    add_clid_entry_hook add_clid_entry,
-				    add_rfh_entry_hook add_rfh_entry)
+				    char *tgtdir, int takeover)
 {
 	struct dirent *dentp;
 	DIR *dp;
@@ -842,8 +839,7 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 		       segment_len + 1);
 
 		rc = fs_read_recov_clids_impl(sub_path, build_clid, new_path,
-					      takeover, add_clid_entry,
-					      add_rfh_entry);
+					      takeover);
 		gsh_free(new_path);
 
 		/* after recursion, if the subdir has no non-hidden
@@ -897,11 +893,10 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 			if ((len == (cid_len + 2)) && (ptr2[len - 1] == ')')) {
 				reclaim_complete =
 					fs_check_reclaim_complete(sub_path);
-				new_ent = add_clid_entry(build_clid,
-							 reclaim_complete);
+				new_ent = nfs4_add_clid_entry(build_clid,
+							      reclaim_complete);
 				fs_cp_pop_revoked_delegs(new_ent, sub_path,
-							 tgtdir, !takeover,
-							 add_rfh_entry);
+							 tgtdir, !takeover);
 				LogDebugAlt(
 					COMPONENT_CLIENTID, COMPONENT_RECOVERY,
 					"added %s to clid list, reclaim_complete %d",
@@ -937,22 +932,19 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 	return num;
 }
 
-static void fs_read_recov_clids_recover(char *recov_dir, char *old_dir,
-					add_clid_entry_hook add_clid_entry,
-					add_rfh_entry_hook add_rfh_entry)
+static void fs_read_recov_clids_recover(char *recov_dir, char *old_dir)
 {
 	int rc;
 
-	rc = fs_read_recov_clids_impl(old_dir, NULL, NULL, 0, add_clid_entry,
-				      add_rfh_entry);
+	rc = fs_read_recov_clids_impl(old_dir, NULL, NULL, 0);
 	if (rc == -1) {
 		LogEvent(COMPONENT_RECOVERY,
 			 "Failed to read v4 recovery dir (%s)", old_dir);
 		return;
 	}
 
-	rc = fs_read_recov_clids_impl(recov_dir, NULL, old_dir, 0,
-				      add_clid_entry, add_rfh_entry);
+	rc = fs_read_recov_clids_impl(recov_dir, NULL, old_dir, 0);
+
 	if (rc == -1) {
 		LogEvent(COMPONENT_RECOVERY,
 			 "Failed to read v4 recovery dir (%s)", recov_dir);
@@ -978,9 +970,7 @@ static void create_dir(char *path)
  *
  * @param[in] nodeid Node, on takeover
  */
-void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
-				  add_clid_entry_hook add_clid_entry,
-				  add_rfh_entry_hook add_rfh_entry)
+void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp)
 {
 	int rc;
 	sockaddr_t saddr;
@@ -1031,8 +1021,7 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 	}
 
 	if (!gsp) {
-		fs_read_recov_clids_recover(recov_dir, old_dir, add_clid_entry,
-					    add_rfh_entry);
+		fs_read_recov_clids_recover(recov_dir, old_dir);
 		return;
 	}
 
@@ -1108,8 +1097,7 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp,
 	LogEvent(COMPONENT_RECOVERY, "Recovery for nodeid %d dir (%s)",
 		 gsp->nodeid, path);
 
-	rc = fs_read_recov_clids_impl(path, NULL, old_dir, 1, add_clid_entry,
-				      add_rfh_entry);
+	rc = fs_read_recov_clids_impl(path, NULL, old_dir, 1);
 	if (rc == -1) {
 		LogEvent(COMPONENT_RECOVERY,
 			 "Failed to read v4 recovery dir (%s)", path);

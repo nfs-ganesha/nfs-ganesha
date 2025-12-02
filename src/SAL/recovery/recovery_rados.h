@@ -58,8 +58,6 @@ int set_nodeid(void);
 
 /* Callback for rados_kv_traverse */
 struct pop_args {
-	add_clid_entry_hook add_clid_entry;
-	add_rfh_entry_hook add_rfh_entry;
 	bool old;
 	bool takeover;
 };

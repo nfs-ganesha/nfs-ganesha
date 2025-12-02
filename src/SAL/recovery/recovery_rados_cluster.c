@@ -301,18 +301,13 @@ static void set_recovery_object_for_takeover(nfs_grace_start_t *gsp)
 	}
 }
 
-static void rados_cluster_read_clids(nfs_grace_start_t *gsp,
-				     add_clid_entry_hook add_clid_entry,
-				     add_rfh_entry_hook add_rfh_entry)
+static void rados_cluster_read_clids(nfs_grace_start_t *gsp)
 {
 	int ret;
 	size_t new_len, old_len;
 	rados_write_op_t wop;
 	struct gsh_refstr *recov_oid, *old_oid;
-	struct pop_args args = {
-		.add_clid_entry = add_clid_entry,
-		.add_rfh_entry = add_rfh_entry,
-	};
+	struct pop_args args = { false, false };
 
 	if (gsp && (gsp->event != EVENT_JUST_GRACE))
 		set_recovery_object_for_takeover(gsp);

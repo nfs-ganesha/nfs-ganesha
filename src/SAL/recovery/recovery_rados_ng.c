@@ -237,8 +237,6 @@ void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 	char *dupval, *cl_name;
 	char *rfh_names, *rfh_name;
 	clid_entry_t *clid_ent;
-	add_clid_entry_hook add_clid_entry = pop_args->add_clid_entry;
-	add_rfh_entry_hook add_rfh_entry = pop_args->add_rfh_entry;
 
 	/* extract clid records */
 	dupval = gsh_malloc(val_len + 1);
@@ -247,26 +245,22 @@ void rados_ng_pop_clid_entry(char *key, char *val, size_t val_len,
 	cl_name = strtok(dupval, "#");
 	if (!cl_name)
 		cl_name = dupval;
-	clid_ent = add_clid_entry(cl_name, true);
+	clid_ent = nfs4_add_clid_entry(cl_name, true);
 
 	rfh_names = strtok(NULL, "#");
 	rfh_name = strtok(rfh_names, "#");
 	while (rfh_name) {
-		add_rfh_entry(clid_ent, rfh_name);
+		nfs4_add_rfh_entry(clid_ent, rfh_name);
 		rfh_name = strtok(NULL, "#");
 	}
 	gsh_free(dupval);
 }
 
-static void rados_ng_read_recov_clids_recover(
-	add_clid_entry_hook add_clid_entry, add_rfh_entry_hook add_rfh_entry)
+static void rados_ng_read_recov_clids_recover(void)
 {
 	int ret;
 	struct gsh_refstr *recov_oid;
-	struct pop_args args = {
-		.add_clid_entry = add_clid_entry,
-		.add_rfh_entry = add_rfh_entry,
-	};
+	struct pop_args args = { false, false };
 
 	rcu_read_lock();
 	recov_oid = gsh_refstr_get(rcu_dereference(rados_recov_oid));
@@ -281,25 +275,17 @@ static void rados_ng_read_recov_clids_recover(
 	}
 }
 
-static void rados_ng_read_recov_clids_takeover(
-	nfs_grace_start_t *gsp, add_clid_entry_hook add_clid_entry,
-	add_rfh_entry_hook add_rfh_entry)
+static void rados_ng_read_recov_clids_takeover(nfs_grace_start_t *gsp)
 {
 	int ret;
-	struct pop_args args = {
-		.add_clid_entry = add_clid_entry,
-		.add_rfh_entry = add_rfh_entry,
-		.old = false,
-		.takeover = true,
-	};
+	struct pop_args args = { false, true };
 
 	if (!gsp) {
 		takeover = false;
 		LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
 			    "Recovery object in use %s",
 			    rados_recov_oid->gr_val);
-		rados_ng_read_recov_clids_recover(add_clid_entry,
-						  add_rfh_entry);
+		rados_ng_read_recov_clids_recover();
 		return;
 	}
 

@@ -540,8 +540,6 @@ static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
 	char *cl_name, *rfh_names, *rfh_name;
 	struct gsh_refstr *old_oid;
 	clid_entry_t *clid_ent;
-	add_clid_entry_hook add_clid_entry = pop_args->add_clid_entry;
-	add_rfh_entry_hook add_rfh_entry = pop_args->add_rfh_entry;
 	bool old = pop_args->old;
 	bool takeover = pop_args->takeover;
 
@@ -553,12 +551,12 @@ static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
 	cl_name = strtok(dupval, "#");
 	if (!cl_name)
 		cl_name = dupval;
-	clid_ent = add_clid_entry(cl_name, true);
+	clid_ent = nfs4_add_clid_entry(cl_name, true);
 
 	rfh_names = strtok(NULL, "#");
 	rfh_name = strtok(rfh_names, "#");
 	while (rfh_name) {
-		add_rfh_entry(clid_ent, rfh_name);
+		nfs4_add_rfh_entry(clid_ent, rfh_name);
 		rfh_name = strtok(NULL, "#");
 	}
 
@@ -593,17 +591,11 @@ static void rados_kv_pop_clid_entry(char *key, char *val, size_t val_len,
 	gsh_refstr_put(old_oid);
 }
 
-static void rados_kv_read_recov_clids_recover(
-	add_clid_entry_hook add_clid_entry, add_rfh_entry_hook add_rfh_entry)
+static void rados_kv_read_recov_clids_recover(void)
 {
 	int ret;
 	struct gsh_refstr *recov_oid, *old_oid;
-	struct pop_args args = {
-		.add_clid_entry = add_clid_entry,
-		.add_rfh_entry = add_rfh_entry,
-		.old = true,
-		.takeover = false,
-	};
+	struct pop_args args = { true, false };
 
 	rcu_read_lock();
 	old_oid = gsh_refstr_get(rcu_dereference(rados_recov_old_oid));
@@ -630,22 +622,14 @@ static void rados_kv_read_recov_clids_recover(
 	}
 }
 
-void rados_kv_read_recov_clids_takeover(nfs_grace_start_t *gsp,
-					add_clid_entry_hook add_clid_entry,
-					add_rfh_entry_hook add_rfh_entry)
+void rados_kv_read_recov_clids_takeover(nfs_grace_start_t *gsp)
 {
 	int ret;
 	char object_takeover[NI_MAXHOST];
-	struct pop_args args = {
-		.add_clid_entry = add_clid_entry,
-		.add_rfh_entry = add_rfh_entry,
-		.old = false,
-		.takeover = true,
-	};
+	struct pop_args args = { false, true };
 
 	if (!gsp) {
-		rados_kv_read_recov_clids_recover(add_clid_entry,
-						  add_rfh_entry);
+		rados_kv_read_recov_clids_recover();
 		return;
 	}
 

@@ -179,6 +179,8 @@
   nfs4_ace_free;
   nfs4_acl_entry_inc_ref;
   nfs4_acl_new_entry;
+  nfs4_add_clid_entry;
+  nfs4_add_rfh_entry;
   nfs4_create_clid_name;
   nfs4_Compound_FreeOne;
   nfs4_export_check_access;
