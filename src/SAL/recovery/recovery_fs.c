@@ -748,6 +748,59 @@ static void fs_cp_pop_revoked_delegs(clid_entry_t *clid_ent, char *path,
 	(void)closedir(dp);
 }
 
+bool process_recovery_entry(char *build_clid, char *tgtdir, int takeover,
+			    char *sub_path)
+{
+	char temp[10], *ptr, *ptr2;
+	int len, cid_len;
+	bool reclaim_complete;
+	clid_entry_t *new_ent;
+
+	/* Process an NFSv4 clid entry
+	 *
+	 * The clid format is:
+	 *
+	 * <IP>-(clid-len:long-form-clid-in-string-form)
+	 *
+	 * Make sure this reconstructed string is valid by comparing clid-len
+	 * and the actual long-form-clid length in the string. This is to
+	 * prevent getting incompleted strings that might exist due to program
+	 * crash.
+	 */
+	ptr = strchr(build_clid, '(');
+
+	if (ptr == NULL)
+		return false;
+
+	ptr2 = strchr(ptr, ':');
+
+	if (ptr2 == NULL)
+		return false;
+
+	len = ptr2 - ptr - 1;
+
+	if (len >= 9)
+		return false;
+
+	memcpy(temp, ptr + 1, len + 1);
+
+	cid_len = atoi(temp);
+
+	len = strlen(ptr2);
+
+	if ((len == (cid_len + 2)) && (ptr2[len - 1] == ')')) {
+		reclaim_complete = fs_check_reclaim_complete(sub_path);
+		new_ent = nfs4_add_clid_entry(build_clid, reclaim_complete);
+		fs_cp_pop_revoked_delegs(new_ent, sub_path, tgtdir, !takeover);
+		LogDebug(COMPONENT_CLIENTID,
+			 "added %s to clid list, reclaim_complete %d",
+			 new_ent->cl_name, reclaim_complete);
+		return true;
+	}
+
+	return false;
+}
+
 /**
  * @brief Create the client reclaim list
  *
@@ -770,19 +823,14 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 {
 	struct dirent *dentp;
 	DIR *dp;
-	clid_entry_t *new_ent;
 	char *sub_path = NULL;
 	char *new_path = NULL;
 	char *build_clid = NULL;
 	int rc = 0;
 	int num = 0;
-	char *ptr, *ptr2;
-	char temp[10];
-	int cid_len, len;
 	int segment_len;
 	int total_clid_len;
 	int clid_str_len = (clid_str == NULL) ? 0 : strlen(clid_str);
-	bool reclaim_complete;
 
 	dp = opendir(parent_path);
 	if (dp == NULL) {
@@ -847,14 +895,6 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 		 * the clientstr to the list.
 		 */
 		if (rc == 0) {
-			/* the clid format is
-			 * <IP>-(clid-len:long-form-clid-in-string-form)
-			 * make sure this reconstructed string is valid
-			 * by comparing clid-len and the actual
-			 * long-form-clid length in the string. This is
-			 * to prevent getting incompleted strings that
-			 * might exist due to program crash.
-			 */
 			if (total_clid_len >= PATH_MAX) {
 				LogEvent(COMPONENT_RECOVERY,
 					 "invalid clid format: %s, too long",
@@ -863,47 +903,19 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 				gsh_free(build_clid);
 				continue;
 			}
-			ptr = strchr(build_clid, '(');
-			if (ptr == NULL) {
+
+			if (!process_recovery_entry(build_clid, tgtdir,
+						    takeover, sub_path)) {
 				LogEvent(COMPONENT_RECOVERY,
 					 "invalid clid format: %s", build_clid);
 				gsh_free(sub_path);
 				gsh_free(build_clid);
 				continue;
-			}
-			ptr2 = strchr(ptr, ':');
-			if (ptr2 == NULL) {
-				LogEvent(COMPONENT_RECOVERY,
-					 "invalid clid format: %s", build_clid);
-				gsh_free(sub_path);
-				gsh_free(build_clid);
-				continue;
-			}
-			len = ptr2 - ptr - 1;
-			if (len >= 9) {
-				LogEvent(COMPONENT_RECOVERY,
-					 "invalid clid format: %s", build_clid);
-				gsh_free(sub_path);
-				gsh_free(build_clid);
-				continue;
-			}
-			memcpy(temp, ptr + 1, len + 1);
-			cid_len = atoi(temp);
-			len = strlen(ptr2);
-			if ((len == (cid_len + 2)) && (ptr2[len - 1] == ')')) {
-				reclaim_complete =
-					fs_check_reclaim_complete(sub_path);
-				new_ent = nfs4_add_clid_entry(build_clid,
-							      reclaim_complete);
-				fs_cp_pop_revoked_delegs(new_ent, sub_path,
-							 tgtdir, !takeover);
-				LogDebugAlt(
-					COMPONENT_CLIENTID, COMPONENT_RECOVERY,
-					"added %s to clid list, reclaim_complete %d",
-					new_ent->cl_name, reclaim_complete);
 			}
 		}
+
 		gsh_free(build_clid);
+
 		/* If this is not for takeover, remove the directory
 		 * hierarchy  that represent the current clientid
 		 */
@@ -914,7 +926,9 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 					    "Would remove %s", sub_path);
 			} else {
 				fs_rm_client_records(sub_path);
+
 				rc = rmdir(sub_path);
+
 				if (rc == -1) {
 					LogEvent(
 						COMPONENT_RECOVERY,
@@ -924,6 +938,7 @@ static int fs_read_recov_clids_impl(const char *parent_path, char *clid_str,
 				}
 			}
 		}
+
 		gsh_free(sub_path);
 	}
 
