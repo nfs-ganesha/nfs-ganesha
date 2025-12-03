@@ -217,6 +217,17 @@ typedef enum protos {
 #define CORE_OPTION_NFS_RDMA 0x00000010 /*< RPC/RDMA v1 NFS listener */
 
 /**
+ * @brief Support GRPC
+ */
+#define GRPC_ENABLE true
+#define GRPC_PORT 50051
+#define GRPC_SERVER_CERTIFICATE "/etc/ganesha/certs/server.crt"
+#define GRPC_SERVER_KEY "/etc/ganesha/certs/server.key"
+#define GRPC_CLIENT_CERTIFICATE "/etc/ganesha/certs/client.crt"
+#define GRPC_CLIENT_KEY "/etc/ganesha/certs/client.key"
+#define GRPC_CA_CERTIFICATE "/etc/ganesha/certs/ca.crt"
+
+/**
  * @brief Support NFSv3 and NFSv4.
  */
 #ifdef _USE_NFS3
@@ -773,6 +784,23 @@ typedef struct directory_services_param {
 	bool sssd_implementation_skip_cache;
 } directory_services_param_t;
 
+typedef struct grpc_parameter {
+	/** If gRPC is enabled or not*/
+	bool grpc_enable;
+	/** The IP address in which gRPC will be listening. */
+	sockaddr_t grpc_addr;
+	/** gRPC port number. */
+	uint16_t grpc_port;
+	/** To secure grpc with mutual TLS, we need Absolute path of server
+	 * certificate, server key, client certificate, client key and ca
+	 * certificate */
+	char *grpc_server_cert;
+	char *grpc_client_cert;
+	char *grpc_ca_cert;
+	char *grpc_server_key;
+	char *grpc_client_key;
+} grpc_parameter_t;
+
 /** @} */
 
 typedef struct nfs_param {
@@ -788,6 +816,9 @@ typedef struct nfs_param {
 	/** Directory_services configuration, settable in the
 	    DIRECTORY_SERVICES stanza. */
 	directory_services_param_t directory_services_param;
+#ifdef USE_GRPC
+	grpc_parameter_t grpc_param;
+#endif
 } nfs_parameter_t;
 
 extern nfs_parameter_t nfs_param;

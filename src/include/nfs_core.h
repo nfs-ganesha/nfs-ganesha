@@ -49,6 +49,10 @@
 #include "err_inject.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Delegation client cache limits */
 #define DELEG_SPACE_LIMIT_FILESZ 102400 /* just 100K, revisit? */
 #define DELEG_SPACE_LIMIT_BLOCKS 200
@@ -79,9 +83,17 @@ typedef struct _rpc_call rpc_call_t;
 
 typedef void (*rpc_call_func)(rpc_call_t *call);
 
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef _HAVE_GSSAPI
 extern gss_OID_desc krb5oid;
 #endif /* _HAVE_GSSAPI */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct _rpc_call {
 	struct clnt_req call_req;
@@ -171,6 +183,9 @@ extern struct config_block tls_core;
 #endif
 extern struct config_block version4_param;
 extern struct config_block directory_services_param;
+#ifdef USE_GRPC
+extern struct config_block grpc_param;
+#endif
 
 /* in nfs_admin_thread.c */
 
@@ -198,5 +213,9 @@ void nfs_rpc_destroy_chan_no_lock(rpc_call_channel_t *chan);
 int reaper_init(void);
 void reaper_wake(void);
 int reaper_shutdown(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !NFS_CORE_H */

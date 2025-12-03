@@ -35,6 +35,7 @@ QOS_DEFAULT_CONFIG {}
 (*) KMIP {}
 (*) KMIP { HOST {} }
 TLS_CONFIG {}
+GRPC {}
 
 Notably the following FSALs do not have a global config block:
 
@@ -1447,3 +1448,22 @@ TLS_CONFIG {}
 
 	Enable_debug(bool, default true)
 	To enable TLS library callback prints and full debugging logs for TLS.
+
+GRPC {}
+-------
+
+    Grpc_Port (uint16, range 0 to UINT16_MAX, default 50051)
+
+    Grpc_Server_Certificate (path default /etc/ganesha/ganesha_grpc_tls_cert/server.crt)
+
+    Grpc_Server_Key (path default /etc/ganesha/ganesha_grpc_tls_cert/server.key)
+
+    Grpc_Client_Certificate (path default /etc/ganesha/ganesha_grpc_tls_cert/client.crt)
+
+    Grpc_Client_Key (path default /etc/ganesha/ganesha_grpc_tls_cert/client.key)
+
+    Grpc_Ca_Certificate (path default /etc/ganesha/ganesha_grpc_tls_cert/ca.crt)
+
+    Grpc_Addr (IPv4 or IPv6 addr, default 0.0.0.0)
+
+    Grpc_Enable (bool, default true)

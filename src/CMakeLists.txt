@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: LGPL-3.0-or-later
 #-------------------------------------------------------------------------------
-#
 # Copyright Panasas, 2012
 # Contributor: Jim Lieb <jlieb@panasas.com>
 #
@@ -331,6 +330,9 @@ goption(USE_DBUS "enable DBUS protocol support" ON)
 
 # Various DBUS enabled features
 option(USE_CB_SIMULATOR "enable callback simulator thread" OFF)
+
+# Build GRPC with ganesha
+goption(USE_GRPC "enable gRPC protocol support" OFF)
 
 goption(USE_NFSIDMAP "Use of libnfsidmap for name resolution" ON)
 option(ENABLE_ERROR_INJECTION "enable error injection" OFF)
@@ -1009,6 +1011,16 @@ if(USE_CB_SIMULATOR AND NOT USE_DBUS)
   set(USE_CB_SIMULATOR OFF)
 endif(USE_CB_SIMULATOR AND NOT USE_DBUS)
 
+gopt_test(USE_GRPC)
+if(USE_GRPC)
+    find_package(Protobuf ${USE_GRPC_REQUIRED})
+    find_package(gRPC ${USE_GRPC_REQUIRED})
+    if((NOT Protobuf_FOUND) OR (NOT gRPC_FOUND))
+        message(WARNING "Cannot find Protobuf or gRPC libs. Disabling gRPC,protobuf support")
+        set(USE_GRPC OFF)
+    endif((NOT Protobuf_FOUND) OR (NOT gRPC_FOUND))
+endif(USE_GRPC)
+
 gopt_test(USE_NFSIDMAP)
 if(USE_NFSIDMAP)
   find_package(NfsIdmap ${USE_NFSIDMAP_REQUIRED})
@@ -1476,6 +1488,10 @@ if(USE_DBUS)
   add_subdirectory(dbus)
 endif(USE_DBUS)
 
+if(USE_GRPC)
+    add_subdirectory(grpc_server)
+endif(USE_GRPC)
+
 if(USE_LTTNG)
   add_subdirectory(tracing)
 endif(USE_LTTNG)
@@ -1526,6 +1542,7 @@ message(STATUS "USE_FSAL_MEM = ${USE_FSAL_MEM}")
 message(STATUS "GSH_CAN_HOST_LOCAL_FS = ${GSH_CAN_HOST_LOCAL_FS}")
 message(STATUS "USE_SYSTEM_NTIRPC = ${USE_SYSTEM_NTIRPC}")
 message(STATUS "USE_DBUS = ${USE_DBUS}")
+message(STATUS "USE_GRPC = ${USE_GRPC}")
 message(STATUS "USE_CB_SIMULATOR = ${USE_CB_SIMULATOR}")
 message(STATUS "USE_BTRFSUTIL = ${USE_BTRFSUTIL}")
 message(STATUS "USE_NFSIDMAP = ${USE_NFSIDMAP}")

@@ -696,3 +696,30 @@ name(string, no default)
     config blocks for those FSALs will not result in an error if no exports
     are configured using that FSAL. This parameter takes a list of FSAL names
     and the parameter may be listed multiple times.
+
+GRPC {}
+--------------------------------------------------------------------------------
+
+Grpc_Port (uint16, range 0 to UINT16_MAX, default 50051)
+    Port number used to communicate via gRPC.
+
+Grpc_Server_Certificate (path default /etc/ganesha/ganesha_grpc_tls_cert/server.crt)
+    Path for Server Certificate.
+
+Grpc_Server_Key (path default /etc/ganesha/ganesha_grpc_tls_cert/server.key)
+    Path for Server Key.
+
+Grpc_Client_Certificate (path default /etc/ganesha/ganesha_grpc_tls_cert/client.crt)
+    Path for Client Certificate.
+
+Grpc_Client_Key (path default /etc/ganesha/ganesha_grpc_tls_cert/client.key)
+    Path for Client Key.
+
+Grpc_Ca_Certificate (path default /etc/ganesha/ganesha_grpc_tls_cert/ca.crt)
+    Path for CA Certificate.
+
+Grpc_Addr (IPv4 or IPv6 addr, default 0.0.0.0)
+    IP Address used to connect to gRPC
+
+Grpc_Enable (bool, default true)
+    To Enable gRPC or not

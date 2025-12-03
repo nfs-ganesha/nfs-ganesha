@@ -863,3 +863,35 @@ struct config_block tls_core = {
 	.blk_desc.u.blk.commit = tls_config_commit
 };
 #endif
+
+#ifdef USE_GRPC
+static struct config_item grpc_params[] = {
+
+	CONF_ITEM_BOOL("Grpc_Enable", GRPC_ENABLE, grpc_parameter, grpc_enable),
+	CONF_ITEM_IP_ADDR("Grpc_Addr", "0.0.0.0", grpc_parameter, grpc_addr),
+	CONF_ITEM_UI16("Grpc_Port", 0, UINT16_MAX, GRPC_PORT, grpc_parameter,
+		       grpc_port),
+	CONF_ITEM_PATH("Grpc_Server_Certificate", 1, MAXPATHLEN,
+		       GRPC_SERVER_CERTIFICATE, grpc_parameter,
+		       grpc_server_cert),
+	CONF_ITEM_PATH("Grpc_Server_Key", 1, MAXPATHLEN, GRPC_SERVER_KEY,
+		       grpc_parameter, grpc_server_key),
+	CONF_ITEM_PATH("Grpc_Client_Certificate", 1, MAXPATHLEN,
+		       GRPC_CLIENT_CERTIFICATE, grpc_parameter,
+		       grpc_client_cert),
+	CONF_ITEM_PATH("Grpc_Client_Key", 1, MAXPATHLEN, GRPC_CLIENT_KEY,
+		       grpc_parameter, grpc_client_key),
+	CONF_ITEM_PATH("Grpc_Ca_Certificate", 1, MAXPATHLEN,
+		       GRPC_CA_CERTIFICATE, grpc_parameter, grpc_ca_cert),
+	CONFIG_EOL
+};
+struct config_block grpc_param = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.grpc",
+	.blk_desc.name = "GRPC",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
+	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.params = grpc_params,
+	.blk_desc.u.blk.commit = noop_conf_commit
+};
+#endif

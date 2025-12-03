@@ -127,6 +127,7 @@
 #cmakedefine HAVE_URCU_REF_GET_UNLESS_ZERO 1
 #cmakedefine USE_BTRFSUTIL 1
 #cmakedefine USE_MONITORING 1
+#cmakedefine USE_GRPC 1
 #define NFS_GANESHA 1
 
 #define GANESHA_CONFIG_PATH "@SYSCONFDIR@/ganesha/ganesha.conf"

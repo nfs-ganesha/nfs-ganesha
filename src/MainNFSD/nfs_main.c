@@ -49,6 +49,7 @@
 #include "sal_functions.h"
 #include "dynamic_metrics.h"
 #ifdef USE_MONITORING
+#include "ip_utils.h"
 #include "prometheus_exposer.h"
 #endif /* USE_MONITORING */
 

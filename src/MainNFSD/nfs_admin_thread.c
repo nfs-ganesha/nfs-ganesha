@@ -65,6 +65,9 @@
 #include "prometheus_exposer.h"
 #endif
 #include "nfs_qos.h"
+#ifdef USE_GRPC
+#include "GrpcServerInit.h"
+#endif
 
 /**
  * @brief Mutex protecting shutdown flag.
@@ -932,6 +935,11 @@ static void do_shutdown(void)
 	gsh_dbus_pkgshutdown();
 #endif
 
+#ifdef USE_GRPC
+	/* GRPC shutdown  */
+	if (nfs_param.grpc_param.grpc_enable)
+		grpc_shutdown();
+#endif
 	LogEvent(COMPONENT_MAIN, "Stopping delayed executor.");
 	delayed_shutdown();
 	LogEvent(COMPONENT_MAIN, "Delayed executor stopped.");
