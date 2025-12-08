@@ -84,8 +84,6 @@ class DynamicMetrics {
 	CounterInt::Family &mdcacheCacheMissesTotal;
 	CounterInt::Family &mdcacheCacheHitsByExportTotal;
 	CounterInt::Family &mdcacheCacheMissesByExportTotal;
-	CounterInt::Family &rpcsReceivedTotal;
-	CounterInt::Family &rpcsCompletedTotal;
 	CounterInt::Family &errorsByVersionOperationStatus;
 
 	// Per client metrics.
@@ -96,7 +94,6 @@ class DynamicMetrics {
 	CounterInt::Family &clientBytesSentTotal;
 
 	// Gauges
-	GaugeInt::Family &rpcsInFlight;
 	GaugeInt::Family &lastClientUpdate;
 	GaugeInt::Family &exporttotalsize;
 	GaugeInt::Family &exportavailablesize;
@@ -147,14 +144,6 @@ DynamicMetrics::DynamicMetrics(prometheus::Registry &registry)
 			  .Name("mdcache_cache_misses_by_export_total")
 			  .Help("Counter for total cache misses in mdcache, by export.")
 			  .Register(registry))
-	, rpcsReceivedTotal(prometheus::Builder<CounterInt>()
-				    .Name("rpcs_received_total")
-				    .Help("Counter for total RPCs received.")
-				    .Register(registry))
-	, rpcsCompletedTotal(prometheus::Builder<CounterInt>()
-				     .Name("rpcs_completed_total")
-				     .Help("Counter for total RPCs completed.")
-				     .Register(registry))
 	, errorsByVersionOperationStatus(
 		  prometheus::Builder<CounterInt>()
 			  .Name("nfs_errors_total")
@@ -177,14 +166,8 @@ DynamicMetrics::DynamicMetrics(prometheus::Registry &registry)
 			  .Name("client_bytes_sent_total")
 			  .Help("Total response bytes sent by client.")
 			  .Register(registry))
-	,
 
 	// Gauges
-	rpcsInFlight(
-		prometheus::Builder<GaugeInt>()
-			.Name("rpcs_in_flight")
-			.Help("Number of NFS requests received or in flight.")
-			.Register(registry))
 	, lastClientUpdate(prometheus::Builder<GaugeInt>()
 				   .Name("last_client_update")
 				   .Help("Last update timestamp, per client.")
