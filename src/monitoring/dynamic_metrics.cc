@@ -98,6 +98,11 @@ class DynamicMetrics {
 	// Gauges
 	GaugeInt::Family &rpcsInFlight;
 	GaugeInt::Family &lastClientUpdate;
+	GaugeInt::Family &exporttotalsize;
+	GaugeInt::Family &exportavailablesize;
+	GaugeInt::Family &exportfilescount;
+	GaugeDouble::Family &exportfreebytespercent;
+	GaugeDouble::Family &exportinodeutilization;
 	GaugeDouble::Family &memoryrss;
 	GaugeDouble::Family &memoryvirtualsize;
 	GaugeDouble::Family &memoryswapsize;
@@ -184,6 +189,29 @@ DynamicMetrics::DynamicMetrics(prometheus::Registry &registry)
 				   .Name("last_client_update")
 				   .Help("Last update timestamp, per client.")
 				   .Register(registry))
+	, exporttotalsize(prometheus::Builder<GaugeInt>()
+				  .Name("export_total_size")
+				  .Help("Storage size of the export id (Bytes)")
+				  .Register(registry))
+	, exportavailablesize(
+		  prometheus::Builder<GaugeInt>()
+			  .Name("export_available_size")
+			  .Help("exports free size available (Bytes)")
+			  .Register(registry))
+	, exportfilescount(prometheus::Builder<GaugeInt>()
+				   .Name("export_available_file_count")
+				   .Help("Files present in the export")
+				   .Register(registry))
+	, exportfreebytespercent(
+		  prometheus::Builder<GaugeDouble>()
+			  .Name("export_free_bytes_percent")
+			  .Help("Exports storage utilization percentage")
+			  .Register(registry))
+	, exportinodeutilization(
+		  prometheus::Builder<GaugeDouble>()
+			  .Name("export_inode_utilization")
+			  .Help("Exports Files utilzation percentage")
+			  .Register(registry))
 	, memoryrss(
 		  prometheus::BuildGauge()
 			  .Name("nfs_memory_resident_ram_size")
@@ -510,6 +538,34 @@ void dynamic_metrics__mdcache_cache_miss(const char *operation,
 			.Add({ { kExport, GetExportLabel(export_id) },
 			       { kOperation, operation } })
 			.Increment();
+	}
+}
+
+void dynamic_metrics_export_info(const char *path, const uint64_t total_size,
+				 const uint64_t avail_size,
+				 const uint64_t total_files,
+				 const uint64_t avail_files)
+{
+	if (total_size && total_files) {
+		uint32_t storage_utilization =
+			((double)avail_size / total_size) * 100;
+		uint32_t files_utilization =
+			((double)(total_files - avail_files) / total_files) *
+			100;
+
+		dynamic_metrics->exporttotalsize.Add({ { kExportpath, path } })
+			.Set(total_size);
+		dynamic_metrics->exportavailablesize
+			.Add({ { kExportpath, path } })
+			.Set(avail_size);
+		dynamic_metrics->exportfilescount.Add({ { kExportpath, path } })
+			.Set(avail_files);
+		dynamic_metrics->exportfreebytespercent
+			.Add({ { kExportpath, path } })
+			.Set(storage_utilization);
+		dynamic_metrics->exportinodeutilization
+			.Add({ { kExportpath, path } })
+			.Set(files_utilization);
 	}
 }
 

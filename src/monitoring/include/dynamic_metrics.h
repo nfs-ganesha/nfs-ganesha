@@ -99,6 +99,11 @@ void dynamic_metrics__mdcache_cache_hit(const char *operation,
 void dynamic_metrics__mdcache_cache_miss(const char *operation,
 					 export_id_t export_id);
 
+void dynamic_metrics_export_info(const char *path, const uint64_t total_size,
+				 const uint64_t avail_size,
+				 const uint64_t total_files,
+				 const uint64_t avail_files);
+
 #ifdef HAVE_PROCPS
 void dynamic_metrics__mem_info(proc_t proc_info);
 #endif
@@ -137,6 +142,14 @@ static inline void dynamic_metrics__mdcache_cache_hit(
 
 static inline void dynamic_metrics__mdcache_cache_miss(
 	const char *UNUSED(operation), export_id_t UNUSED(export_id))
+{
+}
+
+static inline void dynamic_export_info(const char *UNSED(path),
+				       const uint64_t UNUSED(total_size),
+				       const uint64_t UNUSED(avail_size),
+				       const uint64_t UNUSED(total_files),
+				       const uint64_t UNUSED(avail_files))
 {
 }
 

@@ -34,7 +34,13 @@
 #include <unistd.h>
 #include <streambuf>
 #include <mutex>
+
+extern "C" {
+#include "fsal.h"
 #include "gsh_config.h"
+#include "log.h"
+}
+
 #ifdef HAVE_PROCPS
 #include <proc/readproc.h>
 #endif
@@ -317,8 +323,10 @@ void *PrometheusExposer::server_thread(void *arg)
 			exposer->successLatencies_.Observe(elapsed_ms);
 
 #ifdef HAVE_PROCPS
-		if (nfs_param.core_param.enable_dynamic_metrics)
+		if (nfs_param.core_param.enable_dynamic_metrics) {
 			update_mem_info();
+			update_export_mem();
+		}
 #endif
 		gettimeofday(&current_time, nullptr);
 		elapsed_seconds =
@@ -373,6 +381,65 @@ void update_mem_info()
 		dynamic_metrics__mem_info(proc_info);
 }
 #endif
+
+static bool update_export(struct gsh_export *gsh_export,
+			  void *status __attribute__((unused)))
+{
+	if (gsh_export == NULL)
+		return false;
+
+	struct fsal_obj_handle *export_fsal_obj = gsh_export->exp_root_obj;
+	struct fsal_export *exp = gsh_export->fsal_export;
+	const char *path = gsh_export->cfg_pseudopath;
+
+	if (path == NULL || path[0] == '\0' || strcmp(path, "/") == 0)
+		return true;
+
+	LogFullDebug(COMPONENT_FSAL, "path is %s", path);
+	if (export_fsal_obj == NULL || exp == NULL ||
+	    exp->exp_ops.get_fs_dynamic_info == NULL)
+		return true;
+
+	fsal_dynamicfsinfo_t dynamic_info;
+	fsal_status_t fsal_status = { ERR_FSAL_NO_ERROR, 0 };
+
+	/* Set up a minimal op context for the duration of the call
+	 * then release it immediately after.
+	 */
+	struct req_op_context op_context;
+	get_gsh_export_ref(gsh_export);
+	init_op_context_simple(&op_context, gsh_export, exp);
+
+	fsal_status = exp->exp_ops.get_fs_dynamic_info(exp, export_fsal_obj,
+						       &dynamic_info);
+	release_op_context();
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "unable to fetch fs info with failure %s",
+			     fsal_err_txt(fsal_status));
+		return false;
+	}
+	LogFullDebug(
+		COMPONENT_FSAL,
+		"dynamic_metrics_export_info details :"
+		" dynamic_info.total_bytes %ld dynamic_info.avail_bytes  %ld"
+		" dynamic_info.total_files %ld dynamic_info.avail_files %ld",
+		dynamic_info.total_bytes, dynamic_info.avail_bytes,
+		dynamic_info.total_files, dynamic_info.avail_files);
+	dynamic_metrics_export_info(path, dynamic_info.total_bytes,
+				    dynamic_info.avail_bytes,
+				    dynamic_info.total_files,
+				    dynamic_info.avail_files);
+
+	return true;
+}
+
+void update_export_mem()
+{
+	foreach_gsh_export(update_export, false, NULL)
+		;
+}
+
 } /* extern "C" */
 
 } /* namespace ganesha_monitoring */
