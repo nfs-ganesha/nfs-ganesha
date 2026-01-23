@@ -652,6 +652,9 @@ int main(int argc, char *argv[])
 		goto fatal_die;
 	}
 
+	/* Initialize netconfigs */
+	nfs_Init_netconfig();
+
 	/* Start grace period */
 	nfs_start_grace(NULL);
 

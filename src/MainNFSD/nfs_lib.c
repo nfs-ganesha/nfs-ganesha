@@ -217,6 +217,9 @@ int nfs_libmain(const char *ganesha_conf, const char *lpath,
 		goto fatal_die;
 	}
 
+	/* Initialize netconfigs */
+	nfs_Init_netconfig();
+
 	/* Start grace period */
 	nfs_start_grace(NULL);
 

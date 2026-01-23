@@ -144,9 +144,17 @@ void _9p_rdma_process_request(struct _9p_request_data *req9p);
 void _9p_rdma_cleanup_conn(msk_trans_t *trans);
 #endif
 
-/* in nfs_rpc_dispatcher_thread.c */
+/************** in nfs_rpc_dispatcher_thread.c ************/
+
+/* RPC Service Sockets and Transports */
+extern struct netconfig *netconfig_udpv4;
+extern struct netconfig *netconfig_tcpv4;
+extern struct netconfig *netconfig_udpv6;
+extern struct netconfig *netconfig_tcpv6;
 
 void Clean_RPC(void);
+struct netconfig *nfs_Get_netconfig(char *netid);
+void nfs_Init_netconfig(void);
 void nfs_Init_svc(void);
 void nfs_rpc_dispatch_stop(void);
 uint32_t nfs_get_evchannel_id(enum evchan);

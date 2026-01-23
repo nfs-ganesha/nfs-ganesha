@@ -1407,6 +1407,73 @@ static inline void Register_program(protos prot, int vers)
 }
 #endif /* RPCBIND */
 
+struct netconfig *nfs_Get_netconfig(char *netid)
+{
+	bool ipv6 = false;
+
+	if (strncasecmp(netid, "tcp", 3) == 0) {
+		ipv6 = netid[3] == '6';
+		if (ipv6)
+			return netconfig_tcpv6;
+		else
+			return netconfig_tcpv4;
+	} else if (strncasecmp(netid, "udp", 3) == 0) {
+		ipv6 = netid[3] == '6';
+		if (ipv6)
+			return netconfig_udpv6;
+		else
+			return netconfig_udpv4;
+	} else if ((strcasecmp(netid, "local") == 0) ||
+		   (strcasecmp(netid, "unix") == 0)) {
+		/* Come back later to support AF_LOCAL sockets */
+		return NULL;
+	}
+
+	/* Don't support any other netids */
+	return NULL;
+}
+
+void nfs_Init_netconfig(void)
+{
+	/* Get the netconfig entries from /etc/netconfig */
+	netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp");
+	if (netconfig_udpv4 == NULL)
+		LogFatal(
+			COMPONENT_DISPATCH,
+			"Cannot get udp netconfig, cannot get an entry for udp in netconfig file. Check file /etc/netconfig...");
+
+	/* Get the netconfig entries from /etc/netconfig */
+	netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp");
+	if (netconfig_tcpv4 == NULL)
+		LogFatal(
+			COMPONENT_DISPATCH,
+			"Cannot get tcp netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
+
+	/* A short message to show that /etc/netconfig parsing was a success */
+	LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
+
+	LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
+
+	/* Get the netconfig entries from /etc/netconfig */
+	netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6");
+	if (netconfig_udpv6 == NULL)
+		LogInfo(COMPONENT_DISPATCH,
+			"Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
+
+	/* Get the netconfig entries from /etc/netconfig */
+	netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6");
+	if (netconfig_tcpv6 == NULL)
+		LogInfo(COMPONENT_DISPATCH,
+			"Cannot get tcp6 netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
+
+	/* A short message to show that /etc/netconfig parsing was a success
+	 * for ipv6
+	 */
+	if (netconfig_udpv6 && netconfig_tcpv6)
+		LogFullDebug(COMPONENT_DISPATCH,
+			     "netconfig found for UDPv6 and TCPv6");
+}
+
 /**
  * @brief Init the svc descriptors for the nfs daemon
  *
@@ -1488,44 +1555,6 @@ void nfs_Init_svc(void)
 				 ix, code);
 		/* XXX bail?? */
 	}
-
-	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp");
-	if (netconfig_udpv4 == NULL)
-		LogFatal(
-			COMPONENT_DISPATCH,
-			"Cannot get udp netconfig, cannot get an entry for udp in netconfig file. Check file /etc/netconfig...");
-
-	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp");
-	if (netconfig_tcpv4 == NULL)
-		LogFatal(
-			COMPONENT_DISPATCH,
-			"Cannot get tcp netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
-
-	/* A short message to show that /etc/netconfig parsing was a success */
-	LogFullDebug(COMPONENT_DISPATCH, "netconfig found for UDPv4 and TCPv4");
-
-	LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
-
-	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6");
-	if (netconfig_udpv6 == NULL)
-		LogInfo(COMPONENT_DISPATCH,
-			"Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
-
-	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6");
-	if (netconfig_tcpv6 == NULL)
-		LogInfo(COMPONENT_DISPATCH,
-			"Cannot get tcp6 netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
-
-	/* A short message to show that /etc/netconfig parsing was a success
-	 * for ipv6
-	 */
-	if (netconfig_udpv6 && netconfig_tcpv6)
-		LogFullDebug(COMPONENT_DISPATCH,
-			     "netconfig found for UDPv6 and TCPv6");
 
 	/* Allocate the UDP and TCP sockets for the RPC */
 	Allocate_sockets();

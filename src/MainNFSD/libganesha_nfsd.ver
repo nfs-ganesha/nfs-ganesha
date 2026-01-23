@@ -195,9 +195,11 @@
   nfs_config_path;
   nfs_export_get_root_entry;
   nfs_grace_is_member;
+  nfs_Get_netconfig;
   nfs_init_init;
   nfs_init_wait;
   nfs_init_wait_timeout;
+  nfs_Init_netconfig;
   nfs_libmain;
   nfs_param;
   nfs_pidfile_path;
