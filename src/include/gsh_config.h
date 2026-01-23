@@ -62,6 +62,9 @@ typedef enum protos {
 #endif
 #ifdef _USE_NLM
 	P_NLM, /*< NLM (for v3) */
+#ifdef _INTERNAL_STATD
+	P_STATD, /*< NSM (for v3) */
+#endif
 #endif
 #ifdef _USE_RQUOTA
 	P_RQUOTA, /*< RQUOTA (for v3) */
@@ -596,6 +599,9 @@ typedef struct nfs_core_param {
 	bool allow_set_io_flusher_fail;
 #ifdef _USE_NLM
 	bool unmonitor_on_shutdown;
+#endif
+#ifdef _INTERNAL_STATD
+	bool internal_statd;
 #endif
 } nfs_core_parameter_t;
 
