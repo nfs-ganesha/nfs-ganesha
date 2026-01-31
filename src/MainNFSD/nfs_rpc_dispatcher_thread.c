@@ -1535,12 +1535,15 @@ void nfs_Init_svc(void)
 
 	if ((NFS_options & CORE_OPTION_ALL_NFS_VERS) != 0) {
 		/* Bind the tcp and udp sockets */
+		LogDebug(COMPONENT_DISPATCH, "About to bind sockets");
 		Bind_sockets();
 
 		/* Unregister from portmapper/rpcbind */
+		LogDebug(COMPONENT_DISPATCH, "About to unregister services");
 		unregister_rpc();
 
 		/* Set up well-known xprt handles */
+		LogDebug(COMPONENT_DISPATCH, "About to create SVCXPRTS");
 		Create_SVCXPRTs();
 	}
 
@@ -1550,6 +1553,8 @@ void nfs_Init_svc(void)
 	 * and NFS_V4. Note that v4 servers are not required to register with
 	 * rpcbind, so we don't fail to start if only that fails.
 	 */
+	LogDebug(COMPONENT_DISPATCH, "About to register services");
+
 #ifdef _USE_NFS3
 	if (NFS_options & CORE_OPTION_NFSV3) {
 		Register_program(P_NFS, NFS_V3);
@@ -1577,6 +1582,11 @@ void nfs_Init_svc(void)
 		Register_program(P_RQUOTA, EXT_RQUOTAVERS);
 	}
 #endif
+
+	LogDebug(COMPONENT_DISPATCH, "Done registering services");
+#else
+
+	LogDebug(COMPONENT_DISPATCH, "Skip registering services");
 #endif /* RPCBIND */
 }
 

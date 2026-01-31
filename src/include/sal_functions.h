@@ -118,6 +118,8 @@ void free_state_owner(state_owner_t *owner);
 		PTHREAD_MUTEX_unlock(&(obj)->state_hdl->st_lock); \
 	} while (0)
 
+const char *str_care_t(enum care_t care);
+
 state_owner_t *get_state_owner(care_t care, state_owner_t *pkey,
 			       state_owner_init_t init_owner, bool_t *isnew);
 

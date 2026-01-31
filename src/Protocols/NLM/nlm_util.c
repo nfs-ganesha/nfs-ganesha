@@ -294,6 +294,8 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		 * unlock), just return GRANTED (the unlock must succeed,
 		 * there can't be any locks).
 		 */
+		LogDebug(COMPONENT_NLM, "Could not get NSM Client");
+
 		if (care != CARE_NOT)
 			rc = NLM4_DENIED_NOLOCKS;
 		else
@@ -310,6 +312,8 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		 * unlock), just return GRANTED (the unlock must succeed,
 		 * there can't be any locks).
 		 */
+		LogDebug(COMPONENT_NLM, "Could not get NLM Client");
+
 		if (care != CARE_NOT)
 			rc = NLM4_DENIED_NOLOCKS;
 		else

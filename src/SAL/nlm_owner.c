@@ -62,6 +62,28 @@ hash_table_t *ht_nlm_client;
  */
 hash_table_t *ht_nlm_owner;
 
+const char *str_care_t(enum care_t care)
+{
+	switch (care) {
+	case CARE_NOT:
+		return "CARE_NOT";
+
+	case CARE_OWNER:
+		return "CARE_OWNER";
+
+	case CARE_ALWAYS:
+		return "CARE_ALWAYS";
+
+	case CARE_NO_MONITOR:
+		return "CARE_NO_MONITOR";
+
+	case CARE_MONITOR:
+		return "CARE_MONITOR";
+	}
+
+	return "Unknown Care";
+}
+
 /*******************************************************************************
  *
  * NSM Client Routines
@@ -909,7 +931,8 @@ state_nsm_client_t *get_nsm_client(care_t care, char *caller_name)
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_nsm_client(&dspbuf, &key);
-		LogFullDebug(COMPONENT_STATE, "Find {%s}", str);
+		LogFullDebug(COMPONENT_STATE, "Find %s {%s}", str_care_t(care),
+			     str);
 	}
 
 	buffkey.addr = &key;
@@ -1194,7 +1217,8 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 
 	if (isFullDebug(COMPONENT_STATE)) {
 		display_nlm_client(&dspbuf, &key);
-		LogFullDebug(COMPONENT_STATE, "Find {%s}", str);
+		LogFullDebug(COMPONENT_STATE, "Find %s {%s}", str_care_t(care),
+			     str);
 	}
 
 	buffkey.addr = &key;
