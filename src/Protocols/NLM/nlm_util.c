@@ -260,6 +260,7 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 	int rc;
 	uint64_t maxfilesize = op_ctx->fsal_export->exp_ops.fs_maxfilesize(
 		op_ctx->fsal_export);
+	care_t care_nsm_client = care;
 
 	*ppnsm_client = NULL;
 	*ppnlm_client = NULL;
@@ -287,7 +288,17 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 		return NLM4_FAILED;
 	}
 
-	*ppnsm_client = get_nsm_client(care, alock->caller_name);
+#ifdef _INTERNAL_STATD
+	if (NFS_pcp.internal_statd && care == CARE_MONITOR) {
+		/* If we are using internal statd, we won't monitor the nsm
+		 * client, instead, we will handle the monitoring with the nlm
+		 * client.
+		 */
+		care_nsm_client = CARE_NO_MONITOR;
+	}
+#endif
+
+	*ppnsm_client = get_nsm_client(care_nsm_client, alock->caller_name);
 
 	if (*ppnsm_client == NULL) {
 		/* If NSM Client is not found, and we don't care (such as

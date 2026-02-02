@@ -300,6 +300,13 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI16("NSM_Port", 0, UINT16_MAX, 0, nfs_core_param,
 		       port[P_STATD]),
 	CONF_ITEM_BOOL("Internal_statd", false, nfs_core_param, internal_statd),
+	/* We need this config variable to provide SM_PROG to various parts of
+	 * Ganesha, but it really should never be changed. Clients aren't
+	 * going to know that they should look for statd using a different
+	 * RPC program number. For this reason, the variable is not documented.
+	 */
+	CONF_ITEM_UI32("NSM_Program", SM_PROG, SM_PROG, SM_PROG, nfs_core_param,
+		       program[P_STATD]),
 #endif
 #endif
 #ifdef _USE_RQUOTA

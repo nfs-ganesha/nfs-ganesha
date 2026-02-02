@@ -98,12 +98,28 @@ static void default_add_revoke_fh(nfs_client_id_t *dlr_clid,
 {
 }
 
+#ifdef _INTERNAL_STATD
+static bool default_add_nlm_entry(struct local_nlm_info *info)
+{
+	return false;
+}
+
+static bool default_rm_nlm_entry(struct local_nlm_info *info)
+{
+	return false;
+}
+#endif
+
 static struct nfs4_recovery_backend default_recovery_backend = {
 	.recovery_init = default_recovery_init,
 	.end_grace = default_end_grace,
 	.recovery_read_clids = default_recovery_read_clids,
 	.add_clid = default_add_clid,
 	.rm_clid = default_rm_clid,
+#ifdef _INTERNAL_STATD
+	.add_nlm_entry = default_add_nlm_entry,
+	.rm_nlm_entry = default_rm_nlm_entry,
+#endif
 	.add_revoke_fh = default_add_revoke_fh,
 };
 
@@ -241,12 +257,272 @@ void nfs4_cleanup_clid_entries(void)
 	atomic_store_int32_t(&reclaim_completes, 0);
 }
 
+#ifdef _INTERNAL_STATD
+int nsm_create_state_entry(struct display_buffer *dspbuf,
+			   struct local_nlm_info *info)
+{
+	/* Format is NSM_STATE-state */
+	return display_printf(dspbuf, "NSM_STATE-%d", info->nsm_state);
+}
+
+bool parse_nlm_state_entry(char *entry, struct local_nlm_info *info)
+{
+	/* Format is NSM_STATE-state */
+	int rc = sscanf(entry, "NSM_STATE-%d", &info->nsm_state);
+
+	return rc == 1;
+}
+
+int nlm_create_client_entry(struct display_buffer *dspbuf,
+			    struct local_nlm_info *info)
+{
+	int rc, caller_name_len = strlen(info->client_name);
+
+	/* format is NLM-<CLIENT-IP>-<SERV-IP>-(netid:LSTR{caller-name})
+	 *           "NLM-%s-%s-(%s)(%d:%s)"
+	 */
+	rc = display_cat(dspbuf, "NLM-");
+
+	if (rc > 0)
+		rc = display_sockip(dspbuf, &info->client_address);
+
+	if (rc > 0)
+		rc = display_cat(dspbuf, "-");
+
+	if (rc > 0)
+		rc = display_sockip(dspbuf, &info->server_address);
+
+	if (rc > 0)
+		rc = display_printf(dspbuf, "-(%s)(%d:%s)",
+				    info->nconf->nc_netid, caller_name_len,
+				    info->client_name);
+
+	if (rc <= 0)
+		LogCrit(COMPONENT_NLM, "Failure to encode NLM client entry");
+	else
+		LogDebug(COMPONENT_NLM, "Created NLM encoding [%s]",
+			 dspbuf->b_start);
+
+	return rc;
+}
+
+char *parse_lstr(char *pos, char **lstr)
+{
+	long len, slen = strlen(pos);
+	char *endstr;
+
+	if (*pos != '(') {
+		LogFullDebug(COMPONENT_NLM, "Missing open parentheses");
+		return NULL;
+	}
+
+	len = strtol(pos + 1, &endstr, 10);
+
+	if (endstr == (pos + 1) || *endstr != ':') {
+		LogFullDebug(COMPONENT_NLM, "Could not find LSTR len");
+		return NULL;
+	}
+
+	/* endstr -> after len, so there must be ':' plus len chars plus ')'
+	 * after that.
+	 */
+	if ((endstr - pos + len + 2) > slen) {
+		LogFullDebug(COMPONENT_NLM, "Not long enough for string");
+		return NULL;
+	}
+
+	if (*(endstr + len + 1) != ')') {
+		LogFullDebug(COMPONENT_NLM, "LSTR missing closing parentheses");
+		return NULL;
+	}
+
+	/* Skip ':' */
+	*lstr = endstr + 1;
+
+	/* NUL terminate */
+	*(endstr + len + 1) = '\0';
+
+	return endstr + len + 2;
+}
+
+/*
+ * @brief parse the common bit of NLM Client Format and Local NLM SM_MON Format
+ *
+ * <CLIENT-IP>-<SERV-IP>-(netid)(LSTR{caller-name})
+ *
+ */
+char *parse_cli_srv_netid_client(char *start, struct local_nlm_info *info)
+{
+	char *endstr, *cli_ipstring = start, *client_name_string, *netid;
+	char *srv_ipstring;
+	int rc;
+
+	endstr = strchr(cli_ipstring, '-');
+
+	if (endstr == NULL) {
+		LogFullDebug(COMPONENT_NLM, "Could not find client addr");
+		return NULL;
+	}
+
+	/* NUL terminate ipstring */
+	*endstr = '\0';
+
+	srv_ipstring = endstr + 1;
+	endstr = strchr(srv_ipstring, '-');
+
+	if (endstr == NULL) {
+		LogFullDebug(COMPONENT_NLM, "Could not find server addr");
+		return NULL;
+	}
+
+	/* NUL terminate ipstring */
+	*endstr = '\0';
+
+	/* Find the netid string */
+	if (*(endstr + 1) != '(') {
+		LogFullDebug(COMPONENT_NLM, "Missing open parentheses");
+		return NULL;
+	}
+
+	/* Skip past open parentheses to find netid. */
+	netid = endstr + 2;
+
+	/* Find the end of netid */
+	endstr = strchr(netid, ')');
+
+	if (endstr == NULL) {
+		LogFullDebug(COMPONENT_NLM, "Could not find end of netid");
+		return NULL;
+	}
+
+	/* NUL terminate netid */
+	*endstr = '\0';
+
+	info->nconf = nfs_Get_netconfig(netid);
+
+	if (info->nconf == NULL) {
+		LogFullDebug(COMPONENT_NLM, "netid %s invalid", netid);
+		return NULL;
+	}
+
+	/* Find the client-name string */
+	endstr = parse_lstr(endstr + 1, &client_name_string);
+
+	if (endstr == NULL) {
+		LogFullDebug(COMPONENT_NLM, "Could not find client addr");
+		return NULL;
+	}
+
+	rc = ip_str_to_sockaddr(cli_ipstring, &info->client_address);
+
+	if (rc != 0) {
+		LogFullDebug(COMPONENT_NLM, "Could not convert client addr");
+		return NULL;
+	}
+
+	rc = ip_str_to_sockaddr(srv_ipstring, &info->server_address);
+
+	if (rc != 0) {
+		LogFullDebug(COMPONENT_NLM, "Could not convert server addr");
+		return NULL;
+	}
+
+	/* now we have what we need to fire off task to send SM_NOTIFY */
+	info->client_name = gsh_strdup(client_name_string);
+	info->client_address_str = gsh_strdup(cli_ipstring);
+	info->server_address_str = gsh_strdup(srv_ipstring);
+
+	return endstr;
+}
+
+bool parse_nlm_client_entry(char *entry, struct local_nlm_info *info)
+{
+	char *dupe = gsh_strdupa(entry);
+	char *endstr;
+
+	endstr = parse_cli_srv_netid_client(dupe + 4, info);
+
+	if (endstr == NULL) {
+		LogFullDebug(COMPONENT_NLM, "Parse of NLM Client failed");
+		return false;
+	}
+
+	if (*endstr != '\0') {
+		LogFullDebug(COMPONENT_NLM, "Extra at end of client-name %s",
+			     endstr);
+		return false;
+	}
+
+	return true;
+}
+
+int create_nlm_entry(struct display_buffer *dspbuf, struct local_nlm_info *info)
+{
+	switch (info->recovery_type) {
+	case NSM_STATE_ENTRY:
+		return nsm_create_state_entry(dspbuf, info);
+
+	case NLM_CLIENT_ENTRY:
+		return nlm_create_client_entry(dspbuf, info);
+
+	default:
+		return -1;
+	}
+
+	return -1;
+}
+#endif
+
 bool parse_nlm_entry(char *entry, enum recovery_type recovery_type)
 {
+#ifdef _INTERNAL_STATD
+	struct local_nlm_info *info;
+	bool rc;
 	if (recovery_type == NFS4_CLID_ENTRY ||
 	    recovery_type > NLM_CLIENT_ENTRY)
-		return false;
+		goto bad_entry;
 
+	info = gsh_calloc(1, sizeof(*info));
+	info->recovery_type = recovery_type;
+
+	LogDebug(COMPONENT_NLM, "Parsing NLM entry %s, type = %d", entry,
+		 recovery_type);
+
+	switch (recovery_type) {
+	case NSM_STATE_ENTRY:
+		rc = parse_nlm_state_entry(entry, info);
+		if (rc) {
+			/* Process this immediately */
+			recov_nsm_state = info->nsm_state;
+			cur_nsm_state = recov_nsm_state + 2;
+			info->nsm_state = cur_nsm_state;
+			local_nlm_info_free(info);
+		}
+		break;
+
+	case NLM_CLIENT_ENTRY:
+		rc = parse_nlm_client_entry(entry, info);
+		if (rc) {
+			/* Keep a list of all the monitor entries */
+			glist_add_tail(&local_nlm_info_list, &info->infolist);
+		}
+		break;
+
+	default:
+		/* can't get here */
+		return false;
+	}
+
+	if (!rc) {
+		/* Failed, don't keep it */
+		local_nlm_info_free(info);
+	}
+
+	return rc;
+
+bad_entry:
+
+#endif
 	LogWarn(COMPONENT_NLM, "NLM Recovery Entry Invalid: %s", entry);
 
 	return false;
@@ -837,6 +1113,21 @@ void nfs4_add_clid(nfs_client_id_t *clientid)
 	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 }
 
+#ifdef _INTERNAL_STATD
+/**
+ * @brief Create an entry in the recovery directory
+ *
+ * This entry allows the client to reclaim state after a server
+ * reboot/restart.
+ *
+ * @param[in] nsmclient NSM client definition
+ */
+bool nlm_add_entry(struct local_nlm_info *info)
+{
+	return recovery_backend->add_nlm_entry(info);
+}
+#endif
+
 /**
  * @brief Remove a client entry from the recovery directory
  *
@@ -851,6 +1142,21 @@ void nfs4_rm_clid(nfs_client_id_t *clientid)
 	recovery_backend->rm_clid(clientid);
 	PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 }
+
+#ifdef _INTERNAL_STATD
+/**
+ * @brief Remove a client entry from the recovery directory
+ *
+ * This function would be called when a client is unmonitored.
+ *
+ * @param[in] nsmclient NSM client definition
+ *
+ */
+bool nlm_rm_entry(struct local_nlm_info *info)
+{
+	return recovery_backend->rm_nlm_entry(info);
+}
+#endif
 
 static bool check_clid(nfs_client_id_t *clientid, clid_entry_t *clid_ent)
 {

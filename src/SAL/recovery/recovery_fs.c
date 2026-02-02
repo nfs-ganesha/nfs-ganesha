@@ -779,8 +779,12 @@ bool process_recovery_entry(char *build_clid, char *tgtdir, int takeover,
 			recovery_type);
 
 	if (recovery_type > NFS4_CLID_ENTRY) {
+#ifdef _INTERNAL_STATD
 		/* Process an NLM recovery entry */
 		return parse_nlm_entry(build_clid, recovery_type);
+#else
+		return false;
+#endif
 	}
 
 	/* Process an NFSv4 clid entry
@@ -1298,6 +1302,58 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 	}
 }
 
+#ifdef _INTERNAL_STATD
+static bool fs_add_nlm_entry(struct local_nlm_info *info)
+{
+	char entry[PATH_MAX];
+	struct display_buffer dspbuf = { sizeof(entry), entry, entry };
+	char path[PATH_MAX];
+	int rc = create_nlm_entry(&dspbuf, info);
+	sockaddr_t *serv = NULL;
+
+	if (rc <= 0)
+		return false;
+
+	if (info->recovery_type == NLM_CLIENT_ENTRY)
+		serv = &info->server_address;
+
+	rc = fs_make_path(entry, serv, path, sizeof(path), true, COMPONENT_NLM);
+
+	LogFullDebug(COMPONENT_NLM, "fs_make_path rc = %d for entry %s path %s",
+		     rc, entry, path);
+
+	return rc > 0;
+}
+
+static bool fs_rm_nlm_entry(struct local_nlm_info *info)
+{
+	char entry[PATH_MAX];
+	struct display_buffer dspbuf = { sizeof(entry), entry, entry };
+	int rc = create_nlm_entry(&dspbuf, info);
+
+	if (rc <= 0)
+		return false;
+
+	if (nfs_param.nfsv4_param.recovery_backend_ipbased &&
+	    info->recovery_type == NLM_CLIENT_ENTRY) {
+		char dir[PATH_MAX];
+		int dir_len;
+
+		dir_len = fs_make_ip_recov_dir_name(&info->server_address,
+						    false, sizeof(dir), dir,
+						    COMPONENT_NLM);
+
+		rc = fs_rm_entry_impl(0, entry, strlen(entry), dir, dir_len,
+				      COMPONENT_NLM);
+	} else {
+		rc = fs_rm_entry_impl(0, entry, strlen(entry), v4_recov_dir,
+				      v4_recov_dir_len, COMPONENT_NLM);
+	}
+
+	return rc != -1;
+}
+#endif
+
 struct nfs4_recovery_backend fs_backend = {
 	.recovery_init = fs_create_recov_dir,
 	.end_grace = fs_clean_old_recov_dir,
@@ -1305,6 +1361,10 @@ struct nfs4_recovery_backend fs_backend = {
 	.reclaim_complete = fs_reclaim_complete,
 	.add_clid = fs_add_clid,
 	.rm_clid = fs_rm_clid,
+#ifdef _INTERNAL_STATD
+	.add_nlm_entry = fs_add_nlm_entry,
+	.rm_nlm_entry = fs_rm_nlm_entry,
+#endif
 	.add_revoke_fh = fs_add_revoke_fh,
 };
 

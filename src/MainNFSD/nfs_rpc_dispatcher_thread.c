@@ -125,9 +125,12 @@ const char *tags[P_COUNT] = {
 #endif
 #ifdef _USE_NLM
 	"NLM",
+#endif
+#ifdef _INTERNAL_STATD
+	"SMMON",
+#endif
 #ifdef _USE_RQUOTA
 	"RQUOTA",
-#endif
 #endif
 #ifdef USE_NFSACL3
 	"NFSACL",
@@ -207,6 +210,10 @@ static void unregister_rpc(void)
 	if (nfs_param.core_param.enable_NLM)
 		unregister(NFS_program[P_NLM], 1, NLM4_VERS);
 #endif /* _USE_NLM */
+#ifdef _INTERNAL_STATD
+	if (NFS_pcp.internal_statd)
+		unregister(NFS_program[P_STATD], 1, SM_VERS);
+#endif
 #ifdef _USE_RQUOTA
 	if (nfs_param.core_param.enable_RQUOTA) {
 		unregister(NFS_program[P_RQUOTA], RQUOTAVERS, EXT_RQUOTAVERS);
@@ -242,6 +249,14 @@ static inline bool nfs_protocol_enabled(protos p)
 		if (nfsv3 && nfs_param.core_param.enable_NLM)
 			return true;
 		break;
+#endif
+
+#ifdef _INTERNAL_STATD
+	case P_STATD:
+		/* If we have chosen not to use rpc.statd, i.e. use internal
+		 * then P_STATD is enabled from this perspective.
+		 */
+		return NFS_pcp.internal_statd;
 #endif
 
 #ifdef _USE_RQUOTA
@@ -316,6 +331,21 @@ uint32_t nfs_get_evchannel_id(enum evchan channel)
  * TCP initial connections are bound to socket NFS_TCPSocket
  * all the other cases are requests from already connected TCP Clients
  */
+
+#ifdef _INTERNAL_STATD
+static enum xprt_stat nfs_rpc_dispatch_udp_SMMON(SVCXPRT *xprt)
+{
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "SMMON UDP request for SVCXPRT %p fd %d", xprt,
+		     xprt->xp_fd);
+	GSH_XPRT_UNIQUE_AUTO_TRACEPOINT(nfs_rpc, before_recv, TRACE_INFO, xprt,
+					"rpcbind udp dispatch");
+
+	xprt->xp_dispatch.process_cb = nfs_rpc_valid_SMMON;
+	return SVC_RECV(xprt);
+}
+#endif
+
 static enum xprt_stat nfs_rpc_dispatch_udp_NFS(SVCXPRT *xprt)
 {
 	LogFullDebug(COMPONENT_DISPATCH, "NFS UDP request for SVCXPRT %p fd %d",
@@ -387,6 +417,9 @@ const svc_xprt_fun_t udp_dispatch[] = {
 #ifdef _USE_NLM
 	nfs_rpc_dispatch_udp_NLM,
 #endif
+#ifdef _INTERNAL_STATD
+	nfs_rpc_dispatch_udp_SMMON,
+#endif
 #ifdef _USE_RQUOTA
 	nfs_rpc_dispatch_udp_RQUOTA,
 #endif
@@ -427,6 +460,17 @@ static enum xprt_stat nfs_rpc_dispatch_remote_addr_set_tcp(SVCXPRT *xprt)
 	}
 	return XPRT_IDLE;
 }
+
+#ifdef _INTERNAL_STATD
+static enum xprt_stat nfs_rpc_dispatch_tcp_SMMON(SVCXPRT *xprt)
+{
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "SMMON TCP dispatch setup for SVCXPRT %p fd %d", xprt,
+		     xprt->xp_fd);
+	xprt->xp_dispatch.process_cb = nfs_rpc_valid_SMMON;
+	return nfs_rpc_tcp_user_data(xprt);
+}
+#endif
 
 static enum xprt_stat nfs_rpc_dispatch_tcp_NFS(SVCXPRT *xprt)
 {
@@ -535,6 +579,9 @@ const svc_xprt_fun_t tcp_dispatch[P_COUNT] = {
 #endif
 #ifdef _USE_NLM
 	nfs_rpc_dispatch_tcp_NLM,
+#endif
+#ifdef _INTERNAL_STATD
+	nfs_rpc_dispatch_tcp_SMMON,
 #endif
 #ifdef _USE_RQUOTA
 	nfs_rpc_dispatch_tcp_RQUOTA,
@@ -1589,6 +1636,10 @@ void nfs_Init_svc(void)
 		if (nfs_param.core_param.enable_NLM)
 			Register_program(P_NLM, NLM4_VERS);
 #endif /* _USE_NLM */
+#ifdef _INTERNAL_STATD
+		if (NFS_pcp.internal_statd)
+			Register_program(P_STATD, SM_VERS);
+#endif
 #ifdef USE_NFSACL3
 		if (nfs_param.core_param.enable_NFSACL)
 			Register_program(P_NFSACL, NFSACL_V3);

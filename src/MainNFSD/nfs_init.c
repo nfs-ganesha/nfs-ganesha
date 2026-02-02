@@ -1407,6 +1407,13 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	}
 #endif /* _USE_NLM */
 
+#ifdef _INTERNAL_STATD
+	/* Launch thread to send SM_NOTIFY, recovery DB was previously loaded
+	 * from nfs_start_grace which was called before nfs_start() was called.
+	 */
+	process_local_nlm_info();
+#endif
+
 	LogEvent(COMPONENT_INIT,
 		 "-------------------------------------------------");
 	LogEvent(COMPONENT_INIT, "             NFS SERVER INITIALIZED");

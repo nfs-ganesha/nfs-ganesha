@@ -490,6 +490,15 @@ void rquota_setquota_Free(nfs_res_t *);
 void rquota_setactivequota_Free(nfs_res_t *);
 #endif
 
+#ifdef _INTERNAL_STATD
+int smmon_proc_null(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res);
+void smmon_free(nfs_res_t *res);
+int smmon_proc_stat(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res);
+int smmon_proc_mon(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res);
+int smmon_proc_unmon(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res);
+int smmon_proc_notify(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res);
+#endif
+
 #ifdef USE_NFSACL3
 void nfsacl_Null_Free(nfs_res_t *);
 void nfsacl_getacl_Free(nfs_res_t *);

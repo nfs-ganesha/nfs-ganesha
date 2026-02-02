@@ -963,6 +963,10 @@ static void do_shutdown(void)
 			 "State asynchronous request system shut down.");
 	}
 
+#ifdef _INTERNAL_STATD
+	shutdown_nsm_notify_thread();
+#endif
+
 	LogEvent(COMPONENT_MAIN, "Unregistering ports used by NFS service");
 	/* finalize RPC package */
 	Clean_RPC();

@@ -31,7 +31,7 @@ bool xdr_sm_stat(XDR *xdrs, sm_stat *objp)
 	return true;
 }
 
-bool xdr_my_id(XDR *xdrs, my_id *objp)
+bool xdr_my_id(XDR *xdrs, struct my_id *objp)
 {
 	if (!xdr_string(xdrs, &objp->my_name, SM_MAXSTRLEN))
 		return false;
@@ -44,7 +44,7 @@ bool xdr_my_id(XDR *xdrs, my_id *objp)
 	return true;
 }
 
-bool xdr_mon_id(XDR *xdrs, mon_id *objp)
+bool xdr_mon_id(XDR *xdrs, struct mon_id *objp)
 {
 	if (!xdr_string(xdrs, &objp->mon_name, SM_MAXSTRLEN))
 		return false;

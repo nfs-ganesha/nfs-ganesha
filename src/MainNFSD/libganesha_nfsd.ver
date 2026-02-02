@@ -162,6 +162,7 @@
   is_op_context_conditional_flag_set;
   load_config_from_node;
   load_config_from_parse;
+  local_nlm_info_free;
   log_attrlist;
   lookup_dev;
   lookup_fsal;
@@ -226,6 +227,7 @@
   nfs_get_evchannel_id;
   noop_conf_commit;
   noop_conf_init;
+  nsm_notify_thread_p;
   object_file_type_to_str;
   op_ctx;
   open_dir_by_path_walk;

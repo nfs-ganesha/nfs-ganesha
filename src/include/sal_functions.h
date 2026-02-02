@@ -1040,6 +1040,27 @@ void signal_async_work(void);
 state_status_t state_async_init(void);
 state_status_t state_async_shutdown(void);
 
+#ifdef _INTERNAL_STATD
+static inline void shutdown_nsm_notify_thread(void)
+{
+	bool wait;
+
+	PTHREAD_MUTEX_lock(&nsm_mutex);
+
+	wait = run_nsm_notify_thread;
+
+	run_nsm_notify_thread = false;
+
+	if (wait)
+		PTHREAD_COND_signal(&nsm_cond);
+
+	PTHREAD_MUTEX_unlock(&nsm_mutex);
+
+	if (wait)
+		pthread_join(nsm_notify_thread_p, NULL);
+}
+#endif
+
 void grant_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
 			       fsal_lock_param_t *lock);
 
@@ -1081,6 +1102,12 @@ void nfs41_reclaim_complete_clid(nfs_client_id_t *);
 
 /* NLM Client stable-storage database management */
 bool parse_nlm_entry(char *entry, enum recovery_type recovery_type);
+#ifdef _INTERNAL_STATD
+int create_nlm_entry(struct display_buffer *dspbuf,
+		     struct local_nlm_info *info);
+bool nlm_add_entry(struct local_nlm_info *info);
+bool nlm_rm_entry(struct local_nlm_info *info);
+#endif
 
 /* Delegation revocation tracking */
 bool nfs4_check_deleg_reclaim(nfs_client_id_t *, nfs_fh4 *);
@@ -1100,6 +1127,10 @@ struct nfs4_recovery_backend {
 	void (*recovery_read_clids)(nfs_grace_start_t *gsp);
 	void (*add_clid)(nfs_client_id_t *);
 	void (*rm_clid)(nfs_client_id_t *);
+#ifdef _INTERNAL_STATD
+	bool (*add_nlm_entry)(struct local_nlm_info *);
+	bool (*rm_nlm_entry)(struct local_nlm_info *);
+#endif
 	void (*reclaim_complete)(nfs_client_id_t *);
 	void (*add_revoke_fh)(nfs_client_id_t *, nfs_fh4 *);
 	void (*end_grace)(void);

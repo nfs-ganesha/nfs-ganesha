@@ -510,6 +510,41 @@ const nfs_function_desc_t nlm4_func_desc[] = {
 };
 #endif /* _USE_NLM */
 
+#ifdef _INTERNAL_STATD
+const nfs_function_desc_t smmon_func_desc[] = {
+	[0] = { .service_function = smmon_proc_null,
+		.free_function = smmon_free,
+		.xdr_decode_func = (xdrproc_t)xdr_void,
+		.xdr_encode_func = (xdrproc_t)xdr_void,
+		.funcname = "SM_NULL",
+		.dispatch_behaviour = NOTHING_SPECIAL },
+	[SM_STAT] = { .service_function = smmon_proc_stat,
+		      .free_function = smmon_free,
+		      .xdr_decode_func = (xdrproc_t)xdr_wrapstring,
+		      .xdr_encode_func = (xdrproc_t)xdr_sm_stat_res,
+		      .funcname = "SM_STAT",
+		      .dispatch_behaviour = NEEDS_CRED },
+	[SM_MON] = { .service_function = smmon_proc_mon,
+		     .free_function = smmon_free,
+		     .xdr_decode_func = (xdrproc_t)xdr_mon,
+		     .xdr_encode_func = (xdrproc_t)xdr_sm_stat_res,
+		     .funcname = "SM_MON",
+		     .dispatch_behaviour = NEEDS_CRED },
+	[SM_UNMON] = { .service_function = smmon_proc_unmon,
+		       .free_function = smmon_free,
+		       .xdr_decode_func = (xdrproc_t)xdr_mon_id,
+		       .xdr_encode_func = (xdrproc_t)xdr_int,
+		       .funcname = "SM_UNMON",
+		       .dispatch_behaviour = NEEDS_CRED },
+	[SM_NOTIFY] = { .service_function = smmon_proc_notify,
+			.free_function = smmon_free,
+			.xdr_decode_func = (xdrproc_t)xdr_notify,
+			.xdr_encode_func = (xdrproc_t)xdr_void,
+			.funcname = "SM_NOTIFY",
+			.dispatch_behaviour = NEEDS_CRED },
+};
+#endif
+
 #ifdef _USE_RQUOTA
 const nfs_function_desc_t rquota1_func_desc[] = {
 	[0] = { .service_function = rquota_Null,
@@ -1694,6 +1729,41 @@ static enum xprt_stat nfs_rpc_noproc(nfs_request_t *reqdata)
 		     reqdata->svc.rq_msg.cb_prog);
 	return svcerr_noproc(&reqdata->svc);
 }
+
+#ifdef _INTERNAL_STATD
+enum xprt_stat nfs_rpc_valid_SMMON(struct svc_req *req)
+{
+	nfs_request_t *reqdata = container_of(req, struct nfs_request, svc);
+
+	reqdata->funcdesc = &invalid_funcdesc;
+
+	LogFullDebug(COMPONENT_DISPATCH,
+		     "Program %" PRIu32 " SMMON Program %" PRIu32
+		     " Vers %" PRIu32,
+		     req->rq_msg.cb_prog, NFS_program[P_STATD],
+		     req->rq_msg.cb_vers);
+
+	if (req->rq_msg.cb_prog != NFS_program[P_STATD] ||
+	    !NFS_pcp.internal_statd)
+		return nfs_rpc_noprog(reqdata);
+
+	switch (req->rq_msg.cb_vers) {
+	case SM_VERS:
+		LogFullDebug(COMPONENT_DISPATCH, "SMMON proc %" PRIu32,
+			     req->rq_msg.cb_proc);
+
+		if (req->rq_msg.cb_proc <= SM_NOTIFY) {
+			reqdata->funcdesc =
+				&smmon_func_desc[req->rq_msg.cb_proc];
+			return nfs_rpc_process_request(reqdata, false);
+		}
+
+		return nfs_rpc_noproc(reqdata);
+	}
+
+	return nfs_rpc_novers(reqdata, SM_VERS, SM_VERS);
+}
+#endif
 
 /**
  * @brief Validate rpc calls, extract nfs function descriptor.

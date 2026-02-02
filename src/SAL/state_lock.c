@@ -4270,6 +4270,7 @@ void state_cleanup(void)
 	PTHREAD_MUTEX_destroy(&nlm_async_resp_mutex);
 	PTHREAD_COND_destroy(&nlm_async_resp_cond);
 	PTHREAD_MUTEX_destroy(&nsm_mutex);
+	PTHREAD_COND_destroy(&nsm_cond);
 #endif
 #ifdef DEBUG_SAL
 	PTHREAD_MUTEX_destroy(&all_state_owners_mutex);
@@ -4308,6 +4309,7 @@ state_status_t state_lock_init(void)
 	PTHREAD_MUTEX_init(&nlm_async_resp_mutex, NULL);
 	PTHREAD_COND_init(&nlm_async_resp_cond, NULL);
 	PTHREAD_MUTEX_init(&nsm_mutex, NULL);
+	PTHREAD_COND_init(&nsm_cond, NULL);
 #endif
 #ifdef DEBUG_SAL
 	PTHREAD_MUTEX_init(&all_state_owners_mutex, NULL);

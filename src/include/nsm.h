@@ -9,8 +9,8 @@
 
 #include "config.h"
 #include "gsh_rpc.h"
-#include "sal_data.h"
 #include "gsh_config.h"
+#include "nlm4.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +19,7 @@ extern "C" {
 #define SM_MAXSTRLEN 1024
 #define SM_PROG 100024
 #define SM_VERS 1
+#define SM_STAT 1
 #define SM_MON 2
 #define SM_UNMON 3
 #define SM_UNMON_ALL 4
@@ -29,6 +30,10 @@ enum res {
 	STAT_FAIL = 1,
 };
 typedef enum res res;
+
+typedef struct sm_stat_args {
+	char *mon_name;
+} sm_stat_args;
 
 struct sm_stat_res {
 	res res_stat;
@@ -80,6 +85,7 @@ enum recovery_type {
 	NLM_SM_MON_ENTRY,
 	NLM_RPCBIND_UDP_ENTRY,
 	NLM_RPCBIND_TCP_ENTRY,
+	NSM_FORWARD_NOTIFY,
 };
 
 static inline enum recovery_type entry_recovery_type(char *entry)
@@ -99,8 +105,54 @@ static inline enum recovery_type entry_recovery_type(char *entry)
 	return NFS4_CLID_ENTRY;
 }
 
+#ifdef _INTERNAL_STATD
+
+extern struct glist_head local_nlm_info_list;
+extern int cur_nsm_state;
+extern int recov_nsm_state;
+
+void process_local_nlm_info(void);
+
+struct local_nlm_info {
+	struct glist_head infolist;
+	struct clnt_req cc;
+	enum recovery_type recovery_type;
+	struct mon mon;
+	int info_port;
+	char *client_name;
+	char *client_address_str;
+	char *server_address_str;
+	sockaddr_t client_address;
+	sockaddr_t server_address;
+	struct netconfig *nconf;
+	int nsm_state;
+	time_t reply_due;
+	int retries;
+	CLIENT *rpc_client;
+	union {
+		struct notify notify_args;
+		struct nlm4_sm_notifyargs cb_args;
+		struct rpcb rpcb_args;
+		struct pmap pmap_args;
+	} args;
+	union {
+		uint32_t res_pmap_getport;
+	} res;
+	xdrproc_t xargs;
+	xdrproc_t xres;
+};
+
+void local_nlm_info_free(struct local_nlm_info *info);
+
+#endif
+
+typedef struct state_nsm_client_t state_nsm_client_t;
+typedef struct state_nlm_client_t state_nlm_client_t;
+
 extern bool nsm_monitor(state_nsm_client_t *host);
+extern bool nlm_monitor(state_nlm_client_t *host);
 extern bool nsm_unmonitor(state_nsm_client_t *host);
+extern bool nlm_unmonitor(state_nlm_client_t *host);
 extern void nsm_unmonitor_all(void);
 
 extern int nsm_notify(char *host, int state);

@@ -57,6 +57,16 @@ enum recovery_backend {
  *    <IP>-(LSTR{cliid})
  *    "%s-(%d:%s)"
  *
+ * NSM State Format:
+ *
+ *    NSM_STATE-state
+ *    NSM_STATE-%d
+ *
+ * NLM Client Format:
+ *
+ *    NLM-<CLIENT-IP>-<SERV-IP>-(netid)(LSTR{caller-name})
+ *    "NLM-%s-%s-(%s)(%d:%s)"
+ *
  ******************************************************************************/
 
 #endif /* GSH_RECOVERY_H */

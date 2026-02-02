@@ -46,6 +46,7 @@
 #include "log.h"
 #include "client_mgr.h"
 #include "fsal.h"
+#include "nfs_proto_functions.h"
 
 /**
  * @brief NSM clients
@@ -855,7 +856,14 @@ void _dec_nsm_client_ref(state_nsm_client_t *client, char *file, int line,
 					 NIV_FULL_DEBUG, "Free {%s}", str);
 	}
 
-	nsm_unmonitor(client);
+#ifdef _INTERNAL_STATD
+	if (!NFS_pcp.internal_statd) {
+#else
+	{
+#endif
+		nsm_unmonitor(client);
+	}
+
 	free_nsm_client(client);
 }
 
@@ -1174,6 +1182,13 @@ void dec_nlm_client_ref(state_nlm_client_t *client)
 	if (str_valid)
 		LogFullDebug(COMPONENT_STATE, "Free {%s}", str);
 
+#ifdef _INTERNAL_STATD
+	if (client->slc_monitored) {
+		/* Need to unmonitor in recovery database */
+		nlm_unmonitor(client);
+	}
+#endif
+
 	free_nlm_client(client);
 }
 
@@ -1199,8 +1214,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	hash_error_t rc;
 	struct gsh_buffdesc buffkey;
 	struct gsh_buffdesc buffval;
-	sockaddr_t local_addr;
-	socklen_t addr_len;
+	sockaddr_t *local, *remote;
 	uint32_t refcount;
 
 	if (caller_name == NULL)
@@ -1211,14 +1225,12 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	key.slc_nsm_client = nsm_client;
 	key.slc_nlm_caller_name_len = strlen(caller_name);
 	key.slc_client_type = svc_get_xprt_type(xprt);
+	key.slc_nconf = nfs_Get_netconfig(xprt->xp_netid);
 
-	addr_len = sizeof(local_addr);
-	if (getsockname(xprt->xp_fd, (struct sockaddr *)&local_addr,
-			&addr_len) == -1) {
-		LogEvent(COMPONENT_CLIENTID, "Failed to get local addr.");
-	} else {
-		memcpy(&(key.slc_server_addr), &local_addr, sizeof(sockaddr_t));
-	}
+	local = svc_getrpclocal(xprt);
+	remote = svc_getrpccaller(xprt);
+	key.slc_server_addr = *local;
+	key.slc_client_addr = *remote;
 
 	if (key.slc_nlm_caller_name_len > LM_MAXSTRLEN)
 		return NULL;
@@ -1262,12 +1274,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 
 		hashtable_releaselatched(ht_nlm_client, &latch);
 
-		if (care == CARE_MONITOR && !nsm_monitor(nsm_client)) {
-			dec_nlm_client_ref(pclient);
-			pclient = NULL;
-		}
-
-		return pclient;
+		goto check_monitor;
 
 	case HASHTABLE_ERROR_NO_SUCH_KEY:
 		goto not_found;
@@ -1282,6 +1289,7 @@ state_nlm_client_t *get_nlm_client(care_t care, SVCXPRT *xprt,
 	}
 
 not_found:
+
 	/* Not found, but we don't care, return NULL */
 	if (care == CARE_NOT) {
 		/* Return the found NLM Client */
@@ -1332,7 +1340,14 @@ not_found:
 		return NULL;
 	}
 
-	if (care != CARE_MONITOR || nsm_monitor(nsm_client))
+check_monitor:
+
+	if (care != CARE_MONITOR)
+		return pclient;
+
+	/* Monitor nlm client (which will monitor nsm client or the nlm client
+	 * if using internal status monitor) */
+	if (nlm_monitor(pclient))
 		return pclient;
 
 	/* Failed to monitor, release client reference

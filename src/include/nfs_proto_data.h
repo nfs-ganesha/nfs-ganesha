@@ -49,6 +49,7 @@
 #include "nfs4.h"
 #include "nlm4.h"
 #include "nfsacl.h"
+#include "nsm.h"
 
 /* ------------------------------ Typedefs and structs----------------------- */
 
@@ -104,6 +105,12 @@ typedef union nfs_arg__ {
 	/* NFSACL */
 	getaclargs arg_getacl;
 	setaclargs arg_setacl;
+
+	/* STATUS MONITOR */
+	struct sm_stat_args sm_stat_args;
+	struct mon mon_args;
+	struct mon_id unmon_args;
+	struct notify notify_args;
 } nfs_arg_t;
 
 struct COMPOUND4res_extended {
@@ -161,6 +168,10 @@ typedef union nfs_res__ {
 	/* NFSACL */
 	getaclres res_getacl;
 	setaclres res_setacl;
+
+	/* STATUS MONITOR */
+	struct sm_stat_res sm_stat_res;
+	int32_t sm_unmon_res;
 } nfs_res_t;
 
 /* flags related to the behaviour of the requests
