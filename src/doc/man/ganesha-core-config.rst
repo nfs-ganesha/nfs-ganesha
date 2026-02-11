@@ -291,6 +291,13 @@ Allow_Set_Io_Flusher_Fail(bool, default false)
   For more info, see:
   https://git.kernel.org/torvalds/p/8d19f1c8e1937baf74e1962aae9f90fa3aeab463
 
+Unmonitor_On_Shutdown(bool, default true)
+  If true, Ganesha will unmonitor NLM clients on shutdown. This is the
+  historic default. Setting this false will prevent Ganesha from removing
+  monitoring of NLM clients on shutdown, allowing for the possibility of
+  sending SM_NOTIFY on restart (if internal statd is used, Ganesha will send
+  SM_NOTIFY on restart for any NLM clients still monitored).
+
 Parameters controlling TCP DRC behavior:
 ----------------------------------------
 

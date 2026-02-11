@@ -240,6 +240,8 @@ NFS_CORE_PARAM {}
 
 	Allow_Set_Io_Flusher_Fail(bool, default false)
 
+	Unmonitor_On_Shutdown(bool, default true)
+
 NFS_IP_NAME {}
 --------------
 

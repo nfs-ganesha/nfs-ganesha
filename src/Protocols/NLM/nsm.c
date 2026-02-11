@@ -26,6 +26,8 @@
 
 #include "config.h"
 #include <sys/utsname.h>
+#include "gsh_config.h"
+#include "nfs_core.h"
 #include "abstract_atomic.h"
 #include "nsm.h"
 #include "sal_data.h"
@@ -255,6 +257,9 @@ static bool nsm_unmonitor_noretry(state_nsm_client_t *host)
 
 bool nsm_unmonitor(state_nsm_client_t *host)
 {
+	if (!nfs_param.core_param.unmonitor_on_shutdown && admin_shutdown)
+		return true;
+
 	/* If someone restarts nsm service, nsm_unmonitor_noretry may
 	 * fail and would tear down the old structures. A retry should
 	 * work!  So let us retry once if there is a failure.

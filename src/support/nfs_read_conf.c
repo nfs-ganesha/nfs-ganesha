@@ -294,6 +294,8 @@ static struct config_item core_params[] = {
 #ifdef _USE_NLM
 	CONF_ITEM_UI16("NLM_Port", 0, UINT16_MAX, 0, nfs_core_param,
 		       port[P_NLM]),
+	CONF_ITEM_BOOL("Unmonitor_On_Shutdown", true, nfs_core_param,
+		       unmonitor_on_shutdown),
 #endif
 #ifdef _USE_RQUOTA
 	CONF_ITEM_UI16("Rquota_Port", 0, UINT16_MAX, RQUOTA_PORT,

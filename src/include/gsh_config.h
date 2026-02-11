@@ -583,6 +583,9 @@ typedef struct nfs_core_param {
 	 * For more info, see:
 	 * https://git.kernel.org/torvalds/p/8d19f1c8e1937baf74e1962aae9f90fa3aeab463 */
 	bool allow_set_io_flusher_fail;
+#ifdef _USE_NLM
+	bool unmonitor_on_shutdown;
+#endif
 } nfs_core_parameter_t;
 
 /** @} */
