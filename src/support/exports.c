@@ -386,11 +386,12 @@ void FreeExportClient(struct base_client_entry *client)
 /**
  * @brief Init for CLIENT sub-block of an export.
  *
- * Allocate one exportlist_client structure for parameter
- * processing. The client_commit will allocate additional
- * exportlist_client__ storage for each of its enumerated
- * clients and free the initial block.  We only free that
- * resource here on errors.
+ * Allocate one exportlist_client PROTO_CLIENT structure for parameter
+ * processing. The various permission parameters of the CLIENT block will
+ * be collected and validated here.  Additionally, client_entry.cle_list will
+ * be used to collect the individual Clients entries as enumerated.
+ * The client_commit function will validate everything and free this initial
+ * PROTO_CLIENT block using this function in the "free resources" mode.
  */
 
 static void *client_init(void *link_mem, void *self_struct)
@@ -596,13 +597,10 @@ static struct config_block qos_block_desc = {
 */
 #endif
 /**
- * @brief Init for CLIENT sub-block of an export.
+ * @brief Init for CLIENT sub-block of a PSEUDOFS block.
  *
- * Allocate one exportlist_client structure for parameter
- * processing. The client_commit will allocate additional
- * exportlist_client__ storage for each of its enumerated
- * clients and free the initial block.  We only free that
- * resource here on errors.
+ * Call client_init() to do most of the work. Additionally set the default
+ * options for PSEUDOFS CLIENT block.
  */
 
 static void *pseudofs_client_init(void *link_mem, void *self_struct)
@@ -624,16 +622,20 @@ static void *pseudofs_client_init(void *link_mem, void *self_struct)
 }
 
 /**
- * @brief Commit this client block
+ * @brief Commit this CLIENT block
  *
- * Validate "clients" token(s) and perms.  We enter with a client entry
- * allocated by proc_block.  Since we expand the clients token both
- * here and in add_client, we allocate new client entries and free
- * what was passed to us rather than try and link it in.
+ * Validate "Clients" token(s) and perms.
  *
- * @param node [IN] the config_node **not used**
- * @param link_mem [IN] the exportlist entry. add_client adds to its glist.
- * @param self_struct  [IN] the filled out client entry with a PROTO_CLIENT
+ * self_struct is the PROTO_CLIENT exportlist_client_entry allocated by
+ * client_init. It has been filled in, and individual
+ * client exportlist_client_entry added to it's client_entry.cle_list.
+ *
+ * When we are done, use client_init to free the PROTO_CLIENT
+ * exportlist_client_entry.
+ *
+ * @param node        [IN] the config_node **not used**
+ * @param link_mem    [IN] the gsh_export entry this CLIENT block belongs to.
+ * @param self_struct [IN] the filled out PROTO_CLIENT exportlist_client_entry
  *
  * @return 0 on success, error count for failure.
  */
@@ -2251,7 +2253,7 @@ static void export_client_filler(struct base_client_entry *client,
  *
  * CONFIG_PROC handler that gets called for each token in the term list.
  * Create a exportlist_client_entry for each token and link it into
- * the proto client's cle_list list head.  We will pass that head to the
+ * the PROTO_CLIENT's cle_list list head.  We will pass that head to the
  * export in commit.
  *
  * NOTES: this is the place to expand a node list with perhaps moving the
@@ -2312,6 +2314,18 @@ static struct config_item client_params[] = {
 	CONF_ITEM_TOKEN("HA_Proxy_Protocol", CLIENT_ENTRY_HA_PROXY_PROTOCOL_ANY,
 			export_client_ha_proxy_protocol,
 			exportlist_client_entry, ha_proxy_protocol_type),
+	/* NOTE: it may look odd that this uses (base_client_entry, cle_list)
+	 *       where other uses of add_client use the gsh_list the clients
+	 *       are collected into. This is because the CLIENT blocks allocate
+	 *       a PROTO_CLIENT exportlist_client_entry to collect the
+	 *       permission and HA_Proxy_Protocol parameters (which will be
+	 *       copied INTO the exportlist_client_entry allocated by
+	 *       add_client. The PROTO_CLIENT cle_list is the list head these
+	 *       exportlist_client_entry will be linked to. Once client_commit
+	 *       is called at the end of processing the CLIENT block, that
+	 *       list will be appended to the parent block clients list and the
+	 *       PROTO_CLIENT will be freed.
+	 */
 	CONF_ITEM_PROC_MULT("Clients", noop_conf_init, client_adder,
 			    base_client_entry, cle_list),
 	CONFIG_EOL
@@ -2330,6 +2344,18 @@ static struct config_item pseudo_fs_client_params[] = {
 	CONF_ITEM_TOKEN("HA_Proxy_Protocol", CLIENT_ENTRY_HA_PROXY_PROTOCOL_ANY,
 			export_client_ha_proxy_protocol,
 			exportlist_client_entry, ha_proxy_protocol_type),
+	/* NOTE: it may look odd that this uses (base_client_entry, cle_list)
+	 *       where other uses of add_client use the gsh_list the clients
+	 *       are collected into. This is because the CLIENT blocks allocate
+	 *       a PROTO_CLIENT exportlist_client_entry to collect the
+	 *       permission and HA_Proxy_Protocol parameters (which will be
+	 *       copied INTO the exportlist_client_entry allocated by
+	 *       add_client. The PROTO_CLIENT cle_list is the list head these
+	 *       exportlist_client_entry will be linked to. Once client_commit
+	 *       is called at the end of processing the CLIENT block, that
+	 *       list will be appended to the parent block clients list and the
+	 *       PROTO_CLIENT will be freed.
+	 */
 	CONF_ITEM_PROC_MULT("Clients", noop_conf_init, client_adder,
 			    base_client_entry, cle_list),
 	CONFIG_EOL

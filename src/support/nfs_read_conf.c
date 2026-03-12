@@ -197,7 +197,7 @@ static int haproxy_host_adder(const char *token, enum term_type type_hint,
 
 static struct config_item core_params[] = {
 	CONF_ITEM_PROC_MULT("HAProxy_Hosts", noop_conf_init, haproxy_host_adder,
-			    base_client_entry, cle_list),
+			    nfs_core_param, haproxy_hosts),
 	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, NFS_PORT, nfs_core_param,
 		       port[P_NFS]),
 #ifdef _USE_NFS3
