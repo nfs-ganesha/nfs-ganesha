@@ -30,6 +30,8 @@
 #include "sal_functions.h"
 #include <string.h>
 
+#define safe_sizeof(v) (size##of v)
+
 static regex_t url_regex;
 static rados_t cluster;
 static bool initialized;
@@ -360,22 +362,42 @@ static int rados_url_parse(const char *url, char **pool, char **ns, char **obj)
 	return ret;
 }
 
-static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
+struct cu_rados_save {
+	char *streambuf;
+	size_t streamsz;
+};
+
+static void cu_rados_url_release(FILE *f, void *b)
+{
+	struct cu_rados_save *save = (struct cu_rados_save *)b;
+
+	if (f)
+		fclose(f);
+	if (!save)
+		return;
+	/* Was allocated via open_memstream so use free NOT gsh_free. */
+	if (save->streambuf)
+		free(save->streambuf);
+	gsh_free(save);
+}
+
+static int cu_rados_url_fetch(const char *url, FILE **f,
+			      void (**rel)(FILE *, void *), void **fbuf)
 {
 	rados_ioctx_t io_ctx;
 
 	char *pool_name = NULL;
 	char *object_name = NULL;
 	char *rados_ns = NULL;
+	struct cu_rados_save *save = NULL;
 
-	char *streambuf = NULL; /* not optional (buggy open_memstream) */
 	FILE *stream = NULL;
 	char buf[1024];
 
-	size_t streamsz;
 	uint64_t off1 = 0;
 	int ret;
 
+	*rel = 0;
 	if (!initialized) {
 		cu_rados_url_init();
 	}
@@ -393,6 +415,9 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 	}
 	rados_ioctx_set_namespace(io_ctx, rados_ns);
 
+	save = gsh_malloc(safe_sizeof(*save));
+	memset(save, 0, safe_sizeof(*save));
+
 	do {
 		int nread, wrt, nwrt;
 		uint64_t off2 = 0;
@@ -406,8 +431,9 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		}
 		off1 += nread;
 		if (!stream) {
-			streamsz = 1024;
-			stream = open_memstream(&streambuf, &streamsz);
+			save->streamsz = 1024;
+			stream = open_memstream(&save->streambuf,
+						&save->streamsz);
 		}
 		do {
 			wrt = fwrite(buf + off2, 1, nread, stream);
@@ -423,10 +449,10 @@ static int cu_rados_url_fetch(const char *url, FILE **f, char **fbuf)
 		/* rewind */
 		fseek(stream, 0L, SEEK_SET);
 		/* return--caller will release */
+		*fbuf = save;
+		*rel = cu_rados_url_release;
 		*f = stream;
-		*fbuf = streambuf;
-		stream = NULL;
-		streambuf = NULL;
+		save = 0;
 	}
 
 err:
@@ -434,13 +460,7 @@ err:
 
 out:
 
-	if (stream)
-		(void)fclose(stream);
-
-	if (streambuf) {
-		/* Was allocated via open_memstream so use free NOT gsh_free. */
-		free(streambuf);
-	}
+	cu_rados_url_release(NULL, save);
 
 	/* allocated or NULL */
 	gsh_free(pool_name);

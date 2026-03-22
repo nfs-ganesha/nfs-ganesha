@@ -187,7 +187,8 @@ static inline char *match_dup(regmatch_t *m, char *in)
 
 /** @brief generic url dispatch
  */
-int config_url_fetch(const char *url, FILE **f, char **fbuf)
+int config_url_fetch(const char *url, FILE **f, void (**rel)(FILE *, void *),
+		     void **fbuf)
 {
 	struct gsh_url_provider *url_p;
 	struct glist_head *gl;
@@ -228,7 +229,7 @@ int config_url_fetch(const char *url, FILE **f, char **fbuf)
 	glist_for_each(gl, &url_providers) {
 		url_p = glist_entry(gl, struct gsh_url_provider, link);
 		if (!strcasecmp(url_type, url_p->name)) {
-			code = url_p->url_fetch(m_url, f, fbuf);
+			code = url_p->url_fetch(m_url, f, rel, fbuf);
 			break;
 		}
 	}

@@ -31,7 +31,8 @@ struct gsh_url_provider {
 	const char *name;
 	void (*url_init)(void); /* XXX needs config info */
 	void (*url_shutdown)(void);
-	int (*url_fetch)(const char *url, FILE **f, char **fbuf);
+	int (*url_fetch)(const char *url, FILE **f, void (**)(FILE *, void *),
+			 void **fbuf);
 };
 
 /** @brief package initializer
@@ -40,7 +41,8 @@ struct gsh_url_provider {
 void config_url_init(void);
 void config_url_shutdown(void);
 int register_url_provider(struct gsh_url_provider *nurl_p);
-int config_url_fetch(const char *url, FILE **f, char **fbuf);
+int config_url_fetch(const char *url, FILE **f, void (**rel)(FILE *, void *),
+		     void **fbuf);
 void config_url_release(FILE *f, char *fbuf);
 
 int gsh_rados_url_setup_watch(void);

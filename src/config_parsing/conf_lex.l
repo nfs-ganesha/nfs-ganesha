@@ -76,7 +76,8 @@ struct bufstack {
 	int lineno;
 	char *filename;
 	FILE *f;
-	char *fbuf;
+	void (*release_buffer)(FILE *, void *);
+	void *fbuf;
 	uint32_t flags;
 };
 
@@ -727,7 +728,7 @@ static int fetch_url(char *name_tok, struct parser_state *st)
 	bs = gsh_calloc(1, sizeof(struct bufstack));
 	flist = gsh_calloc(1, sizeof(struct file_list));
 
-	rc = config_url_fetch(filename, &bs->f, &bs->fbuf);
+	rc = config_url_fetch(filename, &bs->f, &bs->release_buffer, &bs->fbuf);
 	if (bs->f == NULL) {
 		config_parse_error(yylloc, st,
 			"new url (%s) open error (%s), ignored",
@@ -771,7 +772,7 @@ static int pop_file(struct parser_state *st)
 	if (bs == NULL)
 		return 0;
 	if (bs->flags & BS_FLAG_URL) {
-		config_url_release(bs->f, bs->fbuf);
+		bs->release_buffer(bs->f, bs->fbuf);
 	} else {
 		fclose(bs->f);
 	}
