@@ -263,6 +263,15 @@ typedef struct nfs_core_param {
 	 *  end clients are handled in EXPORT CLIENT lists.
 	 */
 	struct glist_head haproxy_hosts;
+	/** The list of cluster members. Used by various features such as
+	 *  Clsuter QoS and status monitor SM_NOTIFY forward to identify the
+	 *  members of the cluster.
+	 */
+	struct glist_head cluster_members;
+	/** The list of cluster_member addresses which correspond to a local
+	 *  interface address.
+	 */
+	struct glist_head cluster_self;
 	/** The IPv4 or IPv6 address to which to bind for our
 	    listening port.  Set by the Bind_Addr option.
 	    Must be 8-byte aligned (see sockaddr_t). */

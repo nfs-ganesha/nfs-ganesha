@@ -42,6 +42,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <ctype.h>
+#include <ifaddrs.h>
 #include "log.h"
 #include "fsal.h"
 #include "nfs23.h"
@@ -195,9 +196,95 @@ static int haproxy_host_adder(const char *token, enum term_type type_hint,
 	return rc;
 }
 
+static int cluster_members_adder(const char *token, enum term_type type_hint,
+				 struct config_item *item, void *param_addr,
+				 void *cnode,
+				 struct config_error_type *err_type)
+{
+	struct base_client_entry *host;
+	int rc;
+
+	if (type_hint != TERM_V4ADDR && type_hint != TERM_V6ADDR) {
+		/* Currently only allow individual addresses */
+		config_proc_error(cnode, err_type,
+				  "Expected a IPv4 or IPv6 address, got (%s)",
+				  token);
+		err_type->invalid = true;
+		return 1;
+	}
+
+	host = container_of(param_addr, struct base_client_entry, cle_list);
+
+	LogMidDebug(COMPONENT_CONFIG, "Adding host %s", token);
+
+	rc = add_client(COMPONENT_CONFIG, &host->cle_list, token, type_hint,
+			cnode, err_type, NULL, NULL, NULL);
+	return rc;
+}
+
+void remove_self_cluster_members(void)
+{
+	struct ifaddrs *ifap, *ifa;
+
+	if (glist_empty(&nfs_param.core_param.cluster_members))
+		return;
+
+	if (getifaddrs(&ifap) != 0) {
+		int err = errno;
+
+		LogFatal(COMPONENT_CONFIG, "getoifaddrs failed %s",
+			 strerror(err));
+	}
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		sockaddr_t *sa = (sockaddr_t *)ifa->ifa_addr;
+		struct base_client_entry *bce;
+
+		if (sa->ss_family != AF_INET && sa->ss_family != AF_INET6)
+			continue;
+
+		bce = client_match(COMPONENT_CONFIG,
+				   " for Cluster_Members list", sa,
+				   &nfs_param.core_param.cluster_members, NULL);
+
+		if (bce != NULL) {
+			char ip[SOCK_NAME_MAX];
+			struct display_buffer dspbuf = { sizeof(ip), ip, ip };
+
+			display_sockip(&dspbuf, sa);
+
+			LogInfo(COMPONENT_CONFIG,
+				"Moving %s from Cluster_Members list to Cluster Self list",
+				ip);
+
+			glist_del(&bce->cle_list);
+			glist_add_tail(&nfs_param.core_param.cluster_self,
+				       &bce->cle_list);
+		}
+	}
+
+	freeifaddrs(ifap);
+}
+
+static int core_commit(void *node, void *link_mem, void *self_struct,
+		       struct config_error_type *err_type)
+{
+	LogDebug(COMPONENT_CONFIG, "NFS_CORE_PARAM commit");
+
+	remove_self_cluster_members();
+
+	Log_ClientList_Level(COMPONENT_CONFIG, NIV_INFO, "Cluster_Members",
+			     &nfs_param.core_param.cluster_members);
+
+	return 0;
+}
+
 static struct config_item core_params[] = {
 	CONF_ITEM_PROC_MULT("HAProxy_Hosts", noop_conf_init, haproxy_host_adder,
 			    nfs_core_param, haproxy_hosts),
+	CONF_ITEM_PROC_MULT("Cluster_Members", noop_conf_init,
+			    cluster_members_adder, nfs_core_param,
+			    cluster_members),
 	CONF_ITEM_UI16("NFS_Port", 0, UINT16_MAX, NFS_PORT, nfs_core_param,
 		       port[P_NFS]),
 #ifdef _USE_NFS3
@@ -408,7 +495,7 @@ struct config_block nfs_core = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = core_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = core_commit
 };
 
 #ifdef ENABLE_QOS

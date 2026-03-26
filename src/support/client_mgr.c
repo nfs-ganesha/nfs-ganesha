@@ -1278,8 +1278,8 @@ int StrClient(struct display_buffer *dspbuf, struct base_client_entry *client)
 }
 
 void LogClientListEntry(enum log_components component, log_levels_t level,
-			int line, const char *func, const char *tag,
-			struct base_client_entry *entry)
+			const char *file, int line, const char *func,
+			const char *tag, struct base_client_entry *entry)
 {
 	char buf[1024] = "\0";
 	struct display_buffer dspbuf = { sizeof(buf), buf, buf };
@@ -1297,8 +1297,26 @@ void LogClientListEntry(enum log_components component, log_levels_t level,
 	if (b_left > 0)
 		b_left = StrClient(&dspbuf, entry);
 
-	DisplayLogComponentLevel(component, (char *)__FILE__, line, func, level,
-				 "%s", buf);
+	DisplayLogComponentLevel(component, file, line, func, level, "%s", buf);
+}
+
+void LogClientList(enum log_components component, log_levels_t level,
+		   const char *file, int line, const char *func,
+		   const char *tag, struct glist_head *list)
+{
+	struct glist_head *glist;
+
+	if (!isLevel(component, level))
+		return;
+
+	glist_for_each(glist, list) {
+		struct base_client_entry *bce;
+
+		bce = glist_entry(glist, struct base_client_entry, cle_list);
+
+		LogClientListEntry(component, level, file, line, func, tag,
+				   bce);
+	}
 }
 
 void FreeClientList(struct glist_head *clients, client_free_func free_func)

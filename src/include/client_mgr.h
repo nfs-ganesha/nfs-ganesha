@@ -121,12 +121,20 @@ struct base_client_entry {
 int StrClient(struct display_buffer *dspbuf, struct base_client_entry *client);
 
 void LogClientListEntry(enum log_components component, log_levels_t level,
-			int line, const char *func, const char *tag,
-			struct base_client_entry *entry);
+			const char *file, int line, const char *func,
+			const char *tag, struct base_client_entry *entry);
 
-#define LogMidDebug_ClientListEntry(component, tag, cli)       \
-	LogClientListEntry(component, NIV_MID_DEBUG, __LINE__, \
-			   (char *)__func__, tag, cli)
+#define LogMidDebug_ClientListEntry(component, tag, cli)               \
+	LogClientListEntry(component, NIV_MID_DEBUG, (char *)__FILE__, \
+			   __LINE__, (char *)__func__, tag, cli)
+
+void LogClientList(enum log_components component, log_levels_t level,
+		   const char *file, int line, const char *func,
+		   const char *tag, struct glist_head *list);
+
+#define Log_ClientList_Level(component, level, tag, cli)            \
+	LogClientList(component, level, (char *)__FILE__, __LINE__, \
+		      (char *)__func__, tag, cli)
 
 typedef void(client_free_func)(struct base_client_entry *client);
 

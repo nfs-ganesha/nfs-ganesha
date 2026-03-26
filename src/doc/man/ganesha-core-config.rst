@@ -43,6 +43,10 @@ HAProxy_Hosts (host list, empty)
                     getaddrinfo call is made at config parsing time)
         IP address  Match a single host
 
+Cluster_Members (address list, empty)
+    This is the list of IP addresses representing the nodes in a Ganesha
+    cluster. Only individual IPv4 or IPv6 addresses are allowed.
+
 NFS_Port (uint16, range 0 to UINT16_MAX, default 2049)
     Port number used by NFS Protocol.
 

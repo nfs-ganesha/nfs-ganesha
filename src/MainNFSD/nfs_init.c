@@ -673,6 +673,8 @@ void nfs_print_param_config(void)
 static inline void core_pkginit(void)
 {
 	glist_init(&nfs_param.core_param.haproxy_hosts);
+	glist_init(&nfs_param.core_param.cluster_members);
+	glist_init(&nfs_param.core_param.cluster_self);
 }
 
 /**
