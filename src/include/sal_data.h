@@ -857,9 +857,10 @@ struct nfs_client_id_t {
 			__ref_count, ##__VA_ARGS__);                         \
 	} while (0)
 
-#define EXCHGID4_FLAG_TLS_ESTABLISHED 0x00000001
-#define EXCHGID4_FLAG_MTLS_ESTABLISHED 0x00000002
-#define EXCHGID4_FLAG_TLS_MASK 0x00000003
+#define EXCHGID4_FLAG_TLS_ESTABLISHED	0x00000001
+#define EXCHGID4_FLAG_MTLS_ESTABLISHED	0x00000002
+#define EXCHGID4_FLAG_RDMA_ESTABLISHED	0x00000004
+#define EXCHGID4_FLAG_EXTRA_MASK	0x00000007
 
 /**
  * @brief Client owner record for verification and replacement

@@ -124,6 +124,12 @@ enum nfs_req_result nfs4_op_setclientid(struct nfs_argop4 *op,
 	server_addr = svc_getrpclocal(data->req->rq_xprt);
 	client_addr = svc_getrpccaller(data->req->rq_xprt);
 
+#ifdef _USE_NFS_RDMA
+	/* True if this xprt is RDMA enabled */
+	if (data->req->rq_xprt->xp_rdma)
+		server_exflags |= EXCHGID4_FLAG_RDMA_ESTABLISHED;
+#endif
+
 #ifdef USE_TLS
 	if (data->req->rq_xprt->xp_tls.tls_established) {
 		server_exflags |= EXCHGID4_FLAG_TLS_ESTABLISHED;
