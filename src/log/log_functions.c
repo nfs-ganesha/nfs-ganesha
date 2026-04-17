@@ -4014,7 +4014,6 @@ static bool dbus_conditional_log_client_list_show(DBusMessageIter *args,
 	char *errormsg = "Conditional Logging Client:";
 	bool success = true;
 	DBusMessageIter iter;
-	char *cli_str = NULL;
 	struct glist_head *client_glist;
 	struct base_client_entry *cli;
 
@@ -4036,26 +4035,8 @@ static bool dbus_conditional_log_client_list_show(DBusMessageIter *args,
 			cli = glist_entry(client_glist,
 					  struct base_client_entry, cle_list);
 
-			switch (cli->type) {
-			case NETWORK_CLIENT:
-				cli_str = cidr_to_str(cli->client.network.cidr);
-				break;
-			case NETGROUP_CLIENT:
-				cli_str = cli->client.netgroup.netgroupname;
-				break;
-			case WILDCARDHOST_CLIENT:
-				cli_str = cli->client.wildcard.wildcard;
-				break;
-			case MATCH_ANY_CLIENT:
-				cli_str = "*";
-				break;
-			default:
-				cli_str = "<unknown>";
-				break;
-			}
-
 			dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
-						       &cli_str);
+						       &cli->str);
 		}
 	}
 

@@ -102,21 +102,11 @@ enum exportlist_client_type {
 struct base_client_entry {
 	struct glist_head cle_list;
 	enum exportlist_client_type type;
-	union {
-		struct {
-			CIDR *cidr;
-		} network;
-		struct {
-			char *netgroupname;
-		} netgroup;
-		struct {
-			char *wildcard;
-		} wildcard;
-		struct {
-			char *princname;
-		} gssprinc;
-	} client;
+	CIDR *cidr;
+	char *str;
 };
+
+const char *get_base_client_str(struct base_client_entry *bce);
 
 int StrClient(struct display_buffer *dspbuf, struct base_client_entry *client);
 

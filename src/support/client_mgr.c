@@ -1229,50 +1229,16 @@ static char *client_types[] = { [PROTO_CLIENT] = "PROTO_CLIENT",
 
 int StrClient(struct display_buffer *dspbuf, struct base_client_entry *client)
 {
-	char *paddr = NULL;
-	char *free_paddr = NULL;
 	int b_left = display_start(dspbuf);
-
-	switch (client->type) {
-	case NETWORK_CLIENT:
-		free_paddr = cidr_to_str(client->client.network.cidr);
-		paddr = free_paddr;
-		break;
-
-	case NETGROUP_CLIENT:
-		paddr = client->client.netgroup.netgroupname;
-		break;
-
-	case WILDCARDHOST_CLIENT:
-		paddr = client->client.wildcard.wildcard;
-		break;
-
-	case GSSPRINCIPAL_CLIENT:
-		paddr = client->client.gssprinc.princname;
-		break;
-
-	case MATCH_ANY_CLIENT:
-		paddr = "*";
-		break;
-
-	case PROTO_CLIENT:
-	case BAD_CLIENT:
-		paddr = "<unknown>";
-		break;
-
-	default:
-		break;
-	}
 
 	if (client->type > BAD_CLIENT) {
 		b_left = display_printf(dspbuf, "UNKNOWN_CLIENT_TYPE: 0x%08x",
 					client->type);
 	} else {
 		b_left = display_printf(dspbuf, "%s: %s",
-					client_types[client->type], paddr);
+					client_types[client->type],
+					client->str);
 	}
-
-	gsh_free(free_paddr);
 
 	return b_left;
 }
@@ -1330,26 +1296,8 @@ void FreeClientList(struct glist_head *clients, client_free_func free_func)
 		client = glist_entry(glist, struct base_client_entry, cle_list);
 
 		glist_del(&client->cle_list);
-		switch (client->type) {
-		case NETWORK_CLIENT:
-			if (client->client.network.cidr != NULL)
-				cidr_free(client->client.network.cidr);
-			break;
-		case NETGROUP_CLIENT:
-			gsh_free(client->client.netgroup.netgroupname);
-			break;
-		case WILDCARDHOST_CLIENT:
-			gsh_free(client->client.wildcard.wildcard);
-			break;
-		case GSSPRINCIPAL_CLIENT:
-			gsh_free(client->client.gssprinc.princname);
-			break;
-		case PROTO_CLIENT:
-		case MATCH_ANY_CLIENT:
-		case BAD_CLIENT:
-			/* Do nothing for these client types */
-			break;
-		}
+		cidr_free(client->cidr);
+		gsh_free(client->str);
 		free_func(client);
 	}
 }
@@ -1378,7 +1326,7 @@ struct base_client_entry *is_base_client_exact_match(
 
 		switch (cli->type) {
 		case NETWORK_CLIENT:
-			cli_cidr = *cli->client.network.cidr;
+			cli_cidr = *cli->cidr;
 
 			normalize_v4_mapped_cidr(&cli_cidr);
 			if (cidr && cidr_equals(&cli_cidr, cidr))
@@ -1392,14 +1340,12 @@ struct base_client_entry *is_base_client_exact_match(
 
 		case NETGROUP_CLIENT:
 			if (client_tok[0] == '@' &&
-			    strcmp(cli->client.netgroup.netgroupname,
-				   client_tok + 1) == 0)
+			    strcmp(cli->str, client_tok + 1) == 0)
 				goto found;
 			break;
 
 		case WILDCARDHOST_CLIENT:
-			if (strcmp(cli->client.wildcard.wildcard, client_tok) ==
-			    0)
+			if (strcmp(cli->str, client_tok) == 0)
 				goto found;
 			break;
 
@@ -1411,8 +1357,8 @@ struct base_client_entry *is_base_client_exact_match(
 	cli = NULL;
 
 found:
-	if (cidr)
-		cidr_free(cidr);
+
+	cidr_free(cidr);
 
 	return cli;
 }
@@ -1465,11 +1411,12 @@ int add_client(enum log_components component, struct glist_head *client_list,
 
 	cli = cle_allocator();
 
-	cli->client.network.cidr = NULL;
+	cli->cidr = NULL;
 	glist_init(&cli->cle_list);
 	switch (type_hint) {
 	case TERM_V4_ANY:
 		cli->type = MATCH_ANY_CLIENT;
+		cli->str = gsh_strdup("*");
 		break;
 	case TERM_NETGROUP:
 		if (strlen(client_tok) > MAXHOSTNAMELEN) {
@@ -1480,7 +1427,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 			errcnt++;
 			goto out;
 		}
-		cli->client.netgroup.netgroupname = gsh_strdup(client_tok + 1);
+		cli->str = gsh_strdup(client_tok + 1);
 		cli->type = NETGROUP_CLIENT;
 		break;
 	case TERM_V4CIDR:
@@ -1521,7 +1468,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 			errcnt++;
 			goto out;
 		}
-		cli->client.network.cidr = cidr;
+		cli->cidr = cidr;
 		cli->type = NETWORK_CLIENT;
 		break;
 	case TERM_REGEX:
@@ -1533,7 +1480,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 			errcnt++;
 			goto out;
 		}
-		cli->client.wildcard.wildcard = gsh_strdup(client_tok);
+		cli->str = gsh_strdup(client_tok);
 		cli->type = WILDCARDHOST_CLIENT;
 		break;
 	case TERM_TOKEN: /* only dns names now. */
@@ -1570,8 +1517,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 					    memcmp(&infoaddr, &in_addr_last,
 						   sizeof(struct in_addr)) == 0)
 						continue;
-					cli->client.network.cidr =
-						cidr_from_inaddr(&infoaddr);
+					cli->cidr = cidr_from_inaddr(&infoaddr);
 					cli->type = NETWORK_CLIENT;
 					ap_last = ap;
 					in_addr_last = infoaddr;
@@ -1591,7 +1537,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 						    sizeof(struct in6_addr)))
 						continue;
 					/* IPv6 address */
-					cli->client.network.cidr =
+					cli->cidr =
 						cidr_from_in6addr(&infoaddr);
 					cli->type = NETWORK_CLIENT;
 					ap_last = ap;
@@ -1626,6 +1572,11 @@ int add_client(enum log_components component, struct glist_head *client_list,
 		err_type->bogus = true;
 		errcnt++;
 		goto out;
+	}
+
+	if (cli->type == NETWORK_CLIENT) {
+		/* Standardize string form */
+		cli->str = cidr_to_str(cli->cidr);
 	}
 
 	if (cle_filler != NULL)
@@ -1671,25 +1622,8 @@ bool delete_base_client(enum log_components component,
 		goto out;
 	}
 
-	/* delete the exact match entry only */
-	switch (cli->type) {
-	case NETWORK_CLIENT:
-		cidr_free(cli->client.network.cidr);
-		break;
-	case NETGROUP_CLIENT:
-		gsh_free(cli->client.netgroup.netgroupname);
-		break;
-	case WILDCARDHOST_CLIENT:
-		gsh_free(cli->client.wildcard.wildcard);
-		break;
-	case GSSPRINCIPAL_CLIENT:
-	case PROTO_CLIENT:
-	case MATCH_ANY_CLIENT:
-	case BAD_CLIENT:
-		/* Do nothing for these client types */
-		break;
-	}
-
+	cidr_free(cli->cidr);
+	gsh_free(cli->str);
 	glist_del(&cli->cle_list);
 	gsh_free(cli);
 
@@ -1748,8 +1682,7 @@ client_match(enum log_components component, const char *str,
 
 		switch (client->type) {
 		case NETWORK_CLIENT:
-			if (cidr_contains_ip(client->client.network.cidr,
-					     hostaddr) == 0) {
+			if (cidr_contains_ip(client->cidr, hostaddr) == 0) {
 				goto out;
 			}
 			break;
@@ -1771,8 +1704,7 @@ client_match(enum log_components component, const char *str,
 			/* At this point 'hostname' should contain the
 			 * name that was found
 			 */
-			if (ng_innetgr(client->client.netgroup.netgroupname,
-				       hostname)) {
+			if (ng_innetgr(client->str, hostname)) {
 				goto out;
 			}
 			break;
@@ -1783,9 +1715,8 @@ client_match(enum log_components component, const char *str,
 				ipvalid = sprint_sockip(hostaddr, ipstring,
 							sizeof(ipstring));
 
-			if (ipvalid &&
-			    (fnmatch(client->client.wildcard.wildcard, ipstring,
-				     FNM_PATHNAME) == 0)) {
+			if (ipvalid && (fnmatch(client->str, ipstring,
+						FNM_PATHNAME) == 0)) {
 				goto out;
 			}
 
@@ -1810,8 +1741,7 @@ client_match(enum log_components component, const char *str,
 			/* At this point 'hostname' should contain the
 			 * name that was found
 			 */
-			if (fnmatch(client->client.wildcard.wildcard, hostname,
-				    FNM_PATHNAME) == 0) {
+			if (fnmatch(client->str, hostname, FNM_PATHNAME) == 0) {
 				goto out;
 			}
 			break;

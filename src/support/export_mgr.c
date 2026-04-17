@@ -1359,37 +1359,14 @@ static void client_of_export(struct exportlist_client_entry *expclient,
 	struct showexports_state *client_array_iter =
 		(struct showexports_state *)state;
 	DBusMessageIter client_struct_iter;
-	const char *grp_name;
 	struct base_client_entry *client = &expclient->client_entry;
 
-	switch (client->type) {
-	case NETWORK_CLIENT:
-		grp_name = cidr_to_str(client->client.network.cidr);
-		if (grp_name == NULL) {
-			grp_name = "Invalid Network Address";
-		}
-		break;
-	case NETGROUP_CLIENT:
-		grp_name = client->client.netgroup.netgroupname;
-		break;
-	case GSSPRINCIPAL_CLIENT:
-		grp_name = client->client.gssprinc.princname;
-		break;
-	case MATCH_ANY_CLIENT:
-		grp_name = "*";
-		break;
-	case WILDCARDHOST_CLIENT:
-		grp_name = client->client.wildcard.wildcard;
-		break;
-	default:
-		grp_name = "<unknown>";
-	}
 	dbus_message_iter_open_container(&client_array_iter->export_iter,
 					 DBUS_TYPE_STRUCT, NULL,
 					 &client_struct_iter);
 	// Client type
 	dbus_message_iter_append_basic(&client_struct_iter, DBUS_TYPE_STRING,
-				       &grp_name);
+				       &client->str);
 	// Client Cidr block
 	if (client->type == NETWORK_CLIENT) {
 		unsigned char addr[16];
@@ -1397,10 +1374,10 @@ static void client_of_export(struct exportlist_client_entry *expclient,
 		int proto;
 		int version;
 
-		cidr_ipaddr_to_chars(client->client.network.cidr, addr);
-		cidr_mask_to_chars(client->client.network.cidr, mask);
-		proto = cidr_proto(client->client.network.cidr);
-		version = cidr_version(client->client.network.cidr);
+		cidr_ipaddr_to_chars(client->cidr, addr);
+		cidr_mask_to_chars(client->cidr, mask);
+		proto = cidr_proto(client->cidr);
+		version = cidr_version(client->cidr);
 
 		dbus_message_iter_append_basic(&client_struct_iter,
 					       DBUS_TYPE_INT32, &version);
