@@ -110,9 +110,6 @@ struct nfs_request_lookahead {
 #define XDR_BYTES_MAXLEN_IO (64 * 1024 * 1024)
 #define XDR_STRING_MAXLEN (8 * 1024)
 
-struct netconfig *getnetconfigent(const char *);
-void freenetconfigent(struct netconfig *);
-
 /**
  * @addtogroup config
  *
@@ -188,70 +185,6 @@ static inline int display_xprt_sockaddr(struct display_buffer *db,
 	addr = (const sockaddr_t *)hostaddr->buf;
 
 	return display_sockaddr(db, addr);
-}
-
-static inline void *socket_addr(sockaddr_t *addr)
-{
-	switch (addr->ss_family) {
-	case AF_INET:
-		return &(((struct sockaddr_in *)addr)->sin_addr);
-	case AF_INET6:
-		return &(((struct sockaddr_in6 *)addr)->sin6_addr);
-#ifdef RPC_VSOCK
-	case AF_VSOCK:
-		return &(((struct sockaddr_vm *)addr)->svm_cid);
-#endif /* VSOCK */
-	default:
-		return addr;
-	}
-}
-
-static inline size_t socket_addr_len(sockaddr_t *addr)
-{
-	switch (addr->ss_family) {
-	case AF_INET:
-		return sizeof(struct sockaddr_in);
-	case AF_INET6:
-		return sizeof(struct sockaddr_in6);
-#ifdef RPC_VSOCK
-	case AF_VSOCK:
-		return sizeof(((struct sockaddr_vm *)addr)->svm_cid);
-#endif /* VSOCK */
-	default:
-		return sizeof(sockaddr_t);
-	}
-}
-
-static inline int get_sockport(sockaddr_t *addr)
-{
-#ifdef RPC_VSOCK
-	if (addr->ss_family == AF_VSOCK)
-		return ((struct sockaddr_vm *)addr)->svm_port;
-#endif /* VSOCK */
-
-	if (addr->ss_family == AF_INET)
-		return ntohs(((struct sockaddr_in *)addr)->sin_port);
-
-	if (addr->ss_family == AF_INET6)
-		return ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
-
-	return -1;
-}
-
-static inline bool sprint_sockip(sockaddr_t *addr, char *buf, int len)
-{
-#ifdef RPC_VSOCK
-	if (addr->ss_family == AF_VSOCK) {
-		int rc = snprintf(buf, len, "%d",
-				  ((struct sockaddr_vm *)addr)->svm_cid));
-		return rc >= 0 && rc < len;
-	}
-#endif /* VSOCK */
-
-	if (addr->ss_family != AF_INET && addr->ss_family != AF_INET6)
-		return false;
-
-	return inet_ntop(addr->ss_family, socket_addr(addr), buf, len) != NULL;
 }
 
 const char *xprt_type_to_str(xprt_type_t);

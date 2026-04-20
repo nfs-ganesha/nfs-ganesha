@@ -1436,14 +1436,14 @@ struct netconfig *nfs_Get_netconfig(char *netid)
 void nfs_Init_netconfig(void)
 {
 	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_udpv4 = (struct netconfig *)getnetconfigent("udp");
+	netconfig_udpv4 = getnetconfigent("udp");
 	if (netconfig_udpv4 == NULL)
 		LogFatal(
 			COMPONENT_DISPATCH,
 			"Cannot get udp netconfig, cannot get an entry for udp in netconfig file. Check file /etc/netconfig...");
 
 	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_tcpv4 = (struct netconfig *)getnetconfigent("tcp");
+	netconfig_tcpv4 = getnetconfigent("tcp");
 	if (netconfig_tcpv4 == NULL)
 		LogFatal(
 			COMPONENT_DISPATCH,
@@ -1455,13 +1455,13 @@ void nfs_Init_netconfig(void)
 	LogInfo(COMPONENT_DISPATCH, "NFS INIT: Using IPv6");
 
 	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_udpv6 = (struct netconfig *)getnetconfigent("udp6");
+	netconfig_udpv6 = getnetconfigent("udp6");
 	if (netconfig_udpv6 == NULL)
 		LogInfo(COMPONENT_DISPATCH,
 			"Cannot get udp6 netconfig, cannot get an entry for udp6 in netconfig file. Check file /etc/netconfig...");
 
 	/* Get the netconfig entries from /etc/netconfig */
-	netconfig_tcpv6 = (struct netconfig *)getnetconfigent("tcp6");
+	netconfig_tcpv6 = getnetconfigent("tcp6");
 	if (netconfig_tcpv6 == NULL)
 		LogInfo(COMPONENT_DISPATCH,
 			"Cannot get tcp6 netconfig, cannot get an entry for tcp in netconfig file. Check file /etc/netconfig...");
