@@ -53,7 +53,7 @@
 #include <wbclient.h>
 #endif
 #include "common_utils.h"
-#include "gsh_rpc.h"
+#include "ip_utils.h"
 #include "gsh_types.h"
 #include "gsh_list.h"
 #ifdef USE_DBUS
@@ -61,6 +61,7 @@
 #endif
 #include "nfs_core.h"
 #include "idmapper.h"
+#include "uid2grp.h"
 #include "server_stats_private.h"
 #include "idmapper_monitoring.h"
 #include "pwnam_wrappers.h"

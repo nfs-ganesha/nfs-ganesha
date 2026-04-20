@@ -472,6 +472,8 @@ enum request_type {
  *       currently in use, or needs to do something with different credentials.
  */
 
+struct group_data;
+
 struct req_op_context {
 	struct req_op_context *saved_op_ctx; /* saved op_ctx */
 	struct user_cred creds; /*< resolved user creds from request */

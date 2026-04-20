@@ -44,6 +44,7 @@
 #include "log.h"
 #include "fsal.h"
 #include "9p.h"
+#include "uid2grp.h"
 
 #define XATTRS_ARRAY_LEN 100
 

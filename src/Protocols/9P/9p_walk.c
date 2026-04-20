@@ -42,6 +42,7 @@
 #include "log.h"
 #include "fsal.h"
 #include "9p.h"
+#include "uid2grp.h"
 
 int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 {

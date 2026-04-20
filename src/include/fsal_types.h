@@ -40,7 +40,6 @@
 #include <sys/param.h>
 #include <dirent.h> /* for MAXNAMLEN */
 
-#include "uid2grp.h"
 #include "nfsv41.h"
 
 typedef struct nfs_request nfs_request_t;

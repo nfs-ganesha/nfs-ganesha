@@ -47,6 +47,7 @@
 #include "sal_functions.h"
 #include "sal_data.h"
 #include "idmapper.h"
+#include "uid2grp.h"
 #include "delayed_exec.h"
 #include "export_mgr.h"
 #include "pnfs_utils.h"
