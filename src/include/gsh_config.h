@@ -49,7 +49,6 @@
 
 #include "nfs4.h"
 #include "gsh_recovery.h"
-#include "gsh_rpc.h"
 #include "pwnam_wrappers.h"
 
 /**

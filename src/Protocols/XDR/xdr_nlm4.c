@@ -5,7 +5,6 @@
  */
 
 #include "config.h"
-#include "gsh_rpc.h"
 #include "nlm4.h"
 #include "nfs_fh.h"
 

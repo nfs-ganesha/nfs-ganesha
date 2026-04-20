@@ -39,7 +39,6 @@
 #include <pthread.h>
 #include "hashtable.h"
 #include "log.h"
-#include "gsh_rpc.h"
 #include "nfs4.h"
 #include "nfs_core.h"
 #include "sal_functions.h"

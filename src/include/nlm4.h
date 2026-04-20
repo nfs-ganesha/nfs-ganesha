@@ -7,6 +7,8 @@
 #ifndef _NLM4_H_RPCGEN
 #define _NLM4_H_RPCGEN
 
+#include "gsh_rpc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

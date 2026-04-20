@@ -7,7 +7,7 @@
  * This file is under version control.
  */
 #include "config.h"
-#include "gsh_rpc.h"
+#include "nfs23.h"
 #include "fsal.h"
 #include "nfs_fh.h"
 #include "fsal_convert.h"

@@ -25,7 +25,6 @@
  * --------------------------------------- */
 #include "config.h"
 #include "log.h"
-#include "gsh_rpc.h"
 #include "fsal.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"

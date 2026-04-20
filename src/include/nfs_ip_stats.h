@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include "gsh_rpc.h"
 #include <netdb.h> /* for having MAXHOSTNAMELEN */
 #include "hashtable.h"
 

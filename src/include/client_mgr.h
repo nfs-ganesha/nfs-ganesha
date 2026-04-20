@@ -45,7 +45,6 @@
 
 #include "avltree.h"
 #include "gsh_types.h"
-#include "gsh_rpc.h"
 #include "ip_utils.h"
 #include "sal_shared.h"
 #include "connection_manager.h"

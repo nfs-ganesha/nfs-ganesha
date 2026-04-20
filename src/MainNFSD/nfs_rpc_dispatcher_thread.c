@@ -48,7 +48,6 @@
 #include <assert.h>
 #include "hashtable.h"
 #include "log.h"
-#include "gsh_rpc.h"
 #include "abstract_atomic.h"
 #include "nfs23.h"
 #include "nfs4.h"

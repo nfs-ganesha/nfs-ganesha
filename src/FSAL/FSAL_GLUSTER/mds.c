@@ -28,7 +28,7 @@
 #include "fsal_types.h"
 #include "fsal_api.h"
 #include "fsal_up.h"
-#include "gsh_rpc.h"
+#include "ip_utils.h"
 #include "gluster_internal.h"
 #include "FSAL/fsal_commonlib.h"
 #include "FSAL/fsal_config.h"

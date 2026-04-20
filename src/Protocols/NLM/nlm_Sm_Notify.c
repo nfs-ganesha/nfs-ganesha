@@ -28,7 +28,6 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include "log.h"
-#include "gsh_rpc.h"
 #include "nlm4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"

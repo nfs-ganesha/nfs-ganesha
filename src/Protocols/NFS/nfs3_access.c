@@ -39,8 +39,6 @@
 #include "hashtable.h"
 #include "log.h"
 #include "nfs23.h"
-#include "nfs4.h"
-#include "mount.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
 #include "nfs_creds.h"

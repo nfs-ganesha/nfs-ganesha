@@ -49,7 +49,6 @@
 #include "server_stats.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
-#include "gsh_rpc.h"
 #include "nfs_qos.h"
 
 #include "gsh_lttng/gsh_lttng.h"

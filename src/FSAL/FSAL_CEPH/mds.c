@@ -21,7 +21,7 @@
  * -------------
  */
 
-#include "gsh_rpc.h"
+#include "ip_utils.h"
 #include <cephfs/libcephfs.h>
 #include "fsal.h"
 #include "fsal_types.h"

@@ -41,7 +41,6 @@
 #include <dlfcn.h>
 #include "fsal.h"
 #include "log.h"
-#include "gsh_rpc.h"
 #include "nfs_init.h"
 #include "nfs_exports.h"
 #include "pnfs_utils.h"

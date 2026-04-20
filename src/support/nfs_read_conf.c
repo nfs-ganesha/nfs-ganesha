@@ -43,7 +43,6 @@
 #include <netdb.h>
 #include <ctype.h>
 #include "log.h"
-#include "gsh_rpc.h"
 #include "fsal.h"
 #include "nfs23.h"
 #include "nfs4.h"

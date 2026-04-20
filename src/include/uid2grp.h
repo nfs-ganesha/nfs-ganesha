@@ -43,7 +43,6 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include "gsh_rpc.h"
 #include "gsh_types.h"
 
 /**

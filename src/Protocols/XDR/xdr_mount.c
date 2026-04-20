@@ -5,8 +5,6 @@
  */
 
 #include "config.h"
-#include "gsh_rpc.h"
-#include "mount.h"
 #include "nfs23.h"
 #include "nfs_fh.h"
 

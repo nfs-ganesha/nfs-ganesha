@@ -27,7 +27,6 @@
 #include <string.h>
 #include <pthread.h>
 #include "log.h"
-#include "gsh_rpc.h"
 #include "nlm4.h"
 #include "nlm_util.h"
 #include "nlm_async.h"

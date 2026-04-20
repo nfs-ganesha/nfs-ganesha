@@ -29,12 +29,8 @@
 #include <sys/file.h> /* for having FNDELAY */
 #include "hashtable.h"
 #include "log.h"
-#include "gsh_rpc.h"
-#include "nfs23.h"
-#include "nfs4.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
-#include "mount.h"
 #include <os/quota.h> /* For USRQUOTA */
 #include "rquota.h"
 #include "nfs_proto_functions.h"

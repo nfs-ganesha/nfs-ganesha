@@ -38,7 +38,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include "gsh_rpc.h"
 #ifdef HAVE_HEIMDAL
 #include <gssapi.h>
 #define gss_nt_service_name GSS_C_NT_HOSTBASED_SERVICE

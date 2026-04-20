@@ -35,7 +35,6 @@
 
 #include "log.h"
 #include "nfs_core.h"
-#include "gsh_rpc.h"
 
 typedef struct __nfs_start_info {
 	int dump_default_config;
