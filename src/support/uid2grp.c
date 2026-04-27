@@ -460,6 +460,7 @@ out:
 	return gdata;
 }
 
+#ifndef _MSPAC_SUPPORT
 /**
  * @brief Allocate supplementary groups using principal
  *
@@ -485,13 +486,6 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	int ret;
 	struct timespec s_time, e_time;
 	size_t principal_len;
-
-#ifdef _MSPAC_SUPPORT
-	/* TODO */
-	LogWarn(COMPONENT_IDMAPPER, "Unsupported code path for principal %s",
-		principal);
-	return NULL;
-#endif
 
 	/* We call nfs4_gss_princ_to_grouplist() with ngroups set to 1000 first.
 	 * This should reduce number of nfs4_gss_princ_to_grouplist() calls made
@@ -589,6 +583,7 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	return NULL;
 #endif
 }
+#endif /* _MSPAC_SUPPORT */
 
 /**
  * @brief Add a user entry to the cache
@@ -814,12 +809,22 @@ bool principal2grp(char *principal, struct group_data **gdata, const uid_t uid,
 	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
 
 	/* We could not find non-expired group-data in cache, fetch it afresh */
+#ifndef _MSPAC_SUPPORT
 	*gdata = uid2grp_allocate_by_principal(principal, uid, gid);
 	if (*gdata) {
 		/* This will also remove existing expired cache entry */
 		add_user_groups_to_cache(gdata);
 		return true;
 	}
+#else
+	/* MSPAC uses Winbind for group resolution via principal2uid(),
+	 * not nfsidmap. Skip uid2grp_allocate_by_principal() and return false
+	 * so caller falls back to set_extended_groups() which uses the groups
+	 * already resolved by principal2uid(). */
+	LogDebug(COMPONENT_IDMAPPER,
+		 "MSPAC: uid2grp_allocate_by_principal not supported for principal '%s'",
+		 principal);
+#endif
 
 	/*
 	 * At this point, we could not find non-expired group-data in cache,
