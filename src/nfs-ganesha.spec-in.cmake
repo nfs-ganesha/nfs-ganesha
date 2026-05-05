@@ -149,13 +149,6 @@ BuildRequires:	openssl-devel
 %if %{with rados_recov} || %{with rados_urls}
 BuildRequires: librados-devel >= 0.61
 %endif
-%if ( 0%{?suse_version} >= 1330 )
-BuildRequires:  libnsl-devel
-%else
-%if ( 0%{?fedora} >= 28 || 0%{?rhel} >= 8 )
-BuildRequires:  libnsl2-devel
-%endif
-%endif
 %if ( 0%{?suse_version} )
 BuildRequires:	dbus-1-devel
 Requires:	dbus-1
