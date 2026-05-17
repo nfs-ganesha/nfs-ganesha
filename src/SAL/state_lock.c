@@ -3023,9 +3023,9 @@ recheck_for_conflicting_entries:
 }
 
 /* Like state_unlock- but assumes obj state lock is taken */
-static state_status_t state_unlock_internal(
-	struct fsal_obj_handle *obj, state_t *state, state_owner_t *owner,
-	bool state_applies, int32_t nsm_state, fsal_lock_param_t *lock)
+state_status_t state_unlock_locked(struct fsal_obj_handle *obj, state_t *state,
+				   state_owner_t *owner, bool state_applies,
+				   int32_t nsm_state, fsal_lock_param_t *lock)
 {
 	bool empty = false;
 	bool removed = false;
@@ -3134,8 +3134,8 @@ state_status_t state_unlock(struct fsal_obj_handle *obj, state_t *state,
 
 	STATELOCK_lock(obj);
 
-	status = state_unlock_internal(obj, state, owner, state_applies,
-				       nsm_state, lock);
+	status = state_unlock_locked(obj, state, owner, state_applies,
+				     nsm_state, lock);
 
 	STATELOCK_unlock(obj);
 
@@ -3149,7 +3149,7 @@ state_status_t state_unlock(struct fsal_obj_handle *obj, state_t *state,
  * @param[in] obj      File to unlock
  * @param[in] state      The state
  */
-void state_unlock_all(struct fsal_obj_handle *obj, state_t *state)
+void state_unlock_all_locked(struct fsal_obj_handle *obj, state_t *state)
 {
 	/* The state lock associated with the state */
 	struct state_lock *locks;
@@ -3185,9 +3185,9 @@ void state_unlock_all(struct fsal_obj_handle *obj, state_t *state)
 
 		PTHREAD_MUTEX_unlock(&state->state_mutex);
 
-		status = state_unlock_internal(state->state_obj, state,
-					       state->state_owner, false, 0,
-					       &lock_entry->sle_lock);
+		status = state_unlock_locked(state->state_obj, state,
+					     state->state_owner, false, 0,
+					     &lock_entry->sle_lock);
 
 		lock_entry_dec_ref(lock_entry);
 

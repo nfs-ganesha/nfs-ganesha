@@ -254,12 +254,17 @@ bool open4_open_owner(struct nfs_argop4 *op, compound_data_t *data,
 		return true;
 	}
 
+	PTHREAD_MUTEX_lock(&(*owner)->so_mutex);
+
 	/* Check for replay */
-	if (Check_nfs4_seqid(*owner, arg_OPEN4->seqid, op, data->current_obj,
-			     res, open_tag)) {
+	if (Check_nfs4_seqid_locked(*owner, arg_OPEN4->seqid, op,
+				    data->current_obj, res, open_tag)) {
 		/* No replay */
+		PTHREAD_MUTEX_unlock(&(*owner)->so_mutex);
 		return true;
 	}
+
+	PTHREAD_MUTEX_unlock(&(*owner)->so_mutex);
 
 	/* Response is setup for us and LogDebug told what was
 	 * wrong.
@@ -786,7 +791,7 @@ static void open4_ex(OPEN4args *arg, compound_data_t *data, OPEN4res *res_OPEN4,
 	/* Status for fsal calls */
 	fsal_status_t status = { 0, 0 };
 	/* The open state for the file */
-	bool st_lock_held = false;
+	bool state_handle_lock_held = false;
 
 	/* Make sure the attributes are initialized */
 	memset(&sattr, 0, sizeof(sattr));
@@ -954,7 +959,7 @@ static void open4_ex(OPEN4args *arg, compound_data_t *data, OPEN4res *res_OPEN4,
 	if (file_obj != NULL) {
 		/* Go ahead and take the state lock now. */
 		STATELOCK_lock(file_obj);
-		st_lock_held = true;
+		state_handle_lock_held = true;
 
 		in_obj = file_obj;
 
@@ -973,6 +978,24 @@ static void open4_ex(OPEN4args *arg, compound_data_t *data, OPEN4res *res_OPEN4,
 		/* Check if there is already a state for this entry and owner.
 		 */
 		*file_state = nfs4_State_Get_Obj(file_obj, owner);
+		if (*file_state != NULL) {
+			/* Re-verify state validity under lock to prevent
+			 * TOCTOU races with concurrent CLOSE operations.
+			 * If a parallel CLOSE thread successfully deleted
+			 * this state before we acquired the lock, state_owner
+			 * will be NULL, and we should create a new state for
+			 * this open. We clear *file_state here, then proceed
+			 * to allocate and set up a new state for this open
+			 * file later in this function. Execution continues
+			 * under the safety of the already-held state lock,
+			 * which is released in the out block at the end of
+			 * the function.
+			 */
+			if ((*file_state)->state_owner == NULL) {
+				dec_state_t_ref(*file_state);
+				*file_state = NULL;
+			}
+		}
 
 		if (isFullDebug(COMPONENT_STATE) && *file_state != NULL) {
 			char str[LOG_BUFF_LEN] = "\0";
@@ -1038,15 +1061,15 @@ retry_open_file:
 			* client. Let's recheck if it was expired.
 			*/
 			if (res_OPEN4->status == NFS4ERR_SHARE_DENIED) {
-				if (st_lock_held)
+				if (state_handle_lock_held)
 					STATELOCK_unlock(in_obj);
 				if (check_and_remove_conflicting_client(
 					    in_obj->state_hdl)) {
-					if (st_lock_held)
+					if (state_handle_lock_held)
 						STATELOCK_lock(in_obj);
 					goto retry_open_file;
 				}
-				if (st_lock_held)
+				if (state_handle_lock_held)
 					STATELOCK_lock(in_obj);
 			}
 			goto out;
@@ -1113,7 +1136,7 @@ retry_open_file:
 		/* We have a file object, take the state lock. */
 		file_obj = out_obj;
 		STATELOCK_lock(file_obj);
-		st_lock_held = true;
+		state_handle_lock_held = true;
 	}
 
 	/* Now the st_lock is held for sure and we have an extra LRU
@@ -1194,7 +1217,7 @@ retry_open_file:
 			 * call.
 			 */
 			STATELOCK_unlock(file_obj);
-			st_lock_held = false;
+			state_handle_lock_held = false;
 
 			/* Release the extra LRU reference on file_obj. */
 			file_obj->obj_ops->put_ref(file_obj);
@@ -1241,10 +1264,10 @@ retry_open_file:
 			(*file_state)->state_data.share.share_deny_prev);
 	}
 
-	if (!st_lock_held) {
+	if (!state_handle_lock_held) {
 		/* Acquire st_lock before adding deleg state */
 		STATELOCK_lock(file_obj);
-		st_lock_held = true;
+		state_handle_lock_held = true;
 	}
 
 	/* At this point open has succeeded and we are holding the state
@@ -1254,12 +1277,19 @@ retry_open_file:
 		file_obj->state_hdl->file.fdeleg_stats.fds_num_write_opens++;
 
 	do_delegation(arg, res_OPEN4, data, owner, *file_state, clientid);
+
+	/* Update seqid/stateid here so it will be under the state lock. */
+	if (res_OPEN4->status == NFS4_OK) {
+		update_stateid_locked(*file_state,
+				      &res_OPEN4->OPEN4res_u.resok4.stateid,
+				      data, open_tag);
+	}
 out:
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&sattr);
 
-	if (st_lock_held) {
+	if (state_handle_lock_held) {
 		STATELOCK_unlock(file_obj);
 	}
 
@@ -1561,11 +1591,6 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 	res_OPEN4->OPEN4res_u.resok4.cinfo.atomic =
 		is_parent_pre_attrs_valid && is_parent_post_attrs_valid ? TRUE
 									: FALSE;
-
-	/* Handle open stateid/seqid for success */
-	update_stateid(file_state, &res_OPEN4->OPEN4res_u.resok4.stateid, data,
-		       open_tag);
-
 out:
 	fsal_release_attrs(&parent_pre_attrs);
 	fsal_release_attrs(&parent_post_attrs);

@@ -687,6 +687,8 @@ void Copy_nfs4_state_req(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
  * In either case, on a false return, the caller should send the
  * resulting response back to the client.
  *
+ * @note The caller MUST hold owner->so_mutex before calling this function.
+ *
  * @param[in]  owner The owner to check
  * @param[in]  seqid The seqid to check
  * @param[in]  args  Arguments of operation
@@ -697,9 +699,9 @@ void Copy_nfs4_state_req(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
  * @retval true if the caller should process the operation.
  * @retval false if the caller should immediately return the provides response.
  */
-bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
-		      struct fsal_obj_handle *obj, nfs_resop4 *resp,
-		      const char *tag)
+bool Check_nfs4_seqid_locked(state_owner_t *owner, seqid4 seqid,
+			     nfs_argop4 *args, struct fsal_obj_handle *obj,
+			     nfs_resop4 *resp, const char *tag)
 {
 	seqid4 next;
 	char str[LOG_BUFF_LEN] = "\0";

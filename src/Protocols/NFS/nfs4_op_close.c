@@ -156,7 +156,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 	/* Secondary safe iterator to continue traversal on delete */
 	struct glist_head *glistn = NULL;
 	struct fsal_obj_handle *state_obj;
-	bool ok;
+	bool state_handle_lock_held = false;
 
 	LogDebug(COMPONENT_STATE,
 		 "Entering NFS v4 CLOSE handler ----------------------------");
@@ -175,35 +175,29 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		return NFS_REQ_ERROR;
 
 	/* Check stateid correctness and get pointer to state */
-	nfs_status = nfs4_Check_Stateid(&arg_CLOSE4->open_stateid,
-					data->current_obj, &state_found, data,
-					data->minorversion == 0
-						? STATEID_SPECIAL_FOR_CLOSE_40
-						: STATEID_SPECIAL_FOR_CLOSE_41,
-					arg_CLOSE4->seqid,
-					data->minorversion == 0, close_tag);
+	nfs_status = nfs4_check_stateid_acquire_state_lock(
+		&arg_CLOSE4->open_stateid, data->current_obj, data,
+		data->minorversion == 0 ? STATEID_SPECIAL_FOR_CLOSE_40
+					: STATEID_SPECIAL_FOR_CLOSE_41,
+		arg_CLOSE4->seqid, data->minorversion == 0,
+		/*should_lock=*/true, close_tag, &state_found, &state_obj,
+		&open_owner, &state_handle_lock_held);
 
 	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_CLOSE4->status = nfs_status;
-		LogDebug(COMPONENT_STATE, "CLOSE failed nfs4_Check_Stateid");
+		LogDebug(COMPONENT_STATE,
+			 "CLOSE failed nfs4_check_stateid_acquire_state_lock");
 		return NFS_REQ_ERROR;
 	}
 
-	/* We hold the state, but not its object handle. Its object
-	 * handle could be freed as soon as the state gets deleted from
-	 * the hashtable.
-	 *
-	 * If there are multiple threads trying to delete the state at
-	 * the same time, the object handle could be NULL here.
-	 *
-	 * Get a ref on the object handle and the open owner.
+	/* If the state, open owner, or state object is NULL for NFSv4.0, it is
+	 * likely that a racing thread concurrently deleted or freed the state
+	 * while we were waiting for the lock. In this scenario, we treat the
+	 * request as a replayed CLOSE and return NFS4_OK with an incremented
+	 * seqid.
 	 */
-	ok = get_state_obj_export_owner_refs(state_found, &state_obj, NULL,
-					     &open_owner);
-	if (!ok) {
-		/* Assume this is a replayed close */
-		if (state_found)
-			dec_state_t_ref(state_found);
+	if (data->minorversion == 0 &&
+	    (state_found == NULL || open_owner == NULL || state_obj == NULL)) {
 		res_CLOSE4->status = NFS4_OK;
 		memcpy(res_CLOSE4->CLOSE4res_u.open_stateid.other,
 		       arg_CLOSE4->open_stateid.other, OTHERSIZE);
@@ -214,30 +208,24 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		if (res_CLOSE4->CLOSE4res_u.open_stateid.seqid == 0)
 			res_CLOSE4->CLOSE4res_u.open_stateid.seqid = 1;
 
-		LogDebug(
-			COMPONENT_STATE,
-			"CLOSE failed nfs4_Check_Stateid must have already been closed. But treating it as replayed close and returning NFS4_OK");
-
-		return NFS_REQ_OK;
+		LogDebug(COMPONENT_STATE,
+			 "CLOSE treated as replayed close. Returning NFS4_OK");
+		goto out;
 	}
-
-	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
 	if (data->minorversion == 0) {
-		if (!Check_nfs4_seqid(open_owner, arg_CLOSE4->seqid, op,
-				      state_obj, resp, close_tag)) {
+		PTHREAD_MUTEX_lock(&open_owner->so_mutex);
+		if (!Check_nfs4_seqid_locked(open_owner, arg_CLOSE4->seqid, op,
+					     state_obj, resp, close_tag)) {
 			/* Response is all setup for us and LogDebug
 			 * told what was wrong
 			 */
 			PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
-			goto out2;
+			goto out;
 		}
+		PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 	}
-
-	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
-
-	STATELOCK_lock(state_obj);
 
 	/* Clean all associated lock states */
 	glist_for_each_safe(glist, glistn,
@@ -248,7 +236,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 		inc_state_t_ref(lock_state);
 
-		state_unlock_all(state_obj, lock_state);
+		state_unlock_all_locked(state_obj, lock_state);
 
 		state_del_locked(lock_state);
 
@@ -257,9 +245,9 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 
 	if (data->minorversion == 0) {
 		/* Handle stateid/seqid for success for v4.0 */
-		update_stateid(state_found,
-			       &res_CLOSE4->CLOSE4res_u.open_stateid, data,
-			       close_tag);
+		update_stateid_locked(state_found,
+				      &res_CLOSE4->CLOSE4res_u.open_stateid,
+				      data, close_tag);
 	} else {
 		/* In NFS V4.1 and later, the server SHOULD return a special
 		 * invalid stateid to prevent re-use of a now closed stateid.
@@ -285,6 +273,7 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 		op_ctx->clientid = NULL;
 
 	STATELOCK_unlock(state_obj);
+	state_handle_lock_held = false;
 	res_CLOSE4->status = NFS4_OK;
 
 	if (isFullDebug(COMPONENT_STATE) && isFullDebug(COMPONENT_MEMLEAKS)) {
@@ -298,10 +287,20 @@ enum nfs_req_result nfs4_op_close(struct nfs_argop4 *op, compound_data_t *data,
 				    state_obj, resp, close_tag);
 	}
 
-out2:
-	dec_state_owner_ref(open_owner);
-	state_obj->obj_ops->put_ref(state_obj);
-	dec_state_t_ref(state_found);
+out:
+	if (state_handle_lock_held) {
+		STATELOCK_unlock(state_obj);
+		state_handle_lock_held = false;
+	}
+	if (open_owner != NULL) {
+		dec_state_owner_ref(open_owner);
+	}
+	if (state_obj != NULL) {
+		state_obj->obj_ops->put_ref(state_obj);
+	}
+	if (state_found != NULL) {
+		dec_state_t_ref(state_found);
+	}
 
 	GSH_AUTO_TRACEPOINT(nfs4, op_close_end, TRACE_INFO,
 			    "CLOSE arg: status={} open_stateid={}",

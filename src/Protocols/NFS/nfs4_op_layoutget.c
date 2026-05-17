@@ -67,6 +67,8 @@
  *                                 the arguments to layoutget
  * @param[in]     layout_type      Type of layout being requested
  * @param[out]    layout_state     The layout state
+ * @param[out]    out_state_handle_lock_held Whether state handle lock is
+ *                                           held on return
  *
  * @return NFS4_OK if successful, other values on error
  */
@@ -74,7 +76,9 @@
 static nfsstat4 acquire_layout_state(compound_data_t *data,
 				     stateid4 *supplied_stateid,
 				     layouttype4 layout_type,
-				     state_t **layout_state, const char *tag)
+				     state_t **layout_state,
+				     bool *out_state_handle_lock_held,
+				     const char *tag)
 {
 	/* State associated with the client-supplied stateid */
 	state_t *supplied_state = NULL;
@@ -88,7 +92,10 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	state_t *condemned_state = NULL;
 	/* Tracking data for the layout state */
 	struct state_refer refer;
-	bool lock_held = false;
+	struct fsal_obj_handle *layout_obj = NULL;
+	state_owner_t *layout_owner = NULL;
+
+	*out_state_handle_lock_held = false;
 
 	memcpy(refer.session, data->session->session_id, sizeof(sessionid4));
 	refer.sequence = data->sequence;
@@ -99,13 +106,24 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 	/* Retrieve state corresponding to supplied ID, inspect it
 	 * and, if necessary, create a new layout state
 	 */
-	nfs_status = nfs4_Check_Stateid(supplied_stateid, data->current_obj,
-					&supplied_state, data,
-					STATEID_SPECIAL_CURRENT, 0, false, tag);
+	nfs_status = nfs4_check_stateid_acquire_state_lock(
+		supplied_stateid, data->current_obj, data,
+		STATEID_SPECIAL_CURRENT, 0, false, /*should_lock=*/true, tag,
+		&supplied_state, &layout_obj, &layout_owner,
+		out_state_handle_lock_held);
+
+	if (layout_owner != NULL) {
+		dec_state_owner_ref(layout_owner);
+		layout_owner = NULL;
+	}
+	if (layout_obj != NULL) {
+		layout_obj->obj_ops->put_ref(layout_obj);
+		layout_obj = NULL;
+	}
 
 	if (nfs_status != NFS4_OK) {
 		/* The supplied stateid was invalid */
-		return nfs_status;
+		goto out;
 	}
 
 	if (supplied_state->state_type == STATE_TYPE_LAYOUT) {
@@ -114,6 +132,7 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		 * acquired.
 		 */
 		*layout_state = supplied_state;
+		supplied_state = NULL;
 		return NFS4_OK;
 	} else if ((supplied_state->state_type == STATE_TYPE_SHARE) ||
 		   (supplied_state->state_type == STATE_TYPE_DELEG) ||
@@ -123,9 +142,6 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 		union state_data layout_data;
 
 		memset(&layout_data, 0, sizeof(layout_data));
-
-		STATELOCK_lock(data->current_obj);
-		lock_held = true;
 
 		/* See if a layout state already exists */
 		state_status = state_lookup_layout_state(data->current_obj,
@@ -195,11 +211,14 @@ static nfsstat4 acquire_layout_state(compound_data_t *data,
 
 out:
 
-	/* We are done with the supplied_state, release the reference. */
-	dec_state_t_ref(supplied_state);
+	if (supplied_state != NULL) {
+		dec_state_t_ref(supplied_state);
+	}
 
-	if (lock_held)
+	if (nfs_status != NFS4_OK && *out_state_handle_lock_held) {
 		STATELOCK_unlock(data->current_obj);
+		*out_state_handle_lock_held = false;
+	}
 
 	return nfs_status;
 }
@@ -359,6 +378,7 @@ enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *op,
 	   single LAYOUTGET */
 	int max_segment_count = 0;
 	uint32_t resp_size = LAYOUTGET_RESP_BASE_SIZE;
+	bool state_handle_lock_held = false;
 
 	resp->resop = NFS4_OP_LAYOUTGET;
 
@@ -385,7 +405,8 @@ enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *op,
 
 	nfs_status = acquire_layout_state(data, &arg_LAYOUTGET4->loga_stateid,
 					  arg_LAYOUTGET4->loga_layout_type,
-					  &layout_state, tag);
+					  &layout_state,
+					  &state_handle_lock_held, tag);
 
 	if (nfs_status != NFS4_OK)
 		goto out;
@@ -456,7 +477,7 @@ enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *op,
 		goto out;
 
 	/* Update stateid.seqid and copy to current */
-	update_stateid(layout_state, &resok->logr_stateid, data, tag);
+	update_stateid_locked(layout_state, &resok->logr_stateid, data, tag);
 
 	resok->logr_return_on_close =
 		layout_state->state_data.layout.state_return_on_close;
@@ -468,6 +489,11 @@ enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *op,
 	nfs_status = NFS4_OK;
 
 out:
+
+	if (state_handle_lock_held) {
+		STATELOCK_unlock(data->current_obj);
+		state_handle_lock_held = false;
+	}
 
 	if (nfs_status != NFS4_OK) {
 		if (layouts != NULL)

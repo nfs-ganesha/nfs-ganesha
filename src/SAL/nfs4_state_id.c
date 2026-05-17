@@ -615,6 +615,11 @@ state_status_t nfs4_State_Set(state_t *state)
 /**
  * @brief Get the state from the stateid
  *
+ * A non-NULL return value guarantees the state_t memory is valid, but does
+ * not guarantee associated objects (state_obj, state_owner, state_export)
+ * are still active or non-NULL, as a concurrent thread may be tearing down
+ * the state. Callers must verify these fields before proceeding.
+ *
  * @param[in]  other      stateid4.other
  *
  * @returns The found state_t or NULL if not found.
@@ -781,52 +786,23 @@ bool nfs4_State_Del(state_t *state)
 }
 
 /**
- * @brief Check and look up the supplied stateid
+ * @brief Helper to check for special stateids (all zeros, all ones, current)
  *
- * This function yields the state for the stateid if it is valid.
+ * @param[in,out] stateid    Stateid to check (may be updated for CURRENT)
+ * @param[in,out] data       Compound data
+ * @param[in]     flags      Allowed special stateid flags
+ * @param[in]     tag        Tag for logging
+ * @param[out]    is_special Set to true if a special all-0 or all-1 stateid was
+ * handled
  *
- * @param[in]  stateid     Stateid to look up
- * @param[in]  fsal_obj    Associated file (if any)
- * @param[out] state       Found state
- * @param[in]  data        Compound data
- * @param[in]  flags       Flags governing special stateids
- * @param[in]  owner_seqid seqid on v4.0 owner
- * @param[in]  check_seqid Whether to validate owner_seqid
- * @param[in]  tag     Arbitrary string for logging/debugging
- *
- * @return NFSv4 status codes
+ * @return NFS4_OK on success, NFS4ERR_BAD_STATEID on failure, or NFS4_OK with
+ * is_special=false to proceed
  */
-nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
-			    state_t **state, compound_data_t *data, int flags,
-			    seqid4 owner_seqid, bool check_seqid,
-			    const char *tag)
+static nfsstat4 check_special_stateid(stateid4 *stateid, compound_data_t *data,
+				      int flags, const char *tag,
+				      bool *is_special)
 {
-	uint32_t client_unique_prefix = 0;
-	uint64_t unique_prefix = get_unique_server_id() & 0xFFFFFFFF;
-	state_t *state2 = NULL;
-	struct fsal_obj_handle *obj2 = NULL;
-	state_owner_t *owner2 = NULL;
-	char str[DISPLAY_STATEID4_SIZE] = "\0";
-	struct display_buffer dspbuf = { sizeof(str), str, str };
-	bool str_valid = false;
-	int32_t diff;
-	clientid4 clientid;
-	nfs_client_id_t *pclientid;
-	int rc;
-	nfsstat4 status;
-
-	if (isDebug(COMPONENT_STATE)) {
-		display_stateid4(&dspbuf, stateid);
-		str_valid = true;
-	}
-
-	LogFullDebug(COMPONENT_STATE, "Check %s stateid flags%s%s%s%s%s%s", tag,
-		     flags & STATEID_SPECIAL_ALL_0 ? " ALL_0" : "",
-		     flags & STATEID_SPECIAL_ALL_1 ? " ALL_1" : "",
-		     flags & STATEID_SPECIAL_CURRENT ? " CURRENT" : "",
-		     flags & STATEID_SPECIAL_CLOSE_40 ? " CLOSE_40" : "",
-		     flags & STATEID_SPECIAL_CLOSE_41 ? " CLOSE_41" : "",
-		     flags == 0 ? " NONE" : "");
+	*is_special = false;
 
 	/* Test for OTHER is all zeros */
 	if (memcmp(stateid->other, all_zero, OTHERSIZE) == 0) {
@@ -841,7 +817,8 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			 * actual state for use in temporary locks for I/O.
 			 */
 			data->current_stateid_valid = false;
-			goto success;
+			*is_special = true;
+			return NFS4_OK;
 		}
 		if (stateid->seqid == 1 &&
 		    (flags & STATEID_SPECIAL_CURRENT) != 0) {
@@ -855,21 +832,19 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 					COMPONENT_STATE,
 					"Check %s stateid STATEID_SPECIAL_CURRENT - current stateid is bad",
 					tag);
-				status = NFS4ERR_BAD_STATEID;
-				goto failure;
+				return NFS4ERR_BAD_STATEID;
 			}
 
-			/* Copy current stateid in and proceed to checks */
+			/* Copy current stateid in */
 			*stateid = data->current_stateid;
-			goto check_it;
+			return NFS4_OK;
 		}
 
 		LogDebug(
 			COMPONENT_STATE,
 			"Check %s stateid with OTHER all zeros, seqid %u unexpected",
 			tag, (unsigned int)stateid->seqid);
-		status = NFS4ERR_BAD_STATEID;
-		goto failure;
+		return NFS4ERR_BAD_STATEID;
 	}
 
 	/* Test for OTHER is all ones */
@@ -886,24 +861,45 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			 * actual state for use in temporary locks for I/O.
 			 */
 			data->current_stateid_valid = false;
-			goto success;
+			*is_special = true;
+			return NFS4_OK;
 		}
 
 		LogDebug(
 			COMPONENT_STATE,
 			"Check %s stateid with OTHER all ones, seqid %u unexpected",
 			tag, (unsigned int)stateid->seqid);
-		status = NFS4ERR_BAD_STATEID;
-		goto failure;
+		return NFS4ERR_BAD_STATEID;
 	}
 
-check_it:
+	return NFS4_OK;
+}
+
+/**
+ * @brief Helper to verify a stateid was created by this server instance
+ *
+ * @param[in]  stateid       Stateid to check
+ * @param[in]  data          Compound data
+ * @param[in]  unique_prefix Unique server prefix
+ * @param[in]  str_valid     Whether display string is valid
+ * @param[in]  str           Display string for logging
+ * @param[in]  tag           Tag for logging
+ * @param[out] clientid      Extracted clientid
+ *
+ * @return NFS4_OK on success, NFS4ERR_STALE_STATEID or NFS4ERR_BAD_STATEID
+ * on failure
+ */
+static nfsstat4 check_stateid_server_instance(
+	stateid4 *stateid, compound_data_t *data, uint64_t unique_prefix,
+	bool str_valid, const char *str, const char *tag, clientid4 *clientid)
+{
+	uint32_t client_unique_prefix;
 
 	/* Extract the clientid from the stateid other field */
-	memcpy(&clientid, stateid->other, sizeof(clientid));
+	memcpy(clientid, stateid->other, sizeof(*clientid));
 
 	/* Extract the epoch from the clientid */
-	client_unique_prefix = clientid >> (clientid4)32;
+	client_unique_prefix = *clientid >> (clientid4)32;
 
 	/* Check if stateid was made from this server instance */
 	if (client_unique_prefix != unique_prefix) {
@@ -912,11 +908,90 @@ check_it:
 				 "Check %s stateid found stale stateid %s", tag,
 				 str);
 		if (data->minorversion == 0)
-			status = NFS4ERR_STALE_STATEID;
+			return NFS4ERR_STALE_STATEID;
 		else
-			status = NFS4ERR_BAD_STATEID;
-		goto failure;
+			return NFS4ERR_BAD_STATEID;
 	}
+
+	return NFS4_OK;
+}
+
+/**
+ * @brief Check and look up the supplied stateid, optionally acquiring locks
+ *
+ * This function yields the state for the stateid if it is valid, along with
+ * references to the associated state object and open owner. If requested,
+ * it acquires the state object lock and seqid mutex. The callee (caller of
+ * this function) is responsible for releasing those locks when done, in the
+ * expected release order: first PTHREAD_MUTEX_unlock(&state->seqid_mutex),
+ * and then STATELOCK_unlock(state_obj).
+ *
+ * @param[in]  stateid               Stateid to look up
+ * @param[in]  fsal_obj              Associated file (if any)
+ * @param[in]  data                  Compound data
+ * @param[in]  flags                 Flags governing special stateids
+ * @param[in]  owner_seqid           seqid on v4.0 owner
+ * @param[in]  check_seqid           Whether to validate owner_seqid
+ * @param[in]  should_lock           If true, acquires both STATELOCK
+ *                                   (on state_obj) and seqid_mutex (on state).
+ * @param[in]  tag                   Arbitrary string for logging/debugging
+ * @param[out] out_state_pp          Found state
+ * @param[out] out_state_obj_pp      Object containing state
+ * @param[out] out_open_owner_pp     Open owner for state
+ * @param[out] out_st_lock_held_p    Whether st_lock is held on return
+ *
+ * @return NFSv4 status codes
+ */
+nfsstat4 nfs4_check_stateid_acquire_state_lock(
+	stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
+	compound_data_t *data, int flags, seqid4 owner_seqid, bool check_seqid,
+	bool should_lock, const char *tag, state_t **out_state_pp,
+	struct fsal_obj_handle **out_state_obj_pp,
+	state_owner_t **out_open_owner_pp, bool *out_st_lock_held_p)
+{
+	uint64_t unique_prefix = get_unique_server_id() & 0xFFFFFFFF;
+	state_t *state2 = NULL;
+	struct fsal_obj_handle *obj2 = NULL;
+	state_owner_t *owner2 = NULL;
+	char str[DISPLAY_STATEID4_SIZE] = "\0";
+	struct display_buffer dspbuf = { sizeof(str), str, str };
+	bool str_valid = false;
+	int32_t diff;
+	clientid4 clientid;
+	nfs_client_id_t *pclientid;
+	int rc;
+	nfsstat4 status;
+	bool is_special_stateid = false;
+
+	*out_st_lock_held_p = false;
+	*out_state_pp = NULL;
+	*out_state_obj_pp = NULL;
+	*out_open_owner_pp = NULL;
+
+	if (isDebug(COMPONENT_STATE)) {
+		display_stateid4(&dspbuf, stateid);
+		str_valid = true;
+	}
+
+	LogFullDebug(COMPONENT_STATE, "Check %s stateid flags%s%s%s%s%s%s", tag,
+		     flags & STATEID_SPECIAL_ALL_0 ? " ALL_0" : "",
+		     flags & STATEID_SPECIAL_ALL_1 ? " ALL_1" : "",
+		     flags & STATEID_SPECIAL_CURRENT ? " CURRENT" : "",
+		     flags & STATEID_SPECIAL_CLOSE_40 ? " CLOSE_40" : "",
+		     flags & STATEID_SPECIAL_CLOSE_41 ? " CLOSE_41" : "",
+		     flags == 0 ? " NONE" : "");
+
+	status = check_special_stateid(stateid, data, flags, tag,
+				       &is_special_stateid);
+	if (status != NFS4_OK)
+		goto failure;
+	if (is_special_stateid)
+		goto success;
+
+	status = check_stateid_server_instance(stateid, data, unique_prefix,
+					       str_valid, str, tag, &clientid);
+	if (status != NFS4_OK)
+		goto failure;
 
 	/* Try to get the related state */
 	state2 = nfs4_State_Get_Pointer(stateid->other);
@@ -1026,11 +1101,15 @@ check_it:
 				inc_client_id_ref(data->preserved_clientid);
 			}
 
-			/* Replayed close, it's ok, but stateid doesn't exist */
-			LogDebug(COMPONENT_STATE,
-				 "Check %s stateid is a replayed close", tag);
-			data->current_stateid_valid = false;
-			goto success;
+			if ((flags & STATEID_SPECIAL_CLOSE_40) != 0) {
+				/* Replayed close, it's ok, but stateid doesn't
+				 * exist */
+				LogDebug(COMPONENT_STATE,
+					 "Check %s stateid is a replayed close",
+					 tag);
+				data->current_stateid_valid = false;
+				goto success;
+			}
 		}
 
 		if (state2 == NULL)
@@ -1066,6 +1145,26 @@ check_it:
 		/* Release the clientid reference we just acquired. */
 		dec_client_id_ref(pclientid);
 		goto failure;
+	}
+
+	/* We have references, now lock if requested */
+	if (should_lock) {
+		if (obj2 != NULL) {
+			STATELOCK_lock(obj2);
+			*out_st_lock_held_p = true;
+		}
+
+		/* Re-verify state validity under lock to prevent TOCTOU races
+		 * with concurrent CLOSE operations. If a parallel CLOSE thread
+		 * successfully deleted this state before we acquired the lock,
+		 * state_owner will be NULL.
+		 */
+		if (state2->state_owner == NULL) {
+			LogDebug(COMPONENT_STATE,
+				 "Stateid was deleted while waiting for lock!");
+			status = NFS4ERR_BAD_STATEID;
+			goto failure;
+		}
 	}
 
 	/* Now, if this lease is not already reserved, reserve it */
@@ -1118,6 +1217,11 @@ check_it:
 		/* Check seqid in stateid */
 
 		/**
+		 * @todo Eventually all checks of the seqid should be migrated
+		 *       to be done under the seqid_mutex.
+		 */
+
+		/**
 		 * @todo fsf: maybe change to simple comparison:
 		 *            stateid->seqid < state2->state_seqid
 		 *            as good enough and maybe makes pynfs happy.
@@ -1135,7 +1239,7 @@ check_it:
 			    (owner_seqid ==
 			     owner2->so_owner.so_nfs4_owner.so_seqid)) {
 				LogDebug(COMPONENT_STATE, "possible replay?");
-				*state = state2;
+				*out_state_pp = state2;
 				status = NFS4ERR_REPLAY;
 				goto replay;
 			}
@@ -1158,7 +1262,7 @@ check_it:
 			 (owner_seqid ==
 			  owner2->so_owner.so_nfs4_owner.so_seqid)) {
 			LogDebug(COMPONENT_STATE, "possible replay?");
-			*state = state2;
+			*out_state_pp = state2;
 			status = NFS4ERR_REPLAY;
 			goto replay;
 		} else if (diff > 0) {
@@ -1185,32 +1289,79 @@ check_it:
 	data->current_stateid.seqid = state2->state_seqid;
 
 success:
-
-	if (obj2 != NULL)
-		obj2->obj_ops->put_ref(obj2);
-
-	if (owner2 != NULL)
-		dec_state_owner_ref(owner2);
-
-	*state = state2;
+	*out_state_pp = state2;
+	*out_state_obj_pp = obj2;
+	*out_open_owner_pp = owner2;
 	return NFS4_OK;
 
 failure:
-
-	if (state2 != NULL)
-		dec_state_t_ref(state2);
-
-	*state = NULL;
-
-replay:
+	if (*out_st_lock_held_p) {
+		STATELOCK_unlock(obj2);
+		*out_st_lock_held_p = false;
+	}
 
 	if (obj2 != NULL)
 		obj2->obj_ops->put_ref(obj2);
-
 	if (owner2 != NULL)
 		dec_state_owner_ref(owner2);
+	if (state2 != NULL)
+		dec_state_t_ref(state2);
 
+	*out_state_pp = NULL;
+	*out_state_obj_pp = NULL;
+	*out_open_owner_pp = NULL;
 	data->current_stateid_valid = false;
+	return status;
+
+replay:
+	*out_state_obj_pp = obj2;
+	*out_open_owner_pp = owner2;
+	return status;
+}
+
+/**
+ * @brief Check and look up the supplied stateid (wrapper)
+ *
+ * This wrapper function checks a stateid without acquiring state object or
+ * seqid locks, maintaining backward compatibility for standard state
+ * verification.
+ *
+ * @todo Eventually all calls should migrate to the
+ *       nfs4_check_stateid_acquire_state_lock function.
+ *
+ * @param[in]  stateid     Stateid to look up
+ * @param[in]  fsal_obj    Associated file (if any)
+ * @param[out] state       Found state
+ * @param[in]  data        Compound data
+ * @param[in]  flags       Flags governing special stateids
+ * @param[in]  owner_seqid seqid on v4.0 owner
+ * @param[in]  check_seqid Whether to validate owner_seqid
+ * @param[in]  tag         Arbitrary string for logging/debugging
+ *
+ * @return NFSv4 status codes
+ */
+nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
+			    state_t **state, compound_data_t *data, int flags,
+			    seqid4 owner_seqid, bool check_seqid,
+			    const char *tag)
+{
+	struct fsal_obj_handle *state_obj = NULL;
+	state_owner_t *open_owner = NULL;
+	bool st_lock_held = false;
+	nfsstat4 status;
+
+	status = nfs4_check_stateid_acquire_state_lock(
+		stateid, fsal_obj, data, flags, owner_seqid, check_seqid,
+		/*should_lock=*/false, tag, state, &state_obj, &open_owner,
+		&st_lock_held);
+
+	if (state_obj != NULL) {
+		state_obj->obj_ops->put_ref(state_obj);
+	}
+	if (open_owner != NULL) {
+		dec_state_owner_ref(open_owner);
+	}
+
 	return status;
 }
 
@@ -1236,8 +1387,20 @@ void nfs_State_PrintAll(void)
  *                      (may be NULL)
  * @param[in]     tag   Arbitrary text for debug/log
  */
-void update_stateid(state_t *state, stateid4 *resp, compound_data_t *data,
-		    const char *tag)
+/**
+ * @brief Update stateid and set current (assumes lock is held)
+ *
+ * Enforces the contract that the caller holds the STATELOCK protecting
+ * the state resource.
+ *
+ * @param[in,out] state The state to update
+ * @param[out]    resp  Stateid in response
+ * @param[in,out] data  Compound data to update with current stateid
+ *                      (may be NULL)
+ * @param[in]     tag   Arbitrary text for debug/log
+ */
+void update_stateid_locked(state_t *state, stateid4 *resp,
+			   compound_data_t *data, const char *tag)
 {
 	/* Increment state_seqid, handling wraparound */
 	state->state_seqid += 1;

@@ -84,6 +84,8 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	fsal_lock_param_t lock_desc;
 	/*  */
 	nfsstat4 nfs_status = NFS4_OK;
+	struct fsal_obj_handle *state_obj = NULL;
+	bool state_handle_lock_held = false;
 	uint64_t maxfilesize = op_ctx->fsal_export->exp_ops.fs_maxfilesize(
 		op_ctx->fsal_export);
 
@@ -131,37 +133,39 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	else
 		lock_desc.lock_length = 0;
 
-	/* Check stateid correctness and get pointer to state */
-	nfs_status = nfs4_Check_Stateid(&arg_LOCKU4->lock_stateid,
-					data->current_obj, &state_found, data,
-					STATEID_SPECIAL_FOR_LOCK,
-					arg_LOCKU4->seqid,
-					data->minorversion == 0, locku_tag);
+	nfs_status = nfs4_check_stateid_acquire_state_lock(
+		&arg_LOCKU4->lock_stateid, data->current_obj, data,
+		STATEID_SPECIAL_FOR_LOCK, arg_LOCKU4->seqid,
+		data->minorversion == 0,
+		/*should_lock=*/true, locku_tag, &state_found, &state_obj,
+		&lock_owner, &state_handle_lock_held);
 
 	if (nfs_status != NFS4_OK && nfs_status != NFS4ERR_REPLAY) {
 		res_LOCKU4->status = nfs_status;
 		return NFS_REQ_ERROR;
 	}
 
-	lock_owner = get_state_owner_ref(state_found);
-
 	if (lock_owner == NULL) {
 		/* State is going stale. */
 		res_LOCKU4->status = NFS4ERR_STALE;
 		LogDebug(COMPONENT_NFS_V4_LOCK,
 			 "UNLOCK failed nfs4_Check_Stateid, stale lock owner");
-		goto out3;
+		goto out2;
 	}
 
 	/* Check seqid (lock_seqid or open_seqid) */
 	if (data->minorversion == 0) {
-		if (!Check_nfs4_seqid(lock_owner, arg_LOCKU4->seqid, op,
-				      data->current_obj, resp, locku_tag)) {
+		PTHREAD_MUTEX_lock(&lock_owner->so_mutex);
+		if (!Check_nfs4_seqid_locked(lock_owner, arg_LOCKU4->seqid, op,
+					     data->current_obj, resp,
+					     locku_tag)) {
 			/* Response is all setup for us and LogDebug
 			 * told what was wrong
 			 */
+			PTHREAD_MUTEX_unlock(&lock_owner->so_mutex);
 			goto out2;
 		}
+		PTHREAD_MUTEX_unlock(&lock_owner->so_mutex);
 	}
 
 	/* Lock length should not be 0 */
@@ -205,8 +209,8 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 
 	/* Now we have a lock owner and a stateid.  Go ahead and push
 	   unlock into SAL (and FSAL). */
-	state_status = state_unlock(data->current_obj, state_found, lock_owner,
-				    false, 0, &lock_desc);
+	state_status = state_unlock_locked(data->current_obj, state_found,
+					   lock_owner, false, 0, &lock_desc);
 
 	if (state_status != STATE_SUCCESS) {
 		res_LOCKU4->status = nfs4_Errno_state(state_status);
@@ -220,8 +224,9 @@ enum nfs_req_result nfs4_op_locku(struct nfs_argop4 *op, compound_data_t *data,
 	res_LOCKU4->status = NFS4_OK;
 
 	/* Handle stateid/seqid for success */
-	update_stateid(state_found, &res_LOCKU4->LOCKU4res_u.lock_stateid, data,
-		       locku_tag);
+	update_stateid_locked(state_found,
+			      &res_LOCKU4->LOCKU4res_u.lock_stateid, data,
+			      locku_tag);
 
 out:
 	if (data->minorversion == 0) {
@@ -231,12 +236,19 @@ out:
 	}
 
 out2:
-
-	dec_state_owner_ref(lock_owner);
-
-out3:
-
-	dec_state_t_ref(state_found);
+	if (state_handle_lock_held) {
+		STATELOCK_unlock(state_obj);
+		state_handle_lock_held = false;
+	}
+	if (lock_owner != NULL) {
+		dec_state_owner_ref(lock_owner);
+	}
+	if (state_obj != NULL) {
+		state_obj->obj_ops->put_ref(state_obj);
+	}
+	if (state_found != NULL) {
+		dec_state_t_ref(state_found);
+	}
 
 	GSH_AUTO_TRACEPOINT(nfs4, op_locku_end, TRACE_INFO,
 			    "LOCKU res: status={} stateid={}",

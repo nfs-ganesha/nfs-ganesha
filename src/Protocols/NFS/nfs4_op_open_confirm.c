@@ -64,7 +64,9 @@ enum nfs_req_result nfs4_op_open_confirm(struct nfs_argop4 *op,
 		&res_OPEN_CONFIRM4->OPEN_CONFIRM4res_u.resok4;
 	int rc = 0;
 	state_t *state_found = NULL;
-	state_owner_t *open_owner;
+	struct fsal_obj_handle *state_obj = NULL;
+	state_owner_t *open_owner = NULL;
+	bool state_handle_lock_held = false;
 	const char *tag = "OPEN_CONFIRM";
 
 	resp->resop = NFS4_OP_OPEN_CONFIRM;
@@ -85,33 +87,31 @@ enum nfs_req_result nfs4_op_open_confirm(struct nfs_argop4 *op,
 		return NFS_REQ_ERROR;
 
 	/* Check stateid correctness and get pointer to state */
-	rc = nfs4_Check_Stateid(&arg_OPEN_CONFIRM4->open_stateid,
-				data->current_obj, &state_found, data,
-				STATEID_SPECIAL_FOR_LOCK,
-				arg_OPEN_CONFIRM4->seqid,
-				data->minorversion == 0, tag);
+	rc = nfs4_check_stateid_acquire_state_lock(
+		&arg_OPEN_CONFIRM4->open_stateid, data->current_obj, data,
+		STATEID_SPECIAL_FOR_LOCK, arg_OPEN_CONFIRM4->seqid,
+		data->minorversion == 0, /*should_lock=*/true, tag,
+		&state_found, &state_obj, &open_owner, &state_handle_lock_held);
 
 	if (rc != NFS4_OK && rc != NFS4ERR_REPLAY) {
 		res_OPEN_CONFIRM4->status = rc;
 		return NFS_REQ_ERROR;
 	}
 
-	open_owner = get_state_owner_ref(state_found);
-
 	if (open_owner == NULL) {
 		/* State is going stale. */
 		res_OPEN_CONFIRM4->status = NFS4ERR_STALE;
 		LogDebug(
 			COMPONENT_NFS_V4,
-			"OPEN CONFIRM failed nfs4_Check_Stateid, stale open owner");
-		goto out2;
+			"OPEN CONFIRM failed nfs4_check_stateid_acquire_state_lock, stale open owner");
+		goto out;
 	}
 
 	PTHREAD_MUTEX_lock(&open_owner->so_mutex);
 
 	/* Check seqid */
-	if (!Check_nfs4_seqid(open_owner, arg_OPEN_CONFIRM4->seqid, op,
-			      data->current_obj, resp, tag)) {
+	if (!Check_nfs4_seqid_locked(open_owner, arg_OPEN_CONFIRM4->seqid, op,
+				     state_obj, resp, tag)) {
 		/* Response is all setup for us and LogDebug
 		 * told what was wrong
 		 */
@@ -131,19 +131,27 @@ enum nfs_req_result nfs4_op_open_confirm(struct nfs_argop4 *op,
 	PTHREAD_MUTEX_unlock(&open_owner->so_mutex);
 
 	/* Handle stateid/seqid for success */
-	update_stateid(state_found, &resok->open_stateid, data, tag);
+	update_stateid_locked(state_found, &resok->open_stateid, data, tag);
 
 	/* Save the response in the open owner */
-	Copy_nfs4_state_req(open_owner, arg_OPEN_CONFIRM4->seqid, op,
-			    data->current_obj, resp, tag);
+	Copy_nfs4_state_req(open_owner, arg_OPEN_CONFIRM4->seqid, op, state_obj,
+			    resp, tag);
 
 out:
 
-	dec_state_owner_ref(open_owner);
-
-out2:
-
-	dec_state_t_ref(state_found);
+	if (state_handle_lock_held) {
+		STATELOCK_unlock(state_obj);
+		state_handle_lock_held = false;
+	}
+	if (open_owner != NULL) {
+		dec_state_owner_ref(open_owner);
+	}
+	if (state_obj != NULL) {
+		state_obj->obj_ops->put_ref(state_obj);
+	}
+	if (state_found != NULL) {
+		dec_state_t_ref(state_found);
+	}
 
 	return nfsstat4_to_nfs_req_result(res_OPEN_CONFIRM4->status);
 } /* nfs4_op_open_confirm */

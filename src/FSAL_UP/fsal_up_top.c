@@ -509,7 +509,8 @@ state_status_t layoutrecall(const struct fsal_up_vector *vec,
 
 		put_gsh_export(exp);
 
-		update_stateid(s, &layout->lor_stateid, NULL, "LAYOUTRECALL");
+		update_stateid_locked(s, &layout->lor_stateid, NULL,
+				      "LAYOUTRECALL");
 
 		memcpy(cb_data->stateid_other, s->stateid_other, OTHERSIZE);
 		cb_data->segment = *segment;

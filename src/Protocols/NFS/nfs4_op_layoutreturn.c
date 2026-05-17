@@ -114,6 +114,9 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 	/* Keep track of so_mutex */
 	bool so_mutex_locked = false;
 	state_t *first;
+	struct fsal_obj_handle *layout_obj = NULL;
+	state_owner_t *layout_owner = NULL;
+	bool state_handle_lock_held = false;
 
 	resp->resop = NFS4_OP_LAYOUTRETURN;
 
@@ -133,11 +136,21 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
 		/* Retrieve state corresponding to supplied ID */
 		if (!arg_LAYOUTRETURN4->lora_reclaim) {
-			nfs_status = nfs4_Check_Stateid(&lr_layout->lrf_stateid,
-							data->current_obj,
-							&layout_state, data,
-							STATEID_SPECIAL_CURRENT,
-							0, false, tag);
+			nfs_status = nfs4_check_stateid_acquire_state_lock(
+				&lr_layout->lrf_stateid, data->current_obj,
+				data, STATEID_SPECIAL_CURRENT, 0, false,
+				/*should_lock=*/true, tag, &layout_state,
+				&layout_obj, &layout_owner,
+				&state_handle_lock_held);
+
+			if (layout_owner != NULL) {
+				dec_state_owner_ref(layout_owner);
+				layout_owner = NULL;
+			}
+			if (layout_obj != NULL) {
+				layout_obj->obj_ops->put_ref(layout_obj);
+				layout_obj = NULL;
+			}
 
 			if (nfs_status != NFS4_OK) {
 				res_LAYOUTRETURN4->lorr_status = nfs_status;
@@ -149,7 +162,10 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 		spec.offset = lr_layout->lrf_offset;
 		spec.length = lr_layout->lrf_length;
 
-		STATELOCK_lock(data->current_obj);
+		if (!state_handle_lock_held) {
+			STATELOCK_lock(data->current_obj);
+			state_handle_lock_held = true;
+		}
 
 		res_LAYOUTRETURN4->lorr_status = nfs4_return_one_state(
 			data->current_obj,
@@ -158,8 +174,6 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 							: circumstance_client,
 			layout_state, spec, lr_layout->lrf_body.lrf_body_len,
 			lr_layout->lrf_body.lrf_body_val, &deleted);
-
-		STATELOCK_unlock(data->current_obj);
 
 		if (res_LAYOUTRETURN4->lorr_status == NFS4_OK) {
 			if (deleted) {
@@ -171,13 +185,20 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 				lorr_stateid->lrs_present = 1;
 
 				/* Update stateid.seqid and copy to current */
-				update_stateid(layout_state, lrs_stateid, data,
-					       tag);
+				update_stateid_locked(layout_state, lrs_stateid,
+						      data, tag);
 			}
 		}
 
-		if (!arg_LAYOUTRETURN4->lora_reclaim)
+		if (state_handle_lock_held) {
+			STATELOCK_unlock(data->current_obj);
+			state_handle_lock_held = false;
+		}
+
+		if (layout_state != NULL) {
 			dec_state_t_ref(layout_state);
+			layout_state = NULL;
+		}
 
 		break;
 

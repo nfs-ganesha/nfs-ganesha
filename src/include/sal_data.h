@@ -445,6 +445,16 @@ struct state_t {
 #ifdef DEBUG_SAL
 	struct glist_head state_list_all; /**< Global list of all stateids */
 #endif
+	/**
+	 * @brief Mutex protecting following pointers.
+	 *
+	 * When acquiring multiple state-related locks in SAL, the required
+	 * locking hierarchy (from outer to inner) to prevent deadlocks is:
+	 * 1. STATELOCK (FSAL object state lock, e.g. via STATELOCK_lock)
+	 * 2. so_mutex (State owner mutex, state_owner_t::so_mutex)
+	 * 3. state_mutex (State internal pointer mutex, state_t::state_mutex)
+	 *
+	 */
 	pthread_mutex_t state_mutex; /**< Mutex protecting following pointers */
 	state_free_t *state_free; /**< function to free if default gsh_free
 				      doesn't work. */
@@ -698,7 +708,17 @@ struct state_owner_t {
 #ifdef DEBUG_SAL
 	struct glist_head so_all_owners; /**< Global list of all state owners */
 #endif /* _DEBUG_MEMLEAKS */
-	pthread_mutex_t so_mutex; /*< Mutex on this owner */
+	/**
+	 * @brief Mutex on this owner.
+	 *
+	 * When acquiring multiple state-related locks in SAL, the required
+	 * locking hierarchy (from outer to inner) to prevent deadlocks is:
+	 * 1. STATELOCK (FSAL object state lock, e.g. via STATELOCK_lock)
+	 * 2. so_mutex (State owner mutex, state_owner_t::so_mutex)
+	 * 3. state_mutex (State internal pointer mutex, state_t::state_mutex)
+	 *
+	 */
+	pthread_mutex_t so_mutex;
 	int32_t so_refcount; /*< Reference count for lifecyce management */
 	int so_owner_len; /*< Length of owner name */
 	char *so_owner_val; /*< Owner name */

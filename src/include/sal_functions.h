@@ -97,6 +97,12 @@ void free_state_owner(state_owner_t *owner);
 /**
  * @brief Acquire exclusive st_lock and set no_cleanup=true
  *
+ * When acquiring multiple state-related locks in SAL, the required
+ * locking hierarchy (from outer to inner) to prevent deadlocks is:
+ * 1. STATELOCK (FSAL object state lock, e.g. via STATELOCK_lock)
+ * 2. so_mutex (State owner mutex, state_owner_t::so_mutex)
+ * 3. state_mutex (State internal pointer mutex, state_t::state_mutex)
+ *
  * @param[in,out] obj the object whose state_hdl->st_lock is to be
  *		      acquired and state_hdl->no_cleanup needs to be set
  */
@@ -431,8 +437,50 @@ nfsstat4 nfs4_Check_Stateid(stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
 			    seqid4 owner_seqid, bool check_seqid,
 			    const char *tag);
 
-void update_stateid(state_t *state, stateid4 *stateid, compound_data_t *data,
-		    const char *tag);
+/**
+ * @brief Check and look up the supplied stateid, optionally acquiring thef
+ * state object lock.
+ *
+ * This function yields the state for the stateid if it is valid, along with
+ * references to the associated state object and open owner. If requested,
+ * it acquires the state object lock. The callee (caller of
+ * this function) is responsible for releasing the lock when done via:
+ * STATELOCK_unlock(state_obj).
+ *
+ * Note that if a concurrent thread is mid-teardown on the state (e.g., during
+ * a racing CLOSE), out_state_pp may be non-NULL while out_state_obj_pp or
+ * out_open_owner_pp is NULL.
+ *
+ * @param[in]  stateid               Stateid to look up
+ * @param[in]  fsal_obj              Associated file (if any)
+ * @param[in]  data                  Compound data
+ * @param[in]  flags                 Flags governing special stateids
+ * @param[in]  owner_seqid           seqid on v4.0 owner
+ * @param[in]  check_seqid           Whether to validate owner_seqid
+ * @param[in]  should_lock           If true, acquires STATELOCK on state_obj.
+ * @param[in]  tag                   Arbitrary string for logging/debugging
+ * @param[out] out_state_pp          Found state
+ * @param[out] out_state_obj_pp      Object containing state
+ * @param[out] out_open_owner_pp     Open owner for state
+ * @param[out] out_st_lock_held_p    Whether st_lock is held on return
+ *
+ * @return NFSv4 status codes
+ */
+nfsstat4 nfs4_check_stateid_acquire_state_lock(
+	stateid4 *stateid, struct fsal_obj_handle *fsal_obj,
+	compound_data_t *data, int flags, seqid4 owner_seqid, bool check_seqid,
+	bool should_lock, const char *tag, state_t **out_state_pp,
+	struct fsal_obj_handle **out_state_obj_pp,
+	state_owner_t **out_open_owner_pp, bool *out_st_lock_held_p);
+
+/**
+ * @brief Update stateid and set current under STATELOCK
+ *
+ * This locked variant expects the caller to guarantee that STATELOCK
+ * is acquired and held on state->state_obj.
+ */
+void update_stateid_locked(state_t *state, stateid4 *stateid,
+			   compound_data_t *data, const char *tag);
 
 int nfs4_Init_state_id(void);
 
@@ -564,9 +612,9 @@ void Copy_nfs4_state_req(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
 			 struct fsal_obj_handle *obj, nfs_resop4 *resp,
 			 const char *tag);
 
-bool Check_nfs4_seqid(state_owner_t *owner, seqid4 seqid, nfs_argop4 *args,
-		      struct fsal_obj_handle *obj, nfs_resop4 *resp,
-		      const char *tag);
+bool Check_nfs4_seqid_locked(state_owner_t *owner, seqid4 seqid,
+			     nfs_argop4 *args, struct fsal_obj_handle *obj,
+			     nfs_resop4 *resp, const char *tag);
 
 /**
  * @brief Determine if an NFS v4 owner has state associated with it
@@ -677,13 +725,17 @@ state_status_t state_unlock(struct fsal_obj_handle *obj, state_t *state,
 			    state_owner_t *owner, bool state_applies,
 			    int32_t nsm_state, fsal_lock_param_t *lock);
 
+state_status_t state_unlock_locked(struct fsal_obj_handle *obj, state_t *state,
+				   state_owner_t *owner, bool state_applies,
+				   int32_t nsm_state, fsal_lock_param_t *lock);
+
 state_status_t state_cancel(struct fsal_obj_handle *obj, state_owner_t *owner,
 			    fsal_lock_param_t *lock);
 
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 				bool state_applies, int32_t state);
 
-void state_unlock_all(struct fsal_obj_handle *obj, state_t *state);
+void state_unlock_all_locked(struct fsal_obj_handle *obj, state_t *state);
 
 void state_nfs4_owner_unlock_all(state_owner_t *owner);
 
