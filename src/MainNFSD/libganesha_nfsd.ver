@@ -261,6 +261,9 @@
   register_fsal;
   register_url_provider;
   release_log_facility;
+  register_rpcs_metrics;
+  update_rpc_metrics;
+  update_ops_metrics;
   release_op_context;
   release_posix_file_system;
   read_log_config;

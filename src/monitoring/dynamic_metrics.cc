@@ -21,7 +21,6 @@
  */
 
 #include <unistd.h>
-
 #include <map>
 #include <memory>
 #include <sstream>
@@ -355,6 +354,13 @@ static void toLowerCase(std::string &s)
 
 extern "C" {
 
+static inline uint64_t counter_delta(uint64_t current_value,
+				     uint64_t previous_value)
+{
+	return current_value > previous_value ? current_value - previous_value
+					      : 0;
+}
+
 void dynamic_metrics__init(void)
 {
 	static bool initialized = false;
@@ -369,15 +375,18 @@ void dynamic_metrics__init(void)
 }
 
 void dynamic_metrics__observe_nfs_request(
-	const char *operation, nsecs_elapsed_t request_time,
-	const char *version, const char *status_label, export_id_t export_id,
-	const char *path, const char *client_ip)
+	const char *operation, uint64_t op_count, const char *version,
+	const char *status_label, export_id_t export_id, const char *path,
+	const char *client_ip)
 {
 	if (!dynamic_metrics)
 		return;
-	const int64_t latency_ms = request_time / NS_PER_MSEC;
+
+	uint64_t old_value = 0;
+	uint64_t delta = 0;
 	std::string operationLowerCase = std::string(operation);
 	toLowerCase(operationLowerCase);
+
 	if (client_ip != NULL) {
 		std::string client(client_ip);
 		int64_t epoch =
@@ -393,16 +402,67 @@ void dynamic_metrics__observe_nfs_request(
 		dynamic_metrics->lastClientUpdate.Add({ { kClient, client } })
 			.Set(epoch);
 	}
+	/* Processing errorsByVersionOperationStatus */
+
+	old_value = dynamic_metrics->errorsByVersionOperationStatus
+			    .Add({ { kVersion, version },
+				   { kOperation, operationLowerCase },
+				   { kStatus, status_label } })
+			    .Get();
+	delta = counter_delta(op_count, old_value);
 	dynamic_metrics->errorsByVersionOperationStatus
 		.Add({ { kVersion, version },
 		       { kOperation, operationLowerCase },
 		       { kStatus, status_label } })
-		.Increment();
+		.Increment(delta);
 
-	// Observe metrics.
+	/* End of processing errorsByVersionOperationStatus*/
+
+	/* Processing requestsTotalByOperation */
+	old_value = dynamic_metrics->requestsTotalByOperation
+			    .Add({ { kOperation, operationLowerCase } })
+			    .Get();
+
+	delta = counter_delta(op_count, old_value);
+
 	dynamic_metrics->requestsTotalByOperation
 		.Add({ { kOperation, operationLowerCase } })
-		.Increment();
+		.Increment(delta);
+	/* End of processing RequestsTotalByOperation */
+
+	if (export_id == 0) {
+		return;
+	}
+	// Observe metrics, by export.
+	const std::string exportLabel = GetExportLabel(export_id);
+
+	/* Processing requestsTotalByOperationExport */
+	old_value = dynamic_metrics->requestsTotalByOperationExport
+			    .Add({ { kOperation, operationLowerCase },
+				   { kExport, exportLabel },
+				   { kExportpath, path } })
+			    .Get();
+
+	delta = counter_delta(op_count, old_value);
+
+	dynamic_metrics->requestsTotalByOperationExport
+		.Add({ { kOperation, operationLowerCase },
+		       { kExport, exportLabel },
+		       { kExportpath, path } })
+		.Increment(delta);
+	/* End of processing requestsTotalByOperationExport */
+}
+
+void dynamic_metrics__observe_nfs_request_histogram(
+	const char *operation, nsecs_elapsed_t request_time,
+	export_id_t export_id, const char *path)
+{
+	if (!dynamic_metrics)
+		return;
+	const int64_t latency_ms = request_time / NS_PER_MSEC;
+	std::string operationLowerCase = std::string(operation);
+
+	toLowerCase(operationLowerCase);
 	dynamic_metrics->latencyByOperation
 		.Add({ { kOperation, operationLowerCase } }, latencyBuckets)
 		.Observe(latency_ms);
@@ -412,11 +472,7 @@ void dynamic_metrics__observe_nfs_request(
 	}
 	// Observe metrics, by export.
 	const std::string exportLabel = GetExportLabel(export_id);
-	dynamic_metrics->requestsTotalByOperationExport
-		.Add({ { kOperation, operationLowerCase },
-		       { kExport, exportLabel },
-		       { kExportpath, path } })
-		.Increment();
+
 	dynamic_metrics->latencyByOperationExport
 		.Add({ { kOperation, operationLowerCase },
 		       { kExport, exportLabel },

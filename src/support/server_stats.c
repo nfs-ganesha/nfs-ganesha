@@ -37,7 +37,6 @@
  * @author Jim Lieb <jlieb@panasas.com>
  * @brief FSAL module manager
  */
-
 #include "config.h"
 
 #include <time.h>
@@ -63,7 +62,11 @@
 #include <abstract_atomic.h>
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
+
+#ifdef USE_MONITORING
+#include "dynamic_metrics.h"
 #include "nfs_metrics.h"
+#endif
 #include "server_stats_grpc.h"
 #include "server_stats_private.h"
 #ifdef _USE_9P
@@ -391,6 +394,9 @@ struct proto_op v3_full_stats[NFS_V3_NB_COMMAND];
 /* NFSv4 Detailed stats holder */
 struct proto_op v4_full_stats[NFS4_OP_LAST_ONE];
 
+/* metric stats holder */
+struct metric_proto_op metric_total_v4_full_stats[NFS4_OP_LAST_ONE];
+
 /**
  * @brief Get stats struct helpers
  *
@@ -670,6 +676,17 @@ static void record_io_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		return;
 	}
 	record_io(iop, requested, transferred, success);
+}
+
+static void record_metric_op(struct metric_proto_op *export_op,
+			     nsecs_elapsed_t request_time, nfsstat4 status,
+			     bool dup)
+{
+	/* count the op */
+	(void)atomic_inc_uint64_t(&export_op->total);
+	/* also count it as an error if protocol not happy */
+	(void)atomic_inc_uint64_t(
+		&export_op->errors[nfsstat4_to_index(status)]);
 }
 
 /**
@@ -3426,23 +3443,85 @@ void reset_v3_full_stats(void)
 }
 #endif
 
+#ifdef USE_MONITORING
+
+static bool update_export(struct gsh_export *gsh_export, void *status)
+{
+	if (gsh_export == NULL)
+		return true;
+	struct fsal_export *export = gsh_export->fsal_export;
+	const char *path = gsh_export->cfg_pseudopath;
+	int op;
+
+	if (path == NULL)
+		path = "";
+	for (op = 1; op < NFS4_OP_LAST_ONE; op++) {
+		if (path[0] != '\0' && strcmp(path, "/") != 0 &&
+		    export->metric_v4_full_stats[op].total != 0) {
+			nfs_metrics__nfs4_request(
+				op, export->metric_v4_full_stats[op].total, 0,
+				0, export->export_id, path, NULL);
+		}
+	}
+	return true;
+}
+
+void update_ops_metrics(void)
+{
+	int op;
+
+	foreach_gsh_export(update_export, false, NULL);
+
+	for (op = 1; op < NFS4_OP_LAST_ONE; op++) {
+		if (metric_total_v4_full_stats[op].total != 0)
+			nfs_metrics__nfs4_request(
+				op, metric_total_v4_full_stats[op].total, 0, 0,
+				0, NULL, NULL);
+
+		for (enum nfsstat4_index statcode_index = 0;
+		     statcode_index < NFSSTAT4_INDEX_LAST; statcode_index++) {
+			if (metric_total_v4_full_stats[op]
+				    .errors[statcode_index] != 0) {
+				const char *const operation = nfsop4_to_str(op);
+				const char *const status = nfsstat4_to_str(
+					index_to_nfsstat4[statcode_index]);
+				dynamic_metrics__observe_nfs_request(
+					operation,
+					metric_total_v4_full_stats[op]
+						.errors[statcode_index],
+					"nfs4", status, 0, NULL, NULL);
+			}
+		}
+	}
+}
+
+#endif
+
 static void record_v4_full_stats(uint32_t proc, nsecs_elapsed_t request_time,
 				 nfsstat4 status)
 {
 	struct fsal_export *export = op_ctx->fsal_export;
-	struct gsh_client *client = op_ctx->client;
-	const char *client_ip = client == NULL ? "" : client->hostaddr_str;
+	//	struct gsh_client *client = op_ctx->client;
+	//	const char *client_ip = client == NULL ? ""
+	//				 : client->hostaddr_str;
 	const char *path = op_ctx_export_path(op_ctx);
 	uint16_t export_id = export != NULL ? export->export_id : 0;
+	const char *const operation = nfsop4_to_str(proc);
 
-	nfs_metrics__nfs4_request(proc, request_time, status, export_id, path,
-				  client_ip);
+	dynamic_metrics__observe_nfs_request_histogram(operation, request_time,
+						       export_id, path);
 	if (proc >= NFS4_OP_LAST_ONE) {
 		LogCrit(COMPONENT_DBUS,
 			"proc is more than NFS4_OP_LAST_ONE: %d\n", proc);
 		return;
 	}
 	record_op(&v4_full_stats[proc], request_time, status == NFS4_OK, false);
+	record_metric_op(&metric_total_v4_full_stats[proc], request_time,
+			 status, false);
+	if (export != NULL) {
+		record_metric_op(&export->metric_v4_full_stats[proc],
+				 request_time, status, false);
+	}
 }
 
 void reset_v4_full_stats(void)

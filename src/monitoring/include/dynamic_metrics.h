@@ -84,9 +84,13 @@ void dynamic_metrics__init(void);
  */
 
 void dynamic_metrics__observe_nfs_request(
+	const char *operation, uint64_t op_count, const char *version,
+	const char *status_label, export_id_t export_id, const char *path,
+	const char *client_ip);
+
+void dynamic_metrics__observe_nfs_request_histogram(
 	const char *operation, nsecs_elapsed_t request_time,
-	const char *version, const char *status_label, export_id_t export_id,
-	const char *path, const char *client_ip);
+	export_id_t export_id, const char *path);
 
 void dynamic_metrics__observe_nfs_io(size_t bytes_requested,
 				     size_t bytes_transferred, bool is_write,
@@ -121,10 +125,16 @@ static inline void dynamic_metrics__init(void)
 }
 
 static inline void dynamic_metrics__observe_nfs_request(
-	const char *UNUSED(operation), nsecs_elapsed_t UNUSED(request_time),
+	const char *UNUSED(operation), uint64_t UNUSED(op_count),
 	const char *UNUSED(version), const char *UNUSED(status_label),
 	export_id_t UNUSED(export_id), const char *UNUSED(path),
 	const char *UNUSED(client_ip))
+{
+}
+
+static inline void dynamic_metrics__observe_nfs_request_histogram(
+	const char *UNUSED(operation), nsecs_elapsed_t UNUSED(request_time),
+	export_id_t UNUSED(export_id), const char *UNUSED(path))
 {
 }
 

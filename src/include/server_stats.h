@@ -81,8 +81,20 @@ struct mem_stats_info {
 
 void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup);
 
+#ifdef USE_MONITORING
+#include "export_metrics_types.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+void update_ops_metrics(void);
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
 #ifdef _USE_9P
-void server_stats_9p_done(u8 msgtype, struct _9p_request_data *req9p);
+void server_stats_9p_done(uint8_t msgtype, struct _9p_request_data *req9p);
 #endif
 
 void server_stats_io_done(size_t requested, size_t transferred, bool success,

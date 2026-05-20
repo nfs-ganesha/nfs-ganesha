@@ -56,6 +56,7 @@ void prometheus_exposer__stop(prometheus_registry_handle_t registry_handle);
 
 void update_mem_info(void);
 void update_export_mem(void);
+void register_all_metrics(void);
 } /* extern "C" */
 
 namespace ganesha_monitoring

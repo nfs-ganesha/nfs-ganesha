@@ -79,6 +79,7 @@
 
 #include "monitoring.h"
 #include "nfs_metrics.h"
+#include "prometheus_exposer.h"
 
 /**
  * TI-RPC event channels.  Each channel is a thread servicing an event
@@ -181,6 +182,43 @@ SVCXPRT *tcp_xprt[P_COUNT];
 bool v6disabled;
 bool vsock;
 bool rdma;
+
+#ifdef USE_MONITORING
+static counter_metric_handle_t rpcs_received_total;
+static counter_metric_handle_t rpcs_completed_total;
+static gauge_metric_handle_t rpcs_inflight;
+
+void register_rpcs_metrics(void)
+{
+	const metric_label_t labels[] = {};
+
+	rpcs_received_total = monitoring__register_counter(
+		"rpcs_received_total",
+		METRIC_METADATA("Number of NFS requests received",
+				METRIC_UNIT_NONE),
+		labels, ARRAY_SIZE(labels));
+	rpcs_completed_total = monitoring__register_counter(
+		"rpcs_completed_total",
+		METRIC_METADATA("Number of NFS requests completed",
+				METRIC_UNIT_NONE),
+		labels, ARRAY_SIZE(labels));
+	rpcs_inflight = monitoring__register_gauge(
+		"rpcs_in_flight",
+		METRIC_METADATA("Number of NFS requests received or in flight.",
+				METRIC_UNIT_NONE),
+		labels, ARRAY_SIZE(labels));
+}
+
+void update_rpc_metrics(void)
+{
+	monitoring__counter_set(rpcs_received_total, nfs_health_.enqueued_reqs);
+	monitoring__counter_set(rpcs_completed_total,
+				nfs_health_.dequeued_reqs);
+	monitoring__gauge_set(rpcs_inflight, nfs_health_.enqueued_reqs -
+						     nfs_health_.dequeued_reqs);
+}
+
+#endif
 
 /**
  * @brief Unregister an RPC program.
@@ -1933,10 +1971,6 @@ static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 
 	(void)atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
-	nfs_metrics__rpc_received();
-	nfs_metrics__rpcs_in_flight(nfs_health_.enqueued_reqs -
-				    nfs_health_.dequeued_reqs);
-
 	/* set up req */
 	SVC_REF(xprt, SVC_REF_FLAG_NONE);
 	reqdata->svc.rq_xprt = xprt;
@@ -1981,6 +2015,4 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 	SVC_RELEASE(xprt, SVC_REF_FLAG_NONE);
 
 	(void)atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
-
-	nfs_metrics__rpc_completed();
 }

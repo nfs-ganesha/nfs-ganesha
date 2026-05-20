@@ -135,6 +135,21 @@ extern writeverf3 NFS3_write_verifier; /*< NFS V3 write verifier */
 extern char *nfs_config_path;
 extern char *nfs_pidfile_path;
 
+#ifdef USE_MONITORING
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void register_rpcs_metrics(void);
+void update_rpc_metrics(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+
 /*
  * Thread entry functions
  */
