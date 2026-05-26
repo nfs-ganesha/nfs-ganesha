@@ -223,7 +223,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 			}
 
 			if (RGWFSM.cluster) {
-				clen = strlen(RGWFSM.cluster) + 8;
+				clen = strlen(RGWFSM.cluster) + 11;
 				cluster = (char *)gsh_malloc(clen);
 				(void)sprintf(cluster, "--cluster=%s",
 					      RGWFSM.cluster);
