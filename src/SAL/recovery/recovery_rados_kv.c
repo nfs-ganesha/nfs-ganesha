@@ -358,6 +358,7 @@ int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 	if (ret < 0) {
 		LogEvent(COMPONENT_RECOVERY, "Failed to read conf: %d", ret);
 		rados_shutdown(clnt);
+		clnt = NULL;
 		return ret;
 	}
 
@@ -365,6 +366,7 @@ int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 	if (ret < 0) {
 		LogEvent(COMPONENT_RECOVERY, "Failed to connect: %d", ret);
 		rados_shutdown(clnt);
+		clnt = NULL;
 		return ret;
 	}
 
@@ -372,6 +374,7 @@ int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 	if (ret < 0 && ret != -EEXIST) {
 		LogEvent(COMPONENT_RECOVERY, "Failed to create pool: %d", ret);
 		rados_shutdown(clnt);
+		clnt = NULL;
 		return ret;
 	}
 
@@ -379,6 +382,8 @@ int rados_kv_connect(rados_ioctx_t *io_ctx, const char *userid,
 	if (ret < 0) {
 		LogEvent(COMPONENT_RECOVERY, "Failed to create ioctx");
 		rados_shutdown(clnt);
+		clnt = NULL;
+		return ret;
 	}
 
 	rados_ioctx_set_namespace(*io_ctx, ns);
