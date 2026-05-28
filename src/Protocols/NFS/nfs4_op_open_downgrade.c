@@ -193,6 +193,29 @@ void nfs4_op_open_downgrade_CopyRes(OPEN_DOWNGRADE4res *res_dst,
 	/* Nothing to deep copy */
 }
 
+/*
+ * RFC 7530 §16.19.4 / RFC 5661 §18.18.3: the downgrade target must be the
+ * union of some subset of the exact share mode values used in prior OPEN calls
+ * (each recorded as (1 << mode) in share_access_prev / share_deny_prev).
+ *
+ * Special case for target == BOTH (read_bit | write_bit): BOTH is also valid
+ * when READ and WRITE were each opened individually rather than as a single
+ * BOTH call, because their union equals BOTH and the client effectively holds
+ * all the rights that BOTH represents.
+ */
+static bool share_downgrade_allowed(unsigned int prev, unsigned int target,
+				    unsigned int read_bit,
+				    unsigned int write_bit)
+{
+	unsigned int both_bit = read_bit | write_bit;
+
+	if (target == both_bit)
+		return (prev & (1u << both_bit)) != 0 ||
+		       ((prev & (1u << read_bit)) != 0 &&
+			(prev & (1u << write_bit)) != 0);
+	return (prev & (1u << target)) != 0;
+}
+
 /**
  * @note This function expects the caller to hold the following locks:
  *       - STATELOCK_lock(data->current_obj)
@@ -238,11 +261,13 @@ static nfsstat4 nfs4_do_open_downgrade_locked(struct nfs_argop4 *op,
 		return NFS4ERR_INVAL;
 	}
 
-	/* Check if given share access is previously seen */
-	if (((state->state_data.share.share_access_prev &
-	      (1 << args->share_access)) == 0) ||
-	    ((state->state_data.share.share_deny_prev &
-	      (1 << args->share_deny)) == 0)) {
+	if (!share_downgrade_allowed(state->state_data.share.share_access_prev,
+				     args->share_access,
+				     OPEN4_SHARE_ACCESS_READ,
+				     OPEN4_SHARE_ACCESS_WRITE) ||
+	    !share_downgrade_allowed(state->state_data.share.share_deny_prev,
+				     args->share_deny, OPEN4_SHARE_DENY_READ,
+				     OPEN4_SHARE_DENY_WRITE)) {
 		*cause = " (share access or deny never seen before)";
 		return NFS4ERR_INVAL;
 	}
