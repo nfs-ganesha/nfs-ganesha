@@ -10,6 +10,7 @@
 #include "config.h"
 #include "gsh_rpc.h"
 #include "sal_data.h"
+#include "gsh_config.h"
 
 #ifdef __cplusplus
 extern "C" {

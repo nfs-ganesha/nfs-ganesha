@@ -66,6 +66,7 @@ extern "C" {
 #endif
 #include <rpc/svc_rqst.h>
 #include <rpc/rpc_msg.h>
+#include <rpc/pmap_prot.h>
 
 #include "common_utils.h"
 #include "abstract_mem.h"
