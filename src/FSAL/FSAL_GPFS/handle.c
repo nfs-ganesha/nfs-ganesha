@@ -416,7 +416,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 			return status;
 
 		myself->u.symlink.link_content = gsh_strdup(link_buff);
-		myself->u.symlink.link_size = strlen(link_buff) + 1;
+		myself->u.symlink.link_size = strlen(link_buff);
 	}
 
 	if (myself->u.symlink.link_content == NULL)
