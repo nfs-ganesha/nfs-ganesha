@@ -822,11 +822,18 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 {
 	struct fsal_attrlist attrs;
 	fsal_status_t status;
+	attrmask_t needed_attr_for_access_check = ATTRS_CREDS | ATTR_MODE;
+	bool is_acl_needed = IS_FSAL_ACE4_REQ(access_type) ||
+			     IS_FSAL_ACE4_MASK_VALID(access_type);
+
+	if (is_acl_needed) {
+		needed_attr_for_access_check |= ATTR_ACL;
+	}
 
 	fsal_prepare_attrs(&attrs,
 			   op_ctx->fsal_export->exp_ops.fs_supported_attrs(
 				   op_ctx->fsal_export) &
-				   (ATTRS_CREDS | ATTR_MODE | ATTR_ACL));
+				   needed_attr_for_access_check);
 
 	status = obj_hdl->obj_ops->getattrs(obj_hdl, &attrs);
 
