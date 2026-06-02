@@ -2625,6 +2625,22 @@ typedef struct RECLAIM_COMPLETE4res RECLAIM_COMPLETE4res;
 enum netloc_type4 { NL4_NAME = 0, NL4_URL = 1, NL4_NETADDR = 2 };
 typedef enum netloc_type4 netloc_type4;
 
+/* RFC 7862 Sec.15.1 — network location union */
+typedef struct {
+	netloc_type4 nl_type;
+	union {
+		utf8str_cis nl_name; /* NL4_NAME */
+		utf8str_cis nl_url; /* NL4_URL  */
+		netaddr4 nl_addr; /* NL4_NETADDR */
+	};
+} netloc4;
+
+/* RFC 7862 Sec.15.2 — copy capability advertisement */
+typedef struct {
+	bool_t cr_consecutive;
+	bool_t cr_synchronous;
+} copy_requirements4;
+
 enum data_content4 {
 	NFS4_CONTENT_DATA = 0,
 	NFS4_CONTENT_HOLE = 1,
@@ -2731,25 +2747,39 @@ struct OFFLOAD_REVOKE4res {
 typedef struct OFFLOAD_REVOKE4res OFFLOAD_REVOKE4res;
 
 struct COPY4args {
+	/* SAVED_FH:   source file      */
+	/* CURRENT_FH: destination file */
 	stateid4 ca_src_stateid;
 	stateid4 ca_dst_stateid;
 	offset4 ca_src_offset;
 	offset4 ca_dst_offset;
 	length4 ca_count;
-	netloc_type4 ca_type;
-	union {
-		utf8str_cis ca_name;
-		utf8str_cis ca_url;
-		netaddr4 ca_addr;
-	};
+	/*
+	 * RFC 7862 §15.2.1: two separate XDR bool fields on the wire.
+	 * ca_consecutive: client requires bytes transferred in order.
+	 * ca_synchronous: client requires server to complete inline (no CB).
+	 */
+	bool_t ca_consecutive;
+	bool_t ca_synchronous;
+	uint32_t ca_source_server_len; /* 0 for intra-server */
+	netloc4 *ca_source_server_val;
 };
 typedef struct COPY4args COPY4args;
+
+/* RFC 7862 Sec.15.2 — COPY4resok (NFS4_OK case) */
+typedef struct {
+	/* wr_ids, wr_callback_id, wr_count, etc. */
+	write_response4 cr_response;
+	bool_t cr_consecutive;
+	bool_t cr_synchronous;
+} COPY4resok;
 
 struct COPY4res {
 	nfsstat4 cr_status;
 	union {
-		write_response4 cr_resok4;
-		length4 cr_bytes_copied;
+		COPY4resok cr_resok4; /* NFS4_OK */
+		/* NFS4ERR_OFFLOAD_NO_REQS */
+		copy_requirements4 cr_requirements;
 	} COPY4res_u;
 };
 typedef struct COPY4res COPY4res;
@@ -8157,6 +8187,117 @@ static inline bool xdr_LAYOUTSTATS4res(XDR *xdrs, LAYOUTSTATS4res *objp)
 	return true;
 }
 
+/* ---- XDR codecs for NFSv4.2 xcopy ---- */
+static inline bool xdr_netloc4(XDR *xdrs, netloc4 *objp)
+{
+	if (!inline_xdr_enum(xdrs, (enum_t *)&objp->nl_type))
+		return false;
+	switch (objp->nl_type) {
+	case NL4_NAME:
+		if (!xdr_utf8str_cis(xdrs, &objp->nl_name))
+			return false;
+		break;
+	case NL4_URL:
+		if (!xdr_utf8str_cis(xdrs, &objp->nl_url))
+			return false;
+		break;
+	case NL4_NETADDR:
+		if (!xdr_netaddr4(xdrs, &objp->nl_addr))
+			return false;
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
+
+static inline bool xdr_copy_requirements4(XDR *xdrs, copy_requirements4 *objp)
+{
+	if (!inline_xdr_bool(xdrs, &objp->cr_consecutive))
+		return false;
+	if (!inline_xdr_bool(xdrs, &objp->cr_synchronous))
+		return false;
+	return true;
+}
+
+static inline bool xdr_write_response4(XDR *xdrs, write_response4 *objp)
+{
+	if (!xdr_count4(xdrs, &objp->wr_ids))
+		return false;
+	if (objp->wr_ids > 1)
+		return false;
+	if (objp->wr_ids == 1)
+		if (!xdr_stateid4(xdrs, &objp->wr_callback_id))
+			return false;
+	if (!xdr_length4(xdrs, &objp->wr_count))
+		return false;
+	if (!xdr_stable_how4(xdrs, &objp->wr_committed))
+		return false;
+	if (!xdr_verifier4(xdrs, objp->wr_writeverf))
+		return false;
+	return true;
+}
+
+static inline bool xdr_COPY4resok(XDR *xdrs, COPY4resok *objp)
+{
+	if (!xdr_write_response4(xdrs, &objp->cr_response))
+		return false;
+	if (!inline_xdr_bool(xdrs, &objp->cr_consecutive))
+		return false;
+	if (!inline_xdr_bool(xdrs, &objp->cr_synchronous))
+		return false;
+	return true;
+}
+
+static inline bool xdr_COPY4args(XDR *xdrs, COPY4args *objp)
+{
+	if (!xdr_stateid4(xdrs, &objp->ca_src_stateid))
+		return false;
+	if (!xdr_stateid4(xdrs, &objp->ca_dst_stateid))
+		return false;
+	if (!xdr_offset4(xdrs, &objp->ca_src_offset))
+		return false;
+	if (!xdr_offset4(xdrs, &objp->ca_dst_offset))
+		return false;
+	if (!xdr_length4(xdrs, &objp->ca_count))
+		return false;
+	/*
+	 * RFC 7862 §15.2.1 — on the wire these are TWO separate XDR bool
+	 * values (each 4 bytes), NOT a single packed flags word.  Decoding
+	 * them as a single uint32 skips ca_synchronous and misaligns the
+	 * following ca_source_server array by 4 bytes.
+	 */
+	if (!inline_xdr_bool(xdrs, &objp->ca_consecutive))
+		return false;
+	if (!inline_xdr_bool(xdrs, &objp->ca_synchronous))
+		return false;
+	if (!xdr_array(xdrs, (char **)&objp->ca_source_server_val,
+		       &objp->ca_source_server_len, XDR_ARRAY_MAXLEN,
+		       sizeof(netloc4), (xdrproc_t)xdr_netloc4))
+		return false;
+	return true;
+}
+
+static inline bool xdr_COPY4res(XDR *xdrs, COPY4res *objp)
+{
+	if (!xdr_nfsstat4(xdrs, &objp->cr_status))
+		return false;
+	switch (objp->cr_status) {
+	case NFS4_OK:
+		if (!xdr_COPY4resok(xdrs, &objp->COPY4res_u.cr_resok4))
+			return false;
+		break;
+	case NFS4ERR_OFFLOAD_NO_REQS:
+		if (!xdr_copy_requirements4(xdrs,
+					    &objp->COPY4res_u.cr_requirements))
+			return false;
+		break;
+	default:
+		break;
+	}
+	return true;
+}
+
 /* new operations for NFSv4.1 */
 
 static inline bool xdr_nfs_opnum4(XDR *xdrs, nfs_opnum4 *objp)
@@ -8477,6 +8618,10 @@ static inline bool xdr_nfs_argop4(XDR *xdrs, nfs_argop4 *objp)
 		break;
 
 	case NFS4_OP_COPY:
+		if (!xdr_COPY4args(xdrs, &objp->nfs_argop4_u.opcopy))
+			return false;
+		lkhd->flags |= NFS_LOOKAHEAD_WRITE;
+		break;
 	case NFS4_OP_COPY_NOTIFY:
 	case NFS4_OP_OFFLOAD_CANCEL:
 	case NFS4_OP_OFFLOAD_STATUS:
@@ -8803,6 +8948,9 @@ static inline bool xdr_nfs_resop4(XDR *xdrs, nfs_resop4 *objp)
 		break;
 
 	case NFS4_OP_COPY:
+		if (!xdr_COPY4res(xdrs, &objp->nfs_resop4_u.opcopy))
+			return false;
+		break;
 	case NFS4_OP_COPY_NOTIFY:
 	case NFS4_OP_OFFLOAD_CANCEL:
 	case NFS4_OP_OFFLOAD_STATUS:
