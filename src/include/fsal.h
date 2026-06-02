@@ -678,6 +678,18 @@ fsal_status_t fsal_listxattr_helper(const char *buf, size_t listlen,
 				    bool_t *lxr_eof, xattrlist4 *lxr_names);
 
 /**
+ * @brief Generic FSAL-API buffered copy (read/write loop)
+ *
+ * Used as the fallback when a FSAL's copy_file_range hook is the default.
+ */
+fsal_status_t fsal_buffered_copy_fsal(struct fsal_obj_handle *src_obj,
+				      struct fsal_obj_handle *dst_obj,
+				      struct state_t *src_state,
+				      struct state_t *dst_state,
+				      uint64_t src_offset, uint64_t dst_offset,
+				      uint64_t count, uint64_t *copied);
+
+/**
  * @brief Structure to hold FD LURU paramaters
  */
 

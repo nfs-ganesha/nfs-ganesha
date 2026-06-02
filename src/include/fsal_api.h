@@ -2823,6 +2823,34 @@ struct fsal_obj_ops {
 	fsal_status_t (*close2)(struct fsal_obj_handle *obj_hdl,
 				struct state_t *state);
 
+	/**
+ * @brief Server-side copy from one file to another
+ *
+ * Implements the data movement for NFSv4.2 COPY operations.
+ * FSALs may use whatever mechanism is most efficient w.r.t them.
+ *
+ * The default implementation (installed in def_handle_ops) falls back
+ * to a FSAL read/write loop via fsal_buffered_copy_fsal().
+ *
+ * @param[in]  src_obj     Source file object handle
+ * @param[in]  src_state   State for source access (may be NULL)
+ * @param[in]  dst_obj     Destination file object handle
+ * @param[in]  dst_state   State for destination access (may be NULL)
+ * @param[in]  src_offset  Byte offset in source to start reading from
+ * @param[in]  dst_offset  Byte offset in destination to write to
+ * @param[in]  count       Number of bytes to copy
+ * @param[out] copied      Number of bytes actually copied
+ *
+ * @return FSAL status.
+ */
+	fsal_status_t (*copy_file_range)(struct fsal_obj_handle *src_obj,
+					 struct state_t *src_state,
+					 struct fsal_obj_handle *dst_obj,
+					 struct state_t *dst_state,
+					 uint64_t src_offset,
+					 uint64_t dst_offset, uint64_t count,
+					 uint64_t *copied);
+
 	/**@}*/
 
 	/**

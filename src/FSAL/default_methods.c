@@ -60,6 +60,8 @@
 #include "sal_data.h"
 #include "FSAL/fsal_config.h"
 
+#define MIN3(a, b, c) MIN(MIN(a, b), c)
+
 /** fsal module method defaults and common methods
  */
 
@@ -1498,6 +1500,24 @@ static fsal_status_t close2(struct fsal_obj_handle *obj_hdl, struct state_t *fd)
 	return fsalstat(ERR_FSAL_NOTSUPP, ENOTSUP);
 }
 
+/**
+ * @brief Default copy_file_range — delegates to fsal_buffered_copy_fsal()
+ *
+ * FSALs that can do better (VFS, CEPH, etc.) override this in their own
+ * fsal_obj_ops.  This default means "no FSAL-specific copy, fall back to
+ * generic read/write loop".
+ */
+fsal_status_t default_copy_file_range(struct fsal_obj_handle *src_obj,
+				      struct state_t *src_state,
+				      struct fsal_obj_handle *dst_obj,
+				      struct state_t *dst_state,
+				      uint64_t src_offset, uint64_t dst_offset,
+				      uint64_t count, uint64_t *copied)
+{
+	return fsal_buffered_copy_fsal(src_obj, dst_obj, src_state, dst_state,
+				       src_offset, dst_offset, count, copied);
+}
+
 /* is_referral
  * default case not a referral
  */
@@ -1564,6 +1584,7 @@ struct fsal_obj_ops def_handle_ops = {
 	.lease_op2 = lease_op2,
 	.setattr2 = setattr2,
 	.close2 = close2,
+	.copy_file_range = default_copy_file_range,
 	.is_referral = is_referral,
 };
 
