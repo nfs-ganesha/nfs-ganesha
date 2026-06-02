@@ -1979,6 +1979,10 @@ void vfs_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->setxattrs = vfs_setxattrs;
 	ops->listxattrs = vfs_listxattrs;
 	ops->removexattrs = vfs_removexattrs;
+
+#ifdef HAVE_COPY_FILE_RANGE
+	ops->copy_file_range = vfs_copy_file_range;
+#endif /* HAVE_COPY_FILE_RANGE */
 }
 
 /* export methods that create object handles

@@ -1461,6 +1461,9 @@ if (NOT LIBURCU_INC)
 endif(NOT LIBURCU_INC)
 check_symbol_exists(urcu_ref_get_unless_zero urcu/ref.h HAVE_URCU_REF_GET_UNLESS_ZERO)
 
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+check_symbol_exists(copy_file_range unistd.h HAVE_COPY_FILE_RANGE)
+unset(CMAKE_REQUIRED_DEFINITIONS)
 # All the plumbing in the basement
 set(SYSTEM_LIBRARIES
   ${NTIRPC_LIBRARY}

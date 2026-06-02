@@ -126,6 +126,7 @@
 #cmakedefine USE_LLAPI 1
 #cmakedefine USE_GLUSTER_STAT_FETCH_API 1
 #cmakedefine HAVE_URCU_REF_GET_UNLESS_ZERO 1
+#cmakedefine HAVE_COPY_FILE_RANGE 1
 #cmakedefine USE_BTRFSUTIL 1
 #cmakedefine USE_MONITORING 1
 #cmakedefine USE_GRPC 1

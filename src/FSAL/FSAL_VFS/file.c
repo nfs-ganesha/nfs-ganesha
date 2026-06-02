@@ -43,6 +43,7 @@
 #include "vfs_methods.h"
 #include "os/subr.h"
 #include "sal_data.h"
+#include "../fsal_private.h"
 
 fsal_status_t vfs_open_my_fd(struct vfs_fsal_obj_handle *myself,
 			     fsal_openflags_t openflags, int posix_flags,
@@ -2342,3 +2343,158 @@ fsal_status_t vfs_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 
 	return close_fsal_fd(obj_hdl, &my_fd->fsal_fd, false);
 }
+
+#ifdef HAVE_COPY_FILE_RANGE
+/**
+ * @brief Server-side copy via Linux copy_file_range(2) , i.e CFR(2)
+ *
+ * Attempts efficient in-kernel data movement using the copy_file_range(2)
+ * syscall.  On btrfs/XFS with matching filesystems this becomes a
+ * zero-copy reflink (CoW clone).  For other cases the kernel copies the
+ * data in-kernel without going through userspace.
+ *
+ * Falls back to fsal_buffered_copy_fd() on:
+ *   - EOPNOTSUPP: filesystem does not support the operation
+ *   - EXDEV:      source and destination are on different filesystems
+ *
+ * @param[in]  src_hdl    Source VFS object handle
+ * @param[in]  src_state  Source open state; its fd is reused when present
+ * @param[in]  dst_hdl    Destination VFS object handle
+ * @param[in]  dst_state  Destination open state; its fd is reused when present
+ * @param[in]  src_off    Byte offset in source
+ * @param[in]  dst_off    Byte offset in destination
+ * @param[in]  len        Bytes to copy
+ * @param[out] copied     Bytes actually copied
+ *
+ * @return FSAL status
+ */
+fsal_status_t vfs_copy_file_range(struct fsal_obj_handle *src_hdl,
+				  struct state_t *src_state,
+				  struct fsal_obj_handle *dst_hdl,
+				  struct state_t *dst_state, uint64_t src_off,
+				  uint64_t dst_off, uint64_t len,
+				  uint64_t *copied)
+{
+	struct vfs_fsal_obj_handle *src_vfs =
+		container_of(src_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	struct vfs_fsal_obj_handle *dst_vfs =
+		container_of(dst_hdl, struct vfs_fsal_obj_handle, obj_handle);
+	struct vfs_fd src_tmp_fd = { FSAL_FD_INIT, -1 };
+	struct vfs_fd dst_tmp_fd = { FSAL_FD_INIT, -1 };
+	struct fsal_fd *src_out_fd, *dst_out_fd;
+	struct vfs_fd *src_my_fd, *dst_my_fd;
+	int src_fd, dst_fd;
+	uint64_t bytes_copied = 0;
+	uint64_t remaining = len;
+	off_t s_off = (off_t)src_off;
+	off_t d_off = (off_t)dst_off;
+	ssize_t rc;
+	fsal_status_t status, status2;
+
+	/* Acquire src fd — reuses the state's existing fd when src_state is
+	 * an OPEN state, otherwise opens a temporary fd.  bypass=true because
+	 * server-side COPY is allowed to read past a deny-read reservation.
+	 */
+	status = fsal_start_io(&src_out_fd, src_hdl,
+			       &src_vfs->u.file.fd.fsal_fd, &src_tmp_fd.fsal_fd,
+			       src_state, FSAL_O_READ, false, NULL, true,
+			       &src_vfs->u.file.share);
+	if (FSAL_IS_ERROR(status)) {
+		LogWarn(COMPONENT_NFS_V4, "COPY fsal_start_io src failed: %s",
+			fsal_err_txt(status));
+		return status;
+	}
+
+	/* Acquire dst fd — bypass=false: honour deny-write reservations. */
+	status = fsal_start_io(&dst_out_fd, dst_hdl,
+			       &dst_vfs->u.file.fd.fsal_fd, &dst_tmp_fd.fsal_fd,
+			       dst_state, FSAL_O_WRITE, false, NULL, false,
+			       &dst_vfs->u.file.share);
+	if (FSAL_IS_ERROR(status)) {
+		LogWarn(COMPONENT_NFS_V4, "COPY fsal_start_io dst failed: %s",
+			fsal_err_txt(status));
+		goto out_src;
+	}
+
+	src_my_fd = container_of(src_out_fd, struct vfs_fd, fsal_fd);
+	dst_my_fd = container_of(dst_out_fd, struct vfs_fd, fsal_fd);
+	src_fd = src_my_fd->fd;
+	dst_fd = dst_my_fd->fd;
+
+	LogFullDebug(COMPONENT_NFS_V4,
+		     "COPY trying CFR src_fd=%d dst_fd=%d src_off=%" PRIu64
+		     " dst_off=%" PRIu64 " len=%" PRIu64,
+		     src_fd, dst_fd, src_off, dst_off, len);
+
+	while (remaining > 0) {
+		rc = copy_file_range(src_fd, &s_off, dst_fd, &d_off, remaining,
+				     0);
+		if (rc < 0) {
+			if (bytes_copied == 0 &&
+			    (errno == EOPNOTSUPP || errno == EXDEV)) {
+				fsal_status_t fallback_st;
+				/*
+				 * copy_file_range(2) not supported for this
+				 * pair of files:
+				 * - EOPNOTSUPP: filesystem doesn't support it
+				 * - EXDEV: cross-device copy not supported
+				 *
+				 * Fall back to the fd-level pread/pwrite loop
+				 * reusing the fds already acquired above.
+				 */
+				LogDebug(COMPONENT_NFS_V4,
+					 "COPY CFR(2) fail %d(%s) len=%" PRIu64,
+					 errno, strerror(errno), len);
+				fallback_st =
+					fsal_buffered_copy_fd(src_fd, dst_fd,
+							      src_off, dst_off,
+							      len, copied);
+				if (FSAL_IS_ERROR(fallback_st)) {
+					LogWarn(COMPONENT_NFS_V4,
+						"COPY buff fb maj=%u min=%u",
+						fallback_st.major,
+						fallback_st.minor);
+				} else {
+					LogFullDebug(
+						COMPONENT_NFS_V4,
+						"COPY buff fb copied=%" PRIu64,
+						*copied);
+				}
+				status = fallback_st;
+				goto out_dst;
+			}
+			LogWarn(COMPONENT_NFS_V4,
+				"COPY CFR(2) errno=%d (%s) %" PRIu64 " bytes",
+				errno, strerror(errno), bytes_copied);
+			status = posix2fsal_status(errno);
+			goto out_dst;
+		}
+		if (rc == 0)
+			break; /* EOF */
+		bytes_copied += rc;
+		remaining -= rc;
+	}
+
+	LogFullDebug(COMPONENT_NFS_V4, "COPY CFR(2) OK copied=%" PRIu64,
+		     bytes_copied);
+	fsync(dst_fd);
+	*copied = bytes_copied;
+
+out_dst:
+	status2 = fsal_complete_io(dst_hdl, dst_out_fd);
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io dst returned %s",
+		     fsal_err_txt(status2));
+	if (dst_state == NULL)
+		update_share_counters_locked(dst_hdl, &dst_vfs->u.file.share,
+					     FSAL_O_WRITE, FSAL_O_CLOSED);
+
+out_src:
+	status2 = fsal_complete_io(src_hdl, src_out_fd);
+	LogFullDebug(COMPONENT_FSAL, "fsal_complete_io src returned %s",
+		     fsal_err_txt(status2));
+	if (src_state == NULL)
+		update_share_counters_locked(src_hdl, &src_vfs->u.file.share,
+					     FSAL_O_READ, FSAL_O_CLOSED);
+	return status;
+}
+#endif /* HAVE_COPY_FILE_RANGE */

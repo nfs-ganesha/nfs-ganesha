@@ -233,6 +233,15 @@ int vfs_fsal_open(struct vfs_fsal_obj_handle *hdl, int openflags,
 
 fsal_status_t vfs_close_func(struct fsal_obj_handle *obj_hdl,
 			     struct fsal_fd *fd);
+#ifdef HAVE_COPY_FILE_RANGE
+fsal_status_t vfs_copy_file_range(struct fsal_obj_handle *src_hdl,
+				  struct state_t *src_state,
+				  struct fsal_obj_handle *dst_hdl,
+				  struct state_t *dst_state, uint64_t src_off,
+				  uint64_t dst_off, uint64_t len,
+				  uint64_t *copied);
+#endif /* HAVE_COPY_FILE_RANGE */
+
 
 fsal_status_t vfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 			      fsal_openflags_t openflags,
