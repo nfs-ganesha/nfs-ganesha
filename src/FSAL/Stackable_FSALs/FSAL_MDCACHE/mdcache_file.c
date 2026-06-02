@@ -886,3 +886,134 @@ fsal_status_t mdcache_fallocate(struct fsal_obj_handle *obj_hdl,
 
 	return status;
 }
+
+/**
+ * @brief Server-side copy between two files (NFSv4.2 COPY offload)
+ *
+ * Unwraps both mdcache handles and routes to the most efficient path:
+ *
+ *   FS1 -> FS1 (same sub-FSAL module):
+ *     Delegates to the sub-FSAL's copy_file_range so it can use an
+ *     optimised path (e.g. Linux copy_file_range(2) in FSAL_VFS).
+ *
+ *   FS1 -> FS1, different exports (e.g. two Ceph mount points):
+ *     Same path as above: subcall_raw uses the src export so the
+ *     sub-FSAL always sees the correct context for the source object.
+ *     fsal_buffered_copy_fsal()'s switch_src_ctx guard detects that
+ *     op_ctx is already at the sub-FSAL layer and does not override it.
+ *
+ *   FS1 -> FS2 (different sub-FSAL modules):
+ *     Falls back to the generic buffered read/write loop via
+ *     fsal_buffered_copy_fsal().  That function switches op_ctx to
+ *     the src export for each read and restores it for the write.
+ *
+  * After a successful copy the destination entry's attribute cache is
+ * invalidated because the file size and mtime will have changed.
+ *
+ * @param[in]  src_hdl    Source object handle (mdcache entry)
+ * @param[in]  src_state  Source open-state (may be NULL)
+ * @param[in]  dst_hdl    Destination object handle (mdcache entry)
+ * @param[in]  dst_state  Destination open-state (may be NULL)
+ * @param[in]  src_offset Byte offset to start reading from
+ * @param[in]  dst_offset Byte offset to start writing at
+ * @param[in]  count      Bytes to copy
+ * @param[out] copied     Bytes actually copied
+ * @return FSAL status.
+ */
+fsal_status_t mdcache_copy_file_range(struct fsal_obj_handle *src_hdl,
+				      struct state_t *src_state,
+				      struct fsal_obj_handle *dst_hdl,
+				      struct state_t *dst_state,
+				      uint64_t src_offset, uint64_t dst_offset,
+				      uint64_t count, uint64_t *copied)
+{
+	mdcache_entry_t *src_entry =
+		container_of(src_hdl, mdcache_entry_t, obj_handle);
+	mdcache_entry_t *dst_entry =
+		container_of(dst_hdl, mdcache_entry_t, obj_handle);
+	fsal_status_t status;
+
+	if (src_entry->sub_handle->fsal == dst_entry->sub_handle->fsal) {
+		/*
+		 * Same sub-FSAL: zero-copy via obj_ops->copy_file_range.
+		 * op_ctx->fsal_export is currently the dst MDCache export.
+		 * We must switch to the src's sub-FSAL export before calling
+		 * into the sub-FSAL so that FSALs that resolve their private
+		 * context from op_ctx->fsal_export (e.g. Ceph picks its
+		 * cmount via container_of(op_ctx->fsal_export, ...)) get the
+		 * correct object for the source even when src and dst are on
+		 * different exports of the same FSAL (e.g. two Ceph mounts).
+		 *
+		 * Use the src state's export when available; fall back to the
+		 * current op_ctx export (same export, intra-export copy).
+		 *
+		 * subcall_raw() restores op_ctx->fsal_export to the src MDCache
+		 * export after the call, but our caller expects the dst MDCache
+		 * export to remain in op_ctx.  Save and restore it explicitly.
+		 */
+		struct fsal_export *src_fsal_exp =
+			(src_state != NULL)
+				? src_state->state_export->fsal_export
+				: op_ctx->fsal_export;
+		struct mdcache_fsal_export *src_mdc_exp =
+			mdc_export(src_fsal_exp);
+		/* dst MDCache export — op_ctx->fsal_export on entry */
+		struct mdcache_fsal_export *dst_mdc_exp = mdc_cur_export();
+
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "COPY mdcache: same sub-FSAL (%s) src_off=%" PRIu64
+			     " dst_off=%" PRIu64 " count=%" PRIu64
+			     "src_exp=%s dst_exp=%s ",
+			     src_entry->sub_handle->fsal->name, src_offset,
+			     dst_offset, count,
+			     src_mdc_exp->name, dst_mdc_exp->name);
+
+		op_ctx->fsal_export = &src_mdc_exp->mfe_exp;
+		subcall(status =
+				src_entry->sub_handle->obj_ops->copy_file_range(
+					src_entry->sub_handle, src_state,
+					dst_entry->sub_handle, dst_state,
+					src_offset, dst_offset, count, copied));
+		op_ctx->fsal_export = &dst_mdc_exp->mfe_exp;
+	} else {
+		/*
+		 * Different sub-FSALs (FS1->FS2): buffered fallback since no
+		 * zero-copy is available across FSAL boundaries.
+		 */
+		LogFullDebug(
+			COMPONENT_NFS_V4,
+			"COPY mdcache: crossFSAL (%s->%s) BFC src_off=%" PRIu64
+			" dst_off=%" PRIu64 " count=%" PRIu64,
+			src_entry->sub_handle->fsal->name,
+			dst_entry->sub_handle->fsal->name, src_offset,
+			dst_offset, count);
+		status = fsal_buffered_copy_fsal(src_hdl, dst_hdl, src_state,
+						 dst_state, src_offset,
+						 dst_offset, count, copied);
+	}
+
+	if (FSAL_IS_SUCCESS(status)) {
+		LogFullDebug(COMPONENT_NFS_V4,
+			     "COPY mdcache: done OK copied=%" PRIu64
+			     " — invalidating dst attrs",
+			     *copied);
+		/*
+		 * Destination size/mtime changed.  Bump attr_generation before
+		 * clearing MDCACHE_TRUST_ATTRS so concurrent getattrs see a
+		 * consistent view.
+		 */
+		atomic_inc_uint32_t(&dst_entry->attr_generation);
+		atomic_clear_uint32_t_bits(&dst_entry->mde_flags,
+					   MDCACHE_TRUST_ATTRS);
+	} else if (status.major == ERR_FSAL_STALE) {
+		LogWarn(COMPONENT_NFS_V4,
+			"COPY mdcache: dst entry STALE killing mdcache entry");
+		mdcache_kill_entry(dst_entry);
+	} else {
+		LogWarn(COMPONENT_NFS_V4,
+			"COPY mdcache: FSAL error major=%u minor=%u",
+			status.major, status.minor);
+	}
+
+	return status;
+}

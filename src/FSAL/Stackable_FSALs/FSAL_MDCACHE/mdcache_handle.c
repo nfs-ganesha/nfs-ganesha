@@ -1567,6 +1567,7 @@ void mdcache_handle_ops_init(struct fsal_obj_ops *ops)
 	ops->setattr2 = mdcache_setattr2;
 	ops->close2 = mdcache_close2;
 	ops->fallocate = mdcache_fallocate;
+	ops->copy_file_range = mdcache_copy_file_range;
 
 	/* xattr related functions */
 	ops->list_ext_attrs = mdcache_list_ext_attrs;
