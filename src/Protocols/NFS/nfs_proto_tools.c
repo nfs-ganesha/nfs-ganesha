@@ -1661,6 +1661,8 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	uid_t uid;
 	uint32_t len = 0;
 	struct gsh_buffdesc ownerdesc;
+	void *src_owner;
+	char *owner_buff;
 	unsigned int pos, newpos;
 
 	if (!inline_xdr_u_int(xdr, &len))
@@ -1676,14 +1678,20 @@ static fattr_xdr_result decode_owner(XDR *xdr, struct xdr_attrs_args *args)
 	if (len % 4 != 0)
 		newpos += (4 - (len % 4));
 
-	ownerdesc.len = len;
-	ownerdesc.addr = xdr_inline_decode(xdr, len);
+	src_owner = xdr_inline_decode(xdr, len);
 
-	if (!ownerdesc.addr) {
+	if (!src_owner) {
 		LogMajor(COMPONENT_NFS_V4,
 			 "xdr_inline_decode on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
 	}
+
+	/* Allocate a temporary null terminated buffer */
+	owner_buff = alloca(len + 1);
+	memcpy(owner_buff, src_owner, len);
+	owner_buff[len] = '\0';
+	ownerdesc.len = len;
+	ownerdesc.addr = owner_buff;
 
 	if (!name2uid(&ownerdesc, &uid, get_anonymous_uid())) {
 		args->nfs_status = NFS4ERR_BADOWNER;
@@ -1711,6 +1719,8 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	gid_t gid;
 	uint32_t len = 0;
 	struct gsh_buffdesc groupdesc;
+	void *src_group;
+	char *group_buff;
 	unsigned int pos, newpos;
 
 	if (!inline_xdr_u_int(xdr, &len))
@@ -1726,14 +1736,20 @@ static fattr_xdr_result decode_group(XDR *xdr, struct xdr_attrs_args *args)
 	if (len % 4 != 0)
 		newpos += (4 - (len % 4));
 
-	groupdesc.len = len;
-	groupdesc.addr = xdr_inline_decode(xdr, len);
+	src_group = xdr_inline_decode(xdr, len);
 
-	if (!groupdesc.addr) {
+	if (!src_group) {
 		LogMajor(COMPONENT_NFS_V4,
 			 "xdr_inline_decode on xdrmem stream failed!");
 		return FATTR_XDR_FAILED;
 	}
+
+	/* Allocate a temporary null terminated buffer */
+	group_buff = alloca(len + 1);
+	memcpy(group_buff, src_group, len);
+	group_buff[len] = '\0';
+	groupdesc.len = len;
+	groupdesc.addr = src_group;
 
 	if (!name2gid(&groupdesc, &gid, get_anonymous_gid())) {
 		args->nfs_status = NFS4ERR_BADOWNER;
