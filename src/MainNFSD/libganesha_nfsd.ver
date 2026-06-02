@@ -80,6 +80,7 @@
   fsal_acl_support;
   fsal_attach_export;
   fsal_acl_to_mode;
+  fsal_buffered_copy_fd;
   fsal_common_is_referral;
   fsal_complete_fd_work;
   fsal_complete_io;

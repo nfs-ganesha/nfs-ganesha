@@ -338,4 +338,24 @@ fsal_status_t update_export(struct fsal_module *fsal_hdl, void *parse_node,
 			    struct fsal_export *original,
 			    struct fsal_module *updated_super);
 
+/**
+ * @brief Get copy chunk size against default and export read/write limits.
+ *
+ * @param[in] max_read  Export MaxRead limit (0 = unconstrained).
+ * @param[in] max_write Export MaxWrite limit (0 = unconstrained).
+ *
+ * @return chunk size, always > 0.
+ */
+static inline uint64_t get_copy_chunk_size(uint64_t max_read,
+					   uint64_t max_write)
+{
+	uint64_t chunk = FSAL_MAXIOSIZE;
+
+	if (max_read > 0)
+		chunk = MIN(chunk, max_read);
+	if (max_write > 0)
+		chunk = MIN(chunk, max_write);
+	return chunk;
+}
+
 #endif /* FSAL_COMMONLIB_H */

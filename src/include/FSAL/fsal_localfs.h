@@ -201,6 +201,11 @@ void get_fs_first_export_ref(struct fsal_filesystem *this,
 			     struct gsh_export **gsh_export,
 			     struct fsal_export **fsal_export);
 
+/* fd-based buffered copy for FSALs with direct fd access (FSAL_VFS, etc.) */
+fsal_status_t fsal_buffered_copy_fd(int src_fd, int dst_fd, uint64_t src_offset,
+				    uint64_t dst_offset, uint64_t count,
+				    uint64_t *copied);
+
 #ifdef USE_DBUS
 void dbus_cache_init(void);
 #endif

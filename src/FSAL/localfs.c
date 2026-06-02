@@ -1940,6 +1940,101 @@ out:
 	return retval;
 }
 
+/**
+ * @brief fd-level buffered copy via pread/pwrite
+ *
+ * Can be used by FSALs as the fallback when copy_file_range(2) is not
+ * available and is based on File Descriptors.
+ * Uses pread and pwrite.
+ *
+ * Chunk size is bounded by the export's MaxRead/MaxWrite limits;
+ * defaults to 1 MiB when both are zero/unset.
+ *
+ * @param[in]  src_fd      Open file descriptor for source (O_RDONLY)
+ * @param[in]  dst_fd      Open file descriptor for destination (O_WRONLY)
+ * @param[in]  src_offset  Source byte offset
+ * @param[in]  dst_offset  Destination byte offset
+ * @param[in]  count       Bytes to copy
+ * @param[out] copied      Bytes actually copied
+ *
+ * @return FSAL status
+ */
+fsal_status_t fsal_buffered_copy_fd(int src_fd, int dst_fd, uint64_t src_offset,
+				    uint64_t dst_offset, uint64_t count,
+				    uint64_t *copied)
+{
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
+	uint64_t MaxRead = atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxRead);
+	uint64_t MaxWrite =
+		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxWrite);
+	uint64_t max_chunk = get_copy_chunk_size(MaxRead, MaxWrite);
+	uint64_t bytes_copied = 0;
+	char *buffer;
+
+	LogDebug(COMPONENT_NFS_V4,
+		 "COPY buffered_fd START: src_fd=%d dst_fd=%d src_off=%" PRIu64
+		 " dst_off=%" PRIu64 " count=%" PRIu64 " chunk=%" PRIu64,
+		 src_fd, dst_fd, src_offset, dst_offset, count, max_chunk);
+
+	buffer = gsh_malloc(max_chunk);
+
+	while (bytes_copied < count) {
+		size_t request = (size_t)MIN(count - bytes_copied, max_chunk);
+		ssize_t n = pread(src_fd, buffer, request,
+				  (off_t)(src_offset + bytes_copied));
+		if (n < 0) {
+			LogWarn(COMPONENT_NFS_V4,
+				"COPY pread failed %d (%s) src_off=%" PRIu64
+				" bytes_copied=%" PRIu64,
+				errno, strerror(errno),
+				src_offset + bytes_copied, bytes_copied);
+			status = posix2fsal_status(errno);
+			goto out;
+		}
+		if (n == 0)
+			break; /* EOF */
+
+		ssize_t w = pwrite(dst_fd, buffer, n,
+				   (off_t)(dst_offset + bytes_copied));
+		if (w < 0) {
+			LogWarn(COMPONENT_NFS_V4,
+				"COPY pwrite failed %d (%s) dst_off=%" PRIu64
+				" bytes_copied=%" PRIu64,
+				errno, strerror(errno),
+				dst_offset + bytes_copied, bytes_copied);
+			status = posix2fsal_status(errno);
+			goto out;
+		}
+		if (w == 0) {
+			LogWarn(COMPONENT_NFS_V4,
+				"COPY pwrite ret 0 dst_off=%" PRIu64
+				" — possible ENOSPC?",
+				dst_offset + bytes_copied);
+			status = fsalstat(ERR_FSAL_IO, EIO);
+			goto out;
+		}
+		bytes_copied += w;
+	}
+
+	*copied = bytes_copied;
+	if (!FSAL_IS_ERROR(status)) {
+		fsync(dst_fd);
+		futimens(dst_fd, NULL);
+		LogDebug(COMPONENT_NFS_V4,
+			 "COPY DONE OK: copied=%" PRIu64 " of %" PRIu64,
+			 bytes_copied, count);
+	}
+out:
+	if (FSAL_IS_ERROR(status)) {
+		LogWarn(COMPONENT_NFS_V4,
+			"COPY DONE ERROR: major=%u minor=%u copied=%" PRIu64
+			" of %" PRIu64,
+			status.major, status.minor, bytes_copied, count);
+	}
+	gsh_free(buffer);
+	return status;
+}
+
 #ifdef USE_DBUS
 
 /**
