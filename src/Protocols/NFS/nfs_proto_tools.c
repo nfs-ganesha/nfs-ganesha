@@ -4396,6 +4396,12 @@ bool nfs4_Fattr_Supported(fattr4 *Fattr)
 	for (attribute = next_attr_from_bitmap(&Fattr->attrmask, -1);
 	     attribute != -1;
 	     attribute = next_attr_from_bitmap(&Fattr->attrmask, attribute)) {
+		if (attribute > FATTR4_MAX_ATTR_INDEX) {
+			LogWarn(COMPONENT_NFS_V4,
+				"Attribute index %d is out of range",
+				attribute);
+			return false;
+		}
 		bool supported = atrib_supported(attribute, fsal_supported);
 
 		LogFullDebug(COMPONENT_NFS_V4,
