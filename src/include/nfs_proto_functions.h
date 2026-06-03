@@ -406,6 +406,12 @@ enum nfs_req_result nfs4_op_allocate(struct nfs_argop4 *, compound_data_t *,
 
 void nfs4_op_allocate_Free(nfs_resop4 *resp);
 
+/* NFSv4.2 COPY */
+enum nfs_req_result nfs4_op_copy(struct nfs_argop4 *, compound_data_t *,
+				 struct nfs_resop4 *);
+
+void nfs4_op_copy_Free(nfs_resop4 *resp);
+
 enum nfs_req_result nfs4_op_deallocate(struct nfs_argop4 *, compound_data_t *,
 				       struct nfs_resop4 *);
 
