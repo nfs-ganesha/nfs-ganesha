@@ -2118,7 +2118,10 @@ nfs_client_record_t *get_client_record(const char *const value,
 	sockaddr_t *server_addr_conv;
 	sockaddr_t *client_addr_conv;
 
-	assert(len);
+	if (len == 0) {
+		LogCrit(COMPONENT_CLIENTID, "Client record value is empty");
+		return NULL;
+	}
 
 	record = gsh_malloc(sizeof(nfs_client_record_t) + len);
 
