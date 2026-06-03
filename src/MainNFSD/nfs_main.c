@@ -350,6 +350,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* initialize memory and logging */
+	fprintf(stderr, "Initializing memory and logging");
 	nfs_prereq_init(exec_name, nfs_host_name, debug_level, log_path,
 			dump_trace, stack_size);
 #if GANESHA_BUILD_RELEASE
@@ -362,12 +363,15 @@ int main(int argc, char *argv[])
 #endif
 
 	/* initialize nfs_init */
+	LogEvent(COMPONENT_MAIN, "Initializing nfs_init");
 	nfs_init_init();
 
+	LogEvent(COMPONENT_MAIN, "Checking malloc");
 	nfs_check_malloc();
 
 	/* Start in background, if wanted */
 	if (detach_flag) {
+		LogEvent(COMPONENT_MAIN, "Detaching process");
 #ifdef HAVE_DAEMON
 		/* daemonize the process (fork, close xterm fds,
 		 * detach from parent process) */
@@ -457,6 +461,7 @@ int main(int argc, char *argv[])
 	/* Echo our PID into pidfile: this serves as a lock to prevent */
 	/* multiple instances from starting, so any failure creating   */
 	/* this file is a fatal error.                                 */
+	LogEvent(COMPONENT_MAIN, "Writing PID file");
 	pidfile = open(nfs_pidfile_path, O_CREAT | O_RDWR, 0644);
 	if (pidfile == -1) {
 		LogFatal(
@@ -500,14 +505,17 @@ int main(int argc, char *argv[])
 	}
 
 	/* init URL package */
+	LogEvent(COMPONENT_MAIN, "Initializing URL package");
 	config_url_init();
 
 	/* Create a memstream for parser+processing error messages */
+	LogEvent(COMPONENT_MAIN, "Initializing error type");
 	if (!init_error_type(&err_type))
 		goto fatal_die;
 
 	/* Parse the configuration file so we all know what is going on. */
 
+	LogEvent(COMPONENT_MAIN, "Parsing configuration file");
 	if (nfs_config_path == NULL || nfs_config_path[0] == '\0') {
 		LogWarn(COMPONENT_INIT, "No configuration file named.");
 		nfs_config_struct = NULL;
@@ -533,6 +541,7 @@ int main(int argc, char *argv[])
 			gsh_free(errstr);
 	}
 
+	LogEvent(COMPONENT_MAIN, "Reading log configuration");
 	if (read_log_config(nfs_config_struct, &err_type) < 0) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing log configuration");
@@ -542,6 +551,7 @@ int main(int argc, char *argv[])
 	/* We need all the fsal modules loaded so we can have
 	 * the list available at exports parsing time.
 	 */
+	LogEvent(COMPONENT_MAIN, "Starting FSALs");
 	if (start_fsals(nfs_config_struct, &err_type) < 0) {
 		LogCrit(COMPONENT_INIT, "Error starting FSALs.");
 		goto fatal_die;
@@ -549,6 +559,7 @@ int main(int argc, char *argv[])
 
 	/* parse configuration file */
 
+	LogEvent(COMPONENT_MAIN, "Setting parameters from configuration file");
 	if (nfs_set_param_from_conf(nfs_config_struct, &my_nfs_start_info,
 				    &err_type)) {
 		LogCrit(COMPONENT_INIT,
