@@ -135,10 +135,14 @@ fsal_errors_t nfs4_readdir_callback(void *opaque, struct fsal_obj_handle *obj,
 	bool_t lock_dir = false;
 	struct fsal_obj_handle *saved_current_obj = NULL;
 
-	assert(mem_avail >= pos_start);
 	LogFullDebug(COMPONENT_NFS_READDIR, "Entry %s pos %d mem_left %d",
 		     cb_parms->name, (int)pos_start,
 		     (int)(mem_avail - pos_start));
+	if (mem_avail < pos_start) {
+		LogWarn(COMPONENT_NFS_READDIR,
+			"Skipping because not enough space for BASE_ENTRY_SIZE");
+		goto failure;
+	}
 
 	memset(&args, 0, sizeof(args));
 
