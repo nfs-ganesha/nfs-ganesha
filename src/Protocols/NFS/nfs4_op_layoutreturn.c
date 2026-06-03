@@ -117,6 +117,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 	struct fsal_obj_handle *layout_obj = NULL;
 	state_owner_t *layout_owner = NULL;
 	bool state_handle_lock_held = false;
+	bool was_op_context_set = false;
 
 	resp->resop = NFS4_OP_LAYOUTRETURN;
 
@@ -224,6 +225,7 @@ enum nfs_req_result nfs4_op_layoutreturn(struct nfs_argop4 *op,
 
 		/* Initialize op_context */
 		init_op_context_simple(&op_context, NULL, NULL);
+		was_op_context_set = true;
 
 		/* We need the safe version because return_one_state
 		 * can delete the current state.
@@ -355,10 +357,7 @@ again:
 		res_LAYOUTRETURN4->lorr_status = NFS4ERR_INVAL;
 	}
 
-	if (arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype ==
-		    LAYOUTRETURN4_FSID ||
-	    arg_LAYOUTRETURN4->lora_layoutreturn.lr_returntype ==
-		    LAYOUTRETURN4_ALL) {
+	if (was_op_context_set) {
 		/* Release the root op context we setup above */
 		release_op_context();
 	}
