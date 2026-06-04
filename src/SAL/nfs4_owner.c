@@ -536,7 +536,7 @@ nfsstat4 Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
 	status = check_resp_room(data, BASE_RESP_SIZE + owner_len);
 
 	if (status != NFS4_OK)
-		return status;
+		goto out;
 
 	/* Now set the op_resp_size. */
 	data->op_resp_size = BASE_RESP_SIZE + owner_len;
@@ -574,11 +574,14 @@ nfsstat4 Process_nfs4_conflict(LOCK4denied *denied, state_owner_t *holder,
 	else
 		denied->owner.clientid = 0;
 
+	status = NFS4ERR_DENIED;
+
+out:
 	/* Release any lock owner reference passed back from SAL */
 	if (holder != NULL)
 		dec_state_owner_ref(holder);
 
-	return NFS4ERR_DENIED;
+	return status;
 }
 
 /**
