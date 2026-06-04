@@ -255,6 +255,11 @@ extern struct fridgethr *general_fridge;
 int general_fridge_init(void);
 int general_fridge_shutdown(void);
 
+/* Dedicated fridge for NFSv4.2 COPY offload workers (xcopy0, xcopy1, ...).
+ * Pool size is controlled by nfs_param.nfsv4_param.max_copy_workers. */
+int nfs4_copy_fridge_init(void);
+int nfs4_copy_fridge_shutdown(void);
+
 #endif /* FRIDGETHR_H */
 
 /** @} */

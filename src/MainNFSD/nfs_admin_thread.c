@@ -1016,6 +1016,13 @@ static void do_shutdown(void)
 		LogEvent(COMPONENT_THREAD, "General fridge shut down.");
 	}
 
+	rc = nfs4_copy_fridge_shutdown();
+	if (rc != 0 && rc != ETIMEDOUT) {
+		LogMajor(COMPONENT_THREAD,
+			 "Error shutting down copy fridge (xcopy): %d", rc);
+		disorderly = true;
+	}
+
 	/* We have to remove DS before exports, DS refer to exports but
 	 * exports do not refer to DS. This SHOULD remove every single DS.
 	 */

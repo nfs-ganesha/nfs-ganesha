@@ -410,6 +410,10 @@ void nfs4_op_allocate_Free(nfs_resop4 *resp);
 enum nfs_req_result nfs4_op_copy(struct nfs_argop4 *, compound_data_t *,
 				 struct nfs_resop4 *);
 
+enum nfs_req_result nfs4_op_copy_resume(struct nfs_argop4 *op,
+					compound_data_t *data,
+					struct nfs_resop4 *resp);
+
 void nfs4_op_copy_Free(nfs_resop4 *resp);
 
 enum nfs_req_result nfs4_op_deallocate(struct nfs_argop4 *, compound_data_t *,

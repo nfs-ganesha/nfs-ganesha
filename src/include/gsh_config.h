@@ -749,6 +749,19 @@ typedef struct nfs_version4_parameter {
 	/** Whether to allow blocking locks (READW_LT/WRITEW_LT). Defaults to
 	 * true and settable with Blocking_Locks. */
 	bool allow_blocking_locks;
+	/** Whether to enable NFSv4.2 server-side copy offload */
+	bool allow_copy_offload;
+	/**
+	 * Minimum byte count at which an COPY offload copying is done.
+	 * Default: 16 MiB for sync. 16*4  MiB for async.
+	 */
+	uint64_t copy_offload_chunk_size;
+	/**
+	 * This controls the size of the dedicated xcopy fridger thread pool,
+	 * which also controls number of concurrent XCOPY supported by server.
+	 * Default: 8.  Settable with Max_Copy_Workers.
+	 */
+	uint32_t max_copy_workers;
 
 } nfs_version4_parameter_t;
 

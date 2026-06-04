@@ -2755,7 +2755,7 @@ struct COPY4args {
 	offset4 ca_dst_offset;
 	length4 ca_count;
 	/*
-	 * RFC 7862 §15.2.1: two separate XDR bool fields on the wire.
+	 * RFC 7862 Sec.15.2.1: two separate XDR bool fields on the wire.
 	 * ca_consecutive: client requires bytes transferred in order.
 	 * ca_synchronous: client requires server to complete inline (no CB).
 	 */
@@ -3785,9 +3785,35 @@ enum nfs_cb_opnum4 {
 	NFS4_OP_CB_WANTS_CANCELLED = 12,
 	NFS4_OP_CB_NOTIFY_LOCK = 13,
 	NFS4_OP_CB_NOTIFY_DEVICEID = 14,
+	NFS4_OP_CB_OFFLOAD = 15,
 	NFS4_OP_CB_ILLEGAL = 10044,
 };
 typedef enum nfs_cb_opnum4 nfs_cb_opnum4;
+
+/* RFC 7862 Sec.16.1.1 — CB_OFFLOAD
+ *
+ * Wire layout (MUST match RFC exactly):
+ *   1. coa_fh        – destination file handle (nfs_fh4, variable opaque)
+ *   2. coa_stateid   – the copy stateid returned in wr_callback_id
+ *   3. offload_info4 – discriminated union (coa_status + payload)
+ *
+ * NOTE: coa_fh MUST be the first field; the Linux client XDR decoder
+ * expects it before coa_stateid.  Omitting it causes complete XDR
+ * desynchronisation and NFS4ERR_RESOURCE from the client.
+ */
+typedef struct {
+	nfs_fh4 coa_fh; /* destination file handle */
+	stateid4 coa_stateid;
+	nfsstat4 coa_status; /* offload_info4 discriminant */
+	union {
+		write_response4 coa_resok4; /* on NFS4_OK */
+		length4 coa_bytes_copied; /* on error */
+	} coa_payload;
+} CB_OFFLOAD4args;
+
+typedef struct {
+	nfsstat4 cor_status;
+} CB_OFFLOAD4res;
 
 struct nfs_cb_argop4 {
 	u_int argop;
@@ -3804,6 +3830,7 @@ struct nfs_cb_argop4 {
 		CB_WANTS_CANCELLED4args opcbwants_cancelled;
 		CB_NOTIFY_LOCK4args opcbnotify_lock;
 		CB_NOTIFY_DEVICEID4args opcbnotify_deviceid;
+		CB_OFFLOAD4args opcboffload;
 	} nfs_cb_argop4_u;
 };
 typedef struct nfs_cb_argop4 nfs_cb_argop4;
@@ -3823,6 +3850,7 @@ struct nfs_cb_resop4 {
 		CB_WANTS_CANCELLED4res opcbwants_cancelled;
 		CB_NOTIFY_LOCK4res opcbnotify_lock;
 		CB_NOTIFY_DEVICEID4res opcbnotify_deviceid;
+		CB_OFFLOAD4res opcboffload;
 		CB_ILLEGAL4res opcbillegal;
 	} nfs_cb_resop4_u;
 };
@@ -8262,7 +8290,7 @@ static inline bool xdr_COPY4args(XDR *xdrs, COPY4args *objp)
 	if (!xdr_length4(xdrs, &objp->ca_count))
 		return false;
 	/*
-	 * RFC 7862 §15.2.1 — on the wire these are TWO separate XDR bool
+	 * RFC 7862 Sec.15.2.1 — on the wire these are TWO separate XDR bool
 	 * values (each 4 bytes), NOT a single packed flags word.  Decoding
 	 * them as a single uint32 skips ca_synchronous and misaligns the
 	 * following ca_source_server array by 4 bytes.
@@ -8295,6 +8323,33 @@ static inline bool xdr_COPY4res(XDR *xdrs, COPY4res *objp)
 	default:
 		break;
 	}
+	return true;
+}
+
+static inline bool xdr_CB_OFFLOAD4args(XDR *xdrs, CB_OFFLOAD4args *objp)
+{
+	/* RFC 7862 Sec.16.1.1: coa_fh MUST be encoded first */
+	if (!xdr_nfs_fh4(xdrs, &objp->coa_fh))
+		return false;
+	if (!xdr_stateid4(xdrs, &objp->coa_stateid))
+		return false;
+	/* offload_info4 discriminant then payload */
+	if (!xdr_nfsstat4(xdrs, &objp->coa_status))
+		return false;
+	if (objp->coa_status == NFS4_OK) {
+		if (!xdr_write_response4(xdrs, &objp->coa_payload.coa_resok4))
+			return false;
+	} else {
+		if (!xdr_length4(xdrs, &objp->coa_payload.coa_bytes_copied))
+			return false;
+	}
+	return true;
+}
+
+static inline bool xdr_CB_OFFLOAD4res(XDR *xdrs, CB_OFFLOAD4res *objp)
+{
+	if (!xdr_nfsstat4(xdrs, &objp->cor_status))
+		return false;
 	return true;
 }
 
@@ -9798,6 +9853,11 @@ static inline bool xdr_nfs_cb_argop4(XDR *xdrs, nfs_cb_argop4 *objp)
 			    xdrs, &objp->nfs_cb_argop4_u.opcbnotify_deviceid))
 			return false;
 		break;
+	case NFS4_OP_CB_OFFLOAD:
+		if (!xdr_CB_OFFLOAD4args(xdrs,
+					 &objp->nfs_cb_argop4_u.opcboffload))
+			return false;
+		break;
 	case NFS4_OP_CB_ILLEGAL:
 		break;
 	default:
@@ -9868,6 +9928,11 @@ static inline bool xdr_nfs_cb_resop4(XDR *xdrs, nfs_cb_resop4 *objp)
 	case NFS4_OP_CB_NOTIFY_DEVICEID:
 		if (!xdr_CB_NOTIFY_DEVICEID4res(
 			    xdrs, &objp->nfs_cb_resop4_u.opcbnotify_deviceid))
+			return false;
+		break;
+	case NFS4_OP_CB_OFFLOAD:
+		if (!xdr_CB_OFFLOAD4res(xdrs,
+					&objp->nfs_cb_resop4_u.opcboffload))
 			return false;
 		break;
 	case NFS4_OP_CB_ILLEGAL:

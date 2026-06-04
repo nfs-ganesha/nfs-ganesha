@@ -1362,6 +1362,55 @@ extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
 extern int g_total_num_files_delegated;
 extern int g_max_files_delegatable;
 
+/**
+ * @brief Per-copy offload state
+ *
+ * Tracks a single asynchronous COPY operation.  The embedded state_t must
+ * be the first member so that container_of(ptr, struct copy_offload_state,
+ * state) works from any state_t * returned by nfs4_Check_Stateid().
+ *
+ * Lifecycle:
+ *   Created: nfs4_op_copy() when ca_synchronous == FALSE and
+ *            the copy exceeds COPY_ASYNC_THRESHOLD.
+ *   Destroyed: copy worker on completion, or OFFLOAD_CANCEL handler.
+ */
+struct copy_offload_state {
+	struct state_t cos_state;
+
+	/* Who started the copy — needed to target CB_OFFLOAD */
+	nfs_client_id_t *cos_clientid;
+
+	/* Total bytes to copy (immutable after create). */
+	uint64_t cos_total_count;
+
+	/* Progress and completion entries */
+	uint64_t cos_bytes_copied;
+	nfsstat4 cos_status;
+	uint8_t cos_complete; /* atomic via abstract_atomic.h */
+	uint8_t cos_cancelled; /* atomic via abstract_atomic.h */
+
+	/* When the copy was created, elapsed time by OFFLOAD_STATUS */
+	nfstime4 cos_start_time; /* immutable after create */
+
+	/*
+	 * Destination file handle for CB_OFFLOAD coa_fh (RFC 7862 16.1.1).
+	 *
+	 * CB_OFFLOAD4args MUST carry the destination NFS4 file handle as its
+	 * FIRST field before coa_stateid.  We capture data->currentFH at
+	 * create time (current FH == destination during COPY processing).
+	 * Freed in copy_offload_state_free().
+	 */
+	nfs_fh4 cos_dst_fh;
+
+	/*
+	 * CB_OFFLOAD retry support (RFC 7862 15.9.3).
+	 */
+	uint64_t cos_cb_bytes_copied;
+	fsal_status_t cos_cb_fsal_status;
+	verifier4 cos_cb_write_verifier;
+	uint8_t cos_cb_retry_count; /* incremented on each retry */
+};
+
 #ifdef DEBUG_SAL
 extern struct glist_head state_v4_all;
 extern struct glist_head state_owners_all;

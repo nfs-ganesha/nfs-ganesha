@@ -800,6 +800,13 @@ static struct config_item version4_params[] = {
 		       max_alive_time_for_expired_client),
 	CONF_ITEM_BOOL("Blocking_Locks", true, nfs_version4_parameter,
 		       allow_blocking_locks),
+	CONF_ITEM_BOOL("Copy_Offload", true, nfs_version4_parameter,
+		       allow_copy_offload),
+	CONF_ITEM_UI64("Copy_Offload_Chunk_Size", 1ULL * 1024 * 1024,
+		       UINT64_MAX, 64ULL * 1024 * 1024, nfs_version4_parameter,
+		       copy_offload_chunk_size),
+	CONF_ITEM_UI32("Max_Copy_Workers", 1, 256, 8, nfs_version4_parameter,
+		       max_copy_workers),
 	CONFIG_EOL
 };
 

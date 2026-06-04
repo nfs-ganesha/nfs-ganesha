@@ -659,6 +659,16 @@ Blocking_Locks(bool, default true)
     due to a conflict, the server will return NFS4ERR_DENIED instead of
     blocking the request and waiting for the lock to become available.
 
+Copy_Offload(bool, default true)
+    Flag decides to allows server copy offload operation or not.
+
+Copy_Offload_Chunk_Size(uint64, range 1048576 to UINT64_MAX, default 67108864)
+    Chunk Size by which worker copies the data.
+
+Max_Copy_Workers(uint32, range 1 to 256, default 8)
+    Maximum number of worker threads in the xcopy fridge pool.
+    Each thread handles one in-flight copy at a time.
+
 RADOS_KV {}
 --------------------------------------------------------------------------------
 

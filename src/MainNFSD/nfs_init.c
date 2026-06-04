@@ -1033,6 +1033,16 @@ static void nfs_Start_threads(void)
 	}
 	LogEvent(COMPONENT_THREAD, "General fridge was started successfully");
 
+	/* Starting the dedicated COPY offload fridge (xcopyN threads) */
+	if (nfs_param.nfsv4_param.allow_copy_offload) {
+		rc = nfs4_copy_fridge_init();
+		if (rc != 0) {
+			LogFatal(COMPONENT_THREAD,
+				 "COPY create fridger, failed = %d (%s)", rc,
+				 strerror(rc));
+		}
+	}
+
 	PTHREAD_ATTR_destroy(&attr_thr);
 }
 

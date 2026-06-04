@@ -169,6 +169,8 @@ const char *str_state_type(state_t *state)
 		return "NLM_SHARE";
 	case STATE_TYPE_9P_FID:
 		return "9P_FID";
+	case STATE_TYPE_COPY_OFFLOAD:
+		return "NFS4_COPY_OFFLOAD";
 	default:
 		return "UNKNOWN";
 	}
