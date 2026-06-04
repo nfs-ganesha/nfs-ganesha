@@ -8326,6 +8326,43 @@ static inline bool xdr_COPY4res(XDR *xdrs, COPY4res *objp)
 	return true;
 }
 
+static inline bool xdr_OFFLOAD_STATUS4args(XDR *xdrs, OFFLOAD_STATUS4args *objp)
+{
+	if (!xdr_stateid4(xdrs, &objp->osa_stateid))
+		return false;
+	return true;
+}
+
+static inline bool xdr_OFFLOAD_STATUS4resok(XDR *xdrs,
+					    OFFLOAD_STATUS4resok *objp)
+{
+	if (!xdr_length4(xdrs, &objp->osr_bytes_copied))
+		return false;
+	if (!xdr_count4(xdrs, &objp->osr_count_complete))
+		return false;
+	if (objp->osr_count_complete > 1)
+		return false;
+	if (objp->osr_count_complete == 1)
+		if (!xdr_nfsstat4(xdrs, &objp->osr_complete))
+			return false;
+	return true;
+}
+
+static inline bool xdr_OFFLOAD_STATUS4res(XDR *xdrs, OFFLOAD_STATUS4res *objp)
+{
+	if (!xdr_nfsstat4(xdrs, &objp->osr_status))
+		return false;
+	switch (objp->osr_status) {
+	case NFS4_OK:
+		if (!xdr_OFFLOAD_STATUS4resok(
+			    xdrs, &objp->OFFLOAD_STATUS4res_u.osr_resok4))
+			return false;
+		break;
+	default:
+		break;
+	}
+	return true;
+}
 static inline bool xdr_CB_OFFLOAD4args(XDR *xdrs, CB_OFFLOAD4args *objp)
 {
 	/* RFC 7862 Sec.16.1.1: coa_fh MUST be encoded first */
@@ -8677,9 +8714,13 @@ static inline bool xdr_nfs_argop4(XDR *xdrs, nfs_argop4 *objp)
 			return false;
 		lkhd->flags |= NFS_LOOKAHEAD_WRITE;
 		break;
-	case NFS4_OP_COPY_NOTIFY:
-	case NFS4_OP_OFFLOAD_CANCEL:
 	case NFS4_OP_OFFLOAD_STATUS:
+		if (!xdr_OFFLOAD_STATUS4args(
+			    xdrs, &objp->nfs_argop4_u.opoffload_status))
+			return false;
+		break;
+	case NFS4_OP_OFFLOAD_CANCEL:
+	case NFS4_OP_COPY_NOTIFY:
 	case NFS4_OP_CLONE:
 		break;
 
@@ -9006,9 +9047,13 @@ static inline bool xdr_nfs_resop4(XDR *xdrs, nfs_resop4 *objp)
 		if (!xdr_COPY4res(xdrs, &objp->nfs_resop4_u.opcopy))
 			return false;
 		break;
+	case NFS4_OP_OFFLOAD_STATUS:
+		if (!xdr_OFFLOAD_STATUS4res(
+			    xdrs, &objp->nfs_resop4_u.opoffload_status))
+			return false;
+		break;
 	case NFS4_OP_COPY_NOTIFY:
 	case NFS4_OP_OFFLOAD_CANCEL:
-	case NFS4_OP_OFFLOAD_STATUS:
 	case NFS4_OP_CLONE:
 
 	/* NFSv4.3 */
