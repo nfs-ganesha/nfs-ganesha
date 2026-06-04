@@ -3303,8 +3303,6 @@ again:
 		status = entry->obj_handle.obj_ops->getattrs(&entry->obj_handle,
 							     &attrs);
 		if (FSAL_IS_ERROR(status)) {
-			mdcache_lru_unref_chunk(chunk);
-
 			LogFullDebugAlt(COMPONENT_NFS_READDIR,
 					COMPONENT_MDCACHE,
 					"getattrs failed status=%s",
@@ -3323,6 +3321,8 @@ again:
 					     "Skip stale entry & status reset");
 				goto skip;
 			}
+
+			mdcache_lru_unref_chunk(chunk);
 			PTHREAD_RWLOCK_unlock(&directory->content_lock);
 			return status;
 		}
