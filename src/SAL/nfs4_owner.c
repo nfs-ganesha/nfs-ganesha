@@ -472,15 +472,38 @@ state_owner_t *create_nfs4_owner(state_nfs4_owner_name_t *name,
 			display_owner(&dspbuf1, related_owner);
 			display_owner(&dspbuf2, owner);
 
-			LogCrit(COMPONENT_STATE,
-				"Related {%s} doesn't match for {%s}", str1,
-				str2);
-			PTHREAD_MUTEX_unlock(&owner->so_mutex);
+			if (!glist_empty(&owner->so_lock_list)) {
+				/*
+				 * Genuine conflict: zombie holds active POSIX
+				 * locks, so it is not safe to re-associate
+				 * the open owner.
+				 */
+				LogCrit(COMPONENT_STATE,
+					"Related {%s} doesn't match for {%s}",
+					str1, str2);
+				PTHREAD_MUTEX_unlock(&owner->so_mutex);
+				dec_state_owner_ref(owner);
+				return NULL;
+			}
 
-			/* Release the reference to the owner. */
-			dec_state_owner_ref(owner);
+			/*
+			 * The existing lock owner is a zombie: it has no
+			 * active POSIX locks but its so_related_owner points
+			 * to a stale open owner.  This happens when the
+			 * kernel NFS client recycles a lock-owner ID after
+			 * a crash/expiry (IDA-based ID wrap-around).
+			 * Recover gracefully by re-associating the lock owner
+			 * with the new open owner instead of failing.
+			 */
+			LogInfo(COMPONENT_STATE,
+				"Zombie lock owner detected: related owner mismatch for {%s} (new: {%s}), recovering by re-associating open owner",
+				str2, str1);
 
-			return NULL;
+			dec_state_owner_ref(
+				owner->so_owner.so_nfs4_owner.so_related_owner);
+			inc_state_owner_ref(related_owner);
+			owner->so_owner.so_nfs4_owner.so_related_owner =
+				related_owner;
 		}
 		PTHREAD_MUTEX_unlock(&owner->so_mutex);
 	}
