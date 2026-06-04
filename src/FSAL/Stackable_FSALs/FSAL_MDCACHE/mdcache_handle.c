@@ -1645,8 +1645,12 @@ fsal_status_t mdcache_lookup_path(struct fsal_export *exp_hdl, const char *path,
 		LogFullDebug(COMPONENT_MDCACHE,
 			     "lookup_path Created entry %p FSAL %s", new_entry,
 			     new_entry->sub_handle->fsal->name);
-		/* Make sure this entry has a parent pointer */
-		mdc_get_parent(export, new_entry, NULL);
+		/* Make sure this entry has a parent pointer.
+		 * Skip background parent warmup if parent caching is disabled.
+		 */
+		if (op_ctx->fsal_export->exp_ops.fs_expiretimeparent(
+			    op_ctx->fsal_export) > 0)
+			mdc_get_parent(export, new_entry, NULL);
 
 		*handle = &new_entry->obj_handle;
 	}
@@ -1690,8 +1694,11 @@ fsal_status_t mdcache_create_handle(struct fsal_export *exp_hdl,
 	/* Make sure directory entries have a parent pointer.
 	 * Skip for non-directory entries to avoid unnecessary
 	 * write lock acquisition on content_lock.
+	 * Skip background parent warmup if parent caching is disabled.
 	 */
-	if (entry->obj_handle.type == DIRECTORY)
+	if (entry->obj_handle.type == DIRECTORY &&
+	    op_ctx->fsal_export->exp_ops.fs_expiretimeparent(
+		    op_ctx->fsal_export) > 0)
 		mdc_get_parent(export, entry, NULL);
 
 	if (attrs_out != NULL) {
