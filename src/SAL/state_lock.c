@@ -3627,6 +3627,7 @@ void state_nfs4_owner_unlock_all(state_owner_t *owner)
 			/* Entry and/or export is dying, skip this state,
 			 * it will be cleaned up soon enough.
 			 */
+			dec_state_t_ref(state);
 			continue;
 		}
 
