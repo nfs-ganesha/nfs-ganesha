@@ -769,12 +769,19 @@ static inline uint64_t copy_job_total(struct copy_job *job)
 /**
  * @brief cancellation check applicable as below.
  * sync : Server shutdown.
- * Async: Server shutdown, Lease expiry.
+ * Async: Server shutdown, Lease expiry, offload_cancel.
  *
+ * return : bool, should continue or not.
  */
 static inline bool copy_should_continue(bool is_async,
 					struct copy_offload_state *cos)
 {
+	if (is_async && atomic_fetch_uint8_t((uint8_t *)&cos->cos_cancelled)) {
+		LogDebug(COMPONENT_NFS_V4,
+			 "COPY worker stopping OFFLOAD_CANCEL received");
+		return false;
+	}
+
 	if (atomic_fetch_uint8_t(&copy_fridge_stopping)) {
 		LogEvent(COMPONENT_THREAD,
 			 "COPY worker stopping: server shutdown in progress");
@@ -804,6 +811,7 @@ static inline void copy_async_update_progress(uint64_t bytes_copied,
  *
  * @param[in]  job     Unified copy job (read-only execution fields)
  * @param[out] result  Filled with timing and copy outcome
+ *
  */
 static void copy_do_work(struct copy_job *job, struct copy_work_result *result)
 {
@@ -959,7 +967,7 @@ static void copy_complete_sync(struct copy_job *job,
  */
 static void copy_async_finalize(struct copy_offload_state *cos,
 				const struct copy_work_result *wr,
-				verifier4 write_verifier)
+				bool client_cancelled, verifier4 write_verifier)
 {
 	if (!FSAL_IS_ERROR(wr->st)) {
 		struct gsh_buffdesc verf_desc = {
@@ -971,8 +979,9 @@ static void copy_async_finalize(struct copy_offload_state *cos,
 			op_ctx->fsal_export, &verf_desc);
 	}
 
-	cos->cos_status = FSAL_IS_ERROR(wr->st) ? nfs4_Errno_status(wr->st)
-						: NFS4_OK;
+	cos->cos_status = (FSAL_IS_ERROR(wr->st) && !client_cancelled)
+				  ? nfs4_Errno_status(wr->st)
+				  : NFS4_OK;
 	atomic_store_uint64_t(&cos->cos_bytes_copied, wr->bytes_copied);
 	atomic_store_uint8_t(&cos->cos_complete, 1);
 
@@ -993,13 +1002,19 @@ static void copy_complete_async(struct copy_job *job,
 {
 	struct copy_offload_state *cos = job->job_cos;
 	verifier4 write_verifier;
+	bool client_cancelled = atomic_fetch_uint8_t(&cos->cos_cancelled);
 
 	memset(write_verifier, 0, sizeof(write_verifier));
 
-	copy_async_finalize(cos, wr, write_verifier);
+	copy_async_finalize(cos, wr, client_cancelled, write_verifier);
 
 	copy_worker_teardown(job);
 	gsh_free(job);
+	/* on client initiated cancel, no need of callback to client */
+	if (client_cancelled) {
+		destroy_copy_offload_state(cos);
+		return;
+	}
 
 	nfs4_copy_send_cb_offload(cos, wr->bytes_copied, wr->st,
 				  write_verifier);

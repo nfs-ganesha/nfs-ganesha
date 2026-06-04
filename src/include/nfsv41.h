@@ -2731,21 +2731,6 @@ struct COPY_NOTIFY4res {
 };
 typedef struct COPY_NOTIFY4res COPY_NOTIFY4res;
 
-struct OFFLOAD_REVOKE4args {
-	netloc_type4 ora_type;
-	union {
-		utf8str_cis ora_name;
-		utf8str_cis ora_url;
-		netaddr4 ora_addr;
-	};
-};
-typedef struct OFFLOAD_REVOKE4args OFFLOAD_REVOKE4args;
-
-struct OFFLOAD_REVOKE4res {
-	netloc_type4 orr_type;
-};
-typedef struct OFFLOAD_REVOKE4res OFFLOAD_REVOKE4res;
-
 struct COPY4args {
 	/* SAVED_FH:   source file      */
 	/* CURRENT_FH: destination file */
@@ -2784,15 +2769,16 @@ struct COPY4res {
 };
 typedef struct COPY4res COPY4res;
 
-struct OFFLOAD_ABORT4args {
-	stateid4 oaa_stateid;
+/* OFFLOAD_CANCEL (RFC 7862 Sec.15.8) */
+struct OFFLOAD_CANCEL4args {
+	stateid4 oca_stateid; /* copy stateid to cancel */
 };
-typedef struct OFFLOAD_ABORT4args OFFLOAD_ABORT4args;
+typedef struct OFFLOAD_CANCEL4args OFFLOAD_CANCEL4args;
 
-struct OFFLOAD_ABORT4res {
-	stateid4 oar_stateid;
+struct OFFLOAD_CANCEL4res {
+	nfsstat4 ocr_status; /* RFC: bare nfsstat4 */
 };
-typedef struct OFFLOAD_ABORT4res OFFLOAD_ABORT4res;
+typedef struct OFFLOAD_CANCEL4res OFFLOAD_CANCEL4res;
 
 struct OFFLOAD_STATUS4args {
 	stateid4 osa_stateid;
@@ -3327,9 +3313,8 @@ struct nfs_argop4 {
 
 		/* NFSv4.2 */
 		COPY_NOTIFY4args opoffload_notify;
-		OFFLOAD_REVOKE4args opcopy_revoke;
 		COPY4args opcopy;
-		OFFLOAD_ABORT4args opoffload_abort;
+		OFFLOAD_CANCEL4args opoffload_cancel;
 		OFFLOAD_STATUS4args opoffload_status;
 		WRITE_SAME4args opwrite_same;
 		ALLOCATE4args opallocate;
@@ -3412,9 +3397,8 @@ struct nfs_resop4 {
 
 		/* NFSv4.2 */
 		COPY_NOTIFY4res opoffload_notify;
-		OFFLOAD_REVOKE4res opcopy_revoke;
 		COPY4res opcopy;
-		OFFLOAD_ABORT4res opoffload_abort;
+		OFFLOAD_CANCEL4res opoffload_cancel;
 		OFFLOAD_STATUS4res opoffload_status;
 		WRITE_SAME4res opwrite_same;
 		ALLOCATE4res opallocate;
@@ -8326,6 +8310,20 @@ static inline bool xdr_COPY4res(XDR *xdrs, COPY4res *objp)
 	return true;
 }
 
+static inline bool xdr_OFFLOAD_CANCEL4args(XDR *xdrs, OFFLOAD_CANCEL4args *objp)
+{
+	if (!xdr_stateid4(xdrs, &objp->oca_stateid))
+		return false;
+	return true;
+}
+
+static inline bool xdr_OFFLOAD_CANCEL4res(XDR *xdrs, OFFLOAD_CANCEL4res *objp)
+{
+	if (!xdr_nfsstat4(xdrs, &objp->ocr_status))
+		return false;
+	return true;
+}
+
 static inline bool xdr_OFFLOAD_STATUS4args(XDR *xdrs, OFFLOAD_STATUS4args *objp)
 {
 	if (!xdr_stateid4(xdrs, &objp->osa_stateid))
@@ -8714,12 +8712,16 @@ static inline bool xdr_nfs_argop4(XDR *xdrs, nfs_argop4 *objp)
 			return false;
 		lkhd->flags |= NFS_LOOKAHEAD_WRITE;
 		break;
+	case NFS4_OP_OFFLOAD_CANCEL:
+		if (!xdr_OFFLOAD_CANCEL4args(
+			    xdrs, &objp->nfs_argop4_u.opoffload_cancel))
+			return false;
+		break;
 	case NFS4_OP_OFFLOAD_STATUS:
 		if (!xdr_OFFLOAD_STATUS4args(
 			    xdrs, &objp->nfs_argop4_u.opoffload_status))
 			return false;
 		break;
-	case NFS4_OP_OFFLOAD_CANCEL:
 	case NFS4_OP_COPY_NOTIFY:
 	case NFS4_OP_CLONE:
 		break;
@@ -9047,13 +9049,17 @@ static inline bool xdr_nfs_resop4(XDR *xdrs, nfs_resop4 *objp)
 		if (!xdr_COPY4res(xdrs, &objp->nfs_resop4_u.opcopy))
 			return false;
 		break;
+	case NFS4_OP_OFFLOAD_CANCEL:
+		if (!xdr_OFFLOAD_CANCEL4res(
+			    xdrs, &objp->nfs_resop4_u.opoffload_cancel))
+			return false;
+		break;
 	case NFS4_OP_OFFLOAD_STATUS:
 		if (!xdr_OFFLOAD_STATUS4res(
 			    xdrs, &objp->nfs_resop4_u.opoffload_status))
 			return false;
 		break;
 	case NFS4_OP_COPY_NOTIFY:
-	case NFS4_OP_OFFLOAD_CANCEL:
 	case NFS4_OP_CLONE:
 
 	/* NFSv4.3 */
