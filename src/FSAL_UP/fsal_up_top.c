@@ -64,60 +64,6 @@ static int schedule_delegrevoke_check(struct delegrecall_context *ctx,
 static int schedule_delegrecall_task(struct delegrecall_context *ctx,
 				     uint32_t delay);
 
-/** Check whether delegation recall should be skipped for lock-only activity
- *  from the same client.
- *
- * When a backend recalls a delegation while the same NFSv4 client is only
- * transitioning local lock/open state, recalling at NFS layer is noisy and
- * can perturb lock-stateid based I/O ordering. If every active lock on the
- * file belongs to that same client, this helper returns true so caller can
- * skip issuing CB_RECALL.
- *
- * @note st_lock must be held by caller.
- *
- * @param[in] obj         File object being considered for delegation recall
- * @param[in] deleg_clid  Client that currently owns the delegation
- *
- * @retval true  All active locks belong to the same delegation client
- * @retval false Otherwise
- *
- */
-static bool delegrecall_skip_for_same_client_locks(struct fsal_obj_handle *obj,
-						   nfs_client_id_t *deleg_clid)
-{
-	struct glist_head *glist;
-	state_lock_entry_t *lock_entry;
-	bool saw_lock = false;
-
-	if (obj == NULL || obj->type != REGULAR_FILE || deleg_clid == NULL)
-		return false;
-
-	glist_for_each(glist, &obj->state_hdl->file.lock_list) {
-		state_owner_t *lock_owner;
-		nfs_client_id_t *lock_clid;
-
-		lock_entry = glist_entry(glist, state_lock_entry_t, sle_list);
-		if (lock_entry->sle_lock.lock_type == FSAL_NO_LOCK)
-			continue;
-
-		saw_lock = true;
-		lock_owner = lock_entry->sle_owner;
-		if (lock_owner == NULL)
-			return false;
-
-		if (lock_owner->so_type != STATE_LOCK_OWNER_NFSV4 &&
-		    lock_owner->so_type != STATE_OPEN_OWNER_NFSV4)
-			return false;
-
-		lock_clid = lock_owner->so_owner.so_nfs4_owner.so_clientrec;
-		if (lock_clid == NULL ||
-		    lock_clid->cid_clientid != deleg_clid->cid_clientid)
-			return false;
-	}
-
-	return saw_lock;
-}
-
 /** Invalidate some or all of a cache entry and close if open
  *
  * This version should NOT be used if an FSAL supports extended
@@ -1557,10 +1503,12 @@ state_status_t delegrecall_impl_per_state(struct fsal_obj_handle *obj,
 	}
 
 	/* Backend upcalls may request recall during local lock/open-mode
-	 * transitions for the same client. In that case, keep delegation
-	 * granted and avoid issuing CB_RECALL.
+	 * transitions for the same client. lock_clientid_hint (maintained in
+	 * state_lock.c) records whether all active locks belong to one client;
+	 * skip recall when that client is the delegation holder.
 	 */
-	if (delegrecall_skip_for_same_client_locks(obj, client_id)) {
+	if (obj->state_hdl->file.lock_clientid_hint ==
+	    client_id->cid_clientid) {
 		LogDebug(
 			COMPONENT_FSAL_UP,
 			"Skipping delegrecall for obj=%p fileid=%" PRIu64

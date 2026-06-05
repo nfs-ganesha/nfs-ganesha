@@ -691,6 +691,121 @@ void lock_entry_dec_ref(state_lock_entry_t *lock_entry)
 }
 
 /**
+ * @brief Extract NFSv4 clientid from a lock entry owner.
+ *
+ * @param[in]  lock_entry Lock entry
+ * @param[out] cid_out     Clientid if extractable
+ *
+ * @retval true  Owner is NFSv4 open/lock owner with client record
+ * @retval false Otherwise
+ */
+static bool lock_entry_get_nfs4_clientid(state_lock_entry_t *lock_entry,
+					 clientid4 *cid_out)
+{
+	state_owner_t *owner;
+
+	if (lock_entry == NULL || cid_out == NULL)
+		return false;
+
+	owner = lock_entry->sle_owner;
+	if (owner == NULL)
+		return false;
+
+	if (owner->so_type != STATE_LOCK_OWNER_NFSV4 &&
+	    owner->so_type != STATE_OPEN_OWNER_NFSV4)
+		return false;
+
+	if (owner->so_owner.so_nfs4_owner.so_clientrec == NULL)
+		return false;
+
+	*cid_out = owner->so_owner.so_nfs4_owner.so_clientrec->cid_clientid;
+	return true;
+}
+
+/**
+ * @brief Update per-file lock clientid hint when a lock is added.
+ *
+ * @note st_lock must be held by caller.
+ *
+ * @param[in] file       Per-file state
+ * @param[in] lock_entry Lock being inserted
+ */
+static void state_file_lock_clientid_note_add(struct state_file *file,
+					      state_lock_entry_t *lock_entry)
+{
+	clientid4 cid = 0;
+	clientid4 hint;
+
+	if (lock_entry->sle_lock.lock_type == FSAL_NO_LOCK)
+		return;
+
+	hint = file->lock_clientid_hint;
+
+	/* Sticky mixed: once multiple clients seen, stay mixed until empty */
+	if (hint == LOCK_CLIENTID_HINT_MIXED)
+		return;
+
+	/* Non-NFSv4 or unknown owner: treat as mixed */
+	if (!lock_entry_get_nfs4_clientid(lock_entry, &cid)) {
+		file->lock_clientid_hint = LOCK_CLIENTID_HINT_MIXED;
+		return;
+	}
+
+	/* First lock on file records its clientid */
+	if (hint == 0) {
+		file->lock_clientid_hint = cid;
+		return;
+	}
+
+	/* Different clientid marks the file as mixed */
+	if (hint != cid)
+		file->lock_clientid_hint = LOCK_CLIENTID_HINT_MIXED;
+}
+
+/**
+ * @brief Clear per-file lock clientid hint when lock list becomes empty.
+ *
+ * @note st_lock must be held by caller.
+ *
+ * @param[in] file Per-file state
+ */
+static inline void state_file_lock_clientid_note_empty(struct state_file *file)
+{
+	file->lock_clientid_hint = 0;
+}
+
+/**
+ * @brief Insert a lock on the file lock list and update clientid hint.
+ *
+ * @note st_lock must be held by caller.
+ *
+ * @param[in] file       Per-file state
+ * @param[in] lock_entry Lock to insert
+ */
+static inline void add_lock_to_file_list(struct state_file *file,
+					 state_lock_entry_t *lock_entry)
+{
+	glist_add_tail(&file->lock_list, &lock_entry->sle_list);
+	state_file_lock_clientid_note_add(file, lock_entry);
+}
+
+/**
+ * @brief Remove a lock from the file lock list and update clientid hint.
+ *
+ * @note st_lock must be held by caller.
+ *
+ * @param[in] file       Per-file state
+ * @param[in] lock_entry Lock to remove
+ */
+static inline void remove_lock_from_file_list(struct state_file *file,
+					      state_lock_entry_t *lock_entry)
+{
+	glist_del(&lock_entry->sle_list);
+	if (glist_empty(&file->lock_list))
+		state_file_lock_clientid_note_empty(file);
+}
+
+/**
  * @brief Remove an entry from the lock lists
  *
  * @param[in,out] lock_entry Entry to remove
@@ -749,7 +864,8 @@ static void remove_from_locklist(state_lock_entry_t *lock_entry)
 		lock_entry->sle_blocked = STATE_CANCELED;
 	}
 
-	glist_del(&lock_entry->sle_list);
+	remove_lock_from_file_list(&lock_entry->sle_obj->state_hdl->file,
+				   lock_entry);
 	lock_entry_dec_ref(lock_entry);
 }
 
@@ -893,8 +1009,8 @@ static void merge_lock_entry(struct state_hdl *ostate,
 				/* Need to split old lock */
 				check_entry_right =
 					state_lock_entry_t_dup(check_entry);
-				glist_add_tail(&ostate->file.lock_list,
-					       &(check_entry_right->sle_list));
+				add_lock_to_file_list(&ostate->file,
+						      check_entry_right);
 			} else {
 				/* No split, just shrink, make the logic below
 				 * work on original lock
@@ -2956,8 +3072,7 @@ recheck_for_conflicting_entries:
 		/* Insert entry into lock list */
 		LogEntry("New lock", new_entry);
 
-		glist_add_tail(&obj->state_hdl->file.lock_list,
-			       &new_entry->sle_list);
+		add_lock_to_file_list(&obj->state_hdl->file, new_entry);
 
 		/* A lock downgrade could unblock blocked locks */
 		grant_blocked_locks(obj->state_hdl);
@@ -2997,8 +3112,7 @@ recheck_for_conflicting_entries:
 		/* Insert entry into lock list */
 		LogEntry("FSAL block for", new_entry);
 
-		glist_add_tail(&obj->state_hdl->file.lock_list,
-			       &new_entry->sle_list);
+		add_lock_to_file_list(&obj->state_hdl->file, new_entry);
 
 		PTHREAD_MUTEX_lock(&blocked_locks_mutex);
 
@@ -4063,10 +4177,10 @@ void available_blocked_lock_upcall(struct fsal_obj_handle *obj, void *owner,
  */
 void state_lock_wipe(struct state_hdl *hstate)
 {
-	if (glist_empty(&hstate->file.lock_list))
-		return;
+	if (!glist_empty(&hstate->file.lock_list))
+		free_list(&hstate->file.lock_list);
 
-	free_list(&hstate->file.lock_list);
+	state_file_lock_clientid_note_empty(&hstate->file);
 }
 
 void cancel_all_nlm_blocked(void)

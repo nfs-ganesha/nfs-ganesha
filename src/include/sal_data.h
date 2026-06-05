@@ -1054,6 +1054,9 @@ struct cbgetattr_rsp {
 };
 typedef struct cbgetattr_rsp cbgetattr_t;
 
+/** Per-file lock clientid hint: multiple or unknown clients seen */
+#define LOCK_CLIENTID_HINT_MIXED ((clientid4)UINT64_MAX)
+
 /**
  * @brief Per-file state lists
  *
@@ -1070,6 +1073,13 @@ struct state_file {
 	struct glist_head lock_list;
 	/** Pointers for NLM share list. Protected by st_lock */
 	struct glist_head nlm_share_list;
+	/**
+	 * Hint of NFSv4 lock clientids on this file. Protected by st_lock.
+	 * 0                        -> no active hint / no locks
+	 * LOCK_CLIENTID_HINT_MIXED -> locks from multiple or unknown clients
+	 * other value              -> single NFSv4 lock client
+	 */
+	clientid4 lock_clientid_hint;
 	/** true iff write delegated. Protected by st_lock */
 	bool write_delegated;
 	/** client holding write_deleg. Protected by st_lock */

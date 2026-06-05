@@ -160,6 +160,7 @@ static inline void state_hdl_init(struct state_hdl *ostate,
 		glist_init(&ostate->file.layoutrecall_list);
 		glist_init(&ostate->file.lock_list);
 		glist_init(&ostate->file.nlm_share_list);
+		ostate->file.lock_clientid_hint = 0;
 		ostate->file.obj = obj;
 		break;
 	case DIRECTORY:
