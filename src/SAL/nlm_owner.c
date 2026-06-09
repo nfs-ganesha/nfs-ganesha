@@ -1070,9 +1070,19 @@ void free_nlm_client(state_nlm_client_t *client)
 
 	gsh_free(client->slc_nlm_caller_name);
 
-	/* free the callback client */
-	if (client->slc_callback_clnt != NULL)
+	/* Free the callback client.
+	 * For TCP callback clients created through libtirpc VC transports,
+	 * request that libtirpc close the underlying socket as part of
+	 * CLNT_DESTROY(). This avoids leaving sockets in CLOSE_WAIT while
+	 * also preserving single ownership of the fd inside libtirpc.
+	 */
+	if (client->slc_callback_clnt != NULL) {
+		if (client->slc_client_type == XPRT_TCP)
+			(void)clnt_control(client->slc_callback_clnt,
+					   CLSET_FD_CLOSE, NULL);
+		/* Now destroy the RPC client structure */
 		CLNT_DESTROY(client->slc_callback_clnt);
+	}
 
 	gsh_free(client);
 }
