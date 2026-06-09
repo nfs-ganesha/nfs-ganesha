@@ -250,6 +250,7 @@ typedef struct rpc_call_channel {
 	} source;
 	time_t last_called;
 	CLIENT *clnt;
+	unsigned int auth_flavor;
 	AUTH *auth;
 #ifdef _HAVE_GSSAPI
 	struct rpc_gss_sec gss_sec;

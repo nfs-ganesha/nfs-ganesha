@@ -639,6 +639,8 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 	}
 
 	/* channel protection */
+	chan->auth_flavor = clientid->cid_credential.flavor;
+
 	switch (clientid->cid_credential.flavor) {
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
@@ -662,7 +664,10 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 
 		LogDebug(COMPONENT_NFS_CB, "%s", err);
 		gsh_free(err);
-		AUTH_DESTROY(chan->auth);
+
+		if (chan->auth_flavor != AUTH_NONE)
+			AUTH_DESTROY(chan->auth);
+
 		chan->auth = NULL;
 		CLNT_DESTROY(chan->clnt);
 		chan->clnt = NULL;
@@ -684,7 +689,8 @@ void nfs_rpc_destroy_chan_no_lock(rpc_call_channel_t *chan)
 
 	/* clean up auth, if any */
 	if (chan->auth) {
-		AUTH_DESTROY(chan->auth);
+		if (chan->auth_flavor != AUTH_NONE)
+			AUTH_DESTROY(chan->auth);
 		chan->auth = NULL;
 	}
 
@@ -867,7 +873,8 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 
 		LogDebug(COMPONENT_NFS_CB, "%s", err);
 		gsh_free(err);
-		AUTH_DESTROY(chan->auth);
+		if (chan->auth_flavor != AUTH_NONE)
+			AUTH_DESTROY(chan->auth);
 		chan->auth = NULL;
 	}
 
