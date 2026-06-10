@@ -375,6 +375,119 @@ def exit_option_not_supported(action):
     """Exit with error, indicating that option is not supported for action."""
     sys.exit(f'"{prog} {action} {sys.argv[2]}" is not supported')
 
+
+def _parse_cond_config_flags(args):
+    """Parse flag-style arguments for set log conditional_config.
+
+    Returns (comp_level_pairs, clients, export_ids, policy, error).
+      comp_level_pairs : list of ([component, ...], level_str) tuples
+      clients          : list of IP/CIDR strings
+      export_ids       : list of export-ID strings
+      policy           : policy string or None
+      error            : error message string, or None on success
+    """
+    comp_level_pairs = []
+    clients = []
+    export_ids = []
+    policy = None
+    pending_components = None
+    i = 0
+    while i < len(args):
+        flag = args[i]
+        if flag == '--components':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--components requires a value"
+            if pending_components is not None:
+                return None, None, None, None, \
+                    "--components given without a following --level for the previous group"
+            pending_components = [c.strip() for c in args[i + 1].split(',')
+                                  if c.strip()]
+            i += 2
+        elif flag == '--level':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--level requires a value"
+            if pending_components is None:
+                return None, None, None, None, \
+                    "--level given without a preceding --components"
+            comp_level_pairs.append((pending_components, args[i + 1].strip()))
+            pending_components = None
+            i += 2
+        elif flag == '--clients':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--clients requires a value"
+            clients = [c.strip() for c in args[i + 1].split(',') if c.strip()]
+            i += 2
+        elif flag == '--export-ids':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--export-ids requires a value"
+            export_ids = [e.strip() for e in args[i + 1].split(',')
+                          if e.strip()]
+            i += 2
+        elif flag == '--policy':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--policy requires a value"
+            policy = args[i + 1].strip()
+            i += 2
+        else:
+            return None, None, None, None, f"Unknown option: {flag}"
+    if pending_components is not None:
+        return None, None, None, None, \
+            "--components given without a following --level"
+    return comp_level_pairs, clients, export_ids, policy, None
+
+
+def _parse_reset_flags(args):
+    """Parse flag-style arguments for reset log conditional_config.
+
+    Returns (components, clients, export_ids, reset_policy, error).
+      components   : list of component name strings (level always reset to default)
+      clients      : list of IP/CIDR strings to remove
+      export_ids   : list of export-ID strings to remove
+      reset_policy : True if --policy flag was given, False otherwise
+      error        : error message string, or None on success
+    """
+    components = []
+    clients = []
+    export_ids = []
+    reset_policy = False
+    i = 0
+    while i < len(args):
+        flag = args[i]
+        if flag == '--components':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--components requires a value"
+            components = [c.strip() for c in args[i + 1].split(',')
+                          if c.strip()]
+            i += 2
+        elif flag == '--clients':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--clients requires a value"
+            clients = [c.strip() for c in args[i + 1].split(',') if c.strip()]
+            i += 2
+        elif flag == '--export-ids':
+            if i + 1 >= len(args):
+                return None, None, None, None, "--export-ids requires a value"
+            export_ids = [e.strip() for e in args[i + 1].split(',')
+                          if e.strip()]
+            i += 2
+        elif flag == '--policy':
+            reset_policy = True
+            i += 1
+        else:
+            return None, None, None, None, f"Unknown option: {flag}"
+    return components, clients, export_ids, reset_policy, None
+
+
+def _normalize_cond_policy(policy_str):
+    """Normalise policy to MATCH_ANY or MATCH_ALL; return None if invalid."""
+    upper = policy_str.upper()
+    if upper in ('ANY', 'MATCH_ANY'):
+        return 'MATCH_ANY'
+    if upper in ('ALL', 'MATCH_ALL'):
+        return 'MATCH_ALL'
+    return None
+
+
 class ManageCondLogs():
 
     def __init__(self, parent=None):
@@ -466,6 +579,180 @@ class ManageCondLogs():
         status, errormsg = self.condlogmgr.ExportDisable(export_id)
         print("%s" % (errormsg))
 
+    # ------------------------------------------------------------------
+    # New composite commands
+    # ------------------------------------------------------------------
+
+    def set_conditional_config(self, raw_args):
+        """Handle: ganesha_mgr set log conditional_config [OPTIONS]"""
+        comp_level_pairs, clients, export_ids, policy, err = \
+            _parse_cond_config_flags(raw_args)
+        if err:
+            sys.exit(f"set log conditional_config: {err}")
+        if not comp_level_pairs and not clients and not export_ids \
+                and policy is None:
+            sys.exit("set log conditional_config requires at least one option. "
+                     f'Try "{prog} help" for more info')
+
+        failed = False
+
+        # 1. Component / level pairs (in order given)
+        for comps, level in comp_level_pairs:
+            for comp in comps:
+                status, msg = self.condlogmgr.Set(comp, level)
+                if status:
+                    print(f"  set {comp} = {level}: OK")
+                else:
+                    print(f"  set {comp} = {level}: FAILED ({msg})")
+                    failed = True
+
+        # 2. Clients
+        for client in clients:
+            status, msg = self.condlogmgr.ClientEnable(client)
+            if status:
+                print(f"  client {client}: OK")
+            else:
+                print(f"  client {client}: FAILED ({msg})")
+                failed = True
+
+        # 3. Export IDs
+        for eid in export_ids:
+            status, msg = self.condlogmgr.ExportEnable(eid)
+            if status:
+                print(f"  export-id {eid}: OK")
+            else:
+                print(f"  export-id {eid}: FAILED ({msg})")
+                failed = True
+
+        # 4. Policy
+        if policy is not None:
+            normalised = _normalize_cond_policy(policy)
+            if normalised is None:
+                print(f"  policy {policy}: FAILED (invalid value, "
+                      "use ANY/MATCH_ANY or ALL/MATCH_ALL)")
+                failed = True
+            else:
+                status, msg = self.condlogmgr.ChangeMatchPolicy(normalised)
+                if status:
+                    print(f"  policy {normalised}: OK")
+                else:
+                    print(f"  policy {normalised}: FAILED ({msg})")
+                    failed = True
+
+        if failed:
+            print("set log conditional_config: completed with errors (see above)")
+        else:
+            print("set log conditional_config: OK")
+
+    def show_conditional_config(self):
+        """Handle: ganesha_mgr show log conditional_config"""
+        print("Conditional Logging Configuration")
+        print("=" * 34)
+
+        # Clients
+        status, errormsg, clients = \
+            self.condlogmgr.ShowConditionalLogClientList()
+        if status:
+            count = len(clients)
+            print(f"\nClients ({count}):")
+            if count == 0:
+                print("  (none)")
+            else:
+                for client in clients:
+                    print(f"  {client}")
+        else:
+            print(f"\nClients: ERROR ({errormsg})")
+
+        # Exports
+        status, errormsg, export_ids = \
+            self.condlogmgr.ShowConditionalLogExportList()
+        if status:
+            count = len(export_ids)
+            print(f"\nExports ({count}):")
+            if count == 0:
+                print("  (none)")
+            else:
+                for eid in export_ids:
+                    print(f"  {eid}")
+        else:
+            print(f"\nExports: ERROR ({errormsg})")
+
+        # Match policy
+        status, errormsg = self.condlogmgr.ShowMatchPolicy()
+        if status:
+            # errormsg format: "Conditional logging current Match Policy: MATCH_ANY"
+            policy_name = errormsg.rsplit(': ', 1)[-1].strip()
+            print(f"\nMatch Policy : {policy_name}")
+        else:
+            print(f"\nMatch Policy : ERROR ({errormsg})")
+
+        # Component log levels
+        status, errormsg, prop_dict = self.condlogmgr.GetAll()
+        print("\nComponent Log Levels:")
+        if not status:
+            print(f"  ERROR ({errormsg})")
+        else:
+            for comp in sorted(prop_dict.keys()):
+                print(f"  {comp:<30} : {prop_dict[comp]}")
+
+    def reset_conditional_config(self, raw_args):
+        """Handle: ganesha_mgr reset log conditional_config [OPTIONS]"""
+        if not raw_args:
+            # Full atomic reset via the new D-Bus method
+            print("Resetting all conditional logging configuration to defaults")
+            status, errormsg = self.condlogmgr.Reset()
+            print(f"  {errormsg}")
+            return
+
+        components, clients, export_ids, reset_policy, err = \
+            _parse_reset_flags(raw_args)
+        if err:
+            sys.exit(f"reset log conditional_config: {err}")
+
+        failed = False
+        DEFAULT_COND_LEVEL = 'NIV_FULL_DEBUG'
+
+        # Components: reset each to NIV_FULL_DEBUG
+        for comp in components:
+            status, msg = self.condlogmgr.Set(comp, DEFAULT_COND_LEVEL)
+            if status:
+                print(f"  reset {comp} -> {DEFAULT_COND_LEVEL}: OK")
+            else:
+                print(f"  reset {comp} -> {DEFAULT_COND_LEVEL}: FAILED ({msg})")
+                failed = True
+
+        # Clients: remove each
+        for client in clients:
+            status, msg = self.condlogmgr.ClientDisable(client)
+            if status:
+                print(f"  remove client {client}: OK")
+            else:
+                print(f"  remove client {client}: FAILED ({msg})")
+                failed = True
+
+        # Export IDs: remove each
+        for eid in export_ids:
+            status, msg = self.condlogmgr.ExportDisable(eid)
+            if status:
+                print(f"  remove export-id {eid}: OK")
+            else:
+                print(f"  remove export-id {eid}: FAILED ({msg})")
+                failed = True
+
+        # Policy: reset to MATCH_ANY
+        if reset_policy:
+            status, msg = self.condlogmgr.ChangeMatchPolicy('MATCH_ANY')
+            if status:
+                print("  reset policy -> MATCH_ANY: OK")
+            else:
+                print(f"  reset policy -> MATCH_ANY: FAILED ({msg})")
+                failed = True
+
+        if failed:
+            print("reset log conditional_config: completed with errors (see above)")
+        else:
+            print("reset log conditional_config: OK")
+
 # Main
 if __name__ == '__main__':
     exportmgr = ShowExports()
@@ -540,6 +827,41 @@ COMMANDS
          Sets the given log level to the given component
       log conditional component level:
          Sets the given log level to the given conditional component
+      log conditional_config [OPTIONS]:
+         Composite command to configure conditional logging in a single call.
+         Options (all optional, at least one required):
+           --components <c1,c2,...> --level <LEVEL>
+              Set the conditional log level for the listed components.
+              Repeatable: each --components/--level pair is processed in order.
+              Component names may omit the COMPONENT_ prefix.
+           --clients <ip1,ip2,...>
+              Add IP/CIDR addresses to the conditional logging client list.
+           --export-ids <id1,id2,...>
+              Add export IDs to the conditional logging export list.
+           --policy <ANY|ALL|MATCH_ANY|MATCH_ALL>
+              Set the conditional logging match policy.
+         Example:
+           set log conditional_config --components "FSAL,DISPATCH" --level FULL_DEBUG \\
+             --components ALL --level EVENT --clients 10.0.0.1 --export-ids 1,2 --policy ANY
+   show:
+      log conditional_config:
+         Display full conditional logging configuration (clients, exports,
+         policy, and all component log levels).
+   reset:
+      log conditional_config [OPTIONS]:
+         With no options: atomically reset ALL conditional logging
+         configuration to defaults (clients cleared, exports cleared,
+         all component levels -> NIV_FULL_DEBUG, policy -> MATCH_ANY).
+         With options: selectively reset only the specified items.
+           --components <c1,c2,...>
+              Reset the listed components to NIV_FULL_DEBUG.
+           --clients <ip1,ip2,...>
+              Remove the listed clients from the conditional logging list.
+           --export-ids <id1,id2,...>
+              Remove the listed export IDs from the conditional logging list.
+           --policy
+              Reset the match policy to MATCH_ANY (boolean flag, no value).
+         Options may be combined.
    getall:
       logs: Prints all log components
    shutdown: Shuts down the ganesha nfs server
@@ -657,6 +979,10 @@ COMMANDS
             exit_try_help("show requires an option")
         if sys.argv[2] == "clients":
             clientmgr.showclients()
+        elif sys.argv[2] == "log":
+            if len(sys.argv) < 4 or sys.argv[3] != "conditional_config":
+                exit_try_help('show log requires "conditional_config"')
+            condlogmgr.show_conditional_config()
         elif sys.argv[2] == "version":
             ganesha.show_version()
         elif sys.argv[2] == "exports":
@@ -677,6 +1003,18 @@ COMMANDS
             condlogmgr.show_conditional_match_policy()
         else:
             exit_option_not_supported("show")
+
+    # reset
+    elif sys.argv[1] == "reset":
+        if len(sys.argv) < 4:
+            exit_try_help('reset requires "log conditional_config" [OPTIONS]')
+        if sys.argv[2] == "log":
+            if sys.argv[3] == "conditional_config":
+                condlogmgr.reset_conditional_config(sys.argv[4:])
+            else:
+                exit_option_not_supported("reset log")
+        else:
+            exit_option_not_supported("reset")
 
     # grace
     elif sys.argv[1] == "grace":
@@ -702,9 +1040,11 @@ COMMANDS
 
     # set
     elif sys.argv[1] == "set":
-        if len(sys.argv) < 5:
-            exit_try_help("set log requires a component and a log level")
+        if len(sys.argv) < 3:
+            exit_try_help("set requires log option")
         if sys.argv[2] == "log":
+            if len(sys.argv) < 4:
+                exit_try_help("set log requires a sub-command")
             if sys.argv[3] == "conditional":
                 if len(sys.argv) < 6:
                     msg = 'set log conditional requires '
@@ -712,7 +1052,11 @@ COMMANDS
                     msg += 'Try "ganesha_mgr.py help" for more info'
                     sys.exit(msg)
                 condlogmgr.set(sys.argv[4], sys.argv[5])
+            elif sys.argv[3] == "conditional_config":
+                condlogmgr.set_conditional_config(sys.argv[4:])
             else:
+                if len(sys.argv) < 5:
+                    exit_try_help("set log requires a component and a log level")
                 logmgr.set(sys.argv[3], sys.argv[4])
         else:
             exit_option_not_supported("set")

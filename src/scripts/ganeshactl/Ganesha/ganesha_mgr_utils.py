@@ -615,6 +615,20 @@ class CondLogManager():
 
         return True, "Done", level
 
+    def GetAll(self):
+        """Get all conditional log component levels via DBus Properties.GetAll."""
+        getall_method = self.dbusobj.get_dbus_method(
+            "GetAll", "org.freedesktop.DBus.Properties")
+        try:
+            dictionary = getall_method(COND_LOGGER_PROPS)
+        except dbus.exceptions.DBusException as ex:
+            return False, str(ex), {}
+
+        prop_dict = {}
+        for key in dictionary.keys():
+            prop_dict[key] = str(dictionary[key])
+        return True, "Done", prop_dict
+
     def Set(self, prop, setval):
         set_method = self.dbusobj.get_dbus_method("Set",
                                                   self.dbus_interface)
@@ -749,6 +763,19 @@ class CondLogManager():
             return False, str(ex)
 
         # Reply format: [status_bool, errormsg_str]
+        status = reply[0]
+        errormsg = reply[1]
+        return bool(status), errormsg
+
+    def Reset(self):
+        """Call ResetConditionalLogging on org.ganesha.nfsd.log.conditional."""
+        reset_method = self.dbusobj.get_dbus_method(
+            "ResetConditionalLogging", "org.ganesha.nfsd.log.conditional")
+        try:
+            reply = reset_method()
+        except dbus.exceptions.DBusException as ex:
+            return False, str(ex)
+
         status = reply[0]
         errormsg = reply[1]
         return bool(status), errormsg

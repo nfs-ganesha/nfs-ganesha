@@ -3694,6 +3694,9 @@ HANDLE_COND_LOG_PROP(FSAL_UP);
 HANDLE_COND_LOG_PROP(DBUS);
 HANDLE_COND_LOG_PROP(NFS_MSK);
 HANDLE_COND_LOG_PROP(XPRT);
+HANDLE_COND_LOG_PROP(QOS);
+HANDLE_COND_LOG_PROP(RECOVERY);
+HANDLE_COND_LOG_PROP(RDMA);
 
 static struct gsh_dbus_prop *cond_log_props[] = {
 	COND_LOG_PROPERTY_ITEM(ALL),
@@ -3733,8 +3736,15 @@ static struct gsh_dbus_prop *cond_log_props[] = {
 	COND_LOG_PROPERTY_ITEM(DBUS),
 	COND_LOG_PROPERTY_ITEM(NFS_MSK),
 	COND_LOG_PROPERTY_ITEM(XPRT),
+	COND_LOG_PROPERTY_ITEM(QOS),
+	COND_LOG_PROPERTY_ITEM(RECOVERY),
+	COND_LOG_PROPERTY_ITEM(RDMA),
 	NULL
 };
+
+CT_ASSERT(ARRAY_SIZE(cond_log_props) - 1 == COMPONENT_COUNT,
+	  "cond_log_props is missing log components; add the missing "
+	  "HANDLE_COND_LOG_PROP and COND_LOG_PROPERTY_ITEM entries");
 
 static bool dbus_conditional_log_export_enable(DBusMessageIter *args,
 					       DBusMessage *reply,
@@ -4076,6 +4086,25 @@ static bool dbus_conditional_log_match_policy_change(DBusMessageIter *args,
 
 	if (match_policy >= COND_LOG_MATCH_ANY &&
 	    match_policy < COND_LOG_MATCH_MAX) {
+		/*
+		 * MATCH_ALL requires both lists to be non-empty: with an
+		 * empty client or export list the condition can never be
+		 * satisfied and conditional logging would silently never fire.
+		 */
+		if (match_policy == COND_LOG_MATCH_ALL) {
+			PTHREAD_RWLOCK_rdlock(&cond_log_rwlock);
+			if (glist_empty(&global_client_ip_list) ||
+			    glist_empty(&global_export_id_list)) {
+				PTHREAD_RWLOCK_unlock(&cond_log_rwlock);
+				LogEvent(COMPONENT_LOG,
+					 "Conditional logging Match Policy changed: Rejected due to either client list or export list is empty");
+				errormsg = "MATCH_ALL requires both a non-empty client list and a non-empty export list";
+				gsh_dbus_status_reply(&iter, false, errormsg);
+				goto error;
+			}
+			PTHREAD_RWLOCK_unlock(&cond_log_rwlock);
+		}
+
 		cond_log_match_policy = match_policy;
 		LogEvent(COMPONENT_LOG,
 			 "Conditional logging Match Policy changed to (%s)",
@@ -4088,6 +4117,7 @@ static bool dbus_conditional_log_match_policy_change(DBusMessageIter *args,
 arg_error:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 
+error:
 	return success;
 }
 
@@ -4115,6 +4145,80 @@ static bool dbus_conditional_log_match_policy_show(DBusMessageIter *args,
 arg_error:
 	gsh_dbus_status_reply(&iter, success, errormsg);
 
+	return success;
+}
+
+/**
+ * @brief Reset all conditional logging configuration to defaults via DBus
+ *
+ * Atomically clears the conditional logging client list and export list,
+ * resets all component log levels to NIV_FULL_DEBUG, and resets the match
+ * policy to COND_LOG_MATCH_ANY.  Takes no arguments.
+ *
+ * @param[in]  args    DBus message iterator (must be NULL / no arguments)
+ * @param[out] reply   DBus reply message to be sent back to the caller
+ * @param[out] error   DBus error object set on failure
+ *
+ * @return true if reset was successful, false otherwise.
+ */
+static bool dbus_conditional_log_reset(DBusMessageIter *args,
+				       DBusMessage *reply,
+				       DBusError *error)
+{
+	char errormsg[LOG_BUFF_LEN];
+	bool success = true;
+	DBusMessageIter iter;
+	struct glist_head *glist;
+	struct glist_head *glistn;
+	struct base_client_entry *cli;
+	struct export_id_list *expidli;
+	log_components_t comp;
+
+	dbus_message_iter_init_append(reply, &iter);
+
+	if (args != NULL) {
+		snprintf(errormsg, sizeof(errormsg),
+			 "ResetConditionalLogging takes no arguments");
+		goto arg_error;
+	}
+
+	PTHREAD_RWLOCK_wrlock(&cond_log_rwlock);
+
+	/* Clear client list */
+	glist_for_each_safe(glist, glistn, &global_client_ip_list) {
+		cli = glist_entry(glist, struct base_client_entry, cle_list);
+		glist_del(&cli->cle_list);
+		cidr_free(cli->cidr);
+		gsh_free(cli->str);
+		gsh_free(cli);
+	}
+
+	/* Clear export list */
+	glist_for_each_safe(glist, glistn, &global_export_id_list) {
+		expidli = glist_entry(glist, struct export_id_list,
+				      export_id_glist);
+		glist_del(&expidli->export_id_glist);
+		gsh_free(expidli);
+	}
+
+	/* Reset all component log levels to NIV_FULL_DEBUG */
+	for (comp = COMPONENT_ALL; comp < COMPONENT_COUNT; comp++)
+		conditional_component_log_level[comp] = NIV_FULL_DEBUG;
+
+	/* Reset match policy to default (MATCH_ANY) */
+	cond_log_match_policy = COND_LOG_MATCH_ANY;
+
+	conditional_logging_configured = false;
+
+	LogEvent(COMPONENT_LOG,
+		 "Conditional logging configuration reset to defaults");
+	snprintf(errormsg, sizeof(errormsg),
+		 "Conditional logging reset: Success");
+
+	PTHREAD_RWLOCK_unlock(&cond_log_rwlock);
+
+arg_error:
+	gsh_dbus_status_reply(&iter, success, errormsg);
 	return success;
 }
 
@@ -4166,6 +4270,12 @@ static struct gsh_dbus_method conditional_log_match_policy_show = {
 	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
+static struct gsh_dbus_method conditional_log_reset = {
+	.name = "ResetConditionalLogging",
+	.method = dbus_conditional_log_reset,
+	.args = { STATUS_REPLY, END_ARG_LIST }
+};
+
 static struct gsh_dbus_method *log_conditional_methods[] = {
 	&conditional_log_export_enable,
 	&conditional_log_export_disable,
@@ -4175,6 +4285,7 @@ static struct gsh_dbus_method *log_conditional_methods[] = {
 	&conditional_log_client_list_show,
 	&conditional_log_match_policy_change,
 	&conditional_log_match_policy_show,
+	&conditional_log_reset,
 	NULL
 };
 
