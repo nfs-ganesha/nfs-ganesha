@@ -797,18 +797,30 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 	assert(xprt);
 
 	if (svc_get_xprt_type(xprt) == XPRT_RDMA) {
-		LogWarn(COMPONENT_NFS_CB,
-			"refusing to create back channel over RDMA for now");
+#ifdef _USE_NFS_RDMA
+		chan->clnt = clnt_rdma_ncreatef(xprt, session->cb_program,
+						NFS_CB, CLNT_CREATE_FLAG_NONE,
+						false);
+		LogInfo(COMPONENT_NFS_CB,
+			"Created Back Channel for RDMA Transport");
+#else
+		LogMajor(
+			COMPONENT_NFS_CB,
+			"RDMA callback channel requested on xprt FD %d but Ganesha/libntirpc was built without USE_RPC_RDMA",
+			xprt->xp_fd);
+		chan->clnt = NULL;
 		code = EINVAL;
 		goto out;
+#endif
+	} else {
+		/*
+		 * connect an RPC client
+		 * Use version 1 per errata ID 2291 for RFC 5661
+		 */
+		chan->clnt = clnt_vc_ncreate_svc(xprt, session->cb_program,
+						 NFS_CB /* Errata ID: 2291 */,
+						 CLNT_CREATE_FLAG_NONE);
 	}
-
-	/* connect an RPC client
-	 * Use version 1 per errata ID 2291 for RFC 5661
-	 */
-	chan->clnt = clnt_vc_ncreate_svc(xprt, session->cb_program,
-					 NFS_CB /* Errata ID: 2291 */,
-					 CLNT_CREATE_FLAG_NONE);
 
 	if (CLNT_FAILURE(chan->clnt)) {
 		err = rpc_sperror(&chan->clnt->cl_error, "failed");
