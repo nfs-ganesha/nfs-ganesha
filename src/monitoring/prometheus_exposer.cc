@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <streambuf>
 #include <mutex>
-
+#include "gsh_config.h"
 #ifdef HAVE_PROCPS
 #include <proc/readproc.h>
 #endif
