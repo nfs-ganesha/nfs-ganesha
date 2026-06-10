@@ -732,38 +732,40 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 {
 	int rc;
 	int errsv;
-	char *name, *next, *end, *val, *valstart;
-	int entryCount = 0;
+	int len;
 	char *buf = NULL;
 	struct listxattr_arg lxarg;
 	struct gpfs_fsal_obj_handle *myself;
-	component4 *entry = lr_names->xl4_entries;
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 						    struct gpfs_fsal_export,
 						    export);
 	int export_fd = exp->export_fd;
 	fsal_status_t status = { 0, 0 };
 
-	val = (char *)entry + la_maxcount;
-	valstart = val;
-
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
-#define MAXCOUNT (1024 * 64)
-	buf = gsh_malloc(MAXCOUNT);
 
+	len = la_maxcount;
+#define MAXCOUNT 1024*64
+	if (len > MAXCOUNT)
+		len = MAXCOUNT;
+	LogFullDebug(COMPONENT_FSAL, "in cookie %llu len %d la_maxcount %d",
+		     (unsigned long long)lxarg.cookie, len, la_maxcount);
+	buf = gsh_malloc(len);
+	if (buf == NULL) {
+		errsv = ERR_FSAL_NOMEM;
+		status = posix2fsal_status(errsv);
+		goto out;
+	}
 	lxarg.mountdirfd = export_fd;
 	lxarg.handle = myself->handle;
 	lxarg.cookie = 0; /* For now gpfs doesn't support cookie */
 	lxarg.verifier = 0; /* @todo: protocol has no verifier now */
 	lxarg.eof = false;
-	lxarg.name_len = MAXCOUNT;
+	lxarg.name_len = len;
 	lxarg.names = buf;
 	lxarg.cli_ip = NULL;
 	if (op_ctx && op_ctx->client)
 		lxarg.cli_ip = op_ctx->client->hostaddr_str;
-
-	LogFullDebug(COMPONENT_FSAL, "in cookie %llu len %d",
-		     (unsigned long long)lxarg.cookie, la_maxcount);
 
 	rc = gpfs_ganesha(OPENHANDLE_LISTXATTRS, &lxarg);
 	if (rc < 0) {
@@ -777,74 +779,24 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 		}
 		goto out;
 	}
+	LogDebug(COMPONENT_FSAL, "EOF %d  rc %d len %d",
+		lxarg.eof, rc, lxarg.name_len);
+
 	if (!lxarg.eof) {
-		errsv = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to get xattr.");
+		errsv = ENOTSUP;
+		LogDebug(COMPONENT_FSAL, "Unable to get xattr.");
 		status = posix2fsal_status(errsv);
 		goto out;
 	}
-	/* Only return names that the caller can read via getxattr */
-	name = buf;
-	end = buf + rc;
-	entry->utf8string_len = 0;
-	entry->utf8string_val = NULL;
-
-	while (name < end) {
-		next = strchr(name, '\0');
-		next += 1;
-
-		LogDebug(COMPONENT_FSAL, "nameP %s at offset %td", name,
-			 (next - name));
-
-		if (entryCount >= *la_cookie) {
-			if ((((char *)entry - (char *)lr_names->xl4_entries) +
-				     sizeof(component4) >
-			     la_maxcount) ||
-			    ((val - valstart) + (next - name) > la_maxcount)) {
-				*lr_eof = false;
-
-				lr_names->xl4_count = entryCount - *la_cookie;
-				*la_cookie += entryCount;
-				LogFullDebug(COMPONENT_FSAL,
-					     "out1 cookie %llu off %td eof %d",
-					     (unsigned long long)*la_cookie,
-					     (next - name), *lr_eof);
-
-				if (lr_names->xl4_count == 0) {
-					status = fsalstat(ERR_FSAL_TOOSMALL, 0);
-				} else {
-					status = fsalstat(ERR_FSAL_NO_ERROR, 0);
-				}
-				goto out;
-			}
-			entry->utf8string_len = next - name;
-			entry->utf8string_val = val;
-			memcpy(entry->utf8string_val, name,
-			       entry->utf8string_len);
-			entry->utf8string_val[entry->utf8string_len] = '\0';
-
-			LogFullDebug(
-				COMPONENT_FSAL,
-				"entry %d val %p at %p len %d at %p name %s",
-				entryCount, val, entry, entry->utf8string_len,
-				entry->utf8string_val, entry->utf8string_val);
-
-			val += entry->utf8string_len;
-			entry += 1;
-		}
-		/* Advance to next name in original buffer */
-		name = next;
-		entryCount += 1;
-	}
-	lr_names->xl4_count = entryCount - *la_cookie;
-	*la_cookie = 0;
-	*lr_eof = true;
+	status = fsal_listxattr_helper(buf, lxarg.name_len, la_maxcount,
+			la_cookie, lr_eof, lr_names);
 
 	LogFullDebug(COMPONENT_FSAL, "out2 cookie %llu eof %d",
 		     (unsigned long long)*la_cookie, *lr_eof);
 
 out:
 	gsh_free(buf);
+
 	return status;
 }
 
