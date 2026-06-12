@@ -169,6 +169,25 @@ struct kmip_callback {
 	char *kmip_key_id;
 };
 
+#ifndef X509_ADD_FLAG_DEFAULT
+/* X509_add_cert was added in openssl-3.0.0 ca. April 2020
+ * Google AI says that while openssl 3.0.x aka "LTS" is the oldest
+ * currently supported "secure" version, you really ought
+ * to at least use 3.5 (LTS).
+ * In short, you should never ever need or use this.
+ */
+#define X509_ADD_FLAG_DEFAULT 0
+
+int X509_add_cert(STACK_OF(X509) * sk, X509 *cert, int flags)
+{
+	if (!sk_X509_insert(sk, cert, -1)) {
+		X509err(0, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	return 1;
+}
+#endif
+
 void free_host_params(void)
 {
 	struct glist_head *host_list = &kmip_settings.kmip_host;
