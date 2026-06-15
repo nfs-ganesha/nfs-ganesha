@@ -765,6 +765,8 @@ static struct config_item version4_params[] = {
 			recovery_backend),
 	CONF_ITEM_BOOL("RecoveryBackendIPBased", false, nfs_version4_parameter,
 		       recovery_backend_ipbased),
+	CONF_ITEM_BOOL("RecoverySkipIp", false, nfs_version4_parameter,
+		       recovery_skip_ip),
 	CONF_ITEM_PATH("RecoveryRoot", 1, MAXPATHLEN, NFS_V4_RECOV_ROOT,
 		       nfs_version4_parameter, recov_root),
 	CONF_ITEM_PATH("RecoveryDir", 1, MAXNAMLEN, NFS_V4_RECOV_DIR,

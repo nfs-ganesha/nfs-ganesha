@@ -718,6 +718,9 @@ typedef struct nfs_version4_parameter {
 	enum recovery_backend recovery_backend;
 	/** Whether Recovery backend is IP based */
 	bool recovery_backend_ipbased;
+	/** Omit the client IP address from the recovery tag so reclaim
+	 * survives the client being seen under a different source address. */
+	bool recovery_skip_ip;
 	/** List of supported NFSV4 minor versions */
 	unsigned int minor_versions;
 	/** Number of allowed slots in the 4.1 slot table */

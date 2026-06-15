@@ -151,14 +151,9 @@ static inline void convert_opaque_val(struct display_buffer *dspbuf,
 char *nfs4_create_clid_name(nfs_client_id_t *clientid, size_t *len)
 {
 	nfs_client_record_t *cl_rec = clientid->cid_client_record;
-	const char *str_client_addr = "(unknown)";
 	char cidstr[PATH_MAX], *encoded;
 	struct display_buffer dspbuf = { sizeof(cidstr), cidstr, cidstr };
-	int total_size, cidstr_len, str_client_addr_len, rc;
-
-	/* get the caller's IP addr */
-	if (clientid->gsh_client != NULL)
-		str_client_addr = clientid->gsh_client->hostaddr_str;
+	int total_size, cidstr_len, rc;
 
 	rc = display_opaque_value_max_impl(&dspbuf, cl_rec->cr_client_val,
 					   cl_rec->cr_client_val_len,
@@ -169,19 +164,36 @@ char *nfs4_create_clid_name(nfs_client_id_t *clientid, size_t *len)
 		LogFatal(COMPONENT_RECOVERY, "Failure to encode clientid");
 
 	cidstr_len = display_buffer_len(&dspbuf);
-	str_client_addr_len = strlen(str_client_addr);
 
-	total_size = cidstr_len + str_client_addr_len + 2;
+	if (nfs_param.nfsv4_param.recovery_skip_ip) {
+		/* format is (%d:%s) (cidstr_len:cid_str)
+		 * Note that cidstr is already in the form (%d:%s), so the
+		 * encoded string is simply cidstr.
+		 */
+		total_size = cidstr_len + 1;
+		encoded = gsh_malloc(total_size);
 
-	encoded = gsh_malloc(total_size);
+		memcpy(encoded, cidstr, total_size);
+	} else {
+		const char *str_client_addr = "(unknown)";
+		int client_addr_len;
 
-	/* format is %s-(%d:%s) client_address-(cidstr_len:cid_str)
-	 * Note that cidstr is already in the form (%d:%s), so building the
-	 * encoded string is simple.
-	 */
-	memcpy(encoded, str_client_addr, str_client_addr_len);
-	encoded[str_client_addr_len] = '-';
-	memcpy(encoded + str_client_addr_len + 1, cidstr, cidstr_len + 1);
+		/* get the caller's IP addr. */
+		if (clientid->gsh_client != NULL)
+			str_client_addr = clientid->gsh_client->hostaddr_str;
+
+		/* format is %s-(%d:%s) client_address-(cidstr_len:cid_str)
+		 * Note that cidstr is already in the form (%d:%s), so building
+		 * the encoded string is simple.
+		 */
+		client_addr_len = strlen(str_client_addr);
+		total_size = cidstr_len + client_addr_len + 2;
+		encoded = gsh_malloc(total_size);
+
+		memcpy(encoded, str_client_addr, client_addr_len);
+		encoded[client_addr_len] = '-';
+		memcpy(encoded + client_addr_len + 1, cidstr, cidstr_len + 1);
+	}
 
 	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY,
 		    "Created clientid encoding [%s]", encoded);

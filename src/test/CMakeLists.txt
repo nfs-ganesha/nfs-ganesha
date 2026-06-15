@@ -52,3 +52,10 @@ SET(test_cidr_SRCS
 
 add_executable(test_cidr EXCLUDE_FROM_ALL ${test_cidr_SRCS})
 target_link_libraries(test_cidr ganesha_nfsd)
+
+SET(test_recovery_tag_SRCS
+   test_recovery_tag.c
+)
+
+add_executable(test_recovery_tag EXCLUDE_FROM_ALL ${test_recovery_tag_SRCS})
+target_link_libraries(test_recovery_tag ganesha_nfsd ${CMAKE_THREAD_LIBS_INIT})
