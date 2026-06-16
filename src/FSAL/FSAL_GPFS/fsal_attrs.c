@@ -312,6 +312,20 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
    **************/
 
 	if (FSAL_TEST_MASK(obj_attr->valid_mask, ATTR_SIZE)) {
+#ifdef LINUX
+		/* Match VFS behavior:
+		 * If filesize cannot be represented as signed off_t,
+		 * return EFBIG instead of letting GPFS return EINVAL.
+		 */
+		if ((off_t)obj_attr->filesize < 0) {
+			LogDebug(COMPONENT_FSAL,
+				 "filesize %" PRIu64 " as off_t is < 0",
+				 obj_attr->filesize);
+
+			return fsalstat(ERR_FSAL_FBIG, EFBIG);
+		}
+#endif
+
 		attr_changed |= XATTR_SIZE;
 		/* Fill wanted size. */
 		buffxstat.buffstat.st_size = obj_attr->filesize;
