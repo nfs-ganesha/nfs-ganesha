@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: LGPL-3.0-or-later
+
 ===================================================================
 ganesha-ceph-config -- NFS Ganesha CEPH Configuration File
 ===================================================================

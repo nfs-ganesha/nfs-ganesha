@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: LGPL-3.0-or-later
+
 ===================================================================
 ganesha-proxy-v4-config -- NFS Ganesha Proxy V4 Configuration File
 ===================================================================

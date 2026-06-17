@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: LGPL-3.0-or-later
+
 ======================================================================
 ganesha-top -- A tool for the information monitoring like top
 ======================================================================

@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: LGPL-3.0-or-later
+
 ===================================================================
 ganesha-core-config -- NFS Ganesha Core Configuration File
 ===================================================================
