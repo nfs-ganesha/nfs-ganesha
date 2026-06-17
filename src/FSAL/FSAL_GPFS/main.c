@@ -62,7 +62,7 @@ struct gpfs_fsal_module
 				 .cansettime = true,
 				 .homogenous = true,
 				 .supported_attrs = GPFS_SUPPORTED_ATTRIBUTES,
-				 .xattr_support = true,
+				 .xattr_support = false,
 				 .maxread = FSAL_MAXIOSIZE,
 				 .maxwrite = FSAL_MAXIOSIZE,
 				 .umask = 0,
@@ -99,6 +99,8 @@ static struct config_item gpfs_params[] = {
 	CONF_ITEM_BOOL("PNFS_DS", true, fsal_staticfsinfo_t, pnfs_ds),
 	CONF_ITEM_BOOL("fsal_trace", true, fsal_staticfsinfo_t, fsal_trace),
 	CONF_ITEM_BOOL("fsal_grace", false, fsal_staticfsinfo_t, fsal_grace),
+	CONF_ITEM_BOOL("xattr_support", false, fsal_staticfsinfo_t,
+		       xattr_support),
 	CONFIG_EOL
 };
 
