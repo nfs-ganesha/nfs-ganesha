@@ -120,6 +120,20 @@ LOG { COMPONENTS {} }
 
         FULL_DEBUG: 0xffffffff
 
+    RDMA debugging generally touches both Ganesha logs and ntirpc warnx. The
+    following components and flags are suggested to monitor the entire RDMA
+    processing sequence.
+
+    Example :
+        COMPONENTS
+    {
+	    RDMA = FULL_DEBUG;
+
+	    TIRPC = DEBUG;
+    }
+
+    RPC_Debug_Flags = 0x0C20200;
+
 LOG { CONDITIONAL {} }
 ----------------------
 Conditional logging allows selective override of log levels for specific
