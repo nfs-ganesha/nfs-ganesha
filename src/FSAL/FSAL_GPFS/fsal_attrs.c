@@ -65,12 +65,17 @@ fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,
 	char path[MAXPATHLEN];
 	char server[MAXHOSTNAMELEN];
 	int errsv, rc;
+	bool xattr_support = false;
 	struct fs_loc_arg loc_arg;
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 						    struct gpfs_fsal_export,
 						    export);
 	int export_fd = exp->export_fd;
 
+	xattr_support = export->exp_ops.fs_supports(export, fso_xattr_support);
+	if (!xattr_support) {
+		return fsalstat(ERR_FSAL_ATTRNOTSUPP, 0);
+	}
 	loc_arg.fs_root = root;
 	loc_arg.fs_root_len = sizeof(root);
 	loc_arg.fs_path = path;
