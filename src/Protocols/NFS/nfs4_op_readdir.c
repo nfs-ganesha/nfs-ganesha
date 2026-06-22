@@ -99,6 +99,18 @@ static void restore_data(struct nfs4_readdir_cb_data *tracker)
  */
 #define BASE_ENTRY_SIZE (sizeof(nfs_cookie4) + 2 * sizeof(uint32_t))
 
+static inline void report_success_entry(struct nfs4_readdir_cb_data *tracker,
+					struct fsal_readdir_cb_parms *cb_parms,
+					size_t add_bytes)
+{
+	tracker->has_entries = true;
+	cb_parms->in_result = true;
+	tracker->count++;
+
+	/* Account for cookie+name bytes contributing to dircount. */
+	tracker->dir_bytes_used += add_bytes;
+}
+
 /**
  * @brief Populate entry4s when called from fsal_readdir
  *
@@ -134,6 +146,7 @@ fsal_errors_t nfs4_readdir_callback(void *opaque, struct fsal_obj_handle *obj,
 	bool_t res_false = false;
 	bool_t lock_dir = false;
 	struct fsal_obj_handle *saved_current_obj = NULL;
+	size_t add_bytes = 0;
 
 	LogFullDebug(COMPONENT_NFS_READDIR, "Entry %s pos %d mem_left %d",
 		     cb_parms->name, (int)pos_start,
@@ -342,8 +355,8 @@ not_junction:
 	name.utf8string_len = strlen(cb_parms->name);
 	name.utf8string_val = (char *)cb_parms->name;
 
-	size_t add_bytes = sizeof(nfs_cookie4) + BYTES_PER_XDR_UNIT +
-			   RNDUP(name.utf8string_len);
+	add_bytes = sizeof(nfs_cookie4) + BYTES_PER_XDR_UNIT +
+		    RNDUP(name.utf8string_len);
 
 	/*
 	 * Enforce dircount as a byte budget for the directory information
@@ -388,7 +401,8 @@ not_junction:
 	    !nfs4_FSALToFhandle(false, &entryFH, obj, op_ctx->ctx_export)) {
 		LogDebug(COMPONENT_NFS_READDIR,
 			 "Skipping because of problem with handle");
-		goto server_fault;
+		tracker->error = NFS4ERR_SERVERFAULT;
+		goto failure;
 	}
 
 	if (!cb_parms->attr_allowed) {
@@ -427,10 +441,37 @@ not_junction:
 	 */
 	if (obj->obj_ops->is_referral(obj, (struct fsal_attrlist *)attr,
 				      false)) {
-		args.rdattr_error = NFS4ERR_MOVED;
-		LogDebug(COMPONENT_NFS_READDIR, "Skipping because of %s",
-			 nfsstat4_to_str(args.rdattr_error));
-		goto skip;
+		/** @todo FSF: eventually handle FATTR4_FS_LOCATIONS_INFO and
+		 *             FATTR4_FS_STATUS here if appropriate.
+		 */
+		if (attribute_is_set(tracker->req_attr, FATTR4_FS_LOCATIONS)) {
+			/* FS_LOCATIONS attribute will be handled below by
+			 * call to xdr_nfs4_fattr_fill_error().
+			 */
+			args.rdattr_error = NFS4ERR_MOVED;
+			LogDebug(
+				COMPONENT_NFS_READDIR,
+				"Going to fill in limited attributes for a referral entry");
+			goto attr_fill;
+		}
+
+		if (attribute_is_set(tracker->req_attr, FATTR4_RDATTR_ERROR)) {
+			/* We will fill in FATTR4_RDATTR_ERROR below in
+			 * call to xdr_nfs4_fattr_fill_error().
+			 */
+			args.rdattr_error = NFS4ERR_MOVED;
+			LogDebug(
+				COMPONENT_NFS_READDIR,
+				"Going to fill in FATTR4_RDATTR_ERROR with NFS4ERR_MOVED for a referral entry");
+			goto attr_fill;
+		}
+
+		/* No way to report on referral. */
+		LogDebug(
+			COMPONENT_NFS_READDIR,
+			"Going to fail READDIR with NFS4ERR_MOVED due to a referral entry without request for FATTR4_FS_LOCATIONS or FATTR4_RDATTR_ERROR");
+		tracker->error = NFS4ERR_MOVED;
+		goto failure;
 	}
 
 	/*
@@ -461,46 +502,54 @@ not_junction:
 	}
 	data->current_obj = saved_current_obj;
 
-skip:
-
-	if (args.rdattr_error != NFS4_OK) {
-		tracker->error = args.rdattr_error;
-		if (!attribute_is_set(tracker->req_attr, FATTR4_RDATTR_ERROR) &&
-		    !attribute_is_set(tracker->req_attr, FATTR4_FS_LOCATIONS)) {
-			LogDebug(
-				COMPONENT_NFS_READDIR,
-				"Skipping because of %s and didn't ask for FATTR4_RDATTR_ERROR or FATTR4_FS_LOCATIONS",
-				nfsstat4_to_str(args.rdattr_error));
-			goto failure;
-		}
-
-		if (!xdr_nfs4_fattr_fill_error(&tracker->xdr, tracker->req_attr,
-					       cookie, &name, &args) ||
-		    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) >
-			    mem_avail) {
-			/* We had an overflow */
-			LogFullDebug(
-				COMPONENT_NFS_READDIR,
-				"Overflow of buffer after xdr_nfs4_fattr_fill_error - pos = %d",
-				xdr_getpos(&tracker->xdr));
-			goto failure;
-		}
+	if (args.rdattr_error == NFS4_OK) {
+		report_success_entry(tracker, cb_parms, add_bytes);
+		return ERR_FSAL_NO_ERROR;
 	}
 
-	tracker->has_entries = true;
-	cb_parms->in_result = true;
-	tracker->count++;
-	/* Account for cookie+name bytes contributing to dircount. */
-	tracker->dir_bytes_used += add_bytes;
-	goto out;
+skip:
 
-server_fault:
+	if (!attribute_is_set(tracker->req_attr, FATTR4_RDATTR_ERROR)) {
+		LogDebug(
+			COMPONENT_NFS_READDIR,
+			"Skipping because of %s and didn't ask for FATTR4_RDATTR_ERROR",
+			nfsstat4_to_str(args.rdattr_error));
+		tracker->error = args.rdattr_error;
+		goto failure;
+	}
 
-	tracker->error = NFS4ERR_SERVERFAULT;
+attr_fill:
+
+	/* At this point, we have an error in rdattr_error. We MAY also have
+	 * a referral, and we may get here with FATTR4_FS_LOCATIONS requested
+	 * but not FATTR4_RDATTR_ERROR and that's OK.
+	 */
+	if (xdr_nfs4_fattr_fill_error(&tracker->xdr, tracker->req_attr, cookie,
+				      &name, &args) &&
+	    (xdr_getpos(&tracker->xdr) + BYTES_PER_XDR_UNIT) <= mem_avail) {
+		/* We succeeded in filling in requested attributes for given
+		 * rdattr_error.
+		 */
+		report_success_entry(tracker, cb_parms, add_bytes);
+		return ERR_FSAL_NO_ERROR;
+	}
+
+	/* We had an overflow or encode failure, return the orginal rdattr_error
+	 * as the READDIR statys (in tracker->error).
+	 */
+	LogDebug(
+		COMPONENT_NFS_READDIR,
+		"Overflow of buffer or encode failure after xdr_nfs4_fattr_fill_error - pos = %d retruning READDIR status %s",
+		xdr_getpos(&tracker->xdr), nfsstat4_to_str(args.rdattr_error));
+	tracker->error = args.rdattr_error;
 
 failure:
 
 	if (!tracker->has_entries && tracker->error == NFS4_OK) {
+		/* If we got here without some other tracker error, and there
+		 * are no entries, we have a case where the response size isn't
+		 * big enough to hold even one entry.
+		 */
 		tracker->error = NFS4ERR_TOOSMALL;
 	}
 
@@ -516,8 +565,6 @@ failure:
 	}
 
 	cb_parms->in_result = false;
-
-out:
 
 	return ERR_FSAL_NO_ERROR;
 }
