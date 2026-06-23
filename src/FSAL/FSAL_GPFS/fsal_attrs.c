@@ -61,9 +61,9 @@ fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,
 			      struct gpfs_file_handle *gpfs_fh,
 			      struct fsal_attrlist *attrs)
 {
-	char root[MAXPATHLEN];
-	char path[MAXPATHLEN];
-	char server[MAXHOSTNAMELEN];
+	char root[MAXPATHLEN] = {0};
+	char path[MAXPATHLEN] = {0};
+	char server[MAXHOSTNAMELEN] = {0};
 	int errsv, rc;
 	bool xattr_support = false;
 	struct fs_loc_arg loc_arg;
