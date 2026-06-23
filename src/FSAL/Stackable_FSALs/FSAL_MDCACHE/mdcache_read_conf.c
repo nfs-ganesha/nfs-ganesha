@@ -50,8 +50,7 @@
 #include <string.h>
 #include <sal_data.h>
 
-/** File cache configuration, settable in the CacheInode/MDCACHE
-    stanza. */
+/** File cache configuration, settable in the MDCACHE stanza. */
 
 struct mdcache_parameter mdcache_param;
 
@@ -140,7 +139,6 @@ static int mdcache_param_commit(void *node, void *link_mem, void *self_struct,
 struct config_block mdcache_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.mdcache",
 	.blk_desc.name = "MDCACHE",
-	.blk_desc.altname = "CacheInode",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = mdcache_param_init,
