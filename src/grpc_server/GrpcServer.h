@@ -68,6 +68,8 @@ class GrpcServer {
 	ClientStatsService clientStatsService;
 	nfsAdminService nfsAdmin;
 	ExportStatsService exportStatsService;
+	ShowIdMapperService ShowIdMapper;
+	ExportService exportService;
 };
 
 extern GrpcServer ganesha_grpc_server;

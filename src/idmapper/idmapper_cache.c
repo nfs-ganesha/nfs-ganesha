@@ -52,22 +52,6 @@
 #include "server_stats_private.h"
 #include "idmapper_monitoring.h"
 
-/**
- * @brief User entry in the IDMapper cache
- */
-
-struct cache_user {
-	struct gsh_buffdesc uname; /*< Username */
-	uid_t uid; /*< Corresponding UID */
-	gid_t gid; /*< Corresponding GID */
-	bool gid_set; /*< if the GID has been set */
-	struct avltree_node uname_node; /*< Node in the name tree */
-	struct avltree_node uid_node; /*< Node in the UID tree */
-	bool in_uidtree; /* true iff this is in uid_tree */
-	time_t epoch;
-	TAILQ_ENTRY(cache_user) queue_entry; /* Node in user-fifo-queue */
-};
-
 #define user_expired(user)            \
 	(time(NULL) - (user)->epoch > \
 	 nfs_param.directory_services_param.idmapped_user_time_validity)

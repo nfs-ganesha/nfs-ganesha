@@ -35,6 +35,15 @@
 #endif
 
 #include "nfs_lib.h"
+#include "avltree.h"
+#include "idmapper.h"
+#include "export_mgr.h"
+#include "nfs_exports.h"
+#include "client_mgr.h"
+#include "config_parsing.h"
+#include "nfs_proto_functions.h"
+
+static struct avltree uname_tree;
 
 grpc::Status GetClientIdService::GetClientIds(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
@@ -973,5 +982,220 @@ grpc::Status ExportStatsService::GetNFSIO(
 				   entry->mutable_write());
 	}
 
+	return grpc::Status::OK;
+}
+
+grpc::Status ShowIdMapperService::ShowIdMapper(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsService::ShowIdMapperResponse *response)
+{
+	try {
+		struct avltree_node *node;
+		char namebuff[256 + 1];
+		struct timespec timestamp;
+
+		// Get current time
+		now(&timestamp);
+		response->set_timestamp_sec(
+			static_cast<uint64_t>(timestamp.tv_sec));
+		response->set_timestamp_nsec(
+			static_cast<uint64_t>(timestamp.tv_nsec));
+
+		PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
+
+		// Traverse idmapper cache
+		for (node = avltree_first(&uname_tree); node != nullptr;
+		     node = avltree_next(node)) {
+			const struct cache_user *user =
+				avltree_container_of(node, struct cache_user,
+						     uname_node);
+
+			size_t len = user->uname.len > 255 ? 255
+							   : user->uname.len;
+			memcpy(namebuff, user->uname.addr, len);
+			namebuff[len] = '\0'; // null terminate
+
+			// Add new entry in protobuf repeated field
+			auto *entry = response->add_entries();
+			entry->set_name(namebuff);
+			entry->set_uid(user->uid);
+			entry->set_gid_set(user->gid_set);
+			entry->set_gid(user->gid_set ? user->gid : 0);
+		}
+
+		PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+
+		return grpc::Status::OK;
+	} catch (const std::exception &ex) {
+		return grpc::Status(grpc::StatusCode::INTERNAL,
+				    "Internal error occurred");
+	}
+}
+
+grpc::Status
+ExportService::DisplayExport(grpc::ServerContext *context,
+			     const nfsProtoUtil::ExportIdRequest *request,
+			     exportService::DisplayExportResponse *response)
+{
+	char *errormsg;
+	struct gsh_export *export_obj =
+		lookup_export_by_id(request->export_id(), &errormsg);
+	if (!export_obj) {
+		response->set_success(false);
+		response->set_error_message(errormsg);
+		return grpc::Status::OK;
+	}
+
+	struct tmp_export_paths tmp;
+	tmp_get_exp_paths(&tmp, export_obj);
+
+	response->set_export_id(export_obj->export_id);
+
+	const char *full = TMP_FULLPATH(&tmp);
+	if (full && full[0] != '\0') {
+		response->set_full_path(full);
+	}
+
+	const char *pseudo = TMP_PSEUDOPATH(&tmp);
+	if (pseudo && pseudo[0] != '\0')
+		response->set_pseudo_path(pseudo);
+
+	struct glist_head *glist;
+
+	PTHREAD_RWLOCK_rdlock(&export_obj->exp_lock);
+
+	glist_for_each(glist, &export_obj->clients) {
+		struct base_client_entry *client;
+		struct exportlist_client_entry *expclient;
+
+		client = glist_entry(glist, struct base_client_entry, cle_list);
+		expclient = container_of(client, struct exportlist_client_entry,
+					 client_entry);
+
+		client = glist_entry(glist, struct base_client_entry, cle_list);
+
+		expclient = container_of(client, struct exportlist_client_entry,
+					 client_entry);
+		auto *out = response->add_clients();
+
+		out->set_client_name(client->str ? client->str : "");
+
+		if (client->type == NETWORK_CLIENT && client->cidr != NULL) {
+			unsigned char addr[16] = { 0 };
+			unsigned char mask[16] = { 0 };
+
+			out->set_client_type("NETWORK_CLIENT");
+
+			out->set_cidr_version(cidr_version(client->cidr));
+
+			cidr_ipaddr_to_chars(client->cidr, addr);
+			out->set_cidr_addr(std::string(
+				reinterpret_cast<char *>(addr), sizeof(addr)));
+
+			cidr_mask_to_chars(client->cidr, mask);
+			out->set_cidr_mask(std::string(
+				reinterpret_cast<char *>(mask), sizeof(mask)));
+
+			out->set_cidr_proto(cidr_proto(client->cidr));
+		} else {
+			switch (client->type) {
+			case NETGROUP_CLIENT:
+				out->set_client_type("NETGROUP_CLIENT");
+				break;
+			case GSSPRINCIPAL_CLIENT:
+				out->set_client_type("GSSPRINCIPAL_CLIENT");
+				break;
+			case MATCH_ANY_CLIENT:
+				out->set_client_type("MATCH_ANY_CLIENT");
+				break;
+			case WILDCARDHOST_CLIENT:
+				out->set_client_type("WILDCARDHOST_CLIENT");
+				break;
+			default:
+				out->set_client_type("UNKNOWN_CLIENT");
+				break;
+			}
+
+			/* Match the D-Bus behavior for non-network clients. */
+			out->set_cidr_version(0);
+			out->set_cidr_addr("");
+			out->set_cidr_mask("");
+			out->set_cidr_proto(0);
+		}
+
+		out->set_anonymous_uid(expclient->client_perms.anonymous_uid);
+		out->set_anonymous_gid(expclient->client_perms.anonymous_gid);
+		out->set_expire_time_attr(
+			expclient->client_perms.expire_time_attr);
+
+		char client_perm_buf[1024] = "\0";
+		struct display_buffer client_dspbuf = { sizeof(client_perm_buf),
+							client_perm_buf,
+							client_perm_buf };
+
+		StrExportOptions(&client_dspbuf, &expclient->client_perms);
+
+		out->set_client_permissions(client_perm_buf);
+
+		char export_perm_buf[1024] = "\0";
+		struct display_buffer export_dspbuf = { sizeof(export_perm_buf),
+							export_perm_buf,
+							export_perm_buf };
+
+		StrExportOptions(&export_dspbuf, &export_obj->export_perms);
+
+		response->set_export_permissions(export_perm_buf);
+	}
+
+	PTHREAD_RWLOCK_unlock(&export_obj->exp_lock);
+
+	tmp_put_exp_paths(&tmp);
+	put_gsh_export(export_obj);
+
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/*
+ * TODO: Extend ShowExports to include the server_stats_summary information
+ * returned by the DBus interface. This will be implemented together with
+ * the remaining export statistics gRPC APIs.
+ */
+grpc::Status ExportService::ShowExports(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::ShowExportsResponse *response)
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	response->set_timestamp_sec(ts.tv_sec);
+	response->set_timestamp_nsec(ts.tv_nsec);
+	pthread_rwlock_t *lock = get_export_id_lock();
+	struct glist_head *exportlist_head = get_exportlist_head();
+	PTHREAD_RWLOCK_rdlock(lock);
+	struct glist_head *node;
+	glist_for_each(node, exportlist_head) {
+		struct gsh_export *export_obj =
+			glist_entry(node, struct gsh_export, exp_list);
+
+		struct tmp_export_paths tmp = { nullptr, nullptr };
+		tmp_get_exp_paths(&tmp, export_obj);
+		const char *full = TMP_FULLPATH(&tmp);
+		const char *pseudo = TMP_PSEUDOPATH(&tmp);
+		auto *out = response->add_exports();
+		out->set_export_id(
+			static_cast<uint32_t>(export_obj->export_id));
+		if (full != nullptr)
+			out->set_full_path(full);
+
+		if (pseudo != nullptr)
+			out->set_pseudo_path(pseudo);
+
+		if (export_obj->FS_tag != nullptr)
+			out->set_fs_tag(export_obj->FS_tag);
+
+		tmp_put_exp_paths(&tmp);
+	}
+	PTHREAD_RWLOCK_unlock(lock);
+	response->set_success(true);
 	return grpc::Status::OK;
 }

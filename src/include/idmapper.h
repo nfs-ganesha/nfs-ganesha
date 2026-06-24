@@ -44,6 +44,7 @@
 #include <pthread.h>
 #include "gsh_rpc.h"
 #include "gsh_types.h"
+#include "avltree.h"
 
 /* Arbitrary string buffer lengths */
 #define PWENT_BEST_GUESS_LEN 1024
@@ -61,6 +62,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+struct cache_user {
+	struct gsh_buffdesc uname; /*< Username */
+	uid_t uid; /*< Corresponding UID */
+	gid_t gid; /*< Corresponding GID */
+	bool gid_set; /*< if the GID has been set */
+	struct avltree_node uname_node; /*< Node in the name tree */
+	struct avltree_node uid_node; /*< Node in the UID tree */
+	bool in_uidtree; /* true iff this is in uid_tree */
+	time_t epoch;
+
+	TAILQ_ENTRY(cache_user) queue_entry; /* Node in user-fifo-queue */
+};
 
 extern pthread_rwlock_t idmapper_user_lock;
 extern pthread_rwlock_t idmapper_group_lock;

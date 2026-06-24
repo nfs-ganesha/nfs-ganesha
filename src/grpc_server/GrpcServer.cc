@@ -129,6 +129,10 @@ void GrpcServer::gRPCServerStart(uint16_t port, std::string server_crt,
 
 		builder.RegisterService(&exportStatsService);
 
+		builder.RegisterService(&ShowIdMapper);
+
+		builder.RegisterService(&exportService);
+
 		/* Reflection Service to enable grpc CLI */
 		grpc::reflection::InitProtoReflectionServerBuilderPlugin();
 

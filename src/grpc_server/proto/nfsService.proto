@@ -136,3 +136,23 @@ message TrimStatusResponse
 	optional bool enable = 1;
 	optional bool success = 2;
 }
+message IdMapperEntry
+{
+	string name = 1;
+	uint32 uid = 2;
+	bool gid_set = 3;
+	uint32 gid = 4;
+}
+
+message ShowIdMapperResponse
+{
+	uint64 timestamp_sec = 1;
+	uint64 timestamp_nsec = 2;
+	repeated IdMapperEntry entries = 3;
+}
+
+service ShowIdMapperService
+{
+	rpc ShowIdMapper(nfsProtoUtil.EmptyRequest)
+		returns (ShowIdMapperResponse);
+}

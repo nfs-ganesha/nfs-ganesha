@@ -31,6 +31,8 @@
 #include <grpcpp/grpcpp.h>
 #include "nfsService.pb.h"
 #include "nfsService.grpc.pb.h"
+#include "exportService.pb.h"
+#include "exportService.grpc.pb.h"
 #include "nfsProtoUtil.pb.h"
 #include "nfsProtoUtil.grpc.pb.h"
 #include "cltmgrService.pb.h"
@@ -239,5 +241,27 @@ class ExportStatsService final : public exportService::ExportStats::Service {
 	GetNFSIO(grpc::ServerContext *context,
 		 const nfsProtoUtil::EmptyRequest *request,
 		 exportService::GetNFSIOResponse *response) override;
+};
+
+class ShowIdMapperService final
+	: public nfsService::ShowIdMapperService::Service {
+    public:
+	grpc::Status
+	ShowIdMapper(grpc::ServerContext *context,
+		     const nfsProtoUtil::EmptyRequest *request,
+		     nfsService::ShowIdMapperResponse *response) override;
+};
+
+class ExportService final : public exportService::ExportService::Service {
+    public:
+	grpc::Status
+	DisplayExport(grpc::ServerContext *context,
+		      const nfsProtoUtil::ExportIdRequest *request,
+		      exportService::DisplayExportResponse *response) override;
+
+	grpc::Status
+	ShowExports(grpc::ServerContext *context,
+		    const nfsProtoUtil::EmptyRequest *request,
+		    exportService::ShowExportsResponse *response) override;
 };
 #endif //NFSSERVICE_H

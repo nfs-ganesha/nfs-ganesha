@@ -108,3 +108,53 @@ service ExportStats
 		returns (GetGlobalOPSResponse);
 	rpc GetNFSIO(nfsProtoUtil.EmptyRequest) returns (GetNFSIOResponse);
 }
+
+message ExportClientEntry
+{
+	string client_name = 1;
+	int32 cidr_version = 2;
+	bytes cidr_addr = 3;
+	bytes cidr_mask = 4;
+	int32 cidr_proto = 5;
+	uint32 anonymous_uid = 6;
+	uint32 anonymous_gid = 7;
+	uint32 expire_time_attr = 8;
+	string client_type = 9;
+	string client_permissions = 10;
+}
+
+message DisplayExportResponse
+{
+	uint32 export_id = 1;
+	string full_path = 2;
+	string pseudo_path = 3;
+	repeated ExportClientEntry clients = 4;
+	bool success = 5;
+	string error_message = 6;
+	string export_permissions = 7;
+}
+
+service ExportService
+{
+	rpc DisplayExport(nfsProtoUtil.ExportIdRequest)
+		returns (DisplayExportResponse);
+	rpc ShowExports(nfsProtoUtil.EmptyRequest)
+		returns (ShowExportsResponse);
+}
+
+message ExportInfo
+{
+	uint32 export_id = 1;
+	string full_path = 2;
+	string pseudo_path = 3;
+	string fs_tag = 4;
+	// Add other fields here as needed
+}
+message ShowExportsResponse
+{
+	uint64 timestamp_sec = 1;
+	uint64 timestamp_nsec = 2;
+	repeated ExportInfo exports = 3;
+	bool success = 4;
+	string error_message = 5;
+}

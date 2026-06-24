@@ -244,7 +244,18 @@ int init_export_root(struct gsh_export *exp);
 
 fsal_status_t nfs_export_get_root_entry(struct gsh_export *exp,
 					struct fsal_obj_handle **obj);
+
 void release_export(struct gsh_export *exp, bool config);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+int StrExportOptions(struct display_buffer *dspbuf,
+		     struct export_perms *p_perms);
+#ifdef __cplusplus
+}
+#endif
+
 /* XXX */
 /*void kill_export_root_entry(cache_entry_t *entry);*/
 /*void kill_export_junction_entry(cache_entry_t *entry);*/

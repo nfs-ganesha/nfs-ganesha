@@ -153,7 +153,7 @@ extern pthread_rwlock_t fs_lock;
 		     (fs)->claims[CLAIM_ROOT], (fs)->claims[CLAIM_SUBTREE],  \
 		     (fs)->claims[CLAIM_CHILD], (fs)->claims[CLAIM_TEMP])
 
-int populate_posix_file_systems(const char *path, struct gsh_export *export);
+int populate_posix_file_systems(const char *path, struct gsh_export *exp);
 
 int resolve_posix_filesystem(const char *path, struct fsal_module *fsal,
 			     struct fsal_export *exp,

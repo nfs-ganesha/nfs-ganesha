@@ -82,8 +82,8 @@ struct global_export_perms export_opt = { GLOBAL_EXPORT_PERMS_INITIALIZER(
 struct global_export_perms export_opt_cfg = { GLOBAL_EXPORT_PERMS_INITIALIZER(
 	export_opt_cfg) };
 
-static int StrExportOptions(struct display_buffer *dspbuf,
-			    struct export_perms *p_perms)
+int StrExportOptions(struct display_buffer *dspbuf,
+		     struct export_perms *p_perms)
 {
 	int b_left = display_start(dspbuf);
 
