@@ -78,6 +78,8 @@ static struct config_item mdcache_params[] = {
 		       lru_run_interval),
 	CONF_ITEM_BOOL("Cache_FDs", true, mdcache_parameter, Cache_FDs),
 	CONF_ITEM_BOOL("Close_Fast", false, mdcache_parameter, close_fast),
+	CONF_ITEM_I64("Open_FD_Limit", 0, INT64_MAX, 0, mdcache_parameter,
+		      open_fd_limit),
 	CONF_ITEM_UI32("FD_Limit_Percent", 0, 100, 99, mdcache_parameter,
 		       fd_limit_percent),
 	CONF_ITEM_UI32("FD_HWMark_Percent", 0, 100, 90, mdcache_parameter,

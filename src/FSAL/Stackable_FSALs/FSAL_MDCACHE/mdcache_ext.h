@@ -105,6 +105,10 @@ struct mdcache_parameter {
 	 * using them for read/write/commit. Defaults to false,
 	 * settable with Close_Fast. */
 	bool close_fast;
+	/** Absolute open file descriptor limit override. Defaults to 0,
+	 *  which uses the system-imposed maximum. Settable with
+	 *  Open_FD_Limit. */
+	int64_t open_fd_limit;
 	/** The percentage of the system-imposed maximum of file
 	    descriptors at which Ganesha will deny requests.
 	    Defaults to 99, settable with FD_Limit_Percent. */

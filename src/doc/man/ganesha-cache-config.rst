@@ -94,6 +94,14 @@ Close_Fast(bool, default false)
     Whether to close files immediately after opening files and using them for
     read/write/commit.
 
+Open_FD_Limit(int64, range 0 to INT64_MAX, default 0)
+    Absolute open file descriptor limit override. A value of 0 uses the
+    system-imposed limit. Positive values up to INT64_MAX are accepted.
+    If the configured value is greater than the system limit, the system
+    limit is used instead and a warning is logged. The effective limit
+    is used to calculate the FD_Limit_Percent, FD_HWMark_Percent, and
+    FD_LWMark_Percent thresholds.
+
 FD_Limit_Percent(uint32, range 0 to 100, default 99)
     The percentage of the system-imposed maximum of file descriptors at which
     Ganesha will deny requests.

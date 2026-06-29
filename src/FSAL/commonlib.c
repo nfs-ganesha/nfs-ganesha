@@ -1936,9 +1936,27 @@ err_open:;
 		}
 	}
 
-	LogEvent(COMPONENT_MDCACHE_LRU,
-		 "Setting the system-imposed limit on FDs to %d.",
-		 fd_lru_state.fds_system_imposed);
+	if (params->open_fd_limit > 0) {
+		if (params->open_fd_limit > fd_lru_state.fds_system_imposed) {
+			LogWarn(COMPONENT_MDCACHE_LRU,
+				"Configured open FD limit of %" PRIi64
+				" exceeds discovered system limit %d. "
+				"Using system limit.",
+				params->open_fd_limit,
+				fd_lru_state.fds_system_imposed);
+		} else {
+			LogEvent(COMPONENT_MDCACHE_LRU,
+				 "Using configured open FD limit of %" PRIi64
+				 " with discovered system limit %d.",
+				 params->open_fd_limit,
+				 fd_lru_state.fds_system_imposed);
+			fd_lru_state.fds_system_imposed = params->open_fd_limit;
+		}
+	} else {
+		LogEvent(COMPONENT_MDCACHE_LRU,
+			 "Setting the system-imposed limit on FDs to %d.",
+			 fd_lru_state.fds_system_imposed);
+	}
 
 	fd_lru_state.fds_hard_limit =
 		(params->fd_limit_percent * fd_lru_state.fds_system_imposed) /
