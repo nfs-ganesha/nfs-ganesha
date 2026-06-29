@@ -231,6 +231,7 @@ struct gsh_export *alloc_export(void)
 	export->refcnt = 1;
 
 	PTHREAD_RWLOCK_init(&export->exp_lock, NULL);
+	PTHREAD_RWLOCK_init(&export->exp_state_lock, NULL);
 
 	return export;
 }
@@ -731,6 +732,7 @@ void _put_gsh_export(struct gsh_export *export, bool config, char *file,
 	export_st = container_of(export, struct export_stats, export);
 	server_stats_free(&export_st->st);
 	PTHREAD_RWLOCK_destroy(&export->exp_lock);
+	PTHREAD_RWLOCK_destroy(&export->exp_state_lock);
 	gsh_free(export_st);
 }
 

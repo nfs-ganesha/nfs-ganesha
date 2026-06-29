@@ -209,6 +209,8 @@ struct gsh_export {
 	int64_t refcnt;
 	/** Read/Write lock protecting export */
 	pthread_rwlock_t exp_lock;
+	/** Read/Write lock protecting exp_state_list (split from exp_lock) */
+	pthread_rwlock_t exp_state_lock;
 	/** CFG: available mount options - update protected by lock */
 	struct export_perms export_perms;
 	/** The last time the export stats were updated */
