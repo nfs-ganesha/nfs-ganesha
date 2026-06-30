@@ -811,6 +811,8 @@ static void open4_ex(OPEN4args *arg, compound_data_t *data, OPEN4res *res_OPEN4,
 	fsal_status_t status = { 0, 0 };
 	/* The open state for the file */
 	bool state_handle_lock_held = false;
+	/* True when OPEN conflicts with an active deleg. */
+	bool open_conflicts_with_deleg = false;
 
 	/* Make sure the attributes are initialized */
 	memset(&sattr, 0, sizeof(sattr));
@@ -956,6 +958,14 @@ static void open4_ex(OPEN4args *arg, compound_data_t *data, OPEN4res *res_OPEN4,
 	if ((arg->share_deny & OPEN4_SHARE_DENY_WRITE) != 0)
 		openflags |= FSAL_O_DENY_WRITE_MAND;
 
+	/* RFC 8881 Section 18.16.4: UNCHECKED4 OPEN with size zero that
+	 * truncates an existing file conflicts with OPEN_DELEGATE_READ
+	 * delegations held by other clients.
+	 */
+	open_conflicts_with_deleg =
+		((arg->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0) ||
+		((openflags & FSAL_O_TRUNC) != 0);
+
 	/* Check if file_obj a REGULAR_FILE */
 	if (file_obj != NULL && file_obj->type != REGULAR_FILE) {
 		LogDebug(COMPONENT_NFS_V4,
@@ -987,9 +997,8 @@ static void open4_ex(OPEN4args *arg, compound_data_t *data, OPEN4res *res_OPEN4,
 		 */
 		if (arg->claim.claim != CLAIM_DELEGATE_CUR &&
 		    arg->claim.claim != CLAIM_DELEG_CUR_FH &&
-		    state_deleg_conflict_impl(
-			    file_obj, (arg->share_access &
-				       OPEN4_SHARE_ACCESS_WRITE) != 0)) {
+		    state_deleg_conflict_impl(file_obj,
+					      open_conflicts_with_deleg)) {
 			res_OPEN4->status = NFS4ERR_DELAY;
 			goto out;
 		}
@@ -1119,9 +1128,9 @@ retry_open_file:
 			(file_obj->state_hdl != NULL &&
 			 file_obj->state_hdl->file.fdeleg_stats
 					 .fds_curr_delegations > 0);
-		bool conflict_detected = state_deleg_conflict_impl(
-			file_obj,
-			(arg->share_access & OPEN4_SHARE_ACCESS_WRITE) != 0);
+		bool conflict_detected =
+			state_deleg_conflict_impl(file_obj,
+						  open_conflicts_with_deleg);
 
 		LogFullDebug(COMPONENT_STATE,
 			     "has_delegations=%d, conflict_detected=%d",
