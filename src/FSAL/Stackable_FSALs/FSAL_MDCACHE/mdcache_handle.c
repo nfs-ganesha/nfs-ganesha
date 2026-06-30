@@ -57,7 +57,8 @@
  * This function is a wrapper of mdcache_alloc_handle. It adds error checking
  * and logging. It also cleans objects allocated in the subfsal if it fails.
  *
- * @note the caller must hold the content lock on the parent.
+ * @note The parent content_lock is taken internally around the dirent add,
+ *       unless @a content_lock_held indicates the caller already holds it.
  *
  * This does not cause an ABBA lock conflict with the potential getattrs
  * if we lose a race to create the cache entry since our caller CAN NOT hold
@@ -68,17 +69,20 @@
  * parent's attributes (we can't do it here due to lock ordering) in a way that
  * does not invalidate the dirent cache.
  *
- * @param[in]     export         The mdcache export used by the handle.
- * @param[in,out] sub_handle     The handle used by the subfsal.
- * @param[in]     fs             The filesystem of the new handle.
- * @param[in]     new_handle     Address where the new allocated pointer should
- *                               be written.
- * @param[in]     new_directory  Indicates a new directory has been created.
- * @param[in,out] attrs_out      Optional attributes for newly created object.
- * @param[in]     parent         Parent directory to add dirent to.
- * @param[in]     name           Name of the dirent to add.
- * @param[in,out] invalidate     Invalidate parent attr (and chunk cache)
- * @param[in]     state          Optional state_t representing open file.
+ * @param[in]     export             The mdcache export used by the handle.
+ * @param[in,out] sub_handle         The handle used by the subfsal.
+ * @param[in]     fs                 The filesystem of the new handle.
+ * @param[in]     new_handle         Address where the new allocated pointer
+ *                                   should be written.
+ * @param[in]     new_directory      Indicates a new directory has been created.
+ * @param[in,out] attrs_out          Optional attributes for newly created
+ *                                   object.
+ * @param[in]     parent             Parent directory to add dirent to.
+ * @param[in]     name               Name of the dirent to add.
+ * @param[in,out] invalidate         Invalidate parent attr (and chunk cache)
+ * @param[in]     state              Optional state_t representing open file.
+ * @param[in]     content_lock_held  True if the caller already holds the
+ *                                   parent's content_lock.
  *
  * @note This returns an INITIAL ref'd entry on success
  *
@@ -89,7 +93,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	struct fsal_obj_handle **new_obj, bool new_directory,
 	struct fsal_attrlist *attrs_in, struct fsal_attrlist *attrs_out,
 	const char *tag, mdcache_entry_t *parent, const char *name,
-	bool *invalidate, struct state_t *state)
+	bool *invalidate, struct state_t *state, bool content_lock_held)
 {
 	fsal_status_t status;
 	mdcache_entry_t *new_entry;
@@ -117,8 +121,14 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	if (get_readdir_mode() == FSAL_RDDIR_CHUNK_ALWAYS) {
 		/* Add this entry to the directory (also takes an internal ref)
 		 */
+		if (!content_lock_held)
+			PTHREAD_RWLOCK_wrlock(&parent->content_lock);
+
 		status =
 			mdcache_dirent_add(parent, name, new_entry, invalidate);
+
+		if (!content_lock_held)
+			PTHREAD_RWLOCK_unlock(&parent->content_lock);
 
 		if (FSAL_IS_ERROR(status)) {
 			LogDebug(COMPONENT_MDCACHE,
@@ -238,14 +248,10 @@ static fsal_status_t mdcache_mkdir(struct fsal_obj_handle *dir_hdl,
 		return status;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-
 	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
 						true, &attrs, attrs_out,
 						"mkdir ", parent, name,
-						&invalidate, NULL);
-
-	PTHREAD_RWLOCK_unlock(&parent->content_lock);
+						&invalidate, NULL, false);
 
 	fsal_release_attrs(&attrs);
 
@@ -325,14 +331,10 @@ static fsal_status_t mdcache_mknode(struct fsal_obj_handle *dir_hdl,
 		return status;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-
 	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
 						false, &attrs, attrs_out,
 						"mknode ", parent, name,
-						&invalidate, NULL);
-
-	PTHREAD_RWLOCK_unlock(&parent->content_lock);
+						&invalidate, NULL, false);
 
 	fsal_release_attrs(&attrs);
 
@@ -410,14 +412,10 @@ static fsal_status_t mdcache_symlink(
 		return status;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&parent->content_lock);
-
 	status = mdcache_alloc_and_check_handle(export, sub_handle, handle,
 						false, &attrs, attrs_out,
 						"symlink ", parent, name,
-						&invalidate, NULL);
-
-	PTHREAD_RWLOCK_unlock(&parent->content_lock);
+						&invalidate, NULL, false);
 
 	fsal_release_attrs(&attrs);
 

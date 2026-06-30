@@ -1427,7 +1427,7 @@ fsal_status_t mdc_lookup_uncached(mdcache_entry_t *mdc_parent, const char *name,
 	status = mdcache_alloc_and_check_handle(export, sub_handle, &new_obj,
 						false, &attrs, attrs_out,
 						"lookup ", mdc_parent, name,
-						&invalidate, NULL);
+						&invalidate, NULL, true);
 
 	fsal_release_attrs(&attrs);
 

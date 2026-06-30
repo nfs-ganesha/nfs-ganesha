@@ -482,7 +482,7 @@ fsal_status_t mdcache_alloc_and_check_handle(
 	struct fsal_obj_handle **new_obj, bool new_directory,
 	struct fsal_attrlist *attrs_in, struct fsal_attrlist *attrs_out,
 	const char *tag, mdcache_entry_t *parent, const char *name,
-	bool *invalidate, struct state_t *state);
+	bool *invalidate, struct state_t *state, bool content_lock_held);
 
 fsal_status_t mdcache_refresh_attrs(mdcache_entry_t *entry, bool need_acl,
 				    bool need_fslocations, bool need_seclabel,

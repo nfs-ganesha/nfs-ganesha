@@ -439,15 +439,11 @@ fsal_status_t mdcache_open2(struct fsal_obj_handle *obj_hdl,
 
 	invalidate = createmode != FSAL_NO_CREATE;
 
-	PTHREAD_RWLOCK_wrlock(&mdc_parent->content_lock);
-
 	/* We will invalidate parent attrs if we did any form of create. */
 	status = mdcache_alloc_and_check_handle(export, sub_handle, new_obj,
 						false, &attrs, attrs_out,
 						"open2 ", mdc_parent, name,
-						&invalidate, state);
-
-	PTHREAD_RWLOCK_unlock(&mdc_parent->content_lock);
+						&invalidate, state, false);
 
 	fsal_release_attrs(&attrs);
 
