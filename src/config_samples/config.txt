@@ -528,6 +528,12 @@ EXPORT {}
 
 	Trust_Readdir_Negative_Cache(bool, default false)
 
+	Read_Access_Check_Policy(enum, values [pre, post], default pre)
+
+	Lookup_Access_Check_Policy(enum, values [pre, post], default pre)
+
+	Readdir_Access_Check_Policy(enum, values [pre, post], default pre)
+
 	* The following options may have limits on dynamic effect
 
 	UseCookieVerifier(bool, default true)

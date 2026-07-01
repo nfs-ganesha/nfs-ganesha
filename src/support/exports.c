@@ -2277,13 +2277,28 @@ struct config_item_list deleg_types[] = {
 	CONFIG_LIST_EOL
 };
 
-/**
- * @brief read permission mode options
- */
 static struct config_item_list read_access_check_policy_type[] = {
-	CONFIG_LIST_TOK("pre", READ_ACCESS_CHECK_POLICY_PRE),
-	CONFIG_LIST_TOK("post", READ_ACCESS_CHECK_POLICY_POST),
-	CONFIG_LIST_TOK("all", READ_ACCESS_CHECK_POLICY_ALL), CONFIG_LIST_EOL
+	CONFIG_LIST_TOK("pre", ACCESS_CHECK_POLICY_PRE
+				       << READ_ACCESS_CHECK_POLICY_SHIFT),
+	CONFIG_LIST_TOK("post", ACCESS_CHECK_POLICY_POST
+					<< READ_ACCESS_CHECK_POLICY_SHIFT),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item_list lookup_access_check_policy_type[] = {
+	CONFIG_LIST_TOK("pre", ACCESS_CHECK_POLICY_PRE
+				       << LOOKUP_ACCESS_CHECK_POLICY_SHIFT),
+	CONFIG_LIST_TOK("post", ACCESS_CHECK_POLICY_POST
+					<< LOOKUP_ACCESS_CHECK_POLICY_SHIFT),
+	CONFIG_LIST_EOL
+};
+
+static struct config_item_list readdir_access_check_policy_type[] = {
+	CONFIG_LIST_TOK("pre", ACCESS_CHECK_POLICY_PRE
+				       << READDIR_ACCESS_CHECK_POLICY_SHIFT),
+	CONFIG_LIST_TOK("post", ACCESS_CHECK_POLICY_POST
+					<< READDIR_ACCESS_CHECK_POLICY_SHIFT),
+	CONFIG_LIST_EOL
 };
 
 /* Note: Access_Type defaults to None on purpose */
@@ -2548,10 +2563,27 @@ static struct config_item fsal_params[] = {
 		CONF_ITEM_FSID_SET("Filesystem_id", 666, 666, _struct_,        \
 				   filesystem_id, /* major.minor */            \
 				   EXPORT_OPTION_FSID_SET, options_set),       \
-		CONF_ITEM_LIST("Read_Access_Check_Policy",                     \
-			       READ_ACCESS_CHECK_POLICY_PRE,                   \
-			       read_access_check_policy_type, _struct_,        \
-			       read_access_check_policy),                      \
+		CONF_ITEM_LIST_MASK("Read_Access_Check_Policy",                \
+				    (ACCESS_CHECK_POLICY_PRE                   \
+				     << READ_ACCESS_CHECK_POLICY_SHIFT),       \
+				    (ACCESS_CHECK_POLICY_ALL_MASK              \
+				     << READ_ACCESS_CHECK_POLICY_SHIFT),       \
+				    read_access_check_policy_type, _struct_,   \
+				    access_check_policies),                    \
+		CONF_ITEM_LIST_MASK("Lookup_Access_Check_Policy",              \
+				    (ACCESS_CHECK_POLICY_PRE                   \
+				     << LOOKUP_ACCESS_CHECK_POLICY_SHIFT),     \
+				    (ACCESS_CHECK_POLICY_ALL_MASK              \
+				     << LOOKUP_ACCESS_CHECK_POLICY_SHIFT),     \
+				    lookup_access_check_policy_type, _struct_, \
+				    access_check_policies),                    \
+		CONF_ITEM_LIST_MASK("Readdir_Access_Check_Policy",             \
+				    (ACCESS_CHECK_POLICY_PRE                   \
+				     << READDIR_ACCESS_CHECK_POLICY_SHIFT),    \
+				    (ACCESS_CHECK_POLICY_ALL_MASK              \
+				     << READDIR_ACCESS_CHECK_POLICY_SHIFT),    \
+				    readdir_access_check_policy_type,          \
+				    _struct_, access_check_policies),          \
 		CONF_ITEM_STR("Tag", 1, MAXPATHLEN, NULL, _struct_, FS_tag),   \
 		CONF_ITEM_UI64("MaxOffsetWrite", 512, UINT64_MAX, INT64_MAX,   \
 			       _struct_, MaxOffsetWrite),                      \
@@ -2997,23 +3029,23 @@ err_out:
 	return -1;
 }
 
-const char *readable_read_access_check_policy(uint32_t read_access_check_policy)
+const char *readable_access_check_policy(uint32_t access_check_policies,
+					 unsigned int shift)
 {
-	static const char *READABLE_READ_ACCESS_CHECK_POLICY_ALL = "all";
-	static const char *READABLE_READ_ACCESS_CHECK_POLICY_PRE = "pre";
-	static const char *READABLE_READ_ACCESS_CHECK_POLICY_POST = "post";
-	static const char *READABLE_READ_ACCESS_CHECK_POLICY_INVALID =
+	static const char *READABLE_ACCESS_CHECK_POLICY_PRE = "pre";
+	static const char *READABLE_ACCESS_CHECK_POLICY_POST = "post";
+	static const char *READABLE_ACCESS_CHECK_POLICY_INVALID =
 		"none/invalid";
-	if (read_access_check_policy == READ_ACCESS_CHECK_POLICY_ALL)
-		return READABLE_READ_ACCESS_CHECK_POLICY_ALL;
+	uint32_t policy = (access_check_policies >> shift) &
+			  ACCESS_CHECK_POLICY_ALL_MASK;
 
-	if (read_access_check_policy & READ_ACCESS_CHECK_POLICY_PRE)
-		return READABLE_READ_ACCESS_CHECK_POLICY_PRE;
+	if (policy == ACCESS_CHECK_POLICY_PRE)
+		return READABLE_ACCESS_CHECK_POLICY_PRE;
 
-	if (read_access_check_policy & READ_ACCESS_CHECK_POLICY_POST)
-		return READABLE_READ_ACCESS_CHECK_POLICY_POST;
+	if (policy == ACCESS_CHECK_POLICY_POST)
+		return READABLE_ACCESS_CHECK_POLICY_POST;
 
-	return READABLE_READ_ACCESS_CHECK_POLICY_INVALID;
+	return READABLE_ACCESS_CHECK_POLICY_INVALID;
 }
 
 bool log_an_export(struct gsh_export *exp, void *state)
@@ -3039,12 +3071,19 @@ bool log_an_export(struct gsh_export *exp, void *state)
 		DisplayLogComponentLevel(
 			COMPONENT_EXPORT, (char *)lep->file, lep->line,
 			lep->func, lep->level,
-			"%s%sExport %p %5d pseudo (%s) with path (%s) and tag (%s) perms (%s) Read_Access_Check_Policy (%s)",
+			"%s%sExport %p %5d pseudo (%s) with path (%s) and tag (%s) perms (%s) Read_Access_Check_Policy (%s) Lookup_Access_Check_Policy (%s) Readdir_Access_Check_Policy (%s)",
 			lep->tag ? lep->tag : "", lep->tag ? " " : "", exp,
 			exp->export_id, exp->cfg_pseudopath, exp->cfg_fullpath,
 			exp->FS_tag, perms,
-			readable_read_access_check_policy(
-				exp->read_access_check_policy));
+			readable_access_check_policy(
+				exp->access_check_policies,
+				READ_ACCESS_CHECK_POLICY_SHIFT),
+			readable_access_check_policy(
+				exp->access_check_policies,
+				LOOKUP_ACCESS_CHECK_POLICY_SHIFT),
+			readable_access_check_policy(
+				exp->access_check_policies,
+				READDIR_ACCESS_CHECK_POLICY_SHIFT));
 	}
 
 	if (lep->clients)

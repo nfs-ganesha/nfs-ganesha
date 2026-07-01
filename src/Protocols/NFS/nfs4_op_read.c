@@ -214,11 +214,14 @@ static void nfs4_complete_read_plus(struct nfs_resop4 *resp,
 static fsal_status_t allow_read(struct fsal_obj_handle *obj,
 				uint32_t read_access_check_policy_to_check)
 {
-	const uint32_t read_access_check_policy = atomic_fetch_uint32_t(
-		&op_ctx->ctx_export->read_access_check_policy);
+	const uint32_t policies = atomic_fetch_uint32_t(
+		&op_ctx->ctx_export->access_check_policies);
+	const uint32_t read_policy =
+		(policies >> READ_ACCESS_CHECK_POLICY_SHIFT) &
+		ACCESS_CHECK_POLICY_ALL_MASK;
 	fsal_status_t ret = { 0, 0 };
 
-	if (read_access_check_policy & read_access_check_policy_to_check) {
+	if (read_policy & read_access_check_policy_to_check) {
 		ret = obj->obj_ops->test_access(obj, FSAL_READ_ACCESS, NULL,
 						NULL, true);
 
@@ -254,7 +257,7 @@ static void nfs4_read_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 
 	if (!FSAL_IS_ERROR(ret)) {
 		/* Perform permission checks after the FSAL does the read */
-		ret = allow_read(obj, READ_ACCESS_CHECK_POLICY_POST);
+		ret = allow_read(obj, ACCESS_CHECK_POLICY_POST);
 	}
 
 	/* Get result */
@@ -856,7 +859,8 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	}
 
 	/* Perform permission checks before the FSAL does the read */
-	fsal_status = allow_read(obj, READ_ACCESS_CHECK_POLICY_PRE);
+	fsal_status = allow_read(obj, ACCESS_CHECK_POLICY_PRE);
+
 	if (FSAL_IS_ERROR(fsal_status)) {
 		res_READ4->status = nfs4_Errno_status(fsal_status);
 		goto out;

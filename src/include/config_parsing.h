@@ -538,6 +538,17 @@ struct config_item {
 	  .u.lst.tokens = _tokens_,                              \
 	  .off = offsetof(struct _struct_, _mem_) }
 
+#define CONF_ITEM_LIST_MASK(_name_, _def_, _mask_, _tokens_, _struct_, _mem_) \
+	{ .name = _name_,                                        \
+	  .type = CONFIG_LIST,                                   \
+	  .flags = CONFIG_UNIQUE,                                \
+	  .u.lst.def = _def_,                                    \
+	  .u.lst.mask = _mask_,                                  \
+	  .u.lst.set_off = UINT32_MAX,                           \
+	  .u.lst.tokens = _tokens_,                              \
+	  .off = offsetof(struct _struct_, _mem_) }
+
+
 #define CONF_ITEM_LIST_BITS_SET(_name_, _def_, _mask_, _tokens_, _struct_, \
 				_mem_, _set_)                              \
 	{ .name = _name_,                                                  \

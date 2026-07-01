@@ -714,6 +714,37 @@ fsal_status_t fsal_link(struct fsal_obj_handle *obj,
 }
 
 /**
+ * @brief Perform permission check for lookup operation
+ *
+ * Checks if the credentials have execute/search permission in the parent
+ * directory, taking into account the configured Lookup_Access_Check_Policy.
+ *
+ * @param[in] parent                              Handle for the parent
+ *                                                directory.
+ * @param[in] lookup_access_check_policy_to_check Policy phase being checked
+ *                                                (PRE or POST).
+ *
+ * @return FSAL status
+ */
+static fsal_status_t allow_lookup(struct fsal_obj_handle *parent,
+				  uint32_t lookup_access_check_policy_to_check)
+{
+	const uint32_t policies = atomic_fetch_uint32_t(
+		&op_ctx->ctx_export->access_check_policies);
+	const uint32_t lookup_policy =
+		(policies >> LOOKUP_ACCESS_CHECK_POLICY_SHIFT) &
+		ACCESS_CHECK_POLICY_ALL_MASK;
+	const fsal_accessflags_t access_mask =
+		(FSAL_MODE_MASK_SET(FSAL_X_OK) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
+
+	if (lookup_policy & lookup_access_check_policy_to_check)
+		return fsal_access(parent, access_mask);
+
+	return fsalstat(ERR_FSAL_NO_ERROR, 0);
+}
+
+/**
  * @brief Look up a name in a directory
  *
  * @param[in]  parent  Handle for the parent directory to be managed.
@@ -730,9 +761,6 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent, const char *name,
 			  struct fsal_attrlist *attrs_out)
 {
 	fsal_status_t fsal_status = { 0, 0 };
-	fsal_accessflags_t access_mask =
-		(FSAL_MODE_MASK_SET(FSAL_X_OK) |
-		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 
 	*obj = NULL;
 
@@ -741,18 +769,37 @@ fsal_status_t fsal_lookup(struct fsal_obj_handle *parent, const char *name,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
-	fsal_status = fsal_access(parent, access_mask);
+	fsal_status = allow_lookup(parent, ACCESS_CHECK_POLICY_PRE);
 	if (FSAL_IS_ERROR(fsal_status))
 		return fsal_status;
 
 	if (strcmp(name, ".") == 0) {
 		parent->obj_ops->get_ref(parent);
 		*obj = parent;
-		return get_optional_attrs(*obj, attrs_out);
-	} else if (strcmp(name, "..") == 0)
-		return fsal_lookupp(parent, obj, attrs_out);
+		fsal_status = get_optional_attrs(*obj, attrs_out);
+	} else if (strcmp(name, "..") == 0) {
+		fsal_status = fsal_lookupp(parent, obj, attrs_out);
+	} else {
+		fsal_status =
+			parent->obj_ops->lookup(parent, name, obj, attrs_out);
+	}
 
-	return parent->obj_ops->lookup(parent, name, obj, attrs_out);
+	if (FSAL_IS_ERROR(fsal_status))
+		return fsal_status;
+
+	fsal_status = allow_lookup(parent, ACCESS_CHECK_POLICY_POST);
+
+	if (FSAL_IS_ERROR(fsal_status)) {
+		/* Lookup succeeded and ref'd *obj; release it before
+		 * returning error */
+		if (*obj != NULL) {
+			(*obj)->obj_ops->put_ref(*obj);
+			*obj = NULL;
+		}
+		return fsal_status;
+	}
+
+	return fsal_status;
 }
 
 /**
@@ -1183,15 +1230,99 @@ bool fsal_create_verify(struct fsal_obj_handle *obj, uint32_t verf_hi,
 	return verified;
 }
 
+/**
+ * @brief Perform permission check for readdir operation
+ *
+ * Checks if the credentials have permission to list the directory and read
+ * attributes of entries, taking into account Readdir_Access_Check_Policy.
+ * Populates out_should_fetch_attr indicating whether child attributes
+ * should be fetched and returned.
+ *
+ * @param[in]  directory                            Handle for the directory
+ *                                                  being read
+ * @param[in]  attrmask                             Requested attributes mask
+ * @param[in]  readdir_access_check_policy_to_check Policy phase being checked
+ *                                                  (PRE or POST).
+ * @param[out] out_should_fetch_attr                Whether child attributes
+ *                                                  should be fetched
+ *
+ * @return FSAL status
+ */
+static fsal_status_t
+allow_readdir(struct fsal_obj_handle *directory, attrmask_t attrmask,
+	      uint32_t readdir_access_check_policy_to_check,
+	      bool *out_should_fetch_attr)
+{
+	const uint32_t policies = atomic_fetch_uint32_t(
+		&op_ctx->ctx_export->access_check_policies);
+	const uint32_t readdir_policy =
+		(policies >> READDIR_ACCESS_CHECK_POLICY_SHIFT) &
+		ACCESS_CHECK_POLICY_ALL_MASK;
+	fsal_status_t fsal_status = { 0, 0 };
+	fsal_status_t attr_status = { 0, 0 };
+
+	*out_should_fetch_attr = false;
+
+	/* The access mask corresponding to permission to list directory
+	   entries */
+	fsal_accessflags_t access_mask =
+		(FSAL_MODE_MASK_SET(FSAL_R_OK) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
+	fsal_accessflags_t access_mask_attr =
+		(FSAL_MODE_MASK_SET(FSAL_R_OK) | FSAL_MODE_MASK_SET(FSAL_X_OK) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR) |
+		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
+
+	/* Adjust access mask if ACL is asked for.
+	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
+	 */
+	if ((attrmask & ATTR_ACL) != 0) {
+		access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+		access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
+	}
+
+	if (!(readdir_policy & readdir_access_check_policy_to_check)) {
+		*out_should_fetch_attr = (attrmask != 0);
+		return fsal_status;
+	}
+
+	fsal_status = fsal_access(directory, access_mask);
+	if (FSAL_IS_ERROR(fsal_status)) {
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "permission check for directory status=%s",
+			 fsal_err_txt(fsal_status));
+		return fsal_status;
+	}
+
+	/* If no attributes were requested, indicate that child attributes
+	 * should not be returned and skip the attribute access check. */
+	if (attrmask == 0)
+		return fsal_status;
+
+	attr_status = fsal_access(directory, access_mask_attr);
+	if (FSAL_IS_ERROR(attr_status)) {
+		LogDebug(COMPONENT_NFS_READDIR,
+			 "permission check for attributes status=%s",
+			 fsal_err_txt(attr_status));
+	}
+	*out_should_fetch_attr = !FSAL_IS_ERROR(attr_status);
+
+	return fsal_status;
+}
+
 struct fsal_populate_cb_state {
 	struct fsal_obj_handle *directory;
-	fsal_status_t *status;
+	/* If cb_status_override is set to an error by the callback, it
+	 * overrides the status being returned by fsal_readdir.
+	 */
+	fsal_status_t *cb_status_override;
 	helper_readdir_cb cb;
 	fsal_cookie_t last_cookie;
 	enum cb_state cb_state;
 	unsigned int *cb_nfound;
 	attrmask_t attrmask;
 	struct fsal_readdir_cb_parms cb_parms;
+	bool post_access_check_done;
 };
 
 static enum fsal_dir_result populate_dirent(const char *name,
@@ -1204,6 +1335,19 @@ static enum fsal_dir_result populate_dirent(const char *name,
 		(struct fsal_populate_cb_state *)dir_state;
 	fsal_status_t status = { 0, 0 };
 	enum fsal_dir_result retval;
+
+	if (!state->post_access_check_done) {
+		status = allow_readdir(state->directory, state->attrmask,
+				       ACCESS_CHECK_POLICY_POST,
+				       &state->cb_parms.attr_allowed);
+
+		state->post_access_check_done = true;
+		if (FSAL_IS_ERROR(status)) {
+			*state->cb_status_override = status;
+			retval = DIR_TERMINATE;
+			goto out;
+		}
+	}
 
 	retval = DIR_CONTINUE;
 	state->cb_parms.name = name;
@@ -1350,20 +1494,10 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
 			   void *opaque)
 {
 	fsal_status_t fsal_status = { 0, 0 };
-	fsal_status_t cb_status = { 0, 0 };
+	fsal_status_t cb_status_override = { 0, 0 };
 	struct fsal_populate_cb_state state;
 
 	*nbfound = 0;
-
-	/* The access mask corresponding to permission to list directory
-	   entries */
-	fsal_accessflags_t access_mask =
-		(FSAL_MODE_MASK_SET(FSAL_R_OK) |
-		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR));
-	fsal_accessflags_t access_mask_attr =
-		(FSAL_MODE_MASK_SET(FSAL_R_OK) | FSAL_MODE_MASK_SET(FSAL_X_OK) |
-		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_LIST_DIR) |
-		 FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_EXECUTE));
 
 	/* readdir can be done only with a directory */
 	if (directory->type != DIRECTORY) {
@@ -1371,37 +1505,14 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 	}
 
-	/* Adjust access mask if ACL is asked for.
-	 * NOTE: We intentionally do NOT check ACE4_READ_ATTR.
-	 */
-	if ((attrmask & ATTR_ACL) != 0) {
-		access_mask |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
-		access_mask_attr |= FSAL_ACE4_MASK_SET(FSAL_ACE_PERM_READ_ACL);
-	}
-
-	fsal_status = fsal_access(directory, access_mask);
-	if (FSAL_IS_ERROR(fsal_status)) {
-		LogDebug(COMPONENT_NFS_READDIR,
-			 "permission check for directory status=%s",
-			 fsal_err_txt(fsal_status));
+	fsal_status = allow_readdir(directory, attrmask,
+				    ACCESS_CHECK_POLICY_PRE,
+				    &state.cb_parms.attr_allowed);
+	if (FSAL_IS_ERROR(fsal_status))
 		return fsal_status;
-	}
-	if (attrmask != 0) {
-		/* Check for access permission to get attributes */
-		fsal_status_t attr_status =
-			fsal_access(directory, access_mask_attr);
-		if (FSAL_IS_ERROR(attr_status))
-			LogDebug(COMPONENT_NFS_READDIR,
-				 "permission check for attributes status=%s",
-				 fsal_err_txt(attr_status));
-		state.cb_parms.attr_allowed = !FSAL_IS_ERROR(attr_status);
-	} else {
-		/* No attributes requested. */
-		state.cb_parms.attr_allowed = false;
-	}
 
 	state.directory = directory;
-	state.status = &cb_status;
+	state.cb_status_override = &cb_status_override;
 	state.cb = cb;
 	state.last_cookie = 0;
 	state.cb_parms.opaque = opaque;
@@ -1410,10 +1521,34 @@ fsal_status_t fsal_readdir(struct fsal_obj_handle *directory, uint64_t cookie,
 	state.cb_state = CB_ORIGINAL;
 	state.cb_nfound = nbfound;
 	state.attrmask = attrmask;
+	state.post_access_check_done = false;
 
 	fsal_status =
 		directory->obj_ops->readdir(directory, &cookie, (void *)&state,
 					    populate_dirent, attrmask, eod_met);
+
+	if (FSAL_IS_ERROR(fsal_status))
+		return fsal_status;
+
+	/* If the directory was completely empty, populate_dirent was never
+	 * called. We must perform the POST permission check here to ensure
+	 * empty directories do not bypass access control.
+	 */
+	if (!state.post_access_check_done) {
+		fsal_status_t post_status =
+			allow_readdir(directory, attrmask,
+				      ACCESS_CHECK_POLICY_POST,
+				      &state.cb_parms.attr_allowed);
+		if (FSAL_IS_ERROR(post_status))
+			return post_status;
+	}
+
+	/* If populate_dirent was called and the POST permission check failed,
+	 * cb_status_override holds the error. Otherwise, cb_status_override
+	 * remains 0 as initialized.
+	 */
+	if (FSAL_IS_ERROR(cb_status_override))
+		return cb_status_override;
 
 	return fsal_status;
 }

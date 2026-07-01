@@ -205,8 +205,10 @@ struct gsh_export {
 	uint64_t MaxOffsetRead;
 	/** CFG: Filesystem ID for overriding fsid from FSAL - ????? */
 	fsal_fsid_t filesystem_id;
-	/** CFG: Controls when to run permission check for read. */
-	uint32_t read_access_check_policy;
+	/** CFG: Controls when to run permission check for read, lookup
+	and readdir */
+	uint32_t access_check_policies;
+
 	/** References to this export */
 	int64_t refcnt;
 	/** Read/Write lock protecting export */
