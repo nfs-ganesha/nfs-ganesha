@@ -501,7 +501,7 @@ static int reclaim_reset(struct ceph_mount *cm)
 /* ceph client reclaim for takeover of failed node */
 fsal_status_t node_takeover_reclaim(struct fsal_module *module_in, char *nodeid)
 {
-	int ceph_status;
+	int ceph_status = -EDOM;
 	struct avltree_node *node;
 
 	PTHREAD_RWLOCK_rdlock(&cmount_lock);

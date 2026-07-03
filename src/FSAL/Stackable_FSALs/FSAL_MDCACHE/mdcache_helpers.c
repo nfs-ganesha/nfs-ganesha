@@ -1781,7 +1781,7 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 		      mdcache_dir_entry_t *new_dir_entry)
 {
 	mdcache_dir_entry_t *left;
-	mdcache_dir_entry_t *right;
+	mdcache_dir_entry_t *right = 0;
 	struct avltree_node *node, *parent, *unbalanced, *other;
 	int is_left, code;
 	fsal_cookie_t ck, nck;
