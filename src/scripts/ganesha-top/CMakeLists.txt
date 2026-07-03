@@ -35,7 +35,6 @@ if(USE_ADMIN_TOOLS)
       string(REPLACE ".py" "" script_file ${src_file})
       add_custom_command(
         OUTPUT ${script_file}
-        COMMAND mkdir -p build/lib
         COMMAND echo ${script_file}
         COMMAND cp "${CMAKE_CURRENT_SOURCE_DIR}/${src_file}" ${script_file}
         DEPENDS ${src_file}

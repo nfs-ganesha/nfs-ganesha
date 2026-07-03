@@ -9,5 +9,4 @@ if __name__ == '__main__':
               maintainer = "NFS-Ganesha Project",
               maintainer_email = "devel@lists.nfs-ganesha.org",
               description = "NFS Ganesha Administration tools",
-              package_dir = { '': '${CMAKE_CURRENT_SOURCE_DIR}' },
               scripts = [${SCRIPTS_STRING}])

@@ -20,17 +20,15 @@
 #-------------------------------------------------------------------------------
 # NFS Ganesha  Cmake
 
-# Current version as of Fedora 16.  Not tested with earlier.
+# 3.10.0 is the minimum that won't cause a warning in Fedora 43
+# (which has cmake 3.31.11).  This value was tested with fc34, el9,
+# el10, fc43.
 
-cmake_minimum_required(VERSION 3.5.0)
+cmake_minimum_required(VERSION 3.10.0)
 
 message( STATUS "cmake version ${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" )
 
-if( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
-  if(COMMAND cmake_policy)
-      cmake_policy(SET CMP0017 NEW)
-  endif(COMMAND cmake_policy)
-endif( "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" VERSION_GREATER "2.6" )
+cmake_policy(SET CMP0017 NEW)
 
 # Find packages and libs we need for building
 include(CheckIncludeFiles)
@@ -302,7 +300,7 @@ goption(USE_FSAL_PROXY_V4 "build PROXY_V4 FSAL shared library" ON)
 goption(USE_FSAL_PROXY_V3 "build PROXY_V3 FSAL shared library" ON)
 goption(USE_FSAL_VFS "build VFS FSAL shared library" ON)
 goption(USE_FSAL_LUSTRE "build LUSTRE FSAL shared library" ON)
-goption(USE_FSAL_LIZARDFS "build LIZARDFS FSAL shared library" ON)
+goption(USE_FSAL_LIZARDFS "build LIZARDFS FSAL shared library" OFF)
 goption(USE_FSAL_KVSFS "build KVSFS FSAL shared library" ON)
 goption(USE_FSAL_CEPH "build CEPH FSAL shared library" ON)
 goption(USE_FSAL_GPFS "build GPFS FSAL" ON)
@@ -1232,10 +1230,11 @@ if(USE_ADMIN_TOOLS)
 
     # Check if the Python version is less than 3.12
     if(python_major_version LESS 3 OR (python_major_version EQUAL 3 AND python_minor_version LESS 12))
-         set(USE_LEGACY_PYTHON_INSTALL TRUE)
+         goption(USE_LEGACY_PYTHON_INSTALL "Use 'python setup.py install'" ON)
     else()
-        set(USE_LEGACY_PYTHON_INSTALL FALSE)
+        goption(USE_LEGACY_PYTHON_INSTALL "Use 'python setup.py install'" OFF)
     endif()
+    gopt_test(USE_LEGACY_PYTHON_INSTALL)
 
     # Optionally, print the result for debugging
     message(STATUS "USE_LEGACY_PYTHON_INSTALL is set to: ${USE_LEGACY_PYTHON_INSTALL}")
@@ -1292,17 +1291,15 @@ check_library_exists(
 
 # Needs to be before ntirpc
 add_custom_target( rpm DEPENDS dist)
-add_custom_command(TARGET rpm
+add_custom_command(TARGET rpm POST_BUILD
                   COMMAND sh -c "rpmbuild -ta ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
+		  VERBATIM )
 
 set(RPMDEST "--define '_srcrpmdir ${CMAKE_CURRENT_BINARY_DIR}'")
 add_custom_target( srpm DEPENDS dist)
-add_custom_command(TARGET srpm
+add_custom_command(TARGET srpm POST_BUILD
                   COMMAND sh -c "rpmbuild ${RPMDEST} -ts ${PKG_NAME}"
-		  VERBATIM
-		  DEPENDS dist)
+		  VERBATIM )
 
 # Roll up required libraries
 
@@ -1949,12 +1946,6 @@ else(SANITIZE_ADDRESS)
     set(BCOND_SANITIZE_ADDRESS "%bcond_with")
 endif(SANITIZE_ADDRESS)
 
-if(USE_LEGACY_PYTHON_INSTALL)
-    set(BCOND_LEGACY_PYTHON_INSTALL "%bcond_without")
-else(USE_LEGACY_PYTHON_INSTALL)
-    set(BCOND_LEGACY_PYTHON_INSTALL "%bcond_with")
-endif(USE_LEGACY_PYTHON_INSTALL)
-
 if(USE_NFSIDMAP)
   set(BCOND_NFSIDMAP "%bcond_without")
 else(USE_NFSIDMAP)
@@ -1972,6 +1963,42 @@ if(INTERNAL_STATD)
 else(INTERNAL_STATD)
   set(BCOND_STATD "%bcond_with")
 endif(INTERNAL_STATD)
+
+# deal with legacy python for el9
+# ... and deal with legacy rpmbuild for legacy python for fc34.
+find_program(RPMBUILD_EXECUTABLE rpmbuild)
+if(RPMBUILD_EXECUTABLE)
+    execute_process(
+        COMMAND ${RPMBUILD_EXECUTABLE} --version
+        OUTPUT_VARIABLE RPM_VERSION_OUTPUT
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    string(REGEX REPLACE "^.* " "" RPMBUILD_VERSION ${RPM_VERSION_OUTPUT})
+      message(STATUS "Found rpmbuild version <${RPMBUILD_VERSION}>")
+else(RPMBUILD_EXECUTABLE)
+      message(WARNING "can't determine rpmbuild version.  Hope it's new")
+    set(RPMBUILD_VERSION "9.999")
+endif(RPMBUILD_EXECUTABLE)
+
+if("${RPMBUILD_VERSION}" VERSION_GREATER_EQUAL "4.18")
+set(BCOND_LEGACY_PYTHON_INSTALL ${RPMBUILD_VERSION}
+[=[%bcond legacy_python_install %[ v"%{python3_version}" < v"3.12" ]]=])
+else()
+set(BCOND_LEGACY_PYTHON_INSTALL [=[%if %[ v"%{python3_version}" < v"3.12" ]
+%bcond_without legacy_python_install
+%else
+%bcond_with legacy_python_install
+%endif]=]
+)
+endif()
+
+
+if("${NTIRPC_VERSION_EMBED}" STREQUAL "${NTIRPC_ABI_EMBED}")
+    set(NTIRPC_COMMENT_IF_EQUAL_ELSE_PERCENT "# PERCENT ")
+else()
+    set(NTIRPC_COMMENT_IF_EQUAL_ELSE_PERCENT "%")
+endif()
 
 # Now create a usable specfile
 configure_file(

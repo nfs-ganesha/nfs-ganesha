@@ -51,6 +51,9 @@ Requires: openSUSE-release
 @BCOND_KVSFS@ kvsfs
 %global use_fsal_kvsfs %{on_off_switch kvsfs}
 
+@BCOND_LIZARDFS@ lizardfs
+%global use_fsal_lizardfs %{on_off_switch lizardfs}
+
 @BCOND_RDMA@ rdma
 %global use_rdma %{on_off_switch rdma}
 
@@ -62,7 +65,7 @@ Requires: openSUSE-release
 %global use_9P %{on_off_switch 9P}
 
 @BCOND_SAUNAFS@ saunafs
-%global use_saunafs %{on_off_switch saunafs}
+%global use_fsal_saunafs %{on_off_switch saunafs}
 
 @BCOND_JEMALLOC@ jemalloc
 
@@ -119,7 +122,7 @@ Requires: openSUSE-release
 @BCOND_GNUTLS@ gnutls
 %global use_gnutls %{on_off_switch gnutls}
 
-@BCOND_LEGACY_PYTHON_INSTALL@ legacy_python_install
+@BCOND_LEGACY_PYTHON_INSTALL@
 %global use_legacy_python_install %{on_off_switch legacy_python_install}
 
 @BCOND_NFSIDMAP@ nfsidmap
@@ -153,6 +156,7 @@ BuildRequires:	pkgconfig
 BuildRequires:	userspace-rcu-devel
 BuildRequires:	krb5-devel
 BuildRequires:	openssl-devel
+BuildRequires:	libacl-devel
 %if %{with rados_recov} || %{with rados_urls}
 BuildRequires: librados-devel >= 0.61
 %endif
@@ -313,8 +317,15 @@ Requires:	python3-dbus
 %endif
 %if ( ! 0%{?with_legacy_python_install} )
 BuildRequires:  python3-wheel
+%if ( 0%{?fedora} >= 43 )
+BuildRequires:  python3-build+virtualenv
+%else
 BuildRequires:  python3-build
+%endif
 BuildRequires:  python3-installer
+%if ( 0%{?rhel} > 9 )
+BuildRequires:  python3-setuptools
+%endif
 %endif
 %endif
 
@@ -421,7 +432,6 @@ Summary: The NFS-GANESHA CephFS FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:	libcephfs-devel >= 10.2.0
-BuildRequires:	libacl-devel
 
 %description ceph
 This package contains a FSAL shared object to
@@ -490,7 +500,7 @@ Summary: The NFS-GANESHA GLUSTER FSAL
 Group: Applications/System
 Requires:	nfs-ganesha = %{version}-%{release}
 BuildRequires:        libgfapi-devel >= 7.0
-BuildRequires:        libattr-devel, libacl-devel
+BuildRequires:        libattr-devel
 
 %description gluster
 This package contains a FSAL shared object to
@@ -581,6 +591,7 @@ Development headers and auxiliary files for developing with %{name}.
 %build
 cmake3 .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
+	-DWITH_PYTHON3=%{python3_version}		\
 	-DUSE_FSAL_NULL=%{use_fsal_null}		\
 	-DUSE_FSAL_MEM=%{use_fsal_mem}			\
 	-DUSE_FSAL_XFS=%{use_fsal_xfs}			\
@@ -589,6 +600,7 @@ cmake3 .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_RGW=%{use_fsal_rgw}			\
 	-DUSE_FSAL_GPFS=%{use_fsal_gpfs}		\
 	-DUSE_FSAL_KVSFS=%{use_fsal_kvsfs}		\
+	-DUSE_FSAL_LIZARDFS=%{use_fsal_lizardfs}	\
 	-DUSE_FSAL_GLUSTER=%{use_fsal_gluster}		\
 	-DUSE_FSAL_SAUNAFS=%{use_fsal_saunafs}		\
 	-DUSE_SYSTEM_NTIRPC=%{use_system_ntirpc}	\
@@ -724,10 +736,8 @@ rm -f %{buildroot}/%{python_sitelib}/__init__.*
 rm -rf %{buildroot}/%{python3_sitelib}/gpfs*
 rm -rf %{buildroot}/%{python3_sitelib}/ganeshactl*
 rm -f %{buildroot}/%{python3_sitelib}/__init__.*
-rm -rf %{buildroot}/%{python3_sitelib}/__pycache__
 rm -f %{buildroot}/%{python3_sitelib}/Ganesha/__init__.*
 rm -f %{buildroot}/%{python3_sitelib}/Ganesha/QtUI/__init__.*
-rm -rf %{buildroot}/%{python3_sitelib}/Ganesha/QtUI/__pycache__
 %endif
 
 %post
@@ -836,7 +846,9 @@ exit 0
 %if %{with monitoring}
 %files monitoring
 %{_libdir}/libganesha_monitoring*
+%if ! %{with system_ntirpc}
 %{_libdir}/libntirpcmonitoring*
+%endif
 %endif
 
 %files vfs
@@ -938,7 +950,7 @@ exit 0
 %if ! %{with system_ntirpc}
 %files -n libntirpc
 %{_libdir}/libntirpc.so.@NTIRPC_VERSION_EMBED@
-%{_libdir}/libntirpc.so.@NTIRPC_ABI_EMBED@
+@NTIRPC_COMMENT_IF_EQUAL_ELSE_PERCENT@{_libdir}/libntirpc.so.@NTIRPC_ABI_EMBED@
 %{_libdir}/libntirpc.so
 %{!?_licensedir:%global license %%doc}
 %license libntirpc/COPYING
@@ -978,6 +990,10 @@ exit 0
 %if ( 0%{?rhel} && 0%{?rhel} < 8 )
 %{python_sitelib}/Ganesha/*
 %{python_sitelib}/ganeshactl-*-info
+%endif
+%if ( 0%{?rhel} > 8 ||  0%{?fedora} >= 34 )
+%{python3_sitelib}/Ganesha/*
+%exclude %{python3_sitelib}/ganesha*-*-info
 %endif
 %if %{with gui_utils}
 %{_bindir}/ganesha-admin
