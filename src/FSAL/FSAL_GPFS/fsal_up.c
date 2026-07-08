@@ -145,6 +145,12 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 			if (errsv == EINTR)
 				continue;
 
+			if (errsv == ETIMEDOUT) {
+				LogDebug(COMPONENT_FSAL_UP,
+					 "Received ETIMEDOUT, retrying");
+				continue;
+			}
+
 			LogCrit(COMPONENT_FSAL_UP,
 				"OPENHANDLE_INODE_UPDATE failed for %d. rc %d, errno %d (%s) reason %d",
 				gpfs_fs->root_fd, rc, errsv, strerror(errsv),
