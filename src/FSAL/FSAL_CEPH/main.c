@@ -648,8 +648,9 @@ static void dentry_invalidate_cb(void *handle, vinodeno_t dir_ino,
 {
 	struct ceph_mount *cm = handle;
 	struct ceph_handle_key dir_key;
+	struct ceph_handle_key dentry_key;
 	struct gsh_buffdesc dir_fh_desc;
-	const struct fsal_up_vector *event_func;
+	struct gsh_buffdesc dentry_fh_desc;
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 
 	LogDebug(COMPONENT_FSAL,
@@ -668,17 +669,42 @@ static void dentry_invalidate_cb(void *handle, vinodeno_t dir_ino,
 	dir_fh_desc.addr = &dir_key;
 	dir_fh_desc.len = sizeof(dir_key);
 
-	/* Fetch the up vector */
-	event_func = cm->cm_export->export.up_ops;
 	PTHREAD_RWLOCK_rdlock(&cmount_lock);
-	status = event_func->invalidate(cm->cm_export->export.up_ops,
-					&dir_fh_desc,
-					FSAL_UP_INVALIDATE_DIR_POPULATED |
-						FSAL_UP_INVALIDATE_DIR_CHUNKS);
-	PTHREAD_RWLOCK_unlock(&cmount_lock);
+	status = cm->cm_export->export.up_ops->invalidate(
+		cm->cm_export->export.up_ops, &dir_fh_desc,
+		FSAL_UP_INVALIDATE_DIR_POPULATED |
+			FSAL_UP_INVALIDATE_DIR_CHUNKS);
 
 	if (status.major != ERR_FSAL_NO_ERROR)
 		LogWarn(COMPONENT_FSAL, "Directory invalidation failed");
+
+	/*
+	 * libcephfs passes a zero inode for invalidate-only notifications
+	 * and the attached inode when removing/trimming the dentry
+	 * (C_Client_DentryInvalidate in Ceph's Client.cc).
+	 */
+	if (dentry_ino.ino.val == 0)
+		goto out;
+
+	dentry_key.hhdl.chk_ino = dentry_ino.ino.val;
+	dentry_key.hhdl.chk_snap = dentry_ino.snapid.val;
+	dentry_key.hhdl.chk_fscid = cm->cm_fscid;
+	dentry_key.export_id = cm->cm_export_id;
+	dentry_fh_desc.addr = &dentry_key;
+	dentry_fh_desc.len = sizeof(dentry_key);
+
+	/*
+	 * The child MDCACHE entry may retain a libcephfs inode reference.
+	 * Release the entry only if it is otherwise idle.
+	 */
+	status = cm->cm_export->export.up_ops->try_release(
+		cm->cm_export->export.up_ops, &dentry_fh_desc, 0);
+
+	if (status.major != ERR_FSAL_NO_ERROR)
+		LogDebug(COMPONENT_FSAL, "Dentry inode release failed");
+
+out:
+	PTHREAD_RWLOCK_unlock(&cmount_lock);
 }
 
 static mode_t umask_cb(void *handle)
