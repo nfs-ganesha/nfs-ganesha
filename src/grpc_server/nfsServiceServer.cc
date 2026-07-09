@@ -20,6 +20,7 @@
 
 #include <string>
 #include "nfsService.h"
+#include "server_stats_grpc.h"
 
 grpc::Status GetClientIdService::GetClientIds(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
@@ -131,4 +132,115 @@ grpc::Status GetSessionIdService::GetSessionIds(
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
 	}
 	return grpc::Status::OK;
+}
+
+/**
+ * @brief Convert C-side I/O stats into protobuf response fields
+ *
+ * @param src [IN] gRPC-safe C stats snapshot
+ * @param dst [OUT] protobuf I/O stats message
+ */
+static void fill_iostats_proto(const struct grpc_iostats *src,
+			       nfsProtoUtil::IoStats *dst)
+{
+	dst->set_requested(src->requested);
+	dst->set_transferred(src->transferred);
+	dst->set_total_ops(src->total_ops);
+	dst->set_errors(src->errors);
+	dst->set_latency(src->latency);
+	dst->set_queue_wait(src->queue_wait);
+}
+
+typedef bool (*grpc_cltmgr_get_io_fn)(const char *, struct grpc_iostats *,
+				      struct grpc_iostats *, struct timespec *,
+				      bool *, char *, size_t);
+
+/**
+ * @brief Common handler for cltmgr per-client I/O stats RPCs
+ *
+ * @param request [IN] protobuf request containing client IP address
+ * @param response [OUT] protobuf response to be populated
+ * @param get_io [IN] per-version C stats lookup function
+ *
+ * @return grpc::Status::OK; API failures are encoded in response status
+ */
+static grpc::Status
+handle_client_iostats(const nfsProtoUtil::ClientIpRequest *request,
+		      cltmgrService::ClientIoStatsResponse *response,
+		      grpc_cltmgr_get_io_fn get_io)
+{
+	struct grpc_iostats read_out, write_out;
+	struct timespec time_out;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	/* Delegate client lookup and stats extraction to C-side cltmgr
+	 * code.
+	 */
+	get_io(request->ipaddr().c_str(), &read_out, &write_out, &time_out,
+	       &success, errmsg, sizeof(errmsg));
+
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	/* Keep transport OK; API errors are reported in the response
+	 * status.
+	 */
+	if (!success)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(time_out.tv_sec);
+	time->set_tv_nsec(time_out.tv_nsec);
+
+	fill_iostats_proto(&read_out, response->mutable_read());
+	fill_iostats_proto(&write_out, response->mutable_write());
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Get per-client NFSv3 read/write counters
+ */
+grpc::Status
+ClientStatsService::GetNFSv3IO(grpc::ServerContext *context,
+			       const nfsProtoUtil::ClientIpRequest *request,
+			       cltmgrService::ClientIoStatsResponse *response)
+{
+	return handle_client_iostats(request, response, grpc_cltmgr_get_v3_io);
+}
+
+/**
+ * @brief Get per-client NFSv4.0 read/write counters
+ */
+grpc::Status
+ClientStatsService::GetNFSv40IO(grpc::ServerContext *context,
+				const nfsProtoUtil::ClientIpRequest *request,
+				cltmgrService::ClientIoStatsResponse *response)
+{
+	return handle_client_iostats(request, response, grpc_cltmgr_get_v40_io);
+}
+
+/**
+ * @brief Get per-client NFSv4.1 read/write counters
+ */
+grpc::Status
+ClientStatsService::GetNFSv41IO(grpc::ServerContext *context,
+				const nfsProtoUtil::ClientIpRequest *request,
+				cltmgrService::ClientIoStatsResponse *response)
+{
+	return handle_client_iostats(request, response, grpc_cltmgr_get_v41_io);
+}
+
+/**
+ * @brief Get per-client NFSv4.2 read/write counters
+ */
+grpc::Status
+ClientStatsService::GetNFSv42IO(grpc::ServerContext *context,
+				const nfsProtoUtil::ClientIpRequest *request,
+				cltmgrService::ClientIoStatsResponse *response)
+{
+	return handle_client_iostats(request, response, grpc_cltmgr_get_v42_io);
 }

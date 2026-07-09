@@ -71,6 +71,8 @@
 #include "sal_functions.h"
 #include "nfs_ip_stats.h"
 #include "netgroup_cache.h"
+#include "ip_utils.h"
+#include "server_stats_grpc.h"
 
 /* Clients are stored in an AVL tree
  */
@@ -1194,6 +1196,155 @@ void dbus_client_init(void)
 }
 
 #endif /* USE_DBUS */
+
+typedef bool (*grpc_cltmgr_fill_iostats_t)(struct gsh_stats *st,
+					   struct grpc_iostats *read_out,
+					   struct grpc_iostats *write_out);
+
+/**
+ * @brief Shared implementation for per-version cltmgr I/O stats lookup
+ *
+ * @param ipaddr [IN] client IP address string
+ * @param read_out [OUT] read statistics
+ * @param write_out [OUT] write statistics
+ * @param time_out [OUT] stats timestamp
+ * @param success [OUT] API-level success status
+ * @param errmsg [OUT] API-level status message
+ * @param errmsg_len [IN] length of errmsg buffer
+ * @param fill_stats [IN] version-specific stats extractor
+ * @param no_activity_msg [IN] error message for missing version stats
+ *
+ * @return true; failures are reported via success and errmsg
+ */
+static bool grpc_cltmgr_get_version_io(const char *ipaddr,
+				       struct grpc_iostats *read_out,
+				       struct grpc_iostats *write_out,
+				       struct timespec *time_out, bool *success,
+				       char *errmsg, size_t errmsg_len,
+				       grpc_cltmgr_fill_iostats_t fill_stats,
+				       const char *no_activity_msg)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	sockaddr_t sockaddr;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	/* Stats must be enabled before lookup. */
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		errormsg = "NFS stat counting disabled";
+		goto out;
+	}
+
+	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+		*success = false;
+		errormsg = "can't decode client address";
+		goto out;
+	}
+
+	/* Lookup-only prevents creating a new client for a stats query. */
+	client = get_gsh_client(&sockaddr, true);
+	if (client == NULL) {
+		*success = false;
+		errormsg = "Client IP address not found";
+		goto out;
+	}
+
+	server_st = container_of(client, struct server_stats, client);
+
+	/* A NULL per-version stats pointer means no activity for that
+	 * version.
+	 */
+	if (!fill_stats(&server_st->st, read_out, write_out)) {
+		*success = false;
+		errormsg = no_activity_msg;
+		goto out_put;
+	}
+
+	*time_out = nfs_stats_time;
+	errormsg = "OK";
+
+out_put:
+	put_gsh_client(client);
+	client = NULL;
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+#ifdef _USE_NFS3
+/**
+ * @brief gRPC entry point for cltmgr_show_v3_io parity
+ */
+bool grpc_cltmgr_get_v3_io(const char *ipaddr, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len)
+{
+	return grpc_cltmgr_get_version_io(
+		ipaddr, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v3_iostats,
+		"Client does not have any NFSv3 activity");
+}
+#else
+/**
+ * @brief gRPC entry point for cltmgr_show_v3_io when NFSv3 is disabled
+ */
+bool grpc_cltmgr_get_v3_io(const char *ipaddr, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	snprintf(errmsg, errmsg_len, "NFSv3 not supported");
+	return true;
+}
+#endif
+
+/**
+ * @brief gRPC entry point for cltmgr_show_v40_io parity
+ */
+bool grpc_cltmgr_get_v40_io(const char *ipaddr, struct grpc_iostats *read_out,
+			    struct grpc_iostats *write_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	return grpc_cltmgr_get_version_io(
+		ipaddr, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v40_iostats,
+		"Client does not have any NFSv4.0 activity");
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_v41_io parity
+ */
+bool grpc_cltmgr_get_v41_io(const char *ipaddr, struct grpc_iostats *read_out,
+			    struct grpc_iostats *write_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	return grpc_cltmgr_get_version_io(
+		ipaddr, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v41_iostats,
+		"Client does not have any NFSv4.1 activity");
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_v42_io parity
+ */
+bool grpc_cltmgr_get_v42_io(const char *ipaddr, struct grpc_iostats *read_out,
+			    struct grpc_iostats *write_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	return grpc_cltmgr_get_version_io(
+		ipaddr, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v42_iostats,
+		"Client does not have any NFSv4.2 activity");
+}
 
 /* Cleanup on shutdown */
 void client_mgr_cleanup(void)

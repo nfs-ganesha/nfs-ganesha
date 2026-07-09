@@ -63,6 +63,7 @@
 #include "nfs_proto_functions.h"
 #include "nfs_convert.h"
 #include "nfs_metrics.h"
+#include "server_stats_grpc.h"
 
 #ifdef USE_DBUS
 
@@ -3155,6 +3156,110 @@ void reset_v4_full_stats(void)
 		v4_full_stats[op].latency.min = 0;
 		v4_full_stats[op].latency.max = 0;
 	}
+}
+
+/**
+ * @brief Copy transfer counters into the gRPC-safe stats snapshot
+ *
+ * @param iop [IN] read or write transfer counter
+ * @param out [OUT] gRPC-safe I/O stats snapshot
+ */
+static void grpc_iostats_from_xfer(struct xfer_op *iop,
+				   struct grpc_iostats *out)
+{
+	/* Keep field order aligned with D-Bus IOSTATS_REPLY (tttttt). */
+	out->requested = iop->requested;
+	out->transferred = iop->transferred;
+	out->total_ops = iop->cmd.total;
+	out->errors = iop->cmd.errors;
+	out->latency = iop->cmd.latency.latency;
+	out->queue_wait = 0;
+}
+
+#ifdef _USE_NFS3
+/**
+ * @brief Extract NFSv3 read/write counters for gRPC cltmgr stats
+ *
+ * @param st [IN] client statistics container
+ * @param read_out [OUT] read statistics
+ * @param write_out [OUT] write statistics
+ *
+ * @return true if NFSv3 stats exist, false otherwise
+ */
+bool server_grpc_fill_v3_iostats(struct gsh_stats *st,
+				 struct grpc_iostats *read_out,
+				 struct grpc_iostats *write_out)
+{
+	if (st->nfsv3 == NULL)
+		return false;
+
+	grpc_iostats_from_xfer(&st->nfsv3->read, read_out);
+	grpc_iostats_from_xfer(&st->nfsv3->write, write_out);
+	return true;
+}
+#endif
+
+/**
+ * @brief Extract NFSv4.0 read/write counters for gRPC cltmgr stats
+ *
+ * @param st [IN] client statistics container
+ * @param read_out [OUT] read statistics
+ * @param write_out [OUT] write statistics
+ *
+ * @return true if NFSv4.0 stats exist, false otherwise
+ */
+bool server_grpc_fill_v40_iostats(struct gsh_stats *st,
+				  struct grpc_iostats *read_out,
+				  struct grpc_iostats *write_out)
+{
+	if (st->nfsv40 == NULL)
+		return false;
+
+	grpc_iostats_from_xfer(&st->nfsv40->read, read_out);
+	grpc_iostats_from_xfer(&st->nfsv40->write, write_out);
+	return true;
+}
+
+/**
+ * @brief Extract NFSv4.1 read/write counters for gRPC cltmgr stats
+ *
+ * @param st [IN] client statistics container
+ * @param read_out [OUT] read statistics
+ * @param write_out [OUT] write statistics
+ *
+ * @return true if NFSv4.1 stats exist, false otherwise
+ */
+bool server_grpc_fill_v41_iostats(struct gsh_stats *st,
+				  struct grpc_iostats *read_out,
+				  struct grpc_iostats *write_out)
+{
+	if (st->nfsv41 == NULL)
+		return false;
+
+	grpc_iostats_from_xfer(&st->nfsv41->read, read_out);
+	grpc_iostats_from_xfer(&st->nfsv41->write, write_out);
+	return true;
+}
+
+/**
+ * @brief Extract NFSv4.2 read/write counters for gRPC cltmgr stats
+ *
+ * @param st [IN] client statistics container
+ * @param read_out [OUT] read statistics
+ * @param write_out [OUT] write statistics
+ *
+ * @return true if NFSv4.2 stats exist, false otherwise
+ */
+bool server_grpc_fill_v42_iostats(struct gsh_stats *st,
+				  struct grpc_iostats *read_out,
+				  struct grpc_iostats *write_out)
+{
+	if (st->nfsv42 == NULL)
+		return false;
+
+	grpc_iostats_from_xfer(&st->nfsv42->read, read_out);
+	grpc_iostats_from_xfer(&st->nfsv42->write, write_out);
+	return true;
 }
 
 /** @} */

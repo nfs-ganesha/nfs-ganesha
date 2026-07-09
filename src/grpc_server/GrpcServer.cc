@@ -123,6 +123,8 @@ void GrpcServer::gRPCServerStart(uint16_t port, std::string server_crt,
 
 		builder.RegisterService(&startNfsGrace);
 
+		builder.RegisterService(&clientStatsService);
+
 		/* Reflection Service to enable grpc CLI */
 		grpc::reflection::InitProtoReflectionServerBuilderPlugin();
 

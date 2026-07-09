@@ -1,4 +1,6 @@
-/* Copyright (C) 2025, IBM
+/* SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * Copyright (C) 2025, IBM
  * Contributor : Avani Rateria <arateria@redhat.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -28,4 +30,31 @@ message EmptyRequest
 message ActionResponse
 {
 	optional bool success = 1;
+}
+
+message ClientIpRequest
+{
+	string ipaddr = 1;
+}
+
+message StatusResponse
+{
+	bool success = 1;
+	string error_msg = 2;
+}
+
+message Timestamp
+{
+	uint64 tv_sec = 1;
+	uint64 tv_nsec = 2;
+}
+
+message IoStats
+{
+	uint64 requested = 1;
+	uint64 transferred = 2;
+	uint64 total_ops = 3;
+	uint64 errors = 4;
+	uint64 latency = 5;
+	uint64 queue_wait = 6;
 }

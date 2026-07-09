@@ -33,6 +33,8 @@
 #include "nfsService.grpc.pb.h"
 #include "nfsProtoUtil.pb.h"
 #include "nfsProtoUtil.grpc.pb.h"
+#include "cltmgrService.pb.h"
+#include "cltmgrService.grpc.pb.h"
 #include "nfsServiceUtil.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -70,4 +72,28 @@ class GetSessionIdService final : public nfsService::GetSessionId::Service {
 		      const nfsProtoUtil::EmptyRequest *request,
 		      nfsService::GetSessionIdsResponse *response) override;
 };
+
+class ClientStatsService final : public cltmgrService::ClientStats::Service {
+    public:
+	grpc::Status
+	GetNFSv3IO(grpc::ServerContext *context,
+		   const nfsProtoUtil::ClientIpRequest *request,
+		   cltmgrService::ClientIoStatsResponse *response) override;
+
+	grpc::Status
+	GetNFSv40IO(grpc::ServerContext *context,
+		    const nfsProtoUtil::ClientIpRequest *request,
+		    cltmgrService::ClientIoStatsResponse *response) override;
+
+	grpc::Status
+	GetNFSv41IO(grpc::ServerContext *context,
+		    const nfsProtoUtil::ClientIpRequest *request,
+		    cltmgrService::ClientIoStatsResponse *response) override;
+
+	grpc::Status
+	GetNFSv42IO(grpc::ServerContext *context,
+		    const nfsProtoUtil::ClientIpRequest *request,
+		    cltmgrService::ClientIoStatsResponse *response) override;
+};
+
 #endif //NFSSERVICE_H
