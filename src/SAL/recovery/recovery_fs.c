@@ -1043,7 +1043,8 @@ void fs_read_recov_clids_takeover(nfs_grace_start_t *gsp)
 				LogDebugAlt3(COMPONENT_CLIENTID, COMPONENT_NLM,
 					     COMPONENT_RECOVERY,
 					     "gsp_ipaddr=%s", gsp->ipaddr);
-				rc = ip_str_to_sockaddr(gsp->ipaddr, &saddr);
+				rc = ip_str_to_sockaddr(COMPONENT_RECOVERY,
+							gsp->ipaddr, &saddr);
 				if (rc != 0) {
 					LogWarn(COMPONENT_RECOVERY,
 						"Unable to convert IP string %s",

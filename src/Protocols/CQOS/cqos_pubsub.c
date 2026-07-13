@@ -58,8 +58,9 @@ int cqos_rpc_msg_recv(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 	 * |            0          |        FFFF       |    IPv4 address   |
 	 * |---------------------------------------------------------------|
 	 */
-	server_addr_conv =
-		convert_ipv6_to_ipv4(op_ctx->caller_addr, &server_addr_ipv4);
+	server_addr_conv = convert_ipv6_to_ipv4(COMPONENT_QOS,
+						op_ctx->caller_addr,
+						&server_addr_ipv4);
 
 	if (server_addr_conv == &server_addr_ipv4)
 		memcpy(&arg->node_addr, server_addr_conv, sizeof(sockaddr_t));

@@ -174,26 +174,30 @@ int display_sockaddr_port(struct display_buffer *dspbuf, const sockaddr_t *addr,
  *
  * @brief Convert an IP address string to a sockaddr
  *
+ * @param[in]  component    Log component
  * @param[in]  ip_str       String representation of IP address
  * @param[out] sockaddr     Canonicalised to IPv4 if ip_str is IPv4
  *
  * @return 0 on success. EINVAL if ip_str is invalid
  */
-int ip_str_to_sockaddr(char *ip_str, sockaddr_t *sp)
+int ip_str_to_sockaddr(log_components_t component, const char *ip_str,
+		       sockaddr_t *sp)
 {
 	int ret = 0;
 
-	if (inet_pton(AF_INET, ip_str, &(*(struct sockaddr_in *)sp).sin_addr) ==
+	if (inet_pton(AF_INET, (char *) ip_str,
+	    &(*(struct sockaddr_in *)sp).sin_addr) ==
 	    1) {
 		sp->ss_family = AF_INET;
-	} else if (inet_pton(AF_INET6, ip_str,
+	} else if (inet_pton(AF_INET6, (char *) ip_str,
 			     &(*(struct sockaddr_in6 *)sp).sin6_addr) == 1) {
 		sockaddr_t server_addr_ipv4;
 		sockaddr_t *server_addr_conv;
 
 		sp->ss_family = AF_INET;
 		/* Canonicalise, does the right thing with IPv4 input */
-		server_addr_conv = convert_ipv6_to_ipv4(sp, &server_addr_ipv4);
+		server_addr_conv = convert_ipv6_to_ipv4(component, sp,
+							&server_addr_ipv4);
 		if (server_addr_conv == &server_addr_ipv4)
 			memcpy(&((struct sockaddr_in *)sp)->sin_addr,
 			       &((struct sockaddr_in *)server_addr_conv)
@@ -210,28 +214,29 @@ int ip_str_to_sockaddr(char *ip_str, sockaddr_t *sp)
 /**
  * @brief Canonically compare 2 sockaddrs
  *
+ * @param[in] comp        Log component
  * @param[in] addr1       First address
  * @param[in] addr2       Second address
  * @param[in] ignore_port Whether to ignore the port
  *
  * @return Comparator trichotomy
  */
-int sockaddr_cmp(sockaddr_t *addr1, sockaddr_t *addr2, bool ignore_port)
+int sockaddr_cmp(log_components_t comp, sockaddr_t *addr1,
+		 sockaddr_t *addr2, bool ignore_port)
 {
 	sockaddr_t addr_ipv6_1 = {};
 	sockaddr_t addr_ipv6_2 = {};
 
 	if (addr1->ss_family == AF_INET) {
-		addr1 = ipv4_to_ipv4_mapped_ipv6(addr1, &addr_ipv6_1);
+		addr1 = ipv4_to_ipv4_mapped_ipv6(comp, addr1, &addr_ipv6_1);
 	}
 	if (addr2->ss_family == AF_INET) {
-		addr2 = ipv4_to_ipv4_mapped_ipv6(addr2, &addr_ipv6_2);
+		addr2 = ipv4_to_ipv4_mapped_ipv6(comp, addr2, &addr_ipv6_2);
 	}
 
 	switch (addr1->ss_family) {
 	case AF_INET:
-		LogFatal(COMPONENT_EXPORT,
-			 "AF_INET should have been converted already.");
+		LogFatal(comp, "AF_INET should have been converted already.");
 	case AF_INET6: {
 		struct sockaddr_in6 *in1 = (struct sockaddr_in6 *)addr1;
 		struct sockaddr_in6 *in2 = (struct sockaddr_in6 *)addr2;
@@ -303,12 +308,15 @@ static char ten_bytes_all_0[10];
  *        the address to IPv4 and return that one, otherwise return the
  *        supplied address.
  *
- * @param[in] ipv6  The input address which may be IPv4, IPV6, or encapsulated
- * @param[in] ipv4  sockattr_t buffer to create IPv4 address into
+ * @param[in] component  Log component
+ * @param[in] ipv6       The input address which may be IPv4, IPV6, or
+ *                       encapsulated
+ * @param[in] ipv4       sockattr_t buffer to create IPv4 address into
  *
  * @returns ipv6 unless an encapsulated address was converted, then ipv4
  */
-sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
+sockaddr_t *convert_ipv6_to_ipv4(log_components_t component, sockaddr_t *ipv6,
+				 sockaddr_t *ipv4)
 {
 	struct sockaddr_in *paddr = (struct sockaddr_in *)ipv4;
 	struct sockaddr_in6 *psockaddr_in6 = (struct sockaddr_in6 *)ipv6;
@@ -335,7 +343,7 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 		paddr->sin_addr.s_addr = *(in_addr_t *)ab;
 		ipv4->ss_family = AF_INET;
 
-		if (isMidDebug(COMPONENT_EXPORT)) {
+		if (isMidDebug(component)) {
 			char ipstring4[SOCK_NAME_MAX];
 			char ipstring6[SOCK_NAME_MAX];
 			struct display_buffer dspbuf4 = { sizeof(ipstring4),
@@ -348,7 +356,7 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
 			display_sockip(&dspbuf4, ipv4);
 			display_sockip(&dspbuf6, ipv6);
 			LogMidDebug(
-				COMPONENT_EXPORT,
+				component,
 				"Converting IPv6 encapsulated IPv4 address %s to IPv4 %s",
 				ipstring6, ipstring4);
 		}
@@ -363,13 +371,15 @@ sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4)
  * @brief Convert an IPv4 address to an IPv4-mapped IPv6 address and return it.
  *        If the input address is not IPv4, return the input address.
  *
- * @param[in] ipv4  The input address which may be IPv4 or IPV6
- * @param[in] ipv6  sockattr_t buffer to create a new IPv6 address
+ * @param[in] component  Log component
+ * @param[in] ipv4       The input address which may be IPv4 or IPV6
+ * @param[in] ipv6       sockattr_t buffer to create a new IPv6 address
  *
  * @returns If the input address is IPv4, the input address mapped to IPv6.
  *          Otherwise the input address.
  */
-sockaddr_t *ipv4_to_ipv4_mapped_ipv6(sockaddr_t *ipv4, sockaddr_t *ipv6)
+sockaddr_t *ipv4_to_ipv4_mapped_ipv6(log_components_t component,
+				     sockaddr_t *ipv4, sockaddr_t *ipv6)
 {
 	struct sockaddr_in *paddr = (struct sockaddr_in *)ipv4;
 	struct sockaddr_in6 *psockaddr_in6 = (struct sockaddr_in6 *)ipv6;
@@ -392,7 +402,7 @@ sockaddr_t *ipv4_to_ipv4_mapped_ipv6(sockaddr_t *ipv4, sockaddr_t *ipv6)
 	memcpy(&psockaddr_in6->sin6_addr.s6_addr[12], &paddr->sin_addr.s_addr,
 	       sizeof(struct in_addr));
 
-	if (isMidDebug(COMPONENT_EXPORT)) {
+	if (isMidDebug(component)) {
 		char ipstring4[SOCK_NAME_MAX];
 		char ipstring6[SOCK_NAME_MAX];
 		struct display_buffer dspbuf4 = { sizeof(ipstring4), ipstring4,
@@ -403,7 +413,7 @@ sockaddr_t *ipv4_to_ipv4_mapped_ipv6(sockaddr_t *ipv4, sockaddr_t *ipv6)
 		display_sockip(&dspbuf4, ipv4);
 		display_sockip(&dspbuf6, ipv6);
 		LogMidDebug(
-			COMPONENT_EXPORT,
+			component,
 			"Converting IPv4 address %s to an IPv6 encapsulated IPv4 address %s ",
 			ipstring4, ipstring6);
 	}
@@ -517,12 +527,15 @@ void cidr_free(CIDR *cidr, mem_components_t comp)
 /**
  * @brief Create a CIDR structure from an IP addr/mask string
  *
- * @in addr      IP Address/Mask string e.g. 192.168.10.0/24
- *                                           fe80::5a4d:7416:a595:bd6f/64
+ * @param[in] component   Log component
+ * @param[in] addr        IP Address/Mask string, examples:
+ *                                192.168.10.0/24
+ *                                e80::5a4d:7416:a595:bd6f/64
  *
  * @return CIDR structure, NULL on parse failure with errno=EINVAL
  */
-CIDR *cidr_from_str(const char *addr, mem_components_t comp)
+CIDR *cidr_from_str(log_components_t component, const char *addr,
+		    mem_components_t comp)
 {
 	CIDR *cidr;
 	char addr_str[SOCK_NAME_MAX];
@@ -543,7 +556,7 @@ CIDR *cidr_from_str(const char *addr, mem_components_t comp)
 	}
 
 	cidr = cidr_alloc(comp);
-	ret = ip_str_to_sockaddr(addr_str, &(cidr->ip_addr));
+	ret = ip_str_to_sockaddr(component, addr_str, &(cidr->ip_addr));
 	if (ret) {
 		cidr_free(cidr, comp);
 		errno = EINVAL;
@@ -852,8 +865,9 @@ int cidr_version(CIDR *cidr)
 /**
  * @brief Compare two CIDRs for equality
  *
- * @param[in]  a       First CIDR
- * @param[in]  b       Second CIDR
+ * @param[in] component   Log component
+ * @param[in] a           First CIDR
+ * @param[in] b           Second CIDR
  *
  * Determines whether two CIDR entries represent the same network.
  * Two CIDRs are considered equal if they belong to the same address
@@ -866,7 +880,7 @@ int cidr_version(CIDR *cidr)
  *
  * @return true if both CIDRs represent the same network, otherwise false.
  */
-bool cidr_equals(CIDR *a, CIDR *b)
+bool cidr_equals(log_components_t component, CIDR *a, CIDR *b)
 {
 	if (a->ip_addr.ss_family != b->ip_addr.ss_family)
 		return false;
@@ -874,7 +888,7 @@ bool cidr_equals(CIDR *a, CIDR *b)
 	if (a->mask != b->mask)
 		return false;
 
-	if (sockaddr_cmp(&a->ip_addr, &b->ip_addr, false) == 0)
+	if (sockaddr_cmp(component, &a->ip_addr, &b->ip_addr, false) == 0)
 		return true;
 
 	return false;
@@ -894,9 +908,10 @@ bool cidr_equals(CIDR *a, CIDR *b)
  * This function must be invoked before performing CIDR comparisons
  * such as cidr_contains_ip(), or cidr_equals().
  *
- * @param[in,out] cidr   CIDR object to be normalized in-place
+ * @param[in] component   Log component
+ * @param[in,out] cidr    CIDR object to be normalized in-place
  */
-void normalize_v4_mapped_cidr(CIDR *cidr)
+void normalize_v4_mapped_cidr(log_components_t component, CIDR *cidr)
 {
 	sockaddr_t ipv4;
 	sockaddr_t *result;
@@ -904,7 +919,8 @@ void normalize_v4_mapped_cidr(CIDR *cidr)
 	if (!cidr)
 		return;
 
-	result = convert_ipv6_to_ipv4(&cidr->ip_addr, &ipv4);
+	result =
+		convert_ipv6_to_ipv4(component, &cidr->ip_addr, &ipv4);
 
 	if (result == &ipv4) {
 		cidr->ip_addr = ipv4;

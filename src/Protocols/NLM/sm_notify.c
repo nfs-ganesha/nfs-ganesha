@@ -377,7 +377,8 @@ int main(int argc, char **argv)
 			mflag = 1;
 			break;
 		case 'r':
-			ret = ip_str_to_sockaddr(optarg, &remote_addr);
+			ret = ip_str_to_sockaddr(COMPONENT_NLM, optarg,
+						 &remote_addr);
 			if (ret == 0)
 				rflag = 1;
 			else
@@ -386,7 +387,8 @@ int main(int argc, char **argv)
 					optarg);
 			break;
 		case 'l':
-			ret = ip_str_to_sockaddr(optarg, &local_addr);
+			ret = ip_str_to_sockaddr(COMPONENT_NLM, optarg,
+						 &local_addr);
 			if (ret == 0)
 				lflag = 1;
 			else

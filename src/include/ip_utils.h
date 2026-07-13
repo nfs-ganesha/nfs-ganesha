@@ -36,6 +36,7 @@
 #include <stdbool.h>
 #include "display.h"
 #include "mem_components.h"
+#include "log.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,7 +59,7 @@ typedef struct cidr_addr {
 CIDR *cidr_alloc(mem_components_t);
 CIDR *cidr_dup(const CIDR *);
 void cidr_free(CIDR *, mem_components_t);
-CIDR *cidr_from_str(const char *, mem_components_t);
+CIDR *cidr_from_str(log_components_t, const char *, mem_components_t);
 char *cidr_to_str(CIDR *, mem_components_t);
 CIDR *cidr_from_inaddr(const struct in_addr *, mem_components_t);
 CIDR *cidr_from_in6addr(const struct in6_addr *, mem_components_t);
@@ -68,17 +69,19 @@ void cidr_mask_to_chars(CIDR *, unsigned char *);
 int cidr_family(CIDR *);
 int cidr_proto(CIDR *);
 int cidr_version(CIDR *);
-bool cidr_equals(CIDR *, CIDR *);
-void normalize_v4_mapped_cidr(CIDR *cidr);
+bool cidr_equals(log_components_t, CIDR *, CIDR *);
+void normalize_v4_mapped_cidr(log_components_t, CIDR *cidr);
 
-int sockaddr_cmp(sockaddr_t *, sockaddr_t *, bool);
+int sockaddr_cmp(log_components_t, sockaddr_t *, sockaddr_t *, bool);
 uint64_t hash_sockaddr(sockaddr_t *, bool);
-int ip_str_to_sockaddr(char *, sockaddr_t *);
+int ip_str_to_sockaddr(log_components_t, const char *, sockaddr_t *);
 
 int get_port(sockaddr_t *);
 
-sockaddr_t *convert_ipv6_to_ipv4(sockaddr_t *ipv6, sockaddr_t *ipv4);
-sockaddr_t *ipv4_to_ipv4_mapped_ipv6(sockaddr_t *ipv4, sockaddr_t *ipv6);
+sockaddr_t *convert_ipv6_to_ipv4(log_components_t component, sockaddr_t *ipv6,
+				 sockaddr_t *ipv4);
+sockaddr_t *ipv4_to_ipv4_mapped_ipv6(log_components_t component,
+				     sockaddr_t *ipv4, sockaddr_t *ipv6);
 bool is_loopback(sockaddr_t *addr);
 bool is_inaddrany(sockaddr_t *addr);
 

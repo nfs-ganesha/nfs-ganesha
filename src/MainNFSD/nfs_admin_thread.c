@@ -201,7 +201,7 @@ static bool admin_dbus_grace(DBusMessageIter *args, DBusMessage *reply,
 		if (arg == NULL) {
 			goto invalid_dbus_arg;
 		}
-		ret = ip_str_to_sockaddr(arg, &gsp.sa);
+		ret = ip_str_to_sockaddr(COMPONENT_DBUS, arg, &gsp.sa);
 		if (ret != 0) {
 			goto invalid_dbus_arg;
 		}

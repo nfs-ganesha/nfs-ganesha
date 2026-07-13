@@ -414,14 +414,16 @@ char *parse_cli_srv_netid_client(char *start, struct local_nlm_info *info)
 		return NULL;
 	}
 
-	rc = ip_str_to_sockaddr(cli_ipstring, &info->client_address);
+	rc = ip_str_to_sockaddr(COMPONENT_NLM, cli_ipstring,
+				&info->client_address);
 
 	if (rc != 0) {
 		LogFullDebug(COMPONENT_NLM, "Could not convert client addr");
 		return NULL;
 	}
 
-	rc = ip_str_to_sockaddr(srv_ipstring, &info->server_address);
+	rc = ip_str_to_sockaddr(COMPONENT_NLM, srv_ipstring,
+				&info->server_address);
 
 	if (rc != 0) {
 		LogFullDebug(COMPONENT_NLM, "Could not convert server addr");
@@ -1532,8 +1534,8 @@ restart:
 			pdata = RBT_OPAQ(pn);
 			nlm_cp = (state_nlm_client_t *)pdata->val.addr;
 
-			if (sockaddr_cmp(release_addr, &nlm_cp->slc_server_addr,
-					 true) == 0) {
+			if (sockaddr_cmp(COMPONENT_RECOVERY, release_addr,
+					 &nlm_cp->slc_server_addr, true) == 0) {
 				nsm_cp = nlm_cp->slc_nsm_client;
 				inc_nsm_client_ref(nsm_cp);
 				PTHREAD_RWLOCK_unlock(
@@ -1563,7 +1565,7 @@ static bool ip_match(sockaddr_t *ip, nfs_client_id_t *cid)
 		LogDebugAlt(COMPONENT_STATE, COMPONENT_RECOVERY,
 			    "Match %s with %s", addr1, addr2);
 	}
-	rc = sockaddr_cmp(ip, saddr, true) == 0;
+	rc = sockaddr_cmp(COMPONENT_RECOVERY, ip, saddr, true) == 0;
 	LogDebugAlt(COMPONENT_STATE, COMPONENT_RECOVERY, "Match ret=%d", rc);
 	return rc;
 }

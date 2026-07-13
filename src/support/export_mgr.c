@@ -3076,7 +3076,7 @@ static void queue_deleg_transition_handler(struct fridgethr_context *ctx)
 			clientid = owner->so_owner.so_nfs4_owner.so_clientrec;
 			src = clientid->gsh_client->hostaddr_str;
 
-			ip_str_to_sockaddr(src, &ip_address);
+			ip_str_to_sockaddr(COMPONENT_FSAL, src, &ip_address);
 
 			if (isMidDebug(COMPONENT_FSAL)) {
 				char scratch[SOCK_NAME_MAX];

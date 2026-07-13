@@ -2037,7 +2037,8 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 		return 1;
 	}
 
-	rc = sockaddr_cmp(&pkey1->cr_server_addr, &pkey2->cr_server_addr, true);
+	rc = sockaddr_cmp(COMPONENT_HASHTABLE, &pkey1->cr_server_addr,
+			  &pkey2->cr_server_addr, true);
 	if (rc != 0) {
 		if (isDebug(COMPONENT_HASHTABLE))
 			LogFullDebug(COMPONENT_CLIENTID, "sockaddr mismatch");
@@ -2045,7 +2046,7 @@ int compare_client_record(struct gsh_buffdesc *buff1,
 	}
 
 	if (nfs_param.nfsv4_param.ip_based_client_owner_separation) {
-		rc = sockaddr_cmp(&pkey1->cr_client_addr,
+		rc = sockaddr_cmp(COMPONENT_HASHTABLE, &pkey1->cr_client_addr,
 				  &pkey2->cr_client_addr, true);
 
 		if (rc == 0) {
@@ -2136,9 +2137,11 @@ nfs_client_record_t *get_client_record(const char *const value,
 	record->cr_pnfs_flags = pnfs_flags;
 	record->cr_extra_flags = flags;
 	/* Canonicalise, does the right thing with IPv4 input */
-	server_addr_conv = convert_ipv6_to_ipv4((sockaddr_t *)server_addr,
+	server_addr_conv = convert_ipv6_to_ipv4(COMPONENT_CLIENTID,
+						(sockaddr_t *)server_addr,
 						&server_addr_ipv4);
-	client_addr_conv = convert_ipv6_to_ipv4((sockaddr_t *)client_addr,
+	client_addr_conv = convert_ipv6_to_ipv4(COMPONENT_CLIENTID,
+						(sockaddr_t *)client_addr,
 						&client_addr_ipv4);
 	record->cr_client_addr = *client_addr_conv;
 	record->cr_server_addr = *server_addr_conv;

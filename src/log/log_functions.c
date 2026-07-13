@@ -4005,7 +4005,7 @@ static bool dbus_conditional_log_client_enable(DBusMessageIter *args,
 
 	dbus_message_iter_get_basic(args, &arg_str);
 
-	cidr = cidr_from_str(arg_str, MEM_COMP_TRANSIENT);
+	cidr = cidr_from_str(COMPONENT_LOG, arg_str, MEM_COMP_TRANSIENT);
 	if (!cidr) {
 		errormsg = "Only IP/CIDR clients are allowed via DBUS";
 		goto arg_error;

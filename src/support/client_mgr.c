@@ -118,7 +118,8 @@ static int client_ip_cmpf(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, struct gsh_client, node_k);
 	rk = avltree_container_of(rhs, struct gsh_client, node_k);
 
-	return sockaddr_cmp(&lk->cl_addrbuf, &rk->cl_addrbuf, true);
+	return sockaddr_cmp(COMPONENT_HASHTABLE_CACHE, &lk->cl_addrbuf,
+			    &rk->cl_addrbuf, true);
 }
 
 /**
@@ -1422,7 +1423,7 @@ static bool grpc_cltmgr_get_version_io(const char *ipaddr,
 		goto out;
 	}
 
-	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+	if (ip_str_to_sockaddr(COMPONENT_GRPC, (char *)ipaddr, &sockaddr) != 0) {
 		*success = false;
 		errormsg = "can't decode client address";
 		goto out;
@@ -1555,7 +1556,7 @@ static bool grpc_cltmgr_get_version_layouts(
 		goto out;
 	}
 
-	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+	if (ip_str_to_sockaddr(COMPONENT_GRPC, ipaddr, &sockaddr) != 0) {
 		*success = false;
 		errormsg = "can't decode client address";
 		goto out;
@@ -1599,7 +1600,7 @@ static struct gsh_client *grpc_cltmgr_lookup_client_simple(
 	*success = true;
 	*errormsg = "OK";
 
-	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+	if (ip_str_to_sockaddr(COMPONENT_GRPC, ipaddr, &sockaddr) != 0) {
 		*success = false;
 		*errormsg = "can't decode client address";
 		return NULL;
@@ -1917,7 +1918,7 @@ bool grpc_cltmgr_add_client(const char *ipaddr, bool *success, char *errmsg,
 
 	*success = true;
 
-	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+	if (ip_str_to_sockaddr(COMPONENT_GRPC, ipaddr, &sockaddr) != 0) {
 		*success = false;
 		errormsg = "can't decode client address";
 		goto out;
@@ -1951,7 +1952,7 @@ bool grpc_cltmgr_remove_client(const char *ipaddr, bool *success, char *errmsg,
 
 	*success = false;
 
-	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+	if (ip_str_to_sockaddr(COMPONENT_GRPC, ipaddr, &sockaddr) != 0) {
 		errormsg = "can't decode client address";
 		goto out;
 	}
@@ -2098,7 +2099,7 @@ bool grpc_cltmgr_disconnect_nfsv41_client(const char *ipaddr,
 	*success = true;
 	*connections_destroyed = 0;
 
-	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+	if (ip_str_to_sockaddr(COMPONENT_GRPC, ipaddr, &sockaddr) != 0) {
 		*success = false;
 		errormsg = "can't decode client address";
 		goto out;
@@ -2244,9 +2245,9 @@ struct base_client_entry *is_base_client_exact_match(
 	CIDR cli_cidr;
 
 	/* Try CIDR parse (NETWORK_CLIENT) */
-	cidr = cidr_from_str(client_tok, MEM_COMP_TRANSIENT);
+	cidr = cidr_from_str(component, client_tok, MEM_COMP_TRANSIENT);
 	if (cidr)
-		normalize_v4_mapped_cidr(cidr);
+		normalize_v4_mapped_cidr(component, cidr);
 
 	glist_for_each(g, client_list) {
 		cli = glist_entry(g, struct base_client_entry, cle_list);
@@ -2255,8 +2256,8 @@ struct base_client_entry *is_base_client_exact_match(
 		case NETWORK_CLIENT:
 			cli_cidr = *cli->cidr;
 
-			normalize_v4_mapped_cidr(&cli_cidr);
-			if (cidr && cidr_equals(&cli_cidr, cidr))
+			normalize_v4_mapped_cidr(component, &cli_cidr);
+			if (cidr && cidr_equals(component, &cli_cidr, cidr))
 				goto found;
 			break;
 
@@ -2364,7 +2365,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 	case TERM_V6CIDR:
 	case TERM_V4ADDR:
 	case TERM_V6ADDR:
-		cidr = cidr_from_str(client_tok, mem_comp);
+		cidr = cidr_from_str(component, client_tok, mem_comp);
 		if (cidr == NULL) {
 			switch (type_hint) {
 			case TERM_V4CIDR:
@@ -2591,7 +2592,7 @@ client_match(enum log_components component, const char *str,
 	sockaddr_t alt_hostaddr;
 	sockaddr_t *hostaddr = NULL;
 
-	hostaddr = convert_ipv6_to_ipv4(clientaddr, &alt_hostaddr);
+	hostaddr = convert_ipv6_to_ipv4(component, clientaddr, &alt_hostaddr);
 
 	if (isMidDebug(component)) {
 		char ipstring[SOCK_NAME_MAX];

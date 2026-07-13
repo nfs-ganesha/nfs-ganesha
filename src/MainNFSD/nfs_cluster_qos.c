@@ -83,7 +83,8 @@ int cqos_addr_cmpf(const struct avltree_node *lhs,
 	lk = avltree_container_of(lhs, struct cqos_nodes_info, cqos_avl_node);
 	rk = avltree_container_of(rhs, struct cqos_nodes_info, cqos_avl_node);
 
-	return sockaddr_cmp(&lk->node_addr, &rk->node_addr, true);
+	return sockaddr_cmp(COMPONENT_QOS, &lk->node_addr, &rk->node_addr,
+			    true);
 }
 
 /**
@@ -1002,7 +1003,8 @@ static void send_publish_message(sockaddr_t sockaddr, cluster_qos_msg cqos_msg)
 
 	glist_for_each(glist, &cqos_hosts) {
 		node = glist_entry(glist, cqos_ceph_nodes_t, node_list);
-		if (!sockaddr_cmp(&node->node_addr, &sockaddr, true)) {
+		if (!sockaddr_cmp(COMPONENT_QOS, &node->node_addr, &sockaddr,
+				  true)) {
 			cqos_process_send_msg(&node->fd, &node->clnt,
 					      node->node_addr,
 					      cqos_msg);
