@@ -287,6 +287,8 @@ NFSV4 {}
 
 	Grace_Period(uint32, range 0 to 180, default 90)
 
+	DomainName(string, default NULL)
+
 	IdmapConf(path, default "/etc/idmapd.conf")
 
 	UseGetpwnam(bool, default false if using idmap, true otherwise)
@@ -296,6 +298,14 @@ NFSV4 {}
 	Only_Numeric_Owners(bool, default false)
 
 	Delegations(bool, default false)
+
+	Deleg_Recall_Retry_Delay(uint32_t, range 0 to 10, default 1)
+
+	Preserve_Unlinked(bool, default false)
+
+	pnfs_mds(bool, default false)
+
+	pnfs_ds(bool, default false)
 
 	RecoveryBackend(enum, values [fs, fs_ng, rados_kv, rados_ng, none],
 			default fs)
