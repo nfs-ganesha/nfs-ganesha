@@ -122,6 +122,9 @@ pthread_rwlock_t cond_log_rwlock;
 pthread_rwlock_t log_rotate_rwlock;
 struct timespec last_rotation_time;
 
+/* Forward declaration */
+static void reset_conditional_logging_state(void);
+
 /* For log rotation */
 struct log_rotate_limits {
 	uint32_t size_kb; /* Size in KB to rotate the log file. */
@@ -2745,6 +2748,8 @@ static struct config_item conditional_params[] = {
 	CONF_INDEX_TOKEN("QOS", NB_LOG_LEVEL, log_levels, COMPONENT_QOS, int),
 	CONF_INDEX_TOKEN("RECOVERY", NB_LOG_LEVEL, log_levels,
 			 COMPONENT_RECOVERY, int),
+	CONF_INDEX_TOKEN("RDMA", NB_LOG_LEVEL, log_levels, COMPONENT_RDMA, int),
+	CONF_INDEX_TOKEN("GRPC", NB_LOG_LEVEL, log_levels, COMPONENT_GRPC, int),
 	CONF_ITEM_PROC_MULT("Exports", noop_conf_init, export_id_list_adder,
 			    export_id_list, export_id_glist),
 	CONF_ITEM_PROC_MULT("Clients", noop_conf_init, client_ip_list_adder,
@@ -3182,6 +3187,13 @@ int read_log_config(config_file_t in_config, struct config_error_type *err_type)
 {
 	struct logger_config logger;
 
+	/* Reset all conditional logging state so that reload applies only
+	 * what is present in the current config file. Without this, stale
+	 * entries from a previous load persist after reload, and re-adding
+	 * the same entries causes duplicate errors that abort the reload.
+	 */
+	reset_conditional_logging_state();
+
 	memset(&logger, 0, sizeof(struct logger_config));
 	(void)load_config_from_parse(in_config, &logging_param, &logger, true,
 				     err_type);
@@ -3572,6 +3584,57 @@ struct base_client_entry *conditional_logging_client_match(sockaddr_t *sockaddr)
 	/* Check if the client sockaddr already exist */
 	return client_match(COMPONENT_LOG, " for ConditionalLogging", sockaddr,
 			    &global_client_ip_list, NULL);
+}
+
+/**
+ * @brief Reset all conditional logging state to defaults.
+ *
+ * Clears both global client/export lists, resets all conditional component
+ * log levels to NIV_FULL_DEBUG, resets match policy to COND_LOG_MATCH_ANY,
+ * and sets conditional_logging_configured to false.
+ *
+ * Caller must NOT hold cond_log_rwlock.
+ */
+static void reset_conditional_logging_state(void)
+{
+	struct glist_head *glist;
+	struct glist_head *glistn;
+	struct base_client_entry *cli;
+	struct export_id_list *expidli;
+	log_components_t comp;
+
+	PTHREAD_RWLOCK_wrlock(&cond_log_rwlock);
+
+	/* Clear client list */
+	glist_for_each_safe(glist, glistn, &global_client_ip_list) {
+		cli = glist_entry(glist, struct base_client_entry, cle_list);
+		glist_del(&cli->cle_list);
+		cidr_free(cli->cidr);
+		gsh_free(cli->str);
+		gsh_free(cli);
+	}
+
+	/* Clear export list */
+	glist_for_each_safe(glist, glistn, &global_export_id_list) {
+		expidli = glist_entry(glist, struct export_id_list,
+				      export_id_glist);
+		glist_del(&expidli->export_id_glist);
+		gsh_free(expidli);
+	}
+
+	/* Reset all component log levels to NIV_FULL_DEBUG */
+	for (comp = COMPONENT_ALL; comp < COMPONENT_COUNT; comp++)
+		conditional_component_log_level[comp] = NIV_FULL_DEBUG;
+
+	/* Reset match policy to default (MATCH_ANY) */
+	cond_log_match_policy = COND_LOG_MATCH_ANY;
+
+	conditional_logging_configured = false;
+
+	LogEvent(COMPONENT_LOG,
+			"Conditional logging configuration reset to defaults");
+
+	PTHREAD_RWLOCK_unlock(&cond_log_rwlock);
 }
 
 #ifdef USE_DBUS
@@ -4181,11 +4244,6 @@ static bool dbus_conditional_log_reset(DBusMessageIter *args,
 	char errormsg[LOG_BUFF_LEN];
 	bool success = true;
 	DBusMessageIter iter;
-	struct glist_head *glist;
-	struct glist_head *glistn;
-	struct base_client_entry *cli;
-	struct export_id_list *expidli;
-	log_components_t comp;
 
 	dbus_message_iter_init_append(reply, &iter);
 
@@ -4195,40 +4253,10 @@ static bool dbus_conditional_log_reset(DBusMessageIter *args,
 		goto arg_error;
 	}
 
-	PTHREAD_RWLOCK_wrlock(&cond_log_rwlock);
+	reset_conditional_logging_state();
 
-	/* Clear client list */
-	glist_for_each_safe(glist, glistn, &global_client_ip_list) {
-		cli = glist_entry(glist, struct base_client_entry, cle_list);
-		glist_del(&cli->cle_list);
-		cidr_free(cli->cidr);
-		gsh_free(cli->str);
-		gsh_free(cli);
-	}
-
-	/* Clear export list */
-	glist_for_each_safe(glist, glistn, &global_export_id_list) {
-		expidli = glist_entry(glist, struct export_id_list,
-				      export_id_glist);
-		glist_del(&expidli->export_id_glist);
-		gsh_free(expidli);
-	}
-
-	/* Reset all component log levels to NIV_FULL_DEBUG */
-	for (comp = COMPONENT_ALL; comp < COMPONENT_COUNT; comp++)
-		conditional_component_log_level[comp] = NIV_FULL_DEBUG;
-
-	/* Reset match policy to default (MATCH_ANY) */
-	cond_log_match_policy = COND_LOG_MATCH_ANY;
-
-	conditional_logging_configured = false;
-
-	LogEvent(COMPONENT_LOG,
-		 "Conditional logging configuration reset to defaults");
 	snprintf(errormsg, sizeof(errormsg),
 		 "Conditional logging reset: Success");
-
-	PTHREAD_RWLOCK_unlock(&cond_log_rwlock);
 
 arg_error:
 	gsh_dbus_status_reply(&iter, success, errormsg);
