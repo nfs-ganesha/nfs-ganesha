@@ -392,7 +392,8 @@ static fsal_status_t mdc_up_update(const struct fsal_up_vector *vec,
 	}
 
 	if (FSAL_TEST_MASK(attr->valid_mask, ATTR4_SEC_LABEL)) {
-		gsh_free(entry->attrs.sec_label.slai_data.slai_data_val);
+		gsh_free(entry->attrs.sec_label.slai_data.slai_data_val,
+			 MEM_COMP_FSAL);
 		entry->attrs.sec_label = attr->sec_label;
 		attr->sec_label.slai_data.slai_data_len = 0;
 		attr->sec_label.slai_data.slai_data_val = NULL;

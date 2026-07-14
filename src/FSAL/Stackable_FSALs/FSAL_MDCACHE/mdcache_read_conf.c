@@ -145,7 +145,8 @@ struct config_block mdcache_param_blk = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = mdcache_param_init,
 	.blk_desc.u.blk.params = mdcache_params,
-	.blk_desc.u.blk.commit = mdcache_param_commit
+	.blk_desc.u.blk.commit = mdcache_param_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 int mdcache_set_param_from_conf(config_file_t parse_tree,

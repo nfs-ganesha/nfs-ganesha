@@ -227,7 +227,7 @@ void vfs_free_state(struct state_t *state)
 		     my_fd->fd, &my_fd->fsal_fd, my_fd->fsal_fd.fd_type);
 	destroy_fsal_fd(&my_fd->fsal_fd);
 
-	gsh_free(state);
+	gsh_free(state, MEM_COMP_STATE);
 }
 
 /**
@@ -250,7 +250,8 @@ struct state_t *vfs_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct vfs_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct vfs_state_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct vfs_state_fd),
+				      MEM_COMP_STATE),
 			   vfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct vfs_state_fd, state)->vfs_fd;

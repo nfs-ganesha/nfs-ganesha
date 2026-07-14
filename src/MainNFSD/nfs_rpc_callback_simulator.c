@@ -228,7 +228,8 @@ static void cbsim_free_compound(nfs4_compound_t *cbt)
 
 			switch (argop->argop) {
 			case NFS4_OP_CB_RECALL:
-				gsh_free(opcbrecall->fh.nfs_fh4_val);
+				gsh_free(opcbrecall->fh.nfs_fh4_val,
+					 MEM_COMP_PROTOCOL);
 				break;
 			default:
 				/* TODO:  ahem */
@@ -313,7 +314,7 @@ static int cbsim_fake_cbrecall(clientid4 clientid)
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_len = 11;
 	/* leaks, sorry */
 	argop->nfs_cb_argop4_u.opcbrecall.fh.nfs_fh4_val =
-		gsh_strdup("0xabadcafe");
+		gsh_strdup("0xabadcafe", MEM_COMP_PROTOCOL);
 
 	/* add ops, till finished (dont exceed count) */
 	cb_compound_add_op(&call->cbt, argop);

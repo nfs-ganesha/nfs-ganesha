@@ -94,7 +94,8 @@ bool proxyv3_rpc_init(const uint num_sockets)
 
 	/* Initialize the fd_entries with not in_use sockets. */
 	rpcNumSockets = num_sockets;
-	fd_entries = gsh_calloc(rpcNumSockets, sizeof(struct fd_entry));
+	fd_entries = gsh_calloc(rpcNumSockets, sizeof(struct fd_entry),
+				MEM_COMP_PROTOCOL);
 	/* Just in case the alloc failed, bail. */
 	rpc_initialised = (fd_entries != NULL);
 
@@ -293,7 +294,7 @@ static bool proxyv3_fd_is_open(int fd)
 
 static void proxyv3_rpcBuf_create(struct rpc_buf *rpc_buf, size_t capacity)
 {
-	rpc_buf->buf = gsh_calloc(1, capacity);
+	rpc_buf->buf = gsh_calloc(1, capacity, MEM_COMP_PROTOCOL);
 	rpc_buf->capacity = capacity;
 	rpc_buf->len = 0;
 }
@@ -316,7 +317,7 @@ static char *proxyv3_rpcBuf_resize(struct rpc_buf *rpc_buf, size_t len)
 		 * we're unlikely to get N^2 style re-allocs.
 		 */
 
-		rpc_buf->buf = gsh_realloc(rpc_buf->buf, len);
+		rpc_buf->buf = gsh_realloc(rpc_buf->buf, len, MEM_COMP_FSAL);
 		rpc_buf->capacity = len;
 	}
 

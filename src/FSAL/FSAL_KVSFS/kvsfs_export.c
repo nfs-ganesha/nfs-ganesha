@@ -59,7 +59,7 @@ static void kvsfs_export_release(struct fsal_export *exp_hdl)
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 
-	gsh_free(myself); /* elvis has left the building */
+	gsh_free(myself, MEM_COMP_EXPORT); /* elvis has left the building */
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -120,7 +120,7 @@ void kvsfs_free_state(struct state_t *state)
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
 
-	gsh_free(state);
+	gsh_free(state, MEM_COMP_STATE);
 }
 
 /**
@@ -143,7 +143,8 @@ static struct state_t *kvsfs_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct kvsfs_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct kvsfs_state_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct kvsfs_state_fd),
+				      MEM_COMP_STATE),
 			   kvsfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
@@ -251,7 +252,8 @@ static struct config_block export_param = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 /* create_export
@@ -271,7 +273,8 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 	int retval = 0;
 	fsal_errors_t fsal_error = ERR_FSAL_INVAL;
 
-	myself = gsh_calloc(1, sizeof(struct kvsfs_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct kvsfs_fsal_export),
+			    MEM_COMP_EXPORT);
 
 	fsal_export_init(&myself->export);
 	kvsfs_export_ops_init(&myself->export.exp_ops);
@@ -327,7 +330,7 @@ fsal_status_t kvsfs_create_export(struct fsal_module *fsal_hdl,
 				pds->id_servers);
 			status.major = ERR_FSAL_EXIST;
 			fsal_pnfs_ds_fini(pds);
-			gsh_free(pds);
+			gsh_free(pds, MEM_COMP_FSAL);
 			goto err_locked;
 		}
 
@@ -348,7 +351,7 @@ err_locked:
 		fsal_detach_export(fsal_hdl, &myself->export.exports);
 errout:
 	/* elvis has left the building */
-	gsh_free(myself);
+	gsh_free(myself, MEM_COMP_EXPORT);
 
 	return fsalstat(fsal_error, retval);
 }

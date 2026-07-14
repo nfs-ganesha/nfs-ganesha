@@ -188,12 +188,12 @@ static void destroy_recall(struct state_layout_recall_file *recall)
 					       struct recall_state_list, link);
 		dec_state_t_ref(list_entry->state);
 		glist_del(&list_entry->link);
-		gsh_free(list_entry);
+		gsh_free(list_entry, MEM_COMP_STATE);
 	}
 
 	/* Remove from entry->layoutrecall_list */
 	glist_del(&recall->entry_link);
-	gsh_free(recall);
+	gsh_free(recall, MEM_COMP_STATE);
 }
 
 /**
@@ -233,7 +233,8 @@ create_file_recall(struct fsal_obj_handle *obj, layouttype4 type,
 	state_status_t rc = STATE_SUCCESS;
 	/* The recall object referenced by future returns */
 	struct state_layout_recall_file *recall =
-		gsh_malloc(sizeof(struct state_layout_recall_file));
+		gsh_malloc(sizeof(struct state_layout_recall_file),
+			   MEM_COMP_STATE);
 
 	glist_init(&recall->state_list);
 	recall->entry_link.next = NULL;
@@ -315,7 +316,8 @@ create_file_recall(struct fsal_obj_handle *obj, layouttype4 type,
 			 * But you may want to ignore this location entirely.
 			 */
 			list_entry =
-				gsh_malloc(sizeof(struct recall_state_list));
+				gsh_malloc(sizeof(struct recall_state_list),
+					   MEM_COMP_STATE);
 
 			list_entry->state = s;
 			glist_add_tail(&recall->state_list, &list_entry->link);
@@ -423,7 +425,8 @@ state_status_t layoutrecall(const struct fsal_up_vector *vec,
 		CB_LAYOUTRECALL4args *cb_layoutrec;
 		layoutrecall_file4 *layout;
 
-		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data));
+		cb_data = gsh_malloc(sizeof(struct layoutrecall_cb_data),
+				     MEM_COMP_STATE);
 
 		arg = &cb_data->arg;
 		arg->argop = NFS4_OP_CB_LAYOUTRECALL;
@@ -441,12 +444,12 @@ state_status_t layoutrecall(const struct fsal_up_vector *vec,
 			/* The export, owner, or state_t has gone stale,
 			 * skip this entry
 			 */
-			gsh_free(cb_data);
+			gsh_free(cb_data, MEM_COMP_STATE);
 			continue;
 		}
 
 		if (!nfs4_FSALToFhandle(true, &layout->lor_fh, obj, exp)) {
-			gsh_free(cb_data);
+			gsh_free(cb_data, MEM_COMP_STATE);
 			put_gsh_export(exp);
 			dec_state_owner_ref(owner);
 			rc = STATE_MALLOC_ERROR;
@@ -491,7 +494,8 @@ static void free_layoutrec(nfs_cb_argop4 *op)
 	layoutrecall4 *clora_recall =
 		&op->nfs_cb_argop4_u.opcblayoutrecall.clora_recall;
 
-	gsh_free(clora_recall->layoutrecall4_u.lor_layout.lor_fh.nfs_fh4_val);
+	gsh_free(clora_recall->layoutrecall4_u.lor_layout.lor_fh.nfs_fh4_val,
+		 MEM_COMP_PROTOCOL);
 }
 
 /**
@@ -548,7 +552,7 @@ static void layoutrec_completion(rpc_call_t *call)
 		 */
 		free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 		nfs41_release_single(call);
-		gsh_free(cb_data);
+		gsh_free(cb_data, MEM_COMP_STATE);
 		goto out;
 	} else if (call->cbt.v_u.v4.res.status == NFS4ERR_DELAY) {
 		struct timespec current;
@@ -630,7 +634,7 @@ revoke:
 
 	free_layoutrec(&call->cbt.v_u.v4.args.argarray.argarray_val[1]);
 	nfs41_release_single(call);
-	gsh_free(cb_data);
+	gsh_free(cb_data, MEM_COMP_STATE);
 
 out:
 
@@ -687,7 +691,7 @@ static void return_one_async(void *arg)
 		STATELOCK_unlock(obj);
 	}
 
-	gsh_free(cb_data);
+	gsh_free(cb_data, MEM_COMP_STATE);
 
 	if (state != NULL) {
 		/* Release the reference taken above */
@@ -782,7 +786,7 @@ static void layoutrecall_one_call(void *arg)
 						      state, cb_data->segment,
 						      0, NULL, &deleted);
 				free_layoutrec(&cb_data->arg);
-				gsh_free(cb_data);
+				gsh_free(cb_data, MEM_COMP_STATE);
 			}
 		} else {
 			++cb_data->attempts;
@@ -791,7 +795,7 @@ static void layoutrecall_one_call(void *arg)
 		STATELOCK_unlock(obj);
 
 	} else {
-		gsh_free(cb_data);
+		gsh_free(cb_data, MEM_COMP_STATE);
 	}
 
 	if (state != NULL) {
@@ -831,7 +835,7 @@ static void notifydev_completion(rpc_call_t *call)
 {
 	LogFullDebug(COMPONENT_NFS_CB, "status %d arg %p",
 		     call->cbt.v_u.v4.res.status, call->call_arg);
-	gsh_free(call->call_arg);
+	gsh_free(call->call_arg, MEM_COMP_PROTOCOL);
 }
 
 /**
@@ -871,7 +875,7 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 	}
 
 	/* free in notifydev_completion */
-	arg = gsh_malloc(sizeof(struct cb_notify));
+	arg = gsh_malloc(sizeof(struct cb_notify), MEM_COMP_PROTOCOL);
 
 	cb_notify_dev = &arg->arg.nfs_cb_argop4_u.opcbnotify_deviceid;
 
@@ -891,7 +895,7 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 	code = nfs_rpc_cb_single(clientid, &arg->arg, NULL,
 				 notifydev_completion, &arg->arg);
 	if (code != 0)
-		gsh_free(arg);
+		gsh_free(arg, MEM_COMP_PROTOCOL);
 
 	return true;
 }
@@ -916,7 +920,8 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 {
 	struct devnotify_cb_data *cb_data;
 
-	cb_data = gsh_malloc(sizeof(struct devnotify_cb_data));
+	cb_data = gsh_malloc(sizeof(struct devnotify_cb_data),
+			     MEM_COMP_STATE);
 
 	cb_data->notify_type = notify_type;
 	cb_data->layout_type = layout_type;
@@ -1046,7 +1051,7 @@ free_delegrecall_context(struct delegrecall_context *deleg_ctx)
 
 	dec_client_id_ref(deleg_ctx->drc_clid);
 
-	gsh_free(deleg_ctx);
+	gsh_free(deleg_ctx, MEM_COMP_STATE);
 }
 
 /**
@@ -1469,7 +1474,8 @@ state_status_t delegrecall_impl_per_state(struct fsal_obj_handle *obj,
 
 	*deleg_state = DELEG_RECALL_WIP;
 
-	drc_ctx = gsh_malloc(sizeof(struct delegrecall_context));
+	drc_ctx = gsh_malloc(sizeof(struct delegrecall_context),
+			     MEM_COMP_STATE);
 
 	/* Get references on the owner and the export. The
 	 * export reference we will hold while we perform the recall.
@@ -1482,7 +1488,7 @@ state_status_t delegrecall_impl_per_state(struct fsal_obj_handle *obj,
 			COMPONENT_FSAL_UP,
 			"Something is going stale, no need to recall delegation");
 
-		gsh_free(drc_ctx);
+		gsh_free(drc_ctx, MEM_COMP_STATE);
 		*deleg_state = DELEG_GRANTED;
 		return rc;
 	}
@@ -1497,7 +1503,7 @@ state_status_t delegrecall_impl_per_state(struct fsal_obj_handle *obj,
 		LogDebug(
 			COMPONENT_FSAL_UP,
 			"Client id within owner has gone stale, no need to recall delegation");
-		gsh_free(drc_ctx);
+		gsh_free(drc_ctx, MEM_COMP_STATE);
 		*deleg_state = DELEG_GRANTED;
 		return rc;
 	}
@@ -1518,7 +1524,7 @@ state_status_t delegrecall_impl_per_state(struct fsal_obj_handle *obj,
 
 		put_gsh_export(drc_ctx->drc_exp);
 		dec_state_owner_ref(owner);
-		gsh_free(drc_ctx);
+		gsh_free(drc_ctx, MEM_COMP_STATE);
 		*deleg_state = DELEG_GRANTED;
 		return rc;
 	}
@@ -1560,7 +1566,7 @@ state_status_t delegrecall_impl_per_state(struct fsal_obj_handle *obj,
 
 		LogDebug(COMPONENT_FSAL_UP,
 			 "Failed to reserve client's lease.");
-		gsh_free(drc_ctx);
+		gsh_free(drc_ctx, MEM_COMP_STATE);
 
 		/* Reset the state for reaper to clean  */
 		*deleg_state = DELEG_GRANTED;
@@ -1671,7 +1677,7 @@ free_cbgetattr_context(struct cbgetattr_context *cbgetattr_ctx)
 	dec_client_id_ref(cbgetattr_ctx->clid);
 	cbgetattr_ctx->obj->obj_ops->put_ref(cbgetattr_ctx->obj);
 
-	gsh_free(cbgetattr_ctx);
+	gsh_free(cbgetattr_ctx, MEM_COMP_STATE);
 }
 
 /**
@@ -1994,7 +2000,8 @@ int cbgetattr_impl(struct fsal_obj_handle *obj, nfs_client_id_t *client,
 	}
 	*cb_state = CB_GETATTR_WIP;
 
-	cbg_ctx = gsh_malloc(sizeof(struct cbgetattr_context));
+	cbg_ctx = gsh_malloc(sizeof(struct cbgetattr_context),
+			     MEM_COMP_STATE);
 
 	obj->obj_ops->get_ref(obj);
 	cbg_ctx->obj = obj;
@@ -2010,7 +2017,7 @@ int cbgetattr_impl(struct fsal_obj_handle *obj, nfs_client_id_t *client,
 	PTHREAD_MUTEX_lock(&cbg_ctx->clid->cid_mutex);
 	if (!reserve_lease(cbg_ctx->clid)) {
 		PTHREAD_MUTEX_unlock(&cbg_ctx->clid->cid_mutex);
-		gsh_free(cbg_ctx);
+		gsh_free(cbg_ctx, MEM_COMP_STATE);
 		*cb_state = CB_GETATTR_FAILED;
 		goto out;
 	}

@@ -64,7 +64,7 @@ static void release(struct fsal_export *exp_hdl)
 	free_export_ops(exp_hdl);
 	close(myself->export_fd);
 
-	gsh_free(myself); /* elvis has left the building */
+	gsh_free(myself, MEM_COMP_EXPORT); /* elvis has left the building */
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -333,7 +333,7 @@ void gpfs_free_state(struct state_t *state)
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
 
-	gsh_free(state);
+	gsh_free(state, MEM_COMP_STATE);
 }
 
 /**
@@ -355,7 +355,8 @@ struct state_t *gpfs_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct gpfs_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct gpfs_state_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct gpfs_state_fd),
+				      MEM_COMP_STATE),
 			   gpfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct gpfs_state_fd, state)->gpfs_fd;
@@ -411,7 +412,7 @@ static void free_gpfs_filesystem(struct gpfs_filesystem *gpfs_fs)
 	if (gpfs_fs->root_fd >= 0)
 		close(gpfs_fs->root_fd);
 
-	gsh_free(gpfs_fs);
+	gsh_free(gpfs_fs, MEM_COMP_FSAL);
 }
 
 /**
@@ -528,7 +529,7 @@ int gpfs_claim_filesystem(struct fsal_filesystem *fs, struct fsal_export *exp,
 	}
 
 	/* first export by GPFS */
-	gpfs_fs = gsh_calloc(1, sizeof(*gpfs_fs));
+	gpfs_fs = gsh_calloc(1, sizeof(*gpfs_fs), MEM_COMP_FSAL);
 	gpfs_fs->root_fd = -1;
 	gpfs_fs->fs = fs;
 
@@ -637,7 +638,8 @@ static struct config_block export_param = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 /**
@@ -660,7 +662,9 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	struct fsal_export *exp;
 	int rc;
 
-	gpfs_exp = gsh_calloc(1, sizeof(struct gpfs_fsal_export));
+	gpfs_exp =
+		gsh_calloc(1, sizeof(struct gpfs_fsal_export),
+			   MEM_COMP_EXPORT);
 	exp = &gpfs_exp->export;
 
 	glist_init(&gpfs_exp->filesystems);
@@ -773,6 +777,6 @@ detach:
 	fsal_detach_export(fsal_hdl, &exp->exports);
 free:
 	free_export_ops(exp);
-	gsh_free(gpfs_exp);
+	gsh_free(gpfs_exp, MEM_COMP_EXPORT);
 	return status;
 }

@@ -114,7 +114,8 @@ struct config_block vfs_param = { .dbus_interface_name =
 				  .blk_desc.type = CONFIG_BLOCK,
 				  .blk_desc.u.blk.init = noop_conf_init,
 				  .blk_desc.u.blk.params = vfs_params,
-				  .blk_desc.u.blk.commit = noop_conf_commit };
+				  .blk_desc.u.blk.commit = noop_conf_commit,
+				  .mem_comp = MEM_COMP_CONFIG };
 
 /* Module methods
  */
@@ -142,7 +143,8 @@ static fsal_status_t init_config(struct fsal_module *vfs_fsal_module,
 	 * Only if they exist will we declare lock support.
 	 */
 	LogInfo(COMPONENT_FSAL, "FSAL_VFS testing OFD Locks");
-	temp_name = gsh_strdup("/tmp/ganesha.nfsd.locktestXXXXXX");
+	temp_name = gsh_strdup("/tmp/ganesha.nfsd.locktestXXXXXX",
+			       MEM_COMP_TRANSIENT);
 	fd = mkstemp(temp_name);
 	if (fd >= 0) {
 		lock.l_whence = SEEK_SET;
@@ -165,7 +167,7 @@ static fsal_status_t init_config(struct fsal_module *vfs_fsal_module,
 			"Could not create file %s to test OFD locks",
 			temp_name);
 	}
-	gsh_free(temp_name);
+	gsh_free(temp_name, MEM_COMP_TRANSIENT);
 #endif
 
 	if (vfs_module->module.fs_info.lock_support)

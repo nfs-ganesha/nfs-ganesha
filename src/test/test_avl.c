@@ -62,7 +62,7 @@ int avl_unit_cmpf(const struct avltree_node *lhs,
 
 avl_unit_val_t *avl_unit_new_val(unsigned long intval)
 {
-	avl_unit_val_t *v = gsh_malloc(sizeof(avl_unit_val_t));
+	avl_unit_val_t *v = gsh_malloc(sizeof(avl_unit_val_t), MEM_COMP_GTEST);
 
 	memset(v, 0, sizeof(avl_unit_val_t));
 	v->val = (intval + 1);
@@ -72,7 +72,7 @@ avl_unit_val_t *avl_unit_new_val(unsigned long intval)
 
 void avl_unit_free_val(avl_unit_val_t *v)
 {
-	gsh_free(v);
+	gsh_free(v, MEM_COMP_GTEST);
 }
 
 void avl_unit_clear_tree(struct avltree *t)

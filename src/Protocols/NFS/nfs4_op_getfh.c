@@ -142,5 +142,6 @@ void nfs4_op_getfh_Free(nfs_resop4 *res)
 	GETFH4res *resp = &res->nfs_resop4_u.opgetfh;
 
 	if (resp->status == NFS4_OK)
-		gsh_free(resp->GETFH4res_u.resok4.object.nfs_fh4_val);
+		gsh_free(resp->GETFH4res_u.resok4.object.nfs_fh4_val,
+			 MEM_COMP_PROTOCOL);
 } /* nfs4_op_getfh_Free */

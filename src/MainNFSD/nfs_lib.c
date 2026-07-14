@@ -88,17 +88,17 @@ int nfs_libmain(const char *ganesha_conf, const char *lpath,
 	nfs_ServerEpoch = (time_t)nfs_ServerBootTime.tv_sec;
 
 	if (ganesha_conf)
-		nfs_config_path = gsh_strdup(ganesha_conf);
+		nfs_config_path = gsh_strdup(ganesha_conf, MEM_COMP_CONFIG);
 
 	if (lpath)
-		log_path = gsh_strdup(lpath);
+		log_path = gsh_strdup(lpath, MEM_COMP_CONFIG);
 
 	/* get host name */
 	if (gethostname(localmachine, sizeof(localmachine)) != 0) {
 		fprintf(stderr, "Could not get local host name, exiting...\n");
 		exit(1);
 	} else {
-		nfs_host_name = gsh_strdup(localmachine);
+		nfs_host_name = gsh_strdup(localmachine, MEM_COMP_CONFIG);
 		if (!nfs_host_name) {
 			fprintf(stderr,
 				"Unable to allocate memory for hostname, exiting...\n");
@@ -159,14 +159,14 @@ int nfs_libmain(const char *ganesha_conf, const char *lpath,
 				errstr != NULL ? errstr : "unknown",
 				nfs_config_path);
 			if (errstr != NULL)
-				gsh_free(errstr);
+				gsh_free(errstr, MEM_COMP_CONFIG);
 			goto fatal_die;
 		} else
 			LogWarn(COMPONENT_INIT, "Error %s while parsing (%s)",
 				errstr != NULL ? errstr : "unknown",
 				nfs_config_path);
 		if (errstr != NULL)
-			gsh_free(errstr);
+			gsh_free(errstr, MEM_COMP_CONFIG);
 	}
 
 	if (read_log_config(nfs_config_struct, &err_type) < 0) {
@@ -253,10 +253,10 @@ int nfs_libmain(const char *ganesha_conf, const char *lpath,
 
 	/* nfs_config_path is allocated only if ganesha_conf is not null. */
 	if (ganesha_conf)
-		gsh_free(nfs_config_path);
+		gsh_free(nfs_config_path, MEM_COMP_CONFIG);
 	if (log_path)
-		gsh_free(log_path);
-	gsh_free(nfs_host_name);
+		gsh_free(log_path, MEM_COMP_CONFIG);
+	gsh_free(nfs_host_name, MEM_COMP_CONFIG);
 
 	return 0;
 

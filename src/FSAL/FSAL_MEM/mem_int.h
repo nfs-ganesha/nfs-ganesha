@@ -182,11 +182,11 @@ static inline void _mem_free_handle(struct mem_fsal_obj_handle *hdl)
 	hdl->mfo_exp = NULL;
 
 	if (hdl->m_name != NULL) {
-		gsh_free(hdl->m_name);
+		gsh_free(hdl->m_name, MEM_COMP_FSAL);
 		hdl->m_name = NULL;
 	}
 
-	gsh_free(hdl);
+	gsh_free(hdl, MEM_COMP_FSAL);
 }
 
 void mem_clean_export(struct mem_fsal_obj_handle *root);

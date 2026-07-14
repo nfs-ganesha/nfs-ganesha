@@ -148,7 +148,7 @@ void *GLUSTERFSAL_UP_Thread(void *Arg)
 	if (event_func == NULL) {
 		LogFatal(COMPONENT_FSAL_UP,
 			 "FSAL up vector does not exist. Can not continue.");
-		gsh_free(Arg);
+		gsh_free(Arg, MEM_COMP_FSAL);
 		goto out;
 	}
 

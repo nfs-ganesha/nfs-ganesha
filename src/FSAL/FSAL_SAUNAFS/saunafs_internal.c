@@ -41,7 +41,8 @@ sau_context_t *createContext(sau_t *instance, struct user_cred *cred)
 
 	if (cred->caller_glen > 0) {
 		gid_t *garray =
-			gsh_malloc((cred->caller_glen + 1) * sizeof(gid_t));
+			gsh_malloc((cred->caller_glen + 1) * sizeof(gid_t),
+				   MEM_COMP_FSAL);
 
 		if (garray != NULL) {
 			garray[0] = gid;

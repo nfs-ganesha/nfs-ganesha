@@ -205,7 +205,7 @@ static inline void cih_hash_key(mdcache_key_t *key, struct fsal_module *fsal,
 	} else {
 		/* XXX dups fh_desc */
 		key->kv.len = fh_desc->len;
-		key->kv.addr = gsh_malloc(fh_desc->len);
+		key->kv.addr = gsh_malloc(fh_desc->len, MEM_COMP_MDCACHE);
 		memcpy(key->kv.addr, fh_desc->addr, fh_desc->len);
 	}
 

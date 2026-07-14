@@ -151,7 +151,7 @@ static int rados_cluster_init(void)
 out_shutdown:
 	rados_kv_shutdown();
 out_free_nodeid:
-	gsh_free(nodeid);
+	gsh_free(nodeid, MEM_COMP_RECOVERY);
 	nodeid = NULL;
 	return ret;
 }
@@ -349,7 +349,7 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp)
 		old_len = new_len;
 	else
 		old_len = 4 + 16 + 1 + strlen(object_takeover) + 1;
-	recov_oid = gsh_refstr_alloc(new_len);
+	recov_oid = gsh_refstr_alloc(new_len, MEM_COMP_RECOVERY);
 
 	/* Create new recovery object for current epoch */
 	if (nfs_param.nfsv4_param.recovery_backend_ipbased)
@@ -377,7 +377,7 @@ static void rados_cluster_read_clids(nfs_grace_start_t *gsp)
 
 	/* Read from the recovery object targeted for reclaim */
 	if (!takeover) {
-		old_oid = gsh_refstr_alloc(old_len);
+		old_oid = gsh_refstr_alloc(old_len, MEM_COMP_RECOVERY);
 		if (nfs_param.nfsv4_param.recovery_backend_ipbased)
 			(void)snprintf(old_oid->gr_val, old_len,
 				       "rec-%16.16lx:%s", rec, object_ipbased);
@@ -451,7 +451,7 @@ static void rados_set_client_cb(struct rbt_node *pn, void *arg)
 
 	rados_kv_create_key(clientid, ckey, sizeof(ckey));
 
-	kvp->keys[kvp->num] = gsh_strdup(ckey);
+	kvp->keys[kvp->num] = gsh_strdup(ckey, MEM_COMP_RECOVERY);
 	kvp->vals[kvp->num] =
 		nfs4_create_clid_name(clientid, &kvp->lens[kvp->num]);
 
@@ -504,7 +504,7 @@ static void rados_cluster_maybe_start_grace(void)
 		len = 4 + 16 + 1 + strlen(object_ipbased) + 1;
 	else
 		len = 4 + 16 + 1 + strlen(nodeid) + 1;
-	recov_oid = gsh_refstr_alloc(len);
+	recov_oid = gsh_refstr_alloc(len, MEM_COMP_RECOVERY);
 
 	/* Get an extra working reference of new string */
 	gsh_refstr_get(recov_oid);
@@ -518,7 +518,7 @@ static void rados_cluster_maybe_start_grace(void)
 			       nodeid);
 	prev_recov_oid = rcu_xchg_pointer(&rados_recov_oid, recov_oid);
 
-	old_oid = gsh_refstr_alloc(len);
+	old_oid = gsh_refstr_alloc(len, MEM_COMP_RECOVERY);
 
 	/* Can't overrun and shouldn't return EOVERFLOW or EINVAL */
 	if (nfs_param.nfsv4_param.recovery_backend_ipbased)
@@ -556,8 +556,8 @@ static void rados_cluster_maybe_start_grace(void)
 
 	/* Free copied strings */
 	for (i = 0; i < kvp.num; ++i) {
-		free(kvp.keys[i]);
-		free(kvp.vals[i]);
+		gsh_free(kvp.keys[i], MEM_COMP_RECOVERY);
+		gsh_free(kvp.vals[i], MEM_COMP_RECOVERY);
 	}
 
 	/* Start a new grace period */
@@ -587,7 +587,7 @@ static void rados_cluster_shutdown(void)
 			 ret);
 
 	rados_kv_shutdown();
-	gsh_free(nodeid);
+	gsh_free(nodeid, MEM_COMP_RECOVERY);
 	nodeid = NULL;
 }
 
@@ -636,7 +636,7 @@ static bool rados_cluster_is_member(void)
 
 static int rados_cluster_get_nodeid(char **pnodeid)
 {
-	*pnodeid = gsh_strdup(nodeid);
+	*pnodeid = gsh_strdup(nodeid, MEM_COMP_RECOVERY);
 	return 0;
 }
 

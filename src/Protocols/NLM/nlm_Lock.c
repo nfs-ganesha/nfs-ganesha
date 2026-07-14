@@ -165,7 +165,7 @@ out_dec:
 	 * state_lock() would set pblock_data to NULL if the lock was
 	 * blocked!
 	 */
-	gsh_free(pblock_data);
+	gsh_free(pblock_data, MEM_COMP_STATE);
 
 	/* Release the NLM Client and NLM Owner references we have */
 	dec_nsm_client_ref(nsm_client);
@@ -203,7 +203,7 @@ static void nlm4_lock_message_resp(state_async_queue_t *arg)
 	nlm4_Lock_Free(res);
 	dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
 	dec_nlm_client_ref(nlm_arg->nlm_async_host);
-	gsh_free(arg);
+	gsh_free(arg, MEM_COMP_STATE);
 }
 
 /**

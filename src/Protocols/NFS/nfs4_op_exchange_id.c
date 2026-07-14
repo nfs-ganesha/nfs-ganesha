@@ -410,7 +410,7 @@ return_ok:
 		major_id_len = owner_len;
 	}
 
-	temp = gsh_malloc(major_id_len + 1);
+	temp = gsh_malloc(major_id_len + 1, MEM_COMP_PROTOCOL);
 
 	/* Copy cid_server_owner plus terminating NUL */
 	memcpy(temp, cid_server_owner, owner_len + 1);
@@ -429,7 +429,7 @@ return_ok:
 
 	res_EXCHANGE_ID4_ok->eir_server_owner.so_minor_id = 0;
 
-	temp = gsh_malloc(scope_len + 1);
+	temp = gsh_malloc(scope_len + 1, MEM_COMP_PROTOCOL);
 	memcpy(temp, cid_server_scope, scope_len + 1);
 
 	res_EXCHANGE_ID4_ok->eir_server_scope.eir_server_scope_len =
@@ -477,8 +477,11 @@ void nfs4_op_exchange_id_Free(nfs_resop4 *res)
 	EXCHANGE_ID4resok *resok = &resp->EXCHANGE_ID4res_u.eir_resok4;
 
 	if (resp->eir_status == NFS4_OK) {
-		gsh_free(resok->eir_server_scope.eir_server_scope_val);
-		gsh_free(resok->eir_server_owner.so_major_id.so_major_id_val);
-		gsh_free(resok->eir_server_impl_id.eir_server_impl_id_val);
+		gsh_free(resok->eir_server_scope.eir_server_scope_val,
+			 MEM_COMP_PROTOCOL);
+		gsh_free(resok->eir_server_owner.so_major_id.so_major_id_val,
+			 MEM_COMP_PROTOCOL);
+		gsh_free(resok->eir_server_impl_id.eir_server_impl_id_val,
+			 MEM_COMP_PROTOCOL);
 	}
 }

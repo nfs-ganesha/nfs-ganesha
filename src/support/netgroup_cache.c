@@ -138,9 +138,9 @@ void ng_cache_init(void)
 
 static void ng_free(struct ng_cache_info *info)
 {
-	gsh_free(info->ng_group.addr);
-	gsh_free(info->ng_host.addr);
-	gsh_free(info);
+	gsh_free(info->ng_group.addr, MEM_COMP_CLIENTID);
+	gsh_free(info->ng_host.addr, MEM_COMP_CLIENTID);
+	gsh_free(info, MEM_COMP_CLIENTID);
 }
 
 /* The caller must hold ng_lock for write */
@@ -161,13 +161,13 @@ static void ng_add(const char *group, const char *host, bool negative)
 	struct avltree_node *found_node;
 	struct ng_cache_info *found_info;
 
-	info = gsh_malloc(sizeof(struct ng_cache_info));
+	info = gsh_malloc(sizeof(struct ng_cache_info), MEM_COMP_CLIENTID);
 	if (!info)
 		LogFatal(COMPONENT_IDMAPPER, "memory alloc failed");
 
-	info->ng_group.addr = gsh_strdup(group);
+	info->ng_group.addr = gsh_strdup(group, MEM_COMP_CLIENTID);
 	info->ng_group.len = strlen(group) + 1;
-	info->ng_host.addr = gsh_strdup(host);
+	info->ng_host.addr = gsh_strdup(host, MEM_COMP_CLIENTID);
 	info->ng_host.len = strlen(host) + 1;
 	info->ng_epoch = time(NULL);
 

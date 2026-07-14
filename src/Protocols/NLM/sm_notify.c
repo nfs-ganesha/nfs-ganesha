@@ -146,7 +146,7 @@ CLIENT *client_create(sockaddr_t *caddr, sockaddr_t *saddr, uint32_t port,
 
 		fprintf(stderr, "connect to client %s\n", err);
 
-		gsh_free(err);
+		free_sperror(err);
 		CLNT_DESTROY(clnt);
 		clnt = NULL;
 	}
@@ -154,6 +154,12 @@ CLIENT *client_create(sockaddr_t *caddr, sockaddr_t *saddr, uint32_t port,
 	freenetconfigent(nconf);
 
 	return clnt;
+}
+
+static void sm_notify_cc_free(struct clnt_req *cc, size_t size,
+			const char *file, int line, const char *function)
+{
+	gsh_free(cc, MEM_COMP_PROTOCOL);
 }
 
 uint32_t portmap_1(sockaddr_t *caddr, sockaddr_t *saddr)
@@ -177,11 +183,12 @@ uint32_t portmap_1(sockaddr_t *caddr, sockaddr_t *saddr)
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
 
-	cc = gsh_malloc(sizeof(*cc));
+	cc = gsh_malloc(sizeof(*cc), MEM_COMP_PROTOCOL);
 
 	clnt_req_fill(cc, clnt, authnone_ncreate(), PMAPPROC_GETPORT,
 		      (xdrproc_t)xdr_pmap, &pmap_args, (xdrproc_t)xdr_uint32_t,
 		      &res);
+	cc->cc_free_cb = sm_notify_cc_free;
 
 	/* Now set up the request */
 	ret = clnt_req_setup(cc, tout);
@@ -195,7 +202,7 @@ uint32_t portmap_1(sockaddr_t *caddr, sockaddr_t *saddr)
 		char *err = rpc_sperror(&cc->cc_error, "failed");
 
 		fprintf(stderr, "PMAPPROC_GETPORT failed error: %s\n", err);
-		gsh_free(err);
+		free_sperror(err);
 		res = 0;
 	}
 
@@ -222,11 +229,12 @@ int nsm_notify_1(notify *argp, sockaddr_t *caddr, sockaddr_t *saddr)
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
 
-	cc = gsh_malloc(sizeof(*cc));
+	cc = gsh_malloc(sizeof(*cc), MEM_COMP_PROTOCOL);
 
 	clnt_req_fill(cc, clnt, authnone_ncreate(), SM_NOTIFY,
 		      (xdrproc_t)xdr_notify, argp, (xdrproc_t)xdr_void,
 		      &clnt_res);
+	cc->cc_free_cb = sm_notify_cc_free;
 
 	ret = clnt_req_setup(cc, tout);
 
@@ -239,7 +247,7 @@ int nsm_notify_1(notify *argp, sockaddr_t *caddr, sockaddr_t *saddr)
 		char *err = rpc_sperror(&cc->cc_error, "failed");
 
 		fprintf(stderr, "SM_NOTIFY failed error: %s\n", err);
-		gsh_free(err);
+		free_sperror(err);
 	}
 
 	clnt_req_release(cc);
@@ -267,7 +275,7 @@ static struct rpc_evchan rpc_evchan[EVCHAN_SIZE];
 
 static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 {
-	struct svc_req *req = gsh_calloc(1, sizeof(*req));
+	struct svc_req *req = gsh_calloc(1, sizeof(*req), MEM_COMP_LIBNTIRPC);
 
 	/* set up req */
 	SVC_REF(xprt, SVC_REF_FLAG_NONE);
@@ -282,7 +290,7 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 {
 	SVC_RELEASE(req->rq_xprt, SVC_REF_FLAG_NONE);
 
-	gsh_free(req);
+	gsh_free(req, MEM_COMP_LIBNTIRPC);
 }
 
 void ntirpc_init(void)

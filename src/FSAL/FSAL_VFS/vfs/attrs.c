@@ -133,13 +133,13 @@ static struct vfs_acl_entry *vfs_acl_locate(struct fsal_obj_handle *obj)
 	}
 
 	LogDebug(COMPONENT_FSAL, "create");
-	fa_entry = gsh_calloc(1, sizeof(struct vfs_acl_entry));
+	fa_entry = gsh_calloc(1, sizeof(struct vfs_acl_entry), MEM_COMP_FSAL);
 
 	fa_entry->fa_key = key;
 	node = avltree_insert(&fa_entry->fa_node, &vfs_acl_tree);
 	if (unlikely(node)) {
 		/* Race won */
-		gsh_free(fa_entry);
+		gsh_free(fa_entry, MEM_COMP_FSAL);
 		fa_entry = avltree_container_of(node, struct vfs_acl_entry,
 						fa_node);
 	} else {
@@ -164,7 +164,7 @@ void vfs_acl_release(struct gsh_buffdesc *key)
 		return;
 
 	avltree_remove(&fa_entry->fa_node, &vfs_acl_tree);
-	gsh_free(fa_entry);
+	gsh_free(fa_entry, MEM_COMP_FSAL);
 }
 
 fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
@@ -323,9 +323,9 @@ fsal_status_t vfs_sub_getattrs(struct vfs_fsal_obj_handle *vfs_hdl, int fd,
 	}
 
 	/* Reallocating acldata into the required size */
-	acldata.aces =
-		(fsal_ace_t *)gsh_realloc(acldata.aces,
-					  new_count * sizeof(fsal_ace_t));
+	acldata.aces = (fsal_ace_t *)gsh_realloc(acldata.aces,
+						 new_count * sizeof(fsal_ace_t),
+						 MEM_COMP_ACL);
 	acldata.naces = new_count;
 
 	attrib->acl = nfs4_acl_new_entry(&acldata, &aclstatus);

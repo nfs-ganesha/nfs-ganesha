@@ -512,7 +512,7 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	YY_BUFFER_STATE inbuf;
 	int rc = ENOMEM;
 
-	confroot = gsh_calloc(1, sizeof(struct config_root));
+	confroot = gsh_calloc(1, sizeof(struct config_root), MEM_COMP_CONFIG);
 
 	glist_init(&confroot->root.node);
 	glist_init(&confroot->root.u.nterm.sub_nodes);
@@ -523,7 +523,7 @@ int ganeshun_yy_init_parser(char *srcfile, struct parser_state *st)
 	ganeshun_yylex_init_extra(st, &st->scanner);
 	rc = new_file(srcfile, st);
 	if (rc == 0)
-		confroot->root.filename = gsh_strdup(srcfile);
+		confroot->root.filename = gsh_strdup(srcfile, MEM_COMP_CONFIG);
 	return rc;
 }
 
@@ -578,13 +578,13 @@ static int process_dir(char *d_name, struct parser_state *st)
 
 	/* check last string in path is pattern or not */
 	tmp_dpath = gsh_strdupa(dname);
-	laststr = gsh_strdup(basename(tmp_dpath));
+	laststr = gsh_strdup(basename(tmp_dpath), MEM_COMP_CONFIG);
 	if (is_pattern(laststr))
 	{
 		pattern = laststr;
-		dir_path = gsh_strdup(dirname(tmp_dpath));
+		dir_path = gsh_strdup(dirname(tmp_dpath), MEM_COMP_CONFIG);
 	} else {
-		dir_path = gsh_strdup(tmp_dpath);
+		dir_path = gsh_strdup(tmp_dpath, MEM_COMP_CONFIG);
 	}
 
 	DEBUG_LEX("Processing directory : %s pattern : \"%s\" \n",
@@ -642,8 +642,8 @@ static int process_dir(char *d_name, struct parser_state *st)
 errout:
 	closedir(d);
 out:
-	gsh_free(dir_path);
-	gsh_free(pattern);
+	gsh_free(dir_path, MEM_COMP_CONFIG);
+	gsh_free(pattern, MEM_COMP_CONFIG);
 	return rc;
 }
 
@@ -673,15 +673,17 @@ static int new_file(char *name_tok,
 	if (confroot->files == NULL) {
 		if (filename[0] == '/') {
 			char *path = gsh_strdupa(filename);
-			confroot->conf_dir = gsh_strdup(dirname(path));
+			confroot->conf_dir = gsh_strdup(dirname(path),
+							MEM_COMP_CONFIG);
 		} else {
-			confroot->conf_dir = gsh_strdup(".");
+			confroot->conf_dir = gsh_strdup(".", MEM_COMP_CONFIG);
 		}
 	}
 	if (filename[0] == '/') {
-		fullpath = gsh_strdup(filename);
+		fullpath = gsh_strdup(filename, MEM_COMP_CONFIG);
 	} else {
-		fullpath = gsh_concat_sep(confroot->conf_dir, '/', filename);
+		fullpath = gsh_concat_sep(confroot->conf_dir, '/', filename,
+					  MEM_COMP_CONFIG);
 	}
 	/* loop detection */
 	for (fp = confroot->files; fp != NULL; fp = fp->next) {
@@ -693,9 +695,9 @@ static int new_file(char *name_tok,
 			goto errout;
 		}
 	}
-	bs = gsh_calloc(1, sizeof(struct bufstack));
+	bs = gsh_calloc(1, sizeof(struct bufstack), MEM_COMP_CONFIG);
 
-	flist = gsh_calloc(1, sizeof(struct file_list));
+	flist = gsh_calloc(1, sizeof(struct file_list), MEM_COMP_CONFIG);
 
 	in_file = fopen(fullpath, "r" );
 	if (in_file == NULL) {
@@ -727,9 +729,9 @@ errout:
 	else
 		st->err_type->scan = true;
 
-	gsh_free(flist);
-	gsh_free(bs);
-	gsh_free(fullpath);
+	gsh_free(flist, MEM_COMP_CONFIG);
+	gsh_free(bs, MEM_COMP_CONFIG);
+	gsh_free(fullpath, MEM_COMP_CONFIG);
 
 	return rc;
 }
@@ -756,10 +758,10 @@ static int fetch_url(char *name_tok, struct parser_state *st)
 		goto errout;
 	}
 #endif
-	filename = gsh_strdup(name_tok);
+	filename = gsh_strdup(name_tok, MEM_COMP_CONFIG);
 
-	bs = gsh_calloc(1, sizeof(struct bufstack));
-	flist = gsh_calloc(1, sizeof(struct file_list));
+	bs = gsh_calloc(1, sizeof(struct bufstack), MEM_COMP_CONFIG);
+	flist = gsh_calloc(1, sizeof(struct file_list), MEM_COMP_CONFIG);
 
 	rc = config_url_fetch(filename, &bs->f, &bs->release_buffer, &bs->fbuf);
 	if (bs->f == NULL) {
@@ -775,9 +777,9 @@ static int fetch_url(char *name_tok, struct parser_state *st)
 	bs->filename = filename;
 	bs->flags = BS_FLAG_URL;
 	ganeshun_yy_switch_to_buffer(bs->bs, yyscanner);
-	st->current_file = gsh_strdup(bs->filename);
+	st->current_file = gsh_strdup(bs->filename, MEM_COMP_CONFIG);
 	st->curbs = bs;
-	flist->pathname = gsh_strdup(bs->filename); /* XXX */
+	flist->pathname = gsh_strdup(bs->filename, MEM_COMP_CONFIG); /* XXX */
 	flist->next = confroot->files;
 	confroot->files = flist;
 	return 0;
@@ -788,9 +790,9 @@ errout:
 	else
 		st->err_type->scan = true;
 
-	gsh_free(flist);
-	gsh_free(bs);
-	gsh_free(filename);
+	gsh_free(flist, MEM_COMP_CONFIG);
+	gsh_free(bs, MEM_COMP_CONFIG);
+	gsh_free(filename, MEM_COMP_CONFIG);
 
 	return rc;
 } /* fetch_url() */
@@ -804,7 +806,7 @@ static int plugin_obj(char *name_tok, struct parser_state *st)
 	void *yyscanner = st->scanner;
 	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-	filename = gsh_strdup(name_tok);
+	filename = gsh_strdup(name_tok, MEM_COMP_CONFIG);
 
 	if (!filename) {
 		goto errout;
@@ -829,7 +831,7 @@ errout:
 		st->err_type->scan = true;
 		break;
 	}
-	gsh_free(filename);
+	gsh_free(filename, MEM_COMP_CONFIG);
 
 	return rc;
 } /* plugin_obj() */
@@ -851,7 +853,7 @@ static int pop_file(struct parser_state *st)
 	ganeshun_yy_delete_buffer(bs->bs, yyscanner);
 	prevbs = bs->prev;
 	st->curbs = prevbs;
-	gsh_free(bs);
+	gsh_free(bs, MEM_COMP_CONFIG);
 	if (prevbs == NULL)
 		return 0;
 	ganeshun_yy_switch_to_buffer(prevbs->bs, yyscanner);

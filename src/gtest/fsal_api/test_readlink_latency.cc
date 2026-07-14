@@ -90,7 +90,7 @@ class ReadlinkEmptyLatencyTest : public gtest::GaneshaFSALBaseTest {
 	{
 		fsal_status_t status;
 
-		gsh_free(bfr_content.utf8string_val);
+		free_utf8string(&bfr_content);
 
 		status = symlink_test_root->obj_ops->unlink(root_entry,
 							    symlink_test_root,
@@ -141,7 +141,7 @@ TEST_F(ReadlinkEmptyLatencyTest, SIMPLE)
 			     link_content.utf8string_len);
 	EXPECT_EQ(ret, 0);
 
-	gsh_free(link_content.utf8string_val);
+	free_utf8string(&link_content);
 }
 
 TEST_F(ReadlinkEmptyLatencyTest, SIMPLE_BYPASS)
@@ -161,7 +161,7 @@ TEST_F(ReadlinkEmptyLatencyTest, SIMPLE_BYPASS)
 			     link_content.utf8string_len);
 	EXPECT_EQ(ret, 0);
 
-	gsh_free(link_content.utf8string_val);
+	free_utf8string(&link_content);
 }
 
 TEST_F(ReadlinkEmptyLatencyTest, LOOP)
@@ -177,7 +177,7 @@ TEST_F(ReadlinkEmptyLatencyTest, LOOP)
 							      &link_content,
 							      false);
 		EXPECT_EQ(status.major, 0);
-		gsh_free(link_content.utf8string_val);
+		free_utf8string(&link_content);
 	}
 
 	now(&e_time);
@@ -197,7 +197,7 @@ TEST_F(ReadlinkEmptyLatencyTest, FSALREADLINK)
 	for (int i = 0; i < LOOP_COUNT; ++i) {
 		status = fsal_readlink(symlink_test_root, &link_content);
 		EXPECT_EQ(status.major, 0);
-		gsh_free(link_content.utf8string_val);
+		free_utf8string(&link_content);
 	}
 
 	now(&e_time);
@@ -220,7 +220,7 @@ TEST_F(ReadlinkFullLatencyTest, BIG)
 							      false);
 		ASSERT_EQ(status.major, 0)
 			<< " failed to readlink " << TEST_ROOT_LINK;
-		gsh_free(link_content.utf8string_val);
+		free_utf8string(&link_content);
 	}
 
 	now(&e_time);
@@ -244,7 +244,7 @@ TEST_F(ReadlinkFullLatencyTest, BIG_BYPASS)
 						    false);
 		ASSERT_EQ(status.major, 0)
 			<< " failed to readlink " << TEST_ROOT_LINK;
-		gsh_free(link_content.utf8string_val);
+		free_utf8string(&link_content);
 	}
 
 	now(&e_time);

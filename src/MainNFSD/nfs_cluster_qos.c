@@ -264,7 +264,7 @@ static void add_subscribed_optype_to_node(qos_class_t *class_ptr,
 					 &key.cqos_avl_node);
 	if (node_info == NULL) {
 		/* If the node doesn't exist, add node to avl tree */
-		node_info = gsh_calloc(1, sizeof(*node_info));
+		node_info = gsh_calloc(1, sizeof(*node_info), MEM_COMP_QOS);
 		memcpy(&node_info->node_addr, &cluster_qos_msg->node_addr,
 		       sizeof(sockaddr_t));
 		node_info->subscribed_ops = cluster_qos_msg->cqos_ops;
@@ -640,7 +640,7 @@ static CLIENT *cqos_create_rpc_client(int fd)
 	if (CLNT_FAILURE(clnt)) {
 		err = rpc_sperror(&clnt->cl_error, "failed");
 		LogCrit(COMPONENT_QOS, "%s", err);
-		gsh_free(err);
+		free_sperror(err);
 		return NULL;
 	}
 
@@ -669,7 +669,7 @@ static void cqos_rpc_call_process(struct clnt_req *cc)
 
 	err = rpc_sperror(&cc->cc_error, "failed");
 	LogCrit(COMPONENT_QOS, "CQOS: Sending RPCmsg failed %s", err);
-	gsh_free(err);
+	free_sperror(err);
 
 	/*
 	 * We try to resend bandwidth usage in case of failure.
@@ -705,6 +705,13 @@ static void cqos_rpc_call_process(struct clnt_req *cc)
 	}
 }
 
+/* Free RPC callback request context */
+static void cqos_rpc_call_free(struct clnt_req *cc, size_t unused,
+			const char *file, int line, const char *function)
+{
+	gsh_free(cc, MEM_COMP_QOS);
+}
+
 /**
  * This function fills the request to be sent using input message
  * structure, and then calls request setup to send message.
@@ -724,17 +731,18 @@ static bool cqos_send_rpc_msg(CLIENT *clnt, cluster_qos_msg msg)
 	if (clnt == NULL)
 		return false;
 
-	cc = gsh_malloc(sizeof(*cc));
+	cc = gsh_malloc(sizeof(*cc), MEM_COMP_QOS);
 
 	clnt_req_fill(cc, clnt, authnone_ncreate(), 1,
 		     (xdrproc_t)xdr_cluster_qos_msg, &msg, (xdrproc_t)xdr_void,
 		     NULL);
+	cc->cc_free_cb = cqos_rpc_call_free;
 
 	cc->cc_error.re_status = clnt_req_setup(cc, msg_tout);
 	if (cc->cc_error.re_status != RPC_SUCCESS) {
 		err = rpc_sperror(&cc->cc_error, "failed");
 		LogCrit(COMPONENT_QOS, "clnt req setup failed %s", err);
-		gsh_free(err);
+		free_sperror(err);
 		clnt_req_release(cc);
 		return false;
 	}
@@ -752,7 +760,7 @@ static bool cqos_send_rpc_msg(CLIENT *clnt, cluster_qos_msg msg)
 	if (cc->cc_error.re_status != RPC_SUCCESS) {
 		err = rpc_sperror(&cc->cc_error, "failed");
 		LogCrit(COMPONENT_QOS, "Sending RPC msg failed %s", err);
-		gsh_free(err);
+		free_sperror(err);
 		clnt_req_release(cc);
 		return false;
 	}

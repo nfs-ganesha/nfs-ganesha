@@ -164,7 +164,8 @@ static sau_chunkserver_info_t *randomizedChunkserverList(
 	sau_chunkserver_info_t *chunkserverInfo = NULL;
 
 	chunkserverInfo = gsh_malloc(SAUNAFS_BIGGEST_STRIPE_COUNT *
-				     sizeof(sau_chunkserver_info_t));
+					     sizeof(sau_chunkserver_info_t),
+				     MEM_COMP_FSAL);
 
 	int retvalue = sau_get_chunkservers_info(export->fsInstance,
 						 chunkserverInfo,
@@ -173,7 +174,7 @@ static sau_chunkserver_info_t *randomizedChunkserverList(
 
 	if (retvalue < 0) {
 		*chunkserverCount = 0;
-		gsh_free(chunkserverInfo);
+		gsh_free(chunkserverInfo, MEM_COMP_FSAL);
 		return NULL;
 	}
 
@@ -350,11 +351,11 @@ static void releaseResources(sau_chunk_info_t *chunkInfo,
 {
 	if (chunkInfo) {
 		sau_destroy_chunks_info(chunkInfo);
-		gsh_free(chunkInfo);
+		gsh_free(chunkInfo, MEM_COMP_FSAL);
 	}
 
 	if (chunkserverInfo)
-		gsh_free(chunkserverInfo);
+		gsh_free(chunkserverInfo, MEM_COMP_FSAL);
 }
 
 /**
@@ -439,7 +440,8 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 
 	/* get the chunk list for file */
 	chunkInfo = gsh_malloc(SAUNAFS_BIGGEST_STRIPE_COUNT *
-			       sizeof(sau_chunk_info_t));
+				       sizeof(sau_chunk_info_t),
+			       MEM_COMP_FSAL);
 
 	int retvalue = saunafs_get_chunks_info(
 		export->fsInstance, &op_ctx->creds, deviceid->devid, 0,
@@ -535,8 +537,8 @@ static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 
 	sau_destroy_chunks_info(chunkInfo);
 
-	gsh_free(chunkInfo);
-	gsh_free(chunkserverInfo);
+	gsh_free(chunkInfo, MEM_COMP_FSAL);
+	gsh_free(chunkserverInfo, MEM_COMP_FSAL);
 
 	return NFS4_OK;
 }

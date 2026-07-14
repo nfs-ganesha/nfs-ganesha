@@ -68,7 +68,8 @@ static struct nullfs_fsal_obj_handle *nullfs_alloc_handle(
 {
 	struct nullfs_fsal_obj_handle *result;
 
-	result = gsh_calloc(1, sizeof(struct nullfs_fsal_obj_handle));
+	result = gsh_calloc(1, sizeof(struct nullfs_fsal_obj_handle),
+			    MEM_COMP_FSAL);
 
 	/* default handlers */
 	fsal_obj_handle_init(&result->obj_handle, &export->export,
@@ -640,7 +641,7 @@ static void release(struct fsal_obj_handle *obj_hdl)
 
 	/* cleaning data allocated by nullfs */
 	fsal_obj_handle_fini(&hdl->obj_handle, true);
-	gsh_free(hdl);
+	gsh_free(hdl, MEM_COMP_FSAL);
 }
 
 static bool nullfs_is_referral(struct fsal_obj_handle *obj_hdl,

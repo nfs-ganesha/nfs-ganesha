@@ -234,7 +234,7 @@ enum nfs_req_result nfs4_op_secinfo(struct nfs_argop4 *op,
 
 	data->op_resp_size = resp_size;
 
-	resok_val = gsh_calloc(num_entry, sizeof(secinfo4));
+	resok_val = gsh_calloc(num_entry, sizeof(secinfo4), MEM_COMP_PROTOCOL);
 
 	res_SECINFO4->SECINFO4res_u.resok4.SECINFO4resok_val = resok_val;
 
@@ -332,7 +332,8 @@ void nfs4_op_secinfo_Free(nfs_resop4 *res)
 	SECINFO4res *resp = &res->nfs_resop4_u.opsecinfo;
 
 	if (resp->status == NFS4_OK) {
-		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val);
+		gsh_free(resp->SECINFO4res_u.resok4.SECINFO4resok_val,
+			 MEM_COMP_PROTOCOL);
 		resp->SECINFO4res_u.resok4.SECINFO4resok_val = NULL;
 	}
 }

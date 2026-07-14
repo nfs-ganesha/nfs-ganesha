@@ -72,5 +72,6 @@ struct config_block _9p_param_blk = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = _9p_param_init,
 	.blk_desc.u.blk.params = _9p_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };

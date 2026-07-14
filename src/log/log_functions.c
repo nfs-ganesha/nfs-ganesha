@@ -66,6 +66,7 @@
 #include "nfs_core.h"
 #include "config_parsing.h"
 #include "sal_functions.h"
+#include "server_stats.h"
 
 /* clang-format off */
 
@@ -74,12 +75,6 @@
 #define LOG_LEVEL_ARG { .name = "log_level", .type = "s", .direction = "in" }
 #define MATCH_POLICY_ARG \
 	{ .name = "match_policy", .type = "s", .direction = "in" }
-
-#define CT_ASSERT_CONCAT(a, b) a##b
-#define CT_ASSERT_CONCAT2(a, b) CT_ASSERT_CONCAT(a, b)
-#define CT_ASSERT(cond, msg) \
-	typedef char CT_ASSERT_CONCAT2(static_assert_failed_, __LINE__) \
-		[(cond) ? 1 : -1] __attribute__((unused))
 
 /* clang-format on */
 
@@ -772,29 +767,31 @@ int create_log_facility(const char *name, lf_function_t *log_func,
 			return -rc;
 		}
 	}
-	PTHREAD_RWLOCK_wrlock(&log_rwlock);
 
-	facility = find_log_facility(name);
+	facility = gsh_calloc(1, sizeof(*facility), MEM_COMP_CONFIG);
 
-	if (facility != NULL) {
-		PTHREAD_RWLOCK_unlock(&log_rwlock);
-
-		LogInfo(COMPONENT_LOG, "Facility %s already exists", name);
-
-		return -EEXIST;
-	}
-
-	facility = gsh_calloc(1, sizeof(*facility));
-
-	facility->lf_name = gsh_strdup(name);
+	facility->lf_name = gsh_strdup(name, MEM_COMP_CONFIG);
 	facility->lf_func = log_func;
 	facility->lf_max_level = max_level;
 	facility->lf_headers = header;
 
 	if (log_func == log_to_file && private != NULL)
-		facility->lf_private = gsh_strdup(private);
+		facility->lf_private = gsh_strdup(private, MEM_COMP_CONFIG);
 	else
 		facility->lf_private = private;
+
+	PTHREAD_RWLOCK_wrlock(&log_rwlock);
+
+	if (find_log_facility(name) != NULL) {
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
+		gsh_free(facility->lf_private, MEM_COMP_CONFIG);
+		gsh_free(facility->lf_name, MEM_COMP_CONFIG);
+		gsh_free(facility, MEM_COMP_CONFIG);
+
+		LogInfo(COMPONENT_LOG, "Facility %s already exists", name);
+
+		return -EEXIST;
+	}
 
 	glist_add_tail(&facility_list, &facility->lf_list);
 
@@ -843,9 +840,9 @@ void release_log_facility(const char *name)
 	glist_del(&facility->lf_list);
 	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	if (facility->lf_func == log_to_file && facility->lf_private != NULL)
-		gsh_free(facility->lf_private);
-	gsh_free(facility->lf_name);
-	gsh_free(facility);
+		gsh_free(facility->lf_private, MEM_COMP_CONFIG);
+	gsh_free(facility->lf_name, MEM_COMP_CONFIG);
+	gsh_free(facility, MEM_COMP_CONFIG);
 }
 
 /**
@@ -1030,9 +1027,11 @@ int set_log_destination(const char *name, char *dest)
 				dest, strerror(errno));
 			return -errno;
 		}
-		logfile = gsh_strdup(dest);
-		gsh_free(facility->lf_private);
+		PTHREAD_RWLOCK_unlock(&log_rwlock);
+		logfile = gsh_strdup(dest, MEM_COMP_CONFIG);
+		gsh_free(facility->lf_private, MEM_COMP_CONFIG);
 		facility->lf_private = logfile;
+		goto out;
 	} else if (facility->lf_func == log_to_stream) {
 		FILE *out;
 
@@ -1055,6 +1054,8 @@ int set_log_destination(const char *name, char *dest)
 		return -EINVAL;
 	}
 	PTHREAD_RWLOCK_unlock(&log_rwlock);
+
+out:
 	return 0;
 }
 
@@ -2231,15 +2232,15 @@ static void *format_init(void *link_mem, void *self_struct)
 	if (link_mem == NULL)
 		return NULL;
 	if (self_struct == NULL)
-		return gsh_calloc(1, sizeof(struct logfields));
+		return gsh_calloc(1, sizeof(struct logfields), MEM_COMP_CONFIG);
 	else {
 		struct logfields *lf = self_struct;
 
 		if (lf->user_date_fmt != NULL)
-			gsh_free(lf->user_date_fmt);
+			gsh_free(lf->user_date_fmt, MEM_COMP_CONFIG);
 		if (lf->user_time_fmt != NULL)
-			gsh_free(lf->user_time_fmt);
-		gsh_free(lf);
+			gsh_free(lf->user_time_fmt, MEM_COMP_CONFIG);
+		gsh_free(lf, MEM_COMP_CONFIG);
 		return NULL;
 	}
 }
@@ -2435,9 +2436,10 @@ static void *component_init(void *link_mem, void *self_struct)
 	if (link_mem == NULL)
 		return NULL;
 	if (self_struct == NULL)
-		return gsh_calloc(COMPONENT_COUNT, sizeof(log_levels_t));
+		return gsh_calloc(COMPONENT_COUNT, sizeof(log_levels_t),
+				  MEM_COMP_CONFIG);
 	else {
-		gsh_free(self_struct);
+		gsh_free(self_struct, MEM_COMP_CONFIG);
 		return NULL;
 	}
 }
@@ -2519,7 +2521,8 @@ static void *facility_init(void *link_mem, void *self_struct)
 		glist_init(&logger->facility_list);
 		return self_struct;
 	} else if (self_struct == NULL) {
-		facility = gsh_calloc(1, sizeof(struct facility_config));
+		facility = gsh_calloc(1, sizeof(struct facility_config),
+				      MEM_COMP_CONFIG);
 		return facility;
 	} else {
 		facility = self_struct;
@@ -2527,10 +2530,10 @@ static void *facility_init(void *link_mem, void *self_struct)
 		assert(glist_null(&facility->fac_list));
 
 		if (facility->facility_name != NULL)
-			gsh_free(facility->facility_name);
+			gsh_free(facility->facility_name, MEM_COMP_CONFIG);
 		if (facility->dest != NULL)
-			gsh_free(facility->dest);
-		gsh_free(self_struct);
+			gsh_free(facility->dest, MEM_COMP_CONFIG);
+		gsh_free(self_struct, MEM_COMP_CONFIG);
 	}
 	return NULL;
 }
@@ -2615,7 +2618,7 @@ static int export_id_list_adder(const char *token, enum term_type type_hint,
 	}
 
 	rc = add_export_id(COMPONENT_CONFIG, &global_export_id_list, export_id,
-			   cnode, err_type);
+			   MEM_COMP_CONFIG, cnode, err_type);
 
 	if (rc == 0)
 		conditional_logging_configured = true;
@@ -2645,7 +2648,8 @@ static int client_ip_list_adder(const char *token, enum term_type type_hint,
 	LogDebug(COMPONENT_CONFIG, "Adding client %s", token);
 
 	rc = add_client(COMPONENT_CONFIG, &global_client_ip_list, token,
-			type_hint, cnode, err_type, NULL, NULL, NULL);
+			type_hint, MEM_COMP_CONFIG, cnode, err_type, NULL, NULL,
+			NULL);
 
 	if (rc == 0)
 		conditional_logging_configured = true;
@@ -2782,9 +2786,10 @@ static void *conditional_init(void *link_mem, void *self_struct)
 	if (link_mem == NULL)
 		return self_struct;
 	else if (self_struct == NULL)
-		return gsh_calloc(COMPONENT_COUNT, sizeof(log_levels_t));
+		return gsh_calloc(COMPONENT_COUNT, sizeof(log_levels_t),
+				  MEM_COMP_CONFIG);
 	else {
-		gsh_free(self_struct);
+		gsh_free(self_struct, MEM_COMP_CONFIG);
 		return NULL;
 	}
 }
@@ -2824,9 +2829,10 @@ static void *rotate_init(void *link_mem, void *self_struct)
 	if (link_mem == NULL)
 		return NULL;
 	if (self_struct == NULL)
-		return gsh_calloc(1, sizeof(struct log_rotate_limits));
+		return gsh_calloc(1, sizeof(struct log_rotate_limits),
+				  MEM_COMP_CONFIG);
 	else {
-		gsh_free(self_struct);
+		gsh_free(self_struct, MEM_COMP_CONFIG);
 		return NULL;
 	}
 }
@@ -3084,7 +3090,7 @@ done:
 	if (errcnt == 0) {
 		if (logger->log_rotate_limits) {
 			if (log_rotate_limits != &log_rotate_limits_default) {
-				gsh_free(log_rotate_limits);
+				gsh_free(log_rotate_limits, MEM_COMP_CONFIG);
 			}
 			log_rotate_limits = logger->log_rotate_limits;
 		}
@@ -3094,10 +3100,12 @@ done:
 				 "Changing definition of log fields");
 			if (logfields != &default_logfields) {
 				if (logfields->user_date_fmt != NULL)
-					gsh_free(logfields->user_date_fmt);
+					gsh_free(logfields->user_date_fmt,
+						 MEM_COMP_CONFIG);
 				if (logfields->user_time_fmt != NULL)
-					gsh_free(logfields->user_time_fmt);
-				gsh_free(logfields);
+					gsh_free(logfields->user_time_fmt,
+						 MEM_COMP_CONFIG);
+				gsh_free(logfields, MEM_COMP_CONFIG);
 			}
 			logfields = logger->logfields;
 
@@ -3127,23 +3135,24 @@ done:
 
 		disp_utc_timestamp = logger->disp_utc_timestamp;
 		rpc_debug_flags = logger->rpc_debug_flags;
+
 		SetNTIRPCLogLevel(component_log_level[COMPONENT_TIRPC]);
 	} else {
 		if (logger->logfields != NULL) {
 			struct logfields *lf = logger->logfields;
 
 			if (lf->user_date_fmt != NULL)
-				gsh_free(lf->user_date_fmt);
+				gsh_free(lf->user_date_fmt, MEM_COMP_CONFIG);
 			if (lf->user_time_fmt != NULL)
-				gsh_free(lf->user_time_fmt);
-			gsh_free(lf);
+				gsh_free(lf->user_time_fmt, MEM_COMP_CONFIG);
+			gsh_free(lf, MEM_COMP_CONFIG);
 		}
 		if (logger->log_rotate_limits != NULL)
-			gsh_free(logger->log_rotate_limits);
+			gsh_free(logger->log_rotate_limits, MEM_COMP_CONFIG);
 	}
 
 	if (logger->comp_log_level != NULL)
-		gsh_free(logger->comp_log_level);
+		gsh_free(logger->comp_log_level, MEM_COMP_CONFIG);
 
 	logger->logfields = NULL;
 	logger->comp_log_level = NULL;
@@ -3182,7 +3191,8 @@ struct config_block logging_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = log_conf_init,
 	.blk_desc.u.blk.params = logging_params,
-	.blk_desc.u.blk.commit = log_conf_commit
+	.blk_desc.u.blk.commit = log_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 /**
@@ -3410,6 +3420,7 @@ void gsh_libunwind(void)
 			break;
 		}
 	}
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
 
 	LogMajor(COMPONENT_INIT, "BACKTRACE:");
 
@@ -3430,8 +3441,11 @@ void gsh_libunwind(void)
 					" #%u %s + %#llx [ip=%#llx] [sp=%#llx]\n",
 					i, procname, (long long)off,
 					(long long)ip, (long long)sp);
-				if (n > 0)
+				if (n > 0) {
+					PTHREAD_RWLOCK_rdlock(&log_rwlock);
 					write(fd, buffer, n);
+					PTHREAD_RWLOCK_unlock(&log_rwlock);
+				}
 			} else {
 				LogMajor(COMPONENT_INIT,
 					 " #%u %s + %#llx [ip=%#llx] [sp=%#llx]",
@@ -3447,8 +3461,11 @@ void gsh_libunwind(void)
 					     " #%u %s [ip=%#llx] [sp=%#llx]\n",
 					     i, "<unknown symbol>",
 					     (long long)ip, (long long)sp);
-				if (n > 0)
+				if (n > 0) {
+					PTHREAD_RWLOCK_rdlock(&log_rwlock);
 					write(fd, buffer, n);
+					PTHREAD_RWLOCK_unlock(&log_rwlock);
+				}
 			} else {
 				LogMajor(COMPONENT_INIT,
 					 " #%u %s [ip=%#llx] [sp=%#llx]", i,
@@ -3459,7 +3476,6 @@ void gsh_libunwind(void)
 		++i;
 	} while (unw_step(&cursor) > 0);
 
-	PTHREAD_RWLOCK_unlock(&log_rwlock);
 	if (fd != -1)
 		close(fd);
 	return;
@@ -3498,6 +3514,15 @@ void gsh_backtrace(void)
 		}
 	}
 
+	/* Release the lock before any LogMajor() call below:
+	 * display_log_component_level() (which itself rdlock()'s
+	 * log_rwlock) while still holding this same read lock is a latent
+	 * self-deadlock hazard whenever a writer is concurrently pending on
+	 * log_rwlock, and why that matters specifically here since this
+	 * runs from the crash handler on every fatal signal.
+	 */
+	PTHREAD_RWLOCK_unlock(&log_rwlock);
+
 	if (fd != -1) {
 		LogMajor(COMPONENT_INIT, "stack backtrace follows:");
 		backtrace_symbols_fd(buffer, nlines, fd);
@@ -3514,7 +3539,6 @@ void gsh_backtrace(void)
 			free(traces);
 		}
 	}
-	PTHREAD_RWLOCK_unlock(&log_rwlock);
 }
 
 void gsh_log_backtrace(void)
@@ -3621,9 +3645,9 @@ static void reset_conditional_logging_state(void)
 	glist_for_each_safe(glist, glistn, &global_client_ip_list) {
 		cli = glist_entry(glist, struct base_client_entry, cle_list);
 		glist_del(&cli->cle_list);
-		cidr_free(cli->cidr);
-		gsh_free(cli->str);
-		gsh_free(cli);
+		cidr_free(cli->cidr, cli->mem_comp);
+		gsh_free(cli->str, cli->mem_comp);
+		gsh_free(cli, cli->mem_comp);
 	}
 
 	/* Clear export list */
@@ -3631,7 +3655,7 @@ static void reset_conditional_logging_state(void)
 		expidli = glist_entry(glist, struct export_id_list,
 				      export_id_glist);
 		glist_del(&expidli->export_id_glist);
-		gsh_free(expidli);
+		gsh_free(expidli, expidli->mem_comp);
 	}
 
 	/* Reset all component log levels to NIV_FULL_DEBUG */
@@ -3865,7 +3889,7 @@ static bool dbus_conditional_log_export_enable(DBusMessageIter *args,
 	PTHREAD_RWLOCK_wrlock(&cond_log_rwlock);
 
 	rc = add_export_id(COMPONENT_CONFIG, &global_export_id_list, export_id,
-			   NULL, &err_type);
+			   MEM_COMP_MANAGE, NULL, &err_type);
 
 	if (rc > 0) {
 		errormsg = errbuf;
@@ -3923,7 +3947,7 @@ static bool dbus_conditional_log_export_disable(DBusMessageIter *args,
 	}
 
 	glist_del(&export_entry->export_id_glist);
-	gsh_free(&export_entry->export_id_glist);
+	gsh_free(export_entry, export_entry->mem_comp);
 
 	if (glist_empty(&global_export_id_list) &&
 	    glist_empty(&global_client_ip_list))
@@ -3981,19 +4005,20 @@ static bool dbus_conditional_log_client_enable(DBusMessageIter *args,
 
 	dbus_message_iter_get_basic(args, &arg_str);
 
-	cidr = cidr_from_str(arg_str);
+	cidr = cidr_from_str(arg_str, MEM_COMP_TRANSIENT);
 	if (!cidr) {
 		errormsg = "Only IP/CIDR clients are allowed via DBUS";
 		goto arg_error;
 	}
-	cidr_free(cidr);
+	cidr_free(cidr, MEM_COMP_TRANSIENT);
 
 	init_error_type_static(&err_type, errbuf, sizeof(errbuf));
 
 	PTHREAD_RWLOCK_wrlock(&cond_log_rwlock);
 
 	rc = add_client(COMPONENT_LOG, &global_client_ip_list, arg_str,
-			TERM_V4CIDR, NULL, &err_type, NULL, NULL, NULL);
+			TERM_V4CIDR, MEM_COMP_MANAGE, NULL, &err_type, NULL,
+			NULL, NULL);
 
 	if (rc > 0) {
 		errormsg = errbuf;

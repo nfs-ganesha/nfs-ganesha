@@ -10,6 +10,7 @@
 #include "config.h"
 #include "gsh_rpc.h"
 #include "gsh_config.h"
+#include "mem_components.h"
 #include "nlm4.h"
 
 #ifdef __cplusplus
@@ -117,6 +118,7 @@ struct local_nlm_info {
 	struct glist_head infolist;
 	struct clnt_req cc;
 	enum recovery_type recovery_type;
+	mem_components_t mem_comp;
 	struct mon mon;
 	int info_port;
 	char *client_name;

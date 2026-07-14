@@ -124,7 +124,8 @@ static void populate_callback_params_in_session(
 {
 	int sp_itr;
 	callback_sec_parms4 *const extracted_sec_params =
-		gsh_malloc(sec_parms_len * sizeof(callback_sec_parms4));
+		gsh_malloc(sec_parms_len * sizeof(callback_sec_parms4),
+			   MEM_COMP_CLIENTID);
 
 	for (sp_itr = 0; sp_itr < sec_parms_len; ++sp_itr) {
 		const callback_sec_parms4 input_sp = sec_parms_val[sp_itr];
@@ -150,14 +151,15 @@ static void populate_callback_params_in_session(
 			machname_len = strnlen(input_cb_sys_creds.aup_machname,
 					       MAX_MACHINE_NAME);
 			curr_cb_sys_creds.aup_machname =
-				gsh_malloc(machname_len + 1);
+				gsh_malloc(machname_len + 1, MEM_COMP_CLIENTID);
 			memcpy(curr_cb_sys_creds.aup_machname,
 			       input_cb_sys_creds.aup_machname, machname_len);
 			curr_cb_sys_creds.aup_machname[machname_len] = '\0';
 
 			curr_cb_sys_creds.aup_len = input_cb_sys_creds.aup_len;
 			curr_cb_sys_creds.aup_gids = gsh_malloc(
-				curr_cb_sys_creds.aup_len * sizeof(gid_t));
+				curr_cb_sys_creds.aup_len * sizeof(gid_t),
+				MEM_COMP_CLIENTID);
 
 			for (gids_itr = 0;
 			     gids_itr < input_cb_sys_creds.aup_len;
@@ -452,7 +454,8 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 	}
 
 	/* Record session related information at the right place */
-	nfs41_session = pool_alloc(nfs41_session_pool);
+	nfs41_session = gsh_calloc(1, sizeof(nfs41_session_t),
+				   MEM_COMP_CLIENTID);
 
 	if (nfs41_session == NULL) {
 		LogCrit(component, "Could not allocate memory for a session");
@@ -479,9 +482,11 @@ enum nfs_req_result nfs4_op_create_session(struct nfs_argop4 *op,
 		MIN(nfs_param.nfsv4_param.nb_slots,
 		    nfs41_session->fore_channel_attrs.ca_maxrequests);
 	nfs41_session->fc_slots = gsh_calloc(nfs41_session->nb_slots,
-					     sizeof(nfs41_session_slot_t));
+					     sizeof(nfs41_session_slot_t),
+					     MEM_COMP_CLIENTID);
 	nfs41_session->bc_slots = gsh_calloc(nfs41_session->nb_slots,
-					     sizeof(nfs41_cb_session_slot_t));
+					     sizeof(nfs41_cb_session_slot_t),
+					     MEM_COMP_CLIENTID);
 	for (i = 0; i < nfs41_session->nb_slots; i++)
 		PTHREAD_MUTEX_init(&nfs41_session->fc_slots[i].slot_lock, NULL);
 

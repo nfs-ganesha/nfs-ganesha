@@ -83,7 +83,8 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 		return STATE_BAD_TYPE;
 	}
 
-	new_segment = gsh_calloc(1, sizeof(*new_segment));
+	new_segment = gsh_calloc(1, sizeof(*new_segment),
+				 MEM_COMP_STATE);
 
 	new_segment->sls_fsal_data = fsal_data;
 	new_segment->sls_state = state;
@@ -113,7 +114,7 @@ state_status_t state_add_segment(state_t *state, struct pnfs_segment *segment,
 state_status_t state_delete_segment(state_layout_segment_t *segment)
 {
 	glist_del(&segment->sls_state_segments);
-	gsh_free(segment);
+	gsh_free(segment, MEM_COMP_STATE);
 	return STATE_SUCCESS;
 }
 

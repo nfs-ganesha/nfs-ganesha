@@ -71,7 +71,7 @@ static void lzfs_fsal_ds_handle_release(struct fsal_ds_handle *const ds_pub)
 					   lzfs_ds->cache_handle);
 	}
 
-	gsh_free(lzfs_ds);
+	gsh_free(lzfs_ds, MEM_COMP_FSAL);
 
 	lzfs_int_clear_fileinfo_cache(lzfs_export, 5);
 }
@@ -291,7 +291,8 @@ static nfsstat4 lzfs_fsal_make_ds_handle(struct fsal_pnfs_ds *const pds,
 	if (dsw->inode == 0)
 		return NFS4ERR_BADHANDLE;
 
-	lzfs_ds = gsh_calloc(1, sizeof(struct lzfs_fsal_ds_handle));
+	lzfs_ds = gsh_calloc(1, sizeof(struct lzfs_fsal_ds_handle),
+			     MEM_COMP_FSAL);
 
 	*handle = &lzfs_ds->ds;
 

@@ -451,14 +451,14 @@ void handle_recalls(struct fsal_layoutreturn_arg *arg, struct state_hdl *ostate,
 				glist_del(&s->link);
 				arg->recall_cookies[arg->ncookies++] =
 					r->recall_cookie;
-				gsh_free(s);
+				gsh_free(s, MEM_COMP_STATE);
 			}
 		}
 
 		if (glist_empty(&r->state_list)) {
 			/* Remove from entry->layoutrecall_list */
 			glist_del(&r->entry_link);
-			gsh_free(r);
+			gsh_free(r, MEM_COMP_STATE);
 		}
 	}
 }

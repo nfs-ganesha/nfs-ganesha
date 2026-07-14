@@ -2528,7 +2528,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *objectHandle,
 
 	/* If xattr were retrieved and they can be allocated */
 	if (curr_size && curr_size < maximumNameSize) {
-		buffer = gsh_malloc(curr_size);
+		buffer = gsh_malloc(curr_size, MEM_COMP_FSAL);
 
 		/* Second time the function is called to retrieve
 		 * the xattr list */
@@ -2539,7 +2539,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *objectHandle,
 		if (retvalue < 0) {
 			LogDebug(COMPONENT_FSAL, "LISTXATTRS returned rc %d",
 				 retvalue);
-			gsh_free(buffer);
+			gsh_free(buffer, MEM_COMP_FSAL);
 			return saunafsToFsalError(retvalue);
 		}
 
@@ -2549,7 +2549,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *objectHandle,
 					       xattributesNames);
 
 		/* Releasing allocated buffer */
-		gsh_free(buffer);
+		gsh_free(buffer, MEM_COMP_FSAL);
 	}
 
 	return status;
@@ -2643,7 +2643,7 @@ struct SaunaFSHandle *allocateHandle(const struct stat *attribute,
 {
 	struct SaunaFSHandle *result = NULL;
 
-	result = gsh_calloc(1, sizeof(struct SaunaFSHandle));
+	result = gsh_calloc(1, sizeof(struct SaunaFSHandle), MEM_COMP_FSAL);
 
 	result->inode = attribute->st_ino;
 	result->key.moduleId = FSAL_ID_SAUNAFS;
@@ -2674,5 +2674,5 @@ struct SaunaFSHandle *allocateHandle(const struct stat *attribute,
 void deleteHandle(struct SaunaFSHandle *object)
 {
 	fsal_obj_handle_fini(&object->handle, true);
-	gsh_free(object);
+	gsh_free(object, MEM_COMP_FSAL);
 }

@@ -311,7 +311,7 @@ void nfs4_qos_read_cb(void *args)
 					     ASYNC_PROC_DONE);
 		svc_resume(read_data->data->req);
 	}
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_QOS);
 }
 #endif
 
@@ -329,7 +329,8 @@ static enum nfs_req_result nfs4_op_ds_read_resume(struct nfs_argop4 *op,
 	bool eof = false;
 
 	read_data->qos_flag = 0;
-	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count));
+	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count),
+				    MEM_COMP_IO_BUFFER);
 	resok->iov0.iov_base = buffer;
 	resok->iov0.iov_len = arg_READ4->count;
 	resok->data.data_len = arg_READ4->count;
@@ -342,7 +343,7 @@ static enum nfs_req_result nfs4_op_ds_read_resume(struct nfs_argop4 *op,
 		&eof);
 
 	if (nfs_status != NFS4_OK) {
-		gsh_free(buffer);
+		gsh_free(buffer, MEM_COMP_IO_BUFFER);
 		resok->iov0.iov_len = 0;
 		resok->iov0.iov_base = NULL;
 		resok->data.data_len = 0;
@@ -352,7 +353,7 @@ static enum nfs_req_result nfs4_op_ds_read_resume(struct nfs_argop4 *op,
 	res_READ4->status = nfs_status;
 
 	/* Free op_data and return */
-	gsh_free(read_data);
+	gsh_free(read_data, MEM_COMP_PROTOCOL);
 	data->op_data = NULL;
 
 	server_stats_io_done(arg_READ4->count, resok->data.data_len,
@@ -427,7 +428,7 @@ enum nfs_req_result nfs4_op_read_resume(struct nfs_argop4 *op,
 		 * might as well be prepared here. Our caller is already
 		 * prepared for such a scenario.
 		 */
-		gsh_free(data->op_data);
+		gsh_free(data->op_data, MEM_COMP_PROTOCOL);
 		data->op_data = NULL;
 	}
 
@@ -483,7 +484,7 @@ enum nfs_req_result nfs4_op_read_plus_resume(struct nfs_argop4 *op,
 		 * might as well be prepared here. Our caller is already
 		 * prepared for such a scenario.
 		 */
-		gsh_free(read_data);
+		gsh_free(read_data, MEM_COMP_PROTOCOL);
 		data->op_data = NULL;
 	}
 
@@ -532,7 +533,8 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 	}
 
 #ifdef ENABLE_QOS
-	struct nfs4_read_data *read_data = gsh_calloc(1, sizeof(*read_data));
+	struct nfs4_read_data *read_data =
+		gsh_calloc(1, sizeof(*read_data), MEM_COMP_PROTOCOL);
 	int qos_async_scheduled = 0;
 
 	read_data->res_READ4 = res_READ4;
@@ -547,7 +549,7 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 
 	/* Not suspended: we won't need read_data; free it */
 	read_data->qos_flag = 0;
-	gsh_free(read_data);
+	gsh_free(read_data, MEM_COMP_PROTOCOL);
 	data->op_data = NULL;
 #endif
 
@@ -572,7 +574,7 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
 	if (nfs_status != NFS4_OK) {
 		server_stats_io_done(arg_READ4->count, 0, false, false);
 		if (!op_ctx->is_rdma_buff_used) {
-			gsh_free(buffer);
+			gsh_free(buffer, MEM_COMP_IO_BUFFER);
 		}
 		resok->data.data_len = 0;
 		resok->iov0.iov_len = 0;
@@ -636,7 +638,8 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 
 	/* Construct the FSAL file handle */
 
-	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count));
+	buffer = gsh_malloc_aligned(4096, RNDUP(arg_READ4->count),
+				    MEM_COMP_IO_BUFFER);
 
 	nfs_status = op_ctx->ctx_pnfs_ds->s_ops.dsh_read_plus(
 		data->current_ds, &arg_READ4->stateid, arg_READ4->offset,
@@ -645,7 +648,7 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 	res_RPLUS->rpr_status = nfs_status;
 	if (nfs_status != NFS4_OK) {
 		server_stats_io_done(arg_READ4->count, 0, false, false);
-		gsh_free(buffer);
+		gsh_free(buffer, MEM_COMP_IO_BUFFER);
 		return NFS_REQ_ERROR;
 	}
 
@@ -959,7 +962,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 	resok->data.release = read4_io_data_release;
 
 	/* Set up args, allocate from heap, iov_len will be 1 */
-	read_data = gsh_calloc(1, sizeof(*read_data));
+	read_data = gsh_calloc(1, sizeof(*read_data), MEM_COMP_PROTOCOL);
 	LogFullDebug(COMPONENT_NFS_V4, "Allocated read_data %p", read_data);
 	read_arg = &read_data->read_arg;
 	read_arg->info = info;
@@ -1093,7 +1096,7 @@ enum nfs_req_result nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 		 * might as well be prepared here. Our caller is already
 		 * prepared for such a scenario.
 		 */
-		gsh_free(data->op_data);
+		gsh_free(data->op_data, MEM_COMP_PROTOCOL);
 		data->op_data = NULL;
 	}
 
@@ -1115,9 +1118,10 @@ void xdr_READ4res_uio_release(struct xdr_uio *uio, u_int flags)
 	if (!(--uio->uio_references)) {
 		if (!(op_ctx && op_ctx->is_rdma_buff_used)) {
 			for (ix = 0; ix < uio->uio_count; ix++)
-				gsh_free(uio->uio_vio[ix].vio_base);
+				gsh_free(uio->uio_vio[ix].vio_base,
+					 MEM_COMP_PROTOCOL);
 		}
-		gsh_free(uio);
+		gsh_free(uio, MEM_COMP_PROTOCOL);
 	}
 }
 
@@ -1190,7 +1194,7 @@ enum nfs_req_result nfs4_op_read_plus(struct nfs_argop4 *op,
 		 * might as well be prepared here. Our caller is already
 		 * prepared for such a scenario.
 		 */
-		gsh_free(data->op_data);
+		gsh_free(data->op_data, MEM_COMP_PROTOCOL);
 		data->op_data = NULL;
 	}
 
@@ -1205,7 +1209,8 @@ void nfs4_op_read_plus_Free(nfs_resop4 *res)
 	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA) {
 		if (!op_ctx->is_rdma_buff_used) {
 			if (conp->data.d_data.data_val != NULL)
-				gsh_free(conp->data.d_data.data_val);
+				gsh_free(conp->data.d_data.data_val,
+					 MEM_COMP_IO_BUFFER);
 		}
 		conp->data.d_data.data_val = NULL;
 	}

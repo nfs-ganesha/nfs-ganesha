@@ -49,11 +49,6 @@
 #include "sal_metrics.h"
 
 /**
- * @brief Pool for allocating session data
- */
-pool_t *nfs41_session_pool;
-
-/**
  * @param Session ID hash
  */
 
@@ -322,8 +317,10 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 			} else if (sp->cb_secflavor == AUTH_SYS) {
 				struct authunix_parms *cb_auth_sys_params =
 					&sp->callback_sec_parms4_u.cbsp_sys_cred;
-				gsh_free(cb_auth_sys_params->aup_machname);
-				gsh_free(cb_auth_sys_params->aup_gids);
+				gsh_free(cb_auth_sys_params->aup_machname,
+					 MEM_COMP_CLIENTID);
+				gsh_free(cb_auth_sys_params->aup_gids,
+					 MEM_COMP_CLIENTID);
 #ifdef _HAVE_GSSAPI
 			} else if (sp->cb_secflavor == RPCSEC_GSS) {
 				LogWarn(COMPONENT_SESSIONS,
@@ -331,14 +328,15 @@ int32_t _dec_session_ref(nfs41_session_t *session, const char *func, int line)
 #endif
 			}
 		}
-		gsh_free(session->cb_sec_parms.sec_parms_val);
+		gsh_free(session->cb_sec_parms.sec_parms_val,
+			 MEM_COMP_CLIENTID);
 
 		/* Free the slot tables */
-		gsh_free(session->fc_slots);
-		gsh_free(session->bc_slots);
+		gsh_free(session->fc_slots, MEM_COMP_CLIENTID);
+		gsh_free(session->bc_slots, MEM_COMP_CLIENTID);
 
 		/* Free the memory for the session */
-		pool_free(nfs41_session_pool, session);
+		gsh_free(session, MEM_COMP_CLIENTID);
 	}
 
 	return refcnt;
@@ -461,7 +459,7 @@ static void release_all_session_connections(nfs41_session_t *session)
 		SVC_RELEASE(xprt, SVC_RELEASE_FLAG_NONE);
 
 		glist_del(curr_node);
-		gsh_free(curr_entry);
+		gsh_free(curr_entry, MEM_COMP_CLIENTID);
 	}
 	session->num_conn = 0;
 	PTHREAD_RWLOCK_unlock(&session->conn_lock);
@@ -610,7 +608,7 @@ retry:
 void nfs41_Session_Add_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 {
 	connection_xprt_t *const new_entry =
-		gsh_malloc(sizeof(connection_xprt_t));
+		gsh_malloc(sizeof(connection_xprt_t), MEM_COMP_CLIENTID);
 	new_entry->xprt = xprt;
 	glist_add_tail(&session->connection_xprts, &new_entry->node);
 	SVC_REF(xprt, SVC_REF_FLAG_NONE);
@@ -676,7 +674,7 @@ void nfs41_Session_Remove_Connection(nfs41_session_t *session, SVCXPRT *xprt)
 
 	/* Remove the xprt from session's connection-xprts */
 	glist_del(&found_xprt->node);
-	gsh_free(found_xprt);
+	gsh_free(found_xprt, MEM_COMP_CLIENTID);
 	const int num_connections = --session->num_conn;
 
 	PTHREAD_RWLOCK_unlock(&session->conn_lock);
@@ -758,7 +756,8 @@ int nfs41_Session_Destroy_All_Connections(nfs41_session_t *session)
 		connection_xprt_t *const curr_entry =
 			glist_entry(curr_node, connection_xprt_t, node);
 		connection_xprt_t *const new_entry =
-			gsh_malloc(sizeof(connection_xprt_t));
+			gsh_malloc(sizeof(connection_xprt_t),
+				   MEM_COMP_CLIENTID);
 
 		new_entry->xprt = curr_entry->xprt;
 		glist_add_tail(&connections_copy, &new_entry->node);
@@ -784,7 +783,7 @@ int nfs41_Session_Destroy_All_Connections(nfs41_session_t *session)
 		SVC_RELEASE(curr_entry->xprt, SVC_RELEASE_FLAG_NONE);
 
 		glist_del(&curr_entry->node);
-		gsh_free(curr_entry);
+		gsh_free(curr_entry, MEM_COMP_CLIENTID);
 	}
 	return num_connections;
 }

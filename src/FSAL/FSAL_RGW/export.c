@@ -66,7 +66,7 @@ static void release(struct fsal_export *export_pub)
 	/* XXX we might need/want an rgw_unmount here, but presently,
 	 * it wouldn't do anything */
 
-	gsh_free(export);
+	gsh_free(export, MEM_COMP_EXPORT);
 	export = NULL;
 }
 

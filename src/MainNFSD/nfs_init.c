@@ -86,6 +86,7 @@
 #include "nfs_cluster_qos.h"
 #include "nfs_metrics.h"
 #include "sal_metrics.h"
+#include "server_stats.h"
 
 #ifdef USE_GRPC
 #include "GrpcServerInit.h"
@@ -1100,7 +1101,7 @@ int nfsv4_init_params(void)
 		owner_len = strlen(cid_server_owner);
 		ss_suffix_len = strlen(cid_server_scope_suffix);
 		scope_len = owner_len + ss_suffix_len;
-		cid_server_scope = gsh_malloc(scope_len + 1);
+		cid_server_scope = gsh_malloc(scope_len + 1, MEM_COMP_CONFIG);
 		memcpy(cid_server_scope, cid_server_owner, owner_len);
 		memcpy(cid_server_scope + owner_len, cid_server_scope_suffix,
 		       ss_suffix_len + 1);
@@ -1132,10 +1133,13 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	dbus_export_init();
 	dbus_client_init();
 	dbus_cache_init();
+	dbus_mem_stats_init();
 #ifdef ENABLE_QOS
 	dbus_qosmgr_init();
 #endif
 #endif
+
+	LogEvent(COMPONENT_INIT, "Counting Memory counters enabled by default");
 
 #ifdef USE_GRPC
 	if (nfs_param.grpc_param.grpc_enable) {
@@ -1171,9 +1175,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 	/* finish the job with exports by caching the root entries
 	 */
 	exports_pkginit();
-
-	nfs41_session_pool = pool_basic_init("NFSv4.1 session pool",
-					     sizeof(nfs41_session_t));
 
 	/* Init the NFSv4 Clientid cache */
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 clientid cache");
@@ -1463,6 +1464,9 @@ void nfs_start(nfs_start_info_t *p_start_info)
 
 	/* Regular exit */
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
+
+	/* Always capture Memory Stats in case of shutdown */
+	gsh_log_mem_stats();
 
 #ifdef USE_TLS
 	tls_cleanup();

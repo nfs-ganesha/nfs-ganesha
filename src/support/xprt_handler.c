@@ -52,7 +52,7 @@ void init_custom_data_for_xprt(SVCXPRT *xprt)
 				     sockaddr_str };
 
 	assert(xprt->xp_u1 == NULL);
-	xprt_data = gsh_malloc(sizeof(xprt_custom_data_t));
+	xprt_data = gsh_malloc(sizeof(xprt_custom_data_t), MEM_COMP_CLIENTID);
 
 	glist_init(&xprt_data->nfs41_sessions_holder.sessions);
 	PTHREAD_RWLOCK_init(&xprt_data->nfs41_sessions_holder.sessions_lock,
@@ -86,7 +86,8 @@ bool add_nfs41_session_to_xprt(SVCXPRT *xprt, nfs41_session_t *session)
 	assert(xprt->xp_u1 != NULL);
 	xprt_data = (xprt_custom_data_t *)xprt->xp_u1;
 
-	new_entry = gsh_malloc(sizeof(nfs41_session_list_entry_t));
+	new_entry = gsh_malloc(sizeof(nfs41_session_list_entry_t),
+			       MEM_COMP_CLIENTID);
 	new_entry->session = session;
 	inc_session_ref(session);
 
@@ -106,7 +107,7 @@ bool add_nfs41_session_to_xprt(SVCXPRT *xprt, nfs41_session_t *session)
 			xprt, "Do not associate xprt to the session: {}",
 			TP_SESSION(session->session_id));
 		dec_session_ref(session);
-		gsh_free(new_entry);
+		gsh_free(new_entry, MEM_COMP_CLIENTID);
 		sal_metrics__xprt_association_denied();
 		return false;
 	}
@@ -148,7 +149,7 @@ void remove_nfs41_session_from_xprt(SVCXPRT *xprt, nfs41_session_t *session)
 		if (curr_entry->session == session) {
 			dec_session_ref(curr_entry->session);
 			glist_del(curr_node);
-			gsh_free(curr_entry);
+			gsh_free(curr_entry, MEM_COMP_CLIENTID);
 			GSH_XPRT_AUTO_TRACEPOINT(
 				xprt_handler, remove_nfs41_session, TRACE_INFO,
 				xprt, "Removed session {} from xprt",
@@ -266,7 +267,7 @@ void dissociate_custom_data_from_xprt(SVCXPRT *xprt)
 
 		/* Free the session-node allocated for the xprt */
 		glist_del(curr_node);
-		gsh_free(curr_entry);
+		gsh_free(curr_entry, MEM_COMP_CLIENTID);
 	}
 	sal_metrics__xprt_custom_data_status(DISSOCIATED_FROM_XPRT);
 	LogDebug(
@@ -312,7 +313,7 @@ void destroy_custom_data_for_destroyed_xprt(SVCXPRT *xprt)
 
 	PTHREAD_RWLOCK_destroy(&xprt_data->nfs41_sessions_holder.sessions_lock);
 	xprt_data->status = DESTROYED;
-	gsh_free(xprt_data);
+	gsh_free(xprt_data, MEM_COMP_CLIENTID);
 	xprt->xp_u1 = NULL;
 	GSH_XPRT_AUTO_TRACEPOINT(
 		xprt_handler, destroy_custom_data, TRACE_INFO, xprt,

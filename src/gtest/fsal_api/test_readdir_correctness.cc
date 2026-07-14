@@ -139,7 +139,7 @@ class ReaddirFullCorrectnessTest : public ReaddirEmptyCorrectnessTest {
 		remove_many(DIR_COUNT, NULL, test_dir);
 
 		for (int i = 0; i < DIR_COUNT; i++) {
-			gsh_free(keys[i].addr);
+			gsh_free(keys[i].addr, MEM_COMP_GTEST);
 		}
 
 		ReaddirEmptyCorrectnessTest::TearDown();
@@ -148,7 +148,7 @@ class ReaddirFullCorrectnessTest : public ReaddirEmptyCorrectnessTest {
 	void keyDup(struct gsh_buffdesc *dest, struct gsh_buffdesc *src)
 	{
 		dest->len = src->len;
-		dest->addr = gsh_malloc(src->len);
+		dest->addr = gsh_malloc(src->len, MEM_COMP_GTEST);
 		memcpy(dest->addr, src->addr, src->len);
 	}
 

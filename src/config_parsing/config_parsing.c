@@ -127,11 +127,12 @@ void config_Free(config_file_t config)
 char *err_type_str(struct config_error_type *err_type)
 {
 	char *buf = NULL;
+	char *r = NULL;
 	size_t bufsize;
 	FILE *fp;
 
 	if (config_error_no_error(err_type))
-		return gsh_strdup("(no errors)");
+		return gsh_strdup("(no errors)", MEM_COMP_CONFIG);
 	fp = open_memstream(&buf, &bufsize);
 	if (fp == NULL) {
 		LogCrit(COMPONENT_CONFIG,
@@ -181,7 +182,17 @@ char *err_type_str(struct config_error_type *err_type)
 		buf[bufsize - 2] = ')';
 		buf[bufsize - 1] = '\0';
 	}
-	return buf;
+
+	/* buf was allocated by open_memstream() via libc malloc, outside
+	 * of Ganesha's memory accounting. Rather than gsh_strdup()'ing a
+	 * second, tracked copy and free()'ing this one, adopt buf directly
+	 * into the MEM_COMP_CONFIG stats; it is release-compatible with
+	 * gsh_free() since gsh_malloc() is itself just malloc() plus
+	 * accounting.
+	 */
+	r = gsh_alloc_account(buf, MEM_COMP_CONFIG);
+
+	return r;
 }
 
 bool init_error_type(struct config_error_type *err_type)
@@ -281,7 +292,11 @@ int report_config_errors(struct config_error_type *err_type, void *dest,
 		}
 		count++;
 	}
-	gsh_free(err_type->diag_buf);
+	/*
+	 * diag_buf allocated by open_memstream() via libc malloc;
+	 * must use free(), not gsh_free()
+	 */
+	free(err_type->diag_buf);
 	err_type->diag_buf = NULL;
 	return count;
 }
@@ -774,8 +789,31 @@ static const char *config_type_str(enum config_type type)
 	return "unknown";
 }
 
+static inline mem_components_t config_mem_comp(mem_components_t comp,
+					       const char *blk_name)
+{
+	/*
+	 * MEM_COMP_UNSET is pinned to 0 (see mem_components.h) so this
+	 * check stays correct no matter how the rest of the enum gets
+	 * reordered. Every struct config_block in the tree is expected
+	 * to set mem_comp explicitly (even if that's just
+	 * MEM_COMP_CONFIG); seeing MEM_COMP_UNSET here means some block
+	 * forgot to. Warn instead of silently guessing, but keep parsing
+	 * working by still falling back to MEM_COMP_CONFIG.
+	 */
+	if (comp == MEM_COMP_UNSET) {
+		LogWarn(COMPONENT_CONFIG,
+			"Config block %s has no mem_comp set, defaulting to MEM_COMP_CONFIG",
+			blk_name);
+		return MEM_COMP_CONFIG;
+	}
+
+	return comp;
+}
+
 static bool do_block_init(struct config_node *blk_node,
 			  struct config_item *params, void *param_struct,
+			  mem_components_t mem_comp,
 			  struct config_error_type *err_type)
 {
 	struct config_item *item;
@@ -824,7 +862,7 @@ static bool do_block_init(struct config_node *blk_node,
 		case CONFIG_PATH:
 			if (item->u.str.def)
 				*(char **)param_addr =
-					gsh_strdup(item->u.str.def);
+					gsh_strdup(item->u.str.def, mem_comp);
 			else
 				*(char **)param_addr = NULL;
 			break;
@@ -940,7 +978,8 @@ int noop_conf_commit(void *node, void *link_mem, void *self_struct,
 }
 
 static bool proc_block(struct config_node *node, struct config_item *item,
-		       void *link_mem, struct config_error_type *err_type);
+		       void *link_mem, mem_components_t mem_comp,
+		       struct config_error_type *err_type);
 
 /*
  * All the types of integers supported by the config processor
@@ -973,6 +1012,7 @@ union gen_int {
 
 static int do_block_load(struct config_node *blk, struct config_item *params,
 			 bool relax, void *param_struct,
+			 mem_components_t mem_comp,
 			 struct config_error_type *err_type)
 {
 	struct config_item *item;
@@ -1122,16 +1162,20 @@ static int do_block_load(struct config_node *blk, struct config_item *params,
 				break;
 			case CONFIG_STRING:
 				if (*(char **)param_addr != NULL)
-					gsh_free(*(char **)param_addr);
+					gsh_free(*(char **)param_addr,
+						 mem_comp);
 				*(char **)param_addr =
-					gsh_strdup(term_node->u.term.varvalue);
+					gsh_strdup(term_node->u.term.varvalue,
+						   mem_comp);
 				break;
 			case CONFIG_PATH:
 				if (*(char **)param_addr != NULL)
-					gsh_free(*(char **)param_addr);
+					gsh_free(*(char **)param_addr,
+						 mem_comp);
 				/** @todo validate path with access() */
 				*(char **)param_addr =
-					gsh_strdup(term_node->u.term.varvalue);
+					gsh_strdup(term_node->u.term.varvalue,
+						   mem_comp);
 				break;
 			case CONFIG_TOKEN:
 				if (convert_enum(term_node, item, &num32,
@@ -1218,7 +1262,7 @@ static int do_block_load(struct config_node *blk, struct config_item *params,
 				break;
 			case CONFIG_BLOCK:
 				if (!proc_block(node, item, param_addr,
-						err_type))
+						mem_comp, err_type))
 					config_proc_error(
 						node, err_type,
 						"Errors processing block (%s)",
@@ -1320,7 +1364,8 @@ static int do_block_load(struct config_node *blk, struct config_item *params,
  */
 
 static bool proc_block(struct config_node *node, struct config_item *item,
-		       void *link_mem, struct config_error_type *err_type)
+		       void *link_mem, mem_components_t mem_comp,
+		       struct config_error_type *err_type)
 {
 	void *param_struct;
 	int errors = 0;
@@ -1349,7 +1394,8 @@ static bool proc_block(struct config_node *node, struct config_item *item,
 	}
 	LogFullDebug(COMPONENT_CONFIG, "------ At (%s:%d): do_block_init %s",
 		     node->filename, node->linenumber, item->name);
-	if (!do_block_init(node, item->u.blk.params, param_struct, err_type)) {
+	if (!do_block_init(node, item->u.blk.params, param_struct,
+			   mem_comp, err_type)) {
 		config_proc_error(node, err_type,
 				  "Could not initialize parameters for %s",
 				  item->name);
@@ -1362,7 +1408,7 @@ static bool proc_block(struct config_node *node, struct config_item *item,
 		     node->filename, node->linenumber, item->name);
 	errors = do_block_load(node, item->u.blk.params,
 			       (item->flags & CONFIG_RELAX) ? true : false,
-			       param_struct, err_type);
+			       param_struct, mem_comp, err_type);
 	if (errors > 0 && !cur_exp_config_error_is_harmless(err_type)) {
 		config_proc_error(node, err_type,
 				  "%d errors while processing parameters for %s",
@@ -1542,9 +1588,9 @@ static void free_expr_parse_arg(struct expr_parse_arg *argp)
 		return;
 	for (arg = argp; arg != NULL; arg = nxtarg) {
 		nxtarg = arg->next;
-		gsh_free(arg->name);
-		gsh_free(arg->value);
-		gsh_free(arg);
+		gsh_free(arg->name, MEM_COMP_CONFIG);
+		gsh_free(arg->value, MEM_COMP_CONFIG);
+		gsh_free(arg, MEM_COMP_CONFIG);
 	}
 }
 
@@ -1560,9 +1606,9 @@ static void free_expr_parse(struct expr_parse *snode)
 		return;
 	for (node = snode; node != NULL; node = nxtnode) {
 		nxtnode = node->next;
-		gsh_free(node->name);
+		gsh_free(node->name, MEM_COMP_CONFIG);
 		free_expr_parse_arg(node->arg);
-		gsh_free(node);
+		gsh_free(node, MEM_COMP_CONFIG);
 	}
 }
 
@@ -1609,9 +1655,9 @@ static char *parse_args(char *arg_str, struct expr_parse_arg **argp)
 		return NULL;
 	saved_char = *sp;
 	*sp = '\0';
-	arg = gsh_calloc(1, sizeof(struct expr_parse_arg));
-	arg->name = gsh_strdup(name);
-	arg->value = gsh_strdup(val);
+	arg = gsh_calloc(1, sizeof(struct expr_parse_arg), MEM_COMP_CONFIG);
+	arg->name = gsh_strdup(name, MEM_COMP_CONFIG);
+	arg->value = gsh_strdup(val, MEM_COMP_CONFIG);
 	*argp = arg;
 	if (saved_char != ',') {
 		*sp = saved_char;
@@ -1656,8 +1702,9 @@ static char *parse_block(char *str, struct expr_parse **node)
 		goto errout;
 	sp = skip_white(sp);
 	if (*sp == ')') { /* name ( ... ) */
-		new_node = gsh_calloc(1, sizeof(struct expr_parse));
-		new_node->name = gsh_strdup(name);
+		new_node = gsh_calloc(1, sizeof(struct expr_parse),
+				      MEM_COMP_CONFIG);
+		new_node->name = gsh_strdup(name, MEM_COMP_CONFIG);
 		new_node->arg = arg;
 		*node = new_node;
 		return sp + 1;
@@ -1844,7 +1891,8 @@ again:
 				expr = expr->next;
 				goto again;
 			}
-			list = gsh_calloc(1, sizeof(struct config_node_list));
+			list = gsh_calloc(1, sizeof(struct config_node_list),
+					  MEM_COMP_CONFIG);
 			list->tree_node = sub_node;
 			if (*node_list == NULL)
 				*node_list = list;
@@ -1912,7 +1960,9 @@ int load_config_from_node(void *tree_node, struct config_block *conf_blk,
 		err_type->errors++;
 		return -1;
 	}
-	if (!proc_block(node, &conf_blk->blk_desc, param, err_type)) {
+	if (!proc_block(node, &conf_blk->blk_desc, param,
+			config_mem_comp(conf_blk->mem_comp, blkname),
+			err_type)) {
 		config_proc_error(node, err_type,
 				  "Errors found in configuration block %s",
 				  blkname);
@@ -1991,7 +2041,12 @@ int load_config_from_parse(config_file_t config, struct config_block *conf_blk,
 				err_type->cur_exp_create_err = false;
 
 				if (!proc_block(node, &conf_blk->blk_desc,
-						blk_mem, err_type))
+						blk_mem,
+						config_mem_comp(
+							conf_blk->mem_comp,
+							conf_blk->blk_desc
+								.name),
+						err_type))
 					config_proc_error(
 						node, err_type,
 						"Errors processing block (%s)",
@@ -2019,7 +2074,10 @@ int load_config_from_parse(config_file_t config, struct config_block *conf_blk,
 								  NULL);
 		assert(blk_mem != NULL);
 		if (!do_block_init(&tree->root, conf_blk->blk_desc.u.blk.params,
-				   blk_mem, err_type)) {
+				   blk_mem,
+				   config_mem_comp(conf_blk->mem_comp,
+						   conf_blk->blk_desc.name),
+				   err_type)) {
 			config_proc_error(
 				&tree->root, err_type,
 				"Could not initialize defaults for block %s",
@@ -2037,7 +2095,7 @@ int load_config_from_parse(config_file_t config, struct config_block *conf_blk,
 				  err_type->errors - prev_errs,
 				  errstr != NULL ? errstr : "unknown", blkname);
 		if (errstr != NULL)
-			gsh_free(errstr);
+			gsh_free(errstr, MEM_COMP_CONFIG);
 	}
 	return found;
 }

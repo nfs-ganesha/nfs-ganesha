@@ -72,7 +72,7 @@ void null_async_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 	arg->cb(arg->obj_hdl, ret, obj_data, arg->cb_arg);
 	op_ctx->fsal_export = save_exp;
 
-	gsh_free(arg);
+	gsh_free(arg, MEM_COMP_FSAL);
 }
 
 /* nullfs_close
@@ -210,7 +210,7 @@ void nullfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	struct null_async_arg *arg;
 
 	/* Set up async callback */
-	arg = gsh_calloc(1, sizeof(*arg));
+	arg = gsh_calloc(1, sizeof(*arg), MEM_COMP_FSAL);
 	arg->obj_hdl = obj_hdl;
 	arg->cb = done_cb;
 	arg->cb_arg = caller_arg;
@@ -236,7 +236,7 @@ void nullfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	struct null_async_arg *arg;
 
 	/* Set up async callback */
-	arg = gsh_calloc(1, sizeof(*arg));
+	arg = gsh_calloc(1, sizeof(*arg), MEM_COMP_FSAL);
 	arg->obj_hdl = obj_hdl;
 	arg->cb = done_cb;
 	arg->cb_arg = caller_arg;

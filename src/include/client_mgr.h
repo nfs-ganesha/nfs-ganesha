@@ -104,6 +104,7 @@ struct base_client_entry {
 	enum exportlist_client_type type;
 	CIDR *cidr;
 	char *str;
+	mem_components_t mem_comp;
 };
 
 const char *get_base_client_str(struct base_client_entry *bce);
@@ -138,13 +139,14 @@ client_match(enum log_components component, const char *str,
 	     sockaddr_t *hostaddr, struct glist_head *clients,
 	     client_list_entry_predicate_t client_predicate);
 
-typedef void *(client_list_entry_allocator_t)(void);
+typedef void *(client_list_entry_allocator_t)(mem_components_t mem_comp);
 
 typedef void(client_list_entry_filler_t)(struct base_client_entry *client,
 					 void *private_data);
 
 int add_client(enum log_components component, struct glist_head *client_list,
-	       const char *client_tok, enum term_type type_hint, void *cnode,
+	       const char *client_tok, enum term_type type_hint,
+	       mem_components_t mem_comp, void *cnode,
 	       struct config_error_type *err_type,
 	       client_list_entry_allocator_t cle_allocator,
 	       client_list_entry_filler_t cle_filler, void *private_data);

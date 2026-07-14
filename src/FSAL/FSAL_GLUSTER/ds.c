@@ -56,7 +56,7 @@ static void dsh_release(struct fsal_ds_handle *const ds_pub)
 				 strerror(errno), errno);
 		}
 	}
-	gsh_free(ds);
+	gsh_free(ds, MEM_COMP_FSAL);
 }
 
 /**
@@ -264,7 +264,7 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	if (hdl_desc->len != sizeof(struct glfs_ds_wire))
 		return NFS4ERR_BADHANDLE;
 
-	ds = gsh_calloc(1, sizeof(struct glfs_ds_handle));
+	ds = gsh_calloc(1, sizeof(struct glfs_ds_handle), MEM_COMP_FSAL);
 
 	*handle = &ds->ds;
 

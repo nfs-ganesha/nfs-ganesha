@@ -64,7 +64,7 @@ static void ds_handle_release(struct fsal_ds_handle *const ds_pub)
 	/* The private 'full' DS handle */
 	struct gpfs_ds *ds = container_of(ds_pub, struct gpfs_ds, ds);
 
-	gsh_free(ds);
+	gsh_free(ds, MEM_COMP_FSAL);
 }
 
 /**
@@ -447,7 +447,7 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 		return NFS4ERR_STALE;
 	}
 
-	ds = gsh_calloc(1, sizeof(struct gpfs_ds));
+	ds = gsh_calloc(1, sizeof(struct gpfs_ds), MEM_COMP_FSAL);
 
 	*handle = &ds->ds;
 

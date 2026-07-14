@@ -34,8 +34,8 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <stdbool.h>
-
 #include "display.h"
+#include "mem_components.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,13 +55,13 @@ typedef struct cidr_addr {
 	u_int16_t mask;
 } CIDR;
 
-CIDR *cidr_alloc(void);
+CIDR *cidr_alloc(mem_components_t);
 CIDR *cidr_dup(const CIDR *);
-void cidr_free(CIDR *);
-CIDR *cidr_from_str(const char *);
-char *cidr_to_str(CIDR *);
-CIDR *cidr_from_inaddr(const struct in_addr *);
-CIDR *cidr_from_in6addr(const struct in6_addr *);
+void cidr_free(CIDR *, mem_components_t);
+CIDR *cidr_from_str(const char *, mem_components_t);
+char *cidr_to_str(CIDR *, mem_components_t);
+CIDR *cidr_from_inaddr(const struct in_addr *, mem_components_t);
+CIDR *cidr_from_in6addr(const struct in6_addr *, mem_components_t);
 int cidr_contains_ip(CIDR *, sockaddr_t *);
 void cidr_ipaddr_to_chars(CIDR *, unsigned char *);
 void cidr_mask_to_chars(CIDR *, unsigned char *);

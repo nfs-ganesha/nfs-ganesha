@@ -123,7 +123,7 @@ static enum load_state {
 void load_fsal_static(const char *name, void (*init)(void),
 		      struct fsal_module **fsal_hdl)
 {
-	char *dl_path = gsh_concat("Builtin-", name);
+	char *dl_path = gsh_concat("Builtin-", name, MEM_COMP_FSAL);
 	struct fsal_module *fsal;
 
 	PTHREAD_MUTEX_lock(&fsal_lock);
@@ -132,7 +132,7 @@ void load_fsal_static(const char *name, void (*init)(void),
 		LogFatal(COMPONENT_INIT, "Couldn't Register FSAL_%s", name);
 
 	if (dl_error) {
-		gsh_free(dl_error);
+		free(dl_error);
 		dl_error = NULL;
 	}
 
@@ -188,7 +188,8 @@ struct config_block fsal_dummy_block = {
 	.blk_desc.flags = CONFIG_RELAX,
 	.blk_desc.u.blk.init = fsal_dummy_init,
 	.blk_desc.u.blk.params = fsal_dummy_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 static int fsal_name_adder(const char *token, enum term_type type_hint,
@@ -221,7 +222,8 @@ struct config_block fsal_block = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = fsal_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 /*
@@ -320,7 +322,7 @@ int load_fsal(const char *name, struct fsal_module **fsal_hdl_p)
 			*bp = tolower(*bp);
 		bp++;
 	}
-	dl_path = gsh_strdup(path);
+	dl_path = gsh_strdup(path, MEM_COMP_FSAL);
 
 	PTHREAD_MUTEX_lock(&fsal_lock);
 	/* check filepath */
@@ -335,7 +337,7 @@ int load_fsal(const char *name, struct fsal_module **fsal_hdl_p)
 	if (load_state != idle)
 		goto errout;
 	if (dl_error) {
-		gsh_free(dl_error);
+		free(dl_error);
 		dl_error = NULL;
 	}
 
@@ -369,7 +371,7 @@ int load_fsal(const char *name, struct fsal_module **fsal_hdl_p)
 		module_init = dlsym(dl, "fsal_init");
 		sym_error = (char *)dlerror();
 		if (sym_error != NULL) {
-			dl_error = gsh_strdup(sym_error);
+			dl_error = gsh_strdup(sym_error, MEM_COMP_FSAL);
 			so_error = ENOENT;
 			LogCrit(COMPONENT_INIT,
 				"Could not execute symbol fsal_init from module:%s Error:%s",
@@ -430,7 +432,7 @@ errout:
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 	LogMajor(COMPONENT_INIT, "Failed to load module (%s) because: %s", path,
 		 strerror(retval));
-	gsh_free(dl_path);
+	gsh_free(dl_path, MEM_COMP_FSAL);
 	return retval;
 }
 
@@ -521,7 +523,7 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 	new_fsal = fsal_hdl;
 
 	if (name != NULL)
-		new_fsal->name = gsh_strdup(name);
+		new_fsal->name = gsh_strdup(name, MEM_COMP_FSAL);
 
 	/* init ops vector to system wide defaults
 	 * from FSAL/default_methods.c
@@ -543,8 +545,8 @@ int register_fsal(struct fsal_module *fsal_hdl, const char *name,
 
 errout:
 
-	gsh_free(fsal_hdl->path);
-	gsh_free(fsal_hdl->name);
+	gsh_free(fsal_hdl->path, MEM_COMP_FSAL);
+	gsh_free(fsal_hdl->name, MEM_COMP_FSAL);
 	load_state = error;
 	PTHREAD_MUTEX_unlock(&fsal_lock);
 	LogCrit(COMPONENT_INIT, "FSAL \"%s\" failed to register because: %s",
@@ -577,8 +579,8 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
 		return EBUSY;
 	}
 	unregister_nfs_service_with_fsal_backend(fsal_hdl);
-	gsh_free(fsal_hdl->path);
-	gsh_free(fsal_hdl->name);
+	gsh_free(fsal_hdl->path, MEM_COMP_FSAL);
+	gsh_free(fsal_hdl->name, MEM_COMP_FSAL);
 	return 0;
 }
 
@@ -593,7 +595,7 @@ int unregister_fsal(struct fsal_module *fsal_hdl)
  * is available in the commit phase.
  */
 
-void *fsal_init(void *link_mem, void *self_struct)
+void *fsal_init(void *link_mem, void *self_struct, mem_components_t comp)
 {
 	struct fsal_args *fp;
 
@@ -602,15 +604,16 @@ void *fsal_init(void *link_mem, void *self_struct)
 	if (link_mem == NULL) {
 		return self_struct; /* NOP */
 	} else if (self_struct == NULL) {
-		void *args = gsh_calloc(1, sizeof(struct fsal_args));
+		void *args =
+			gsh_calloc(1, sizeof(struct fsal_args), comp);
 
 		LogFullDebug(COMPONENT_CONFIG, "Allocating args %p/%p",
 			     link_mem, args);
 		return args;
 	} else {
 		fp = self_struct;
-		gsh_free(fp->name);
-		gsh_free(fp);
+		gsh_free(fp->name, comp);
+		gsh_free(fp, comp);
 		return NULL;
 	}
 }

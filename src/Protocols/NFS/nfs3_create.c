@@ -247,6 +247,6 @@ void nfs3_create_free(nfs_res_t *res)
 
 	if ((res->res_create3.status == NFS3_OK) &&
 	    (res->res_create3.CREATE3res_u.resok.obj.handle_follows)) {
-		gsh_free(handle->data.data_val);
+		gsh_free(handle->data.data_val, MEM_COMP_PROTOCOL);
 	}
 }

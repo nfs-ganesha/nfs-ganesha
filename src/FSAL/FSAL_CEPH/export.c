@@ -94,12 +94,12 @@ static void release(struct fsal_export *export_pub)
 
 		ceph_mount_remove(&cm->cm_avl_mount);
 
-		gsh_free(cm->cm_fs_name);
-		gsh_free(cm->cm_mount_path);
-		gsh_free(cm->cm_user_id);
-		gsh_free(cm->cm_secret_key);
+		gsh_free(cm->cm_fs_name, MEM_COMP_FSAL);
+		gsh_free(cm->cm_mount_path, MEM_COMP_FSAL);
+		gsh_free(cm->cm_user_id, MEM_COMP_FSAL);
+		gsh_free(cm->cm_secret_key, MEM_COMP_FSAL);
 
-		gsh_free(cm);
+		gsh_free(cm, MEM_COMP_FSAL);
 	} else if (cm->cm_export == export) {
 		/* Need to attach a different export for upcalls */
 		cm->cm_export = glist_first_entry(&cm->cm_exports,
@@ -110,12 +110,12 @@ static void release(struct fsal_export *export_pub)
 
 	PTHREAD_RWLOCK_unlock(&cmount_lock);
 
-	gsh_free(export->sec_label_xattr);
-	gsh_free(export->fs_name);
-	gsh_free(export->cmount_path);
-	gsh_free(export->user_id);
-	gsh_free(export->secret_key);
-	gsh_free(export);
+	gsh_free(export->sec_label_xattr, MEM_COMP_EXPORT);
+	gsh_free(export->fs_name, MEM_COMP_EXPORT);
+	gsh_free(export->cmount_path, MEM_COMP_EXPORT);
+	gsh_free(export->user_id, MEM_COMP_EXPORT);
+	gsh_free(export->secret_key, MEM_COMP_EXPORT);
+	gsh_free(export, MEM_COMP_EXPORT);
 	export = NULL;
 }
 

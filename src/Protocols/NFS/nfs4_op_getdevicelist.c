@@ -140,7 +140,8 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 	cb_opaque.swexport = nfs_htonl64(op_ctx->ctx_export->export_id);
 
 	resok->gdlr_deviceid_list.gdlr_deviceid_list_val =
-		gsh_malloc(cb_opaque.max * sizeof(deviceid4));
+		gsh_malloc(cb_opaque.max * sizeof(deviceid4),
+			   MEM_COMP_PROTOCOL);
 
 	cb_opaque.buffer = resok->gdlr_deviceid_list.gdlr_deviceid_list_val;
 
@@ -149,7 +150,7 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 		&cb_opaque, cb, &res);
 
 	if (nfs_status != NFS4_OK) {
-		gsh_free(cb_opaque.buffer);
+		gsh_free(cb_opaque.buffer, MEM_COMP_PROTOCOL);
 		goto out;
 	}
 
@@ -158,7 +159,7 @@ enum nfs_req_result nfs4_op_getdevicelist(struct nfs_argop4 *op,
 	nfs_status = check_resp_room(data, resp_size);
 
 	if (nfs_status != NFS4_OK) {
-		gsh_free(cb_opaque.buffer);
+		gsh_free(cb_opaque.buffer, MEM_COMP_PROTOCOL);
 		goto out;
 	}
 
@@ -193,6 +194,7 @@ void nfs4_op_getdevicelist_Free(nfs_resop4 *res)
 	GETDEVICELIST4resok *resok = &resp->GETDEVICELIST4res_u.gdlr_resok4;
 
 	if (resp->gdlr_status == NFS4_OK) {
-		gsh_free(resok->gdlr_deviceid_list.gdlr_deviceid_list_val);
+		gsh_free(resok->gdlr_deviceid_list.gdlr_deviceid_list_val,
+			 MEM_COMP_PROTOCOL);
 	}
 } /* nfs41_op_getdevicelist_Free */

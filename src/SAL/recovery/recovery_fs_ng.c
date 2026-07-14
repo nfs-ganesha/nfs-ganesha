@@ -267,12 +267,14 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str)
 		 * next readdir. This recursion keeps reading the
 		 * subdirectory until reaching the end.
 		 */
-		sub_path = gsh_concat_sep(parent_path, '/', dentp->d_name);
+		sub_path = gsh_concat_sep(parent_path, '/', dentp->d_name,
+					  MEM_COMP_RECOVERY);
 		segment_len = strlen(dentp->d_name);
 
 		/* keep building the clientid str by recursively */
 		/* reading the directory structure */
-		build_clid = gsh_malloc(clid_str_len + segment_len + 1);
+		build_clid = gsh_malloc(clid_str_len + segment_len + 1,
+					MEM_COMP_RECOVERY);
 
 		if (clid_str)
 			memcpy(build_clid, clid_str, clid_str_len);
@@ -299,32 +301,32 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str)
 				LogEvent(COMPONENT_RECOVERY,
 					 "invalid clid format: %s, too long",
 					 build_clid);
-				gsh_free(sub_path);
-				gsh_free(build_clid);
+				gsh_free(sub_path, MEM_COMP_RECOVERY);
+				gsh_free(build_clid, MEM_COMP_RECOVERY);
 				continue;
 			}
 			ptr = strchr(build_clid, '(');
 			if (ptr == NULL) {
 				LogEvent(COMPONENT_RECOVERY,
 					 "invalid clid format: %s", build_clid);
-				gsh_free(sub_path);
-				gsh_free(build_clid);
+				gsh_free(sub_path, MEM_COMP_RECOVERY);
+				gsh_free(build_clid, MEM_COMP_RECOVERY);
 				continue;
 			}
 			ptr2 = strchr(ptr, ':');
 			if (ptr2 == NULL) {
 				LogEvent(COMPONENT_RECOVERY,
 					 "invalid clid format: %s", build_clid);
-				gsh_free(sub_path);
-				gsh_free(build_clid);
+				gsh_free(sub_path, MEM_COMP_RECOVERY);
+				gsh_free(build_clid, MEM_COMP_RECOVERY);
 				continue;
 			}
 			len = ptr2 - ptr - 1;
 			if (len >= 9) {
 				LogEvent(COMPONENT_RECOVERY,
 					 "invalid clid format: %s", build_clid);
-				gsh_free(sub_path);
-				gsh_free(build_clid);
+				gsh_free(sub_path, MEM_COMP_RECOVERY);
+				gsh_free(build_clid, MEM_COMP_RECOVERY);
 				continue;
 			}
 			memcpy(temp, ptr + 1, len + 1);
@@ -338,8 +340,8 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str)
 					    new_ent->cl_name);
 			}
 		}
-		gsh_free(build_clid);
-		gsh_free(sub_path);
+		gsh_free(build_clid, MEM_COMP_RECOVERY);
+		gsh_free(sub_path, MEM_COMP_RECOVERY);
 	}
 
 	(void)closedir(dp);

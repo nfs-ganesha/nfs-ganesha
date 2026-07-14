@@ -82,7 +82,8 @@ liz_context_t *lzfs_fsal_create_context(liz_t *instance, struct user_cred *cred)
 	if (cred->caller_glen > 0) {
 		if (cred->caller_glen > kLocalGArraySize) {
 			gid_t *garray = gsh_malloc((cred->caller_glen + 1) *
-						   sizeof(gid_t));
+							   sizeof(gid_t),
+						   MEM_COMP_FSAL);
 
 			garray[0] = gid;
 			memcpy(garray + 1, cred->caller_garray,
@@ -117,7 +118,7 @@ struct lzfs_fsal_handle *lzfs_fsal_new_handle(
 {
 	struct lzfs_fsal_handle *result = NULL;
 
-	result = gsh_calloc(1, sizeof(struct lzfs_fsal_handle));
+	result = gsh_calloc(1, sizeof(struct lzfs_fsal_handle), MEM_COMP_FSAL);
 
 	result->inode = attr->st_ino;
 	result->unique_key.module_id = FSAL_ID_LIZARDFS;
@@ -142,5 +143,5 @@ struct lzfs_fsal_handle *lzfs_fsal_new_handle(
 void lzfs_fsal_delete_handle(struct lzfs_fsal_handle *obj)
 {
 	fsal_obj_handle_fini(&obj->handle, true);
-	gsh_free(obj);
+	gsh_free(obj, MEM_COMP_FSAL);
 }

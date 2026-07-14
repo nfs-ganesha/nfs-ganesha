@@ -127,7 +127,8 @@ struct config_block kmip_block = {
 	.blk_desc.flags = CONFIG_UNIQUE,
 	.blk_desc.u.blk.init = kmip_block_init,
 	.blk_desc.u.blk.params = kmip_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 static struct config_item kmip_export_params[] = {
@@ -152,7 +153,8 @@ struct config_block kmip_export_extensions = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = kmip_export_params,
-	.blk_desc.u.blk.commit = kmip_export_extension_commit
+	.blk_desc.u.blk.commit = kmip_export_extension_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 struct export_extension_sw kmip_extension_sw = { kmip_load_export_extension };
@@ -199,7 +201,7 @@ void free_host_params(void)
 	while ((host_p = glist_first_entry(host_list, struct kmip_host_param,
 					   link))) {
 		glist_del(&host_p->link);
-		gsh_free(host_p);
+		gsh_free(host_p, MEM_COMP_CONFIG);
 	}
 }
 
@@ -243,10 +245,10 @@ void *kmip_host_init(void *link_mem, void *self_struct)
 	if (!self_struct) {
 		struct kmip_host_param *host_p;
 
-		host_p = gsh_calloc(1, safe_sizeof(*host_p));
+		host_p = gsh_calloc(1, safe_sizeof(*host_p), MEM_COMP_CONFIG);
 		return host_p;
 	} else {
-		gsh_free(self_struct);
+		gsh_free(self_struct, MEM_COMP_CONFIG);
 	}
 	return 0;
 }
@@ -344,9 +346,10 @@ static int kmip_export_extension_commit(void *node, void *link_mem,
 		return ++err_count;
 	}
 	if (!st->kmip_key_id || strcmp(st->kmip_key_id, MAGIC_KMIP_KEY_ID)) {
-		cb = gsh_calloc(1, safe_sizeof(*cb));
+		cb = gsh_calloc(1, safe_sizeof(*cb), MEM_COMP_CONFIG);
 		if (st->kmip_key_id) {
-			cb->kmip_key_id = gsh_strdup(st->kmip_key_id);
+			cb->kmip_key_id = gsh_strdup(st->kmip_key_id,
+						     MEM_COMP_CONFIG);
 		}
 		add_to_export_callbacks(exp, &kmip_root_callback_sw,
 					&cb->callback);
@@ -1216,8 +1219,8 @@ static int kmip_root_cb_free(struct exp_root_callback *cb)
 	struct kmip_callback *data =
 		container_of(cb, struct kmip_callback, callback);
 
-	gsh_free(data->kmip_key_id);
-	gsh_free(data);
+	gsh_free(data->kmip_key_id, MEM_COMP_CONFIG);
+	gsh_free(data, MEM_COMP_CONFIG);
 	return 0;
 }
 

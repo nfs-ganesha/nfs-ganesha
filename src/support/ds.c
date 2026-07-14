@@ -95,7 +95,7 @@ static int server_id_cmpf(const struct avltree_node *lhs,
 
 struct fsal_pnfs_ds *pnfs_ds_alloc(void)
 {
-	return gsh_calloc(1, sizeof(struct fsal_pnfs_ds));
+	return gsh_calloc(1, sizeof(struct fsal_pnfs_ds), MEM_COMP_FSAL);
 }
 
 /**
@@ -107,7 +107,7 @@ void pnfs_ds_free(struct fsal_pnfs_ds *pds)
 	if (!pds->ds_refcount)
 		return;
 
-	gsh_free(pds);
+	gsh_free(pds, MEM_COMP_FSAL);
 }
 
 /**
@@ -328,6 +328,14 @@ void remove_all_dss(void)
 }
 
 /**
+ * @brief Init for FSAL sub-block under DS.
+ */
+static void *ds_fsal_init(void *link_mem, void *self_struct)
+{
+	return fsal_init(link_mem, self_struct, MEM_COMP_CONFIG);
+}
+
+/**
  * @brief Commit a FSAL sub-block
  *
  * Use the Name parameter passed in via the self_struct to lookup the
@@ -482,7 +490,7 @@ static struct config_item fsal_params[] = {
 
 static struct config_item pds_items[] = {
 	CONF_ITEM_UI16("Number", 0, UINT16_MAX, 0, fsal_pnfs_ds, id_servers),
-	CONF_RELAX_BLOCK("FSAL", fsal_params, fsal_init, fsal_cfg_commit,
+	CONF_RELAX_BLOCK("FSAL", fsal_params, ds_fsal_init, fsal_cfg_commit,
 			 fsal_pnfs_ds, fsal),
 	CONFIG_EOL
 };
@@ -498,7 +506,8 @@ static struct config_block pds_block = {
 	.blk_desc.u.blk.init = pds_init,
 	.blk_desc.u.blk.params = pds_items,
 	.blk_desc.u.blk.commit = pds_commit,
-	.blk_desc.u.blk.display = pds_display
+	.blk_desc.u.blk.display = pds_display,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 /**

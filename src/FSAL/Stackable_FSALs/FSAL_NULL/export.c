@@ -74,7 +74,7 @@ static void release(struct fsal_export *exp_hdl)
 	fsal_detach_export(exp_hdl->fsal, &exp_hdl->exports);
 	free_export_ops(exp_hdl);
 
-	gsh_free(myself); /* elvis has left the building */
+	gsh_free(myself, MEM_COMP_EXPORT); /* elvis has left the building */
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -438,7 +438,8 @@ static struct config_block export_param = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 /* create_export
@@ -474,7 +475,8 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		return fsalstat(ERR_FSAL_INVAL, EINVAL);
 	}
 
-	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct nullfs_fsal_export),
+			    MEM_COMP_EXPORT);
 	expres = fsal_stack->m_ops.create_export(fsal_stack,
 						 nullfsal.subfsal.fsal_node,
 						 err_type, up_ops);
@@ -488,7 +490,7 @@ fsal_status_t nullfs_create_export(struct fsal_module *fsal_hdl,
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
 			 nullfsal.subfsal.name);
-		gsh_free(myself);
+		gsh_free(myself, MEM_COMP_EXPORT);
 		return expres;
 	}
 

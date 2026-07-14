@@ -68,8 +68,8 @@ static void lzfs_fsal_release(struct fsal_export *export_hdl)
 
 	liz_destroy(lzfs_export->lzfs_instance);
 	lzfs_export->lzfs_instance = NULL;
-	gsh_free((char *)lzfs_export->lzfs_params.subfolder);
-	gsh_free(lzfs_export);
+	gsh_free((char *)lzfs_export->lzfs_params.subfolder, MEM_COMP_EXPORT);
+	gsh_free(lzfs_export, MEM_COMP_EXPORT);
 }
 
 /*! \brief Look up a path
@@ -395,7 +395,7 @@ void lzfs_free_state(struct state_t *state)
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
 
-	gsh_free(state);
+	gsh_free(state, MEM_COMP_STATE);
 }
 
 /*! \brief Allocate a state_t structure
@@ -409,7 +409,8 @@ struct state_t *lzfs_fsal_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct lzfs_fsal_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct lzfs_fsal_state_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct lzfs_fsal_state_fd),
+				      MEM_COMP_STATE),
 			   lzfs_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct lzfs_fsal_state_fd, state)->lzfs_fd;

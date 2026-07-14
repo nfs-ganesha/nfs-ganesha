@@ -279,7 +279,8 @@ typedef utf8str_cs component4;
 
 typedef utf8str_cs linktext4;
 
-static inline utf8string *utf8string_dup(utf8string *d, const char *s, size_t l)
+static inline utf8string *utf8string_dup(utf8string *d, const char *s, size_t l,
+					 mem_components_t comp)
 {
 	if (s == NULL || l == 0) {
 		d->utf8string_val = 0;
@@ -287,7 +288,7 @@ static inline utf8string *utf8string_dup(utf8string *d, const char *s, size_t l)
 		return d;
 	}
 
-	d->utf8string_val = (char *)gsh_malloc(l + 1);
+	d->utf8string_val = (char *)gsh_malloc(l + 1, comp);
 	d->utf8string_len = l;
 	memcpy(d->utf8string_val, s, l + 1);
 	return d;
@@ -4073,7 +4074,7 @@ static inline bool xdr_utf8string_decode(XDR *xdrs, utf8string *objp,
 		return true;
 
 	if (!sp) {
-		sp = (char *)gsh_malloc(size + 1);
+		sp = (char *)gsh_malloc(size + 1, MEM_COMP_PROTOCOL);
 		allocated_locally = true;
 	}
 
@@ -4082,7 +4083,7 @@ static inline bool xdr_utf8string_decode(XDR *xdrs, utf8string *objp,
 	if (!ret) {
 		if (allocated_locally)
 			/* Only free if we allocated */
-			gsh_free(sp);
+			gsh_free(sp, MEM_COMP_PROTOCOL);
 		return ret;
 	}
 
@@ -10040,10 +10041,28 @@ static inline bool xdr_CB_COMPOUND4res(XDR *xdrs, CB_COMPOUND4res *objp)
 static inline void copy_into_utf8string(utf8string *dest, const char *src,
 					int len)
 {
-	dest->utf8string_val = (char *)gsh_malloc(len + 1);
+	dest->utf8string_val = (char *)gsh_malloc(len + 1, MEM_COMP_PROTOCOL);
 	dest->utf8string_len = len;
 	memcpy(dest->utf8string_val, src, len);
 	dest->utf8string_val[len] = '\0';
+}
+
+/**
+ * @brief Free a utf8string allocated by copy_into_utf8string()
+ *
+ * Always releases under MEM_COMP_PROTOCOL, matching copy_into_utf8string(),
+ * so every caller is symmetric by construction instead of hand-picking a
+ * (possibly wrong) component at each free site.
+ *
+ * @param[in,out] str  The utf8string to release; val/len are reset to
+ *                      NULL/0 afterward.
+ */
+
+static inline void free_utf8string(utf8string *str)
+{
+	gsh_free(str->utf8string_val, MEM_COMP_PROTOCOL);
+	str->utf8string_val = NULL;
+	str->utf8string_len = 0;
 }
 
 #ifdef __cplusplus

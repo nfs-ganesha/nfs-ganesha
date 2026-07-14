@@ -94,7 +94,7 @@ void free_vfs_fsal_obj_handle(struct vfs_fsal_obj_handle **hdl_ref)
 	object_file_type_t type = myself->obj_handle.type;
 
 	if (type == SYMBOLIC_LINK) {
-		gsh_free(myself->u.symlink.link_content);
+		gsh_free(myself->u.symlink.link_content, MEM_COMP_FSAL);
 	} else if (type == REGULAR_FILE) {
 		struct gsh_buffdesc key;
 
@@ -102,14 +102,14 @@ void free_vfs_fsal_obj_handle(struct vfs_fsal_obj_handle **hdl_ref)
 		vfs_state_release(&key);
 		destroy_fsal_fd(&myself->u.file.fd.fsal_fd);
 	} else if (vfs_unopenable_type(type)) {
-		gsh_free(myself->u.unopenable.name);
-		gsh_free(myself->u.unopenable.dir);
+		gsh_free(myself->u.unopenable.name, MEM_COMP_FSAL);
+		gsh_free(myself->u.unopenable.dir, MEM_COMP_FSAL);
 	}
 
 	LogDebug(COMPONENT_FSAL, "Releasing obj_hdl=%p, myself=%p",
 		 &myself->obj_handle, myself);
 
-	gsh_free(myself);
+	gsh_free(myself, MEM_COMP_FSAL);
 	*hdl_ref = NULL;
 }
 
@@ -159,7 +159,7 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd, vfs_file_handle_t *fh,
 	} else if (hdl->obj_handle.type == SYMBOLIC_LINK) {
 		ssize_t retlink;
 		size_t len = stat->st_size;
-		char *link_content = gsh_malloc(len + 1);
+		char *link_content = gsh_malloc(len + 1, MEM_COMP_FSAL);
 
 		retlink = vfs_readlink_by_handle(fh, dirfd, path, link_content,
 						 len);
@@ -182,11 +182,12 @@ struct vfs_fsal_obj_handle *alloc_handle(int dirfd, vfs_file_handle_t *fh,
 			if (retval < 0)
 				goto spcerr;
 		}
-		hdl->u.unopenable.dir = gsh_malloc(sizeof(vfs_file_handle_t));
+		hdl->u.unopenable.dir =
+			gsh_malloc(sizeof(vfs_file_handle_t), MEM_COMP_FSAL);
 
 		memcpy(hdl->u.unopenable.dir, dir_fh,
 		       sizeof(vfs_file_handle_t));
-		hdl->u.unopenable.name = gsh_strdup(path);
+		hdl->u.unopenable.name = gsh_strdup(path, MEM_COMP_FSAL);
 	}
 	fsal_obj_handle_init(&hdl->obj_handle, exp_hdl,
 			     posix2fsal_type(stat->st_mode), true);
@@ -230,7 +231,7 @@ static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
 		int loclen = fsloc->server[0].utf8string_len +
 			     strlen(fsloc->rootpath) + 2;
 
-		char *location = gsh_calloc(1, loclen);
+		char *location = gsh_calloc(1, loclen, MEM_COMP_FSAL);
 
 		(void)snprintf(location, loclen, "%.*s:%s",
 			       fsloc->server[0].utf8string_len,
@@ -243,7 +244,7 @@ static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
 			 "fsid.major = %" PRIu64 ", fsid.minor = %" PRIu64,
 			 hdl->obj_handle.fsid.major,
 			 hdl->obj_handle.fsid.minor);
-		gsh_free(location);
+		gsh_free(location, MEM_COMP_FSAL);
 	}
 
 out:
@@ -1588,11 +1589,12 @@ static fsal_status_t renamefile(struct fsal_obj_handle *obj_hdl,
 			 * it. Go ahead and discard the old name (we will abort
 			 * if gsh_strdup fails to copy the new name).
 			 */
-			gsh_free(obj->u.unopenable.name);
+			gsh_free(obj->u.unopenable.name, MEM_COMP_FSAL);
 
 			memcpy(obj->u.unopenable.dir, newdir->handle,
 			       sizeof(vfs_file_handle_t));
-			obj->u.unopenable.name = gsh_strdup(new_name);
+			obj->u.unopenable.name =
+				gsh_strdup(new_name, MEM_COMP_FSAL);
 		}
 
 		vfs_restore_ganesha_credentials(obj_hdl->fsal);

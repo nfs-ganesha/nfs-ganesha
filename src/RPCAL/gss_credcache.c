@@ -100,8 +100,8 @@
 	krb5_free_default_realm((ctx), (realm))
 #define k5_free_kt_entry(ctx, kte) krb5_free_keytab_entry_contents((ctx), (kte))
 #else /* Heimdal */
-#define k5_free_unparsed_name(ctx, name) gsh_free(name)
-#define k5_free_default_realm(ctx, realm) gsh_free(realm)
+#define k5_free_unparsed_name(ctx, name) free(name)
+#define k5_free_default_realm(ctx, realm) free(realm)
 #define k5_free_kt_entry(ctx, kte) krb5_kt_free_entry((ctx), (kte))
 
 #undef USE_GSS_KRB5_CCACHE_NAME
@@ -255,8 +255,8 @@ static int gssd_get_single_krb5_cred(krb5_context context, krb5_keytab kt,
 	}
 	ple->endtime = my_creds.times.endtime;
 	if (ple->ccname != NULL)
-		gsh_free(ple->ccname);
-	ple->ccname = gsh_strdup(cc_name);
+		gsh_free(ple->ccname, MEM_COMP_PROTOCOL);
+	ple->ccname = gsh_strdup(cc_name, MEM_COMP_PROTOCOL);
 
 	code = krb5_cc_resolve(context, cc_name, &ccache);
 	if (code != 0) {
@@ -299,7 +299,7 @@ out:
 	if (ccache)
 		krb5_cc_close(context, ccache);
 	krb5_free_cred_contents(context, &my_creds);
-	gsh_free(k5err);
+	gsh_free(k5err, MEM_COMP_PROTOCOL);
 	return code;
 }
 
@@ -362,20 +362,21 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 	char *default_realm;
 	int is_default_realm = 0;
 
-	ple = gsh_calloc(1, sizeof(struct gssd_k5_kt_princ));
+	ple = gsh_calloc(1, sizeof(struct gssd_k5_kt_princ),
+			 MEM_COMP_PROTOCOL);
 
 #ifdef HAVE_KRB5
-	ple->realm = gsh_malloc(princ->realm.length + 1);
+	ple->realm = gsh_malloc(princ->realm.length + 1, MEM_COMP_PROTOCOL);
 	memcpy(ple->realm, princ->realm.data, princ->realm.length);
 	ple->realm[princ->realm.length] = '\0';
 #else
-	ple->realm = gsh_strdup(princ->realm);
+	ple->realm = gsh_strdup(princ->realm, MEM_COMP_PROTOCOL);
 #endif
 	code = krb5_copy_principal(context, princ, &ple->princ);
 
 	if (code) {
-		gsh_free(ple->realm);
-		gsh_free(ple);
+		gsh_free(ple->realm, MEM_COMP_PROTOCOL);
+		gsh_free(ple, MEM_COMP_PROTOCOL);
 		return NULL;
 	}
 
@@ -552,7 +553,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		k5err = gssd_k5_err_msg(context, code);
 		LogCrit(COMPONENT_NFS_CB,
 			"ERROR: %s attempting to get keytab name", k5err);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		retval = code;
 		goto out;
 	}
@@ -562,7 +563,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		LogCrit(COMPONENT_NFS_CB,
 			"ERROR: %s while beginning keytab scan for keytab '%s'",
 			k5err, kt_name);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		retval = code;
 		goto out;
 	}
@@ -575,7 +576,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 				"WARNING: Skipping keytab entry because we failed to unparse principal name: %s",
 				k5err);
 			k5_free_kt_entry(context, kte);
-			gsh_free(k5err);
+			gsh_free(k5err, MEM_COMP_PROTOCOL);
 			continue;
 		}
 		LogFullDebug(COMPONENT_NFS_CB,
@@ -623,7 +624,7 @@ static int gssd_search_krb5_keytab(krb5_context context, krb5_keytab kt,
 		LogCrit(COMPONENT_NFS_CB,
 			"WARNING: %s while ending keytab scan for keytab '%s'",
 			k5err, kt_name);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 	}
 
 	retval = 0;
@@ -664,7 +665,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		k5err = gssd_k5_err_msg(context, retval);
 		LogWarn(COMPONENT_NFS_CB, "%s while getting local hostname",
 			k5err);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		goto out;
 	}
 
@@ -685,7 +686,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		k5err = gssd_k5_err_msg(context, code);
 		LogWarn(COMPONENT_NFS_CB, "%s while getting default realm name",
 			k5err);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		goto out;
 	}
 
@@ -701,7 +702,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		LogCrit(COMPONENT_NFS_CB,
 			"ERROR: %s while getting realm(s) for host '%s'", k5err,
 			targethostname);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		retval = code;
 		goto out;
 	}
@@ -762,7 +763,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 				LogWarn(COMPONENT_NFS_CB,
 					"%s while building principal for '%s'",
 					k5err, spn);
-				gsh_free(k5err);
+				gsh_free(k5err, MEM_COMP_PROTOCOL);
 				continue;
 			}
 			code = krb5_kt_get_entry(context, kt, princ, 0, 0, kte);
@@ -773,7 +774,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 					COMPONENT_NFS_CB,
 					"%s while getting keytab entry for '%s'",
 					k5err, spn);
-				gsh_free(k5err);
+				gsh_free(k5err, MEM_COMP_PROTOCOL);
 			} else {
 				LogFullDebug(
 					COMPONENT_NFS_CB,
@@ -830,18 +831,19 @@ static char *gssd_k5_err_msg(krb5_context context, krb5_error_code code)
 		char *msg = NULL;
 
 		origmsg = krb5_get_error_message(context, code);
-		msg = gsh_strdup(origmsg);
+		msg = gsh_strdup(origmsg, MEM_COMP_PROTOCOL);
 		krb5_free_error_message(context, origmsg);
 		return msg;
 	}
 #endif
 #if HAVE_KRB5
-	return gsh_strdup(error_message(code));
+	return gsh_strdup(error_message(code), MEM_COMP_PROTOCOL);
 #else
 	if (context != NULL)
-		return gsh_strdup(krb5_get_err_text(context, code));
+		return gsh_strdup(krb5_get_err_text(context, code),
+				  MEM_COMP_PROTOCOL);
 	else
-		return gsh_strdup(error_message(code));
+		return gsh_strdup(error_message(code), MEM_COMP_PROTOCOL);
 #endif
 }
 
@@ -882,7 +884,7 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 			"ERROR: %s: %s while initializing krb5 context",
 			__func__, k5err);
 		retval = code;
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		goto out_wo_context;
 	}
 
@@ -892,7 +894,7 @@ int gssd_refresh_krb5_machine_credential(char *hostname,
 		LogCrit(COMPONENT_NFS_CB,
 			"ERROR: %s: %s while resolving keytab '%s'", __func__,
 			k5err, keytabfile);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		goto out;
 	}
 
@@ -977,7 +979,7 @@ static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
 		LogCrit(COMPONENT_NFS_CB,
 			"Received %s while resolving krb5 cache %s", k5err,
 			ple->ccname);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		return;
 	}
 	code = krb5_cc_destroy(*context, ccache);
@@ -986,7 +988,7 @@ static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
 		LogCrit(COMPONENT_NFS_CB,
 			"Received %s while destroying krb5 cache %s", k5err,
 			ple->ccname);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 		return;
 	}
 	LogInfo(COMPONENT_NFS_CB, "krb5 cache %s has been destroyed",
@@ -997,15 +999,15 @@ static void destroy_krb5_creds_cache(struct gssd_k5_kt_princ *ple,
 static void free_ple_entry(struct gssd_k5_kt_princ *ple, krb5_context *context)
 {
 	if (ple->realm != NULL)
-		gsh_free(ple->realm);
+		gsh_free(ple->realm, MEM_COMP_PROTOCOL);
 
 	if (ple->ccname != NULL)
-		gsh_free(ple->ccname);
+		gsh_free(ple->ccname, MEM_COMP_PROTOCOL);
 
 	if (context != NULL)
 		krb5_free_principal(*context, ple->princ);
 
-	gsh_free(ple);
+	gsh_free(ple, MEM_COMP_PROTOCOL);
 }
 
 /**
@@ -1054,7 +1056,7 @@ void gssd_clear_cred_cache(void)
 		LogCrit(COMPONENT_NFS_CB,
 			"Received %s while initializing krb5 context before cache cleanup",
 			k5err);
-		gsh_free(k5err);
+		gsh_free(k5err, MEM_COMP_PROTOCOL);
 
 		/* If we cannot init krb5-context (required for destroying krb5
 		 * caches), we still free the cached global principal list.

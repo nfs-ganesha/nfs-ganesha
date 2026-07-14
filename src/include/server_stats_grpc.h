@@ -183,6 +183,7 @@ struct grpc_compound_op_stats {
  * Entry counts reflect only operations with non-zero totals (D-Bus parity).
  */
 struct grpc_client_allops {
+	int comp;
 	struct timespec time;
 	bool clnt_v3;
 	uint32_t v3_count;

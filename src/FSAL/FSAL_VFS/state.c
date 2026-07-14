@@ -91,7 +91,7 @@ void vfs_state_release(struct gsh_buffdesc *key)
 		return;
 
 	avltree_remove(&fs_entry->fs_node, &vfs_state_tree);
-	gsh_free(fs_entry);
+	gsh_free(fs_entry, MEM_COMP_STATE);
 }
 
 struct state_hdl *vfs_state_locate(struct fsal_obj_handle *obj)
@@ -108,12 +108,13 @@ struct state_hdl *vfs_state_locate(struct fsal_obj_handle *obj)
 		return &fs_entry->ostate;
 	}
 
-	fs_entry = gsh_calloc(sizeof(struct vfs_state_entry), 1);
+	fs_entry = gsh_calloc(sizeof(struct vfs_state_entry), 1,
+			      MEM_COMP_STATE);
 	fs_entry->fs_key = key;
 	node = avltree_insert(&fs_entry->fs_node, &vfs_state_tree);
 	if (unlikely(node)) {
 		/* Race won */
-		gsh_free(fs_entry);
+		gsh_free(fs_entry, MEM_COMP_STATE);
 		fs_entry = avltree_container_of(node, struct vfs_state_entry,
 						fs_node);
 	} else {

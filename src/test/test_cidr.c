@@ -179,7 +179,7 @@ struct {
 int main(int argc, char **argv)
 {
 	for (int i = 0; i < ARRAY_SIZE(cidrs); i++) {
-		CIDR *cidr = cidr_from_str(cidrs[i].cidr);
+		CIDR *cidr = cidr_from_str(cidrs[i].cidr, MEM_COMP_GTEST);
 		char *ip_str;
 
 		if (!cidr) {
@@ -190,19 +190,19 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		ip_str = cidr_to_str(cidr);
+		ip_str = cidr_to_str(cidr, MEM_COMP_GTEST);
 
 		if (cidrs[i].expected_cidr &&
 		    strcmp(ip_str, cidrs[i].expected_cidr)) {
 			printf("IP strings don't match IP str %s Vs %s\n",
 			       cidrs[i].cidr, ip_str);
-			gsh_free(ip_str);
-			cidr_free(cidr);
+			gsh_free(ip_str, MEM_COMP_GTEST);
+			cidr_free(cidr, MEM_COMP_GTEST);
 			continue;
 		}
 
-		gsh_free(ip_str);
-		cidr_free(cidr);
+		gsh_free(ip_str, MEM_COMP_GTEST);
+		cidr_free(cidr, MEM_COMP_GTEST);
 	}
 
 	for (int i = 0; i < ARRAY_SIZE(cidr_matches); i++) {
@@ -211,7 +211,7 @@ int main(int argc, char **argv)
 		bool expected = cidr_matches[i].contained;
 		int contains_ret;
 
-		masked_ip = cidr_from_str(cidr_matches[i].cidr);
+		masked_ip = cidr_from_str(cidr_matches[i].cidr, MEM_COMP_GTEST);
 		if (!masked_ip) {
 			printf("Unable to parse masked_ip %s err=%s\n",
 			       cidr_matches[i].cidr, strerror(errno));
@@ -221,7 +221,7 @@ int main(int argc, char **argv)
 		if (ip_str_to_sockaddr(cidr_matches[i].ip, &ip)) {
 			printf("Unable to parse ip %s err=%s\n",
 			       cidr_matches[i].ip, strerror(errno));
-			cidr_free(masked_ip);
+			cidr_free(masked_ip, MEM_COMP_GTEST);
 			continue;
 		}
 		contains_ret = cidr_contains_ip(masked_ip, &ip);
@@ -233,6 +233,6 @@ int main(int argc, char **argv)
 			printf("Failed %s Vs %s (%s)\n", cidr_matches[i].cidr,
 			       cidr_matches[i].ip, strerror(errno));
 		}
-		cidr_free(masked_ip);
+		cidr_free(masked_ip, MEM_COMP_GTEST);
 	}
 }

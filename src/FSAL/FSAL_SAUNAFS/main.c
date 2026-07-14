@@ -102,7 +102,8 @@ static struct config_block export_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 static struct config_item fsal_export_params[] = {
@@ -167,7 +168,8 @@ static struct config_block fsal_export_param_block = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = fsal_export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 /**
@@ -184,7 +186,7 @@ static inline void releaseExport(struct SaunaFSExport *export)
 		if (export->cache)
 			destroyFileInfoCache(export->cache);
 
-		gsh_free(export);
+		gsh_free(export, MEM_COMP_EXPORT);
 	}
 }
 
@@ -215,7 +217,7 @@ static fsal_status_t createExport(struct fsal_module *module, void *parseNode,
 	int retvalue = 0;
 
 	struct SaunaFSExport *export =
-		gsh_calloc(1, sizeof(struct SaunaFSExport));
+		gsh_calloc(1, sizeof(struct SaunaFSExport), MEM_COMP_EXPORT);
 
 	fsal_export_init(&export->export);
 	exportOperationsInit(&export->export.exp_ops);
@@ -238,7 +240,8 @@ static fsal_status_t createExport(struct fsal_module *module, void *parseNode,
 		}
 	}
 
-	export->parameters.subfolder = gsh_strdup(CTX_FULLPATH(op_ctx));
+	export->parameters.subfolder =
+		gsh_strdup(CTX_FULLPATH(op_ctx), MEM_COMP_EXPORT);
 	export->fsInstance = sau_init_with_params(&export->parameters);
 
 	if (export->fsInstance == NULL) {

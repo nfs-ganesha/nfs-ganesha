@@ -532,14 +532,14 @@ int main(int argc, char *argv[])
 				errstr != NULL ? errstr : "unknown",
 				nfs_config_path);
 			if (errstr != NULL)
-				gsh_free(errstr);
+				gsh_free(errstr, MEM_COMP_CONFIG);
 			goto fatal_die;
 		} else
 			LogWarn(COMPONENT_INIT, "Error %s while parsing (%s)",
 				errstr != NULL ? errstr : "unknown",
 				nfs_config_path);
 		if (errstr != NULL)
-			gsh_free(errstr);
+			gsh_free(errstr, MEM_COMP_CONFIG);
 	}
 
 	LogEvent(COMPONENT_MAIN, "Reading log configuration");

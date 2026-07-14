@@ -165,8 +165,6 @@ struct hash_partition {
 typedef struct hash_table {
 	struct hash_param parameter; /*< Definitive parameter for the
 					 HashTable */
-	pool_t *node_pool; /*< Pool of RBT nodes */
-	pool_t *data_pool; /*< Pool of buffer pairs */
 #ifdef __cplusplus
 	struct hash_partition partitions[1];
 #else

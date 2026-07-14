@@ -46,12 +46,14 @@ struct memstream {
 	size_t offset;
 };
 
-static void memstream_grow(struct memstream *ms, size_t newsize)
+static bool memstream_grow(struct memstream *ms, size_t newsize)
 {
 	char *buf;
 
 	if (newsize > *ms->lenp) {
-		buf = gsh_realloc(*ms->cp, newsize + 1);
+		buf = realloc(*ms->cp, newsize + 1);
+		if (buf == NULL)
+			return false;
 #ifdef DEBUG
 		fprintf(stderr, "MS: %p growing from %zd to %zd\n", ms,
 			*ms->lenp, newsize);
@@ -60,6 +62,7 @@ static void memstream_grow(struct memstream *ms, size_t newsize)
 		*ms->cp = buf;
 		*ms->lenp = newsize;
 	}
+	return true;
 }
 
 static int memstream_read(void *cookie, char *buf, int len)
@@ -68,7 +71,10 @@ static int memstream_read(void *cookie, char *buf, int len)
 	int tocopy;
 
 	ms = cookie;
-	memstream_grow(ms, ms->offset + len);
+	if (!memstream_grow(ms, ms->offset + len)) {
+		errno = ENOMEM;
+		return -1;
+	}
 	tocopy = *ms->lenp - ms->offset;
 	if (len < tocopy)
 		tocopy = len;
@@ -86,7 +92,10 @@ static int memstream_write(void *cookie, const char *buf, int len)
 	int tocopy;
 
 	ms = cookie;
-	memstream_grow(ms, ms->offset + len);
+	if (!memstream_grow(ms, ms->offset + len)) {
+		errno = ENOMEM;
+		return -1;
+	}
 	tocopy = *ms->lenp - ms->offset;
 	if (len < tocopy)
 		tocopy = len;
@@ -129,7 +138,7 @@ static fpos_t memstream_seek(void *cookie, fpos_t pos, int whence)
 
 static int memstream_close(void *cookie)
 {
-	gsh_free(cookie);
+	free(cookie);
 	return 0;
 }
 
@@ -141,7 +150,9 @@ FILE *open_memstream(char **cp, size_t *lenp)
 
 	*cp = NULL;
 	*lenp = 0;
-	ms = gsh_malloc(sizeof(*ms));
+	ms = malloc(sizeof(*ms));
+	if (ms == NULL)
+		return NULL;
 	ms->cp = cp;
 	ms->lenp = lenp;
 	ms->offset = 0;
@@ -149,7 +160,7 @@ FILE *open_memstream(char **cp, size_t *lenp)
 		     memstream_close);
 	if (fp == NULL) {
 		save_errno = errno;
-		gsh_free(ms);
+		free(ms);
 		errno = save_errno;
 	}
 	return fp;

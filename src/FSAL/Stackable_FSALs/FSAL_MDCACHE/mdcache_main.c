@@ -50,8 +50,6 @@
 #include "mdcache_lru.h"
 #include "server_stats_grpc.h"
 
-pool_t *mdcache_entry_pool;
-
 struct mdcache_stats cache_st;
 struct mdcache_stats *cache_stp = &cache_st;
 
@@ -145,7 +143,7 @@ void mdcache_export_uninit(void)
 	free_export_ops(op_ctx->fsal_export);
 	up_ready_destroy(&exp->up_ops);
 
-	gsh_free(exp);
+	gsh_free(exp, MEM_COMP_EXPORT);
 
 	/* Put back sub export */
 	op_ctx->fsal_export = sub_export;
@@ -177,8 +175,9 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	fsal_status_t status = { 0, 0 };
 	struct mdcache_fsal_export *myself;
 
-	myself = gsh_calloc(1, sizeof(struct mdcache_fsal_export));
-	myself->name = gsh_concat(sub_fsal->name, "/MDC");
+	myself = gsh_calloc(1, sizeof(struct mdcache_fsal_export),
+			    MEM_COMP_EXPORT);
+	myself->name = gsh_concat(sub_fsal->name, "/MDC", MEM_COMP_EXPORT);
 
 	fsal_export_init(&myself->mfe_exp);
 	mdcache_export_ops_init(&myself->mfe_exp.exp_ops);
@@ -200,8 +199,8 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 		LogMajor(COMPONENT_FSAL,
 			 "Failed to call create_export on underlying FSAL %s",
 			 sub_fsal->name);
-		gsh_free(myself->name);
-		gsh_free(myself);
+		gsh_free(myself->name, MEM_COMP_EXPORT);
+		gsh_free(myself, MEM_COMP_EXPORT);
 		return status;
 	}
 
@@ -217,8 +216,8 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	status = dirmap_lru_init(myself);
 	if (FSAL_IS_ERROR(status)) {
 		LogMajor(COMPONENT_FSAL, "Failed to call dirmap_lru_init");
-		gsh_free(myself->name);
-		gsh_free(myself);
+		gsh_free(myself->name, MEM_COMP_EXPORT);
+		gsh_free(myself, MEM_COMP_EXPORT);
 		return status;
 	}
 
@@ -321,10 +320,6 @@ static int mdcache_fsal_unload(struct fsal_module *fsal_hdl)
 	if (FSAL_IS_ERROR(status))
 		fprintf(stderr, "MDCACHE LRU failed to shut down");
 
-	/* Destroy the MDCACHE entry pool */
-	pool_destroy(mdcache_entry_pool);
-	mdcache_entry_pool = NULL;
-
 	retval = unregister_fsal(&MDCACHE.module);
 	if (retval != 0)
 		fprintf(stderr, "MDCACHE module failed to unregister");
@@ -364,18 +359,9 @@ fsal_status_t mdcache_pkginit(void)
 {
 	fsal_status_t status;
 
-	if (mdcache_entry_pool)
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-
-	mdcache_entry_pool =
-		pool_basic_init("MDCACHE Entry Pool", sizeof(mdcache_entry_t));
-
 	status = mdcache_lru_pkginit();
-	if (FSAL_IS_ERROR(status)) {
-		pool_destroy(mdcache_entry_pool);
-		mdcache_entry_pool = NULL;
+	if (FSAL_IS_ERROR(status))
 		return status;
-	}
 
 	cih_pkginit();
 

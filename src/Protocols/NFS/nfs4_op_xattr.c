@@ -92,13 +92,14 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 	}
 
 	gxr_value.utf8string_len = XATTR_VALUE_SIZE;
-	gxr_value.utf8string_val = gsh_malloc(gxr_value.utf8string_len + 1);
+	gxr_value.utf8string_val =
+		gsh_malloc(gxr_value.utf8string_len + 1, MEM_COMP_PROTOCOL);
 
 	fsal_status = obj_handle->obj_ops->getxattrs(obj_handle,
 						     &arg_GETXATTR4->gxa_name,
 						     &gxr_value);
 	if (FSAL_IS_ERROR(fsal_status)) {
-		gsh_free(gxr_value.utf8string_val);
+		gsh_free(gxr_value.utf8string_val, MEM_COMP_PROTOCOL);
 		if (fsal_status.major == ERR_FSAL_XATTR2BIG) {
 			LogDebug(COMPONENT_NFS_V4,
 				 "FSAL buffer len %d too small",
@@ -120,7 +121,8 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 				 gxr_value.utf8string_len);
 			/* Try again with a bigger buffer */
 			gxr_value.utf8string_val =
-				gsh_malloc(gxr_value.utf8string_len + 1);
+				gsh_malloc(gxr_value.utf8string_len + 1,
+					   MEM_COMP_PROTOCOL);
 			fsal_status = obj_handle->obj_ops->getxattrs(
 				obj_handle, &arg_GETXATTR4->gxa_name,
 				&gxr_value);
@@ -128,7 +130,8 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 			if (FSAL_IS_ERROR(fsal_status)) {
 				res_GETXATTR4->status = nfs4_Errno_state(
 					state_error_convert(fsal_status));
-				gsh_free(gxr_value.utf8string_val);
+				gsh_free(gxr_value.utf8string_val,
+					 MEM_COMP_PROTOCOL);
 				return NFS_REQ_ERROR;
 			}
 		} else {
@@ -141,7 +144,7 @@ enum nfs_req_result nfs4_op_getxattr(struct nfs_argop4 *op,
 		    RNDUP(gxr_value.utf8string_len);
 	res_GETXATTR4->status = check_resp_room(data, resp_size);
 	if (res_GETXATTR4->status != NFS4_OK) {
-		gsh_free(gxr_value.utf8string_val);
+		gsh_free(gxr_value.utf8string_val, MEM_COMP_PROTOCOL);
 		return NFS_REQ_ERROR;
 	}
 
@@ -163,7 +166,7 @@ void nfs4_op_getxattr_Free(nfs_resop4 *resp)
 	GETXATTR4resok *res = &res_GETXATTR4->GETXATTR4res_u.resok4;
 
 	if (res_GETXATTR4->status == NFS4_OK) {
-		gsh_free(res->gxr_value.utf8string_val);
+		gsh_free(res->gxr_value.utf8string_val, MEM_COMP_PROTOCOL);
 	}
 }
 
@@ -339,8 +342,9 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 	res_LISTXATTR4->status = check_resp_room(data, resp_size);
 	if (res_LISTXATTR4->status != NFS4_OK) {
 		for (i = 0; i < list.xl4_count; i++)
-			gsh_free(list.xl4_entries[i].utf8string_val);
-		gsh_free(list.xl4_entries);
+			gsh_free(list.xl4_entries[i].utf8string_val,
+				 MEM_COMP_PROTOCOL);
+		gsh_free(list.xl4_entries, MEM_COMP_PROTOCOL);
 		return NFS_REQ_ERROR;
 	}
 
@@ -367,8 +371,9 @@ void nfs4_op_listxattr_Free(nfs_resop4 *resp)
 
 	if (res_LISTXATTR4->status == NFS4_OK) {
 		for (i = 0; i < names->xl4_count; i++)
-			gsh_free(names->xl4_entries[i].utf8string_val);
-		gsh_free(names->xl4_entries);
+			gsh_free(names->xl4_entries[i].utf8string_val,
+				 MEM_COMP_PROTOCOL);
+		gsh_free(names->xl4_entries, MEM_COMP_PROTOCOL);
 	}
 }
 

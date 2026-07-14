@@ -150,18 +150,6 @@ struct dupreq_entry {
 
 typedef struct dupreq_entry dupreq_entry_t;
 
-extern pool_t *nfs_res_pool;
-
-static inline nfs_res_t *alloc_nfs_res(void)
-{
-	return pool_alloc(nfs_res_pool);
-}
-
-static inline void free_nfs_res(nfs_res_t *res)
-{
-	pool_free(nfs_res_pool, res);
-}
-
 static inline enum nfs_req_result nfs_dupreq_reply_rc(nfs_request_t *reqnfs)
 {
 	dupreq_entry_t *dv = reqnfs->svc.rq_u1;

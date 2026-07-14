@@ -3286,7 +3286,7 @@ struct gsh_refstr *no_export;
 
 void init_ctx_refstr(void)
 {
-	no_export = gsh_refstr_dup("No Export");
+	no_export = gsh_refstr_dup("No Export", MEM_COMP_EXPORT);
 }
 
 void destroy_ctx_refstr(void)
@@ -3327,7 +3327,7 @@ void unregister_nfs_service_with_fsal_backend(struct fsal_module *fsal_mod)
 	if (entry) {
 		fsal_mod->m_ops.fsal_unregister_nfs_service();
 		glist_del(&entry->list);
-		gsh_free(entry);
+		gsh_free(entry, MEM_COMP_FSAL);
 	}
 	PTHREAD_RWLOCK_unlock(&fsal_registration_lock);
 }
@@ -3348,7 +3348,7 @@ void fsal_registration_try_register(struct fsal_module *fsal_mod)
 	entry = find_fsal_entry(fsal_mod);
 
 	if (!entry) {
-		entry = gsh_malloc(sizeof(*entry));
+		entry = gsh_malloc(sizeof(*entry), MEM_COMP_FSAL);
 		entry->fsal_mod = fsal_mod;
 		entry->registered = false;
 		glist_add_tail(&fsal_registration_list, &entry->list);

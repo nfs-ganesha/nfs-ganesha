@@ -71,7 +71,7 @@ static void kvsfs_release(struct fsal_ds_handle *const ds_pub)
 	/* The private 'full' DS handle */
 	struct kvsfs_ds *ds = container_of(ds_pub, struct kvsfs_ds, ds);
 
-	gsh_free(ds);
+	gsh_free(ds, MEM_COMP_FSAL);
 }
 
 /**
@@ -247,7 +247,7 @@ static nfsstat4 make_ds_handle(struct fsal_pnfs_ds *const pds,
 	if (desc->len != sizeof(struct kvsfs_file_handle))
 		return NFS4ERR_BADHANDLE;
 
-	ds = gsh_calloc(1, sizeof(struct kvsfs_ds));
+	ds = gsh_calloc(1, sizeof(struct kvsfs_ds), MEM_COMP_FSAL);
 
 	*handle = &ds->ds;
 

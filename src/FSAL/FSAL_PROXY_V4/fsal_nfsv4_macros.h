@@ -67,9 +67,9 @@
 	} while (0)
 
 /* Free a compound */
-#define COMPOUNDV4_ARG_FREE                         \
-	do {                                        \
-		gsh_free(argcompound.argarray_val); \
+#define COMPOUNDV4_ARG_FREE                                            \
+	do {                                                           \
+		gsh_free(argcompound.argarray_val, MEM_COMP_PROTOCOL); \
 	} while (0)
 
 /* OP specific macros */

@@ -32,8 +32,6 @@
 #include "city.h"
 #include "common_utils.h"
 
-pool_t *fsal_acl_pool;
-
 static int fsal_acl_hash_both(hash_parameter_t *, struct gsh_buffdesc *,
 			      uint32_t *, uint64_t *);
 static int compare_fsal_acl(struct gsh_buffdesc *, struct gsh_buffdesc *);
@@ -78,13 +76,13 @@ fsal_ace_t *nfs4_ace_alloc(int nace)
 {
 	fsal_ace_t *ace = NULL;
 
-	ace = gsh_calloc(nace, sizeof(fsal_ace_t));
+	ace = gsh_calloc(nace, sizeof(fsal_ace_t), MEM_COMP_ACL);
 	return ace;
 }
 
 fsal_acl_t *nfs4_acl_alloc(void)
 {
-	fsal_acl_t *acl = pool_alloc(fsal_acl_pool);
+	fsal_acl_t *acl = gsh_calloc(1, sizeof(fsal_acl_t), MEM_COMP_ACL);
 
 	PTHREAD_RWLOCK_init(&acl->acl_lock, NULL);
 
@@ -98,7 +96,7 @@ void nfs4_ace_free(fsal_ace_t *ace)
 
 	LogDebug(COMPONENT_NFS_V4_ACL, "free ace %p", ace);
 
-	gsh_free(ace);
+	gsh_free(ace, MEM_COMP_ACL);
 }
 
 void nfs4_acl_free(fsal_acl_t *acl)
@@ -111,7 +109,7 @@ void nfs4_acl_free(fsal_acl_t *acl)
 
 	PTHREAD_RWLOCK_destroy(&acl->acl_lock);
 
-	pool_free(fsal_acl_pool, acl);
+	gsh_free(acl, MEM_COMP_ACL);
 }
 
 void nfs4_acl_entry_inc_ref(fsal_acl_t *acl)
@@ -266,9 +264,6 @@ int nfs4_acls_init(void)
 	LogDebug(COMPONENT_NFS_V4_ACL,
 		 "sizeof(fsal_ace_t)=%zu, sizeof(fsal_acl_t)=%zu",
 		 sizeof(fsal_ace_t), sizeof(fsal_acl_t));
-
-	/* Initialize memory pool of ACLs. */
-	fsal_acl_pool = pool_basic_init("acl_pool", sizeof(fsal_acl_t));
 
 	/* Create hash table. */
 	fsal_acl_hash = hashtable_init(&fsal_acl_hash_config);

@@ -72,10 +72,10 @@ static void export_release(struct fsal_export *exp_hdl)
 
 	glusterfs_free_fs(glfs_export->gl_fs);
 
-	gsh_free(glfs_export->mount_path);
-	gsh_free(glfs_export->export_path);
-	gsh_free(glfs_export->sec_label_xattr);
-	gsh_free(glfs_export);
+	gsh_free(glfs_export->mount_path, MEM_COMP_EXPORT);
+	gsh_free(glfs_export->export_path, MEM_COMP_EXPORT);
+	gsh_free(glfs_export->sec_label_xattr, MEM_COMP_EXPORT);
+	gsh_free(glfs_export, MEM_COMP_EXPORT);
 }
 
 /**
@@ -103,7 +103,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	*pub_handle = NULL;
 
 	if (strcmp(path, glfs_export->mount_path) == 0) {
-		realpath = gsh_strdup(glfs_export->export_path);
+		realpath =
+			gsh_strdup(glfs_export->export_path, MEM_COMP_EXPORT);
 	} else {
 		int len_export_path = strlen(glfs_export->export_path);
 		int len_path = strlen(path);
@@ -117,7 +118,8 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 		 */
 		/** @todo: How do we handle symlinks if present in the path.
 		 */
-		realpath = gsh_malloc(len_export_path + len_dest_path + 1);
+		realpath = gsh_malloc(len_export_path + len_dest_path + 1,
+				      MEM_COMP_EXPORT);
 
 		/*
 		 * Handle the case wherein glfs_export->export_path
@@ -164,12 +166,12 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 
 	*pub_handle = &objhandle->handle;
 
-	gsh_free(realpath);
+	gsh_free(realpath, MEM_COMP_EXPORT);
 
 	return status;
 out:
 	gluster_cleanup_vars(glhandle);
-	gsh_free(realpath);
+	gsh_free(realpath, MEM_COMP_EXPORT);
 
 	return status;
 }
@@ -380,7 +382,7 @@ void gluster_free_state(struct state_t *state)
 
 	destroy_fsal_fd(&my_fd->fsal_fd);
 
-	gsh_free(state);
+	gsh_free(state, MEM_COMP_STATE);
 }
 
 /**
@@ -402,7 +404,8 @@ struct state_t *glusterfs_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct glusterfs_fd *my_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct glusterfs_state_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct glusterfs_state_fd),
+				      MEM_COMP_STATE),
 			   gluster_free_state, state_type, related_state);
 
 	my_fd = &container_of(state, struct glusterfs_state_fd, state)
@@ -518,7 +521,8 @@ static struct config_block export_param = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 /*
@@ -585,8 +589,8 @@ void glusterfs_free_fs(struct glusterfs_fs *gl_fs)
 skip_upcall:
 	/* Gluster and memory cleanup */
 	glfs_fini(gl_fs->fs);
-	gsh_free(gl_fs->volname);
-	gsh_free(gl_fs);
+	gsh_free(gl_fs->volname, MEM_COMP_FSAL);
+	gsh_free(gl_fs, MEM_COMP_FSAL);
 }
 
 /**
@@ -610,7 +614,7 @@ struct glusterfs_fs *glusterfs_get_fs(struct glexport_params params,
 		}
 	}
 
-	gl_fs = gsh_calloc(1, sizeof(struct glusterfs_fs));
+	gl_fs = gsh_calloc(1, sizeof(struct glusterfs_fs), MEM_COMP_FSAL);
 
 	glist_init(&gl_fs->fs_obj);
 
@@ -654,7 +658,7 @@ struct glusterfs_fs *glusterfs_get_fs(struct glexport_params params,
 	}
 
 	gl_fs->fs = fs;
-	gl_fs->volname = strdup(params.glvolname);
+	gl_fs->volname = gsh_strdup(params.glvolname, MEM_COMP_FSAL);
 	gl_fs->destroy_mode = 0;
 	gl_fs->up_poll_usec = params.up_poll_usec;
 
@@ -699,7 +703,7 @@ out:
 		glfs_fini(fs);
 
 	glist_del(&gl_fs->fs_obj); /* not needed atm */
-	gsh_free(gl_fs);
+	gsh_free(gl_fs, MEM_COMP_FSAL);
 
 	return NULL;
 }
@@ -725,7 +729,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	LogDebug(COMPONENT_FSAL, "In args: export path = %s",
 		 CTX_FULLPATH(op_ctx));
 
-	glfsexport = gsh_calloc(1, sizeof(struct glusterfs_export));
+	glfsexport =
+		gsh_calloc(1, sizeof(struct glusterfs_export), MEM_COMP_EXPORT);
 
 	rc = load_config_from_node(parse_node, &export_param, &params, true,
 				   err_type);
@@ -757,7 +762,8 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	}
 	fsal_attached = true;
 
-	glfsexport->mount_path = gsh_strdup(CTX_FULLPATH(op_ctx));
+	glfsexport->mount_path =
+		gsh_strdup(CTX_FULLPATH(op_ctx), MEM_COMP_EXPORT);
 	glfsexport->export_path = params.glvolpath;
 	glfsexport->saveduid = geteuid();
 	glfsexport->savedgid = getegid();
@@ -813,19 +819,19 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->export.up_ops = up_ops;
 
 out:
-	gsh_free(params.glvolname);
-	gsh_free(params.glhostname);
-	gsh_free(params.glfs_log);
+	gsh_free(params.glvolname, MEM_COMP_CONFIG);
+	gsh_free(params.glhostname, MEM_COMP_CONFIG);
+	gsh_free(params.glfs_log, MEM_COMP_CONFIG);
 
 	if (status.major != ERR_FSAL_NO_ERROR) {
-		gsh_free(params.glvolpath);
+		gsh_free(params.glvolpath, MEM_COMP_CONFIG);
 
 		if (fsal_attached)
 			fsal_detach_export(fsal_hdl,
 					   &glfsexport->export.exports);
 		if (glfsexport->gl_fs)
 			glusterfs_free_fs(glfsexport->gl_fs);
-		gsh_free(glfsexport);
+		gsh_free(glfsexport, MEM_COMP_EXPORT);
 	}
 
 	return status;

@@ -425,7 +425,7 @@ struct config_node *config_block(char *blockname,
 {
 	struct config_node *node;
 
-	node = gsh_calloc(1, sizeof(struct config_node));
+	node = gsh_calloc(1, sizeof(struct config_node), MEM_COMP_CONFIG);
 	if (node == NULL) {
 		st->err_type->resource = true;
 		return NULL;
@@ -493,7 +493,7 @@ struct config_node *config_term(char *opcode,
 {
 	struct config_node *node;
 
-	node = gsh_calloc(1, sizeof(struct config_node));
+	node = gsh_calloc(1, sizeof(struct config_node), MEM_COMP_CONFIG);
 	if (node == NULL) {
 		st->err_type->resource = true;
 		return NULL;
@@ -519,7 +519,7 @@ struct config_node *config_stmt(char *varname,
 {
 	struct config_node *node;
 
-	node = gsh_calloc(1, sizeof(struct config_node));
+	node = gsh_calloc(1, sizeof(struct config_node), MEM_COMP_CONFIG);
 	if (node == NULL) {
 		st->err_type->resource = true;
 		return NULL;

@@ -159,7 +159,7 @@ static void nlm4_test_message_resp(state_async_queue_t *arg)
 	nlm4_Test_Free(res);
 	dec_nsm_client_ref(nlm_arg->nlm_async_host->slc_nsm_client);
 	dec_nlm_client_ref(nlm_arg->nlm_async_host);
-	gsh_free(arg);
+	gsh_free(arg, MEM_COMP_STATE);
 }
 
 /**

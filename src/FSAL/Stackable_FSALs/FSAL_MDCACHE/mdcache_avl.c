@@ -234,7 +234,7 @@ void mdcache_avl_remove(mdcache_entry_t *parent, mdcache_dir_entry_t *dirent)
 			"Just freed dirent %p from chunk %p parent %p", dirent,
 			chunk, (chunk) ? chunk->parent : NULL);
 
-	gsh_free(dirent);
+	gsh_free(dirent, MEM_COMP_DIRENT);
 }
 
 /**
@@ -485,7 +485,7 @@ again:
 out:
 
 	mdcache_key_delete(&v->ckey);
-	gsh_free(v);
+	gsh_free(v, MEM_COMP_DIRENT);
 	*dirent = v2;
 
 	return code;

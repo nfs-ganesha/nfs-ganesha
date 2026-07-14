@@ -244,7 +244,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 				      const char *uaddr)
 {
 	int code;
-	char *uaddr2 = gsh_strdup(uaddr);
+	char *uaddr2 = gsh_strdup(uaddr, MEM_COMP_TRANSIENT);
 	char *dot, *p1, *p2;
 	uint16_t port;
 
@@ -328,7 +328,7 @@ static inline void setup_client_saddr(nfs_client_id_t *clientid,
 
 out:
 
-	gsh_free(uaddr2);
+	gsh_free(uaddr2, MEM_COMP_TRANSIENT);
 }
 
 /**
@@ -631,7 +631,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 		err = rpc_sperror(&chan->clnt->cl_error, "failed");
 
 		LogDebug(COMPONENT_NFS_CB, "%s", err);
-		gsh_free(err);
+		free_sperror(err);
 		CLNT_DESTROY(chan->clnt);
 		chan->clnt = NULL;
 		close(fd);
@@ -663,7 +663,7 @@ int nfs_rpc_create_chan_v40(nfs_client_id_t *clientid, uint32_t flags)
 		err = rpc_sperror(&chan->auth->ah_error, "failed");
 
 		LogDebug(COMPONENT_NFS_CB, "%s", err);
-		gsh_free(err);
+		free_sperror(err);
 
 		if (chan->auth_flavor != AUTH_NONE)
 			AUTH_DESTROY(chan->auth);
@@ -704,6 +704,12 @@ void nfs_rpc_destroy_chan_no_lock(rpc_call_channel_t *chan)
 	chan->last_called = 0;
 }
 
+static void rpc_cb_null_cc_free(struct clnt_req *cc, size_t size,
+			const char *file, int line, const char *function)
+{
+	gsh_free(cc, MEM_COMP_PROTOCOL);
+}
+
 /**
  * Call the NFSv4 client's CB_NULL procedure.
  *
@@ -728,9 +734,10 @@ static enum clnt_stat rpc_cb_null(rpc_call_channel_t *chan, bool locked)
 		goto unlock;
 	}
 
-	cc = gsh_malloc(sizeof(*cc));
+	cc = gsh_malloc(sizeof(*cc), MEM_COMP_PROTOCOL);
 	clnt_req_fill(cc, chan->clnt, chan->auth, CB_NULL, (xdrproc_t)xdr_void,
 		      NULL, (xdrproc_t)xdr_void, NULL);
+	cc->cc_free_cb = rpc_cb_null_cc_free;
 	stat = clnt_req_setup(cc, tout);
 	if (stat == RPC_SUCCESS) {
 		cc->cc_refreshes = 1;
@@ -832,7 +839,7 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 		err = rpc_sperror(&chan->clnt->cl_error, "failed");
 
 		LogDebug(COMPONENT_NFS_CB, "%s", err);
-		gsh_free(err);
+		free_sperror(err);
 		CLNT_DESTROY(chan->clnt);
 		chan->clnt = NULL;
 		code = EINVAL;
@@ -872,7 +879,7 @@ int nfs_rpc_create_chan_v41(SVCXPRT *xprt, nfs41_session_t *session,
 		err = rpc_sperror(&chan->auth->ah_error, "failed");
 
 		LogDebug(COMPONENT_NFS_CB, "%s", err);
-		gsh_free(err);
+		free_sperror(err);
 		if (chan->auth_flavor != AUTH_NONE)
 			AUTH_DESTROY(chan->auth);
 		chan->auth = NULL;
@@ -966,7 +973,7 @@ void nfs_rpc_destroy_chan(rpc_call_channel_t *chan)
 
 static inline void free_argop(nfs_cb_argop4 *op)
 {
-	gsh_free(op);
+	gsh_free(op, MEM_COMP_PROTOCOL);
 }
 
 /**
@@ -977,7 +984,7 @@ static inline void free_argop(nfs_cb_argop4 *op)
 
 static inline void free_resop(nfs_cb_resop4 *op)
 {
-	gsh_free(op);
+	gsh_free(op, MEM_COMP_PROTOCOL);
 }
 
 /**
@@ -988,7 +995,8 @@ static inline void free_resop(nfs_cb_resop4 *op)
 
 struct _rpc_call *alloc_rpc_call(void)
 {
-	struct _rpc_call *call = gsh_calloc(1, sizeof(struct _rpc_call));
+	struct _rpc_call *call =
+		gsh_calloc(1, sizeof(struct _rpc_call), MEM_COMP_PROTOCOL);
 
 	(void)atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
 
@@ -1013,11 +1021,12 @@ void free_rpc_call(rpc_call_t *call)
  *
  * @param[in] cc The call context to free
  */
-static void nfs_rpc_call_free(struct clnt_req *cc, size_t unused)
+static void nfs_rpc_call_free(struct clnt_req *cc, size_t unused,
+			const char *file, int line, const char *function)
 {
 	rpc_call_t *call = container_of(cc, struct _rpc_call, call_req);
 
-	gsh_free(call);
+	gsh_free(call, MEM_COMP_PROTOCOL);
 	(void)atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 }
 
@@ -1157,9 +1166,11 @@ static rpc_call_t *construct_v41(nfs41_session_t *session, nfs_cb_argop4 *op,
 		referring_call_list4 *list;
 		referring_call4 *ref_call = NULL;
 
-		list = gsh_calloc(1, sizeof(referring_call_list4));
+		list = gsh_calloc(1, sizeof(referring_call_list4),
+				  MEM_COMP_PROTOCOL);
 
-		ref_call = gsh_malloc(sizeof(referring_call4));
+		ref_call =
+			gsh_malloc(sizeof(referring_call4), MEM_COMP_PROTOCOL);
 
 		sequence->csa_referring_call_lists.csarcl_len = 1;
 		sequence->csa_referring_call_lists.csarcl_val = list;
@@ -1196,8 +1207,9 @@ static void release_v41(rpc_call_t *call)
 	if (call_lists == NULL)
 		return;
 
-	gsh_free(call_lists->rcl_referring_calls.rcl_referring_calls_val);
-	gsh_free(call_lists);
+	gsh_free(call_lists->rcl_referring_calls.rcl_referring_calls_val,
+		 MEM_COMP_PROTOCOL);
+	gsh_free(call_lists, MEM_COMP_PROTOCOL);
 }
 
 /**

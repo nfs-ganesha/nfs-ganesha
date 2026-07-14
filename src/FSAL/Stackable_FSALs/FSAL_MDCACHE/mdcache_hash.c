@@ -74,8 +74,9 @@ void cih_pkginit(void)
 
 	/* avoid writer starvation */
 	cih_fhcache.npart = mdcache_param.nparts;
-	cih_fhcache.partition =
-		gsh_calloc(cih_fhcache.npart, sizeof(cih_partition_t));
+	cih_fhcache.partition = gsh_calloc(cih_fhcache.npart,
+					   sizeof(cih_partition_t),
+					   MEM_COMP_MDCACHE);
 	cih_fhcache.cache_sz = mdcache_param.cache_size;
 	for (ix = 0; ix < cih_fhcache.npart; ++ix) {
 		cp = &cih_fhcache.partition[ix];
@@ -83,7 +84,8 @@ void cih_pkginit(void)
 		PTHREAD_MUTEX_init(&cp->cih_lock, NULL);
 		avltree_init(&cp->t, cih_fh_cmpf, 0 /* must be 0 */);
 		cp->cache = gsh_calloc(cih_fhcache.cache_sz,
-				       sizeof(struct avltree_node *));
+				       sizeof(struct avltree_node *),
+				       MEM_COMP_MDCACHE);
 	}
 
 	initialized = true;
@@ -103,10 +105,10 @@ void cih_pkgdestroy(void)
 			LogMajor(COMPONENT_MDCACHE,
 				 "MDCACHE AVL tree not empty");
 		PTHREAD_MUTEX_destroy(&cih_fhcache.partition[ix].cih_lock);
-		gsh_free(cih_fhcache.partition[ix].cache);
+		gsh_free(cih_fhcache.partition[ix].cache, MEM_COMP_MDCACHE);
 	}
 	/* Destroy the partition table */
-	gsh_free(cih_fhcache.partition);
+	gsh_free(cih_fhcache.partition, MEM_COMP_MDCACHE);
 	cih_fhcache.partition = NULL;
 	initialized = false;
 }

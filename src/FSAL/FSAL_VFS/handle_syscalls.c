@@ -56,7 +56,7 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself, fsal_errors_t *fsal_error)
 #endif
 
 	if (myself->u.symlink.link_content != NULL) {
-		gsh_free(myself->u.symlink.link_content);
+		gsh_free(myself->u.symlink.link_content, MEM_COMP_FSAL);
 		myself->u.symlink.link_content = NULL;
 		myself->u.symlink.link_length = 0;
 	}
@@ -78,7 +78,8 @@ int vfs_readlink(struct vfs_fsal_obj_handle *myself, fsal_errors_t *fsal_error)
 #endif
 
 	/* Make room for NUL termination */
-	myself->u.symlink.link_content = gsh_malloc(st.st_size + 1);
+	myself->u.symlink.link_content = gsh_malloc(st.st_size + 1,
+						    MEM_COMP_FSAL);
 
 	/* readlink fills the buffer up to specified size, not NUL terminated,
 	 * return is the number of bytes read.
@@ -105,7 +106,7 @@ error:
 	close(fd);
 #endif
 	if (myself->u.symlink.link_content != NULL) {
-		gsh_free(myself->u.symlink.link_content);
+		gsh_free(myself->u.symlink.link_content, MEM_COMP_FSAL);
 		myself->u.symlink.link_content = NULL;
 		myself->u.symlink.link_length = 0;
 	}

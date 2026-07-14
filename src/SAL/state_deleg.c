@@ -574,7 +574,7 @@ bool atomic_remove_revoked_and_clear_flags(const stateid4 *stateid,
 			glist_entry(glist, struct revoked_delegation, list);
 		if (memcmp(&revoked->stateid, stateid, sizeof(stateid4)) == 0) {
 			glist_del(&revoked->list);
-			gsh_free(revoked);
+			gsh_free(revoked, MEM_COMP_STATE);
 			LogDebug(COMPONENT_STATE, "Removed revoked stateid");
 			break;
 		}
@@ -743,7 +743,8 @@ bool is_stateid_revoked(const stateid4 *stateid)
  */
 static void add_to_revoked_delegations(state_t *state)
 {
-	struct revoked_delegation *entry = malloc(sizeof(*entry));
+	struct revoked_delegation *entry =
+		gsh_malloc(sizeof(*entry), MEM_COMP_STATE);
 
 	if (!entry) {
 		LogCrit(COMPONENT_NFS_V4,
@@ -838,7 +839,7 @@ nfsstat4 deleg_revoke(struct fsal_obj_handle *obj, struct state_t *deleg_state)
 
 	state_del_locked(deleg_state);
 
-	gsh_free(fhandle.nfs_fh4_val);
+	gsh_free(fhandle.nfs_fh4_val, MEM_COMP_PROTOCOL);
 
 	/* Release references taken above */
 	dec_state_owner_ref(owner);

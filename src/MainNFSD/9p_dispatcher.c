@@ -329,7 +329,7 @@ static void _9p_execute(struct _9p_request_data *req9p)
 static void _9p_free_reqdata(struct _9p_request_data *req9p)
 {
 	if (req9p->pconn->trans_type == _9P_TCP)
-		gsh_free(req9p->_9pmsg);
+		gsh_free(req9p->_9pmsg, MEM_COMP_PROTOCOL);
 
 	/* decrease connection refcount */
 	(void)atomic_dec_uint32_t(&req9p->pconn->refcount);
@@ -414,7 +414,7 @@ static void _9p_worker_run(struct fridgethr_context *ctx)
 		LogFullDebug(COMPONENT_DISPATCH,
 			     "Invalidating processed entry");
 
-		gsh_free(reqdata);
+		gsh_free(reqdata, MEM_COMP_PROTOCOL);
 		(void)atomic_inc_uint64_t(&nfs_health_.dequeued_reqs);
 	}
 
@@ -650,7 +650,7 @@ void *_9p_socket_thread(void *Arg)
 			continue;
 
 		/* Prepare to read the message */
-		_9pmsg = gsh_malloc(_9p_conn.msize);
+		_9pmsg = gsh_malloc(_9p_conn.msize, MEM_COMP_PROTOCOL);
 
 		/* An incoming 9P request: the msg has a 4 bytes header
 		   showing the size of the msg including the header */
@@ -689,7 +689,8 @@ void *_9p_socket_thread(void *Arg)
 
 		/* Message is good. */
 		(void)atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
-		req = gsh_calloc(1, sizeof(struct _9p_request_data));
+		req = gsh_calloc(1, sizeof(struct _9p_request_data),
+				 MEM_COMP_PROTOCOL);
 
 		req->_9pmsg = _9pmsg;
 		req->pconn = &_9p_conn;
@@ -739,7 +740,7 @@ end:
 	/* Free buffer if we encountered an error
 	 * before we could give it to a worker */
 	if (_9pmsg)
-		gsh_free(_9pmsg);
+		gsh_free(_9pmsg, MEM_COMP_PROTOCOL);
 
 	while (atomic_fetch_uint32_t(&_9p_conn.refcount)) {
 		LogEvent(COMPONENT_9P, "Waiting for workers to release pconn");

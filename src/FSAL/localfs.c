@@ -255,10 +255,10 @@ static void remove_fs(struct fsal_filesystem *fs)
 
 static void free_fs(struct fsal_filesystem *fs)
 {
-	gsh_free(fs->path);
-	gsh_free(fs->device);
-	gsh_free(fs->type);
-	gsh_free(fs);
+	gsh_free(fs->path, MEM_COMP_FSAL);
+	gsh_free(fs->device, MEM_COMP_FSAL);
+	gsh_free(fs->type, MEM_COMP_FSAL);
+	gsh_free(fs, MEM_COMP_FSAL);
 }
 
 int re_index_fs_fsid(struct fsal_filesystem *fs, enum fsid_type fsid_type,
@@ -587,7 +587,8 @@ static void posix_create_fs_btrfs_subvols(struct fsal_filesystem *fs)
 		if (err == BTRFS_UTIL_OK) {
 			/* Construct fully qualified path */
 			lens = strlen(path);
-			mnt.mnt_dir = gsh_malloc(lenp + lens + 2);
+			mnt.mnt_dir =
+				gsh_malloc(lenp + lens + 2, MEM_COMP_FSAL);
 			memcpy(mnt.mnt_dir, fs->path, lenp);
 			mnt.mnt_dir[lenp] = '/';
 			memcpy(mnt.mnt_dir + lenp + 1, path, lens + 1);
@@ -609,7 +610,7 @@ static void posix_create_fs_btrfs_subvols(struct fsal_filesystem *fs)
 			 * qualified path.
 			 */
 			free(path);
-			gsh_free(mnt.mnt_dir);
+			gsh_free(mnt.mnt_dir, MEM_COMP_FSAL);
 		} else if (err != BTRFS_UTIL_ERROR_STOP_ITERATION) {
 			LogCrit(COMPONENT_FSAL,
 				"btrfs_util_subvolume_iterator_next err %s",
@@ -633,11 +634,11 @@ static void posix_create_file_system(struct gsh_export *exp, struct mntent *mnt,
 	struct avltree_node *node;
 
 	LogDebug(COMPONENT_FSAL, "exp=%p fsname=%s", exp, mnt->mnt_fsname);
-	fs = gsh_calloc(1, sizeof(*fs));
+	fs = gsh_calloc(1, sizeof(*fs), MEM_COMP_FSAL);
 
-	fs->path = gsh_strdup(mnt->mnt_dir);
-	fs->device = gsh_strdup(mnt->mnt_fsname);
-	fs->type = gsh_strdup(mnt->mnt_type);
+	fs->path = gsh_strdup(mnt->mnt_dir, MEM_COMP_FSAL);
+	fs->device = gsh_strdup(mnt->mnt_fsname, MEM_COMP_FSAL);
+	fs->type = gsh_strdup(mnt->mnt_type, MEM_COMP_FSAL);
 	glist_init(&fs->exports);
 
 	if (!posix_get_fsid(fs, mnt_stat)) {
@@ -686,10 +687,10 @@ static void posix_create_file_system(struct gsh_export *exp, struct mntent *mnt,
 				"Switching device for %s from %s to %s type from %s to %s",
 				fs->path, fs1->device, fs->device, fs1->type,
 				fs->type);
-			gsh_free(fs1->device);
+			free(fs1->device);
 			fs1->device = fs->device;
 			fs->device = NULL;
-			gsh_free(fs1->type);
+			free(fs1->type);
 			fs1->type = fs->type;
 			fs->type = NULL;
 		}
@@ -721,10 +722,10 @@ static void posix_create_file_system(struct gsh_export *exp, struct mntent *mnt,
 				"Switching device for %s from %s to %s type from %s to %s",
 				fs->path, fs1->device, fs->device, fs1->type,
 				fs->type);
-			gsh_free(fs1->device);
+			free(fs1->device);
 			fs1->device = fs->device;
 			fs->device = NULL;
-			gsh_free(fs1->type);
+			free(fs1->type);
 			fs1->type = fs->type;
 			fs->type = NULL;
 		}
@@ -1308,7 +1309,7 @@ void unclaim_child_map(struct fsal_filesystem_export_map *this)
 	LogFilesystem("UNCLAIM ", "(AFTER)", this->fs);
 
 	/* And free this map */
-	gsh_free(this);
+	gsh_free(this, MEM_COMP_FSAL);
 }
 
 void unclaim_all_filesystem_maps(struct fsal_filesystem *this)
@@ -1617,7 +1618,7 @@ static int process_claim(const char *path, int pathlen,
 	this->unclaim = unclaim;
 	this->private_data = private_data;
 
-	map = gsh_calloc(1, sizeof(*map));
+	map = gsh_calloc(1, sizeof(*map), MEM_COMP_FSAL);
 	map->exp = exp;
 	map->fs = this;
 	map->claim_type = claim_type;
@@ -1976,7 +1977,7 @@ fsal_status_t fsal_buffered_copy_fd(int src_fd, int dst_fd, uint64_t src_offset,
 		 " dst_off=%" PRIu64 " count=%" PRIu64 " chunk=%" PRIu64,
 		 src_fd, dst_fd, src_offset, dst_offset, count, max_chunk);
 
-	buffer = gsh_malloc(max_chunk);
+	buffer = gsh_malloc(max_chunk, MEM_COMP_XCOPY);
 
 	while (bytes_copied < count) {
 		size_t request = (size_t)MIN(count - bytes_copied, max_chunk);
@@ -2031,7 +2032,7 @@ out:
 			" of %" PRIu64,
 			status.major, status.minor, bytes_copied, count);
 	}
-	gsh_free(buffer);
+	gsh_free(buffer, MEM_COMP_XCOPY);
 	return status;
 }
 

@@ -190,7 +190,7 @@ void _9p_rdma_callback_recv(msk_trans_t *trans, msk_data_t *data, void *arg)
 	char *_9pmsg = NULL;
 
 	(void)atomic_inc_uint64_t(&nfs_health_.enqueued_reqs);
-	req = gsh_calloc(1, sizeof(struct _9p_request_data));
+	req = gsh_calloc(1, sizeof(struct _9p_request_data), MEM_COMP_PROTOCOL);
 
 	req->_9pmsg = _9pmsg;
 	req->pconn = _9p_rdma_priv_of(trans)->pconn;

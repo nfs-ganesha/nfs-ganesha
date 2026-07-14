@@ -88,7 +88,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 		return EINVAL;
 	}
 
-	frobj = gsh_malloc(sizeof(struct fridgethr));
+	frobj = gsh_malloc(sizeof(struct fridgethr), MEM_COMP_FRIDGE);
 
 	*frout = NULL;
 
@@ -104,7 +104,7 @@ int fridgethr_init(struct fridgethr **frout, const char *s,
 	PTHREAD_ATTR_setdetachstate(&frobj->attr, PTHREAD_CREATE_DETACHED);
 	PTHREAD_MUTEX_init(&frobj->frt_mtx, NULL);
 
-	frobj->s = gsh_strdup(s);
+	frobj->s = gsh_strdup(s, MEM_COMP_FRIDGE);
 
 	frobj->command = fridgethr_comm_run;
 	frobj->transitioning = false;
@@ -157,8 +157,8 @@ inval:
 	PTHREAD_MUTEX_destroy(&frobj->frt_mtx);
 	PTHREAD_ATTR_destroy(&frobj->attr);
 
-	gsh_free(frobj->s);
-	gsh_free(frobj);
+	gsh_free(frobj->s, MEM_COMP_FRIDGE);
+	gsh_free(frobj, MEM_COMP_FRIDGE);
 
 	return EINVAL;
 }
@@ -177,8 +177,8 @@ void fridgethr_destroy(struct fridgethr *fr)
 
 	PTHREAD_MUTEX_destroy(&fr->frt_mtx);
 	PTHREAD_ATTR_destroy(&fr->attr);
-	gsh_free(fr->s);
-	gsh_free(fr);
+	gsh_free(fr->s, MEM_COMP_FRIDGE);
+	gsh_free(fr, MEM_COMP_FRIDGE);
 }
 
 /**
@@ -272,7 +272,7 @@ static bool fridgethr_getwork(struct fridgethr *fr, struct fridgethr_entry *fe)
 		glist_del(&q->link);
 		fe->ctx.func = q->func;
 		fe->ctx.arg = q->arg;
-		gsh_free(q);
+		gsh_free(q, MEM_COMP_FRIDGE);
 		return true;
 	}
 }
@@ -504,7 +504,7 @@ static void *fridgethr_start_routine(void *arg)
 
 	PTHREAD_MUTEX_destroy(&fe->ctx.fre_mtx);
 	PTHREAD_COND_destroy(&fe->ctx.fre_cv);
-	gsh_free(fe);
+	gsh_free(fe, MEM_COMP_FRIDGE);
 	fe = NULL;
 	/* At this point the fridge entry no longer exists and must
 	   not be accessed. */
@@ -533,7 +533,7 @@ static int fridgethr_spawn(struct fridgethr *fr,
 	/* Newly created thread entry */
 	struct fridgethr_entry *fe = NULL;
 
-	fe = gsh_calloc(1, sizeof(struct fridgethr_entry));
+	fe = gsh_calloc(1, sizeof(struct fridgethr_entry), MEM_COMP_FRIDGE);
 
 	glist_init(&fe->thread_link);
 	fe->fr = fr;
@@ -573,7 +573,7 @@ create_err:
 	PTHREAD_COND_destroy(&fe->ctx.fre_cv);
 	PTHREAD_MUTEX_destroy(&fe->ctx.fre_mtx);
 
-	gsh_free(fe);
+	gsh_free(fe, MEM_COMP_FRIDGE);
 	PTHREAD_MUTEX_unlock(&fr->frt_mtx);
 
 	return rc;
@@ -601,7 +601,7 @@ static int fridgethr_queue(struct fridgethr *fr,
 
 	assert(fr->p.deferment == fridgethr_defer_queue);
 
-	q = gsh_malloc(sizeof(struct fridgethr_work));
+	q = gsh_malloc(sizeof(struct fridgethr_work), MEM_COMP_FRIDGE);
 
 	glist_init(&q->link);
 	q->func = func;
@@ -954,7 +954,7 @@ int fridgethr_stop(struct fridgethr *fr, pthread_mutex_t *pmtx,
 						  struct fridgethr_work, link);
 			glist_del(&q->link);
 			rc = fridgethr_spawn(fr, q->func, q->arg);
-			gsh_free(q);
+			gsh_free(q, MEM_COMP_FRIDGE);
 		} else {
 			/* Spawn a dummy to clean out the queue */
 			rc = fridgethr_spawn(fr, fridgethr_noop, NULL);
@@ -1051,7 +1051,7 @@ int fridgethr_start(struct fridgethr *fr, pthread_mutex_t *pmtx,
 						  struct fridgethr_work, link);
 			glist_del(&q->link);
 			rc = fridgethr_spawn(fr, q->func, q->arg);
-			gsh_free(q);
+			gsh_free(q, MEM_COMP_FRIDGE);
 			PTHREAD_MUTEX_lock(&fr->frt_mtx);
 			if (rc != 0)
 				break;
@@ -1225,7 +1225,8 @@ int fridgethr_populate(struct fridgethr *fr,
 		struct fridgethr_entry *fe = NULL;
 		int rc = 0;
 
-		fe = gsh_calloc(1, sizeof(struct fridgethr_entry));
+		fe = gsh_calloc(1, sizeof(struct fridgethr_entry),
+				MEM_COMP_FRIDGE);
 
 		/* Make a new thread */
 		++(fr->nthreads);
@@ -1329,7 +1330,7 @@ void fridgethr_cancel(struct fridgethr *fr)
 		pthread_cancel(t->ctx.id);
 		pthread_join(t->ctx.id, NULL);
 		glist_del(&t->thread_link);
-		gsh_free(t);
+		gsh_free(t, MEM_COMP_FRIDGE);
 		--(fr->nthreads);
 	}
 	PTHREAD_MUTEX_unlock(&fr->frt_mtx);

@@ -225,7 +225,7 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	RES_MOUNTINFO->auth_flavors.auth_flavors_val =
-		gsh_calloc(index_auth, sizeof(int));
+		gsh_calloc(index_auth, sizeof(int), MEM_COMP_PROTOCOL);
 
 	RES_MOUNTINFO->auth_flavors.auth_flavors_len = index_auth;
 	for (i = 0; i < index_auth; i++)
@@ -259,7 +259,8 @@ void mnt3_Mnt_Free(nfs_res_t *res)
 	mountres3_ok *resok = &res->res_mnt3.mountres3_u.mountinfo;
 
 	if (res->res_mnt3.fhs_status == MNT3_OK) {
-		gsh_free(resok->auth_flavors.auth_flavors_val);
-		gsh_free(resok->fhandle.fhandle3_val);
+		gsh_free(resok->auth_flavors.auth_flavors_val,
+			 MEM_COMP_PROTOCOL);
+		gsh_free(resok->fhandle.fhandle3_val, MEM_COMP_PROTOCOL);
 	}
 }

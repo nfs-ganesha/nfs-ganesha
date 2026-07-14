@@ -91,9 +91,9 @@ static void *_9p_rdma_cleanup_conn_thread(void *arg)
 		}
 
 		if (priv->pconn)
-			gsh_free(priv->pconn);
+			gsh_free(priv->pconn, MEM_COMP_PROTOCOL);
 
-		gsh_free(priv);
+		gsh_free(priv, MEM_COMP_PROTOCOL);
 	}
 
 	msk_destroy_trans(&trans);
@@ -147,13 +147,13 @@ void *_9p_rdma_thread(void *Arg)
 	struct sockaddr *addrpeer;
 
 	rcu_register_thread();
-	priv = gsh_calloc(1, sizeof(*priv));
+	priv = gsh_calloc(1, sizeof(*priv), MEM_COMP_PROTOCOL);
 
 	trans->private_data = priv;
 	priv->pernic = msk_getpd(trans)->private;
 	priv->outqueue = outqueue;
 
-	p_9p_conn = gsh_calloc(1, sizeof(*p_9p_conn));
+	p_9p_conn = gsh_calloc(1, sizeof(*p_9p_conn), MEM_COMP_PROTOCOL);
 
 	priv->pconn = p_9p_conn;
 
@@ -218,7 +218,7 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 	if (msk_getpd(trans)->private)
 		return;
 
-	pernic = gsh_calloc(1, sizeof(*pernic));
+	pernic = gsh_calloc(1, sizeof(*pernic), MEM_COMP_PROTOCOL);
 
 	/* register output buffers */
 	pernic->outmr = msk_reg_mr(trans, outrdmabuf,
@@ -236,7 +236,8 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 	/* register input buffers */
 	/* Alloc rdmabuf */
 	pernic->rdmabuf = gsh_malloc(_9p_param._9p_rdma_inpool_size *
-				     _9p_param._9p_rdma_msize);
+					     _9p_param._9p_rdma_msize,
+				     MEM_COMP_IO_BUFFER);
 
 	/* Register rdmabuf */
 	pernic->inmr = msk_reg_mr(trans, pernic->rdmabuf,
@@ -254,7 +255,7 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 	/* Get prepared to recv data */
 
 	pernic->rdata = gsh_calloc(_9p_param._9p_rdma_inpool_size,
-				   sizeof(*pernic->rdata));
+				   sizeof(*pernic->rdata), MEM_COMP_IO_BUFFER);
 
 	for (i = 0; i < _9p_param._9p_rdma_inpool_size; i++) {
 		pernic->rdata[i].data =
@@ -272,9 +273,9 @@ static void _9p_rdma_setup_pernic(msk_trans_t *trans, uint8_t *outrdmabuf)
 				i, rc);
 			msk_dereg_mr(pernic->inmr);
 			msk_dereg_mr(pernic->outmr);
-			gsh_free(pernic->rdmabuf);
-			gsh_free(pernic->rdata);
-			gsh_free(pernic);
+			gsh_free(pernic->rdmabuf, MEM_COMP_IO_BUFFER);
+			gsh_free(pernic->rdata, MEM_COMP_IO_BUFFER);
+			gsh_free(pernic, MEM_COMP_PROTOCOL);
 			return;
 		}
 	}
@@ -291,11 +292,13 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	struct _9p_outqueue *outqueue;
 
 	outrdmabuf = gsh_malloc(_9p_param._9p_rdma_outpool_size *
-				_9p_param._9p_rdma_msize);
+					_9p_param._9p_rdma_msize,
+				MEM_COMP_IO_BUFFER);
 
 	*poutrdmabuf = outrdmabuf;
 
-	wdata = gsh_malloc(_9p_param._9p_rdma_outpool_size * sizeof(*wdata));
+	wdata = gsh_malloc(_9p_param._9p_rdma_outpool_size * sizeof(*wdata),
+			   MEM_COMP_IO_BUFFER);
 
 	for (i = 0; i < _9p_param._9p_rdma_outpool_size; i++) {
 		wdata[i].data = outrdmabuf + i * _9p_param._9p_rdma_msize;
@@ -307,7 +310,7 @@ static void _9p_rdma_setup_global(uint8_t **poutrdmabuf, msk_data_t **pwdata,
 	}
 	*pwdata = wdata;
 
-	outqueue = gsh_malloc(sizeof(*outqueue));
+	outqueue = gsh_malloc(sizeof(*outqueue), MEM_COMP_PROTOCOL);
 
 	PTHREAD_MUTEX_init(&outqueue->oq_lock, NULL);
 	PTHREAD_COND_init(&outqueue->oq_cond, NULL);
@@ -320,9 +323,9 @@ static void _9p_rdma_cleanup_global(uint8_t *outrdmabuf, msk_data_t *wdata,
 {
 	PTHREAD_MUTEX_destroy(&outqueue->oq_lock);
 	PTHREAD_COND_destroy(&outqueue->oq_cond);
-	gsh_free(outrdmabuf);
-	gsh_free(wdata);
-	gsh_free(outqueue);
+	gsh_free(outrdmabuf, MEM_COMP_IO_BUFFER);
+	gsh_free(wdata, MEM_COMP_IO_BUFFER);
+	gsh_free(outqueue, MEM_COMP_PROTOCOL);
 }
 
 /**

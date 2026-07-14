@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <urcu/ref.h>
 #include <string.h>
+#include "abstract_mem.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +40,7 @@ extern "C" {
  */
 struct gsh_refstr {
 	struct urcu_ref gr_ref; /* refcount */
+	mem_components_t gr_comp; /* memory component used for alloc/free */
 #ifdef __cplusplus
 	char gr_val[1];
 #else
@@ -56,7 +58,7 @@ struct gsh_refstr {
  *
  * @param[in]	len	Length of the embedded buffer
  */
-struct gsh_refstr *gsh_refstr_alloc(size_t len);
+struct gsh_refstr *gsh_refstr_alloc(size_t len, mem_components_t comp);
 
 /**
  * @brief create a new gsh_refstr by duplicating an existing string
@@ -65,10 +67,11 @@ struct gsh_refstr *gsh_refstr_alloc(size_t len);
  *
  * @param[in]	str	The string to be duplicated in the new gsh_refstr
  */
-static inline struct gsh_refstr *gsh_refstr_dup(const char *str)
+static inline struct gsh_refstr *gsh_refstr_dup(const char *str,
+						mem_components_t comp)
 {
 	size_t len = strlen(str) + 1;
-	struct gsh_refstr *refstr = gsh_refstr_alloc(len);
+	struct gsh_refstr *refstr = gsh_refstr_alloc(len, comp);
 
 	memcpy(refstr->gr_val, str, len);
 

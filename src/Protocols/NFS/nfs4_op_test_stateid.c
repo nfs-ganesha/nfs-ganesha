@@ -94,7 +94,7 @@ enum nfs_req_result nfs4_op_test_stateid(struct nfs_argop4 *op,
 	nr_stateids = arg_TEST_STATEID4->ts_stateids.ts_stateids_len;
 	res = &res_TEST_STATEID4->TEST_STATEID4res_u.tsr_resok4;
 	res->tsr_status_codes.tsr_status_codes_val =
-		gsh_calloc(nr_stateids, sizeof(nfsstat4));
+		gsh_calloc(nr_stateids, sizeof(nfsstat4), MEM_COMP_PROTOCOL);
 
 	for (i = 0; i < nr_stateids; i++) {
 		ret = nfs4_Check_Stateid(
@@ -131,6 +131,7 @@ void nfs4_op_test_stateid_Free(nfs_resop4 *resp)
 		&res_TEST_STATEID4->TEST_STATEID4res_u.tsr_resok4;
 
 	if (res_TEST_STATEID4->tsr_status == NFS4_OK) {
-		gsh_free(res->tsr_status_codes.tsr_status_codes_val);
+		gsh_free(res->tsr_status_codes.tsr_status_codes_val,
+			 MEM_COMP_PROTOCOL);
 	}
 }

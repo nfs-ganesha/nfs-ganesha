@@ -1,0 +1,286 @@
+#!/usr/bin/env bpftrace
+//SPDX-License-Identifier: LGPL-3.0-or-later
+/*
+ *
+ * Copyright (C) 2026, IBM . All rights reserved.
+ * Author: Nishant Puri <Nishant.Puri1@ibm.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301 USA.  see <http://www.gnu.org/licenses/
+ *
+ * ---------------------------------------
+ *
+ * mem_comp_audit.bt — live mem_components_t alloc/free auditor for NFS-Ganesha
+ *
+ * Portable: no extern, no uretprobe, no inline — works on stock RHEL 9 bpftrace.
+ *
+ * ============================================================================
+ * USAGE
+ * ============================================================================
+ *
+ *   LIB=$(ldd /path/to/ganesha.nfsd | awk '/libganesha_nfsd/ {print $3}')
+ *   sudo bpftrace mem_comp_audit.bt "$LIB" 30
+ *   sudo bpftrace mem_comp_audit.bt "$LIB" 60
+ *
+ * ARGUMENTS (both required — see README for bpftrace limitation)
+ *   $1  Full path to libganesha_nfsd.so
+ *   $2  Heartbeat interval in seconds (use 30 for the usual default)
+ *
+ * See src/scripts/bpftrace/README.md for prerequisites and cold-start workflow.
+ *
+ * SYNC (when adding MEM_COMP_* — see comment above enum in mem_components.h)
+ *   1. src/include/mem_components.h — new enum member before MEM_COMP_MAX
+ *   2. src/support/server_stats.c — MemComponents[] entry with .mem_comp_str
+ *   3. @NAMES[index] and @comp_max[0]
+ *      (index = enum value; @comp_max[0] = MEM_COMP_MAX, currently 23)
+ *
+ * COLD START (recommended first run — capture init from first alloc)
+ *   Terminal 1: sudo bpftrace mem_comp_audit.bt "$LIB" 30
+ *   Terminal 2: start ganesha.nfsd
+ *   Stop with Ctrl-C when init completes.
+ *
+ * ============================================================================
+ * OUTPUT GUIDE (all cases)
+ * ============================================================================
+ *
+ * 1) STARTUP BANNER (always, once)
+ * 2) MISMATCH — comp-tag BUG (fix these) — timestamp on first line
+ * 3) WARN — free with no tracked alloc (usually benign at init)
+ * 4) WARN — address reused before prior free seen (usually startup noise)
+ * 5) HEARTBEAT — every N seconds (progress, not errors)
+ * 6) CLEAN alloc/free — no output (silent = correct tagging)
+ * 7) Ctrl-C SUMMARY — final totals
+ *
+ * ============================================================================
+ * COMPONENT INDEX (@NAMES — must match mem_components.h)
+ * ============================================================================
+ *
+ *   0 UNSET      8 FRIDGE     16 MDCACHE
+ *   1 ACL        9 FSAL       17 PROTOCOL
+ *   2 CLIENT    10 GTEST      18 QOS
+ *   3 CLIENTID  11 HASHTABLE  19 RECOVERY
+ *   4 CONFIG    12 IDMAPPER   20 STATE
+ *   5 DIRENT    13 IO_BUFFER  21 TRANSIENT
+ *   6 DUP_REQ   14 LIBNTIRPC  22 XCOPY
+ *   7 EXPORT    15 MANAGE
+ *
+ * MEM_COMP_MAX = 23 (valid ids 0..22). Update @NAMES[] and @comp_max[0] below
+ * when the enum changes (also MemComponents[] in server_stats.c).
+ *
+ * ============================================================================
+ * TROUBLESHOOTING (script-specific)
+ * ============================================================================
+ *
+ *   "uprobe target file '' does not exist"
+ *     $1 empty — pass full path to libganesha_nfsd.so as the first argument.
+ *
+ *   Heartbeat shows allocation events=0 while ganesha is running
+ *     You likely passed libganesha_nfsd.so (symlink) instead of the versioned
+ *     file ganesha maps (e.g. libganesha_nfsd.so.14.0). Use:
+ *       LIB=$(ldd /path/to/ganesha.nfsd | awk '/libganesha_nfsd/ {print $3; exit}')
+ *
+ *   Kernel 5.14 "lower than minimum 5.15" warning
+ *     Informational on RHEL 9; uprobes still work if "Attached N probes" follows.
+ *
+ *   WARN at init on LIBNTIRPC / gsh_free_size
+ *     Normal — allocs before libntirpc hooks installed, freed after. Not MISMATCH.
+ *
+ *   "Positional parameter $2 is empty" warning
+ *     Pass both arguments always (use 30 for the default heartbeat interval).
+ *
+ * ============================================================================
+ * BEGIN-RUNTIME
+ * ============================================================================
+ */
+
+#define LOOP_CAP 127
+
+BEGIN
+{
+	/*
+	 * Must match mem_components.h enum order and MemComponents[].mem_comp_str
+	 * in server_stats.c (see mem_components.h comment when adding entries).
+	 */
+	@NAMES[0]  = "UNSET";
+	@NAMES[1]  = "ACL";
+	@NAMES[2]  = "CLIENT";
+	@NAMES[3]  = "CLIENTID";
+	@NAMES[4]  = "CONFIG";
+	@NAMES[5]  = "DIRENT";
+	@NAMES[6]  = "DUP_REQ";
+	@NAMES[7]  = "EXPORT";
+	@NAMES[8]  = "FRIDGE";
+	@NAMES[9]  = "FSAL";
+	@NAMES[10] = "GTEST";
+	@NAMES[11] = "HASHTABLE";
+	@NAMES[12] = "IDMAPPER";
+	@NAMES[13] = "IO_BUFFER";
+	@NAMES[14] = "LIBNTIRPC";
+	@NAMES[15] = "MANAGE";
+	@NAMES[16] = "MDCACHE";
+	@NAMES[17] = "PROTOCOL";
+	@NAMES[18] = "QOS";
+	@NAMES[19] = "RECOVERY";
+	@NAMES[20] = "STATE";
+	@NAMES[21] = "TRANSIENT";
+	@NAMES[22] = "XCOPY";
+
+	/* Must equal MEM_COMP_MAX in src/include/mem_components.h */
+	@comp_max[0] = 23;
+
+	@hb_secs[0] = (int64)$2;
+	@hb_tick[0] = 0;
+
+	printf("=== mem_comp_audit started ===\n");
+	printf("Library : %s\n", str($1));
+	printf("MEM_COMP_MAX: %d (indices 0..%d; edit @comp_max in script if enum grows)\n",
+		@comp_max[0], @comp_max[0] - 1);
+	printf("Heartbeat: every %d seconds\n", @hb_secs[0]);
+	printf("Help    : src/scripts/bpftrace/README.md\n");
+	printf("Report  : MISMATCH = comp-tag bug (fix these)\n");
+	printf("          WARN     = usually startup noise (ignore unless persistent)\n");
+	printf("          HEARTBEAT = progress + live pointer counts (not errors)\n");
+	printf("Stop    : Ctrl-C for final summary\n\n");
+}
+
+uprobe:$1:gsh_mem_stats_update_alloc
+/arg0 != 0/
+{
+	$p    = arg0;
+	$comp = (int32)arg1;
+
+	if (@valid[$p] == 1) {
+		time("[%H:%M:%S] ");
+		printf("WARN  address 0x%llx reused before prior free was seen\n", $p);
+		if ($comp >= 0 && $comp < (int32)@comp_max[0]) {
+			printf("      previous tag %s  new alloc tag %s  at %s:%d (%s)\n",
+				@NAMES[@comp[$p]], @NAMES[$comp],
+				str(arg2), arg3, str(arg4));
+		} else {
+			printf("      previous tag comp[%d]  new alloc tag comp[%d]  at %s:%d (%s)\n",
+				@comp[$p], $comp, str(arg2), arg3, str(arg4));
+		}
+	}
+
+	@comp[$p]  = $comp;
+	@afile[$p] = str(arg2);
+	@aline[$p] = arg3;
+	@afunc[$p] = str(arg4);
+	@valid[$p] = 1;
+
+	@outstanding[$comp] = @outstanding[$comp] + 1;
+	@nalloc = @nalloc + 1;
+}
+
+uprobe:$1:gsh_mem_stats_update_free
+/arg0 != 0/
+{
+	$p    = arg0;
+	$comp = (int32)arg1;
+
+	if (@valid[$p] == 0) {
+		time("[%H:%M:%S] ");
+		printf("WARN  free of 0x%llx with no tracked alloc (often pre-attach or pre-hook init)\n",
+			$p);
+		if ($comp >= 0 && $comp < (int32)@comp_max[0]) {
+			printf("      free tag %s  at %s:%d (%s)\n",
+				@NAMES[$comp], str(arg2), arg3, str(arg4));
+		} else {
+			printf("      free tag comp[%d]  at %s:%d (%s)\n",
+				$comp, str(arg2), arg3, str(arg4));
+		}
+	} else {
+		$acomp = @comp[$p];
+		if ($comp != $acomp) {
+			time("[%H:%M:%S] ");
+			printf("MISMATCH  pointer 0x%llx\n", $p);
+			if ($acomp >= 0 && $acomp < (int32)@comp_max[0] &&
+			    $comp >= 0 && $comp < (int32)@comp_max[0]) {
+				printf("          allocated as %s  at %s:%d (%s)\n",
+					@NAMES[$acomp], @afile[$p], @aline[$p], @afunc[$p]);
+				printf("          freed as     %s  at %s:%d (%s)\n",
+					@NAMES[$comp], str(arg2), arg3, str(arg4));
+			} else {
+				printf("          allocated as comp[%d]  at %s:%d (%s)\n",
+					$acomp, @afile[$p], @aline[$p], @afunc[$p]);
+				printf("          freed as     comp[%d]  at %s:%d (%s)\n",
+					$comp, str(arg2), arg3, str(arg4));
+			}
+		}
+		@outstanding[$acomp] = @outstanding[$acomp] - 1;
+	}
+
+	@valid[$p] = 0;
+	@nfree = @nfree + 1;
+}
+
+interval:s:1
+{
+	@hb_tick[0] = @hb_tick[0] + 1;
+	if (@hb_tick[0] < @hb_secs[0]) {
+		return;
+	}
+	@hb_tick[0] = 0;
+
+	$live = 0;
+
+	time("[%H:%M:%S] HEARTBEAT  ");
+	printf("allocation events=%d  free events=%d  (since trace started)\n",
+		@nalloc, @nfree);
+	printf("  Live pointers not yet freed — by memory component:\n");
+	for ($i : 0..LOOP_CAP) {
+		if ($i < @comp_max[0] && @outstanding[$i] > 0) {
+			$live = $live + @outstanding[$i];
+			printf("    %-12s : %d pointer(s) still allocated (not freed since trace started)\n",
+				@NAMES[$i], @outstanding[$i]);
+		}
+	}
+	printf("  Total live pointers tracked: %d  (normal for caches; only MISMATCH is a bug)\n\n",
+		$live);
+}
+
+END
+{
+	$live = 0;
+
+	printf("\n");
+	time("[%H:%M:%S] === mem_comp_audit summary ===\n");
+	printf("Total allocation events : %d\n", @nalloc);
+	printf("Total free events       : %d\n", @nfree);
+	printf("\nLive pointers not yet freed — by memory component:\n");
+	for ($i : 0..LOOP_CAP) {
+		if ($i < @comp_max[0] && @outstanding[$i] > 0) {
+			$live = $live + @outstanding[$i];
+			printf("  %-12s : %d pointer(s) still allocated\n",
+				@NAMES[$i], @outstanding[$i]);
+		}
+	}
+	printf("\nTotal live pointers: %d\n", $live);
+	printf("Fix any MISMATCH lines above. Live counts are expected for running server\n");
+	printf("caches (MDCACHE, LIBNTIRPC, HASHTABLE, etc.).\n");
+
+	clear(@NAMES);
+	clear(@comp_max);
+	clear(@hb_secs);
+	clear(@hb_tick);
+	clear(@comp);
+	clear(@afile);
+	clear(@aline);
+	clear(@afunc);
+	clear(@valid);
+	clear(@outstanding);
+	clear(@nalloc);
+	clear(@nfree);
+}

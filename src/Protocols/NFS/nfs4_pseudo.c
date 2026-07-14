@@ -646,12 +646,13 @@ void pseudo_unmount_export(struct gsh_export *export)
 	op_ctx->flags.pseudo_fsal_internal_lookup = true;
 
 	if (is_export_pseudo(mounted_on_export) && junction_inode != NULL) {
-		char *pseudo_path = gsh_strdup(ref_pseudopath->gr_val);
+		char *pseudo_path =
+			gsh_strdup(ref_pseudopath->gr_val, MEM_COMP_EXPORT);
 
 		/* Remove the unused PseudoFS nodes */
 		cleanup_pseudofs_node(pseudo_path, junction_inode);
 
-		gsh_free(pseudo_path);
+		gsh_free(pseudo_path, MEM_COMP_EXPORT);
 	} else {
 		/* Properly unmount at the FSAL layer - primarily this will
 		 * allow mdcache to unmap the junction inode from the parent

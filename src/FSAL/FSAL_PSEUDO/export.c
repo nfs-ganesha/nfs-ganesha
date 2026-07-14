@@ -70,9 +70,9 @@ static void release(struct fsal_export *exp_hdl)
 			 myself->root_handle, myself->root_handle->name);
 
 		if (myself->root_handle->name != NULL)
-			gsh_free(myself->root_handle->name);
+			gsh_free(myself->root_handle->name, MEM_COMP_FSAL);
 
-		gsh_free(myself->root_handle);
+		gsh_free(myself->root_handle, MEM_COMP_FSAL);
 		myself->root_handle = NULL;
 	}
 
@@ -80,9 +80,9 @@ static void release(struct fsal_export *exp_hdl)
 	free_export_ops(exp_hdl);
 
 	if (myself->export_path != NULL)
-		gsh_free(myself->export_path);
+		gsh_free(myself->export_path, MEM_COMP_EXPORT);
 
-	gsh_free(myself);
+	gsh_free(myself, MEM_COMP_EXPORT);
 }
 
 static fsal_status_t get_dynamic_info(struct fsal_export *exp_hdl,
@@ -199,7 +199,8 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	struct pseudofs_fsal_export *myself;
 	int retval = 0;
 
-	myself = gsh_calloc(1, sizeof(struct pseudofs_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct pseudofs_fsal_export),
+			    MEM_COMP_EXPORT);
 
 	if (myself == NULL) {
 		LogMajor(COMPONENT_FSAL, "Could not allocate export");
@@ -214,10 +215,11 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	if (retval != 0) {
 		/* seriously bad */
 		LogMajor(COMPONENT_FSAL, "Could not attach export");
-		gsh_free(myself->export_path);
-		gsh_free(myself->root_handle);
+		gsh_free(myself->export_path, MEM_COMP_EXPORT);
+		gsh_free(myself->root_handle, MEM_COMP_FSAL);
 		free_export_ops(&myself->export);
-		gsh_free(myself); /* elvis has left the building */
+		/* elvis has left the building */
+		gsh_free(myself, MEM_COMP_EXPORT);
 
 		return fsalstat(posix2fsal_error(retval), retval);
 	}
@@ -228,7 +230,8 @@ fsal_status_t pseudofs_create_export(struct fsal_module *fsal_hdl,
 	myself->export_path = CTX_FULLPATH(op_ctx);
 
 	if (myself->export_path != NULL)
-		myself->export_path = gsh_strdup(myself->export_path);
+		myself->export_path =
+			gsh_strdup(myself->export_path, MEM_COMP_EXPORT);
 
 	op_ctx->fsal_export = &myself->export;
 

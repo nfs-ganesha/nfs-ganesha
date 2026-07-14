@@ -91,7 +91,8 @@ static int cacheEntryCompareFunction(const struct avltree_node *nodeA,
 FileInfoCache_t *createFileInfoCache(unsigned int maxEntries,
 				     int minTimeoutMilliseconds)
 {
-	FileInfoCache_t *cache = gsh_calloc(1, sizeof(FileInfoCache_t));
+	FileInfoCache_t *cache =
+		gsh_calloc(1, sizeof(FileInfoCache_t), MEM_COMP_FSAL);
 
 	cache->max_entries = maxEntries;
 	cache->min_timeout_ms = minTimeoutMilliseconds;
@@ -124,16 +125,16 @@ void destroyFileInfoCache(FileInfoCache_t *cache)
 	while ((entry = glist_first_entry(&cache->used_list, FileInfoEntry_t,
 					  list_hook))) {
 		glist_del(&entry->list_hook);
-		gsh_free(entry);
+		gsh_free(entry, MEM_COMP_FSAL);
 	}
 
 	while ((entry = glist_first_entry(&cache->lru_list, FileInfoEntry_t,
 					  list_hook))) {
 		glist_del(&entry->list_hook);
-		gsh_free(entry);
+		gsh_free(entry, MEM_COMP_FSAL);
 	}
 
-	gsh_free(cache);
+	gsh_free(cache, MEM_COMP_FSAL);
 }
 
 FileInfoEntry_t *acquireFileInfoCache(FileInfoCache_t *cache, sau_inode_t inode)
@@ -156,7 +157,7 @@ FileInfoEntry_t *acquireFileInfoCache(FileInfoCache_t *cache, sau_inode_t inode)
 		glist_add(&cache->used_list, &entry->list_hook);
 		avltree_remove(node, &cache->entry_lookup);
 	} else {
-		entry = gsh_calloc(1, sizeof(FileInfoEntry_t));
+		entry = gsh_calloc(1, sizeof(FileInfoEntry_t), MEM_COMP_FSAL);
 		glist_add(&cache->used_list, &entry->list_hook);
 		cache->entry_count++;
 	}
@@ -190,7 +191,7 @@ void eraseFileInfoCache(FileInfoCache_t *cache, FileInfoEntry_t *entry)
 	glist_del(&entry->list_hook);
 	cache->entry_count--;
 	PTHREAD_MUTEX_unlock(&cache->lock);
-	gsh_free(entry);
+	gsh_free(entry, MEM_COMP_FSAL);
 }
 
 FileInfoEntry_t *popExpiredFileInfoCache(FileInfoCache_t *cache)
@@ -224,7 +225,7 @@ FileInfoEntry_t *popExpiredFileInfoCache(FileInfoCache_t *cache)
 void fileInfoEntryFree(FileInfoEntry_t *entry)
 {
 	assert(!entry->is_used);
-	gsh_free(entry);
+	gsh_free(entry, MEM_COMP_FSAL);
 }
 
 fileinfo_t *extractFileInfo(FileInfoEntry_t *entry)

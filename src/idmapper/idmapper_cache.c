@@ -265,7 +265,7 @@ static void remove_cache_user(struct cache_user *user)
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_USER,
 		(int64_t)avltree_size(&uname_tree));
-	gsh_free(user);
+	gsh_free(user, MEM_COMP_IDMAPPER);
 }
 
 /**
@@ -283,7 +283,7 @@ static void remove_cache_group(struct cache_group *group)
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_GROUP,
 		(int64_t)avltree_size(&gname_tree));
-	gsh_free(group);
+	gsh_free(group, MEM_COMP_IDMAPPER);
 }
 
 /**
@@ -396,7 +396,8 @@ bool idmapper_add_user(const struct gsh_buffdesc *name, uid_t uid,
 	struct cache_user *new;
 	struct cache_user *user_fifo_queue_head_node;
 
-	new = gsh_malloc(sizeof(struct cache_user) + name->len);
+	new = gsh_malloc(sizeof(struct cache_user) + name->len,
+			 MEM_COMP_IDMAPPER);
 	new->epoch = time(NULL);
 	new->uname.addr = (char *)new + sizeof(struct cache_user);
 	new->uname.len = name->len;
@@ -516,7 +517,8 @@ bool idmapper_add_group(const struct gsh_buffdesc *name, const gid_t gid)
 	struct cache_group *new;
 	struct cache_group *group_fifo_queue_head_node;
 
-	new = gsh_malloc(sizeof(struct cache_group) + name->len);
+	new = gsh_malloc(sizeof(struct cache_group) + name->len,
+			 MEM_COMP_IDMAPPER);
 	new->epoch = time(NULL);
 	new->gname.addr = (char *)new + sizeof(struct cache_group);
 	new->gname.len = name->len;
@@ -862,7 +864,7 @@ static bool show_idmapper_users(DBusMessageIter *args, DBusMessage *reply,
 	struct avltree_node *node;
 	uint32_t val;
 	DBusMessageIter iter, sub_iter, id_iter;
-	char *namebuff = gsh_malloc(256);
+	char *namebuff = gsh_malloc(256, MEM_COMP_IDMAPPER);
 	dbus_bool_t gid_set;
 
 	dbus_message_iter_init_append(reply, &iter);
@@ -903,7 +905,7 @@ static bool show_idmapper_users(DBusMessageIter *args, DBusMessage *reply,
 		dbus_message_iter_close_container(&sub_iter, &id_iter);
 	}
 	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
-	free(namebuff);
+	gsh_free(namebuff, MEM_COMP_IDMAPPER);
 	dbus_message_iter_close_container(&iter, &sub_iter);
 	return true;
 }
@@ -921,7 +923,7 @@ static bool show_idmapper_groups(DBusMessageIter *args, DBusMessage *reply,
 	struct avltree_node *node;
 	uint32_t val;
 	DBusMessageIter iter, sub_iter, id_iter;
-	char *namebuff = gsh_malloc(256);
+	char *namebuff = gsh_malloc(256, MEM_COMP_IDMAPPER);
 
 	dbus_message_iter_init_append(reply, &iter);
 	now(&timestamp);
@@ -949,7 +951,7 @@ static bool show_idmapper_groups(DBusMessageIter *args, DBusMessage *reply,
 		dbus_message_iter_close_container(&sub_iter, &id_iter);
 	}
 	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
-	free(namebuff);
+	gsh_free(namebuff, MEM_COMP_IDMAPPER);
 	dbus_message_iter_close_container(&iter, &sub_iter);
 	return true;
 }

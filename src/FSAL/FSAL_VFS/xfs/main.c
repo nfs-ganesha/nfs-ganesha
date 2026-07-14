@@ -110,7 +110,8 @@ struct config_block xfs_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = xfs_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 /* Module methods
@@ -138,7 +139,9 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 	 * Only if they exist will we declare lock support.
 	 */
 	LogInfo(COMPONENT_FSAL, "FSAL_XFS testing OFD Locks");
-	temp_name = gsh_strdup("/tmp/ganesha.nfsd.locktestXXXXXX");
+	temp_name =
+		gsh_strdup("/tmp/ganesha.nfsd.locktestXXXXXX", MEM_COMP_FSAL);
+
 	fd = mkstemp(temp_name);
 	if (fd >= 0) {
 		lock.l_whence = SEEK_SET;
@@ -161,7 +164,7 @@ static fsal_status_t init_config(struct fsal_module *xfs_fsal_module,
 			"Could not create file %s to test OFD locks",
 			temp_name);
 	}
-	gsh_free(temp_name);
+	gsh_free(temp_name, MEM_COMP_FSAL);
 #endif
 
 	if (xfs_module->module.fs_info.lock_support)

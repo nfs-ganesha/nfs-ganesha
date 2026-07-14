@@ -65,9 +65,13 @@
 #include "nfs_convert.h"
 #include "nfs_metrics.h"
 #include "server_stats_grpc.h"
+#include "server_stats_private.h"
 #ifdef _USE_9P
 #include "9p.h"
 #endif
+
+/* Memory Usage Statistics */
+struct gsh_mem_stats gshMC[MEM_COMP_MAX];
 
 #ifdef USE_DBUS
 
@@ -409,8 +413,8 @@ static struct nfsv3_stats *get_v3(struct gsh_stats *stats,
 	if (unlikely(stats->nfsv3 == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nfsv3 == NULL)
-			stats->nfsv3 =
-				gsh_calloc(1, sizeof(struct nfsv3_stats));
+			stats->nfsv3 = gsh_calloc(1, sizeof(struct nfsv3_stats),
+						  stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv3;
@@ -424,7 +428,8 @@ static struct clnt_allops_v3_stats *get_v3_all(struct gsh_clnt_allops_stats *st,
 		if (st->nfsv3 == NULL)
 			st->nfsv3 =
 				gsh_calloc(1,
-					   sizeof(struct clnt_allops_v3_stats));
+					   sizeof(struct clnt_allops_v3_stats),
+					   st->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return st->nfsv3;
@@ -436,7 +441,8 @@ static struct mnt_stats *get_mnt(struct gsh_stats *stats,
 	if (unlikely(stats->mnt == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->mnt == NULL)
-			stats->mnt = gsh_calloc(1, sizeof(struct mnt_stats));
+			stats->mnt = gsh_calloc(1, sizeof(struct mnt_stats),
+						stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->mnt;
@@ -450,7 +456,8 @@ static struct nlmv4_stats *get_nlm4(struct gsh_stats *stats,
 	if (unlikely(stats->nlm4 == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nlm4 == NULL)
-			stats->nlm4 = gsh_calloc(1, sizeof(struct nlmv4_stats));
+			stats->nlm4 = gsh_calloc(1, sizeof(struct nlmv4_stats),
+						 stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nlm4;
@@ -462,8 +469,10 @@ get_nlm4_all(struct gsh_clnt_allops_stats *stats, pthread_rwlock_t *lock)
 	if (unlikely(stats->nlm4 == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nlm4 == NULL)
-			stats->nlm4 = gsh_calloc(
-				1, sizeof(struct clnt_allops_nlm_stats));
+			stats->nlm4 =
+				gsh_calloc(1,
+					   sizeof(struct clnt_allops_nlm_stats),
+					   stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nlm4;
@@ -477,8 +486,9 @@ static struct rquota_stats *get_rquota(struct gsh_stats *stats,
 	if (unlikely(stats->rquota == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->rquota == NULL)
-			stats->rquota =
-				gsh_calloc(1, sizeof(struct rquota_stats));
+			stats->rquota = gsh_calloc(1,
+						   sizeof(struct rquota_stats),
+						   stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->rquota;
@@ -491,8 +501,9 @@ static struct nfsv40_stats *get_v40(struct gsh_stats *stats,
 	if (unlikely(stats->nfsv40 == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nfsv40 == NULL)
-			stats->nfsv40 =
-				gsh_calloc(1, sizeof(struct nfsv40_stats));
+			stats->nfsv40 = gsh_calloc(1,
+						   sizeof(struct nfsv40_stats),
+						   stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv40;
@@ -504,8 +515,9 @@ static struct nfsv41_stats *get_v41(struct gsh_stats *stats,
 	if (unlikely(stats->nfsv41 == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nfsv41 == NULL)
-			stats->nfsv41 =
-				gsh_calloc(1, sizeof(struct nfsv41_stats));
+			stats->nfsv41 = gsh_calloc(1,
+						   sizeof(struct nfsv41_stats),
+						   stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv41;
@@ -517,8 +529,9 @@ static struct nfsv41_stats *get_v42(struct gsh_stats *stats,
 	if (unlikely(stats->nfsv42 == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->nfsv42 == NULL)
-			stats->nfsv42 =
-				gsh_calloc(1, sizeof(struct nfsv41_stats));
+			stats->nfsv42 = gsh_calloc(1,
+						   sizeof(struct nfsv41_stats),
+						   stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv42;
@@ -532,7 +545,8 @@ get_v4_all(struct gsh_clnt_allops_stats *stats, pthread_rwlock_t *lock)
 		if (stats->nfsv4 == NULL)
 			stats->nfsv4 =
 				gsh_calloc(1,
-					   sizeof(struct clnt_allops_v4_stats));
+					   sizeof(struct clnt_allops_v4_stats),
+					   stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->nfsv4;
@@ -544,7 +558,8 @@ static struct _9p_stats *get_9p(struct gsh_stats *stats, pthread_rwlock_t *lock)
 	if (unlikely(stats->_9p == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->_9p == NULL)
-			stats->_9p = gsh_calloc(1, sizeof(struct _9p_stats));
+			stats->_9p = gsh_calloc(1, sizeof(struct _9p_stats),
+						stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 	return stats->_9p;
@@ -1307,8 +1322,9 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 		server_st = container_of(client, struct server_stats, client);
 		sp = get_9p(&server_st->st, &client->client_lock);
 		if (sp->opcodes[opc] == NULL)
-			sp->opcodes[opc] =
-				gsh_calloc(1, sizeof(struct proto_op));
+			sp->opcodes[opc] = gsh_calloc(1,
+						      sizeof(struct proto_op),
+						      server_st->st.comp);
 		record_op(sp->opcodes[opc], 0, true, false);
 	}
 
@@ -1319,8 +1335,9 @@ void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
 		exp_st = container_of(export, struct export_stats, export);
 		sp = get_9p(&exp_st->st, &export->exp_lock);
 		if (sp->opcodes[opc] == NULL)
-			sp->opcodes[opc] =
-				gsh_calloc(1, sizeof(struct proto_op));
+			sp->opcodes[opc] = gsh_calloc(1,
+						      sizeof(struct proto_op),
+						      exp_st->st.comp);
 		record_op(sp->opcodes[opc], 0, true, false);
 	}
 }
@@ -1567,8 +1584,8 @@ void check_deleg_struct(struct gsh_stats *stats, pthread_rwlock_t *lock)
 	if (unlikely(stats->deleg == NULL)) {
 		PTHREAD_RWLOCK_wrlock(lock);
 		if (stats->deleg == NULL)
-			stats->deleg =
-				gsh_calloc(1, sizeof(struct deleg_stats));
+			stats->deleg = gsh_calloc(1, sizeof(struct deleg_stats),
+						  stats->comp);
 		PTHREAD_RWLOCK_unlock(lock);
 	}
 }
@@ -2754,10 +2771,14 @@ void server_dbus_nfsmon_iostats(struct export_stats *export_st,
 	struct xfer_op *op_read = NULL;
 	struct xfer_op *op_write = NULL;
 
-	op_preread = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
-	op_prewrite = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
-	op_read = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
-	op_write = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op));
+	op_preread = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op),
+						  MEM_COMP_EXPORT);
+	op_prewrite = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op),
+						   MEM_COMP_EXPORT);
+	op_read = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op),
+					       MEM_COMP_EXPORT);
+	op_write = (struct xfer_op *)gsh_calloc(1, sizeof(struct xfer_op),
+						MEM_COMP_EXPORT);
 
 	server_nfsmon_export_iostats(export_st, op_preread, op_prewrite);
 	sleep(1);
@@ -2769,10 +2790,10 @@ void server_dbus_nfsmon_iostats(struct export_stats *export_st,
 	server_dbus_iostats(op_read, iter);
 	server_dbus_iostats(op_write, iter);
 
-	gsh_free(op_preread);
-	gsh_free(op_prewrite);
-	gsh_free(op_read);
-	gsh_free(op_write);
+	gsh_free(op_preread, MEM_COMP_EXPORT);
+	gsh_free(op_prewrite, MEM_COMP_EXPORT);
+	gsh_free(op_read, MEM_COMP_EXPORT);
+	gsh_free(op_write, MEM_COMP_EXPORT);
 }
 
 void server_dbus_fill_io(DBusMessageIter *array_iter, uint16_t *export_id,
@@ -3239,36 +3260,36 @@ void server_stats_free(struct gsh_stats *statsp)
 {
 #ifdef _USE_NFS3
 	if (statsp->nfsv3 != NULL) {
-		gsh_free(statsp->nfsv3);
+		gsh_free(statsp->nfsv3, statsp->comp);
 		statsp->nfsv3 = NULL;
 	}
 	if (statsp->mnt != NULL) {
-		gsh_free(statsp->mnt);
+		gsh_free(statsp->mnt, statsp->comp);
 		statsp->mnt = NULL;
 	}
 #endif
 #ifdef _USE_NLM
 	if (statsp->nlm4 != NULL) {
-		gsh_free(statsp->nlm4);
+		gsh_free(statsp->nlm4, statsp->comp);
 		statsp->nlm4 = NULL;
 	}
 #endif
 #ifdef _USE_RQUOTA
 	if (statsp->rquota != NULL) {
-		gsh_free(statsp->rquota);
+		gsh_free(statsp->rquota, statsp->comp);
 		statsp->rquota = NULL;
 	}
 #endif
 	if (statsp->nfsv40 != NULL) {
-		gsh_free(statsp->nfsv40);
+		gsh_free(statsp->nfsv40, statsp->comp);
 		statsp->nfsv40 = NULL;
 	}
 	if (statsp->nfsv41 != NULL) {
-		gsh_free(statsp->nfsv41);
+		gsh_free(statsp->nfsv41, statsp->comp);
 		statsp->nfsv41 = NULL;
 	}
 	if (statsp->nfsv42 != NULL) {
-		gsh_free(statsp->nfsv42);
+		gsh_free(statsp->nfsv42, statsp->comp);
 		statsp->nfsv42 = NULL;
 	}
 #ifdef _USE_9P
@@ -3277,9 +3298,10 @@ void server_stats_free(struct gsh_stats *statsp)
 
 		for (opc = 0; opc <= _9P_RWSTAT; opc++) {
 			if (statsp->_9p->opcodes[opc] != NULL)
-				gsh_free(statsp->_9p->opcodes[opc]);
+				gsh_free(statsp->_9p->opcodes[opc],
+					 statsp->comp);
 		}
-		gsh_free(statsp->_9p);
+		gsh_free(statsp->_9p, statsp->comp);
 		statsp->_9p = NULL;
 	}
 #endif
@@ -3298,17 +3320,17 @@ void server_stats_allops_free(struct gsh_clnt_allops_stats *statsp)
 {
 #ifdef _USE_NFS3
 	if (statsp->nfsv3 != NULL) {
-		gsh_free(statsp->nfsv3);
+		gsh_free(statsp->nfsv3, statsp->comp);
 		statsp->nfsv3 = NULL;
 	}
 #endif
 	if (statsp->nfsv4 != NULL) {
-		gsh_free(statsp->nfsv4);
+		gsh_free(statsp->nfsv4, statsp->comp);
 		statsp->nfsv4 = NULL;
 	}
 #ifdef _USE_NLM
 	if (statsp->nlm4 != NULL) {
-		gsh_free(statsp->nlm4);
+		gsh_free(statsp->nlm4, statsp->comp);
 		statsp->nlm4 = NULL;
 	}
 #endif
@@ -3864,12 +3886,15 @@ bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
  */
 void grpc_cltmgr_free_client_allops(struct grpc_client_allops *allops)
 {
+	mem_components_t comp;
+
 	if (allops == NULL)
 		return;
-	gsh_free(allops->v3_ops);
-	gsh_free(allops->nlm_ops);
-	gsh_free(allops->v4_ops);
-	gsh_free(allops);
+	comp = (mem_components_t)allops->comp;
+	gsh_free(allops->v3_ops, comp);
+	gsh_free(allops->nlm_ops, comp);
+	gsh_free(allops->v4_ops, comp);
+	gsh_free(allops, comp);
 }
 
 /**
@@ -3883,7 +3908,8 @@ struct grpc_client_allops *server_grpc_fill_client_allops(
 	int i;
 	uint32_t count;
 
-	out = gsh_calloc(1, sizeof(struct grpc_client_allops));
+	out = gsh_calloc(1, sizeof(struct grpc_client_allops), st->comp);
+	out->comp = (int)st->comp;
 	out->time = *client_time;
 
 #ifdef _USE_NFS3
@@ -3898,7 +3924,8 @@ struct grpc_client_allops *server_grpc_fill_client_allops(
 		if (count > 0) {
 			out->v3_ops =
 				gsh_calloc(count,
-					   sizeof(struct grpc_client_op_entry));
+					   sizeof(struct grpc_client_op_entry),
+					   (mem_components_t)out->comp);
 			count = 0;
 			for (i = 0; i < NFS_V3_NB_COMMAND; i++) {
 				if (c_all->nfsv3->cmds[i].total) {
@@ -3931,7 +3958,8 @@ struct grpc_client_allops *server_grpc_fill_client_allops(
 		if (count > 0) {
 			out->nlm_ops =
 				gsh_calloc(count,
-					   sizeof(struct grpc_client_op_entry));
+					   sizeof(struct grpc_client_op_entry),
+					   (mem_components_t)out->comp);
 			count = 0;
 			for (i = 0; i < NLM_V4_NB_OPERATION; i++) {
 				if (c_all->nlm4->cmds[i].total) {
@@ -3963,7 +3991,8 @@ struct grpc_client_allops *server_grpc_fill_client_allops(
 		out->v4_count = count;
 		if (count > 0) {
 			out->v4_ops = gsh_calloc(
-				count, sizeof(struct grpc_client_v4_op_entry));
+				count, sizeof(struct grpc_client_v4_op_entry),
+				(mem_components_t)out->comp);
 			count = 0;
 			for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
 				if (c_all->nfsv4->cmds[i].total) {
@@ -4410,4 +4439,369 @@ bool grpc_get_v4_full_stats(struct grpc_full_stats *stats_out,
 
 	return true;
 }
+
+struct mem_component_info MemComponents[] = {
+	[MEM_COMP_UNSET] = {
+		.mem_comp_name = "MEM_COMP_UNSET",
+		.mem_comp_str = "UNSET",},
+	[MEM_COMP_ACL] = {
+		.mem_comp_name = "MEM_COMP_ACL",
+		.mem_comp_str = "ACL",},
+	[MEM_COMP_CLIENT] = {
+		.mem_comp_name = "MEM_COMP_CLIENT",
+		.mem_comp_str = "CLIENT",},
+	[MEM_COMP_CLIENTID] = {
+		.mem_comp_name = "MEM_COMP_CLIENTID",
+		.mem_comp_str = "CLIENTID",},
+	[MEM_COMP_CONFIG] = {
+		.mem_comp_name = "MEM_COMP_CONFIG",
+		.mem_comp_str = "CONFIG",},
+	[MEM_COMP_DIRENT] = {
+		.mem_comp_name = "MEM_COMP_DIRENT",
+		.mem_comp_str = "DIRENT",},
+	[MEM_COMP_DUP_REQ] = {
+		.mem_comp_name = "MEM_COMP_DUP_REQ",
+		.mem_comp_str = "DUP_REQ",},
+	[MEM_COMP_EXPORT] = {
+		.mem_comp_name = "MEM_COMP_EXPORT",
+		.mem_comp_str = "EXPORT",},
+	[MEM_COMP_FRIDGE] = {
+		.mem_comp_name = "MEM_COMP_FRIDGE",
+		.mem_comp_str = "FRIDGE",},
+	[MEM_COMP_FSAL] = {
+		.mem_comp_name = "MEM_COMP_FSAL",
+		.mem_comp_str = "FSAL",},
+	[MEM_COMP_GTEST] = {
+		.mem_comp_name = "MEM_COMP_GTEST",
+		.mem_comp_str = "GTEST",},
+	[MEM_COMP_HASHTABLE] = {
+		.mem_comp_name = "MEM_COMP_HASHTABLE",
+		.mem_comp_str = "HASHTABLE",},
+	[MEM_COMP_IDMAPPER] = {
+		.mem_comp_name = "MEM_COMP_IDMAPPER",
+		.mem_comp_str = "IDMAPPER",},
+	[MEM_COMP_IO_BUFFER] = {
+		.mem_comp_name = "MEM_COMP_IO_BUFFER",
+		.mem_comp_str = "IO_BUFFER",},
+	[MEM_COMP_LIBNTIRPC] = {
+		.mem_comp_name = "MEM_COMP_LIBNTIRPC",
+		.mem_comp_str = "LIBNTIRPC",},
+	[MEM_COMP_MANAGE] = {
+		.mem_comp_name = "MEM_COMP_MANAGE",
+		.mem_comp_str = "MANAGE",},
+	[MEM_COMP_MDCACHE] = {
+		.mem_comp_name = "MEM_COMP_MDCACHE",
+		.mem_comp_str = "MDCACHE",},
+	[MEM_COMP_PROTOCOL] = {
+		.mem_comp_name = "MEM_COMP_PROTOCOL",
+		.mem_comp_str = "PROTOCOL",},
+	[MEM_COMP_QOS] = {
+		.mem_comp_name = "MEM_COMP_QOS",
+		.mem_comp_str = "QOS",},
+	[MEM_COMP_RECOVERY] = {
+		.mem_comp_name = "MEM_COMP_RECOVERY",
+		.mem_comp_str = "RECOVERY",},
+	[MEM_COMP_STATE] = {
+		.mem_comp_name = "MEM_COMP_STATE",
+		.mem_comp_str = "STATE",},
+	[MEM_COMP_TRANSIENT] = {
+		.mem_comp_name = "MEM_COMP_TRANSIENT",
+		.mem_comp_str = "TRANSIENT",},
+	[MEM_COMP_XCOPY] = {
+		.mem_comp_name = "MEM_COMP_XCOPY",
+		.mem_comp_str = "XCOPY",},
+};
+
+CT_ASSERT(sizeof(MemComponents) / sizeof(MemComponents[0]) == MEM_COMP_MAX,
+	  "MemComponents must contain all memory components");
+
+const char *gsh_mem_stats_get_mem_comp_str(mem_components_t comp)
+{
+	if (comp < MEM_COMP_MAX)
+		return MemComponents[comp].mem_comp_str;
+	return NULL;
+}
+
+const char *mem_stat_names[] = {
+	"Lifetime_Alloc_Calls", "Lifetime_Free_Calls",
+	"Lifetime_Alloc_Bytes", "Lifetime_Freed_Bytes",
+	"Current_Active_Bytes", "Peak_Active_Bytes",
+};
+
+void gsh_mem_stats_update_alloc(void *p, mem_components_t comp,
+				const char *file, int line,
+				const char *function)
+{
+	struct gsh_mem_stats *mc;
+	size_t size;
+	uint64_t l_ac, l_fc, l_ab, l_fb;
+	int64_t current_bytes, peak_bytes;
+
+	if (!p)
+		return;
+
+	mc = &gshMC[comp];
+
+	/* Fetch the actual allocated size */
+	size = malloc_usable_size(p);
+
+	/* Use each atomic op's own return value below (not a separate
+	 * re-read of mc->field) so the LogFullDebug() reflects exactly
+	 * this call's result, not a snapshot torn by a concurrent updater.
+	 */
+	l_ac = atomic_inc_uint64_t(&mc->lifetime_alloc_calls);
+	l_ab = atomic_add_uint64_t(&mc->lifetime_alloc_bytes, size);
+
+	current_bytes =
+		atomic_add_int64_t(&mc->current_active_bytes, (int64_t)size);
+	peak_bytes = atomic_max_int64_t(&mc->peak_active_bytes,
+					current_bytes);
+
+	if (isFullDebug(COMPONENT_MEM_ALLOC)) {
+		l_fc = atomic_fetch_uint64_t(&mc->lifetime_free_calls);
+		l_fb = atomic_fetch_uint64_t(&mc->lifetime_freed_bytes);
+
+		LogFullDebug(
+			COMPONENT_MEM_ALLOC,
+			"Component: %s, L_ac/L_fc/L_ab/L_fb: %" PRIu64
+			" %" PRIu64 " %" PRIu64 " %" PRIu64
+			" current: %" PRId64 " peak: %" PRId64
+			" this_alloc: %zu at %s:%d (%s)",
+			gsh_mem_stats_get_mem_comp_str(comp), l_ac, l_fc,
+			l_ab, l_fb, current_bytes, peak_bytes, size, file,
+			line, function);
+	}
+}
+
+void gsh_mem_stats_update_free(void *p, mem_components_t comp, const char *file,
+			       int line, const char *function)
+{
+	struct gsh_mem_stats *mc;
+	size_t size;
+	uint64_t l_ac, l_fc, l_ab, l_fb;
+	int64_t current_bytes, peak_bytes;
+
+	if (!p)
+		return;
+
+	mc = &gshMC[comp];
+
+	/* Fetch the actual free size */
+	size = malloc_usable_size(p);
+
+	l_fc = atomic_inc_uint64_t(&mc->lifetime_free_calls);
+	l_fb = atomic_add_uint64_t(&mc->lifetime_freed_bytes, size);
+
+	current_bytes =
+		atomic_sub_int64_t(&mc->current_active_bytes, (int64_t)size);
+
+	if (current_bytes < 0) {
+		LogWarn(COMPONENT_MEM_ALLOC,
+			"mem_comp underflow on %s: freed %zu bytes, current_active_bytes is now %"
+			PRId64
+			" - possible alloc/free mem_comp mismatch at %s:%d(%s)",
+			gsh_mem_stats_get_mem_comp_str(comp), size,
+			current_bytes, file, line, function);
+	}
+
+	if (isFullDebug(COMPONENT_MEM_ALLOC)) {
+		l_ac = atomic_fetch_uint64_t(&mc->lifetime_alloc_calls);
+		l_ab = atomic_fetch_uint64_t(&mc->lifetime_alloc_bytes);
+		peak_bytes = atomic_fetch_int64_t(&mc->peak_active_bytes);
+
+		LogFullDebug(
+			COMPONENT_MEM_ALLOC,
+			"Component: %s, L_ac/L_fc/L_ab/L_fb: %" PRIu64
+			" %" PRIu64 " %" PRIu64 " %" PRIu64
+			" current: %" PRId64 " peak: %" PRId64
+			" this_free: %zu at %s:%d (%s)",
+			gsh_mem_stats_get_mem_comp_str(comp), l_ac, l_fc,
+			l_ab, l_fb, current_bytes, peak_bytes, size, file,
+			line, function);
+	}
+}
+
+int64_t gsh_mem_stats_get_stat_by_index_and_comp(uint32_t index,
+						 mem_components_t comp)
+{
+	int64_t value = 0;
+	struct gsh_mem_stats *mc;
+
+	if (index >= MAX_MEMORY_STATS_FIELD_COUNT)
+		goto out;
+	if (comp >= MEM_COMP_MAX)
+		goto out;
+
+	mc = &gshMC[comp];
+
+	switch (index) {
+	case 0:
+		value = (int64_t)mc->lifetime_alloc_calls;
+		break;
+	case 1:
+		value = (int64_t)mc->lifetime_free_calls;
+		break;
+	case 2:
+		value = (int64_t)mc->lifetime_alloc_bytes;
+		break;
+	case 3:
+		value = (int64_t)mc->lifetime_freed_bytes;
+		break;
+	case 4:
+		value = mc->current_active_bytes;
+		break;
+	case 5:
+		value = mc->peak_active_bytes;
+		break;
+	default:
+		value = 0;
+		break;
+	}
+
+out:
+	return value;
+}
+
+void gsh_log_mem_stats(void)
+{
+	uint32_t comp;
+	const char *cname;
+	struct gsh_mem_stats *mc;
+
+	for (comp = MEM_COMP_UNSET + 1; comp < MEM_COMP_MAX; comp++) {
+		cname = gsh_mem_stats_get_mem_comp_str((mem_components_t)comp);
+		if (cname == NULL) {
+			LogWarn(COMPONENT_MEM_ALLOC,
+				"Memory Component String Missing at index: %d",
+				comp);
+			continue;
+		}
+		mc = &gshMC[comp];
+		LogEvent(
+			COMPONENT_MEM_ALLOC,
+			"Component: %s, L_Alloc/Free/Bytes/F: %" PRIu64
+			" %" PRIu64 " %" PRIu64 " %" PRIu64
+			" Cur/Peak: %" PRId64 " %" PRId64,
+			cname, atomic_fetch_uint64_t(&mc->lifetime_alloc_calls),
+			atomic_fetch_uint64_t(&mc->lifetime_free_calls),
+			atomic_fetch_uint64_t(&mc->lifetime_alloc_bytes),
+			atomic_fetch_uint64_t(&mc->lifetime_freed_bytes),
+			atomic_fetch_int64_t(&mc->current_active_bytes),
+			atomic_fetch_int64_t(&mc->peak_active_bytes));
+	}
+}
+
+#ifdef USE_DBUS
+void get_comp_memory_statistics(DBusMessageIter *iter)
+{
+	uint32_t index;
+	uint32_t comp;
+	uint64_t value;
+	DBusMessageIter outer_array_iter; // a(sa(st))
+	DBusMessageIter component_struct_iter; // (sa(st))
+	DBusMessageIter stats_array_iter; // a(st)
+	DBusMessageIter stat_entry_iter; // each (st)
+
+	dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, "(sa(st))",
+					 &outer_array_iter);
+
+	for (comp = MEM_COMP_UNSET + 1; comp < MEM_COMP_MAX; comp++) {
+		// Open struct for each component (sa(st))
+		dbus_message_iter_open_container(&outer_array_iter,
+						 DBUS_TYPE_STRUCT, NULL,
+						 &component_struct_iter);
+
+		// Add component name
+		const char *comp_name =
+			gsh_mem_stats_get_mem_comp_str((mem_components_t)comp);
+
+		dbus_message_iter_append_basic(&component_struct_iter,
+					       DBUS_TYPE_STRING, &comp_name);
+
+		// Open the stats array (a(st))
+		dbus_message_iter_open_container(&component_struct_iter,
+						 DBUS_TYPE_ARRAY, "(st)",
+						 &stats_array_iter);
+
+		// Add all stat (string, uint64) tuples
+		for (index = 0; index < MAX_MEMORY_STATS_FIELD_COUNT; index++) {
+			int64_t signed_value =
+				gsh_mem_stats_get_stat_by_index_and_comp(
+					index, (mem_components_t)comp);
+			/* Wire type is fixed at uint64 ("(st)"); reinterpret
+			 * signed bits as uint64_t so callers can cast back
+			 * to int64_t to get sign-correct values.
+			 */
+			value = (uint64_t)signed_value;
+
+			const char *stat_name = mem_stat_names[index];
+
+			dbus_message_iter_open_container(&stats_array_iter,
+							 DBUS_TYPE_STRUCT, NULL,
+							 &stat_entry_iter);
+			dbus_message_iter_append_basic(&stat_entry_iter,
+						       DBUS_TYPE_STRING,
+						       &stat_name);
+			dbus_message_iter_append_basic(&stat_entry_iter,
+						       DBUS_TYPE_UINT64,
+						       &value);
+			dbus_message_iter_close_container(&stats_array_iter,
+							  &stat_entry_iter);
+		}
+
+		// Close a(st) and (sa(st))
+		dbus_message_iter_close_container(&component_struct_iter,
+						  &stats_array_iter);
+		dbus_message_iter_close_container(&outer_array_iter,
+						  &component_struct_iter);
+	}
+
+	// Close a(sa(st))
+	dbus_message_iter_close_container(iter, &outer_array_iter);
+}
+
+static bool get_memory_statistics(DBusMessageIter *args, DBusMessage *reply,
+				  DBusError *error)
+{
+	bool success = true;
+	char *errormsg = "OK";
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+
+	gsh_dbus_status_reply(&iter, success, errormsg);
+
+	get_comp_memory_statistics(&iter);
+
+	return success;
+}
+
+#define TOTAL_MEM_STATS_REPLY \
+	{ .name = "mem_stats", .type = "(a(sa(st)))", .direction = "out" }
+
+static struct gsh_dbus_method get_mem_statistics = {
+	.name = "GetMemoryStats",
+	.method = get_memory_statistics,
+	.args = { STATUS_REPLY, TOTAL_MEM_STATS_REPLY, END_ARG_LIST }
+};
+
+static struct gsh_dbus_method *mem_stats_methods[] = {
+	&get_mem_statistics, NULL
+};
+
+static struct gsh_dbus_interface mem_stats_table = {
+	.name = "org.ganesha.nfsd.memstats",
+	.methods = mem_stats_methods
+};
+
+/* DBUS list of interfaces on /org/ganesha/nfsd/MemMgr */
+
+static struct gsh_dbus_interface *mem_interfaces[] = { &mem_stats_table, NULL };
+
+void dbus_mem_stats_init(void)
+{
+	gsh_dbus_register_path("MemMgr", mem_interfaces);
+}
+
+#endif /* USE_DBUS */
 /** @} */

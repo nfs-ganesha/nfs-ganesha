@@ -86,8 +86,8 @@ static void mem_release_export(struct fsal_export *exp_hdl)
 	glist_del(&myself->export_entry);
 
 	PTHREAD_RWLOCK_destroy(&myself->mfe_exp_lock);
-	gsh_free(myself->export_path);
-	gsh_free(myself);
+	gsh_free(myself->export_path, MEM_COMP_EXPORT);
+	gsh_free(myself, MEM_COMP_EXPORT);
 }
 
 static fsal_status_t mem_get_dynamic_info(struct fsal_export *exp_hdl,
@@ -153,7 +153,7 @@ void mem_free_state(struct state_t *state)
 
 	destroy_fsal_fd(fsal_fd);
 
-	gsh_free(state);
+	gsh_free(state, MEM_COMP_STATE);
 }
 
 /**
@@ -176,7 +176,8 @@ static struct state_t *mem_alloc_state(struct fsal_export *exp_hdl,
 	struct state_t *state;
 	struct fsal_fd *fsal_fd;
 
-	state = init_state(gsh_calloc(1, sizeof(struct mem_state_fd)),
+	state = init_state(gsh_calloc(1, sizeof(struct mem_state_fd),
+				      MEM_COMP_STATE),
 			   mem_free_state, state_type, related_state);
 
 	fsal_fd = &container_of(state, struct mem_state_fd, state)->fsal_fd;
@@ -263,7 +264,8 @@ static struct config_block mem_export_param_block = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = mem_export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 /* create_export
@@ -281,7 +283,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	int retval = 0;
 	fsal_status_t fsal_status = { 0, 0 };
 
-	myself = gsh_calloc(1, sizeof(struct mem_fsal_export));
+	myself = gsh_calloc(1, sizeof(struct mem_fsal_export), MEM_COMP_EXPORT);
 
 	glist_init(&myself->mfe_objs);
 	PTHREAD_RWLOCK_init(&myself->mfe_exp_lock, NULL);
@@ -309,7 +311,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	myself->export.up_ops = up_ops;
 
 	/* Save the export path. */
-	myself->export_path = gsh_strdup(CTX_FULLPATH(op_ctx));
+	myself->export_path = gsh_strdup(CTX_FULLPATH(op_ctx), MEM_COMP_EXPORT);
 	op_ctx->fsal_export = &myself->export;
 
 	/* Insert into exports list */
@@ -322,7 +324,7 @@ fsal_status_t mem_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 
 err_free:
 	free_export_ops(&myself->export);
-	gsh_free(myself); /* elvis has left the building */
+	gsh_free(myself, MEM_COMP_EXPORT); /* elvis has left the building */
 	return fsal_status;
 }
 

@@ -92,6 +92,6 @@ int _9p_readlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	LogDebug(COMPONENT_9P, "RREADLINK: tag=%u fid=%u link=%s", *msgtag,
 		 (u32)*fid, link_buffer.utf8string_val);
 
-	gsh_free(link_buffer.utf8string_val);
+	free_utf8string(&link_buffer);
 	return 1;
 }

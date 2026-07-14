@@ -175,7 +175,9 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	}
 	PTHREAD_RWLOCK_unlock(&client_by_ip.cip_lock);
 
-	server_st = gsh_calloc(1, sizeof(*server_st));
+	server_st = gsh_calloc(1, sizeof(*server_st), MEM_COMP_CLIENT);
+	server_st->st.comp = MEM_COMP_CLIENT;
+	server_st->c_all.comp = MEM_COMP_CLIENT;
 
 	cl = &server_st->client;
 	cl->cl_addrbuf = *client_ipaddr;
@@ -194,7 +196,8 @@ struct gsh_client *get_gsh_client(sockaddr_t *client_ipaddr, bool lookup_only)
 	PTHREAD_RWLOCK_wrlock(&client_by_ip.cip_lock);
 	node = avltree_insert(&cl->node_k, &client_by_ip.t);
 	if (node) {
-		gsh_free(server_st); /* somebody beat us to it */
+		/* somebody beat us to it */
+		gsh_free(server_st, server_st->st.comp);
 		cl = avltree_container_of(node, struct gsh_client, node_k);
 	} else {
 		PTHREAD_RWLOCK_init(&cl->client_lock, NULL);
@@ -279,7 +282,7 @@ out:
 		server_stats_allops_free(&server_st->c_all);
 		connection_manager__client_fini(&cl->connection_manager);
 		PTHREAD_RWLOCK_destroy(&cl->client_lock);
-		gsh_free(server_st);
+		gsh_free(server_st, server_st->st.comp);
 	}
 	return removed;
 }
@@ -2035,8 +2038,8 @@ void grpc_cltmgr_free_show_clients(struct grpc_show_clients *show)
 {
 	if (show == NULL)
 		return;
-	gsh_free(show->clients);
-	gsh_free(show);
+	gsh_free(show->clients, MEM_COMP_MANAGE);
+	gsh_free(show, MEM_COMP_MANAGE);
 }
 
 /**
@@ -2056,7 +2059,7 @@ bool grpc_cltmgr_show_clients(struct grpc_show_clients **out, bool *success,
 	*out = NULL;
 	*success = true;
 
-	show = gsh_calloc(1, sizeof(*show));
+	show = gsh_calloc(1, sizeof(*show), MEM_COMP_MANAGE);
 	now(&show->time);
 
 	(void)foreach_gsh_client(grpc_show_count_cb, &count_st);
@@ -2064,7 +2067,8 @@ bool grpc_cltmgr_show_clients(struct grpc_show_clients **out, bool *success,
 
 	if (show->client_count > 0) {
 		show->clients = gsh_calloc(show->client_count,
-					   sizeof(struct grpc_client_info));
+					   sizeof(struct grpc_client_info),
+					   MEM_COMP_MANAGE);
 		fill_st.clients = show->clients;
 		fill_st.index = 0;
 		(void)foreach_gsh_client(grpc_show_fill_cb, &fill_st);
@@ -2137,7 +2141,8 @@ void client_pkginit(void)
 	avltree_init(&client_by_ip.t, client_ip_cmpf, 0);
 	client_by_ip.cache_sz = 32767;
 	client_by_ip.cache = gsh_calloc(client_by_ip.cache_sz,
-					sizeof(struct avltree_node *));
+					sizeof(struct avltree_node *),
+					MEM_COMP_CLIENT);
 	RegisterCleanup(&client_mgr_cleanup_element);
 }
 
@@ -2218,15 +2223,15 @@ void FreeClientList(struct glist_head *clients, client_free_func free_func)
 		client = glist_entry(glist, struct base_client_entry, cle_list);
 
 		glist_del(&client->cle_list);
-		cidr_free(client->cidr);
-		gsh_free(client->str);
+		cidr_free(client->cidr, client->mem_comp);
+		gsh_free(client->str, client->mem_comp);
 		free_func(client);
 	}
 }
 
-void *base_client_allocator(void)
+void *base_client_allocator(mem_components_t mem_comp)
 {
-	return gsh_calloc(1, sizeof(struct base_client_entry));
+	return gsh_calloc(1, sizeof(struct base_client_entry), mem_comp);
 }
 
 struct base_client_entry *is_base_client_exact_match(
@@ -2239,7 +2244,7 @@ struct base_client_entry *is_base_client_exact_match(
 	CIDR cli_cidr;
 
 	/* Try CIDR parse (NETWORK_CLIENT) */
-	cidr = cidr_from_str(client_tok);
+	cidr = cidr_from_str(client_tok, MEM_COMP_TRANSIENT);
 	if (cidr)
 		normalize_v4_mapped_cidr(cidr);
 
@@ -2280,7 +2285,7 @@ struct base_client_entry *is_base_client_exact_match(
 
 found:
 
-	cidr_free(cidr);
+	cidr_free(cidr, MEM_COMP_TRANSIENT);
 
 	return cli;
 }
@@ -2292,6 +2297,7 @@ found:
  * @param client_list   [IN]  the client list this gets linked to (in tail order)
  * @param client_tok    [IN]  the name string.  We modify it.
  * @param type_hint     [IN]  type hint from parser for client_tok
+ * @param mem_comp      [IN]  memory component
  * @param cnode         [IN]  opaque pointer needed for config_proc_error()
  * @param err_type      [OUT] error handling ref
  * @param cle_allocator [IN]  function to allocate a list entry
@@ -2302,7 +2308,8 @@ found:
  */
 
 int add_client(enum log_components component, struct glist_head *client_list,
-	       const char *client_tok, enum term_type type_hint, void *cnode,
+	       const char *client_tok, enum term_type type_hint,
+	       mem_components_t mem_comp, void *cnode,
 	       struct config_error_type *err_type,
 	       client_list_entry_allocator_t cle_allocator,
 	       client_list_entry_filler_t cle_filler, void *private_data)
@@ -2331,14 +2338,15 @@ int add_client(enum log_components component, struct glist_head *client_list,
 	if (cle_allocator == NULL)
 		cle_allocator = base_client_allocator;
 
-	cli = cle_allocator();
+	cli = cle_allocator(mem_comp);
 
 	cli->cidr = NULL;
+	cli->mem_comp = mem_comp;
 	glist_init(&cli->cle_list);
 	switch (type_hint) {
 	case TERM_V4_ANY:
 		cli->type = MATCH_ANY_CLIENT;
-		cli->str = gsh_strdup("*");
+		cli->str = gsh_strdup("*", mem_comp);
 		break;
 	case TERM_NETGROUP:
 		if (strlen(client_tok) > MAXHOSTNAMELEN) {
@@ -2349,14 +2357,14 @@ int add_client(enum log_components component, struct glist_head *client_list,
 			errcnt++;
 			goto out;
 		}
-		cli->str = gsh_strdup(client_tok + 1);
+		cli->str = gsh_strdup(client_tok + 1, mem_comp);
 		cli->type = NETGROUP_CLIENT;
 		break;
 	case TERM_V4CIDR:
 	case TERM_V6CIDR:
 	case TERM_V4ADDR:
 	case TERM_V6ADDR:
-		cidr = cidr_from_str(client_tok);
+		cidr = cidr_from_str(client_tok, mem_comp);
 		if (cidr == NULL) {
 			switch (type_hint) {
 			case TERM_V4CIDR:
@@ -2402,7 +2410,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 			errcnt++;
 			goto out;
 		}
-		cli->str = gsh_strdup(client_tok);
+		cli->str = gsh_strdup(client_tok, mem_comp);
 		cli->type = WILDCARDHOST_CLIENT;
 		break;
 	case TERM_TOKEN: /* only dns names now. */
@@ -2422,7 +2430,8 @@ int add_client(enum log_components component, struct glist_head *client_list,
 					(int)ap->ai_addrlen, ap->ai_canonname);
 
 				if (cli == NULL) {
-					cli = cle_allocator();
+					cli = cle_allocator(mem_comp);
+					cli->mem_comp = mem_comp;
 					glist_init(&cli->cle_list);
 				}
 
@@ -2439,7 +2448,9 @@ int add_client(enum log_components component, struct glist_head *client_list,
 					    memcmp(&infoaddr, &in_addr_last,
 						   sizeof(struct in_addr)) == 0)
 						continue;
-					cli->cidr = cidr_from_inaddr(&infoaddr);
+					cli->cidr =
+						cidr_from_inaddr(&infoaddr,
+								 mem_comp);
 					cli->type = NETWORK_CLIENT;
 					ap_last = ap;
 					in_addr_last = infoaddr;
@@ -2460,7 +2471,8 @@ int add_client(enum log_components component, struct glist_head *client_list,
 						continue;
 					/* IPv6 address */
 					cli->cidr =
-						cidr_from_in6addr(&infoaddr);
+						cidr_from_in6addr(&infoaddr,
+								  mem_comp);
 					cli->type = NETWORK_CLIENT;
 					ap_last = ap;
 					in6_addr_last = infoaddr;
@@ -2498,7 +2510,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 
 	if (cli->type == NETWORK_CLIENT) {
 		/* Standardize string form */
-		cli->str = cidr_to_str(cli->cidr);
+		cli->str = cidr_to_str(cli->cidr, mem_comp);
 	}
 
 	if (cle_filler != NULL)
@@ -2509,7 +2521,7 @@ int add_client(enum log_components component, struct glist_head *client_list,
 	glist_add_tail(client_list, &cli->cle_list);
 	cli = NULL;
 out:
-	gsh_free(cli);
+	gsh_free(cli, mem_comp);
 
 exit:
 	return errcnt;
@@ -2544,10 +2556,10 @@ bool delete_base_client(enum log_components component,
 		goto out;
 	}
 
-	cidr_free(cli->cidr);
-	gsh_free(cli->str);
+	cidr_free(cli->cidr, cli->mem_comp);
+	gsh_free(cli->str, cli->mem_comp);
 	glist_del(&cli->cle_list);
-	gsh_free(cli);
+	gsh_free(cli, cli->mem_comp);
 
 	LogInfo(component, "Removed Base client: (%s)", client_tok);
 	deleted = true;

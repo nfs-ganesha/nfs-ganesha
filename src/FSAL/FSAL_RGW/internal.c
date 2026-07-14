@@ -193,7 +193,7 @@ int construct_handle(struct rgw_export *export, struct rgw_file_handle *rgw_fh,
 	struct rgw_handle *constructing = NULL;
 	*obj = NULL;
 
-	constructing = gsh_calloc(1, sizeof(struct rgw_handle));
+	constructing = gsh_calloc(1, sizeof(struct rgw_handle), MEM_COMP_FSAL);
 	constructing->rgw_fh = rgw_fh;
 	constructing->up_ops = export->export.up_ops; /* XXXX going away */
 
@@ -213,5 +213,5 @@ int construct_handle(struct rgw_export *export, struct rgw_file_handle *rgw_fh,
 void deconstruct_handle(struct rgw_handle *obj)
 {
 	fsal_obj_handle_fini(&obj->handle, true);
-	gsh_free(obj);
+	gsh_free(obj, MEM_COMP_FSAL);
 }

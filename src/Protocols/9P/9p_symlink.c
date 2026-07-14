@@ -103,7 +103,7 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	_9p_get_fname(symlink_name, *name_len, name_str);
 
-	link_content = gsh_malloc(*linkcontent_len + 1);
+	link_content = gsh_malloc(*linkcontent_len + 1, MEM_COMP_PROTOCOL);
 
 	memcpy(link_content, linkcontent_str, *linkcontent_len);
 
@@ -123,7 +123,7 @@ int _9p_symlink(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 	/* Release the attributes (may release an inherited ACL) */
 	fsal_release_attrs(&object_attributes);
-	gsh_free(link_content);
+	gsh_free(link_content, MEM_COMP_PROTOCOL);
 
 	if (pentry_symlink == NULL) {
 		return _9p_rerror(req9p, msgtag, _9p_tools_errno(fsal_status),

@@ -205,7 +205,7 @@ void del_dbus_broadcast(struct dbus_bcast_item *to_remove)
 	glist_del(&to_remove->dbus_bcast_q);
 	PTHREAD_MUTEX_unlock(&dbus_bcast_lock);
 
-	gsh_free(to_remove);
+	gsh_free(to_remove, MEM_COMP_MANAGE);
 }
 
 /*
@@ -229,7 +229,7 @@ struct dbus_bcast_item *add_dbus_broadcast(dbus_bcast_callback bcast_callback,
 	struct dbus_bcast_item *new_bcast = NULL;
 
 	new_bcast = (struct dbus_bcast_item *)gsh_malloc(
-		sizeof(struct dbus_bcast_item));
+		sizeof(struct dbus_bcast_item), MEM_COMP_MANAGE);
 
 	now(&new_bcast->next_bcast_time);
 	new_bcast->bcast_interval = bcast_interval;
@@ -457,7 +457,15 @@ static bool dbus_reply_introspection(DBusMessage *reply,
 	dbus_message_iter_init_append(reply, &iter);
 	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING,
 				       &introspection_xml);
-	gsh_free(introspection_xml);
+
+	/*
+	 * The memory being freed here was allocated using open_memstream(),
+	 * which internally uses malloc. It was not allocated via gsh_malloc(),
+	 * so we must use free() directly instead of gsh_free().
+	 * Using gsh_free() on such memory may lead to incorrect tracking
+	 * or undefined behavior.
+	 */
+	free(introspection_xml);
 
 out:
 	return retval;
@@ -611,17 +619,18 @@ int32_t gsh_dbus_register_path(const char *name,
 	int code = 0;
 	const char *dbus_path = DBUS_PATH;
 
-	handler = gsh_malloc(sizeof(struct ganesha_dbus_handler));
+	handler = gsh_malloc(sizeof(struct ganesha_dbus_handler),
+			     MEM_COMP_MANAGE);
 
-	handler->name = gsh_concat(dbus_path, name);
+	handler->name = gsh_concat(dbus_path, name, MEM_COMP_MANAGE);
 	handler->vtable.unregister_function = path_unregistered_func;
 	handler->vtable.message_function = dbus_message_entrypoint;
 
 	if (!thread_state.dbus_conn) {
 		LogCrit(COMPONENT_DBUS,
 			"dbus_connection_register_object_path called with no DBUS connection");
-		gsh_free(handler->name);
-		gsh_free(handler);
+		gsh_free(handler->name, MEM_COMP_MANAGE);
+		gsh_free(handler, MEM_COMP_MANAGE);
 		goto out;
 	}
 
@@ -632,8 +641,8 @@ int32_t gsh_dbus_register_path(const char *name,
 	if (!code) {
 		LogFatal(COMPONENT_DBUS,
 			 "dbus_connection_register_object_path failed");
-		gsh_free(handler->name);
-		gsh_free(handler);
+		gsh_free(handler->name, MEM_COMP_MANAGE);
+		gsh_free(handler, MEM_COMP_MANAGE);
 		goto out;
 	}
 
@@ -680,8 +689,8 @@ void gsh_dbus_pkgshutdown(void)
 				"dbus_connection_unregister_object_path called with no DBUS connection");
 		}
 		avltree_remove(&handler->node_k, &thread_state.callouts);
-		gsh_free(handler->name);
-		gsh_free(handler);
+		gsh_free(handler->name, MEM_COMP_MANAGE);
+		gsh_free(handler, MEM_COMP_MANAGE);
 		node = next_node;
 	}
 

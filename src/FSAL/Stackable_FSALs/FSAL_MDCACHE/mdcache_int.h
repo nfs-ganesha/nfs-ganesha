@@ -654,7 +654,7 @@ typedef struct {
 static inline void mdcache_key_dup(mdcache_key_t *tgt, mdcache_key_t *src)
 {
 	tgt->kv.len = src->kv.len;
-	tgt->kv.addr = gsh_malloc(src->kv.len);
+	tgt->kv.addr = gsh_malloc(src->kv.len, MEM_COMP_MDCACHE);
 
 	memcpy(tgt->kv.addr, src->kv.addr, src->kv.len);
 	tgt->hk = src->hk;
@@ -718,7 +718,7 @@ static inline void mdc_dir_add_parent(mdcache_entry_t *entry,
 static inline void mdcache_key_delete(mdcache_key_t *key)
 {
 	key->kv.len = 0;
-	gsh_free(key->kv.addr);
+	gsh_free(key->kv.addr, MEM_COMP_MDCACHE);
 	key->kv.addr = NULL;
 }
 
@@ -727,7 +727,7 @@ static inline void mdcache_copy_fh(struct gsh_buffdesc *dest,
 				   struct gsh_buffdesc *src)
 {
 	dest->len = src->len;
-	dest->addr = gsh_malloc(dest->len);
+	dest->addr = gsh_malloc(dest->len, MEM_COMP_MDCACHE);
 	(void)memcpy(dest->addr, src->addr, dest->len);
 }
 
@@ -735,7 +735,7 @@ static inline void mdcache_copy_fh(struct gsh_buffdesc *dest,
 static inline void mdcache_free_fh(struct gsh_buffdesc *fh_desc)
 {
 	fh_desc->len = 0;
-	gsh_free(fh_desc->addr);
+	gsh_free(fh_desc->addr, MEM_COMP_MDCACHE);
 	fh_desc->addr = NULL;
 }
 
@@ -923,7 +923,7 @@ static inline void mdc_remove_export_map(struct entry_export_map *expmap)
 {
 	glist_del(&expmap->export_per_entry);
 	glist_del(&expmap->entry_per_export);
-	gsh_free(expmap);
+	gsh_free(expmap, MEM_COMP_MDCACHE);
 }
 
 /**

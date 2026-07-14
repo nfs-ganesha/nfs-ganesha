@@ -49,6 +49,7 @@
 #include "log_common.h"
 #include "gsh_list.h"
 #include "ip_utils.h"
+#include "mem_components.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +59,7 @@ extern "C" {
 typedef struct export_id_list {
 	struct glist_head export_id_glist;
 	uint16_t export_id;
+	mem_components_t mem_comp;
 } export_id_list_t;
 
 /* The maximum size of a log buffer */

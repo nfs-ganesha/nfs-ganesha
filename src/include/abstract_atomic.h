@@ -1775,6 +1775,109 @@ static inline void atomic_store_uint64_t(uint64_t *var, uint64_t val)
 }
 
 /**
+ * @brief Atomically update an int64_t to the max of its current value
+ *        and val
+ *
+ * Uses a CAS retry loop so concurrent updates can't race a lost update
+ * (a plain fetch/compare/store isn't atomic as a whole).
+ *
+ * @param[in,out] var Pointer to the variable to modify
+ * @param[in]     val Candidate new value
+ *
+ * @return The resulting value of *var.
+ */
+
+static inline int64_t atomic_max_int64_t(int64_t *var, int64_t val)
+{
+	int64_t cur = atomic_fetch_int64_t(var);
+
+	while (val > cur) {
+		if (__atomic_compare_exchange_n(var, &cur, val, false,
+						__ATOMIC_SEQ_CST,
+						__ATOMIC_SEQ_CST))
+			return val;
+		/* cur was refreshed to the current value by the failed CAS */
+	}
+	return cur;
+}
+
+/**
+ * @brief Atomically update a uint64_t to the max of its current value
+ *        and val
+ *
+ * See atomic_max_int64_t() above for why this needs a CAS loop rather
+ * than fetch/compare/store.
+ *
+ * @param[in,out] var Pointer to the variable to modify
+ * @param[in]     val Candidate new value
+ *
+ * @return The resulting value of *var.
+ */
+
+static inline uint64_t atomic_max_uint64_t(uint64_t *var, uint64_t val)
+{
+	uint64_t cur = atomic_fetch_uint64_t(var);
+
+	while (val > cur) {
+		if (__atomic_compare_exchange_n(var, &cur, val, false,
+						__ATOMIC_SEQ_CST,
+						__ATOMIC_SEQ_CST))
+			return val;
+	}
+	return cur;
+}
+
+/**
+ * @brief Atomically update an int64_t to the min of its current value
+ *        and val
+ *
+ * Mirrors atomic_max_int64_t() for a floor instead of a ceiling.
+ *
+ * @param[in,out] var Pointer to the variable to modify
+ * @param[in]     val Candidate new value
+ *
+ * @return The resulting value of *var.
+ */
+
+static inline int64_t atomic_min_int64_t(int64_t *var, int64_t val)
+{
+	int64_t cur = atomic_fetch_int64_t(var);
+
+	while (val < cur) {
+		if (__atomic_compare_exchange_n(var, &cur, val, false,
+						__ATOMIC_SEQ_CST,
+						__ATOMIC_SEQ_CST))
+			return val;
+	}
+	return cur;
+}
+
+/**
+ * @brief Atomically update a uint64_t to the min of its current value
+ *        and val
+ *
+ * Mirrors atomic_max_uint64_t() for a floor instead of a ceiling.
+ *
+ * @param[in,out] var Pointer to the variable to modify
+ * @param[in]     val Candidate new value
+ *
+ * @return The resulting value of *var.
+ */
+
+static inline uint64_t atomic_min_uint64_t(uint64_t *var, uint64_t val)
+{
+	uint64_t cur = atomic_fetch_uint64_t(var);
+
+	while (val < cur) {
+		if (__atomic_compare_exchange_n(var, &cur, val, false,
+						__ATOMIC_SEQ_CST,
+						__ATOMIC_SEQ_CST))
+			return val;
+	}
+	return cur;
+}
+
+/**
  * @brief Atomically fetch an int32_t
  *
  * This function atomically fetches the value indicated by the

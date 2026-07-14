@@ -215,6 +215,6 @@ void nfs3_mkdir_free(nfs_res_t *res)
 
 	if ((res->res_mkdir3.status == NFS3_OK) &&
 	    (res->res_mkdir3.MKDIR3res_u.resok.obj.handle_follows)) {
-		gsh_free(handle->data.data_val);
+		gsh_free(handle->data.data_val, MEM_COMP_PROTOCOL);
 	}
 }

@@ -132,6 +132,12 @@ extern size_t gsh_strnlen(const char *s, size_t max);
 #define CONCAT(A, B) CONCAT_(A, B)
 #endif
 
+#define CT_ASSERT_CONCAT(a, b) a##b
+#define CT_ASSERT_CONCAT2(a, b) CT_ASSERT_CONCAT(a, b)
+#define CT_ASSERT(cond, msg) \
+	typedef char CT_ASSERT_CONCAT2(static_assert_failed_, __LINE__) \
+		[(cond) ? 1 : -1] __attribute__((unused))
+
 extern unsigned long PTHREAD_stack_size;
 
 static inline int PTHREAD_create(pthread_t *thread, pthread_attr_t *attr,

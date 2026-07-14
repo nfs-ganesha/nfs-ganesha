@@ -124,7 +124,7 @@ static void mem_cleanup(struct mem_fsal_obj_handle *myself)
 		destroy_fsal_fd(&myself->mh_file.fd);
 		break;
 	case SYMBOLIC_LINK:
-		gsh_free(myself->mh_symlink.link_contents);
+		gsh_free(myself->mh_symlink.link_contents, MEM_COMP_FSAL);
 		break;
 	case SOCKET_FILE:
 	case CHARACTER_FILE:
@@ -314,11 +314,11 @@ static void mem_insert_obj(struct mem_fsal_obj_handle *parent,
 	struct mem_dirent *dirent;
 	uint32_t numkids;
 
-	dirent = gsh_calloc(1, sizeof(*dirent));
+	dirent = gsh_calloc(1, sizeof(*dirent), MEM_COMP_FSAL);
 	dirent->hdl = child;
 	mem_int_get_ref(child);
 	dirent->dir = parent;
-	dirent->d_name = gsh_strdup(name);
+	dirent->d_name = gsh_strdup(name, MEM_COMP_FSAL);
 	/* Index is hash of the name */
 	dirent->d_index = CityHash64(name, strlen(name));
 
@@ -471,8 +471,8 @@ static void mem_remove_dirent_locked(struct mem_fsal_obj_handle *parent,
 		     numkids);
 
 	/* Free dirent */
-	gsh_free((char *)dirent->d_name);
-	gsh_free(dirent);
+	gsh_free((char *)dirent->d_name, MEM_COMP_FSAL);
+	gsh_free(dirent, MEM_COMP_FSAL);
 
 	mem_int_put_ref(child);
 
@@ -714,10 +714,10 @@ static struct mem_fsal_obj_handle *_mem_alloc_handle(
 		isize += MEM.inode_size;
 	}
 
-	hdl = gsh_calloc(1, isize);
+	hdl = gsh_calloc(1, isize, MEM_COMP_FSAL);
 
 	/* Establish tree details for this directory */
-	hdl->m_name = gsh_strdup(name);
+	hdl->m_name = gsh_strdup(name, MEM_COMP_FSAL);
 	hdl->obj_handle.fileid = atomic_postinc_uint64_t(&mem_inode_number);
 	hdl->datasize = MEM.inode_size;
 	glist_init(&hdl->dirents);
@@ -1200,7 +1200,7 @@ static fsal_status_t mem_symlink(struct fsal_obj_handle *dir_hdl,
 
 	hdl = container_of(*new_obj, struct mem_fsal_obj_handle, obj_handle);
 
-	hdl->mh_symlink.link_contents = gsh_strdup(link_path);
+	hdl->mh_symlink.link_contents = gsh_strdup(link_path, MEM_COMP_FSAL);
 	hdl->mh_symlink.link_length = strlen(link_path);
 
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -1523,8 +1523,8 @@ static fsal_status_t mem_rename(struct fsal_obj_handle *obj_hdl,
 
 	if (!strcmp(old_name, mem_obj->m_name)) {
 		/* Change base name */
-		gsh_free(mem_obj->m_name);
-		mem_obj->m_name = gsh_strdup(new_name);
+		gsh_free(mem_obj->m_name, MEM_COMP_FSAL);
+		mem_obj->m_name = gsh_strdup(new_name, MEM_COMP_FSAL);
 	}
 
 	/* Insert into new directory */
@@ -1952,7 +1952,7 @@ static void mem_async_complete(struct fridgethr_context *ctx)
 
 	release_op_context();
 
-	gsh_free(async_arg);
+	gsh_free(async_arg, MEM_COMP_FSAL);
 }
 
 /**
@@ -2002,7 +2002,7 @@ void mem_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	/* We always meed async_arg because that's where temp_fd is located
 	 * and we may need temp_fd before we know we actually are going async.
 	 */
-	async_arg = gsh_calloc(1, sizeof(*async_arg));
+	async_arg = gsh_calloc(1, sizeof(*async_arg), MEM_COMP_FSAL);
 
 	init_fsal_fd(&async_arg->temp_fd, FSAL_FD_TEMP, op_ctx->fsal_export);
 
@@ -2104,7 +2104,7 @@ exit:
 	destroy_fsal_fd(&async_arg->temp_fd);
 
 	/* Now free the async arg since we are done with it. */
-	gsh_free(async_arg);
+	gsh_free(async_arg, MEM_COMP_FSAL);
 
 bye:
 
@@ -2163,7 +2163,7 @@ void mem_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	/* We always meed async_arg because that's where temp_fd is located
 	 * and we may need temp_fd before we know we actually are going async.
 	 */
-	async_arg = gsh_calloc(1, sizeof(*async_arg));
+	async_arg = gsh_calloc(1, sizeof(*async_arg), MEM_COMP_FSAL);
 
 	init_fsal_fd(&async_arg->temp_fd, FSAL_FD_TEMP, op_ctx->fsal_export);
 
@@ -2223,7 +2223,7 @@ void mem_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		/* Was MEM_FIXED, MEM_RANDOM, or MEM_RANDOM_OR_INLINE and we
 		 * scored a non-inline.
 		 */
-		async_arg = gsh_malloc(sizeof(*async_arg));
+		async_arg = gsh_malloc(sizeof(*async_arg), MEM_COMP_FSAL);
 
 		async_arg->obj_hdl = obj_hdl;
 		async_arg->io_arg = write_arg;
@@ -2266,7 +2266,7 @@ exit:
 	destroy_fsal_fd(&async_arg->temp_fd);
 
 	/* Now free the async arg since we are done with it. */
-	gsh_free(async_arg);
+	gsh_free(async_arg, MEM_COMP_FSAL);
 
 bye:
 

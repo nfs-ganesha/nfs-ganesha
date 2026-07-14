@@ -202,13 +202,13 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 	 * buffkey->addr for this, this also means that buffkey->len will be 0
 	 */
 	buffkey.len = sizeof(sockaddr_t);
-	buffkey.addr = gsh_memdup(ipaddr, buffkey.len);
+	buffkey.addr = gsh_memdup(ipaddr, buffkey.len, MEM_COMP_CLIENTID);
 
 	/* Now setup the cached hostname */
 	len = strlen(hn);
 	size = sizeof(nfs_ip_name_t) + len + 1;
 
-	nfs_ip_name = gsh_malloc(size);
+	nfs_ip_name = gsh_malloc(size, MEM_COMP_CLIENTID);
 
 	nfs_ip_name->timestamp = time(NULL);
 	memcpy(nfs_ip_name->hostname, hn, len + 1);
@@ -238,8 +238,8 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 		}
 
 		/* Release not required allocations */
-		gsh_free(nfs_ip_name);
-		gsh_free(buffkey.addr);
+		gsh_free(nfs_ip_name, MEM_COMP_CLIENTID);
+		gsh_free(buffkey.addr, MEM_COMP_CLIENTID);
 	}
 
 	return IP_NAME_SUCCESS;
@@ -288,7 +288,7 @@ int nfs_ip_name_get(sockaddr_t *ipaddr, char *hostname, size_t size)
 					     "Removing cache entry %s->%s",
 					     ipstring, nfs_ip_name->hostname);
 
-				gsh_free(nfs_ip_name);
+				gsh_free(nfs_ip_name, MEM_COMP_CLIENTID);
 			}
 			return IP_NAME_NOT_FOUND;
 		}
@@ -343,7 +343,7 @@ int nfs_ip_name_remove(sockaddr_t *ipaddr)
 		LogFullDebug(COMPONENT_DISPATCH, "Cache remove hit for %s->%s",
 			     ipstring, nfs_ip_name->hostname);
 
-		gsh_free(nfs_ip_name);
+		gsh_free(nfs_ip_name, MEM_COMP_CLIENTID);
 		return IP_NAME_SUCCESS;
 	}
 
@@ -433,7 +433,8 @@ struct config_block nfs_ip_name = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = ip_name_init,
 	.blk_desc.u.blk.params = ip_name_params,
-	.blk_desc.u.blk.commit = ip_name_commit
+	.blk_desc.u.blk.commit = ip_name_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 /**

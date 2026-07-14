@@ -144,8 +144,10 @@ out:
  */
 void nfs3_lookup_free(nfs_res_t *res)
 {
+	char *data_val =
+		res->res_lookup3.LOOKUP3res_u.resok.object.data.data_val;
+
 	if (res->res_lookup3.status == NFS3_OK) {
-		gsh_free(res->res_lookup3.LOOKUP3res_u.resok.object.data
-				 .data_val);
+		gsh_free(data_val, MEM_COMP_PROTOCOL);
 	}
 }

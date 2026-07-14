@@ -75,8 +75,8 @@ static void release(struct fsal_export *exportHandle)
 	sau_destroy(export->fsInstance);
 	export->fsInstance = NULL;
 
-	gsh_free((char *)export->parameters.subfolder);
-	gsh_free(export);
+	gsh_free((char *)export->parameters.subfolder, MEM_COMP_EXPORT);
+	gsh_free(export, MEM_COMP_EXPORT);
 }
 
 /**
@@ -219,7 +219,7 @@ void fs_free_state(struct state_t *state)
 	fd = &container_of(state, struct SaunaFSStateFd, state)->saunafsFd;
 
 	destroy_fsal_fd(&fd->fsalFd);
-	gsh_free(state);
+	gsh_free(state, MEM_COMP_STATE);
 }
 
 /**
@@ -242,7 +242,8 @@ struct state_t *allocate_state(struct fsal_export *export,
 	struct state_t *state = NULL;
 	struct SaunaFSFd *fileDescriptor = NULL;
 
-	state = init_state(gsh_calloc(1, sizeof(struct SaunaFSStateFd)),
+	state = init_state(gsh_calloc(1, sizeof(struct SaunaFSStateFd),
+				      MEM_COMP_STATE),
 			   fs_free_state, stateType, relatedState);
 
 	fileDescriptor =

@@ -89,16 +89,16 @@ char *hasmntopt(const struct mntent *mnt, const char *option)
 	int found;
 	char *opt, *optbuf;
 
-	optbuf = gsh_strdup(mnt->mnt_opts);
+	optbuf = gsh_strdup(mnt->mnt_opts, MEM_COMP_TRANSIENT);
 	found = 0;
 	for (opt = optbuf; (opt = strtok(opt, " ")) != NULL; opt = NULL) {
 		if (!strcasecmp(opt, option)) {
 			opt = opt - optbuf + mnt->mnt_opts;
-			gsh_free(optbuf);
+			gsh_free(optbuf, MEM_COMP_TRANSIENT);
 			return opt;
 		}
 	}
-	gsh_free(optbuf);
+	gsh_free(optbuf, MEM_COMP_TRANSIENT);
 	return NULL;
 }
 

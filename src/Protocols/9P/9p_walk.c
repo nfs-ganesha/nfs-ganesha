@@ -86,7 +86,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, EIO, plenout, preply);
 	}
 	_9p_init_opctx(pfid, req9p);
-	pnewfid = gsh_calloc(1, sizeof(struct _9p_fid));
+	pnewfid = gsh_calloc(1, sizeof(struct _9p_fid), MEM_COMP_PROTOCOL);
 
 	/* Is this a lookup or a fid cloning operation ? */
 	if (*nwname == 0) {
@@ -105,7 +105,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		for (i = 0; i < *nwname; i++) {
 			_9p_getstr(cursor, wnames_len, wnames_str);
 			if (*wnames_len >= sizeof(name)) {
-				gsh_free(pnewfid);
+				gsh_free(pnewfid, MEM_COMP_PROTOCOL);
 				return _9p_rerror(req9p, msgtag, ENAMETOOLONG,
 						  plenout, preply);
 			}
@@ -125,7 +125,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			fsal_status = fsal_lookup(pentry, name,
 						  &pnewfid->pentry, NULL);
 			if (FSAL_IS_ERROR(fsal_status)) {
-				gsh_free(pnewfid);
+				gsh_free(pnewfid, MEM_COMP_PROTOCOL);
 				return _9p_rerror(req9p, msgtag,
 						  _9p_tools_errno(fsal_status),
 						  plenout, preply);
@@ -144,7 +144,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		if (strlcpy(pnewfid->name, name, sizeof(pnewfid->name)) >=
 		    sizeof(pnewfid->name)) {
 			pentry->obj_ops->put_ref(pentry);
-			gsh_free(pnewfid);
+			gsh_free(pnewfid, MEM_COMP_PROTOCOL);
 			return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout,
 					  preply);
 		}
@@ -189,7 +189,7 @@ int _9p_walk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 				COMPONENT_9P,
 				"implementation error, you should not see this message !!!!!!");
 			pentry->obj_ops->put_ref(pentry);
-			gsh_free(pnewfid);
+			gsh_free(pnewfid, MEM_COMP_PROTOCOL);
 			return _9p_rerror(req9p, msgtag, EINVAL, plenout,
 					  preply);
 			break;

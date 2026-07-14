@@ -60,6 +60,9 @@ To enable/disable stat counters use:
   {progname} [enable | disable] [all | nfs | fsal | v3_full |
                                  v4_full | auth | client_all_ops]
 
+To show memory stat counters use:
+  {progname} mem_stats show
+
 """
     )
     print(message.format(progname=sys.argv[0]))
@@ -90,7 +93,7 @@ commands = (
     'help', 'list_clients', 'deleg', 'global', 'inode', 'iov3', 'iov4',
     'iov41', 'iov42', 'iomon', 'export', 'total', 'fast', 'pnfs', 'fsal',
     'reset', 'enable', 'disable', 'status', 'v3_full', 'v4_full', 'auth',
-    'client_io_ops', 'export_details', 'client_all_ops', 'json'
+    'client_io_ops', 'export_details', 'client_all_ops', 'json', 'mem_stats'
 )
 
 if command not in commands:
@@ -141,6 +144,14 @@ elif command in ('enable', 'disable'):
         print("\nError: Option '%s' must be followed by all/nfs/fsal/v3_full/v4_full/auth/client_all_ops" %
             command)
         print_usage_exit(1)
+elif command in ('mem_stats'):
+    if not len(opts) == 1:
+        print("\nError: Option '%s' must be followed by show." % command)
+        print_usage_exit(1)
+    command_arg = opts[0]
+    if command_arg not in ('show',):
+        print("\nError: Option '%s' must be followed by show" % command)
+        print_usage_exit(1)
 elif command == "help":
     print_usage_exit(0)
 
@@ -148,6 +159,7 @@ elif command == "help":
 try:
     exp_interface = Ganesha.glib_dbus_stats.RetrieveExportStats()
     cl_interface = Ganesha.glib_dbus_stats.RetrieveClientStats()
+    mem_interface = Ganesha.glib_dbus_stats.RetrieveMemoryStats()
 
     result = None
     if command == "global":
@@ -204,7 +216,9 @@ try:
         result = exp_interface.disable_stats(command_arg)
     elif command == "status":
         result = exp_interface.status_stats()
-
+    elif command == "mem_stats":
+        if command_arg == "show":
+            result = mem_interface.get_mem_stats()
     print(result.json()) if output_json else print(result)
 except dbus.exceptions.DBusException:
     sys.exit("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")

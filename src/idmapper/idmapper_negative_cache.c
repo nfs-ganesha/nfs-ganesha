@@ -152,7 +152,7 @@ remove_negative_cache_entity(negative_cache_entity_t *entity,
 	TAILQ_REMOVE(cache_queue, entity, queue_entry);
 	idmapper_monitoring__cache_entries_total_set(idmapping_cache_entity,
 						     avltree_size(cache_tree));
-	gsh_free(entity);
+	gsh_free(entity, MEM_COMP_IDMAPPER);
 }
 
 /**
@@ -290,7 +290,8 @@ void idmapper_negative_cache_add_user_by_uid(uid_t uid)
 	uint32_t max_cache_entities = nfs_param.directory_services_param
 					      .negative_cache_users_max_count;
 
-	new_entity = gsh_malloc(sizeof(negative_cache_entity_t));
+	new_entity =
+		gsh_malloc(sizeof(negative_cache_entity_t), MEM_COMP_IDMAPPER);
 	new_entity->uid = uid;
 	new_entity->epoch = time(NULL);
 	old_node = avltree_insert(&new_entity->name_node, &uid_tree);
@@ -305,7 +306,7 @@ void idmapper_negative_cache_add_user_by_uid(uid_t uid)
 		TAILQ_REMOVE(&negative_uid_fifo_queue, old_entity, queue_entry);
 		TAILQ_INSERT_TAIL(&negative_uid_fifo_queue, old_entity,
 				  queue_entry);
-		gsh_free(new_entity);
+		gsh_free(new_entity, MEM_COMP_IDMAPPER);
 		return;
 	}
 	TAILQ_INSERT_TAIL(&negative_uid_fifo_queue, new_entity, queue_entry);
@@ -347,7 +348,8 @@ static void idmapper_negative_cache_add_entity_by_name(
 	char *entity_type_string;
 	idmapping_cache_entity_t idmapping_cache_entity;
 
-	new_entity = gsh_malloc(sizeof(negative_cache_entity_t) + name->len);
+	new_entity = gsh_malloc(sizeof(negative_cache_entity_t) + name->len,
+				MEM_COMP_IDMAPPER);
 	new_entity->name.addr = new_entity->name_buffer;
 	new_entity->name.len = name->len;
 	memcpy(new_entity->name.addr, name->addr, name->len);
@@ -390,7 +392,7 @@ static void idmapper_negative_cache_add_entity_by_name(
 		TAILQ_REMOVE(cache_queue, old_entity, queue_entry);
 		TAILQ_INSERT_TAIL(cache_queue, old_entity, queue_entry);
 
-		gsh_free(new_entity);
+		gsh_free(new_entity, MEM_COMP_IDMAPPER);
 		return;
 	}
 	TAILQ_INSERT_TAIL(cache_queue, new_entity, queue_entry);
@@ -638,7 +640,7 @@ static bool show_idmapper_negative_cache_entity(
 	struct timespec timestamp;
 	struct avltree_node *node;
 	DBusMessageIter iter, sub_iter, id_iter;
-	char *namebuff = gsh_malloc(256);
+	char *namebuff = gsh_malloc(256, MEM_COMP_IDMAPPER);
 	struct avltree *cache_tree;
 	pthread_rwlock_t *entity_lock;
 
@@ -697,7 +699,7 @@ static bool show_idmapper_negative_cache_entity(
 		dbus_message_iter_close_container(&sub_iter, &id_iter);
 	}
 	PTHREAD_RWLOCK_unlock(entity_lock);
-	free(namebuff);
+	gsh_free(namebuff, MEM_COMP_IDMAPPER);
 	dbus_message_iter_close_container(&iter, &sub_iter);
 	return true;
 }

@@ -111,7 +111,8 @@ struct config_block proxyv3_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = proxyv3_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 /**
@@ -125,7 +126,8 @@ struct config_block proxyv3_export_param = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = proxyv3_export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 /**
@@ -327,13 +329,13 @@ static struct proxyv3_obj_handle *proxyv3_alloc_handle(
 	 */
 
 	struct proxyv3_obj_handle *result =
-		gsh_calloc(1, sizeof(struct proxyv3_obj_handle));
+		gsh_calloc(1, sizeof(struct proxyv3_obj_handle), MEM_COMP_FSAL);
 
 	/* Copy the fh3 struct. */
 	size_t len = fh3->data.data_len;
 
 	result->fh3.data.data_len = len;
-	result->fh3.data.data_val = gsh_calloc(1, len);
+	result->fh3.data.data_val = gsh_calloc(1, len, MEM_COMP_FSAL);
 	memcpy(result->fh3.data.data_val, fh3->data.data_val, len);
 
 	/* Copy the NFSv3 attrs. */
@@ -365,13 +367,13 @@ static void proxyv3_handle_release(struct fsal_obj_handle *obj_hdl)
 	LogDebug(COMPONENT_FSAL, "Cleaning up handle %p", handle);
 
 	/* Free the underlying filehandle bytes. */
-	gsh_free(handle->fh3.data.data_val);
+	gsh_free(handle->fh3.data.data_val, MEM_COMP_FSAL);
 
 	/* Finish the outer object. */
 	fsal_obj_handle_fini(obj_hdl, true);
 
 	/* Free our allocated handle. */
-	gsh_free(handle);
+	gsh_free(handle, MEM_COMP_FSAL);
 }
 
 /**
@@ -2347,8 +2349,9 @@ static struct state_t *proxyv3_alloc_state(struct fsal_export *exp_hdl,
 					   struct state_t *related_state)
 {
 	/* There is no need for a "file descriptor" or anything.  */
-	return init_state(gsh_calloc(1, sizeof(struct state_t)), NULL,
-			  state_type, related_state);
+	return init_state(gsh_calloc(1, sizeof(struct state_t),
+				     MEM_COMP_STATE),
+			  NULL, state_type, related_state);
 }
 
 /**
@@ -2526,7 +2529,8 @@ static fsal_status_t proxyv3_create_export(struct fsal_module *fsal_handle,
 					   struct config_error_type *error_type,
 					   const struct fsal_up_vector *up_ops)
 {
-	struct proxyv3_export *export = gsh_calloc(1, sizeof(*export));
+	struct proxyv3_export *export =
+		gsh_calloc(1, sizeof(*export), MEM_COMP_FSAL);
 	int ret;
 
 	/* NOTE(boulos): fsal_export_init sets the export ops to defaults. */
@@ -2548,7 +2552,7 @@ static fsal_status_t proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (ret != 0) {
 		LogCrit(COMPONENT_FSAL, "Bad params for export %s",
 			CTX_FULLPATH(op_ctx));
-		gsh_free(export);
+		gsh_free(export, MEM_COMP_FSAL);
 		return fsalstat(ERR_FSAL_INVAL, ret);
 	}
 
@@ -2564,7 +2568,7 @@ static fsal_status_t proxyv3_create_export(struct fsal_module *fsal_handle,
 	if (ret != 0) {
 		LogCrit(COMPONENT_FSAL, "Failed to attach export %s",
 			CTX_FULLPATH(op_ctx));
-		gsh_free(export);
+		gsh_free(export, MEM_COMP_FSAL);
 		return fsalstat(ERR_FSAL_INVAL, ret);
 	}
 
@@ -2615,7 +2619,7 @@ static fsal_status_t proxyv3_create_export(struct fsal_module *fsal_handle,
 				MOUNTPROC3_NULL, (xdrproc_t)xdr_void, NULL,
 				(xdrproc_t)xdr_void, NULL)) {
 		LogCrit(COMPONENT_FSAL, "proxyv3_mount_call for NULL failed");
-		gsh_free(export);
+		gsh_free(export, MEM_COMP_FSAL);
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
@@ -2628,7 +2632,7 @@ static fsal_status_t proxyv3_create_export(struct fsal_module *fsal_handle,
 				&dirpath, (xdrproc_t)xdr_mountres3, &result)) {
 		LogCrit(COMPONENT_FSAL,
 			"proxyv3_mount_call for path '%s' failed", dirpath);
-		gsh_free(export);
+		gsh_free(export, MEM_COMP_FSAL);
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
@@ -2636,7 +2640,7 @@ static fsal_status_t proxyv3_create_export(struct fsal_module *fsal_handle,
 		LogCrit(COMPONENT_FSAL,
 			"Mount failed. Got back %u for path '%s'",
 			result.fhs_status, dirpath);
-		gsh_free(export);
+		gsh_free(export, MEM_COMP_FSAL);
 		return fsalstat(ERR_FSAL_INVAL, 0);
 	}
 
@@ -2657,7 +2661,7 @@ static fsal_status_t proxyv3_create_export(struct fsal_module *fsal_handle,
 				      NLMPROC4_NULL, (xdrproc_t)xdr_void, NULL,
 				      (xdrproc_t)xdr_void, NULL)) {
 			/* nlm_call will already have said the RPC failed. */
-			gsh_free(export);
+			gsh_free(export, MEM_COMP_FSAL);
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}
 	}

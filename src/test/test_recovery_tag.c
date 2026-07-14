@@ -31,7 +31,8 @@ static int failures;
 static char *build_tag(const char *opaque, int opaque_len, const char *addr,
 		       bool skip_ip)
 {
-	nfs_client_record_t *cl_rec = gsh_malloc(sizeof(*cl_rec) + opaque_len);
+	nfs_client_record_t *cl_rec =
+		gsh_malloc(sizeof(*cl_rec) + opaque_len, MEM_COMP_GTEST);
 	struct gsh_client client;
 	nfs_client_id_t clientid;
 	char *tag;
@@ -52,7 +53,7 @@ static char *build_tag(const char *opaque, int opaque_len, const char *addr,
 
 	nfs_param.nfsv4_param.recovery_skip_ip = skip_ip;
 	tag = nfs4_create_clid_name(&clientid, NULL);
-	gsh_free(cl_rec);
+	gsh_free(cl_rec, MEM_COMP_GTEST);
 
 	return tag;
 }
@@ -65,7 +66,11 @@ static void expect(const char *opaque, int opaque_len, const char *addr,
 
 	CHECK(tag != NULL && strcmp(tag, want) == 0, "want [%s] got [%s]", want,
 	      tag ? tag : "(null)");
-	gsh_free(tag);
+	/* tag was allocated by nfs4_create_clid_name() (nfs4_recovery.c)
+	 * under MEM_COMP_RECOVERY - must free with the same component it
+	 * was allocated under, not the test's own component.
+	 */
+	gsh_free(tag, MEM_COMP_RECOVERY);
 }
 
 int main(void)

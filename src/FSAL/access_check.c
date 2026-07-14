@@ -908,7 +908,8 @@ void fsal_save_ganesha_credentials(void)
 
 	ganesha_ngroups = getgroups(0, NULL);
 	if (ganesha_ngroups > 0) {
-		ganesha_groups = gsh_malloc(ganesha_ngroups * sizeof(gid_t));
+		ganesha_groups = gsh_malloc(ganesha_ngroups * sizeof(gid_t),
+					    MEM_COMP_FSAL);
 
 		if (getgroups(ganesha_ngroups, ganesha_groups) !=
 		    ganesha_ngroups) {

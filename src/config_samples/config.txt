@@ -865,6 +865,10 @@ LOG {}
 
 		If this option is NOT set, MATCH_ANY is used.
 
+	Mem_Stats_Enabled(bool, default false)
+		If this is set to true, counting of memory statistics will
+		get enable
+
 LOG { COMPONENTS {} }
 ---------------------
 

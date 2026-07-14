@@ -100,7 +100,7 @@ void fill_netobj(netobj *dst, char *data, int len)
 	dst->n_len = 0;
 	dst->n_bytes = NULL;
 	if (len != 0) {
-		dst->n_bytes = gsh_malloc(len);
+		dst->n_bytes = gsh_malloc(len, MEM_COMP_STATE);
 		dst->n_len = len;
 		memcpy(dst->n_bytes, data, len);
 	}
@@ -109,7 +109,8 @@ void fill_netobj(netobj *dst, char *data, int len)
 void copy_netobj(netobj *dst, netobj *src)
 {
 	if (src->n_len != 0) {
-		dst->n_bytes = gsh_malloc(src->n_len);
+		dst->n_bytes =
+			gsh_malloc(src->n_len, MEM_COMP_STATE);
 		memcpy(dst->n_bytes, src->n_bytes, src->n_len);
 	} else
 		dst->n_bytes = NULL;
@@ -119,7 +120,7 @@ void copy_netobj(netobj *dst, netobj *src)
 
 void netobj_free(netobj *obj)
 {
-	gsh_free(obj->n_bytes);
+	gsh_free(obj->n_bytes, MEM_COMP_STATE);
 }
 
 void netobj_to_string(netobj *obj, char *buffer, int maxlen)
@@ -148,8 +149,9 @@ void free_grant_arg(state_async_queue_t *arg)
 	netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.cookie);
 	netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.oh);
 	netobj_free(&nlm_arg->nlm_async_args.nlm_async_grant.alock.fh);
-	gsh_free(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name);
-	gsh_free(arg);
+	gsh_free(nlm_arg->nlm_async_args.nlm_async_grant.alock.caller_name,
+		 MEM_COMP_STATE);
+	gsh_free(arg, MEM_COMP_STATE);
 }
 
 /**
@@ -361,7 +363,9 @@ int nlm_process_parameters(struct svc_req *req, bool exclusive,
 	}
 
 	if (block_data != NULL) {
-		state_block_data_t *bdat = gsh_calloc(1, sizeof(*bdat));
+		state_block_data_t *bdat =
+			gsh_calloc(1, sizeof(*bdat),
+				   MEM_COMP_STATE);
 		*block_data = bdat;
 
 		/* Fill in the block data. */
@@ -617,7 +621,7 @@ state_status_t nlm_granted_callback(struct fsal_obj_handle *obj,
 	state_status_t state_status;
 	state_status_t state_status_int;
 
-	arg = gsh_calloc(1, sizeof(*arg));
+	arg = gsh_calloc(1, sizeof(*arg), MEM_COMP_STATE);
 	nlm_async_data = &arg->state_async_data.state_nlm_async_data;
 
 	/* Get a cookie to use for this grant */
@@ -652,7 +656,8 @@ state_status_t nlm_granted_callback(struct fsal_obj_handle *obj,
 		    sizeof(nlm_grant_cookie));
 
 	inarg->alock.caller_name =
-		gsh_strdup(nlm_grant_client->slc_nlm_caller_name);
+		gsh_strdup(nlm_grant_client->slc_nlm_caller_name,
+			   MEM_COMP_STATE);
 
 	inarg->exclusive = lock_entry->sle_lock.lock_type == FSAL_LOCK_W;
 	inarg->alock.svid = nlm_grant_owner->so_nlm_svid;

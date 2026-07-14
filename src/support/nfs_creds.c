@@ -426,7 +426,8 @@ static void squash_creds(const char *auth_label)
 				/* Make a copy of the active garray */
 				(*garray_copy) =
 					gsh_malloc(op_ctx->creds.caller_glen *
-						   sizeof(gid_t));
+							   sizeof(gid_t),
+						   MEM_COMP_CLIENTID);
 
 				memcpy((*garray_copy),
 				       op_ctx->creds.caller_garray,
@@ -664,11 +665,11 @@ void clean_credentials(void)
 
 	/* Have we made a local copy of the managed_gids garray? */
 	if (op_ctx->managed_garray_copy != NULL)
-		gsh_free(op_ctx->managed_garray_copy);
+		gsh_free(op_ctx->managed_garray_copy, MEM_COMP_CLIENTID);
 
 	/* Have we made a local copy of the AUTH_SYS garray? */
 	if (op_ctx->caller_garray_copy != NULL)
-		gsh_free(op_ctx->caller_garray_copy);
+		gsh_free(op_ctx->caller_garray_copy, MEM_COMP_CLIENTID);
 
 	/* Prepare the request context and creds for re-use */
 	init_credentials();

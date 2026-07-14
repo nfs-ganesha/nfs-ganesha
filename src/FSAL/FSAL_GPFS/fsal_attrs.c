@@ -101,7 +101,7 @@ fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,
 	attrs->fs_locations->nservers = 1;
 	attrs->fs_locations->server[0].utf8string_len = strlen(server);
 	attrs->fs_locations->server[0].utf8string_val =
-		gsh_memdup(server, strlen(server));
+		gsh_memdup(server, strlen(server), MEM_COMP_FSAL);
 
 	LogDebug(COMPONENT_FSAL,
 		 "gpfs_ganesha: FS_LOCATIONS root=%s path=%s server=%s", root,
@@ -159,12 +159,12 @@ fsal_status_t GPFSFSAL_getattrs(struct fsal_export *export,
 			break;
 		case 1: /* first retry, don't free the old stack buffer */
 			acl_buflen = acl_buf->acl_len;
-			acl_buf = gsh_malloc(acl_buflen);
+			acl_buf = gsh_malloc(acl_buflen, MEM_COMP_FSAL);
 			break;
 		default: /* second or later retry, free the old heap buffer */
 			acl_buflen = acl_buf->acl_len;
-			gsh_free(acl_buf);
-			acl_buf = gsh_malloc(acl_buflen);
+			gsh_free(acl_buf, MEM_COMP_FSAL);
+			acl_buf = gsh_malloc(acl_buflen, MEM_COMP_FSAL);
 			break;
 		}
 
@@ -210,7 +210,7 @@ error:
 	/* Free acl buffer if we allocated on heap */
 	if (acl_buflen != GPFS_ACL_BUF_SIZE) {
 		assert(acl_buf != (gpfs_acl_t *)buffxstat.buffacl);
-		gsh_free(acl_buf);
+		gsh_free(acl_buf, MEM_COMP_FSAL);
 	}
 
 	return st;
@@ -434,7 +434,7 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 		acl_buflen = offsetof(gpfs_acl_t, ace_v1) +
 			     obj_attr->acl->naces * sizeof(gpfs_ace_v4_t);
 		if (acl_buflen > GPFS_ACL_BUF_SIZE)
-			acl_buf = gsh_malloc(acl_buflen);
+			acl_buf = gsh_malloc(acl_buflen, MEM_COMP_FSAL);
 		else
 			acl_buf = (gpfs_acl_t *)buffxstat.buffacl;
 
@@ -459,6 +459,6 @@ fsal_status_t GPFSFSAL_setattrs(struct fsal_obj_handle *dir_hdl,
 
 acl_free:
 	if (acl_buflen > GPFS_ACL_BUF_SIZE)
-		gsh_free(acl_buf);
+		gsh_free(acl_buf, MEM_COMP_FSAL);
 	return status;
 }

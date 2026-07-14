@@ -146,7 +146,8 @@ static struct config_block ceph_block = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = ceph_items,
-	.blk_desc.u.blk.commit = ceph_conf_commit
+	.blk_desc.u.blk.commit = ceph_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 /* Module methods
@@ -317,7 +318,8 @@ static struct config_block export_param_block = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = ceph_export_commit
+	.blk_desc.u.blk.commit = ceph_export_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 #ifdef USE_FSAL_CEPH_LL_DELEGATION
@@ -434,7 +436,7 @@ void create_unique_id(struct ceph_mount *cm, char *nodeid, char **uniq_id)
 	if (CephFSM.use_old_uuid) {
 		LogEvent(COMPONENT_FSAL, "Old logic of uuid for ceph");
 		len = strlen(RECLAIM_UUID_PREFIX) + strlen(nodeid) + 1 + 4 + 1;
-		*uniq_id = gsh_malloc(len);
+		*uniq_id = gsh_malloc(len, MEM_COMP_RECOVERY);
 		(void)snprintf(*uniq_id, len, RECLAIM_UUID_PREFIX "%s-%4.4hx",
 			       nodeid, cm->cm_export_id);
 	} else {
@@ -449,7 +451,7 @@ void create_unique_id(struct ceph_mount *cm, char *nodeid, char **uniq_id)
 		LogDebug(COMPONENT_FSAL, "ceph_mount hash data: %s", buff);
 		hashkey = CityHash64(buff, strlen(buff));
 		len = strlen(RECLAIM_UUID_PREFIX) + 128 + 1;
-		*uniq_id = gsh_malloc(len);
+		*uniq_id = gsh_malloc(len, MEM_COMP_RECOVERY);
 		/* uniq_id will be always like "ganesha-<64-bytes-hash>" */
 		(void)snprintf(*uniq_id, len, RECLAIM_UUID_PREFIX "0x%" PRIx64,
 			       hashkey);
@@ -490,15 +492,15 @@ static int reclaim_reset(struct ceph_mount *cm)
 		LogEvent(COMPONENT_FSAL, "start_reclaim failed: (%d) %s",
 			 ceph_status, strerror(-ceph_status));
 		if ((-ceph_status) != ENOENT) {
-			gsh_free(nodeid);
-			gsh_free(uuid);
+			gsh_free(nodeid, MEM_COMP_RECOVERY);
+			gsh_free(uuid, MEM_COMP_RECOVERY);
 			return ceph_status;
 		}
 	}
 	ceph_finish_reclaim(cm->cmount);
 	ceph_set_uuid(cm->cmount, uuid);
-	gsh_free(nodeid);
-	gsh_free(uuid);
+	gsh_free(nodeid, MEM_COMP_RECOVERY);
+	gsh_free(uuid, MEM_COMP_RECOVERY);
 	return 0;
 }
 
@@ -524,7 +526,7 @@ fsal_status_t node_takeover_reclaim(struct fsal_module *module_in, char *nodeid)
 			 uuid);
 		ceph_status = ceph_start_reclaim(cm->cmount, uuid,
 						 CEPH_RECLAIM_RESET);
-		gsh_free(uuid);
+		gsh_free(uuid, MEM_COMP_RECOVERY);
 		if (ceph_status) {
 			/* Error ENOENT indicates that most likely the failed
 			 * node was not running before. Ignoring this error
@@ -740,7 +742,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	/* The status code to return */
 	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	/* The internal export object */
-	struct ceph_export *export = gsh_calloc(1, sizeof(struct ceph_export));
+	struct ceph_export *export =
+		gsh_calloc(1, sizeof(struct ceph_export), MEM_COMP_EXPORT);
 	/* The 'private' root handle */
 	struct ceph_handle *handle = NULL;
 	/* Root inode */
@@ -766,7 +769,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		rc = load_config_from_node(parse_node, &export_param_block,
 					   export, true, err_type);
 		if (rc != 0) {
-			gsh_free(export);
+			gsh_free(export, MEM_COMP_EXPORT);
 			LogWarn(COMPONENT_FSAL,
 				"Unable to load config for export : %s",
 				CTX_FULLPATH(op_ctx));
@@ -803,7 +806,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto has_cmount;
 	}
 
-	cm = gsh_calloc(1, sizeof(*cm));
+	cm = gsh_calloc(1, sizeof(*cm), MEM_COMP_FSAL);
 
 	cm->cm_allow_delegations = false;
 	cm->cm_disallow_delegations = false;
@@ -815,18 +818,21 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	cm->cm_refcnt = 1;
 
 	if (export->fs_name)
-		cm->cm_fs_name = gsh_strdup(export->fs_name);
+		cm->cm_fs_name = gsh_strdup(export->fs_name, MEM_COMP_FSAL);
 
 	if (export->cmount_path)
-		cm->cm_mount_path = gsh_strdup(export->cmount_path);
+		cm->cm_mount_path = gsh_strdup(export->cmount_path,
+					       MEM_COMP_FSAL);
 	else
-		cm->cm_mount_path = gsh_strdup(CTX_FULLPATH(op_ctx));
+		cm->cm_mount_path = gsh_strdup(CTX_FULLPATH(op_ctx),
+					       MEM_COMP_FSAL);
 
 	if (export->user_id)
-		cm->cm_user_id = gsh_strdup(export->user_id);
+		cm->cm_user_id = gsh_strdup(export->user_id, MEM_COMP_FSAL);
 
 	if (export->secret_key)
-		cm->cm_secret_key = gsh_strdup(export->secret_key);
+		cm->cm_secret_key = gsh_strdup(export->secret_key,
+					       MEM_COMP_FSAL);
 
 	LogDebug(COMPONENT_FSAL, "New cmount %s for %s", cm->cm_mount_path,
 		 CTX_FULLPATH(op_ctx));
@@ -1063,16 +1069,16 @@ error:
 
 		ceph_mount_remove(&cm->cm_avl_mount);
 
-		gsh_free(cm->cm_fs_name);
-		gsh_free(cm->cm_mount_path);
-		gsh_free(cm->cm_user_id);
-		gsh_free(cm->cm_secret_key);
+		gsh_free(cm->cm_fs_name, MEM_COMP_FSAL);
+		gsh_free(cm->cm_mount_path, MEM_COMP_FSAL);
+		gsh_free(cm->cm_user_id, MEM_COMP_FSAL);
+		gsh_free(cm->cm_secret_key, MEM_COMP_FSAL);
 
-		gsh_free(cm);
+		gsh_free(cm, MEM_COMP_FSAL);
 		cm = NULL;
 	}
 
-	gsh_free(export);
+	gsh_free(export, MEM_COMP_EXPORT);
 
 	PTHREAD_RWLOCK_unlock(&cmount_lock);
 

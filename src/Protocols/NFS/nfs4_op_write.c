@@ -159,7 +159,7 @@ static enum nfs_req_result nfs4_op_ds_write_resume(struct nfs_argop4 *op,
 		&res_WRITE4->WRITE4res_u.resok4.committed);
 
 	if (data->op_data != NULL) {
-		gsh_free(data->op_data);
+		gsh_free(data->op_data, MEM_COMP_PROTOCOL);
 		data->op_data = NULL;
 	}
 
@@ -240,7 +240,7 @@ enum nfs_req_result nfs4_op_write_resume(struct nfs_argop4 *op,
 		 * so we might as well be prepared here. Our caller is already
 		 * prepared for such a scenario.
 		 */
-		gsh_free(data->op_data);
+		gsh_free(data->op_data, MEM_COMP_PROTOCOL);
 		data->op_data = NULL;
 	}
 
@@ -276,7 +276,7 @@ static enum nfs_req_result op_dswrite(struct nfs_argop4 *op,
 	uint64_t size = arg_WRITE4->data.data_len;
 	struct fsal_obj_handle *obj = data->current_obj;
 
-	write_data = gsh_calloc(1, sizeof(*write_data));
+	write_data = gsh_calloc(1, sizeof(*write_data), MEM_COMP_PROTOCOL);
 
 	write_data->res_WRITE4 = res_WRITE4;
 	write_data->data = data;
@@ -292,7 +292,7 @@ static enum nfs_req_result op_dswrite(struct nfs_argop4 *op,
 
 	/* QoS not suspended */
 	write_data->qos_flag = 0;
-	gsh_free(write_data);
+	gsh_free(write_data, MEM_COMP_PROTOCOL);
 	data->op_data = NULL;
 #endif
 
@@ -558,7 +558,7 @@ enum nfs_req_result nfs4_op_write(struct nfs_argop4 *op, compound_data_t *data,
 	}
 
 	/* Set up args, allocate from heap, iov_len will be 1 */
-	write_data = gsh_calloc(1, sizeof(*write_data));
+	write_data = gsh_calloc(1, sizeof(*write_data), MEM_COMP_PROTOCOL);
 	LogFullDebug(COMPONENT_NFS_V4, "Allocated write_data %p", write_data);
 	write_arg = &write_data->write_arg;
 	write_arg->info = NULL;
@@ -649,7 +649,7 @@ out:
 			 * might go async so we might as well be prepared here.
 			 * Our caller is already prepared for such a scenario.
 			 */
-			gsh_free(data->op_data);
+			gsh_free(data->op_data, MEM_COMP_PROTOCOL);
 			data->op_data = NULL;
 		}
 
@@ -759,6 +759,6 @@ void nfs4_qos_write_cb(void *args)
 					     ASYNC_PROC_DONE);
 		svc_resume(write_data->data->req);
 	}
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_QOS);
 }
 #endif

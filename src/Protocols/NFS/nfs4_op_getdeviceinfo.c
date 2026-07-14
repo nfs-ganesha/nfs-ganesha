@@ -150,7 +150,7 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 	resok->gdir_device_addr.da_layout_type =
 		arg_GETDEVICEINFO4->gdia_layout_type;
 
-	da_buffer = gsh_malloc(da_addr_size);
+	da_buffer = gsh_malloc(da_addr_size, MEM_COMP_PROTOCOL);
 
 	xdrmem_create(&da_addr_body, da_buffer, da_addr_size, XDR_ENCODE);
 
@@ -185,7 +185,7 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 out:
 
 	if ((nfs_status != NFS4_OK) && da_buffer)
-		gsh_free(da_buffer);
+		gsh_free(da_buffer, MEM_COMP_PROTOCOL);
 
 	res_GETDEVICEINFO4->gdir_status = nfs_status;
 
@@ -207,6 +207,7 @@ void nfs4_op_getdeviceinfo_Free(nfs_resop4 *res)
 	GETDEVICEINFO4resok *resok = &resp->GETDEVICEINFO4res_u.gdir_resok4;
 
 	if (resp->gdir_status == NFS4_OK) {
-		gsh_free(resok->gdir_device_addr.da_addr_body.da_addr_body_val);
+		gsh_free(resok->gdir_device_addr.da_addr_body.da_addr_body_val,
+			 MEM_COMP_PROTOCOL);
 	}
 } /* nfs41_op_getdeviceinfo_Free */

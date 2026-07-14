@@ -190,10 +190,10 @@ static enum delayed_employment delayed_get_work(struct timespec *when,
 	*func = task->func;
 	*arg = task->arg;
 	LIST_REMOVE(task, link);
-	gsh_free(task);
+	gsh_free(task, MEM_COMP_FRIDGE);
 	if (LIST_EMPTY(&mul->list)) {
 		avltree_remove(first, &tree);
-		gsh_free(mul);
+		gsh_free(mul, MEM_COMP_FRIDGE);
 	}
 
 	return delayed_employed;
@@ -254,7 +254,7 @@ void *delayed_thread(void *arg)
 		PTHREAD_COND_broadcast(&dle_cv);
 
 	PTHREAD_MUTEX_unlock(&dle_mtx);
-	gsh_free(thr);
+	gsh_free(thr, MEM_COMP_FRIDGE);
 
 	rcu_unregister_thread();
 	return NULL;
@@ -293,7 +293,8 @@ void delayed_start(void)
 
 	for (i = 0; i < threads_to_start; ++i) {
 		struct delayed_thread *thread =
-			gsh_malloc(sizeof(struct delayed_thread));
+			gsh_malloc(sizeof(struct delayed_thread),
+				   MEM_COMP_FRIDGE);
 		int rc = 0;
 
 		rc = PTHREAD_create(&thread->id, &attr, delayed_thread, thread);
@@ -341,7 +342,7 @@ void delayed_shutdown(void)
 		while ((thr = LIST_FIRST(&thread_list)) != NULL) {
 			LIST_REMOVE(thr, link);
 			pthread_cancel(thr->id);
-			gsh_free(thr);
+			gsh_free(thr, MEM_COMP_FRIDGE);
 		}
 	}
 	PTHREAD_MUTEX_unlock(&dle_mtx);
@@ -374,8 +375,8 @@ int delayed_submit(void (*func)(void *), void *arg, nsecs_elapsed_t delay)
 		return EAGAIN;
 	}
 
-	mul = gsh_malloc(sizeof(struct delayed_multi));
-	task = gsh_malloc(sizeof(struct delayed_task));
+	mul = gsh_malloc(sizeof(struct delayed_multi), MEM_COMP_FRIDGE);
+	task = gsh_malloc(sizeof(struct delayed_task), MEM_COMP_FRIDGE);
 
 	now(&mul->realtime);
 	timespec_add_nsecs(delay, &mul->realtime);
@@ -384,7 +385,7 @@ int delayed_submit(void (*func)(void *), void *arg, nsecs_elapsed_t delay)
 	first = avltree_first(&tree);
 	collision = avltree_insert(&mul->node, &tree);
 	if (unlikely(collision)) {
-		gsh_free(mul);
+		gsh_free(mul, MEM_COMP_FRIDGE);
 		/* There is already a node for this exact time in the
 		   tree.  Add our task to its list. */
 		mul = avltree_container_of(collision, struct delayed_multi,

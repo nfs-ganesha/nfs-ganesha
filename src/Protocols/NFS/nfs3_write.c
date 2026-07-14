@@ -146,7 +146,7 @@ static enum xprt_stat nfs3_write_resume(struct svc_req *req)
 	rc = nfs3_complete_write(data);
 
 	/* Free the write_data. */
-	gsh_free(data);
+	gsh_free(data, MEM_COMP_PROTOCOL);
 	reqdata->proc_data = NULL;
 
 	nfs_rpc_complete_async_request(reqdata, rc);
@@ -349,7 +349,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Set up args, allocate from heap, iov_count will be 1 */
-	write_data = gsh_calloc(1, sizeof(*write_data));
+	write_data = gsh_calloc(1, sizeof(*write_data), MEM_COMP_PROTOCOL);
 	write_arg = &write_data->write_arg;
 
 	write_arg->info = NULL;
@@ -403,7 +403,7 @@ again:
 	rc = nfs3_complete_write(write_data);
 
 	/* Since we're actually done, we can free write_data. */
-	gsh_free(write_data);
+	gsh_free(write_data, MEM_COMP_PROTOCOL);
 	reqdata->proc_data = NULL;
 
 	return rc;

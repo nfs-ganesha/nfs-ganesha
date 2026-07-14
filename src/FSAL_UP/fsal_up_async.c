@@ -86,7 +86,7 @@ static void queue_invalidate(struct fridgethr_context *ctx)
 	if (args->cb)
 		args->cb(args->cb_arg, status);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 fsal_status_t up_async_invalidate(struct fridgethr *fr,
@@ -98,7 +98,8 @@ fsal_status_t up_async_invalidate(struct fridgethr *fr,
 	struct invalidate_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct invalidate_args) + obj->len);
+	args = gsh_malloc(sizeof(struct invalidate_args) + obj->len,
+			  MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->flags = flags;
@@ -111,7 +112,7 @@ fsal_status_t up_async_invalidate(struct fridgethr *fr,
 	rc = fridgethr_submit(fr, queue_invalidate, args);
 
 	if (rc != 0)
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 
 	return fsalstat(posix2fsal_error(rc), rc);
 }
@@ -139,7 +140,7 @@ static void queue_update(struct fridgethr_context *ctx)
 	if (args->cb)
 		args->cb(args->cb_arg, status);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 fsal_status_t up_async_update(struct fridgethr *fr,
@@ -151,7 +152,8 @@ fsal_status_t up_async_update(struct fridgethr *fr,
 	struct update_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct update_args) + obj->len);
+	args = gsh_malloc(sizeof(struct update_args) + obj->len,
+			  MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->attr = *attr;
@@ -165,7 +167,7 @@ fsal_status_t up_async_update(struct fridgethr *fr,
 	rc = fridgethr_submit(fr, queue_update, args);
 
 	if (rc != 0)
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 
 	return fsalstat(posix2fsal_error(rc), rc);
 }
@@ -193,7 +195,7 @@ static void queue_lock_grant(struct fridgethr_context *ctx)
 	if (args->cb)
 		args->cb(args->cb_arg, status);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 fsal_status_t up_async_lock_grant(struct fridgethr *fr,
@@ -206,7 +208,8 @@ fsal_status_t up_async_lock_grant(struct fridgethr *fr,
 	struct lock_grant_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct lock_grant_args) + file->len);
+	args = gsh_malloc(sizeof(struct lock_grant_args) + file->len,
+			  MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->owner = owner;
@@ -220,7 +223,7 @@ fsal_status_t up_async_lock_grant(struct fridgethr *fr,
 	rc = fridgethr_submit(fr, queue_lock_grant, args);
 
 	if (rc != 0)
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 
 	return fsalstat(posix2fsal_error(rc), rc);
 }
@@ -248,7 +251,7 @@ static void queue_lock_avail(struct fridgethr_context *ctx)
 	if (args->cb)
 		args->cb(args->cb_arg, status);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 fsal_status_t up_async_lock_avail(struct fridgethr *fr,
@@ -261,7 +264,8 @@ fsal_status_t up_async_lock_avail(struct fridgethr *fr,
 	struct lock_avail_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct lock_avail_args) + file->len);
+	args = gsh_malloc(sizeof(struct lock_avail_args) + file->len,
+			  MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->owner = owner;
@@ -275,7 +279,7 @@ fsal_status_t up_async_lock_avail(struct fridgethr *fr,
 	rc = fridgethr_submit(fr, queue_lock_avail, args);
 
 	if (rc != 0)
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 
 	return fsalstat(posix2fsal_error(rc), rc);
 }
@@ -309,7 +313,7 @@ static void queue_layoutrecall(struct fridgethr_context *ctx)
 	if (args->cb)
 		args->cb(args->cb_arg, status);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 fsal_status_t
@@ -322,7 +326,8 @@ up_async_layoutrecall(struct fridgethr *fr, const struct fsal_up_vector *vec,
 	struct layoutrecall_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct layoutrecall_args) + handle->len);
+	args = gsh_malloc(sizeof(struct layoutrecall_args) + handle->len,
+			  MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->cb = cb;
@@ -345,7 +350,7 @@ up_async_layoutrecall(struct fridgethr *fr, const struct fsal_up_vector *vec,
 	rc = fridgethr_submit(fr, queue_layoutrecall, args);
 
 	if (rc != 0)
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 
 	return fsalstat(posix2fsal_error(rc), rc);
 }
@@ -375,7 +380,7 @@ static void queue_notify_device(struct fridgethr_context *ctx)
 	if (args->cb)
 		args->cb(args->cb_arg, status);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 fsal_status_t up_async_notify_device(
@@ -387,7 +392,8 @@ fsal_status_t up_async_notify_device(
 	struct notify_device_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct notify_device_args));
+	args = gsh_malloc(sizeof(struct notify_device_args),
+			  MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->cb = cb;
@@ -400,7 +406,7 @@ fsal_status_t up_async_notify_device(
 	rc = fridgethr_submit(fr, queue_notify_device, args);
 
 	if (rc != 0)
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 
 	return fsalstat(posix2fsal_error(rc), rc);
 }
@@ -423,7 +429,7 @@ static void queue_cbgetattr(struct fridgethr_context *ctx)
 	dec_client_id_ref(args->clid);
 	put_gsh_export(args->ctx_export);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 int async_cbgetattr(struct fridgethr *fr, struct fsal_obj_handle *obj,
@@ -432,7 +438,8 @@ int async_cbgetattr(struct fridgethr *fr, struct fsal_obj_handle *obj,
 	int rc = 0;
 	struct cbgetattr_args *args = NULL;
 
-	args = gsh_malloc(sizeof(struct cbgetattr_args));
+	args = gsh_malloc(sizeof(struct cbgetattr_args),
+			  MEM_COMP_STATE);
 
 	/* get a ref to prevent races when callback is called too late */
 	obj->obj_ops->get_ref(obj);
@@ -448,7 +455,7 @@ int async_cbgetattr(struct fridgethr *fr, struct fsal_obj_handle *obj,
 		obj->obj_ops->put_ref(obj);
 		dec_client_id_ref(client);
 		put_gsh_export(args->ctx_export);
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 	}
 	return rc;
 }
@@ -488,7 +495,7 @@ static void queue_delegrecall_per_state(struct fridgethr_context *ctx)
 
 	obj->obj_ops->put_ref(obj);
 	dec_state_t_ref(state);
-	gsh_free(dctx);
+	gsh_free(dctx, MEM_COMP_STATE);
 }
 
 int async_delegrecall_per_state(struct fridgethr *fr,
@@ -498,7 +505,8 @@ int async_delegrecall_per_state(struct fridgethr *fr,
 	struct delegrecall_args_per_state *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct delegrecall_args_per_state));
+	args = gsh_malloc(sizeof(struct delegrecall_args_per_state),
+			  MEM_COMP_STATE);
 
 	/* get a ref to prevent races when delegrecall is called too late */
 	obj->obj_ops->get_ref(obj);
@@ -513,7 +521,7 @@ int async_delegrecall_per_state(struct fridgethr *fr,
 	if (rc != 0) {
 		obj->obj_ops->put_ref(obj);
 		dec_state_t_ref(state);
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 	}
 
 	return rc;
@@ -550,7 +558,7 @@ static void up_queue_delegrecall(struct fridgethr_context *ctx)
 	if (args->cb)
 		args->cb(args->cb_arg, status);
 
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_STATE);
 }
 
 /* XXX dang refcount exports in these? */
@@ -563,7 +571,8 @@ fsal_status_t up_async_delegrecall(struct fridgethr *fr,
 	struct delegrecall_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct delegrecall_args) + handle->len);
+	args = gsh_malloc(sizeof(struct delegrecall_args) + handle->len,
+			  MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->cb = cb;
@@ -576,7 +585,7 @@ fsal_status_t up_async_delegrecall(struct fridgethr *fr,
 	rc = fridgethr_submit(fr, up_queue_delegrecall, args);
 
 	if (rc != 0)
-		gsh_free(args);
+		gsh_free(args, MEM_COMP_STATE);
 
 	return fsalstat(posix2fsal_error(rc), rc);
 }

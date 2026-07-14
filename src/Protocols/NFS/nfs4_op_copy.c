@@ -383,10 +383,10 @@ static void copy_offload_state_free(struct state_t *state)
 		container_of(state, struct copy_offload_state, cos_state);
 
 	/* Free the destination FH buffer stored for CB_OFFLOAD coa_fh */
-	gsh_free(cos->cos_dst_fh.nfs_fh4_val);
+	gsh_free(cos->cos_dst_fh.nfs_fh4_val, MEM_COMP_XCOPY);
 	cos->cos_dst_fh.nfs_fh4_val = NULL;
 
-	gsh_free(cos);
+	gsh_free(cos, MEM_COMP_XCOPY);
 }
 
 /**
@@ -423,7 +423,7 @@ static struct copy_offload_state *create_copy_offload_state(
 	nfs_client_id_t *clientid = data->preserved_clientid;
 	struct timespec now;
 
-	cos = gsh_calloc(1, sizeof(struct copy_offload_state));
+	cos = gsh_calloc(1, sizeof(struct copy_offload_state), MEM_COMP_XCOPY);
 	cos->cos_state.state_type = STATE_TYPE_COPY_OFFLOAD;
 	/*
 	 * Start seqid at 0 — same as _state_add_impl().
@@ -491,7 +491,7 @@ static struct copy_offload_state *create_copy_offload_state(
 		cos->cos_state.state_owner = NULL;
 		dec_client_id_ref(clientid);
 		PTHREAD_MUTEX_destroy(&cos->cos_state.state_mutex);
-		gsh_free(cos);
+		gsh_free(cos, MEM_COMP_XCOPY);
 		return NULL;
 	}
 
@@ -506,7 +506,8 @@ static struct copy_offload_state *create_copy_offload_state(
 	 * copy_offload_state_free() frees it on final refcount drop.
 	 */
 	cos->cos_dst_fh.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-	cos->cos_dst_fh.nfs_fh4_val = gsh_malloc(data->currentFH.nfs_fh4_len);
+	cos->cos_dst_fh.nfs_fh4_val = gsh_malloc(data->currentFH.nfs_fh4_len,
+						 MEM_COMP_XCOPY);
 	memcpy(cos->cos_dst_fh.nfs_fh4_val, data->currentFH.nfs_fh4_val,
 	       data->currentFH.nfs_fh4_len);
 
@@ -1012,7 +1013,7 @@ static void copy_complete_async(struct copy_job *job,
 	copy_async_finalize(cos, wr, client_cancelled, write_verifier);
 
 	copy_worker_teardown(job);
-	gsh_free(job);
+	gsh_free(job, MEM_COMP_XCOPY);
 	/* on client initiated cancel, no need of callback to client */
 	if (client_cancelled) {
 		destroy_copy_offload_state(cos);
@@ -1386,7 +1387,7 @@ enum nfs_req_result nfs4_op_copy_resume(struct nfs_argop4 *op,
 		 * as nfs4_op_write_resume() frees write_data after
 		 * nfs4_complete_write() returns.
 		 */
-		gsh_free(data->op_data);
+		gsh_free(data->op_data, MEM_COMP_XCOPY);
 		data->op_data = NULL;
 	}
 
@@ -1446,7 +1447,7 @@ static enum copy_dispatch_result copy_submit_job(
 	ctx->src->obj_ops->get_ref(ctx->src);
 	ctx->dst->obj_ops->get_ref(ctx->dst);
 
-	job = gsh_malloc(sizeof(*job));
+	job = gsh_malloc(sizeof(*job), MEM_COMP_XCOPY);
 	jctx = &job->job_ctx;
 
 	job->job_mode = mode;
@@ -1502,7 +1503,7 @@ static enum copy_dispatch_result copy_submit_job(
 	else
 		data->op_data = NULL;
 
-	gsh_free(job);
+	gsh_free(job, MEM_COMP_XCOPY);
 
 	LogDebug(COMPONENT_NFS_V4,
 		 "COPY: returning NFS4ERR_OFFLOAD_NO_REQ :%d %" PRIu32,

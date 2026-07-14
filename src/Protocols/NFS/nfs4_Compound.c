@@ -662,7 +662,8 @@ nfs_opnum4 LastOpcode[] = { NFS4_OP_RELEASE_LOCKOWNER, NFS4_OP_RECLAIM_COMPLETE,
 
 static inline void copy_tag(utf8str_cs *dest, utf8str_cs *src)
 {
-	utf8string_dup(dest, src->utf8string_val, src->utf8string_len);
+	utf8string_dup(dest, src->utf8string_val, src->utf8string_len,
+		       MEM_COMP_PROTOCOL);
 }
 
 enum nfs_req_result complete_op(compound_data_t *data, nfsstat4 *status,
@@ -985,7 +986,8 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 
 		/* Allocate (and zero) a new COMPOUND4res_extended */
 		data->slot->cached_result =
-			gsh_calloc(1, sizeof(*data->slot->cached_result));
+			gsh_calloc(1, sizeof(*data->slot->cached_result),
+				   MEM_COMP_PROTOCOL);
 
 		/* record the latest request. */
 		set_slot_last_req(data);
@@ -997,7 +999,8 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 
 		c_res->resarray.resarray_len = resarray_len;
 		c_res->resarray.resarray_val =
-			gsh_calloc(resarray_len, sizeof(struct nfs_resop4));
+			gsh_calloc(resarray_len, sizeof(struct nfs_resop4),
+				   MEM_COMP_PROTOCOL);
 		copy_tag(&c_res->tag, &res_compound4->tag);
 		res0 = c_res->resarray.resarray_val;
 
@@ -1198,7 +1201,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 	/* Allocate (and zero) the COMPOUND4res_extended */
 	res->res_compound4_extended =
-		gsh_calloc(1, sizeof(*res->res_compound4_extended));
+		gsh_calloc(1, sizeof(*res->res_compound4_extended),
+			   MEM_COMP_PROTOCOL);
 	res_compound4 = &res->res_compound4_extended->res_compound4;
 
 	/* Take initial reference to response. */
@@ -1241,7 +1245,7 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 #endif
 	/* Initialisation of the compound request internal's data */
-	data = gsh_calloc(1, sizeof(*data));
+	data = gsh_calloc(1, sizeof(*data), MEM_COMP_PROTOCOL);
 
 	data->req = req;
 	data->argarray_len = argarray_len;
@@ -1280,12 +1284,13 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 
 		/* Make a copy of the tagname */
 		data->tagname =
-			gsh_malloc(res_compound4->tag.utf8string_len + 1);
+			gsh_malloc(res_compound4->tag.utf8string_len + 1,
+				   MEM_COMP_PROTOCOL);
 		memcpy(data->tagname, res_compound4->tag.utf8string_val,
 		       res_compound4->tag.utf8string_len + 1);
 	} else {
 		/* No tag */
-		data->tagname = gsh_strdup("NO TAG");
+		data->tagname = gsh_strdup("NO TAG", MEM_COMP_PROTOCOL);
 	}
 
 	/* Managing the operation list */
@@ -1333,7 +1338,8 @@ int nfs4_Compound(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		arg->arg_compound4.tag.utf8string_len;
 
 	/* Allocating the reply nfs_resop4 */
-	data->resarray = gsh_calloc(argarray_len, sizeof(struct nfs_resop4));
+	data->resarray = gsh_calloc(argarray_len, sizeof(struct nfs_resop4),
+				    MEM_COMP_PROTOCOL);
 
 	res_compound4->resarray.resarray_len = argarray_len;
 	res_compound4->resarray.resarray_val = data->resarray;
@@ -1488,13 +1494,13 @@ void release_nfs4_res_compound(struct COMPOUND4res_extended *res_compound4_ex)
 		}
 	}
 
-	gsh_free(res_compound4->resarray.resarray_val);
+	gsh_free(res_compound4->resarray.resarray_val, MEM_COMP_PROTOCOL);
 	res_compound4->resarray.resarray_val = NULL;
 
-	gsh_free(res_compound4->tag.utf8string_val);
+	gsh_free(res_compound4->tag.utf8string_val, MEM_COMP_PROTOCOL);
 	res_compound4->tag.utf8string_val = NULL;
 
-	gsh_free(res_compound4_ex);
+	gsh_free(res_compound4_ex, MEM_COMP_PROTOCOL);
 }
 
 /**
@@ -1534,7 +1540,7 @@ void compound_data_Free(compound_data_t *data)
 	set_current_entry(data, NULL);
 	set_saved_entry(data, NULL);
 
-	gsh_free(data->tagname);
+	gsh_free(data->tagname, MEM_COMP_PROTOCOL);
 
 	if (data->session) {
 		if (data->slotid != UINT32_MAX) {
@@ -1562,12 +1568,12 @@ void compound_data_Free(compound_data_t *data)
 	}
 
 	if (data->currentFH.nfs_fh4_val != NULL)
-		gsh_free(data->currentFH.nfs_fh4_val);
+		gsh_free(data->currentFH.nfs_fh4_val, MEM_COMP_PROTOCOL);
 
 	if (data->savedFH.nfs_fh4_val != NULL)
-		gsh_free(data->savedFH.nfs_fh4_val);
+		gsh_free(data->savedFH.nfs_fh4_val, MEM_COMP_PROTOCOL);
 
-	gsh_free(data);
+	gsh_free(data, MEM_COMP_PROTOCOL);
 } /* compound_data_Free */
 
 /**
@@ -1758,7 +1764,7 @@ void nfs4_qos_compound_cb(void *args)
 		LogFullDebug(COMPONENT_QOS, "Ratecontrol IO exit data: %p",
 			     data);
 	}
-	gsh_free(args);
+	gsh_free(args, MEM_COMP_QOS);
 }
 #endif
 /* @} */

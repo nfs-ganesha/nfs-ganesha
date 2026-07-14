@@ -1914,7 +1914,8 @@ static void nfs_rpc_unref_user_data(SVCXPRT *xprt)
  */
 static struct svc_req *alloc_nfs_request(SVCXPRT *xprt, XDR *xdrs)
 {
-	nfs_request_t *reqdata = gsh_calloc(1, sizeof(nfs_request_t));
+	nfs_request_t *reqdata =
+		gsh_calloc(1, sizeof(nfs_request_t), MEM_COMP_PROTOCOL);
 
 	if (!xprt) {
 		LogFatal(COMPONENT_DISPATCH, "missing xprt!");
@@ -1972,7 +1973,7 @@ static void free_nfs_request(struct svc_req *req, enum xprt_stat stat)
 	LogFullDebug(COMPONENT_DISPATCH, "%s: %p fd %d xp_refcnt %" PRIu32,
 		     __func__, xprt, xprt->xp_fd, xprt->xp_refcnt);
 
-	gsh_free(reqdata);
+	gsh_free(reqdata, MEM_COMP_PROTOCOL);
 
 	SVC_RELEASE(xprt, SVC_REF_FLAG_NONE);
 

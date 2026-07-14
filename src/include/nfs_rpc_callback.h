@@ -82,22 +82,22 @@ void free_rpc_call(rpc_call_t *call);
 
 static inline nfs_cb_argop4 *alloc_cb_argop(uint32_t cnt)
 {
-	return gsh_calloc(cnt, sizeof(nfs_cb_argop4));
+	return gsh_calloc(cnt, sizeof(nfs_cb_argop4), MEM_COMP_PROTOCOL);
 }
 
 static inline nfs_cb_resop4 *alloc_cb_resop(uint32_t cnt)
 {
-	return gsh_calloc(cnt, sizeof(nfs_cb_resop4));
+	return gsh_calloc(cnt, sizeof(nfs_cb_resop4), MEM_COMP_PROTOCOL);
 }
 
 static inline void free_cb_argop(nfs_cb_argop4 *ptr)
 {
-	gsh_free(ptr);
+	gsh_free(ptr, MEM_COMP_PROTOCOL);
 }
 
 static inline void free_cb_resop(nfs_cb_resop4 *ptr)
 {
-	gsh_free(ptr);
+	gsh_free(ptr, MEM_COMP_PROTOCOL);
 }
 
 static inline bool get_cb_chan_down(struct nfs_client_id_t *clid)

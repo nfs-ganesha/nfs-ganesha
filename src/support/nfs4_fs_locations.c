@@ -34,9 +34,11 @@ static fsal_fs_locations_t *nfs4_fs_locations_alloc(const unsigned int count)
 {
 	fsal_fs_locations_t *fs_locations;
 
-	fs_locations = gsh_calloc(1, sizeof(fsal_fs_locations_t));
+	fs_locations =
+		gsh_calloc(1, sizeof(fsal_fs_locations_t), MEM_COMP_FSAL);
 	if (count)
-		fs_locations->server = gsh_calloc(count, sizeof(utf8string));
+		fs_locations->server =
+			gsh_calloc(count, sizeof(utf8string), MEM_COMP_FSAL);
 
 	PTHREAD_RWLOCK_init(&(fs_locations->fsloc_lock), NULL);
 
@@ -50,15 +52,15 @@ void nfs4_fs_locations_free(fsal_fs_locations_t *fs_locations)
 	if (!fs_locations)
 		return;
 
-	gsh_free(fs_locations->fs_root);
-	gsh_free(fs_locations->rootpath);
+	gsh_free(fs_locations->fs_root, MEM_COMP_FSAL);
+	gsh_free(fs_locations->rootpath, MEM_COMP_FSAL);
 
 	for (i = 0; i < fs_locations->nservers; ++i)
-		gsh_free(fs_locations->server[i].utf8string_val);
+		gsh_free(fs_locations->server[i].utf8string_val, MEM_COMP_FSAL);
 
 	PTHREAD_RWLOCK_destroy(&(fs_locations->fsloc_lock));
-	gsh_free(fs_locations->server);
-	gsh_free(fs_locations);
+	gsh_free(fs_locations->server, MEM_COMP_FSAL);
+	gsh_free(fs_locations, MEM_COMP_FSAL);
 }
 
 void nfs4_fs_locations_get_ref(fsal_fs_locations_t *fs_locations)
@@ -111,8 +113,8 @@ fsal_fs_locations_t *nfs4_fs_locations_new(const char *fs_root,
 		return NULL;
 	}
 
-	fs_locations->fs_root = gsh_strdup(fs_root);
-	fs_locations->rootpath = gsh_strdup(rootpath);
+	fs_locations->fs_root = gsh_strdup(fs_root, MEM_COMP_FSAL);
+	fs_locations->rootpath = gsh_strdup(rootpath, MEM_COMP_FSAL);
 	fs_locations->ref = 1;
 
 	return fs_locations;

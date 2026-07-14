@@ -162,7 +162,8 @@ void config_url_shutdown(void)
 					     struct gsh_plugin_module, link))) {
 		handle = plugin_p->handle;
 		glist_del(&plugin_p->link);
-		gsh_free(plugin_p);
+		gsh_free((char *)plugin_p->name, MEM_COMP_CONFIG);
+		gsh_free(plugin_p, MEM_COMP_CONFIG);
 		dlclose(handle);
 	}
 	PTHREAD_RWLOCK_unlock(&url_rwlock);
@@ -191,7 +192,7 @@ int config_plugin_load(char *filename)
 	struct gsh_plugin_module *plugin_p;
 	char *modules_loc;
 
-	plugin_p = gsh_malloc(safe_sizeof(*plugin_p));
+	plugin_p = gsh_malloc(safe_sizeof(*plugin_p), MEM_COMP_CONFIG);
 	modules_loc = nfs_param.core_param.ganesha_modules_loc;
 	if (!modules_loc) { /* because we are called earlier... */
 		modules_loc = FSAL_MODULE_LOC;
@@ -208,7 +209,7 @@ int config_plugin_load(char *filename)
 		old_form = 1;
 	}
 	size = safe_sizeof(pathfmt) + strlen(modules_loc) + strlen(filename);
-	fn = gsh_malloc(size);
+	fn = gsh_malloc(size, MEM_COMP_CONFIG);
 	snprintf(fn, size, pathfmt, modules_loc, filename);
 	if (!old_form) {
 	} else {
@@ -238,10 +239,10 @@ error:
 	if (plugin_p) {
 		LogWarn(COMPONENT_CONFIG, "Can't dlopen config plugin <%s>: %s",
 			fn, dlerror());
-		gsh_free(plugin_p);
+		gsh_free(plugin_p, MEM_COMP_CONFIG);
 	}
 	if (fn) {
-		gsh_free(fn);
+		gsh_free(fn, MEM_COMP_CONFIG);
 	}
 	PTHREAD_RWLOCK_unlock(&url_rwlock);
 	return rc;
@@ -274,7 +275,7 @@ static inline char *match_dup(regmatch_t *m, char *in)
 		int size;
 
 		size = m->rm_eo - m->rm_so + 1;
-		s = (char *)gsh_malloc(size);
+		s = (char *)gsh_malloc(size, MEM_COMP_CONFIG);
 		(void)snprintf(s, size, "%s", in + m->rm_so);
 	}
 	return s;
@@ -330,8 +331,8 @@ int config_url_fetch(const char *url, FILE **f, void (**rel)(FILE *, void *),
 	}
 	PTHREAD_RWLOCK_unlock(&url_rwlock);
 out:
-	gsh_free(url_type);
-	gsh_free(m_url);
+	gsh_free(url_type, MEM_COMP_CONFIG);
+	gsh_free(m_url, MEM_COMP_CONFIG);
 
 	return code;
 }

@@ -120,7 +120,8 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* Size != 0 , this is a creation/replacement of xattr */
 
 		/* Create the xattr at the FSAL level and cache result */
-		pfid->xattr = gsh_malloc(sizeof(*pfid->xattr) + *size);
+		pfid->xattr = gsh_malloc(sizeof(*pfid->xattr) + *size,
+					 MEM_COMP_PROTOCOL);
 		pfid->xattr->xattr_size = *size;
 		pfid->xattr->xattr_offset = 0LL;
 		pfid->xattr->xattr_write = _9P_XATTR_CAN_WRITE;
@@ -158,7 +159,7 @@ int _9p_xattrcreate(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		}
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pfid->xattr);
+			gsh_free(pfid->xattr, MEM_COMP_PROTOCOL);
 			pfid->xattr = NULL;
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status), plenout,

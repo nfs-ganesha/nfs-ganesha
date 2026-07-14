@@ -88,7 +88,8 @@ static state_status_t nfsv4_granted_callback(struct fsal_obj_handle *obj,
 		return STATE_LOCK_BLOCKED;
 	}
 	argslock->cnla_lock_owner.owner.owner_val =
-		gsh_calloc(1, lock_entry->sle_owner->so_owner_len);
+		gsh_calloc(1, lock_entry->sle_owner->so_owner_len,
+			   MEM_COMP_STATE);
 	argslock->cnla_lock_owner.owner.owner_len =
 		lock_entry->sle_owner->so_owner_len;
 	memcpy(argslock->cnla_lock_owner.owner.owner_val,
@@ -105,7 +106,8 @@ static state_status_t nfsv4_granted_callback(struct fsal_obj_handle *obj,
 
 	bdata->snbd_notified_eligible_time = time(NULL);
 
-	gsh_free(argslock->cnla_lock_owner.owner.owner_val);
+	gsh_free(argslock->cnla_lock_owner.owner.owner_val,
+		 MEM_COMP_STATE);
 	nfs4_freeFH(&argslock->cnla_fh);
 
 	return STATE_SUCCESS;
@@ -733,7 +735,8 @@ check_seqid:
 	}
 
 	if (blocking == STATE_BLOCKING) {
-		pblock_data = gsh_calloc(1, sizeof(*pblock_data));
+		pblock_data = gsh_calloc(1, sizeof(*pblock_data),
+					 MEM_COMP_STATE);
 		pblock_data->sbd_granted_callback = nfsv4_granted_callback;
 		pblock_data->sbd_prot.sbd_v4.snbd_last_poll_time = time(NULL);
 		pblock_data->sbd_prot.sbd_v4.snbd_notified_eligible_time = 0;
@@ -747,7 +750,7 @@ check_seqid:
 	 * state_lock() would set pblock_data to NULL if the lock was
 	 * blocked!
 	 */
-	gsh_free(pblock_data);
+	gsh_free(pblock_data, MEM_COMP_STATE);
 
 	if (state_status != STATE_SUCCESS) {
 		LogDebug(COMPONENT_NFS_V4_LOCK, "LOCK failed with status %s",

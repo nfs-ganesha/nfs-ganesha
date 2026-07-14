@@ -1997,3 +1997,186 @@ class DumpFULLV4Stats(Report):
                 output += " %12.6f" % (self.stats[3][i][5])
                 i += 1
             return output
+
+class RetrieveMemoryStats():
+    def __init__(self):
+        self.dbus_service_name = "org.ganesha.nfsd"
+        self.dbus_memstats_name = "org.ganesha.nfsd.memstats"
+        self.mem_interface = "/org/ganesha/nfsd/MemMgr"
+
+        self.bus = dbus.SystemBus()
+        self.memmgrobj = self.bus.get_object(self.dbus_service_name,
+                                             self.mem_interface)
+
+    # get memory stats
+    def get_mem_stats(self):
+        stats_state = self.memmgrobj.get_dbus_method("GetMemoryStats",
+                                                     self.dbus_memstats_name)
+        return DumpMemStats(stats_state())
+
+class DumpMemStats(Report):
+    # Sent over D-Bus as uint64 but can be negative (see
+    # gsh_mem_stats_get_stat_by_index_and_comp() / get_comp_memory_statistics()
+    # in server_stats.c, which reinterpret a signed int64_t's bits as
+    # uint64_t rather than changing the wire schema). Undo that on read.
+    _SIGNED_FIELDS = {
+        "Current_Active_Bytes", "Peak_Active_Bytes",
+    }
+
+    @staticmethod
+    def _to_signed64(v):
+        v = int(v)
+        return v - (1 << 64) if v >= (1 << 63) else v
+
+    def __init__(self, stats):
+        super().__init__(stats)
+
+        self.success = stats[0]
+        self.status = stats[1]
+
+    def fill_report(self, report):
+        def op_stats(stat_list):
+            # a(st): (name, uint64) per field from the server
+            out = {}
+            for pair in stat_list:
+                if (isinstance(pair, (list, tuple)) and len(pair) == 2):
+                    k, v = pair
+                    v = dbus_to_std(v)
+                    if str(k) in self._SIGNED_FIELDS:
+                        v = self._to_signed64(v)
+                    out[str(k)] = v
+            return out
+
+        stats = self.result[3]
+        for item in stats:
+            if isinstance(item, (list, tuple)) and len(item) == 2:
+                comp_name, stat_tuples = item
+                report[str(comp_name)] = op_stats(stat_tuples)
+
+    def __str__(self):
+        output = ""
+        if self.status != "OK":
+            return ("GANESHA RESPONSE STATUS: " + self.status)
+        else:
+            stats = self.result[2]
+
+            # self.stats is expected to be the array (a(sa(st)))
+            # So it's a list of tuples: (component_name, [(stat_name, value), ...])
+            #stats_dict = {name: dict(stat_list) for name, stat_list in self.stats}
+            stats_dict = {
+                name: dict(stat_list)
+                for item in stats
+                if isinstance(item, (list, tuple)) and len(item) == 2
+                for name, stat_list in [item]
+            }
+
+            total_l_alloc = total_l_free = 0
+            total_l_ab = total_l_fb = 0
+            total_cur = total_pk = 0
+            k_lac = "Lifetime_Alloc_Calls"
+            k_lfc = "Lifetime_Free_Calls"
+            k_lab = "Lifetime_Alloc_Bytes"
+            k_lfd = "Lifetime_Freed_Bytes"
+            k_cur = "Current_Active_Bytes"
+            k_pk = "Peak_Active_Bytes"
+
+            _mem_labels = []
+            _seen = set()
+            for item in stats:
+                if isinstance(item, (list, tuple)) and len(item) == 2:
+                    name, _ = item
+                    n = str(name)
+                    if n not in _seen:
+                        _seen.add(n)
+                        _mem_labels.append(n)
+            w_comp = 10
+            wn = 11
+            w_byte = 14
+            # Short tags = column headers; long names = gsh / D-Bus stat keys.
+            output += (
+                "Column tags (full gsh / D-Bus mem stat field names). "
+                "L_ac/L_fc = call counts; all other columns = bytes.\n"
+                "  L_ac=Lifetime_Alloc_Calls, L_fc=Lifetime_Free_Calls, "
+                "L_ab=Lifetime_Alloc_Bytes, L_fd=Lifetime_Freed_Bytes, "
+                "C_ab=Current_Active_Bytes, P_ab=Peak_Active_Bytes\n"
+                "  C_ab can be negative (alloc/free mem_comp mismatch).\n"
+                "All byte columns (row and TOTAL) use adaptive units - B/K/M/G, "
+                "whichever keeps the value both compact and exact: values under "
+                "1KiB print as exact bytes (so a small mismatch like -100 stays "
+                "visible instead of rounding away to 0.00M), larger values print "
+                "in the smallest unit that keeps them readable, e.g. 12.16M.\n"
+            )
+
+            def _hdr_line():
+                h = f"{'Component':<{w_comp}}"
+                h += f" {'L_ac':>{wn}} {'L_fc':>{wn}} {'L_ab':>{w_byte}} {'L_fd':>{w_byte}}"
+                h += f" {'C_ab':>{w_byte}} {'P_ab':>{w_byte}}\n"
+                return h
+
+            def _hbytes(x):
+                # Adaptive units: exact bytes below 1KiB (so small mismatches
+                # like -100 stay visible), otherwise the smallest of K/M/G
+                # that keeps the number readable. Sign is preserved throughout.
+                if x is None:
+                    return "n/a"
+                ax = abs(x)
+                for unit, div in (("G", 1024 ** 3), ("M", 1024 ** 2),
+                                  ("K", 1024)):
+                    if ax >= div:
+                        return f"{x / div:.2f}{unit}"
+                return f"{x}B"
+
+            def _row(lbl, v):
+                s = f"{(lbl + ':'):<{w_comp}}"
+                s += f" {v[0]:>{wn}} {v[1]:>{wn}} {_hbytes(v[2]):>{w_byte}} {_hbytes(v[3]):>{w_byte}}"
+                s += f" {_hbytes(v[4]):>{w_byte}} {_hbytes(v[5]):>{w_byte}}\n"
+                return s
+
+            def _row_total(v):
+                s = f"{'TOTAL:':<{w_comp}}"
+                s += f" {v[0]:>{wn}} {v[1]:>{wn}} {_hbytes(v[2]):>{w_byte}}"
+                s += f" {_hbytes(v[3]):>{w_byte}}"
+                s += f" {_hbytes(v[4]):>{w_byte}} {_hbytes(v[5]):>{w_byte}}\n"
+                return s
+
+            output += _hdr_line()
+
+            for label in _mem_labels:
+                if label in stats_dict:
+                    stat_map = stats_dict[label]
+                    try:
+                        lac = int(stat_map[k_lac])
+                        lfc = int(stat_map[k_lfc])
+                        lab = int(stat_map[k_lab])
+                        lfd = int(stat_map[k_lfd])
+                        cur = self._to_signed64(stat_map[k_cur])
+                        pk = self._to_signed64(stat_map[k_pk])
+                        output += _row(
+                            label,
+                            [lac, lfc, lab, lfd, cur, pk],
+                        )
+                        total_l_alloc += lac
+                        total_l_free += lfc
+                        total_l_ab += lab
+                        total_l_fb += lfd
+                        total_cur += cur
+                        total_pk += pk
+                    except KeyError as e:
+                        output += f"{(label + ':'):<{w_comp}} <Missing Stat: {e}>\n"
+                else:
+                    output += f"{(label + ':'):<{w_comp}} <Invalid Data>\n"
+
+            outlen = w_comp + 2 * wn + 4 * w_byte + 12
+            output += "-" * min(200, outlen) + "\n"
+            output += _row_total(
+                [
+                    total_l_alloc,
+                    total_l_free,
+                    total_l_ab,
+                    total_l_fb,
+                    total_cur,
+                    total_pk,
+                ]
+            )
+
+        return output

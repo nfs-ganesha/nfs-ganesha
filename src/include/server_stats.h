@@ -42,6 +42,43 @@
 
 #include <sys/types.h>
 
+extern const char *mem_stat_names[];
+
+/*
+ * @brief Ganesha per-component memory statistics
+ *
+ * Always counted; there is no runtime enable/disable for capture.
+ */
+struct gsh_mem_stats {
+	/* Lifetime: monotonic for the process; never cleared by reset. */
+	uint64_t lifetime_alloc_calls;
+	uint64_t lifetime_free_calls;
+	uint64_t lifetime_alloc_bytes;
+	uint64_t lifetime_freed_bytes;
+
+	/*
+	 * current_active_bytes is signed: an alloc/free mem_comp mismatch
+	 * (freeing more than was ever allocated under this comp) is
+	 * allowed to go negative instead of clamping to 0, so it stays
+	 * visible in the value itself, not just in the LogWarn that fires
+	 * alongside it. In a bug-free run this equals
+	 * (lifetime_alloc_bytes - lifetime_freed_bytes).
+	 */
+	int64_t current_active_bytes;
+	/* Lifetime high-water of current_active_bytes. */
+	int64_t peak_active_bytes;
+};
+
+struct mem_stats_info {
+	const char *mem_stat_name; /* stat name */
+};
+
+/*
+ * If adding any new value to gsh_mem_stats, increment
+ * MAX_MEMORY_STATS_FIELD_COUNT.
+ */
+#define MAX_MEMORY_STATS_FIELD_COUNT 6
+
 void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup);
 
 #ifdef _USE_9P
@@ -64,6 +101,18 @@ void dec_grants(struct gsh_client *client);
 void inc_revokes(struct gsh_client *client);
 void inc_recalls(struct gsh_client *client);
 void inc_failed_recalls(struct gsh_client *client);
+
+void gsh_mem_stats_update_alloc(void *p, mem_components_t comp,
+				const char *file, int line,
+				const char *function);
+void gsh_mem_stats_update_free(void *p, mem_components_t comp,
+			       const char *file, int line,
+			       const char *function);
+int64_t gsh_mem_stats_get_stat_by_index_and_comp(uint32_t index,
+						 mem_components_t comp);
+/** comp is gshMC[] index: 0 = libntirpc, 1+ = Ganesha mem_components_t. */
+const char *gsh_mem_stats_get_mem_comp_str(mem_components_t comp);
+void gsh_log_mem_stats(void);
 
 #endif /* !SERVER_STATS_H */
 /** @} */

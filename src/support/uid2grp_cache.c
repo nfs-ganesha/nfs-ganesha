@@ -187,7 +187,7 @@ static void uid2grp_remove_user(struct cache_info *info)
 	 * removed from cache trees.
 	 */
 	uid2grp_release_group_data(info->gdata);
-	gsh_free(info);
+	gsh_free(info, MEM_COMP_IDMAPPER);
 	idmapper_monitoring__cache_entries_total_set(
 		IDMAPPING_CACHE_ENTITY_USER_GROUPS,
 		(int64_t)avltree_size(&uname_tree));
@@ -255,7 +255,7 @@ void uid2grp_add_user(struct group_data *gdata)
 	directory_services_param_t *ds_param =
 		&nfs_param.directory_services_param;
 
-	info = gsh_malloc(sizeof(struct cache_info));
+	info = gsh_malloc(sizeof(struct cache_info), MEM_COMP_IDMAPPER);
 
 	info->uid = gdata->uid;
 	info->uname.addr = gdata->uname.addr;
@@ -552,7 +552,7 @@ static bool show_uid2grp(DBusMessageIter *args, DBusMessage *reply,
 	struct avltree_node *node;
 	uint32_t val;
 	DBusMessageIter iter, sub_iter, id_iter;
-	char *namebuff = gsh_malloc(256);
+	char *namebuff = gsh_malloc(256, MEM_COMP_IDMAPPER);
 
 	dbus_message_iter_init_append(reply, &iter);
 	now(&timestamp);
@@ -582,7 +582,7 @@ static bool show_uid2grp(DBusMessageIter *args, DBusMessage *reply,
 	}
 
 	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
-	free(namebuff);
+	gsh_free(namebuff, MEM_COMP_IDMAPPER);
 	dbus_message_iter_close_container(&iter, &sub_iter);
 	return true;
 }

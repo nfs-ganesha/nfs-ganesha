@@ -189,7 +189,6 @@ typedef struct db_thread_info__ {
 	/* this pool is accessed by submitter
 	 * and by the db thread */
 	pthread_mutex_t pool_mutex;
-	pool_t *dbop_pool;
 
 } db_thread_info_t;
 
@@ -301,9 +300,6 @@ static int init_db_thread_info(db_thread_info_t *p_thr_info,
 	/* init memory pool */
 
 	PTHREAD_MUTEX_init(&p_thr_info->pool_mutex, NULL);
-
-	p_thr_info->dbop_pool =
-		pool_basic_init("drop_pool", sizeof(db_op_item_t));
 
 	return HANDLEMAP_SUCCESS;
 }
@@ -744,7 +740,7 @@ static void *database_worker_thread(void *arg)
 
 		/* free the db operation item */
 		PTHREAD_MUTEX_lock(&p_info->pool_mutex);
-		pool_free(p_info->dbop_pool, to_be_done);
+		gsh_free(to_be_done, MEM_COMP_FSAL);
 		PTHREAD_MUTEX_unlock(&p_info->pool_mutex);
 
 	} /* loop forever */
@@ -918,7 +914,7 @@ int handlemap_db_reaload_all(hash_table_t *target_hash)
 		/* get a new db operation  */
 		PTHREAD_MUTEX_lock(&db_thread[i].pool_mutex);
 
-		new_task = pool_alloc(db_thread[i].dbop_pool);
+		new_task = gsh_calloc(1, sizeof(db_op_item_t), MEM_COMP_FSAL);
 
 		PTHREAD_MUTEX_unlock(&db_thread[i].pool_mutex);
 
@@ -960,7 +956,7 @@ int handlemap_db_insert(nfs23_map_handle_t *p_in_nfs23_digest, const void *data,
 		/* get a new db operation  */
 		PTHREAD_MUTEX_lock(&db_thread[i].pool_mutex);
 
-		new_task = pool_alloc(db_thread[i].dbop_pool);
+		new_task = gsh_calloc(1, sizeof(db_op_item_t), MEM_COMP_FSAL);
 
 		PTHREAD_MUTEX_unlock(&db_thread[i].pool_mutex);
 
@@ -998,7 +994,7 @@ int handlemap_db_delete(nfs23_map_handle_t *p_in_nfs23_digest)
 	/* get a new db operation  */
 	PTHREAD_MUTEX_lock(&db_thread[i].pool_mutex);
 
-	new_task = pool_alloc(db_thread[i].dbop_pool);
+	new_task = gsh_calloc(1, sizeof(db_op_item_t), MEM_COMP_FSAL);
 
 	PTHREAD_MUTEX_unlock(&db_thread[i].pool_mutex);
 

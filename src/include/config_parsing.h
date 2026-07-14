@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include "mem_components.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -840,6 +841,7 @@ struct config_item {
 struct config_block {
 	char *dbus_interface_name;
 	struct config_item blk_desc;
+	mem_components_t mem_comp;
 };
 
 /**

@@ -374,8 +374,9 @@ int nfs3_readdirplus(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		pos_end = xdr_getpos(&tracker.xdr);
 
 		/* Get an xdr_uio and fill it in */
-		uio = gsh_calloc(1, sizeof(struct xdr_uio) +
-					    sizeof(struct xdr_uio));
+		uio = gsh_calloc(
+			1, sizeof(struct xdr_uio) + sizeof(struct xdr_uio),
+			MEM_COMP_PROTOCOL);
 		uio->uio_release = xdr_dirlistplus3_uio_release;
 		uio->uio_count = 1;
 		uio->uio_vio[0].vio_base = tracker.entries;
@@ -422,7 +423,7 @@ out:
 
 	/* If we allocated but didn't consume entries, free it now. */
 	if (!op_ctx->is_rdma_buff_used)
-		gsh_free(tracker.entries);
+		gsh_free(tracker.entries, MEM_COMP_IO_BUFFER);
 
 	return rc;
 } /* nfs3_readdirplus */
@@ -560,7 +561,8 @@ fsal_errors_t nfs3_readdirplus_callback(void *opaque,
 	}
 
 	/* Now we are done with anything allocated */
-	gsh_free(ep3.name_handle.post_op_fh3_u.handle.data.data_val);
+	gsh_free(ep3.name_handle.post_op_fh3_u.handle.data.data_val,
+		 MEM_COMP_PROTOCOL);
 
 	return ERR_FSAL_NO_ERROR;
 } /* nfs3_readdirplus_callback */

@@ -218,5 +218,6 @@ void nfs3_symlink_free(nfs_res_t *res)
 	SYMLINK3resok *resok = &res->res_symlink3.SYMLINK3res_u.resok;
 
 	if (res->res_symlink3.status == NFS3_OK && resok->obj.handle_follows)
-		gsh_free(resok->obj.post_op_fh3_u.handle.data.data_val);
+		gsh_free(resok->obj.post_op_fh3_u.handle.data.data_val,
+			 MEM_COMP_PROTOCOL);
 }

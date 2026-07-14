@@ -216,7 +216,8 @@ enum nfs_req_result nfs4_op_setclientid(struct nfs_argop4 *op,
 							       .nc]
 					.netid;
 			res_SETCLIENTID4_INUSE->r_addr =
-				gsh_strdup(conf->cid_cb.v40.cb_client_r_addr);
+				gsh_strdup(conf->cid_cb.v40.cb_client_r_addr,
+					   MEM_COMP_PROTOCOL);
 
 			/* Release our reference to the confirmed clientid. */
 			dec_client_id_ref(conf);
@@ -404,6 +405,7 @@ void nfs4_op_setclientid_Free(nfs_resop4 *res)
 
 	if (resp->status == NFS4ERR_CLID_INUSE) {
 		if (resp->SETCLIENTID4res_u.client_using.r_addr != NULL)
-			gsh_free(resp->SETCLIENTID4res_u.client_using.r_addr);
+			gsh_free(resp->SETCLIENTID4res_u.client_using.r_addr,
+				 MEM_COMP_PROTOCOL);
 	}
 }

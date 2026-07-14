@@ -269,6 +269,6 @@ void nfs3_mknod_free(nfs_res_t *res)
 
 	if ((res->res_mknod3.status == NFS3_OK) &&
 	    (res->res_mknod3.MKNOD3res_u.resok.obj.handle_follows)) {
-		gsh_free(handle->data.data_val);
+		gsh_free(handle->data.data_val, MEM_COMP_PROTOCOL);
 	}
 }

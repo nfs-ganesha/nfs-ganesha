@@ -213,7 +213,7 @@ static enum xprt_stat nfs3_read_resume(struct svc_req *req)
 	rc = nfs3_complete_read(data);
 
 	/* Free the read_data. */
-	gsh_free(data);
+	gsh_free(data, MEM_COMP_PROTOCOL);
 	reqdata->proc_data = NULL;
 
 	nfs_rpc_complete_async_request(reqdata, rc);
@@ -413,7 +413,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 	}
 
 	/* Set up args, allocate from heap */
-	read_data = gsh_calloc(1, sizeof(*read_data));
+	read_data = gsh_calloc(1, sizeof(*read_data), MEM_COMP_PROTOCOL);
 	read_arg = &read_data->read_arg;
 
 	read_arg->info = NULL;
@@ -468,7 +468,7 @@ again:
 	rc = nfs3_complete_read(read_data);
 
 	/* Since we're actually done, we can free read_data. */
-	gsh_free(read_data);
+	gsh_free(read_data, MEM_COMP_PROTOCOL);
 	reqdata->proc_data = NULL;
 
 	return rc;

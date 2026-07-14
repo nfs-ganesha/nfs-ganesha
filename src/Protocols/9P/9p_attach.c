@@ -144,7 +144,7 @@ int _9p_attach(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	}
 
 	/* Set export and fid id in fid */
-	pfid = gsh_calloc(1, sizeof(struct _9p_fid));
+	pfid = gsh_calloc(1, sizeof(struct _9p_fid), MEM_COMP_PROTOCOL);
 
 	/* Copy the export into the pfid with reference. */
 	pfid->fid_export = op_ctx->ctx_export;

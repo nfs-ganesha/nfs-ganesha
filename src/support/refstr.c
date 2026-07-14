@@ -25,12 +25,13 @@
 #include "abstract_mem.h"
 #include "gsh_list.h"
 
-struct gsh_refstr *gsh_refstr_alloc(size_t len)
+struct gsh_refstr *gsh_refstr_alloc(size_t len, mem_components_t comp)
 {
 	struct gsh_refstr *gr;
 
-	gr = gsh_malloc(sizeof(*gr) + len);
+	gr = gsh_malloc(sizeof(*gr) + len, comp);
 	urcu_ref_init(&gr->gr_ref);
+	gr->gr_comp = comp;
 	return gr;
 }
 
@@ -40,5 +41,5 @@ void gsh_refstr_release(struct urcu_ref *ref)
 
 	LogFullDebug(COMPONENT_EXPORT, "Releasing refstr %s", gr->gr_val);
 
-	gsh_free(gr);
+	gsh_free(gr, gr->gr_comp);
 }

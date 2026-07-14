@@ -237,10 +237,11 @@ void free_layouts(layout4 *layouts, uint32_t numlayouts)
 
 	for (i = 0; i < numlayouts; i++) {
 		if (layouts[i].lo_content.loc_body.loc_body_val)
-			gsh_free(layouts[i].lo_content.loc_body.loc_body_val);
+			gsh_free(layouts[i].lo_content.loc_body.loc_body_val,
+				 MEM_COMP_STATE);
 	}
 
-	gsh_free(layouts);
+	gsh_free(layouts, MEM_COMP_STATE);
 }
 
 /**
@@ -287,7 +288,8 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj, state_t *layout_state,
 	   and create an XDR stream for the FSAL to encode to. */
 
 	current->lo_content.loc_type = arg->type;
-	current->lo_content.loc_body.loc_body_val = gsh_malloc(loc_body_size);
+	current->lo_content.loc_body.loc_body_val =
+		gsh_malloc(loc_body_size, MEM_COMP_STATE);
 
 	xdrmem_create(&loc_body, current->lo_content.loc_body.loc_body_val,
 		      loc_body_size, XDR_ENCODE);
@@ -331,7 +333,8 @@ static nfsstat4 one_segment(struct fsal_obj_handle *obj, state_t *layout_state,
 out:
 
 	if (nfs_status != NFS4_OK)
-		gsh_free(current->lo_content.loc_body.loc_body_val);
+		gsh_free(current->lo_content.loc_body.loc_body_val,
+			 MEM_COMP_STATE);
 
 	return nfs_status;
 }
@@ -421,7 +424,8 @@ enum nfs_req_result nfs4_op_layoutget(struct nfs_argop4 *op,
 	/*
 	 * Initialize segment array and fill out input-only arguments
 	 */
-	layouts = gsh_calloc(max_segment_count, sizeof(layout4));
+	layouts = gsh_calloc(max_segment_count, sizeof(layout4),
+			     MEM_COMP_STATE);
 
 	arg.type = arg_LAYOUTGET4->loga_layout_type;
 	arg.iomode = arg_LAYOUTGET4->loga_iomode;

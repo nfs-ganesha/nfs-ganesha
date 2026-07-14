@@ -130,5 +130,6 @@ out:
 void nfs3_readlink_free(nfs_res_t *res)
 {
 	if (res->res_readlink3.status == NFS3_OK)
-		gsh_free(res->res_readlink3.READLINK3res_u.resok.data);
+		gsh_free(res->res_readlink3.READLINK3res_u.resok.data,
+			 MEM_COMP_PROTOCOL);
 }

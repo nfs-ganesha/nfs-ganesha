@@ -45,12 +45,13 @@ namespace gtest {
     virtual void SetUp() {
       gtest::GaneshaFSALBaseTest::SetUp();
 
-      data = (compound_data_t *) gsh_calloc(1, sizeof(*data));
+      data = (compound_data_t *) gsh_calloc(1, sizeof(*data), MEM_COMP_GTEST);
 
       memset(&arg, 0, sizeof(nfs_arg_t));
       memset(&resp, 0, sizeof(struct nfs_resop4));
 
-      ops = (struct nfs_argop4 *) gsh_calloc(1, sizeof(struct nfs_argop4));
+      ops = (struct nfs_argop4 *) gsh_calloc(1, sizeof(struct nfs_argop4),
+					MEM_COMP_GTEST);
       arg.arg_compound4.argarray.argarray_len = 1;
       arg.arg_compound4.argarray.argarray_val = ops;
 
@@ -109,14 +110,17 @@ namespace gtest {
     }
 
     void setup_lookup(int pos, const char *name) {
-      gsh_free(ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val,
+               MEM_COMP_GTEST);
       ops[pos].argop = NFS4_OP_LOOKUP;
       ops[pos].nfs_argop4_u.oplookup.objname.utf8string_len = strlen(name);
-      ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val = gsh_strdup(name);
+      ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val =
+                                        gsh_strdup(name, MEM_COMP_GTEST);
     }
 
     void cleanup_lookup(int pos) {
-      gsh_free(ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val,
+               MEM_COMP_GTEST);
       ops[pos].nfs_argop4_u.oplookup.objname.utf8string_len = 0;
       ops[pos].nfs_argop4_u.oplookup.objname.utf8string_val = nullptr;
     }
@@ -124,7 +128,8 @@ namespace gtest {
     void setup_putfh(int pos, struct fsal_obj_handle *entry) {
       bool fhres;
 
-      gsh_free(ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_val);
+      gsh_free(ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_val,
+               MEM_COMP_GTEST);
 
       ops[pos].argop = NFS4_OP_PUTFH;
 
@@ -135,21 +140,24 @@ namespace gtest {
     }
 
     void cleanup_putfh(int pos) {
-      gsh_free(ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_val);
+      gsh_free(ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_val,
+               MEM_COMP_GTEST);
       ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_len = 0;
       ops[pos].nfs_argop4_u.opputfh.object.nfs_fh4_val = nullptr;
     }
 
     void setup_rename(int pos, const char *oldname, const char *newname) {
-      gsh_free(ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val);
-      gsh_free(ops[pos].nfs_argop4_u.oprename.newname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val,
+               MEM_COMP_GTEST);
+      gsh_free(ops[pos].nfs_argop4_u.oprename.newname.utf8string_val,
+               MEM_COMP_GTEST);
       ops[pos].argop = NFS4_OP_RENAME;
       ops[pos].nfs_argop4_u.oprename.oldname.utf8string_len = strlen(oldname);
       ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val =
-                                                          gsh_strdup(oldname);
+                                        gsh_strdup(oldname, MEM_COMP_GTEST);
       ops[pos].nfs_argop4_u.oprename.newname.utf8string_len = strlen(newname);
       ops[pos].nfs_argop4_u.oprename.newname.utf8string_val =
-                                                          gsh_strdup(newname);
+                                        gsh_strdup(newname, MEM_COMP_GTEST);
     }
 
     void swap_rename(int pos) {
@@ -160,8 +168,10 @@ namespace gtest {
     }
 
     void cleanup_rename(int pos) {
-      gsh_free(ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val);
-      gsh_free(ops[pos].nfs_argop4_u.oprename.newname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val,
+               MEM_COMP_GTEST);
+      gsh_free(ops[pos].nfs_argop4_u.oprename.newname.utf8string_val,
+               MEM_COMP_GTEST);
       ops[pos].nfs_argop4_u.oprename.oldname.utf8string_len = 0;
       ops[pos].nfs_argop4_u.oprename.oldname.utf8string_val = nullptr;
       ops[pos].nfs_argop4_u.oprename.newname.utf8string_len = 0;
@@ -169,15 +179,17 @@ namespace gtest {
     }
 
     void setup_link(int pos, const char *newname) {
-      gsh_free(ops[pos].nfs_argop4_u.oplink.newname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oplink.newname.utf8string_val,
+               MEM_COMP_GTEST);
       ops[pos].argop = NFS4_OP_LINK;
       ops[pos].nfs_argop4_u.oplink.newname.utf8string_len = strlen(newname);
       ops[pos].nfs_argop4_u.oplink.newname.utf8string_val =
-                                                          gsh_strdup(newname);
+                                      gsh_strdup(newname, MEM_COMP_GTEST);
     }
 
     void cleanup_link(int pos) {
-      gsh_free(ops[pos].nfs_argop4_u.oplink.newname.utf8string_val);
+      gsh_free(ops[pos].nfs_argop4_u.oplink.newname.utf8string_val,
+               MEM_COMP_GTEST);
       ops[pos].nfs_argop4_u.oplink.newname.utf8string_len = 0;
       ops[pos].nfs_argop4_u.oplink.newname.utf8string_val = nullptr;
     }

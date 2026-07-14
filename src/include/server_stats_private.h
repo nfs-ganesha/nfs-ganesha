@@ -42,6 +42,7 @@
 #define SERVER_STATS_PRIVATE_H
 
 #include "sal_data.h"
+#include <stdatomic.h>
 
 /**
  * @brief Server request statistics
@@ -79,6 +80,7 @@ struct clnt_allops_nlm4_stats;
 #endif
 
 struct gsh_stats {
+	mem_components_t comp;
 #ifdef _USE_NFS3
 	struct nfsv3_stats *nfsv3;
 	struct mnt_stats *mnt;
@@ -99,6 +101,7 @@ struct gsh_stats {
 };
 
 struct gsh_clnt_allops_stats {
+	mem_components_t comp;
 #ifdef _USE_NFS3
 	struct clnt_allops_v3_stats *nfsv3;
 #endif
@@ -519,6 +522,5 @@ void server_stats_free(struct gsh_stats *statsp);
 void server_stats_allops_free(struct gsh_clnt_allops_stats *statsp);
 
 void server_stats_init(void);
-
 #endif /* !SERVER_STATS_PRIVATE_H */
 /** @} */

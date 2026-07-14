@@ -140,13 +140,14 @@ static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
 		/* Free the buffers that had been allocated */
 		for (ix = 0; ix < uio->uio_count; ix++) {
 			if (!(op_ctx && op_ctx->is_rdma_buff_used))
-				gsh_free(uio->uio_vio[ix].vio_base);
+				gsh_free(uio->uio_vio[ix].vio_base,
+					 MEM_COMP_IO_BUFFER);
 		}
 	}
 
-	gsh_free(uio);
+	gsh_free(uio, MEM_COMP_IO_BUFFER);
 	if (io_data)
-		gsh_free(io_data);
+		gsh_free(io_data, MEM_COMP_IO_BUFFER);
 }
 
 static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
@@ -172,13 +173,16 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 		last = objp->iovcnt - 1;
 	}
 
-	uio = gsh_calloc(1, sizeof(struct xdr_uio) +
-				    count * sizeof(struct xdr_vio) + extra);
+	uio = gsh_calloc(1,
+			 sizeof(struct xdr_uio) +
+				 count * sizeof(struct xdr_vio) + extra,
+			 MEM_COMP_IO_BUFFER);
 	uio->uio_release = xdr_io_data_uio_release;
 	uio->uio_count = count;
 	if (objp->release && objp->release_data) {
 		/* Create a copy of io_data, since send path could be async */
-		io_data *objp_copy = gsh_calloc(1, sizeof(io_data));
+		io_data *objp_copy =
+			gsh_calloc(1, sizeof(io_data), MEM_COMP_IO_BUFFER);
 
 		objp_copy->release = objp->release;
 		objp_copy->release_data = objp->release_data;
@@ -283,7 +287,7 @@ void release_io_data_copy(void *release_data)
 	int i;
 
 	for (i = 0; i < objp->iovcnt; i++)
-		gsh_free(objp->iov[i].iov_base);
+		gsh_free(objp->iov[i].iov_base, MEM_COMP_IO_BUFFER);
 }
 
 static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
@@ -301,7 +305,8 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 
 	if (objp->data_len == 0) {
 		/* Special handling of length 0. */
-		objp->iov = gsh_calloc(1, sizeof(*objp->iov));
+		objp->iov =
+			gsh_calloc(1, sizeof(*objp->iov), MEM_COMP_IO_BUFFER);
 		i = 0;
 
 		objp->iovcnt = 1;
@@ -341,14 +346,15 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 		 * a single buffer.
 		 */
 		objp->iovcnt = 1;
-		objp->iov = gsh_calloc(1, sizeof(*objp->iov));
-		buf = gsh_malloc(objp->data_len);
+		objp->iov =
+			gsh_calloc(1, sizeof(*objp->iov), MEM_COMP_IO_BUFFER);
+		buf = gsh_malloc(objp->data_len, MEM_COMP_IO_BUFFER);
 		objp->iov[0].iov_base = buf;
 		objp->iov[0].iov_len = objp->data_len;
 
 		if (!xdr_opaque_decode(xdrs, buf, objp->data_len)) {
-			gsh_free(buf);
-			gsh_free(objp->iov);
+			gsh_free(buf, MEM_COMP_IO_BUFFER);
+			gsh_free(objp->iov, MEM_COMP_IO_BUFFER);
 			objp->iov = NULL;
 			return false;
 		}
@@ -360,16 +366,17 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 	}
 
 	/* Allocate a vio to extract the data buffers into */
-	vio = gsh_calloc(objp->iovcnt, sizeof(*vio));
+	vio = gsh_calloc(objp->iovcnt, sizeof(*vio), MEM_COMP_IO_BUFFER);
 
 	/* Get the data buffers - XDR_FILLBUFS happens to do what we want... */
 	if (!XDR_FILLBUFS(xdrs, start, vio, objp->data_len)) {
-		gsh_free(vio);
+		gsh_free(vio, MEM_COMP_IO_BUFFER);
 		return false;
 	}
 
 	/* Now allocate an iovec to carry the data */
-	objp->iov = gsh_calloc(objp->iovcnt, sizeof(*objp->iov));
+	objp->iov = gsh_calloc(objp->iovcnt, sizeof(*objp->iov),
+			       MEM_COMP_IO_BUFFER);
 
 	/* Convert the xdr_vio to an iovec */
 	for (i = 0; i < objp->iovcnt; i++) {
@@ -383,12 +390,12 @@ static inline bool xdr_io_data_decode(XDR *xdrs, io_data *objp)
 	}
 
 	/* We're done with the vio */
-	gsh_free(vio);
+	gsh_free(vio, MEM_COMP_IO_BUFFER);
 
 	/* Now advance the position past the data (rounding up data_len) */
 	if (!XDR_SETPOS(xdrs, XDR_GETENDDATAPOS(xdrs, start,
 						RNDUP(objp->data_len)))) {
-		gsh_free(objp->iov);
+		gsh_free(objp->iov, MEM_COMP_IO_BUFFER);
 		objp->iov = NULL;
 		return false;
 	}
@@ -415,7 +422,7 @@ bool xdr_io_data(XDR *xdrs, io_data *objp)
 	if (objp->release != NULL)
 		objp->release(objp->release_data);
 
-	gsh_free(objp->iov);
+	gsh_free(objp->iov, MEM_COMP_IO_BUFFER);
 	objp->iov = NULL;
 
 	return true;

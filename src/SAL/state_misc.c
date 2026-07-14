@@ -60,8 +60,6 @@ struct glist_head cached_open_owners = GLIST_HEAD_INIT(cached_open_owners);
 
 pthread_mutex_t cached_open_owners_lock;
 
-pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
-
 #ifdef DEBUG_SAL
 struct glist_head state_owners_all = GLIST_HEAD_INIT(state_owners_all);
 pthread_mutex_t all_state_owners_mutex;
@@ -855,7 +853,7 @@ void free_state_owner(state_owner_t *owner)
 		return;
 	}
 
-	gsh_free(owner->so_owner_val);
+	gsh_free(owner->so_owner_val, MEM_COMP_STATE);
 
 	PTHREAD_MUTEX_destroy(&owner->so_mutex);
 
@@ -867,7 +865,7 @@ void free_state_owner(state_owner_t *owner)
 	PTHREAD_MUTEX_unlock(&all_state_owners_mutex);
 #endif
 
-	pool_free(state_owner_pool, owner);
+	gsh_free(owner, MEM_COMP_STATE);
 }
 
 /**
@@ -1172,7 +1170,7 @@ not_found:
 		return NULL;
 	}
 
-	owner = pool_alloc(state_owner_pool);
+	owner = gsh_calloc(1, sizeof(state_owner_t), MEM_COMP_STATE);
 
 	/* Copy everything over */
 	memcpy(owner, key, sizeof(*key));
@@ -1192,7 +1190,8 @@ not_found:
 		init_owner(owner);
 
 	if (key->so_owner_len != 0) {
-		owner->so_owner_val = gsh_malloc(key->so_owner_len);
+		owner->so_owner_val = gsh_malloc(key->so_owner_len,
+						 MEM_COMP_STATE);
 
 		memcpy(owner->so_owner_val, key->so_owner_val,
 		       key->so_owner_len);

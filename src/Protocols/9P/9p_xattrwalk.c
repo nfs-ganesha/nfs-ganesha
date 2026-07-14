@@ -110,7 +110,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		return _9p_rerror(req9p, msgtag, ENAMETOOLONG, plenout, preply);
 	}
 
-	pxattrfid = gsh_calloc(1, sizeof(struct _9p_fid));
+	pxattrfid = gsh_calloc(1, sizeof(struct _9p_fid), MEM_COMP_PROTOCOL);
 
 	/* set op_ctx, it will be useful if FSAL is later called */
 	_9p_init_opctx(pfid, req9p);
@@ -124,7 +124,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 	_9p_get_fname(name, *name_len, name_str);
 
 	pxattrfid->xattr =
-		gsh_malloc(sizeof(*pxattrfid->xattr) + XATTR_BUFFERSIZE);
+		gsh_malloc(sizeof(*pxattrfid->xattr) + XATTR_BUFFERSIZE,
+			   MEM_COMP_PROTOCOL);
 
 	if (*name_len == 0) {
 		/* xattrwalk is used with an empty name,
@@ -138,8 +139,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			&nb_xattrs_read, &eod_met);
 
 		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pxattrfid->xattr);
-			gsh_free(pxattrfid);
+			gsh_free(pxattrfid->xattr, MEM_COMP_PROTOCOL);
+			gsh_free(pxattrfid, MEM_COMP_PROTOCOL);
 			return _9p_rerror(req9p, msgtag,
 					  _9p_tools_errno(fsal_status), plenout,
 					  preply);
@@ -148,8 +149,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 		/* if all xattrent are not read,
 		 * returns ERANGE as listxattr does */
 		if (eod_met != true) {
-			gsh_free(pxattrfid->xattr);
-			gsh_free(pxattrfid);
+			gsh_free(pxattrfid->xattr, MEM_COMP_PROTOCOL);
+			gsh_free(pxattrfid, MEM_COMP_PROTOCOL);
 			return _9p_rerror(req9p, msgtag, ERANGE, plenout,
 					  preply);
 		}
@@ -161,8 +162,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			/* Make sure not to go beyond the buffer
 			 * @todo realloc here too */
 			if (attrsize + tmplen + 1 > XATTR_BUFFERSIZE) {
-				gsh_free(pxattrfid->xattr);
-				gsh_free(pxattrfid);
+				gsh_free(pxattrfid->xattr, MEM_COMP_PROTOCOL);
+				gsh_free(pxattrfid, MEM_COMP_PROTOCOL);
 				return _9p_rerror(req9p, msgtag, ERANGE,
 						  plenout, preply);
 			}
@@ -191,8 +192,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 						pxattrfid->xattr->xattr_content,
 						0, &attrsize);
 			if (FSAL_IS_ERROR(fsal_status)) {
-				gsh_free(pxattrfid->xattr);
-				gsh_free(pxattrfid);
+				gsh_free(pxattrfid->xattr, MEM_COMP_PROTOCOL);
+				gsh_free(pxattrfid, MEM_COMP_PROTOCOL);
 
 				/* fsal_status.minor is a valid errno code */
 				return _9p_rerror(req9p, msgtag,
@@ -202,8 +203,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 			/* Check our own limit too before reallocating */
 			if (attrsize > _9P_XATTR_MAX_SIZE) {
-				gsh_free(pxattrfid->xattr);
-				gsh_free(pxattrfid);
+				gsh_free(pxattrfid->xattr, MEM_COMP_PROTOCOL);
+				gsh_free(pxattrfid, MEM_COMP_PROTOCOL);
 
 				return _9p_rerror(req9p, msgtag, E2BIG, plenout,
 						  preply);
@@ -211,7 +212,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 
 			pxattrfid->xattr = gsh_realloc(
 				pxattrfid->xattr,
-				sizeof(*pxattrfid->xattr) + attrsize);
+				sizeof(*pxattrfid->xattr) + attrsize,
+				MEM_COMP_FSAL);
 
 			fsal_status =
 				pxattrfid->pentry->obj_ops
@@ -221,8 +223,8 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 						attrsize, &attrsize);
 		}
 		if (FSAL_IS_ERROR(fsal_status)) {
-			gsh_free(pxattrfid->xattr);
-			gsh_free(pxattrfid);
+			gsh_free(pxattrfid->xattr, MEM_COMP_PROTOCOL);
+			gsh_free(pxattrfid, MEM_COMP_PROTOCOL);
 
 			/* ENOENT for xattr is ENOATTR */
 			if (fsal_status.major == ERR_FSAL_NOENT)

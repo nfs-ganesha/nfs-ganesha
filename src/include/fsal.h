@@ -63,6 +63,7 @@ extern __thread struct req_op_context *op_ctx;
 #include "fsal_api.h"
 #include "nfs23.h"
 #include "nfs4_acls.h"
+#include "mem_components.h"
 #include "nfs4_fs_locations.h"
 
 #ifdef __cplusplus
@@ -210,7 +211,7 @@ struct fsal_args {
 	char *name;
 };
 
-void *fsal_init(void *link_mem, void *self_struct);
+void *fsal_init(void *link_mem, void *self_struct, mem_components_t comp);
 
 struct subfsal_args {
 	char *name;
@@ -450,7 +451,7 @@ static inline void fsal_release_attrs(struct fsal_attrlist *attrs)
 	}
 
 	attrs->sec_label.slai_data.slai_data_len = 0;
-	gsh_free(attrs->sec_label.slai_data.slai_data_val);
+	gsh_free(attrs->sec_label.slai_data.slai_data_val, MEM_COMP_FSAL);
 	attrs->sec_label.slai_data.slai_data_val = NULL;
 }
 
@@ -530,7 +531,7 @@ static inline void fsal_copy_attrs(struct fsal_attrlist *dest,
 		   ((save_request_mask & ATTR4_SEC_LABEL) != 0)) {
 		dest->sec_label.slai_data.slai_data_val = (char *)gsh_memdup(
 			dest->sec_label.slai_data.slai_data_val,
-			dest->sec_label.slai_data.slai_data_len);
+			dest->sec_label.slai_data.slai_data_len, MEM_COMP_FSAL);
 	} else {
 		dest->sec_label.slai_data.slai_data_len = 0;
 		dest->sec_label.slai_data.slai_data_val = NULL;

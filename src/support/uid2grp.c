@@ -93,8 +93,8 @@ void uid2grp_release_group_data(struct group_data *gdata)
 
 	if (refcount == 0) {
 		PTHREAD_MUTEX_destroy(&gdata->gd_lock);
-		gsh_free(gdata->groups);
-		gsh_free(gdata);
+		gsh_free(gdata->groups, MEM_COMP_IDMAPPER);
+		gsh_free(gdata, MEM_COMP_IDMAPPER);
 	} else if (refcount == (unsigned int)-1) {
 		LogCrit(COMPONENT_IDMAPPER, "negative refcount on gdata: %p",
 			gdata);
@@ -131,7 +131,7 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 	 * When the buffer is too small, ngroups *may* hint for the actual
 	 *  number of groups the user is in.
 	 */
-	groups = gsh_malloc(ngroups * sizeof(gid_t));
+	groups = gsh_malloc(ngroups * sizeof(gid_t), MEM_COMP_IDMAPPER);
 
 	now(&s_time);
 	ret = pwnam_wrappers__getgrouplist(user, gid, groups, &ngroups);
@@ -153,7 +153,7 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 			"getgrouplist for user: {} needs retry, ngroups: {}",
 			TP_STR(user), ngroups);
 
-		gsh_free(groups);
+		gsh_free(groups, MEM_COMP_IDMAPPER);
 
 		/* If ngroups changed, try with the new value that it was set to
 		 * as it may hint to the actual ngroups the user is member of,
@@ -165,7 +165,7 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 			ngroups = max_groups_membership;
 			idmapper_monitoring__max_groups_exceeded_inc();
 		}
-		groups = gsh_malloc(ngroups * sizeof(gid_t));
+		groups = gsh_malloc(ngroups * sizeof(gid_t), MEM_COMP_IDMAPPER);
 
 		now(&s_time);
 		ret = pwnam_wrappers__getgrouplist(user, gid, groups, &ngroups);
@@ -186,7 +186,7 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 				TRACE_WARNING,
 				"getgrouplist retry for user:{} failed, ret: {}, ngroups: {}, errno: {}",
 				TP_STR(user), ret, ngroups, local_errno);
-			gsh_free(groups);
+			gsh_free(groups, MEM_COMP_IDMAPPER);
 			return false;
 		}
 
@@ -205,7 +205,7 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 			uid2grp, getgrouplist_failed, TRACE_WARNING,
 			"getgrouplist for user: {} failed with error: {}",
 			TP_STR(user), ret);
-		gsh_free(groups);
+		gsh_free(groups, MEM_COMP_IDMAPPER);
 		return false;
 	}
 
@@ -222,10 +222,11 @@ static bool my_getgrouplist_alloc(char *user, gid_t gid,
 		/* Resize the buffer, if it fails, gsh_realloc will
 		 * abort.
 		 */
-		groups = gsh_realloc(groups, ngroups * sizeof(gid_t));
+		groups = gsh_realloc(groups, ngroups * sizeof(gid_t),
+				     MEM_COMP_IDMAPPER);
 	} else {
 		/* We need to free groups because later code may not. */
-		gsh_free(groups);
+		gsh_free(groups, MEM_COMP_IDMAPPER);
 		groups = NULL;
 	}
 
@@ -261,7 +262,7 @@ uid2grp_allocate_by_name(const struct gsh_buffdesc *name)
 	}
 
 	while (buff_size <= PWENT_MAX_SIZE) {
-		buff = gsh_malloc(buff_size);
+		buff = gsh_malloc(buff_size, MEM_COMP_IDMAPPER);
 		now_mono(&s_time);
 		retval = pwnam_wrappers__getpwnam_r(namebuff, &p, buff,
 						    buff_size, &pp);
@@ -276,7 +277,7 @@ uid2grp_allocate_by_name(const struct gsh_buffdesc *name)
 
 		if (retval != ERANGE)
 			break;
-		gsh_free(buff);
+		gsh_free(buff, MEM_COMP_IDMAPPER);
 		buff_size *= 16;
 	}
 
@@ -320,7 +321,8 @@ uid2grp_allocate_by_name(const struct gsh_buffdesc *name)
 			    p.pw_uid, p.pw_gid,
 			    TP_BYTE_ARR_TRUNCATED(p.pw_name, uname_len));
 
-	gdata = gsh_malloc(sizeof(struct group_data) + uname_len);
+	gdata = gsh_malloc(sizeof(struct group_data) + uname_len,
+			   MEM_COMP_IDMAPPER);
 	gdata->uname.len = uname_len;
 	gdata->uname.addr = (char *)gdata + sizeof(struct group_data);
 	memcpy(gdata->uname.addr, p.pw_name, gdata->uname.len);
@@ -332,7 +334,7 @@ uid2grp_allocate_by_name(const struct gsh_buffdesc *name)
 		sem_wait(&uid2grp_sem);
 
 	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
-		gsh_free(gdata);
+		gsh_free(gdata, MEM_COMP_IDMAPPER);
 		gdata = NULL;
 		if (nfs_param.core_param.max_uid_to_grp_reqs)
 			sem_post(&uid2grp_sem);
@@ -347,7 +349,7 @@ uid2grp_allocate_by_name(const struct gsh_buffdesc *name)
 	gdata->refcount = 0;
 
 out:
-	gsh_free(buff);
+	gsh_free(buff, MEM_COMP_IDMAPPER);
 	return gdata;
 }
 
@@ -370,7 +372,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	}
 
 	while (buff_size <= PWENT_MAX_SIZE) {
-		buff = gsh_malloc(buff_size);
+		buff = gsh_malloc(buff_size, MEM_COMP_IDMAPPER);
 		now_mono(&s_time);
 		retval = pwnam_wrappers__getpwuid_r(uid, &p, buff, buff_size,
 						    &pp);
@@ -386,7 +388,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 
 		if (retval != ERANGE)
 			break;
-		gsh_free(buff);
+		gsh_free(buff, MEM_COMP_IDMAPPER);
 		buff_size *= 16;
 	}
 
@@ -426,7 +428,8 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 			    p.pw_gid,
 			    TP_BYTE_ARR_TRUNCATED(p.pw_name, uname_len));
 
-	gdata = gsh_malloc(sizeof(struct group_data) + uname_len);
+	gdata = gsh_malloc(sizeof(struct group_data) + uname_len,
+			   MEM_COMP_IDMAPPER);
 	gdata->uname.len = uname_len;
 	gdata->uname.addr = (char *)gdata + sizeof(struct group_data);
 	memcpy(gdata->uname.addr, p.pw_name, gdata->uname.len);
@@ -438,7 +441,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 		sem_wait(&uid2grp_sem);
 
 	if (!my_getgrouplist_alloc(p.pw_name, p.pw_gid, gdata)) {
-		gsh_free(gdata);
+		gsh_free(gdata, MEM_COMP_IDMAPPER);
 		gdata = NULL;
 		if (nfs_param.core_param.max_uid_to_grp_reqs)
 			sem_post(&uid2grp_sem);
@@ -453,7 +456,7 @@ static struct group_data *uid2grp_allocate_by_uid(uid_t uid)
 	gdata->refcount = 0;
 
 out:
-	gsh_free(buff);
+	gsh_free(buff, MEM_COMP_IDMAPPER);
 	return gdata;
 }
 
@@ -498,7 +501,7 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 	 * groups the user is in. We can then make a second query to fetch all
 	 * the groups when ngroups is greater than 1000.
 	 */
-	groups = gsh_malloc(ngroups * sizeof(gid_t));
+	groups = gsh_malloc(ngroups * sizeof(gid_t), MEM_COMP_IDMAPPER);
 	now_mono(&s_time);
 	ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups, &ngroups);
 	now_mono(&e_time);
@@ -510,12 +513,12 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 		/* Try with the actual ngroups since user is part of more than
 		 * 1000 groups
 		 */
-		gsh_free(groups);
+		gsh_free(groups, MEM_COMP_IDMAPPER);
 		if (ngroups > max_groups_membership) {
 			ngroups = max_groups_membership;
 			idmapper_monitoring__max_groups_exceeded_inc();
 		}
-		groups = gsh_malloc(ngroups * sizeof(gid_t));
+		groups = gsh_malloc(ngroups * sizeof(gid_t), MEM_COMP_IDMAPPER);
 
 		now_mono(&s_time);
 		ret = nfs4_gss_princ_to_grouplist("krb5", principal, groups,
@@ -534,14 +537,14 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 					"Could not re-resolve principal %s to groups using nfsidmap, err: %d",
 					principal, ret);
 			}
-			gsh_free(groups);
+			gsh_free(groups, MEM_COMP_IDMAPPER);
 			return NULL;
 		}
 	} else if (ret) {
 		LogWarn(COMPONENT_IDMAPPER,
 			"Could not resolve principal %s to groups using nfsidmap, err: %d",
 			principal, ret);
-		gsh_free(groups);
+		gsh_free(groups, MEM_COMP_IDMAPPER);
 		return NULL;
 	}
 	LogDebug(COMPONENT_IDMAPPER,
@@ -555,15 +558,17 @@ static struct group_data *uid2grp_allocate_by_principal(char *principal,
 		/* Resize the buffer, if it fails, gsh_realloc will
 		 * abort.
 		 */
-		groups = gsh_realloc(groups, ngroups * sizeof(gid_t));
+		groups = gsh_realloc(groups, ngroups * sizeof(gid_t),
+				     MEM_COMP_IDMAPPER);
 	} else {
 		/* We need to free groups because later code may not. */
-		gsh_free(groups);
+		gsh_free(groups, MEM_COMP_IDMAPPER);
 		groups = NULL;
 	}
 
 	principal_len = strlen(principal);
-	grpdata = gsh_malloc(sizeof(struct group_data) + principal_len + 1);
+	grpdata = gsh_malloc(sizeof(struct group_data) + principal_len + 1,
+			     MEM_COMP_IDMAPPER);
 	/* We populate principal as the uname here */
 	grpdata->uname.len = principal_len;
 	grpdata->uname.addr = (char *)grpdata + sizeof(struct group_data);

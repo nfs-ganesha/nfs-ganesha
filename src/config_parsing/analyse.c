@@ -143,7 +143,8 @@ char *save_token(char *token, bool quot, bool esc, struct parser_state *st)
 		st->root_node->token_tree_initialized = true;
 	}
 
-	new_tok = gsh_calloc(1, (sizeof(struct token_tab) + token_len + 1));
+	new_tok = gsh_calloc(1, (sizeof(struct token_tab) + token_len + 1),
+			     MEM_COMP_CONFIG);
 	if (new_tok == NULL)
 		return NULL;
 
@@ -152,7 +153,7 @@ char *save_token(char *token, bool quot, bool esc, struct parser_state *st)
 	ret_tok = avltree_inline_hash_lookup(&new_tok->token_node);
 
 	if (ret_tok != NULL) {
-		gsh_free(new_tok);
+		gsh_free(new_tok, MEM_COMP_CONFIG);
 		return ret_tok->token;
 	}
 
@@ -293,7 +294,7 @@ static void free_node(struct config_node *node)
 			free_node(sub_node);
 		}
 	}
-	gsh_free(node);
+	gsh_free(node, MEM_COMP_CONFIG);
 	return;
 }
 
@@ -307,7 +308,7 @@ static void free_token_tree(struct avltree_node *node)
 	free_token_tree(node->left);
 	free_token_tree(node->right);
 	token = avltree_container_of(node, struct token_tab, token_node);
-	gsh_free(token);
+	gsh_free(token, MEM_COMP_CONFIG);
 }
 
 void free_parse_tree(struct config_root *tree)
@@ -321,18 +322,17 @@ void free_parse_tree(struct config_root *tree)
 		glist_del(&node->node);
 		free_node(node);
 	}
-	gsh_free(tree->root.filename);
-	if (tree->conf_dir != NULL)
-		gsh_free(tree->conf_dir);
+	gsh_free(tree->root.filename, MEM_COMP_CONFIG);
+	gsh_free(tree->conf_dir, MEM_COMP_CONFIG);
 	file = tree->files;
 	while (file != NULL) {
 		next_file = file->next;
-		gsh_free(file->pathname);
-		gsh_free(file);
+		gsh_free(file->pathname, MEM_COMP_CONFIG);
+		gsh_free(file, MEM_COMP_CONFIG);
 		file = next_file;
 	}
 	free_token_tree(token_tree.root);
-	gsh_free(tree);
+	gsh_free(tree, MEM_COMP_CONFIG);
 	return;
 }
 

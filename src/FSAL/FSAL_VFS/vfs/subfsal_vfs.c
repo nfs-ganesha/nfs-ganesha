@@ -64,7 +64,8 @@ static struct config_block export_param_block = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 struct config_block *vfs_sub_export_param = &export_param_block;
@@ -92,8 +93,10 @@ struct vfs_fsal_obj_handle *vfs_sub_alloc_handle(void)
 {
 	struct vfs_fsal_obj_handle *hdl;
 
-	hdl = gsh_calloc(1, (sizeof(struct vfs_fsal_obj_handle) +
-			     sizeof(vfs_file_handle_t)));
+	hdl = gsh_calloc(1,
+			 (sizeof(struct vfs_fsal_obj_handle) +
+			  sizeof(vfs_file_handle_t)),
+			 MEM_COMP_FSAL);
 
 	hdl->handle = (vfs_file_handle_t *)&hdl[1];
 

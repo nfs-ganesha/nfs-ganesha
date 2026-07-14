@@ -97,7 +97,8 @@ struct config_block rgw_block = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = rgw_items,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 static pthread_mutex_t init_mtx;
@@ -164,7 +165,8 @@ static struct config_block export_param_block = {
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = export_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_EXPORT
 };
 
 static fsal_status_t create_export(struct fsal_module *module_in,
@@ -206,7 +208,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 						"ceph.conf path does not exist");
 				}
 				clen = strlen(RGWFSM.conf_path) + 8;
-				conf_path = (char *)gsh_malloc(clen);
+				conf_path =
+					(char *)gsh_malloc(clen, MEM_COMP_FSAL);
 				(void)sprintf(conf_path, "--conf=%s",
 					      RGWFSM.conf_path);
 				argv[argc] = conf_path;
@@ -215,7 +218,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 			if (RGWFSM.name) {
 				clen = strlen(RGWFSM.name) + 8;
-				inst_name = (char *)gsh_malloc(clen);
+				inst_name =
+					(char *)gsh_malloc(clen, MEM_COMP_FSAL);
 				(void)sprintf(inst_name, "--name=%s",
 					      RGWFSM.name);
 				argv[argc] = inst_name;
@@ -224,7 +228,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 
 			if (RGWFSM.cluster) {
 				clen = strlen(RGWFSM.cluster) + 11;
-				cluster = (char *)gsh_malloc(clen);
+				cluster = (char *)gsh_malloc(clen,
+							     MEM_COMP_FSAL);
 				(void)sprintf(cluster, "--cluster=%s",
 					      RGWFSM.cluster);
 				argv[argc] = cluster;
@@ -243,9 +248,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					rc);
 			}
 
-			gsh_free(conf_path);
-			gsh_free(inst_name);
-			gsh_free(cluster);
+			gsh_free(conf_path, MEM_COMP_FSAL);
+			gsh_free(inst_name, MEM_COMP_FSAL);
+			gsh_free(cluster, MEM_COMP_FSAL);
 		}
 		PTHREAD_MUTEX_unlock(&init_mtx);
 	}
@@ -255,7 +260,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto error;
 	}
 
-	export = gsh_calloc(1, sizeof(struct rgw_export));
+	export = gsh_calloc(1, sizeof(struct rgw_export), MEM_COMP_EXPORT);
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
 
@@ -265,7 +270,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 					   export, true, err_type);
 
 		if (rc != 0) {
-			gsh_free(export);
+			gsh_free(export, MEM_COMP_EXPORT);
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}
 	}
@@ -351,7 +356,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	return status;
 
 error:
-	gsh_free(export);
+	gsh_free(export, MEM_COMP_EXPORT);
 
 	if (initialized)
 		initialized = false;

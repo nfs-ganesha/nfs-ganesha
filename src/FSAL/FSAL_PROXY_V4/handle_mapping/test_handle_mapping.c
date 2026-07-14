@@ -60,8 +60,8 @@ int main(int argc, char **argv)
 
 	dir = argv[1];
 
-	param.databases_directory = gsh_strdup(dir);
-	param.temp_directory = gsh_strdup("/tmp");
+	param.databases_directory = gsh_strdup(dir, MEM_COMP_GTEST);
+	param.temp_directory = gsh_strdup("/tmp", MEM_COMP_GTEST);
 	param.database_count = count;
 	param.hashtable_size = 27;
 	param.nb_handles_prealloc = 1024;

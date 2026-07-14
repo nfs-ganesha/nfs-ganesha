@@ -57,7 +57,7 @@
 static struct _9p_user_cred *new_9p_user_creds(void)
 {
 	struct _9p_user_cred *result =
-		gsh_calloc(1, sizeof(struct _9p_user_cred));
+		gsh_calloc(1, sizeof(struct _9p_user_cred), MEM_COMP_PROTOCOL);
 
 	result->refcount = 1;
 
@@ -93,7 +93,7 @@ void release_9p_user_cred_ref(struct _9p_user_cred *creds)
 		return;
 	}
 
-	gsh_free(creds);
+	gsh_free(creds, MEM_COMP_PROTOCOL);
 }
 
 /**
@@ -346,8 +346,8 @@ void free_fid(struct _9p_fid *pfid)
 	if (pfid->ucred != NULL)
 		release_9p_user_cred_ref(pfid->ucred);
 
-	gsh_free(pfid->xattr);
-	gsh_free(pfid);
+	gsh_free(pfid->xattr, MEM_COMP_PROTOCOL);
+	gsh_free(pfid, MEM_COMP_PROTOCOL);
 }
 
 int _9p_tools_clunk(struct _9p_fid *pfid)

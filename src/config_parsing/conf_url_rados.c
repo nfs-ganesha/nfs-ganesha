@@ -76,7 +76,8 @@ struct config_block rados_url_param_blk = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = rados_url_param_init,
 	.blk_desc.u.blk.params = rados_url_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 static int rados_urls_set_param_from_conf(void *tree_node,
@@ -184,7 +185,7 @@ void register_service_to_ceph(char *nodeid)
 		return;
 	}
 	size_t len = strlen(nodeid) + 5; // "nfs." + nodeid + '\0'
-	char *daemon_instance = (char *)gsh_malloc(len);
+	char *daemon_instance = (char *)gsh_malloc(len, MEM_COMP_CONFIG);
 
 	snprintf(daemon_instance, len, "nfs.%s", nodeid);
 	int ret = rados_service_register(cluster, "nfs-ganesha",
@@ -193,10 +194,10 @@ void register_service_to_ceph(char *nodeid)
 		LogEvent(COMPONENT_CONFIG,
 			 "%s: Failed to register nfs-ganesha service",
 			 __func__);
-		gsh_free(daemon_instance);
+		gsh_free(daemon_instance, MEM_COMP_CONFIG);
 		return;
 	}
-	gsh_free(daemon_instance);
+	gsh_free(daemon_instance, MEM_COMP_CONFIG);
 
 	if (pthread_create(&service_update, NULL, rados_service_update, NULL) !=
 	    0) {
@@ -289,7 +290,7 @@ static inline char *match_dup(regmatch_t *m, const char *in)
 		int size;
 
 		size = m->rm_eo - m->rm_so + 1;
-		s = (char *)gsh_malloc(size);
+		s = (char *)gsh_malloc(size, MEM_COMP_CONFIG);
 		memcpy(s, in + m->rm_so, size - 1);
 		s[size - 1] = '\0';
 	}
@@ -344,9 +345,9 @@ static int rados_url_parse(const char *url, char **pool, char **ns, char **obj)
 		}
 
 		/* If any of x1, x2, or x3 are not consumed, free them. */
-		gsh_free(x1);
-		gsh_free(x2);
-		gsh_free(x3);
+		gsh_free(x1, MEM_COMP_CONFIG);
+		gsh_free(x2, MEM_COMP_CONFIG);
+		gsh_free(x3, MEM_COMP_CONFIG);
 
 	} else if (ret == REG_NOMATCH) {
 		LogWarn(COMPONENT_CONFIG,
@@ -379,7 +380,7 @@ static void cu_rados_url_release(FILE *f, void *b)
 	/* Was allocated via open_memstream so use free NOT gsh_free. */
 	if (save->streambuf)
 		free(save->streambuf);
-	gsh_free(save);
+	gsh_free(save, MEM_COMP_CONFIG);
 }
 
 static int cu_rados_url_fetch(const char *url, FILE **f,
@@ -416,7 +417,7 @@ static int cu_rados_url_fetch(const char *url, FILE **f,
 	}
 	rados_ioctx_set_namespace(io_ctx, rados_ns);
 
-	save = gsh_malloc(safe_sizeof(*save));
+	save = gsh_malloc(safe_sizeof(*save), MEM_COMP_CONFIG);
 	memset(save, 0, safe_sizeof(*save));
 
 	do {
@@ -464,9 +465,9 @@ out:
 	cu_rados_url_release(NULL, save);
 
 	/* allocated or NULL */
-	gsh_free(pool_name);
-	gsh_free(rados_ns);
-	gsh_free(object_name);
+	gsh_free(pool_name, MEM_COMP_CONFIG);
+	gsh_free(rados_ns, MEM_COMP_CONFIG);
+	gsh_free(object_name, MEM_COMP_CONFIG);
 
 	return ret;
 }
@@ -558,9 +559,9 @@ int rados_url_setup_watch(void)
 		obj = NULL;
 	}
 out:
-	gsh_free(pool);
-	gsh_free(ns);
-	gsh_free(obj);
+	gsh_free(pool, MEM_COMP_CONFIG);
+	gsh_free(ns, MEM_COMP_CONFIG);
+	gsh_free(obj, MEM_COMP_CONFIG);
 
 	return ret;
 }
@@ -578,7 +579,7 @@ void rados_url_shutdown_watch(void)
 
 		rados_ioctx_destroy(rados_watch_io_ctx);
 		rados_watch_io_ctx = NULL;
-		gsh_free(rados_watch_oid);
+		gsh_free(rados_watch_oid, MEM_COMP_CONFIG);
 		rados_watch_oid = NULL;
 		/* Leave teardown of client to the %url parser shutdown */
 	}

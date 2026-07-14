@@ -1639,7 +1639,7 @@ static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
 			   struct fsal_ds_handle **const handle, int flags)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle creation!");
-	*handle = gsh_calloc(1, sizeof(struct fsal_ds_handle));
+	*handle = gsh_calloc(1, sizeof(struct fsal_ds_handle), MEM_COMP_FSAL);
 
 	return NFS4_OK;
 }
@@ -1657,7 +1657,7 @@ static nfsstat4 pds_handle(struct fsal_pnfs_ds *const pds,
 static void ds_handle_release(struct fsal_ds_handle *const ds_hdl)
 {
 	LogCrit(COMPONENT_PNFS, "Unimplemented DS handle release!");
-	gsh_free(ds_hdl);
+	gsh_free(ds_hdl, MEM_COMP_FSAL);
 }
 
 /**

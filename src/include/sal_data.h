@@ -117,8 +117,6 @@ extern struct fridgethr *state_async_fridge;
  *
  *****************************************************************************/
 
-extern pool_t *nfs41_session_pool;
-
 /**
  * @param Session ID hash
  */
@@ -478,7 +476,7 @@ static inline void free_state(struct state_t *state)
 	if (state->state_free != NULL)
 		state->state_free(state);
 	else
-		gsh_free(state);
+		gsh_free(state, MEM_COMP_STATE);
 }
 
 /* Macros to compare and copy state_t to a struct stateid4 */
@@ -905,8 +903,6 @@ struct nfs_client_record_t {
 #ifdef __cplusplus
 }
 #endif /* extern "C" */
-
-extern pool_t *client_id_pool;
 
 extern hash_table_t *ht_client_record;
 extern hash_table_t *ht_confirmed_client_id;
@@ -1356,8 +1352,6 @@ typedef struct nfs_grace_start {
 } nfs_grace_start_t;
 
 /* Memory pools */
-
-extern pool_t *state_owner_pool; /*< Pool for NFSv4 files's open owner */
 
 extern int g_total_num_files_delegated;
 extern int g_max_files_delegatable;

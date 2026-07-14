@@ -140,7 +140,8 @@ void construct_handle(struct glusterfs_export *glexport, const struct stat *st,
 {
 	struct glusterfs_handle *constructing = NULL;
 
-	constructing = gsh_calloc(1, sizeof(struct glusterfs_handle));
+	constructing =
+		gsh_calloc(1, sizeof(struct glusterfs_handle), MEM_COMP_FSAL);
 
 	constructing->glhandle = glhandle;
 	memcpy(constructing->globjhdl, vol_uuid, GLAPI_UUID_LENGTH);
@@ -293,7 +294,8 @@ fsal_status_t glusterfs_get_acl(struct glusterfs_export *glfs_export,
 
 		/* Reallocating acldata into the required size */
 		acldata.aces = (fsal_ace_t *)gsh_realloc(
-			acldata.aces, new_count * sizeof(fsal_ace_t));
+			acldata.aces, new_count * sizeof(fsal_ace_t),
+			MEM_COMP_ACL);
 		acldata.naces = new_count;
 
 		fsalattr->acl = nfs4_acl_new_entry(&acldata, &aclstatus);

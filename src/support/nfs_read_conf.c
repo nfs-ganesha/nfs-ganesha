@@ -193,7 +193,7 @@ static int haproxy_host_adder(const char *token, enum term_type type_hint,
 	LogMidDebug(COMPONENT_CONFIG, "Adding host %s", token);
 
 	rc = add_client(COMPONENT_CONFIG, &host->cle_list, token, type_hint,
-			cnode, err_type, NULL, NULL, NULL);
+			MEM_COMP_CONFIG, cnode, err_type, NULL, NULL, NULL);
 	return rc;
 }
 
@@ -219,7 +219,7 @@ static int cluster_members_adder(const char *token, enum term_type type_hint,
 	LogMidDebug(COMPONENT_CONFIG, "Adding host %s", token);
 
 	rc = add_client(COMPONENT_CONFIG, &host->cle_list, token, type_hint,
-			cnode, err_type, NULL, NULL, NULL);
+			MEM_COMP_CONFIG, cnode, err_type, NULL, NULL, NULL);
 	return rc;
 }
 
@@ -280,7 +280,8 @@ void populate_cqos_hosts(void)
 	glist_for_each(glist, &nfs_param.core_param.cluster_members) {
 	      client = glist_entry(glist, struct base_client_entry, cle_list);
 
-		cli = gsh_calloc(1, sizeof(struct cqos_ceph_nodes));
+		cli = gsh_calloc(1, sizeof(struct cqos_ceph_nodes),
+				 MEM_COMP_QOS);
 		glist_init(&cli->node_list);
 		cli->fd = -1;
 		cli->clnt = NULL;
@@ -551,7 +552,8 @@ struct config_block nfs_core = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = core_params,
-	.blk_desc.u.blk.commit = core_commit
+	.blk_desc.u.blk.commit = core_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 #ifdef ENABLE_QOS
@@ -666,7 +668,8 @@ struct config_block qos_core = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = qos_global_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 #endif
@@ -693,7 +696,8 @@ struct config_block krb5_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = krb5_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 #endif
 
@@ -751,7 +755,8 @@ struct config_block directory_services_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = directory_services_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 #ifdef USE_NFSIDMAP
@@ -867,7 +872,8 @@ struct config_block version4_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = version4_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 
 #ifdef USE_TLS
@@ -931,7 +937,8 @@ struct config_block tls_core = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = tls_config_items,
-	.blk_desc.u.blk.commit = tls_config_commit
+	.blk_desc.u.blk.commit = tls_config_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 #endif
 
@@ -963,6 +970,7 @@ struct config_block grpc_param = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = grpc_params,
-	.blk_desc.u.blk.commit = noop_conf_commit
+	.blk_desc.u.blk.commit = noop_conf_commit,
+	.mem_comp = MEM_COMP_CONFIG
 };
 #endif
