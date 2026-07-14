@@ -126,6 +126,10 @@ static struct config_item ceph_items[] = {
 		       conf_path),
 	CONF_ITEM_MODE("umask", 0, ceph_fsal_module, fsal.fs_info.umask),
 	CONF_ITEM_BOOL("client_oc", false, ceph_fsal_module, client_oc),
+	CONF_ITEM_UI64_ZERO("client_oc_size", 0, UINT64_MAX, 209715200,
+			    ceph_fsal_module, client_oc_size),
+	CONF_ITEM_UI64_ZERO("client_oc_max_dirty", 0, UINT64_MAX, 104857600,
+			    ceph_fsal_module, client_oc_max_dirty),
 	CONF_ITEM_BOOL("async", false, ceph_fsal_module, async),
 	CONF_ITEM_BOOL("zerocopy", false, ceph_fsal_module, zerocopy),
 	CONF_ITEM_BOOL("use_old_uuid", false, ceph_fsal_module, use_old_uuid),
@@ -899,6 +903,35 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		LogCrit(COMPONENT_FSAL, "Unable to set Ceph client_oc: %d",
 			ceph_status);
 		goto error;
+	}
+
+	if (my_module->client_oc) {
+		/* Set other client_oc related config options.
+		 * ceph_conf_set accepts strings, so convert the values. */
+		char str_val[1024];
+
+		snprintf(str_val, 1024, "%" PRIu64, my_module->client_oc_size);
+		ceph_status =
+			ceph_conf_set(cm->cmount, "client_oc_size", str_val);
+		if (ceph_status) {
+			status.major = ERR_FSAL_INVAL;
+			LogCrit(COMPONENT_FSAL,
+				"Unable to set Ceph client_oc_size: %d",
+				ceph_status);
+			goto error;
+		}
+
+		snprintf(str_val, 1024, "%" PRIu64,
+			 my_module->client_oc_max_dirty);
+		ceph_status = ceph_conf_set(cm->cmount, "client_oc_max_dirty",
+					    str_val);
+		if (ceph_status) {
+			status.major = ERR_FSAL_INVAL;
+			LogCrit(COMPONENT_FSAL,
+				"Unable to set Ceph client_oc_max_dirty: %d",
+				ceph_status);
+			goto error;
+		}
 	}
 
 	ceph_status = ceph_init(cm->cmount);

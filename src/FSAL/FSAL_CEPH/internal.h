@@ -65,6 +65,8 @@ struct ceph_fsal_module {
 	struct fsal_obj_ops handle_ops;
 	char *conf_path;
 	bool client_oc;
+	uint64_t client_oc_size;
+	uint64_t client_oc_max_dirty;
 	bool async;
 	bool zerocopy;
 	bool use_old_uuid;
