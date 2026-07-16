@@ -36,6 +36,10 @@
 #include "fsal_types.h"
 #include "fsal_up.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Create an MDCACHE instance at the top of a stack */
 fsal_status_t
 mdcache_fsal_create_export(struct fsal_module *fsal_hdl, void *parse_node,
@@ -63,4 +67,9 @@ void mdcache_handle_deleg_transition(struct fsal_export *orig,
 				     struct gsh_export *exp);
 
 void init_fds_limit(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* MDCACHE_H */

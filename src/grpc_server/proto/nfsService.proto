@@ -80,3 +80,59 @@ message GetSessionIdsResponse
 {
 	repeated string session_ids = 1;
 }
+
+/* NFS Admin Services */
+service nfsAdmin
+{
+	/* Shutdown Ganesha */
+	rpc ShutdownGanesha(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Purge Group Ids */
+	rpc PurgeGids(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Purge Netgroups */
+	rpc PurgeNetGroups(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Update open fd limit */
+	rpc InitFdLimit(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Flush idmapper cache */
+	rpc PurgeIdmapperCache(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Flush idmapper negative cache */
+	rpc PurgeIdmapperNegativeCache(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Enable Malloc Trace */
+	rpc MallocTrace(MallocTraceRequest)
+		returns (nfsProtoUtil.MessageResponse);
+	/* Disable Malloc Trace */
+	rpc MallocUntrace(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.MessageResponse);
+	/* Enable or Disable Malloc Trim */
+	rpc TrimEnableDisable(TrimEnableDisableRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Call malloc_trim() */
+	rpc TrimCall(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+	/* Get Trim Status */
+	rpc TrimStatus(nfsProtoUtil.EmptyRequest) returns (TrimStatusResponse);
+	/* Re-Read Config */
+	rpc ReReadConfig(nfsProtoUtil.EmptyRequest)
+		returns (nfsProtoUtil.ActionResponse);
+}
+
+message MallocTraceRequest
+{
+	string filename = 1;
+}
+
+message TrimEnableDisableRequest
+{
+	optional bool enable = 1;
+}
+
+message TrimStatusResponse
+{
+	optional bool enable = 1;
+	optional bool success = 2;
+}

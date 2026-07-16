@@ -58,3 +58,9 @@ message IoStats
 	uint64 latency = 5;
 	uint64 queue_wait = 6;
 }
+
+message MessageResponse
+{
+	optional bool success = 1;
+	string error = 2;
+}

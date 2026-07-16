@@ -34,12 +34,20 @@
 #ifndef NFS_LIB_H
 #define NFS_LIB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern char *nfs_config_path;
 
 extern int nfs_libmain(const char *config_path, const char *log_path,
 		       const int debug_level);
 
 extern bool reread_config(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !NFS_LIB_H */
 /** @} */

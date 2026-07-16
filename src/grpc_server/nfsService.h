@@ -96,4 +96,64 @@ class ClientStatsService final : public cltmgrService::ClientStats::Service {
 		    cltmgrService::ClientIoStatsResponse *response) override;
 };
 
+class nfsAdminService final : public nfsService::nfsAdmin::Service {
+    public:
+	grpc::Status
+	ShutdownGanesha(grpc::ServerContext *context,
+			const nfsProtoUtil::EmptyRequest *request,
+			nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status PurgeGids(grpc::ServerContext *context,
+			       const nfsProtoUtil::EmptyRequest *request,
+			       nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status
+	PurgeNetGroups(grpc::ServerContext *context,
+		       const nfsProtoUtil::EmptyRequest *request,
+		       nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status
+	InitFdLimit(grpc::ServerContext *context,
+		    const nfsProtoUtil::EmptyRequest *request,
+		    nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status
+	PurgeIdmapperCache(grpc::ServerContext *context,
+			   const nfsProtoUtil::EmptyRequest *request,
+			   nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status PurgeIdmapperNegativeCache(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::EmptyRequest *request,
+		nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status
+	MallocTrace(grpc::ServerContext *context,
+		    const nfsService::MallocTraceRequest *request,
+		    nfsProtoUtil::MessageResponse *response) override;
+
+	grpc::Status
+	MallocUntrace(grpc::ServerContext *context,
+		      const nfsProtoUtil::EmptyRequest *request,
+		      nfsProtoUtil::MessageResponse *response) override;
+
+	grpc::Status
+	TrimEnableDisable(grpc::ServerContext *context,
+			  const nfsService::TrimEnableDisableRequest *request,
+			  nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status TrimCall(grpc::ServerContext *context,
+			      const nfsProtoUtil::EmptyRequest *request,
+			      nfsProtoUtil::ActionResponse *response) override;
+
+	grpc::Status
+	TrimStatus(grpc::ServerContext *context,
+		   const nfsProtoUtil::EmptyRequest *request,
+		   nfsService::TrimStatusResponse *response) override;
+
+	grpc::Status
+	ReReadConfig(grpc::ServerContext *context,
+		     const nfsProtoUtil::EmptyRequest *request,
+		     nfsProtoUtil::ActionResponse *response) override;
+};
 #endif //NFSSERVICE_H

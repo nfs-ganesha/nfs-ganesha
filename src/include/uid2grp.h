@@ -62,6 +62,10 @@ typedef struct group_data {
 	gid_t *groups;
 } group_data_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern pthread_rwlock_t uid2grp_user_lock;
 extern sem_t uid2grp_sem;
 
@@ -88,6 +92,10 @@ void uid2grp_unref(struct group_data *gdata);
 void uid2grp_hold_group_data(struct group_data *);
 void uid2grp_release_group_data(struct group_data *);
 bool uid2grp_is_group_data_expired(struct group_data *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UID2GRP_H */
 /** @} */

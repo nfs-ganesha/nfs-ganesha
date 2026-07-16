@@ -21,6 +21,20 @@
 #include <string>
 #include "nfsService.h"
 #include "server_stats_grpc.h"
+#include "idmapper.h"
+#include "uid2grp.h"
+#include "netgroup_cache.h"
+#include "mdcache.h"
+
+#ifdef LINUX
+#include <mcheck.h> /* For mtrace/muntrace */
+#endif
+
+#ifndef __APPLE__
+#include <malloc.h>
+#endif
+
+#include "nfs_lib.h"
 
 grpc::Status GetClientIdService::GetClientIds(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
@@ -243,4 +257,161 @@ ClientStatsService::GetNFSv42IO(grpc::ServerContext *context,
 				cltmgrService::ClientIoStatsResponse *response)
 {
 	return handle_client_iostats(request, response, grpc_cltmgr_get_v42_io);
+}
+
+/* Shutdown Ganesha */
+grpc::Status nfsAdminService::ShutdownGanesha(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	admin_halt();
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/* Flushing manage gids cache */
+grpc::Status nfsAdminService::PurgeGids(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	uid2grp_clear_cache();
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/* Flushing netgroup cache */
+grpc::Status nfsAdminService::PurgeNetGroups(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	ng_clear_cache();
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/* Updating open fd limit */
+grpc::Status nfsAdminService::InitFdLimit(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	init_fds_limit();
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/* Flushing idmapper cache */
+grpc::Status nfsAdminService::PurgeIdmapperCache(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	idmapper_clear_cache();
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/* Flushing idmapper negative cache */
+grpc::Status nfsAdminService::PurgeIdmapperNegativeCache(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	idmapper_negative_cache_clear();
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/* Enable  malloc trace */
+grpc::Status
+nfsAdminService::MallocTrace(grpc::ServerContext *context,
+			     const nfsService::MallocTraceRequest *request,
+			     nfsProtoUtil::MessageResponse *response)
+{
+#ifdef LINUX
+	LogEvent(COMPONENT_GRPC, "enabling malloc trace to %s.",
+		 request->filename().c_str());
+	setenv("MALLOC_TRACE", request->filename().c_str(), 1);
+	mtrace();
+	response->set_success(true);
+#else
+	response->set_error("malloc trace is not supported");
+	response->set_success(false);
+#endif
+	return grpc::Status::OK;
+}
+
+grpc::Status nfsAdminService::MallocUntrace(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::MessageResponse *response)
+{
+#ifdef LINUX
+	LogEvent(COMPONENT_GRPC, "disabling malloc trace.");
+	muntrace();
+	response->set_success(true);
+#else
+	response->set_error("malloc untrace is not supported");
+	response->set_success(false);
+#endif
+	return grpc::Status::OK;
+}
+
+grpc::Status nfsAdminService::TrimEnableDisable(
+	grpc::ServerContext *context,
+	const nfsService::TrimEnableDisableRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	if (request->enable()) {
+		LogEvent(COMPONENT_MEMLEAKS, "enabling malloc_Trim");
+		nfs_param.core_param.malloc_trim = true;
+	} else {
+		LogEvent(COMPONENT_MEMLEAKS, "disabling malloc_Trim");
+		nfs_param.core_param.malloc_trim = false;
+	}
+
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+grpc::Status nfsAdminService::TrimCall(grpc::ServerContext *context,
+				       const nfsProtoUtil::EmptyRequest *request,
+				       nfsProtoUtil::ActionResponse *response)
+{
+	LogEvent(COMPONENT_MEMLEAKS, "Calling malloc_Trim");
+	malloc_trim(0);
+
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+grpc::Status nfsAdminService::TrimStatus(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsService::TrimStatusResponse *response)
+{
+	char hostname[64 + 1] = { 0 };
+	char name[100];
+	FILE *fp;
+
+	response->set_enable(true);
+
+	/* log malloc_info() as a side effect! */
+	(void)gethostname(hostname, sizeof(hostname));
+	snprintf(name, sizeof(name), "/tmp/mallinfo-%s.%d.txt", hostname,
+		 getpid());
+	fp = fopen(name, "w");
+	if (fp != NULL) {
+		malloc_info(0, fp);
+		fclose(fp);
+	}
+	if (!nfs_param.core_param.malloc_trim) {
+		response->set_enable(false);
+	}
+
+	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+grpc::Status nfsAdminService::ReReadConfig(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsProtoUtil::ActionResponse *response)
+{
+	response->set_success(reread_config());
+	return grpc::Status::OK;
 }

@@ -58,6 +58,10 @@
  * @{
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern pthread_rwlock_t idmapper_user_lock;
 extern pthread_rwlock_t idmapper_group_lock;
 extern pthread_rwlock_t idmapper_negative_cache_uid_lock;
@@ -120,6 +124,10 @@ extern struct gsh_dbus_method cachemgr_show_idmapper_negative_groups;
 extern struct gsh_dbus_method cachemgr_show_idmapper_negative_uids;
 extern struct gsh_dbus_method cachemgr_show_uid2grp;
 extern struct gsh_dbus_method auth_statistics;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* IDMAPPER_H */

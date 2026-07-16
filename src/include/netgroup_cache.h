@@ -24,7 +24,17 @@
 
 #ifndef NETGROUP_CACHE_H
 #define NETGROUP_CACHE_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ng_cache_init(void);
 void ng_clear_cache(void);
 bool ng_innetgr(const char *group, const char *host);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
