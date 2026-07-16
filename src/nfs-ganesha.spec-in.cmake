@@ -54,6 +54,10 @@ Requires: openSUSE-release
 @BCOND_RDMA@ rdma
 %global use_rdma %{on_off_switch rdma}
 
+@BCOND_STATD@ statd
+%global internal_statd %{on_off_switch statd}
+
+
 @BCOND_9P@ 9P
 %global use_9P %{on_off_switch 9P}
 
@@ -602,6 +606,7 @@ cmake3 .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_FSAL_VFS=ON				\
 	-DUSE_FSAL_PROXY_V4=ON				\
 	-DUSE_DBUS=ON					\
+	-DINTERNAL_STATD=%{internal_statd} 		\
 	-DUSE_9P=%{use_9P}				\
 	-DDISTNAME_HAS_GIT_DATA=OFF			\
 	-DUSE_MAN_PAGE=%{use_man_page}                  \

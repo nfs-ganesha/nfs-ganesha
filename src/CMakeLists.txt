@@ -1941,6 +1941,12 @@ else(USE_MONITORING)
   set(BCOND_MONITORING "%bcond_with")
 endif(USE_MONITORING)
 
+if(INTERNAL_STATD)
+  set(BCOND_STATD "%bcond_without")
+else(INTERNAL_STATD)
+  set(BCOND_STATD "%bcond_with")
+endif(INTERNAL_STATD)
+
 # Now create a usable specfile
 configure_file(
   "${PROJECT_SOURCE_DIR}/nfs-ganesha.spec-in.cmake"

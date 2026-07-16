@@ -675,6 +675,7 @@ bool local_nlm_info_client_create(struct local_nlm_info *info)
 		break;
 
 	default:
+		break;
 		// handle unexpected case...
 	}
 
@@ -875,7 +876,7 @@ void req_call_init(struct local_nlm_info *info)
 	info->cc.cc_process_cb = local_nlm_info_cb;
 
 	/* Need to override the free function */
-	info->cc.cc_free_cb = local_nlm_info_free_caller;
+	info->cc.cc_free_cb = (clnt_req_freer)local_nlm_info_free_caller;
 }
 
 bool req_call(struct local_nlm_info *info)
@@ -906,7 +907,8 @@ bool req_call(struct local_nlm_info *info)
 		info->cc.cc_process_cb = local_nlm_info_cb;
 
 		/* Need to override the free function */
-		info->cc.cc_free_cb = local_nlm_info_free_caller;
+		info->cc.cc_free_cb =
+			(clnt_req_freer)local_nlm_info_free_caller;
 	}
 
 	LogFullDebug(COMPONENT_NLM, "CLNT_CALL_BACK info %p", info);
@@ -926,6 +928,7 @@ bool req_call(struct local_nlm_info *info)
 		return true;
 
 	default:
+		break;
 		/* error, continue on below */
 	}
 
