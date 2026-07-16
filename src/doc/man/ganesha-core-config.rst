@@ -45,9 +45,14 @@ HAProxy_Hosts (host list, empty)
                     getaddrinfo call is made at config parsing time)
         IP address  Match a single host
 
+    This parameter may be updated dynamically with a SIGHUP.
+
 Cluster_Members (address list, empty)
     This is the list of IP addresses representing the nodes in a Ganesha
     cluster. Only individual IPv4 or IPv6 addresses are allowed.
+
+    This parameter may be updated dynamically with a SIGHUP. The list may not
+    be changed from empty to non-empty or non-empty to empty without a restart.
 
 NFS_Port (uint16, range 0 to UINT16_MAX, default 2049)
     Port number used by NFS Protocol.
@@ -365,9 +370,11 @@ Parameters affecting the relation with TIRPC:
 
 RPC_Max_Connections(uint32, range 1 to 1000000, default 1024)
     Maximum number of connections for TIRPC.
+    This parameter may be updated dynamically with a SIGHUP.
 
 RPC_Idle_Timeout_S(uint32, range 0 to 60*60, default 300)
     Idle timeout (seconds). Default to 300 seconds.
+    This parameter may be updated dynamically with a SIGHUP.
 
 MaxRPCSendBufferSize(uint32, range 1 to 1048576*9, default 1048576)
     Size of RPC send buffer.
@@ -378,22 +385,30 @@ MaxRPCRecvBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 RPC_Max_RDMA_Connections(uint32, range 1 to 1024, default 64)
     Maximum number of RDMA connections for TIRPC. Limiting the number of RDMA
     connections to 64 by default to avoid memory exhaustion.
+    This parameter may be updated dynamically with a SIGHUP.
 
 MaxRPCRdmaCredits(uint32, range 1 to 4096, default 64)
     Max credits of RDMA channel, representing the max number of outstanding
     NFS operations on the channel.
 
 RPC_Ioq_ThrdMax(uint32, range 1 to 1024*128 default 200)
-    TIRPC ioq max simultaneous io threads
+    TIRPC ioq maximum simultaneous io threads
+    This parameter may be updated dynamically with a SIGHUP.
+
+RPC_Ioq_ThrdMin(uint32, range 2 to 1024*128 default 2)
+    TIRPC ioq minimum simultaneous io threads
+    This parameter may be updated dynamically with a SIGHUP.
 
 RPC_GSS_Npart(uint32, range 1 to 1021, default 13)
     Partitions in GSS ctx cache table
 
 RPC_GSS_Max_Ctx(uint32, range 1 to 1048576, default 16384)
+    This parameter may be updated dynamically with a SIGHUP.
     Max GSS contexts in cache. Default 16k
 
 RPC_GSS_Max_Gc(uint32, range 1 to 1048576, default 200)
     Max entries to expire in one idle check
+    This parameter may be updated dynamically with a SIGHUP.
 
 
 Parameters for TCP:

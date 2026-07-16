@@ -1681,39 +1681,11 @@ void nfs_Init_netconfig(void)
 #endif
 }
 
-/**
- * @brief Init the svc descriptors for the nfs daemon
- *
- * Perform all the required initialization for the RPC subsystem and event
- * channels.
- */
-void nfs_Init_svc(void)
+bool rpc_init_or_update(void)
 {
 	svc_init_params svc_params;
-	int ix;
-	int code;
-
-	LogDebug(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
-		 NFS_options);
-
-	LogInfo(COMPONENT_DISPATCH, "NFS INIT: using TIRPC");
 
 	memset(&svc_params, 0, sizeof(svc_params));
-
-#ifdef __FreeBSD__
-	v6disabled = true;
-#else
-	v6disabled = false;
-#endif
-#ifdef RPC_VSOCK
-	vsock = NFS_options & CORE_OPTION_NFS_VSOCK;
-#endif
-#ifdef _USE_NFS_RDMA
-	rdma = NFS_options & CORE_OPTION_NFS_RDMA;
-	LogEvent(COMPONENT_RDMA,
-		 "RDMA: NFS/RDMA compiled in; runtime rdma flag = %s",
-		 rdma ? "enabled" : "disabled");
-#endif
 
 	/* New TI-RPC package init function */
 	svc_params.disconnect_cb = NULL;
@@ -1737,18 +1709,52 @@ void nfs_Init_svc(void)
 	svc_params.thr_stack_size = PTHREAD_stack_size;
 #endif
 #ifdef _USE_NFS_RDMA
-	svc_params.nfs_rdma_port = nfs_param.core_param.port[P_NFS_RDMA];
 	svc_params.max_rdma_connections =
 		nfs_param.core_param.rpc.max_rdma_connections;
 	LogEvent(
 		COMPONENT_RDMA,
-		"RDMA: svc_params configured: rdma_port=%d max_rdma_connections=%d rdma_credits=%d",
-		svc_params.nfs_rdma_port, svc_params.max_rdma_connections,
+		"RDMA: svc_params configured: max_rdma_connections=%d rdma_credits=%d",
+		svc_params.max_rdma_connections,
 		nfs_param.core_param.rpc.rdma_credits);
 #endif
 
 	/* Only after TI-RPC allocators, log channel are setup */
-	if (!svc_init(&svc_params))
+	return svc_init(&svc_params);
+}
+
+/**
+ * @brief Init the svc descriptors for the nfs daemon
+ *
+ * Perform all the required initialization for the RPC subsystem and event
+ * channels.
+ */
+void nfs_Init_svc(void)
+{
+	int ix;
+	int code;
+
+	LogDebug(COMPONENT_DISPATCH, "NFS INIT: Core options = %d",
+		 NFS_options);
+
+	LogInfo(COMPONENT_DISPATCH, "NFS INIT: using TIRPC");
+
+#ifdef __FreeBSD__
+	v6disabled = true;
+#else
+	v6disabled = false;
+#endif
+#ifdef RPC_VSOCK
+	vsock = NFS_options & CORE_OPTION_NFS_VSOCK;
+#endif
+#ifdef _USE_NFS_RDMA
+	rdma = NFS_options & CORE_OPTION_NFS_RDMA;
+	LogEvent(COMPONENT_RDMA,
+		 "RDMA: NFS/RDMA compiled in; runtime rdma flag = %s",
+		 rdma ? "enabled" : "disabled");
+#endif
+
+	/* Only after TI-RPC allocators, log channel are setup */
+	if (!rpc_init_or_update())
 		LogFatal(COMPONENT_INIT, "SVC initialization failed");
 
 	for (ix = 0; ix < EVCHAN_SIZE; ++ix) {

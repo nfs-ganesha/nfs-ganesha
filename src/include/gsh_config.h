@@ -277,6 +277,8 @@ typedef enum protos {
 #define NFS_RDMA_ENABLE_BY_DEFAULT NFS_RDMA_ENABLE_FOR_ALL
 #endif
 
+extern pthread_rwlock_t nfs_core_lock;
+
 typedef struct nfs_core_param {
 	/** The list of hosts allowed to use the HAProxy protocol. These are
 	 *  the hosts running HAProxy, acting as load balancing/proxy. Actual

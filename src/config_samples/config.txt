@@ -149,7 +149,11 @@ NFS_CORE_PARAM {}
 
 	RPC_Max_Connections(uint32, range 1 to 1000000, default 1024)
 
+	* Updates dynamically when a new configuration is loaded via SIGHUP.
+
 	RPC_Idle_Timeout_S(uint32, range 0 to 60*60, default 300)
+
+	* Updates dynamically when a new configuration is loaded via SIGHUP.
 
 	MaxRPCSendBufferSize(uint32, range 1 to 1048576*9, default 1048576)
 
@@ -157,17 +161,27 @@ NFS_CORE_PARAM {}
 
 	RPC_Max_RDMA_Connections(uint32, range 1 to 1024, default 64)
 
+	* Updates dynamically when a new configuration is loaded via SIGHUP.
+
 	MaxRPCRdmaCredits(uint32, range 1 to 4096, default 64)
 
 	RPC_Ioq_ThrdMax(uint32, range 2 to 1024*128 default 200)
 
-	rpc_ioq_thrdmin(uint32, range 2 to 1024*128 default 2)
+	* Updates dynamically when a new configuration is loaded via SIGHUP.
+
+	RPC_Ioq_ThrdMin(uint32, range 2 to 1024*128 default 2)
+
+	* Updates dynamically when a new configuration is loaded via SIGHUP.
 
 	RPC_GSS_Npart(uint32, range 1 to 1021, default 13)
 
 	RPC_GSS_Max_Ctx(uint32, range 1 to 1048576, default 16384)
 
+	* Updates dynamically when a new configuration is loaded via SIGHUP.
+
 	RPC_GSS_Max_Gc(uint32, range 1 to 1048576, default 200)
+
+	* Updates dynamically when a new configuration is loaded via SIGHUP.
 
 	Blocked_Lock_Poller_Interval(int64, range 0 to 180, default 10)
 

@@ -292,11 +292,38 @@ void populate_cqos_hosts(void)
 	}
 }
 #endif
+/**
+ * @brief Initialize a core_param block
+ *
+ */
+
+static void *core_param_init(void *link_mem, void *self_struct)
+{
+	if (self_struct != NULL) {
+		/* Initialization case */
+		nfs_core_parameter_t *core_param = self_struct;
+
+		memset(core_param, 0, sizeof(*core_param));
+		glist_init(&core_param->haproxy_hosts);
+		glist_init(&core_param->cluster_members);
+		glist_init(&core_param->cluster_self);
+		return self_struct;
+	} else if (self_struct == NULL) {
+		return link_mem;
+	} else {
+		/* free resources case - this should never be called, but is
+		 * present for completeness.
+		 */
+		return NULL;
+	}
+}
 
 static int core_commit(void *node, void *link_mem, void *self_struct,
 		       struct config_error_type *err_type)
 {
 	LogDebug(COMPONENT_CONFIG, "NFS_CORE_PARAM commit");
+
+	PTHREAD_RWLOCK_wrlock(&nfs_core_lock);
 
 	remove_self_cluster_members();
 
@@ -311,7 +338,134 @@ static int core_commit(void *node, void *link_mem, void *self_struct,
 	Log_ClientList_Level(COMPONENT_CONFIG, NIV_INFO, "Cluster_Members",
 			     &nfs_param.core_param.cluster_members);
 
+	PTHREAD_RWLOCK_unlock(&nfs_core_lock);
+
 	return 0;
+}
+
+void FreeCoreClient(struct base_client_entry *client)
+{
+	gsh_free(client, MEM_COMP_CONFIG);
+}
+
+static int core_update(void *node, void *link_mem, void *self_struct,
+		       struct config_error_type *err_type)
+{
+	nfs_core_parameter_t *updates = self_struct;
+	int errcnt = 0;
+
+	PTHREAD_RWLOCK_wrlock(&nfs_core_lock);
+
+	LogEvent(COMPONENT_CONFIG, "NFS_CORE_PARAM update");
+
+	/* Process RPC parameter that cannot be updated */
+	if (updates->rpc.gss.ctx_hash_partitions !=
+	    NFS_pcp.rpc.gss.ctx_hash_partitions) {
+		LogWarn(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM RPC_GSS_Npart can not be updated.");
+		err_type->invalid = true;
+		errcnt++;
+	}
+
+#ifdef _USE_NFS_RDMA
+	if (updates->rpc.rdma_credits != NFS_pcp.rpc.rdma_credits) {
+		LogWarn(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM MaxRPCRdmaCredits can not be updated.");
+		err_type->invalid = true;
+		errcnt++;
+	}
+#endif
+
+	if (updates->rpc.max_recv_buffer_size !=
+	    NFS_pcp.rpc.max_recv_buffer_size) {
+		LogWarn(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM MaxRPCRecvBufferSize can not be updated.");
+		err_type->invalid = true;
+		errcnt++;
+	}
+
+	if (updates->rpc.max_send_buffer_size !=
+	    NFS_pcp.rpc.max_send_buffer_size) {
+		LogWarn(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM MaxRPCSendBufferSize can not be updated.");
+		err_type->invalid = true;
+		errcnt++;
+	}
+
+	/* Verify Cluster_Memners doesn't change from empty to non-empty or
+	 * reverse. It is valid for the list to ONLY be a single address that is
+	 * the node's address as a way of reducing from clustered to
+	 * non-cluustered, but the list can't be entirely removed.
+	 */
+	if (glist_empty(&updates->cluster_members) &&
+	    (!glist_empty(&NFS_pcp.cluster_members) ||
+	     !glist_empty(&NFS_pcp.cluster_self))) {
+		LogWarn(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM Change of Cluster_Members from non-empty to empty is invalid");
+		err_type->invalid = true;
+		errcnt++;
+	}
+
+	if (!glist_empty(&updates->cluster_members) &&
+	    glist_empty(&NFS_pcp.cluster_members) &&
+	    glist_empty(&NFS_pcp.cluster_self)) {
+		LogWarn(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM Change of Cluster_Members from empty to non-empty is invalid");
+		err_type->invalid = true;
+		errcnt++;
+	}
+
+	if (errcnt > 0)
+		goto out;
+
+	/* Process the RPC parameters that can be updated */
+	if (memcmp(&NFS_pcp.rpc, &updates->rpc, sizeof(updates->rpc)) != 0) {
+		/* RPC parameters have changed */
+		NFS_pcp.rpc = updates->rpc;
+		if (!rpc_init_or_update()) {
+			/* We really can't recover and we don't know what might
+			 * have actually been done inside ntirpc so let's just
+			 * abort.
+			 */
+			LogFatal(COMPONENT_CONFIG,
+				 "NFS_CORE_PARAM Update of RPC parameters failed.");
+		}
+	}
+
+	/* Deal with update of HAProxy_Hosts and Cluster_Members */
+	glist_swap_lists(&NFS_pcp.haproxy_hosts, &updates->haproxy_hosts);
+	glist_swap_lists(&NFS_pcp.cluster_members, &updates->cluster_members);
+
+	/* Drop prior self-stripped entries; rebuild from the new peer list. */
+	FreeClientList(&NFS_pcp.cluster_self, FreeCoreClient);
+	remove_self_cluster_members();
+
+#ifdef ENABLE_CLUSTER_QOS
+	/*
+	 * Cluster QoS global structures needs to be updated with
+	 * cluster_members details
+	 */
+	/** @todo FSF:
+	 * populate_cqos_hosts();
+	 */
+#endif
+
+out:
+
+	/* Free any unused or swapped allocated memory */
+	FreeClientList(&updates->haproxy_hosts, FreeCoreClient);
+	FreeClientList(&updates->cluster_members, FreeCoreClient);
+
+	gsh_free(updates->interface_name, MEM_COMP_CONFIG);
+	updates->interface_name = NULL;
+	gsh_free(updates->ganesha_modules_loc, MEM_COMP_CONFIG);
+	updates->ganesha_modules_loc = NULL;
+	gsh_free(updates->dbus_name_prefix, MEM_COMP_CONFIG);
+	updates->dbus_name_prefix = NULL;
+
+	PTHREAD_RWLOCK_unlock(&nfs_core_lock);
+
+	return errcnt;
 }
 
 static struct config_item core_params[] = {
@@ -436,7 +590,7 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("MaxRPCRdmaCredits", 1, 4096, 64, nfs_core_param,
 		       rpc.rdma_credits),
 #endif
-	CONF_ITEM_UI32("rpc_ioq_thrdmin", 2, 1024 * 128, 2, nfs_core_param,
+	CONF_ITEM_UI32("RPC_Ioq_ThrdMin", 2, 1024 * 128, 2, nfs_core_param,
 		       rpc.ioq_thrd_min),
 	CONF_ITEM_UI32("RPC_Ioq_ThrdMax", 2, 1024 * 128, 200, nfs_core_param,
 		       rpc.ioq_thrd_max),
@@ -550,9 +704,20 @@ struct config_block nfs_core = {
 	.blk_desc.name = "NFS_Core_Param",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
-	.blk_desc.u.blk.init = noop_conf_init,
+	.blk_desc.u.blk.init = core_param_init,
 	.blk_desc.u.blk.params = core_params,
 	.blk_desc.u.blk.commit = core_commit,
+	.mem_comp = MEM_COMP_CONFIG
+};
+
+struct config_block nfs_core_update = {
+	.dbus_interface_name = "org.ganesha.nfsd.config.core",
+	.blk_desc.name = "NFS_Core_Param",
+	.blk_desc.type = CONFIG_BLOCK,
+	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
+	.blk_desc.u.blk.init = core_param_init,
+	.blk_desc.u.blk.params = core_params,
+	.blk_desc.u.blk.commit = core_update,
 	.mem_comp = MEM_COMP_CONFIG
 };
 
@@ -963,6 +1128,7 @@ static struct config_item grpc_params[] = {
 		       GRPC_CA_CERTIFICATE, grpc_parameter, grpc_ca_cert),
 	CONFIG_EOL
 };
+
 struct config_block grpc_param = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.grpc",
 	.blk_desc.name = "GRPC",

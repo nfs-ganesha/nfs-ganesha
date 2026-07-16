@@ -105,6 +105,7 @@ unsigned long PTHREAD_stack_size;
 struct nfs_init nfs_init;
 
 /* global information exported to all layers (as extern vars) */
+pthread_rwlock_t nfs_core_lock = RWLOCK_INITIALIZER;
 nfs_parameter_t nfs_param;
 struct _nfs_health nfs_health_;
 
@@ -430,8 +431,23 @@ bool reread_config(void)
 		goto reread_error;
 	}
 
+	/* Reread NFS_CORE_PARAM, actual parameter update is handled by the
+	 * commit function core_update().
+	 */
+	nfs_core_parameter_t nfs_core_param;
+
+	(void)load_config_from_parse(config_struct, &nfs_core_update,
+				     &nfs_core_param, true, &err_type);
+
+	if (!config_error_is_harmless(&err_type)) {
+		LogCrit(COMPONENT_CONFIG,
+			"Error while parsing NFS_CORE_PARAM configuration");
+		goto reread_error;
+	}
+
 	/* Reread NFSv4 configuration */
 	nfs_version4_parameter_t nfs_version4_param;
+
 	(void)load_config_from_parse(config_struct, &version4_param,
 				     &nfs_version4_param, true, &err_type);
 	if (!config_error_is_harmless(&err_type)) {
@@ -439,6 +455,7 @@ bool reread_config(void)
 			"Error while parsing NFSv4 configuration section");
 		goto reread_error;
 	}
+
 	/* We currently only support reloading the UTF8 validation field. */
 	nfs_param.nfsv4_param.enforce_utf8_vld =
 		nfs_version4_param.enforce_utf8_vld;
@@ -689,13 +706,6 @@ void nfs_print_param_config(void)
 	printf("}\n\n");
 }
 
-static inline void core_pkginit(void)
-{
-	glist_init(&nfs_param.core_param.haproxy_hosts);
-	glist_init(&nfs_param.core_param.cluster_members);
-	glist_init(&nfs_param.core_param.cluster_self);
-}
-
 /**
  * @brief Load parameters from config file
  *
@@ -716,7 +726,6 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	 * Initialize exports and clients so config parsing can use them
 	 * early.
 	 */
-	core_pkginit();
 	client_pkginit();
 	export_pkginit();
 	server_pkginit();

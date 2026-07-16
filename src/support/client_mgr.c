@@ -2707,13 +2707,18 @@ bool haproxy_match(SVCXPRT *xprt)
 {
 	struct base_client_entry *host = NULL;
 
+	PTHREAD_RWLOCK_rdlock(&nfs_core_lock);
+
 	if (glist_empty(&nfs_param.core_param.haproxy_hosts))
-		return false;
+		goto out;
 
 	/* Does the host match anyone on the host list? */
 	host = client_match(COMPONENT_DISPATCH, " for HAProxy",
 			    &xprt->xp_proxy.ss,
 			    &nfs_param.core_param.haproxy_hosts, NULL);
+out:
+
+	PTHREAD_RWLOCK_unlock(&nfs_core_lock);
 
 	return host != NULL;
 }

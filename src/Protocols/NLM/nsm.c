@@ -649,14 +649,18 @@ int smmon_proc_notify(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		dec_nsm_client_ref(nsm_client);
 	}
 
-	if (!client_match(COMPONENT_NLM, "for Cluster Self list",
+	PTHREAD_RWLOCK_rdlock(&nfs_core_lock);
+
+	if (!client_match(COMPONENT_NLM, "for Cluster_Members list",
 			  op_ctx->caller_addr,
 			  &nfs_param.core_param.cluster_members, NULL)) {
 		/* SM_NOTIFY did not come from another cluster member, forward
-		 * it to all cluster members.
+		 * it to all cluster members while still holding nfs_core_lock.
 		 */
 		forward_sm_notify(arg, req);
 	}
+
+	PTHREAD_RWLOCK_unlock(&nfs_core_lock);
 
 	LogDebug(COMPONENT_DISPATCH, "REQUEST RESULT: SM_NOTIFY DONE");
 
@@ -1262,6 +1266,13 @@ void process_local_nlm_info(void)
 	int rc;
 	pthread_attr_t attr_thr;
 
+	/* Keep the nsm_notify_thread running if we have cluster members
+	 * identified to forward SM_NOTIFY to.
+	 */
+	run_nsm_notify_thread =
+		!glist_empty(&nfs_param.core_param.cluster_members) ||
+		!glist_empty(&nfs_param.core_param.cluster_self);
+
 	/* Init for thread parameter (mostly for scheduling) */
 	PTHREAD_ATTR_init(&attr_thr);
 	PTHREAD_ATTR_setscope(&attr_thr, PTHREAD_SCOPE_SYSTEM);
@@ -1276,11 +1287,7 @@ void process_local_nlm_info(void)
 			 errno, strerror(errno));
 	}
 
-	/* Keep the nsm_notify_thread running if we have cluster members
-	 * identified to forward SM_NOTIFY to.
-	 */
-	run_nsm_notify_thread =
-		!glist_empty(&nfs_param.core_param.cluster_members);
+	PTHREAD_ATTR_destroy(&attr_thr);
 }
 
 #endif
