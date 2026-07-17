@@ -593,6 +593,7 @@ cmake3 .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DUSE_NFSIDMAP=%{use_nfsidmap}			\
 	-DUSE_MONITORING=%{use_monitoring}		\
 	-DUSE_TLS=%{use_tls}                            \
+	-DUSE_PRIO_INHERIT=%{use_prio_inherit}          \
 	-DUSE_OPENSSL=%{use_openssl}                    \
 	-DUSE_GNUTLS=%{use_gnutls}                      \
 	-DUSE_9P_RDMA=%{use_rdma}			\

@@ -578,6 +578,12 @@ void nfs_prereq_init_mutexes(void)
 #if defined(__linux__)
 	PTHREAD_MUTEXATTR_settype(&default_mutex_attr,
 				  PTHREAD_MUTEX_ADAPTIVE_NP);
+
+#ifdef USE_PRIO_INHERIT
+	pthread_mutexattr_setprotocol(&default_mutex_attr,
+				      PTHREAD_PRIO_INHERIT);
+#endif
+
 #endif
 
 	PTHREAD_RWLOCKATTR_init(&default_rwlock_attr);
