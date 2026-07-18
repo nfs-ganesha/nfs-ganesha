@@ -3262,4 +3262,155 @@ bool server_grpc_fill_v42_iostats(struct gsh_stats *st,
 	return true;
 }
 
+/**
+ * @brief Copy transfer counters into a gRPC-safe I/O statistics snapshot
+ *
+ * @param src [IN] read or write transfer counters
+ * @param dst [OUT] gRPC-safe I/O statistics snapshot
+ */
+static void fill_grpc_iostats(struct xfer_op *src, struct grpc_iostats *dst)
+{
+	dst->requested = src->requested;
+	dst->transferred = src->transferred;
+	dst->total_ops = src->cmd.total;
+	dst->errors = src->cmd.errors;
+	dst->latency = src->cmd.latency.latency;
+	dst->queue_wait = 0;
+}
+
+/**
+ * @brief Collect NFSMon read/write I/O statistics for an export
+ *
+ * Samples the export statistics twice over a one-second interval and
+ * returns the resulting read and write activity.
+ */
+bool server_grpc_fill_nfsmon_iostats(struct export_stats *export_st,
+				     struct grpc_iostats *read_out,
+				     struct grpc_iostats *write_out)
+{
+	struct xfer_op pre_read = { 0 };
+	struct xfer_op pre_write = { 0 };
+	struct xfer_op read = { 0 };
+	struct xfer_op write = { 0 };
+
+	server_nfsmon_export_iostats(export_st, &pre_read, &pre_write);
+
+	sleep(1);
+
+	server_nfsmon_export_iostats(export_st, &read, &write);
+
+	server_ret_nfsmon_iostats(&read, &write, &pre_read, &pre_write);
+
+	fill_grpc_iostats(&read, read_out);
+	fill_grpc_iostats(&write, write_out);
+
+	return true;
+}
+
+/**
+ * @brief Collect total NFS operation counters for an export
+ */
+bool server_grpc_fill_total_ops(struct export_stats *export_st,
+				struct grpc_total_ops *ops)
+{
+	memset(ops, 0, sizeof(*ops));
+
+#ifdef _USE_NFS3
+	if (export_st->st.nfsv3 != NULL)
+		ops->nfsv3 = export_st->st.nfsv3->cmds.total;
+#endif
+
+	if (export_st->st.nfsv40 != NULL)
+		ops->nfsv40 = export_st->st.nfsv40->compounds.total;
+
+	if (export_st->st.nfsv41 != NULL)
+		ops->nfsv41 = export_st->st.nfsv41->compounds.total;
+
+	if (export_st->st.nfsv42 != NULL)
+		ops->nfsv42 = export_st->st.nfsv42->compounds.total;
+
+	return true;
+}
+
+/**
+ * @brief Collect aggregated global NFS operation counters
+ */
+bool server_grpc_fill_global_total_ops(struct grpc_global_total_ops *ops)
+{
+	memset(ops, 0, sizeof(*ops));
+
+#ifdef _USE_NFS3
+	ops->nfs.nfsv3 = global_st.nfsv3.cmds.total;
+#endif
+
+	ops->nfs.nfsv40 = global_st.nfsv40.compounds.total;
+	ops->nfs.nfsv41 = global_st.nfsv41.compounds.total;
+	ops->nfs.nfsv42 = global_st.nfsv42.compounds.total;
+
+#ifdef _USE_NLM
+	ops->nlm4 = global_st.nlm4.ops.total;
+#endif
+
+#ifdef _USE_NFS3
+	ops->mntv1 = global_st.mnt.v1_ops.total;
+	ops->mntv3 = global_st.mnt.v3_ops.total;
+#endif
+
+#ifdef _USE_RQUOTA
+	ops->rquota = global_st.rquota.ops.total;
+#endif
+
+	return true;
+}
+
+/**
+ * @brief Append an export I/O statistics entry to the gRPC export list
+ */
+static void add_export_io(struct grpc_export_io_list *list, uint16_t export_id,
+			  const char *version, struct xfer_op *read,
+			  struct xfer_op *write)
+{
+	if (list->count >= GRPC_MAX_EXPORT_IO_ENTRIES)
+		return;
+
+	struct grpc_export_io *entry = &list->entries[list->count++];
+
+	entry->export_id = export_id;
+	strlcpy(entry->version, version, sizeof(entry->version));
+
+	fill_grpc_iostats(read, &entry->read);
+	fill_grpc_iostats(write, &entry->write);
+}
+
+/**
+ * @brief Collect I/O statistics for all supported NFS protocol versions
+ *        of an export
+ */
+bool server_grpc_fill_all_iostats(struct export_stats *export_st,
+				  struct grpc_export_io_list *list)
+{
+#ifdef _USE_NFS3
+	if (export_st->st.nfsv3)
+		add_export_io(list, export_st->export.export_id, "NFSv3",
+			      &export_st->st.nfsv3->read,
+			      &export_st->st.nfsv3->write);
+#endif
+
+	if (export_st->st.nfsv40)
+		add_export_io(list, export_st->export.export_id, "NFSv40",
+			      &export_st->st.nfsv40->read,
+			      &export_st->st.nfsv40->write);
+
+	if (export_st->st.nfsv41)
+		add_export_io(list, export_st->export.export_id, "NFSv41",
+			      &export_st->st.nfsv41->read,
+			      &export_st->st.nfsv41->write);
+
+	if (export_st->st.nfsv42)
+		add_export_io(list, export_st->export.export_id, "NFSv42",
+			      &export_st->st.nfsv42->read,
+			      &export_st->st.nfsv42->write);
+
+	return true;
+}
 /** @} */

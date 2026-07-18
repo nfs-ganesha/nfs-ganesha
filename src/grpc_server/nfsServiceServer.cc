@@ -415,3 +415,218 @@ grpc::Status nfsAdminService::ReReadConfig(
 	response->set_success(reread_config());
 	return grpc::Status::OK;
 }
+
+typedef bool (*grpc_export_get_io_fn)(uint16_t export_id, struct grpc_iostats *,
+				      struct grpc_iostats *, struct timespec *,
+				      bool *, char *, size_t);
+
+/**
+ * @brief Common handler for per-export I/O stats RPCs
+ */
+static grpc::Status
+handle_export_iostats(const nfsProtoUtil::ExportIdRequest *request,
+		      exportService::ExportIoStatsResponse *response,
+		      grpc_export_get_io_fn get_io)
+{
+	struct grpc_iostats read_out{}, write_out{};
+	struct timespec time_out{};
+	bool success = false;
+	char errmsg[256];
+
+	get_io(request->export_id(), &read_out, &write_out, &time_out, &success,
+	       errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(time_out.tv_sec);
+	time->set_tv_nsec(time_out.tv_nsec);
+
+	fill_iostats_proto(&read_out, response->mutable_read());
+	fill_iostats_proto(&write_out, response->mutable_write());
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Get per-export NFSv3/NFSv4.0/NFSv4.1/NFSv4.2  read/write counters
+ */
+grpc::Status
+ExportStatsService::GetNFSv3IO(grpc::ServerContext *context,
+			       const nfsProtoUtil::ExportIdRequest *request,
+			       exportService::ExportIoStatsResponse *response)
+{
+	return handle_export_iostats(request, response, grpc_export_get_v3_io);
+}
+
+grpc::Status
+ExportStatsService::GetNFSv40IO(grpc::ServerContext *context,
+				const nfsProtoUtil::ExportIdRequest *request,
+				exportService::ExportIoStatsResponse *response)
+{
+	return handle_export_iostats(request, response, grpc_export_get_v40_io);
+}
+
+grpc::Status
+ExportStatsService::GetNFSv41IO(grpc::ServerContext *context,
+				const nfsProtoUtil::ExportIdRequest *request,
+				exportService::ExportIoStatsResponse *response)
+{
+	return handle_export_iostats(request, response, grpc_export_get_v41_io);
+}
+
+grpc::Status
+ExportStatsService::GetNFSv42IO(grpc::ServerContext *context,
+				const nfsProtoUtil::ExportIdRequest *request,
+				exportService::ExportIoStatsResponse *response)
+{
+	return handle_export_iostats(request, response, grpc_export_get_v42_io);
+}
+
+grpc::Status
+ExportStatsService::GetNFSMonIO(grpc::ServerContext *context,
+				const nfsProtoUtil::ExportIdRequest *request,
+				exportService::ExportIoStatsResponse *response)
+{
+	return handle_export_iostats(request, response,
+				     grpc_export_get_nfsmon_io);
+}
+
+/**
+ * @brief Retrieves the total NFS operation statistics from the server.
+ */
+grpc::Status
+ExportStatsService::GetTotalOPS(grpc::ServerContext *context,
+				const nfsProtoUtil::ExportIdRequest *request,
+				exportService::GetTotalOPSResponse *response)
+{
+	struct grpc_total_ops ops = {};
+	struct timespec ts = {};
+	bool success = false;
+	char errmsg[128];
+
+	grpc_export_get_total_ops(request->export_id(), &ops, &ts, &success,
+				  errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	auto *total = response->mutable_total_ops();
+
+#ifdef _USE_NFS3
+	total->set_nfsv3(ops.nfsv3);
+#endif
+
+	total->set_nfsv40(ops.nfsv40);
+	total->set_nfsv41(ops.nfsv41);
+	total->set_nfsv42(ops.nfsv42);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Retrieves the aggregated global NFS operation statistics.
+ */
+grpc::Status ExportStatsService::GetGlobalOPS(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::GetGlobalOPSResponse *response)
+{
+	grpc_global_total_ops ops = {};
+	struct timespec ts = {};
+	bool success = false;
+	char errmsg[128];
+
+	grpc_get_global_total_ops(&ops, &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	auto *total = response->mutable_total_ops();
+	auto *nfs = total->mutable_nfs();
+
+#ifdef _USE_NFS3
+	nfs->set_nfsv3(ops.nfs.nfsv3);
+#endif
+
+	nfs->set_nfsv40(ops.nfs.nfsv40);
+	nfs->set_nfsv41(ops.nfs.nfsv41);
+	nfs->set_nfsv42(ops.nfs.nfsv42);
+
+#ifdef _USE_NLM
+	total->set_nlm4(ops.nlm4);
+#endif
+
+#ifdef _USE_NFS3
+	total->set_mntv1(ops.mntv1);
+	total->set_mntv3(ops.mntv3);
+#endif
+
+#ifdef _USE_RQUOTA
+	total->set_rquota(ops.rquota);
+#endif
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Retrieves server-wide NFS I/O statistics.
+ */
+grpc::Status ExportStatsService::GetNFSIO(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::GetNFSIOResponse *response)
+{
+	grpc_export_io_list list{};
+	struct timespec ts{};
+	bool success = false;
+	char errmsg[128];
+
+	grpc_get_all_export_iostats(&list, &ts, &success, errmsg,
+				    sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	for (size_t i = 0; i < list.count; ++i) {
+		auto *entry = response->add_entries();
+
+		entry->set_export_id(list.entries[i].export_id);
+		entry->set_version(list.entries[i].version);
+
+		fill_iostats_proto(&list.entries[i].read,
+				   entry->mutable_read());
+
+		fill_iostats_proto(&list.entries[i].write,
+				   entry->mutable_write());
+	}
+
+	return grpc::Status::OK;
+}

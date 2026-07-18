@@ -1,0 +1,110 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * Copyright (C) 2025, IBM
+ * Contributor : Vidya Thumukunta <vthumuku@redhat.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
+ * -------------
+ */
+
+syntax = "proto3";
+
+import "nfsProtoUtil.proto";
+
+package exportService;
+
+/* Export manager statistics exposed over gRPC.
+ * This file mirrors the D-Bus interface org.ganesha.nfsd.exportstats
+ * defined in support/export_mgr.c. Each RPC name matches the existing
+ * D-Bus method name (e.g. GetNFSv41IO) so callers can migrate from
+ * D-Bus to gRPC without changing semantics. Shared request/response
+ * field types live in nfsProtoUtil.proto and
+ * may be reused by other gRPC modules.
+ */
+
+message ExportIoStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.IoStats read = 3;
+	nfsProtoUtil.IoStats write = 4;
+}
+
+message TotalOps
+{
+	uint64 nfsv3 = 1;
+	uint64 nfsv40 = 2;
+	uint64 nfsv41 = 3;
+	uint64 nfsv42 = 4;
+}
+
+message GetTotalOPSResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	TotalOps total_ops = 3;
+}
+
+message GlobalTotalOps
+{
+	TotalOps nfs = 1;
+	uint64 nlm4 = 5;
+	uint64 mntv1 = 6;
+	uint64 mntv3 = 7;
+	uint64 rquota = 8;
+}
+
+message GetGlobalOPSResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	GlobalTotalOps total_ops = 3;
+}
+
+message ExportIOEntry
+{
+	uint32 export_id = 1;
+	string version = 2;
+	nfsProtoUtil.IoStats read = 3;
+	nfsProtoUtil.IoStats write = 4;
+}
+
+message GetNFSIOResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	repeated ExportIOEntry entries = 3;
+}
+
+// Per-Export NFS version I/O statistics
+service ExportStats
+{
+	rpc GetNFSv3IO(nfsProtoUtil.ExportIdRequest)
+		returns (ExportIoStatsResponse);
+	rpc GetNFSv40IO(nfsProtoUtil.ExportIdRequest)
+		returns (ExportIoStatsResponse);
+	rpc GetNFSv41IO(nfsProtoUtil.ExportIdRequest)
+		returns (ExportIoStatsResponse);
+	rpc GetNFSv42IO(nfsProtoUtil.ExportIdRequest)
+		returns (ExportIoStatsResponse);
+	rpc GetNFSMonIO(nfsProtoUtil.ExportIdRequest)
+		returns (ExportIoStatsResponse);
+	rpc GetTotalOPS(nfsProtoUtil.ExportIdRequest)
+		returns (GetTotalOPSResponse);
+	rpc GetGlobalOPS(nfsProtoUtil.EmptyRequest)
+		returns (GetGlobalOPSResponse);
+	rpc GetNFSIO(nfsProtoUtil.EmptyRequest) returns (GetNFSIOResponse);
+}

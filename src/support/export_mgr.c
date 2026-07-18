@@ -67,6 +67,7 @@
 #include "pnfs_utils.h"
 #include "idmapper.h"
 #include "sal_functions.h"
+#include "server_stats_grpc.h"
 
 /** Mutex to serialize export admin operations.
  */
@@ -3152,4 +3153,256 @@ int async_deleg_transition_handler(struct fridgethr *fr,
 	return rc;
 }
 
+/**
+ * @brief Shared implementation for per-version export I/O stats lookup
+ */
+typedef bool (*grpc_export_fill_iostats_t)(struct gsh_stats *st,
+					   struct grpc_iostats *read_out,
+					   struct grpc_iostats *write_out);
+bool grpc_export_get_version_io(uint16_t export_id,
+				struct grpc_iostats *read_out,
+				struct grpc_iostats *write_out,
+				struct timespec *time_out, bool *success,
+				char *errmsg, size_t errmsg_len,
+				grpc_export_fill_iostats_t fill_stats,
+				const char *no_activity_msg)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		errormsg = "NFS stat counting disabled";
+		goto out;
+	}
+
+	export = get_gsh_export(export_id);
+	if (export == NULL) {
+		*success = false;
+		errormsg = "No export available";
+		goto out;
+	}
+
+	export_st = container_of(export, struct export_stats, export);
+
+	if (!fill_stats(&export_st->st, read_out, write_out)) {
+		*success = false;
+		errormsg = no_activity_msg;
+		goto out_put;
+	}
+
+	*time_out = export->last_update;
+
+out_put:
+	put_gsh_export(export);
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+#ifdef _USE_NFS3
+bool grpc_export_get_v3_io(uint16_t export_id, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len)
+{
+	return grpc_export_get_version_io(
+		export_id, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v3_iostats,
+		"Export does not have any NFSv3 activity");
+}
+#else
+bool grpc_export_get_v3_io(uint16_t export_id, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	snprintf(errmsg, errmsg_len, "NFSv3 not supported");
+	return true;
+}
+#endif
+
+bool grpc_export_get_v40_io(uint16_t export_id, struct grpc_iostats *read_out,
+			    struct grpc_iostats *write_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	return grpc_export_get_version_io(
+		export_id, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v40_iostats,
+		"Export does not have any NFSv4.0 activity");
+}
+
+bool grpc_export_get_v41_io(uint16_t export_id, struct grpc_iostats *read_out,
+			    struct grpc_iostats *write_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	return grpc_export_get_version_io(
+		export_id, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v41_iostats,
+		"Export does not have any NFSv4.1 activity");
+}
+
+bool grpc_export_get_v42_io(uint16_t export_id, struct grpc_iostats *read_out,
+			    struct grpc_iostats *write_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	return grpc_export_get_version_io(
+		export_id, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_v42_iostats,
+		"Export does not have any NFSv4.2 activity");
+}
+
+/**
+ * @brief Retrieves NFSMon I/O statistics for the specified export.
+ */
+bool grpc_export_get_nfsmon_io(uint16_t exportid, struct grpc_iostats *read_out,
+			       struct grpc_iostats *write_out,
+			       struct timespec *time_out, bool *success,
+			       char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		errormsg = "NFS stat counting disabled";
+		goto out;
+	}
+
+	export = get_gsh_export(exportid);
+	if (export == NULL) {
+		*success = false;
+		errormsg = "No export available";
+		goto out;
+	}
+
+	export_st = container_of(export, struct export_stats, export);
+
+	server_grpc_fill_nfsmon_iostats(export_st, read_out, write_out);
+
+	*time_out = nfs_stats_time;
+
+	put_gsh_export(export);
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+/**
+ * @brief Retrieves total NFS operation statistics for the specified export.
+ */
+bool grpc_export_get_total_ops(uint16_t export_id, struct grpc_total_ops *ops,
+			       struct timespec *time_out, bool *success,
+			       char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		errormsg = "NFS stat counting disabled";
+		goto out;
+	}
+
+	export = get_gsh_export(export_id);
+
+	if (export == NULL) {
+		*success = false;
+		errormsg = "Export does not have any activity";
+		goto out;
+	}
+
+	export_st = container_of(export, struct export_stats, export);
+
+	server_grpc_fill_total_ops(export_st, ops);
+
+	*time_out = nfs_stats_time;
+
+	put_gsh_export(export);
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+/**
+ * @brief Retrieves aggregated total NFS operation statistics
+ * across all exports.
+ */
+bool grpc_get_global_total_ops(struct grpc_global_total_ops *ops,
+			       struct timespec *time_out, bool *success,
+			       char *errmsg, size_t errmsg_len)
+{
+	*success = true;
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		snprintf(errmsg, errmsg_len, "NFS stat counting disabled");
+		return true;
+	}
+
+	server_grpc_fill_global_total_ops(ops);
+
+	*time_out = nfs_stats_time;
+
+	snprintf(errmsg, errmsg_len, "OK");
+
+	return true;
+}
+
+/**
+ * @brief Collects I/O statistics for an export into the gRPC export I/O list.
+ */
+static bool grpc_collect_export_io(struct gsh_export *export_node, void *arg)
+{
+	struct grpc_export_io_list *list = arg;
+	struct export_stats *export_st;
+
+	export_st = container_of(export_node, struct export_stats, export);
+
+	server_grpc_fill_all_iostats(export_st, list);
+
+	return true;
+}
+
+/**
+ * @brief Retrieves I/O statistics for all configured exports.
+ */
+bool grpc_get_all_export_iostats(struct grpc_export_io_list *list,
+				 struct timespec *time_out, bool *success,
+				 char *errmsg, size_t errmsg_len)
+{
+	memset(list, 0, sizeof(*list));
+
+	*success = true;
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		snprintf(errmsg, errmsg_len, "NFS stat counting disabled");
+		return true;
+	}
+
+	*time_out = nfs_stats_time;
+
+	foreach_gsh_export(grpc_collect_export_io, false, list);
+
+	snprintf(errmsg, errmsg_len, "OK");
+
+	return true;
+}
 /** @} */

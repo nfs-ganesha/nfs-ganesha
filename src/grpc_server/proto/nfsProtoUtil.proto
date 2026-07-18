@@ -64,3 +64,8 @@ message MessageResponse
 	optional bool success = 1;
 	string error = 2;
 }
+
+message ExportIdRequest
+{
+	uint32 export_id = 1;
+}

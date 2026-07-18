@@ -35,6 +35,8 @@
 #include "nfsProtoUtil.grpc.pb.h"
 #include "cltmgrService.pb.h"
 #include "cltmgrService.grpc.pb.h"
+#include "exportService.pb.h"
+#include "exportService.grpc.pb.h"
 #include "nfsServiceUtil.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -155,5 +157,47 @@ class nfsAdminService final : public nfsService::nfsAdmin::Service {
 	ReReadConfig(grpc::ServerContext *context,
 		     const nfsProtoUtil::EmptyRequest *request,
 		     nfsProtoUtil::ActionResponse *response) override;
+};
+
+class ExportStatsService final : public exportService::ExportStats::Service {
+    public:
+	grpc::Status
+	GetNFSv3IO(grpc::ServerContext *context,
+		   const nfsProtoUtil::ExportIdRequest *request,
+		   exportService::ExportIoStatsResponse *response) override;
+
+	grpc::Status
+	GetNFSv40IO(grpc::ServerContext *context,
+		    const nfsProtoUtil::ExportIdRequest *request,
+		    exportService::ExportIoStatsResponse *response) override;
+
+	grpc::Status
+	GetNFSv41IO(grpc::ServerContext *context,
+		    const nfsProtoUtil::ExportIdRequest *request,
+		    exportService::ExportIoStatsResponse *response) override;
+
+	grpc::Status
+	GetNFSv42IO(grpc::ServerContext *context,
+		    const nfsProtoUtil::ExportIdRequest *request,
+		    exportService::ExportIoStatsResponse *response) override;
+	grpc::Status
+	GetNFSMonIO(grpc::ServerContext *context,
+		    const nfsProtoUtil::ExportIdRequest *request,
+		    exportService::ExportIoStatsResponse *response) override;
+
+	grpc::Status
+	GetTotalOPS(grpc::ServerContext *context,
+		    const nfsProtoUtil::ExportIdRequest *request,
+		    exportService::GetTotalOPSResponse *response) override;
+
+	grpc::Status
+	GetGlobalOPS(grpc::ServerContext *context,
+		     const nfsProtoUtil::EmptyRequest *request,
+		     exportService::GetGlobalOPSResponse *response) override;
+
+	grpc::Status
+	GetNFSIO(grpc::ServerContext *context,
+		 const nfsProtoUtil::EmptyRequest *request,
+		 exportService::GetNFSIOResponse *response) override;
 };
 #endif //NFSSERVICE_H
