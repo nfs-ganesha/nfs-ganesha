@@ -38,6 +38,9 @@ package cltmgrService;
  * may be reused by other gRPC modules (export stats, admin, etc.).
  */
 
+// Response for per-client read/write I/O statistics.
+// Populated only when status.success is true; mirrors D-Bus reply:
+// STATUS_REPLY + TIMESTAMP_REPLY + IOSTATS_REPLY (read + write).
 message ClientIoStatsResponse
 {
 	nfsProtoUtil.StatusResponse status = 1;
@@ -49,15 +52,117 @@ message ClientIoStatsResponse
 // Per-client NFS version I/O statistics (read-only introspection).
 service ClientStats
 {
+	// cltmgr_show_v3_io  → D-Bus GetNFSv3IO
+	// Per-client NFSv3 read/write counters.
 	rpc GetNFSv3IO(nfsProtoUtil.ClientIpRequest)
 		returns (ClientIoStatsResponse);
 
+	// cltmgr_show_v40_io → D-Bus GetNFSv40IO
+	// Per-client NFSv4.0 read/write counters.
 	rpc GetNFSv40IO(nfsProtoUtil.ClientIpRequest)
 		returns (ClientIoStatsResponse);
 
+	// cltmgr_show_v41_io → D-Bus GetNFSv41IO
+	// Per-client NFSv4.1 read/write counters.
 	rpc GetNFSv41IO(nfsProtoUtil.ClientIpRequest)
 		returns (ClientIoStatsResponse);
 
+	// cltmgr_show_v42_io → D-Bus GetNFSv42IO
+	// Per-client NFSv4.2 read/write counters.
 	rpc GetNFSv42IO(nfsProtoUtil.ClientIpRequest)
 		returns (ClientIoStatsResponse);
+
+	// cltmgr_show_v41_layouts → D-Bus GetNFSv41Layouts
+	rpc GetNFSv41Layouts(nfsProtoUtil.ClientIpRequest)
+		returns (ClientLayoutsResponse);
+
+	// cltmgr_show_v42_layouts → D-Bus GetNFSv42Layouts
+	rpc GetNFSv42Layouts(nfsProtoUtil.ClientIpRequest)
+		returns (ClientLayoutsResponse);
+
+	// cltmgr_show_delegations → D-Bus GetDelegations
+	rpc GetDelegations(nfsProtoUtil.ClientIpRequest)
+		returns (ClientDelegationsResponse);
+
+	// gsh_client_io_ops → D-Bus GetClientIOops
+	rpc GetClientIOops(nfsProtoUtil.ClientIpRequest)
+		returns (ClientIoOpsResponse);
+
+	// gsh_client_all_ops → D-Bus GetClientAllops
+	rpc GetClientAllops(nfsProtoUtil.ClientIpRequest)
+		returns (ClientAllOpsResponse);
+
+	// cltmgr_show_9p_io → D-Bus Get9pIO
+	rpc Get9pIO(nfsProtoUtil.ClientIpRequest)
+		returns (ClientIoStatsResponse);
+
+	// cltmgr_show_9p_trans → D-Bus Get9pTrans
+	rpc Get9pTrans(nfsProtoUtil.ClientIpRequest)
+		returns (ClientTransportResponse);
+
+	// cltmgr_show_9p_op_stats → D-Bus Get9pOpStats
+	rpc Get9pOpStats(nfsProtoUtil.Client9pOpRequest)
+		returns (ClientOpStatsResponse);
+}
+
+// Response for per-client pNFS layout statistics.
+message ClientLayoutsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.LayoutStats getdevinfo = 3;
+	nfsProtoUtil.LayoutStats layout_get = 4;
+	nfsProtoUtil.LayoutStats layout_commit = 5;
+	nfsProtoUtil.LayoutStats layout_return = 6;
+	nfsProtoUtil.LayoutStats layout_recall = 7;
+}
+
+// Response for per-client delegation statistics.
+message ClientDelegationsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.DelegationStats delegation_stats = 3;
+}
+
+// Response for per-client multi-protocol I/O op statistics.
+message ClientIoOpsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.VersionCeStats clnt_v3 = 3;
+	nfsProtoUtil.VersionCeStats clnt_v40 = 4;
+	nfsProtoUtil.VersionCeStats clnt_v41 = 5;
+	nfsProtoUtil.VersionCeStats clnt_v42 = 6;
+}
+
+// Response for per-client all-ops statistics.
+message ClientAllOpsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	bool clnt_v3 = 3;
+	repeated nfsProtoUtil.ClientOpEntry clnt_v3_ops_stats = 4;
+	bool clnt_nlm = 5;
+	repeated nfsProtoUtil.ClientOpEntry clnt_nlm_ops_stats = 6;
+	bool clnt_v4 = 7;
+	repeated nfsProtoUtil.ClientV4OpEntry clnt_v4_ops_stats = 8;
+	bool clnt_cmp = 9;
+	nfsProtoUtil.CompoundOpStats clnt_cmp_ops_stats = 10;
+}
+
+// Response for per-client 9p transport statistics.
+message ClientTransportResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.TransportStats transport = 3;
+}
+
+// Response for a single 9p operation counter.
+message ClientOpStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.OpStats op_stats = 3;
 }

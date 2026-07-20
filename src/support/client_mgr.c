@@ -1346,6 +1346,378 @@ bool grpc_cltmgr_get_v42_io(const char *ipaddr, struct grpc_iostats *read_out,
 		"Client does not have any NFSv4.2 activity");
 }
 
+typedef bool (*grpc_cltmgr_fill_layouts_t)(struct gsh_stats *st,
+					   struct grpc_layouts *layouts_out);
+
+/**
+ * @brief Shared implementation for per-version cltmgr layout stats lookup
+ */
+static bool grpc_cltmgr_get_version_layouts(
+	const char *ipaddr, struct grpc_layouts *layouts_out,
+	struct timespec *time_out, bool *success, char *errmsg,
+	size_t errmsg_len, grpc_cltmgr_fill_layouts_t fill_layouts,
+	const char *no_activity_msg)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	sockaddr_t sockaddr;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		errormsg = "NFS stat counting disabled";
+		goto out;
+	}
+
+	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+		*success = false;
+		errormsg = "can't decode client address";
+		goto out;
+	}
+
+	client = get_gsh_client(&sockaddr, true);
+	if (client == NULL) {
+		*success = false;
+		errormsg = "Client IP address not found";
+		goto out;
+	}
+
+	server_st = container_of(client, struct server_stats, client);
+	if (!fill_layouts(&server_st->st, layouts_out)) {
+		*success = false;
+		errormsg = no_activity_msg;
+		goto out_put;
+	}
+
+	*time_out = nfs_stats_time;
+	errormsg = "OK";
+
+out_put:
+	put_gsh_client(client);
+	client = NULL;
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+/**
+ * @brief Shared client lookup for cltmgr stats that do not require NFSSTATS
+ */
+static struct gsh_client *grpc_cltmgr_lookup_client_simple(
+	const char *ipaddr, bool *success, const char **errormsg)
+{
+	sockaddr_t sockaddr;
+	struct gsh_client *client;
+
+	*success = true;
+	*errormsg = "OK";
+
+	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+		*success = false;
+		*errormsg = "can't decode client address";
+		return NULL;
+	}
+
+	client = get_gsh_client(&sockaddr, true);
+	if (client == NULL) {
+		*success = false;
+		*errormsg = "Client IP address not found";
+	}
+	return client;
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_v41_layouts parity
+ */
+bool grpc_cltmgr_get_v41_layouts(const char *ipaddr,
+				 struct grpc_layouts *layouts_out,
+				 struct timespec *time_out, bool *success,
+				 char *errmsg, size_t errmsg_len)
+{
+	return grpc_cltmgr_get_version_layouts(
+		ipaddr, layouts_out, time_out, success, errmsg, errmsg_len,
+		server_grpc_fill_v41_layouts,
+		"Client does not have any NFSv4.1 activity");
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_v42_layouts parity
+ */
+bool grpc_cltmgr_get_v42_layouts(const char *ipaddr,
+				 struct grpc_layouts *layouts_out,
+				 struct timespec *time_out, bool *success,
+				 char *errmsg, size_t errmsg_len)
+{
+	return grpc_cltmgr_get_version_layouts(
+		ipaddr, layouts_out, time_out, success, errmsg, errmsg_len,
+		server_grpc_fill_v42_layouts,
+		"Client does not have any NFSv4.2 activity");
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_delegations parity
+ */
+bool grpc_cltmgr_get_delegations(const char *ipaddr,
+				 struct grpc_delegation_stats *deleg_out,
+				 struct timespec *time_out, bool *success,
+				 char *errmsg, size_t errmsg_len)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	const char *errormsg = "OK";
+
+	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	if (*success) {
+		server_st = container_of(client, struct server_stats, client);
+		if (!server_grpc_fill_delegations(&server_st->st, deleg_out)) {
+			*success = false;
+			errormsg =
+				"Client does not have any Delegation activity";
+		} else {
+			*time_out = nfs_stats_time;
+			errormsg = "OK";
+		}
+	}
+
+	if (client != NULL)
+		put_gsh_client(client);
+
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+/**
+ * @brief gRPC entry point for gsh_client_io_ops parity
+ */
+bool grpc_cltmgr_get_client_io_ops(const char *ipaddr,
+				   struct grpc_client_io_ops *ops_out,
+				   bool *success, char *errmsg,
+				   size_t errmsg_len)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	const char *errormsg = "OK";
+
+	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	if (*success) {
+		server_st = container_of(client, struct server_stats, client);
+		server_grpc_fill_client_io_ops(&server_st->st,
+					       &client->last_update, ops_out);
+		errormsg = "OK";
+	}
+
+	if (client != NULL)
+		put_gsh_client(client);
+
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+/**
+ * @brief gRPC entry point for gsh_client_all_ops parity
+ */
+bool grpc_cltmgr_get_client_allops(const char *ipaddr,
+				   struct grpc_client_allops **allops_out,
+				   bool *success, char *errmsg,
+				   size_t errmsg_len)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	const char *errormsg = "OK";
+
+	*allops_out = NULL;
+	*success = true;
+
+	if (!nfs_param.core_param.enable_CLNTALLSTATS) {
+		*success = false;
+		snprintf(errmsg, errmsg_len,
+			 "Stat counting for all ops for a client is disabled");
+		return true;
+	}
+
+	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	if (*success) {
+		server_st = container_of(client, struct server_stats, client);
+		*allops_out =
+			server_grpc_fill_client_allops(&server_st->st,
+						       &server_st->c_all,
+						       &client->last_update);
+		errormsg = "OK";
+	}
+
+	if (client != NULL)
+		put_gsh_client(client);
+
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+#ifdef _USE_9P
+/**
+ * @brief Shared implementation for 9p cltmgr stats lookup
+ */
+static bool grpc_cltmgr_get_9p_stats(
+	const char *ipaddr, bool *success, char *errmsg, size_t errmsg_len,
+	bool (*fill_stats)(struct gsh_stats *st, void *out), void *out,
+	struct timespec *time_out, const char *no_activity_msg)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	if (!*success)
+		goto out;
+
+	server_st = container_of(client, struct server_stats, client);
+	if (!fill_stats(&server_st->st, out)) {
+		*success = false;
+		errormsg = no_activity_msg;
+		goto out_put;
+	}
+
+	now(time_out);
+	errormsg = "OK";
+
+out_put:
+	put_gsh_client(client);
+	client = NULL;
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+static bool grpc_fill_9p_iostats_wrapper(struct gsh_stats *st, void *out)
+{
+	struct grpc_iostats *pair = (struct grpc_iostats *)out;
+
+	return server_grpc_fill_9p_iostats(st, &pair[0], &pair[1]);
+}
+
+static bool grpc_fill_9p_transport_wrapper(struct gsh_stats *st, void *out)
+{
+	return server_grpc_fill_9p_transport(st, out);
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_9p_io parity
+ */
+bool grpc_cltmgr_get_9p_io(const char *ipaddr, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len)
+{
+	struct grpc_iostats pair[2];
+
+	if (!grpc_cltmgr_get_9p_stats(ipaddr, success, errmsg, errmsg_len,
+				      grpc_fill_9p_iostats_wrapper, pair,
+				      time_out,
+				      "Client does not have any 9p activity"))
+		return true;
+
+	if (*success) {
+		*read_out = pair[0];
+		*write_out = pair[1];
+	}
+	return true;
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_9p_trans parity
+ */
+bool grpc_cltmgr_get_9p_trans(const char *ipaddr,
+			      struct grpc_transport_stats *trans_out,
+			      struct timespec *time_out, bool *success,
+			      char *errmsg, size_t errmsg_len)
+{
+	return grpc_cltmgr_get_9p_stats(ipaddr, success, errmsg, errmsg_len,
+					grpc_fill_9p_transport_wrapper,
+					trans_out, time_out,
+					"Client does not have any 9p activity");
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_9p_op_stats parity
+ */
+bool grpc_cltmgr_get_9p_opstats(const char *ipaddr, const char *opname,
+				struct grpc_op_stats *op_out,
+				struct timespec *time_out, bool *success,
+				char *errmsg, size_t errmsg_len)
+{
+	struct gsh_client *client = NULL;
+	struct server_stats *server_st = NULL;
+	uint8_t opcode;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	if (!*success)
+		goto out;
+
+	server_st = container_of(client, struct server_stats, client);
+	if (server_st->st._9p == NULL) {
+		*success = false;
+		errormsg = "Client does not have any 9p activity";
+		goto out_put;
+	}
+
+	if (!grpc_parse_9p_opname(opname, &opcode)) {
+		*success = false;
+		errormsg = "arg not a known 9P operation";
+		goto out_put;
+	}
+
+	server_grpc_fill_9p_opstats(&server_st->st, opcode, op_out);
+	now(time_out);
+	errormsg = "OK";
+
+out_put:
+	put_gsh_client(client);
+	client = NULL;
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+#else
+bool grpc_cltmgr_get_9p_io(const char *ipaddr, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	snprintf(errmsg, errmsg_len, "9P not supported");
+	return true;
+}
+
+bool grpc_cltmgr_get_9p_trans(const char *ipaddr,
+			      struct grpc_transport_stats *trans_out,
+			      struct timespec *time_out, bool *success,
+			      char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	snprintf(errmsg, errmsg_len, "9P not supported");
+	return true;
+}
+
+bool grpc_cltmgr_get_9p_opstats(const char *ipaddr, const char *opname,
+				struct grpc_op_stats *op_out,
+				struct timespec *time_out, bool *success,
+				char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	snprintf(errmsg, errmsg_len, "9P not supported");
+	return true;
+}
+#endif
+
 /* Cleanup on shutdown */
 void client_mgr_cleanup(void)
 {

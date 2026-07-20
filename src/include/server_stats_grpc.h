@@ -26,7 +26,7 @@
 /*
  * gRPC-safe declarations for client statistics.
  *
- * This header is the C/C++ boundary for cltmgr I/O stats RPCs. C++ gRPC
+ * This header is the C/C++ boundary for cltmgr stats RPCs. C++ gRPC
  * handlers must include this file instead of server_stats_private.h,
  * which is not C++-safe (uses the C++ keyword "export" as a field name
  * and pulls in D-Bus types).
@@ -47,6 +47,7 @@
 /* Opaque forward declarations; full structs are private to server_stats.c */
 struct gsh_stats;
 struct export_stats;
+struct gsh_clnt_allops_stats;
 
 /*
  * Portable I/O stats snapshot passed from C to C++ before protobuf fill.
@@ -90,6 +91,127 @@ struct grpc_export_io_list {
 	size_t count;
 };
 
+/* Mirrors nfsProtoUtil.LayoutStats / D-Bus layout struct (ttt). */
+struct grpc_layout_stats {
+	uint64_t total;
+	uint64_t errors;
+	uint64_t delays;
+};
+
+/* Mirrors nfsProtoUtil.ClientLayoutsResponse layout fields. */
+struct grpc_layouts {
+	struct grpc_layout_stats getdevinfo;
+	struct grpc_layout_stats layout_get;
+	struct grpc_layout_stats layout_commit;
+	struct grpc_layout_stats layout_return;
+	struct grpc_layout_stats layout_recall;
+};
+
+/* Mirrors nfsProtoUtil.DelegationStats / D-Bus DELEG_REPLY (tttt). */
+struct grpc_delegation_stats {
+	uint32_t curr_deleg_grants;
+	uint32_t tot_recalls;
+	uint32_t failed_recalls;
+	uint32_t num_revokes;
+};
+
+/* Mirrors nfsProtoUtil.CeIoStats / D-Bus CEIOSTATS read|write (ttdt). */
+struct grpc_ce_iostats {
+	uint64_t total_ops;
+	uint64_t errors;
+	uint64_t bytes_transferred;
+};
+
+/* Mirrors nfsProtoUtil.CeOpStats / D-Bus CEIOSTATS other (ttd). */
+struct grpc_ce_opstats {
+	uint64_t total_ops;
+	uint64_t errors;
+};
+
+/* Mirrors nfsProtoUtil.CeLayoutStats / D-Bus CELOSTATS (ttt) for clients. */
+struct grpc_ce_layoutstats {
+	uint64_t total;
+	uint64_t errors;
+};
+
+/* Mirrors nfsProtoUtil.VersionCeStats. */
+struct grpc_version_ce_stats {
+	bool available;
+	struct grpc_ce_iostats read;
+	struct grpc_ce_iostats write;
+	struct grpc_ce_opstats other;
+	bool has_layout;
+	struct grpc_ce_layoutstats layout;
+};
+
+/* Mirrors nfsProtoUtil.ClientIoOpsResponse payload. */
+struct grpc_client_io_ops {
+	struct timespec time;
+#ifdef _USE_NFS3
+	struct grpc_version_ce_stats v3;
+#endif
+	struct grpc_version_ce_stats v40;
+	struct grpc_version_ce_stats v41;
+	struct grpc_version_ce_stats v42;
+};
+
+/* Mirrors nfsProtoUtil.ClientOpEntry / D-Bus a(sttt). */
+struct grpc_client_op_entry {
+	char op_name[64];
+	uint64_t total;
+	uint64_t errors;
+	uint64_t dups;
+};
+
+/* Mirrors nfsProtoUtil.ClientV4OpEntry / D-Bus a(stt). */
+struct grpc_client_v4_op_entry {
+	char op_name[64];
+	uint64_t total;
+	uint64_t errors;
+};
+
+/* Mirrors nfsProtoUtil.CompoundOpStats / D-Bus CLNT_CMP_OPS_REPLY (ttt). */
+struct grpc_compound_op_stats {
+	uint64_t total;
+	uint64_t errors;
+	uint64_t ops_in_cmp;
+};
+
+/*
+ * Heap-allocated all-ops snapshot; freed by grpc_cltmgr_free_client_allops().
+ * Entry counts reflect only operations with non-zero totals (D-Bus parity).
+ */
+struct grpc_client_allops {
+	struct timespec time;
+	bool clnt_v3;
+	uint32_t v3_count;
+	struct grpc_client_op_entry *v3_ops;
+	bool clnt_nlm;
+	uint32_t nlm_count;
+	struct grpc_client_op_entry *nlm_ops;
+	bool clnt_v4;
+	uint32_t v4_count;
+	struct grpc_client_v4_op_entry *v4_ops;
+	bool clnt_cmp;
+	struct grpc_compound_op_stats cmp;
+};
+
+/* Mirrors nfsProtoUtil.TransportStats / D-Bus TRANSPORT_REPLY. */
+struct grpc_transport_stats {
+	uint64_t rx_bytes;
+	uint64_t rx_pkt;
+	uint64_t rx_err;
+	uint64_t tx_bytes;
+	uint64_t tx_pkt;
+	uint64_t tx_err;
+};
+
+/* Mirrors nfsProtoUtil.OpStats / D-Bus OP_STATS_REPLY (tt). */
+struct grpc_op_stats {
+	uint64_t total_ops;
+	uint64_t errors;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -124,6 +246,37 @@ bool server_grpc_fill_global_total_ops(struct grpc_global_total_ops *ops);
 
 bool server_grpc_fill_all_iostats(struct export_stats *export_st,
 				  struct grpc_export_io_list *list);
+
+bool server_grpc_fill_v41_layouts(struct gsh_stats *st,
+				  struct grpc_layouts *layouts_out);
+
+bool server_grpc_fill_v42_layouts(struct gsh_stats *st,
+				  struct grpc_layouts *layouts_out);
+
+bool server_grpc_fill_delegations(struct gsh_stats *st,
+				  struct grpc_delegation_stats *deleg_out);
+
+bool server_grpc_fill_9p_iostats(struct gsh_stats *st,
+				 struct grpc_iostats *read_out,
+				 struct grpc_iostats *write_out);
+
+bool server_grpc_fill_9p_transport(struct gsh_stats *st,
+				   struct grpc_transport_stats *trans_out);
+
+bool server_grpc_fill_9p_opstats(struct gsh_stats *st, uint8_t opcode,
+				 struct grpc_op_stats *op_out);
+
+bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
+				    struct timespec *client_time,
+				    struct grpc_client_io_ops *out);
+
+struct grpc_client_allops *server_grpc_fill_client_allops(
+	struct gsh_stats *st, struct gsh_clnt_allops_stats *c_all,
+	struct timespec *client_time);
+
+void grpc_cltmgr_free_client_allops(struct grpc_client_allops *allops);
+
+bool grpc_parse_9p_opname(const char *opname, uint8_t *opcode_out);
 
 /*
  * Per-version entry points called from nfsServiceServer.cc.
@@ -198,6 +351,46 @@ bool grpc_get_global_total_ops(struct grpc_global_total_ops *ops,
 bool grpc_get_all_export_iostats(struct grpc_export_io_list *list,
 				 struct timespec *time_out, bool *success,
 				 char *errmsg, size_t errmsg_len);
+bool grpc_cltmgr_get_v41_layouts(const char *ipaddr,
+				 struct grpc_layouts *layouts_out,
+				 struct timespec *time_out, bool *success,
+				 char *errmsg, size_t errmsg_len);
+
+bool grpc_cltmgr_get_v42_layouts(const char *ipaddr,
+				 struct grpc_layouts *layouts_out,
+				 struct timespec *time_out, bool *success,
+				 char *errmsg, size_t errmsg_len);
+
+bool grpc_cltmgr_get_delegations(const char *ipaddr,
+				 struct grpc_delegation_stats *deleg_out,
+				 struct timespec *time_out, bool *success,
+				 char *errmsg, size_t errmsg_len);
+
+bool grpc_cltmgr_get_client_io_ops(const char *ipaddr,
+				   struct grpc_client_io_ops *ops_out,
+				   bool *success, char *errmsg,
+				   size_t errmsg_len);
+
+bool grpc_cltmgr_get_client_allops(const char *ipaddr,
+				   struct grpc_client_allops **allops_out,
+				   bool *success, char *errmsg,
+				   size_t errmsg_len);
+
+bool grpc_cltmgr_get_9p_io(const char *ipaddr, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len);
+
+bool grpc_cltmgr_get_9p_trans(const char *ipaddr,
+			      struct grpc_transport_stats *trans_out,
+			      struct timespec *time_out, bool *success,
+			      char *errmsg, size_t errmsg_len);
+
+bool grpc_cltmgr_get_9p_opstats(const char *ipaddr, const char *opname,
+				struct grpc_op_stats *op_out,
+				struct timespec *time_out, bool *success,
+				char *errmsg, size_t errmsg_len);
+
 #ifdef __cplusplus
 }
 #endif

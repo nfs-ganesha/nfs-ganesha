@@ -44,6 +44,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/param.h>
 #include <pthread.h>
 #include <assert.h>
@@ -64,6 +65,9 @@
 #include "nfs_convert.h"
 #include "nfs_metrics.h"
 #include "server_stats_grpc.h"
+#ifdef _USE_9P
+#include "9p.h"
+#endif
 
 #ifdef USE_DBUS
 
@@ -3413,4 +3417,439 @@ bool server_grpc_fill_all_iostats(struct export_stats *export_st,
 
 	return true;
 }
+
+/**
+ * @brief Copy one layout counter bucket into gRPC-safe form
+ *
+ * @param src [IN] layout operation counter
+ * @param dst [OUT] gRPC-safe layout snapshot
+ */
+static void grpc_layout_from_op(struct layout_op *src,
+				struct grpc_layout_stats *dst)
+{
+	dst->total = src->total;
+	dst->errors = src->errors;
+	dst->delays = src->delays;
+}
+
+/**
+ * @brief Extract NFSv4.1 layout counters for gRPC cltmgr stats
+ */
+bool server_grpc_fill_v41_layouts(struct gsh_stats *st,
+				  struct grpc_layouts *layouts_out)
+{
+	if (st->nfsv41 == NULL)
+		return false;
+
+	grpc_layout_from_op(&st->nfsv41->getdevinfo, &layouts_out->getdevinfo);
+	grpc_layout_from_op(&st->nfsv41->layout_get, &layouts_out->layout_get);
+	grpc_layout_from_op(&st->nfsv41->layout_commit,
+			    &layouts_out->layout_commit);
+	grpc_layout_from_op(&st->nfsv41->layout_return,
+			    &layouts_out->layout_return);
+	grpc_layout_from_op(&st->nfsv41->recall, &layouts_out->layout_recall);
+	return true;
+}
+
+/**
+ * @brief Extract NFSv4.2 layout counters for gRPC cltmgr stats
+ */
+bool server_grpc_fill_v42_layouts(struct gsh_stats *st,
+				  struct grpc_layouts *layouts_out)
+{
+	if (st->nfsv42 == NULL)
+		return false;
+
+	grpc_layout_from_op(&st->nfsv42->getdevinfo, &layouts_out->getdevinfo);
+	grpc_layout_from_op(&st->nfsv42->layout_get, &layouts_out->layout_get);
+	grpc_layout_from_op(&st->nfsv42->layout_commit,
+			    &layouts_out->layout_commit);
+	grpc_layout_from_op(&st->nfsv42->layout_return,
+			    &layouts_out->layout_return);
+	grpc_layout_from_op(&st->nfsv42->recall, &layouts_out->layout_recall);
+	return true;
+}
+
+/**
+ * @brief Extract delegation counters for gRPC cltmgr stats
+ */
+bool server_grpc_fill_delegations(struct gsh_stats *st,
+				  struct grpc_delegation_stats *deleg_out)
+{
+	if (st->deleg == NULL)
+		return false;
+
+	deleg_out->curr_deleg_grants = st->deleg->curr_deleg_grants;
+	deleg_out->tot_recalls = st->deleg->tot_recalls;
+	deleg_out->failed_recalls = st->deleg->failed_recalls;
+	deleg_out->num_revokes = st->deleg->num_revokes;
+	return true;
+}
+
+/**
+ * @brief Copy client/export xfer op stats into gRPC-safe form
+ */
+static void grpc_ce_iostats_from_xfer(struct xfer_op *iop,
+				      struct grpc_ce_iostats *out)
+{
+	out->total_ops = iop->cmd.total;
+	out->errors = iop->cmd.errors;
+	out->bytes_transferred = iop->transferred;
+}
+
+/**
+ * @brief Copy client/export proto op stats into gRPC-safe form
+ */
+static void grpc_ce_opstats_from_proto(struct proto_op *op,
+				       struct grpc_ce_opstats *out)
+{
+	out->total_ops = op->total;
+	out->errors = op->errors;
+}
+
+/**
+ * @brief Copy aggregated layout stats into gRPC-safe form
+ */
+static void grpc_ce_layoutstats_from_nfsv41(struct nfsv41_stats *sp,
+					    struct grpc_ce_layoutstats *out)
+{
+	out->total = sp->getdevinfo.total + sp->layout_get.total +
+		     sp->layout_commit.total + sp->layout_return.total;
+	out->errors = sp->getdevinfo.errors + sp->layout_get.errors +
+		      sp->layout_commit.errors + sp->layout_return.errors;
+}
+
+/**
+ * @brief Fill one protocol block for GetClientIOops
+ */
+static void grpc_fill_version_ce_stats(
+	struct gsh_stats *st, struct grpc_version_ce_stats *out,
+	bool (*has_stats)(struct gsh_stats *),
+	void (*fill_stats)(struct gsh_stats *, struct grpc_version_ce_stats *))
+{
+	out->available = has_stats(st);
+	if (out->available)
+		fill_stats(st, out);
+}
+
+#ifdef _USE_NFS3
+static bool grpc_has_v3_stats(struct gsh_stats *st)
+{
+	return st->nfsv3 != NULL;
+}
+
+static void grpc_fill_v3_ce_stats(struct gsh_stats *st,
+				  struct grpc_version_ce_stats *out)
+{
+	grpc_ce_iostats_from_xfer(&st->nfsv3->read, &out->read);
+	grpc_ce_iostats_from_xfer(&st->nfsv3->write, &out->write);
+	grpc_ce_opstats_from_proto(&st->nfsv3->cmds, &out->other);
+	out->has_layout = false;
+}
+#endif
+
+static bool grpc_has_v40_stats(struct gsh_stats *st)
+{
+	return st->nfsv40 != NULL;
+}
+
+static void grpc_fill_v40_ce_stats(struct gsh_stats *st,
+				   struct grpc_version_ce_stats *out)
+{
+	grpc_ce_iostats_from_xfer(&st->nfsv40->read, &out->read);
+	grpc_ce_iostats_from_xfer(&st->nfsv40->write, &out->write);
+	grpc_ce_opstats_from_proto(&st->nfsv40->compounds, &out->other);
+	out->has_layout = false;
+}
+
+static bool grpc_has_v41_stats(struct gsh_stats *st)
+{
+	return st->nfsv41 != NULL;
+}
+
+static void grpc_fill_v41_ce_stats(struct gsh_stats *st,
+				   struct grpc_version_ce_stats *out)
+{
+	grpc_ce_iostats_from_xfer(&st->nfsv41->read, &out->read);
+	grpc_ce_iostats_from_xfer(&st->nfsv41->write, &out->write);
+	grpc_ce_opstats_from_proto(&st->nfsv41->compounds, &out->other);
+	out->has_layout = true;
+	grpc_ce_layoutstats_from_nfsv41(st->nfsv41, &out->layout);
+}
+
+static bool grpc_has_v42_stats(struct gsh_stats *st)
+{
+	return st->nfsv42 != NULL;
+}
+
+static void grpc_fill_v42_ce_stats(struct gsh_stats *st,
+				   struct grpc_version_ce_stats *out)
+{
+	grpc_ce_iostats_from_xfer(&st->nfsv42->read, &out->read);
+	grpc_ce_iostats_from_xfer(&st->nfsv42->write, &out->write);
+	grpc_ce_opstats_from_proto(&st->nfsv42->compounds, &out->other);
+	out->has_layout = true;
+	grpc_ce_layoutstats_from_nfsv41(st->nfsv42, &out->layout);
+}
+
+/**
+ * @brief Extract multi-protocol client I/O op stats for gRPC
+ */
+bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
+				    struct timespec *client_time,
+				    struct grpc_client_io_ops *out)
+{
+	out->time = *client_time;
+
+#ifdef _USE_NFS3
+	grpc_fill_version_ce_stats(st, &out->v3, grpc_has_v3_stats,
+				   grpc_fill_v3_ce_stats);
+#endif
+	grpc_fill_version_ce_stats(st, &out->v40, grpc_has_v40_stats,
+				   grpc_fill_v40_ce_stats);
+	grpc_fill_version_ce_stats(st, &out->v41, grpc_has_v41_stats,
+				   grpc_fill_v41_ce_stats);
+	grpc_fill_version_ce_stats(st, &out->v42, grpc_has_v42_stats,
+				   grpc_fill_v42_ce_stats);
+	return true;
+}
+
+/**
+ * @brief Release heap memory owned by a client all-ops snapshot
+ */
+void grpc_cltmgr_free_client_allops(struct grpc_client_allops *allops)
+{
+	if (allops == NULL)
+		return;
+	gsh_free(allops->v3_ops);
+	gsh_free(allops->nlm_ops);
+	gsh_free(allops->v4_ops);
+	gsh_free(allops);
+}
+
+/**
+ * @brief Extract per-client all-ops statistics for gRPC
+ */
+struct grpc_client_allops *server_grpc_fill_client_allops(
+	struct gsh_stats *st, struct gsh_clnt_allops_stats *c_all,
+	struct timespec *client_time)
+{
+	struct grpc_client_allops *out;
+	int i;
+	uint32_t count;
+
+	out = gsh_calloc(1, sizeof(struct grpc_client_allops));
+	out->time = *client_time;
+
+#ifdef _USE_NFS3
+	out->clnt_v3 = c_all->nfsv3 != NULL;
+	if (out->clnt_v3) {
+		count = 0;
+		for (i = 0; i < NFS_V3_NB_COMMAND; i++) {
+			if (c_all->nfsv3->cmds[i].total)
+				count++;
+		}
+		out->v3_count = count;
+		if (count > 0) {
+			out->v3_ops =
+				gsh_calloc(count,
+					   sizeof(struct grpc_client_op_entry));
+			count = 0;
+			for (i = 0; i < NFS_V3_NB_COMMAND; i++) {
+				if (c_all->nfsv3->cmds[i].total) {
+					snprintf(out->v3_ops[count].op_name,
+						 sizeof(out->v3_ops[count]
+								.op_name),
+						 "%s", nfsproc3_to_str(i));
+					out->v3_ops[count].total =
+						c_all->nfsv3->cmds[i].total;
+					out->v3_ops[count].errors =
+						c_all->nfsv3->cmds[i].errors;
+					out->v3_ops[count].dups =
+						c_all->nfsv3->cmds[i].dups;
+					count++;
+				}
+			}
+		}
+	}
+#endif
+
+#ifdef _USE_NLM
+	out->clnt_nlm = c_all->nlm4 != NULL;
+	if (out->clnt_nlm) {
+		count = 0;
+		for (i = 0; i < NLM_V4_NB_OPERATION; i++) {
+			if (c_all->nlm4->cmds[i].total)
+				count++;
+		}
+		out->nlm_count = count;
+		if (count > 0) {
+			out->nlm_ops =
+				gsh_calloc(count,
+					   sizeof(struct grpc_client_op_entry));
+			count = 0;
+			for (i = 0; i < NLM_V4_NB_OPERATION; i++) {
+				if (c_all->nlm4->cmds[i].total) {
+					snprintf(out->nlm_ops[count].op_name,
+						 sizeof(out->nlm_ops[count]
+								.op_name),
+						 "%s",
+						 nlm4_func_desc[i].funcname);
+					out->nlm_ops[count].total =
+						c_all->nlm4->cmds[i].total;
+					out->nlm_ops[count].errors =
+						c_all->nlm4->cmds[i].errors;
+					out->nlm_ops[count].dups =
+						c_all->nlm4->cmds[i].dups;
+					count++;
+				}
+			}
+		}
+	}
+#endif
+
+	out->clnt_v4 = c_all->nfsv4 != NULL;
+	if (out->clnt_v4) {
+		count = 0;
+		for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
+			if (c_all->nfsv4->cmds[i].total)
+				count++;
+		}
+		out->v4_count = count;
+		if (count > 0) {
+			out->v4_ops = gsh_calloc(
+				count, sizeof(struct grpc_client_v4_op_entry));
+			count = 0;
+			for (i = 0; i < NFS4_OP_LAST_ONE; i++) {
+				if (c_all->nfsv4->cmds[i].total) {
+					snprintf(out->v4_ops[count].op_name,
+						 sizeof(out->v4_ops[count]
+								.op_name),
+						 "%s", nfsop4_to_str(i));
+					out->v4_ops[count].total =
+						c_all->nfsv4->cmds[i].total;
+					out->v4_ops[count].errors =
+						c_all->nfsv4->cmds[i].errors;
+					count++;
+				}
+			}
+		}
+	}
+
+	if (st->nfsv40) {
+		out->cmp.total += st->nfsv40->compounds.total;
+		out->cmp.errors += st->nfsv40->compounds.errors;
+		out->cmp.ops_in_cmp += st->nfsv40->ops_per_compound;
+	}
+	if (st->nfsv41) {
+		out->cmp.total += st->nfsv41->compounds.total;
+		out->cmp.errors += st->nfsv41->compounds.errors;
+		out->cmp.ops_in_cmp += st->nfsv41->ops_per_compound;
+	}
+	if (st->nfsv42) {
+		out->cmp.total += st->nfsv42->compounds.total;
+		out->cmp.errors += st->nfsv42->compounds.errors;
+		out->cmp.ops_in_cmp += st->nfsv42->ops_per_compound;
+	}
+	out->clnt_cmp = out->cmp.total != 0;
+
+	return out;
+}
+
+#ifdef _USE_9P
+/**
+ * @brief Extract 9p read/write counters for gRPC cltmgr stats
+ */
+bool server_grpc_fill_9p_iostats(struct gsh_stats *st,
+				 struct grpc_iostats *read_out,
+				 struct grpc_iostats *write_out)
+{
+	if (st->_9p == NULL)
+		return false;
+
+	grpc_iostats_from_xfer(&st->_9p->read, read_out);
+	grpc_iostats_from_xfer(&st->_9p->write, write_out);
+	return true;
+}
+
+/**
+ * @brief Extract 9p transport counters for gRPC cltmgr stats
+ */
+bool server_grpc_fill_9p_transport(struct gsh_stats *st,
+				   struct grpc_transport_stats *trans_out)
+{
+	if (st->_9p == NULL)
+		return false;
+
+	trans_out->rx_bytes = st->_9p->trans.rx_bytes;
+	trans_out->rx_pkt = st->_9p->trans.rx_pkt;
+	trans_out->rx_err = st->_9p->trans.rx_err;
+	trans_out->tx_bytes = st->_9p->trans.tx_bytes;
+	trans_out->tx_pkt = st->_9p->trans.tx_pkt;
+	trans_out->tx_err = st->_9p->trans.tx_err;
+	return true;
+}
+
+/**
+ * @brief Extract one 9p operation counter for gRPC cltmgr stats
+ */
+bool server_grpc_fill_9p_opstats(struct gsh_stats *st, uint8_t opcode,
+				 struct grpc_op_stats *op_out)
+{
+	struct proto_op *op;
+
+	if (st->_9p == NULL)
+		return false;
+
+	op = st->_9p->opcodes[opcode];
+	op_out->total_ops = op == NULL ? 0 : op->total;
+	op_out->errors = op == NULL ? 0 : op->errors;
+	return true;
+}
+
+/**
+ * @brief Parse a 9p operation name into its opcode
+ */
+bool grpc_parse_9p_opname(const char *opname, uint8_t *opcode_out)
+{
+	uint8_t opc;
+
+	if (opname == NULL)
+		return false;
+
+	for (opc = _9P_TSTATFS; opc <= _9P_TWSTAT; opc++) {
+		if (_9pfuncdesc[opc].funcname != NULL &&
+		    !strcmp(opname, _9pfuncdesc[opc].funcname)) {
+			*opcode_out = opc;
+			return true;
+		}
+	}
+	return false;
+}
+#else
+bool server_grpc_fill_9p_iostats(struct gsh_stats *st,
+				 struct grpc_iostats *read_out,
+				 struct grpc_iostats *write_out)
+{
+	return false;
+}
+
+bool server_grpc_fill_9p_transport(struct gsh_stats *st,
+				   struct grpc_transport_stats *trans_out)
+{
+	return false;
+}
+
+bool server_grpc_fill_9p_opstats(struct gsh_stats *st, uint8_t opcode,
+				 struct grpc_op_stats *op_out)
+{
+	return false;
+}
+
+bool grpc_parse_9p_opname(const char *opname, uint8_t *opcode_out)
+{
+	return false;
+}
+#endif
+
 /** @} */

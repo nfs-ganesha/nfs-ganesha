@@ -96,6 +96,46 @@ class ClientStatsService final : public cltmgrService::ClientStats::Service {
 	GetNFSv42IO(grpc::ServerContext *context,
 		    const nfsProtoUtil::ClientIpRequest *request,
 		    cltmgrService::ClientIoStatsResponse *response) override;
+
+	grpc::Status GetNFSv41Layouts(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ClientIpRequest *request,
+		cltmgrService::ClientLayoutsResponse *response) override;
+
+	grpc::Status GetNFSv42Layouts(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ClientIpRequest *request,
+		cltmgrService::ClientLayoutsResponse *response) override;
+
+	grpc::Status GetDelegations(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ClientIpRequest *request,
+		cltmgrService::ClientDelegationsResponse *response) override;
+
+	grpc::Status
+	GetClientIOops(grpc::ServerContext *context,
+		       const nfsProtoUtil::ClientIpRequest *request,
+		       cltmgrService::ClientIoOpsResponse *response) override;
+
+	grpc::Status
+	GetClientAllops(grpc::ServerContext *context,
+			const nfsProtoUtil::ClientIpRequest *request,
+			cltmgrService::ClientAllOpsResponse *response) override;
+
+	grpc::Status
+	Get9pIO(grpc::ServerContext *context,
+		const nfsProtoUtil::ClientIpRequest *request,
+		cltmgrService::ClientIoStatsResponse *response) override;
+
+	grpc::Status
+	Get9pTrans(grpc::ServerContext *context,
+		   const nfsProtoUtil::ClientIpRequest *request,
+		   cltmgrService::ClientTransportResponse *response) override;
+
+	grpc::Status
+	Get9pOpStats(grpc::ServerContext *context,
+		     const nfsProtoUtil::Client9pOpRequest *request,
+		     cltmgrService::ClientOpStatsResponse *response) override;
 };
 
 class nfsAdminService final : public nfsService::nfsAdmin::Service {

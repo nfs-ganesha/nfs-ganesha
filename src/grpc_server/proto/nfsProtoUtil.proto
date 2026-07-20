@@ -32,23 +32,35 @@ message ActionResponse
 	optional bool success = 1;
 }
 
+/*
+ * Shared message types used across gRPC services (cltmgr, export, etc.).
+ * Field layout matches the D-Bus reply macros in gsh_dbus.h and
+ * server_stats_private.h so gRPC responses stay compatible with existing
+ * D-Bus clients and tooling.
+ */
+
+// Input for client-manager stats RPCs; mirrors D-Bus IPADDR_ARG.
 message ClientIpRequest
 {
 	string ipaddr = 1;
 }
 
+// Operation outcome; mirrors D-Bus STATUS_REPLY (status + error).
 message StatusResponse
 {
 	bool success = 1;
 	string error_msg = 2;
 }
 
+// Stats snapshot time; mirrors D-Bus TIMESTAMP_REPLY (tv_sec, tv_nsec).
 message Timestamp
 {
 	uint64 tv_sec = 1;
 	uint64 tv_nsec = 2;
 }
 
+// One read or write I/O bucket; mirrors D-Bus IOSTATS_REPLY struct (tttttt).
+// Maps to struct xfer_op via server_dbus_iostats() / grpc_iostats_from_xfer().
 message IoStats
 {
 	uint64 requested = 1;
@@ -59,6 +71,7 @@ message IoStats
 	uint64 queue_wait = 6;
 }
 
+// Message of successful response.
 message MessageResponse
 {
 	optional bool success = 1;
@@ -68,4 +81,103 @@ message MessageResponse
 message ExportIdRequest
 {
 	uint32 export_id = 1;
+}
+
+// Per layout operation bucket; mirrors D-Bus LAYOUTS_REPLY struct (ttt).
+message LayoutStats
+{
+	uint64 total = 1;
+	uint64 errors = 2;
+	uint64 delays = 3;
+}
+
+// Delegation counters; mirrors D-Bus DELEG_REPLY struct (tttt).
+message DelegationStats
+{
+	uint32 curr_deleg_grants = 1;
+	uint32 tot_recalls = 2;
+	uint32 failed_recalls = 3;
+	uint32 num_revokes = 4;
+}
+
+// Client/export xfer op stats; mirrors D-Bus CEIOSTATS_REPLY read/write (ttdt).
+message CeIoStats
+{
+	uint64 total_ops = 1;
+	uint64 errors = 2;
+	uint64 bytes_transferred = 3;
+}
+
+// Client/export proto op stats; mirrors D-Bus CEIOSTATS_REPLY other (ttd).
+message CeOpStats
+{
+	uint64 total_ops = 1;
+	uint64 errors = 2;
+}
+
+// Aggregated layout stats; mirrors D-Bus CELOSTATS_REPLY (ttt) for clients.
+message CeLayoutStats
+{
+	uint64 total = 1;
+	uint64 errors = 2;
+}
+
+// 9p / generic op counter pair; mirrors D-Bus OP_STATS_REPLY (tt).
+message OpStats
+{
+	uint64 total_ops = 1;
+	uint64 errors = 2;
+}
+
+// 9p transport counters; mirrors D-Bus TRANSPORT_REPLY.
+message TransportStats
+{
+	uint64 rx_bytes = 1;
+	uint64 rx_pkt = 2;
+	uint64 rx_err = 3;
+	uint64 tx_bytes = 4;
+	uint64 tx_pkt = 5;
+	uint64 tx_err = 6;
+}
+
+// Per-operation entry with duplicates; mirrors D-Bus a(sttt).
+message ClientOpEntry
+{
+	string op_name = 1;
+	uint64 total = 2;
+	uint64 errors = 3;
+	uint64 dups = 4;
+}
+
+// Per-operation entry without duplicates; mirrors D-Bus a(stt).
+message ClientV4OpEntry
+{
+	string op_name = 1;
+	uint64 total = 2;
+	uint64 errors = 3;
+}
+
+// Compound operation summary; mirrors D-Bus CLNT_CMP_OPS_REPLY (ttt).
+message CompoundOpStats
+{
+	uint64 total = 1;
+	uint64 errors = 2;
+	uint64 ops_in_cmp = 3;
+}
+
+// Per-protocol CE stats block inside GetClientIOops.
+message VersionCeStats
+{
+	bool available = 1;
+	CeIoStats read = 2;
+	CeIoStats write = 3;
+	CeOpStats other = 4;
+	CeLayoutStats layout = 5; // populated for NFSv4.1/4.2 only
+}
+
+// Input for Get9pOpStats; mirrors D-Bus IPADDR_ARG + _9P_OP_ARG.
+message Client9pOpRequest
+{
+	string ipaddr = 1;
+	string op_name = 2;
 }

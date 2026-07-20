@@ -259,6 +259,351 @@ ClientStatsService::GetNFSv42IO(grpc::ServerContext *context,
 	return handle_client_iostats(request, response, grpc_cltmgr_get_v42_io);
 }
 
+/**
+ * @brief Convert C-side layout stats into protobuf response fields
+ */
+static void fill_layout_stats_proto(const struct grpc_layout_stats *src,
+				    nfsProtoUtil::LayoutStats *dst)
+{
+	dst->set_total(src->total);
+	dst->set_errors(src->errors);
+	dst->set_delays(src->delays);
+}
+
+typedef bool (*grpc_cltmgr_get_layouts_fn)(const char *, struct grpc_layouts *,
+					   struct timespec *, bool *, char *,
+					   size_t);
+
+/**
+ * @brief Common handler for cltmgr per-client layout stats RPCs
+ */
+static grpc::Status
+handle_client_layouts(const nfsProtoUtil::ClientIpRequest *request,
+		      cltmgrService::ClientLayoutsResponse *response,
+		      grpc_cltmgr_get_layouts_fn get_layouts)
+{
+	struct grpc_layouts layouts_out;
+	struct timespec time_out;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	get_layouts(request->ipaddr().c_str(), &layouts_out, &time_out,
+		    &success, errmsg, sizeof(errmsg));
+
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(time_out.tv_sec);
+	time->set_tv_nsec(time_out.tv_nsec);
+
+	fill_layout_stats_proto(&layouts_out.getdevinfo,
+				response->mutable_getdevinfo());
+	fill_layout_stats_proto(&layouts_out.layout_get,
+				response->mutable_layout_get());
+	fill_layout_stats_proto(&layouts_out.layout_commit,
+				response->mutable_layout_commit());
+	fill_layout_stats_proto(&layouts_out.layout_return,
+				response->mutable_layout_return());
+	fill_layout_stats_proto(&layouts_out.layout_recall,
+				response->mutable_layout_recall());
+
+	return grpc::Status::OK;
+}
+
+grpc::Status ClientStatsService::GetNFSv41Layouts(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ClientIpRequest *request,
+	cltmgrService::ClientLayoutsResponse *response)
+{
+	return handle_client_layouts(request, response,
+				     grpc_cltmgr_get_v41_layouts);
+}
+
+grpc::Status ClientStatsService::GetNFSv42Layouts(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ClientIpRequest *request,
+	cltmgrService::ClientLayoutsResponse *response)
+{
+	return handle_client_layouts(request, response,
+				     grpc_cltmgr_get_v42_layouts);
+}
+
+/**
+ * @brief Get per-client delegation counters
+ */
+grpc::Status ClientStatsService::GetDelegations(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ClientIpRequest *request,
+	cltmgrService::ClientDelegationsResponse *response)
+{
+	struct grpc_delegation_stats deleg_out;
+	struct timespec time_out;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	grpc_cltmgr_get_delegations(request->ipaddr().c_str(), &deleg_out,
+				    &time_out, &success, errmsg,
+				    sizeof(errmsg));
+
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(time_out.tv_sec);
+	time->set_tv_nsec(time_out.tv_nsec);
+
+	nfsProtoUtil::DelegationStats *deleg =
+		response->mutable_delegation_stats();
+
+	deleg->set_curr_deleg_grants(deleg_out.curr_deleg_grants);
+	deleg->set_tot_recalls(deleg_out.tot_recalls);
+	deleg->set_failed_recalls(deleg_out.failed_recalls);
+	deleg->set_num_revokes(deleg_out.num_revokes);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Fill one VersionCeStats protobuf block from C snapshot
+ */
+static void fill_version_ce_stats_proto(const struct grpc_version_ce_stats *src,
+					nfsProtoUtil::VersionCeStats *dst)
+{
+	dst->set_available(src->available);
+	if (!src->available)
+		return;
+
+	nfsProtoUtil::CeIoStats *read = dst->mutable_read();
+	nfsProtoUtil::CeIoStats *write = dst->mutable_write();
+	nfsProtoUtil::CeOpStats *other = dst->mutable_other();
+
+	read->set_total_ops(src->read.total_ops);
+	read->set_errors(src->read.errors);
+	read->set_bytes_transferred(src->read.bytes_transferred);
+	write->set_total_ops(src->write.total_ops);
+	write->set_errors(src->write.errors);
+	write->set_bytes_transferred(src->write.bytes_transferred);
+	other->set_total_ops(src->other.total_ops);
+	other->set_errors(src->other.errors);
+
+	if (src->has_layout) {
+		nfsProtoUtil::CeLayoutStats *layout = dst->mutable_layout();
+
+		layout->set_total(src->layout.total);
+		layout->set_errors(src->layout.errors);
+	}
+}
+
+/**
+ * @brief Get per-client multi-protocol I/O op statistics
+ */
+grpc::Status
+ClientStatsService::GetClientIOops(grpc::ServerContext *context,
+				   const nfsProtoUtil::ClientIpRequest *request,
+				   cltmgrService::ClientIoOpsResponse *response)
+{
+	struct grpc_client_io_ops ops_out;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	grpc_cltmgr_get_client_io_ops(request->ipaddr().c_str(), &ops_out,
+				      &success, errmsg, sizeof(errmsg));
+
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(ops_out.time.tv_sec);
+	time->set_tv_nsec(ops_out.time.tv_nsec);
+
+#ifdef _USE_NFS3
+	fill_version_ce_stats_proto(&ops_out.v3, response->mutable_clnt_v3());
+#endif
+	fill_version_ce_stats_proto(&ops_out.v40, response->mutable_clnt_v40());
+	fill_version_ce_stats_proto(&ops_out.v41, response->mutable_clnt_v41());
+	fill_version_ce_stats_proto(&ops_out.v42, response->mutable_clnt_v42());
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Get per-client all-ops statistics
+ */
+grpc::Status ClientStatsService::GetClientAllops(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ClientIpRequest *request,
+	cltmgrService::ClientAllOpsResponse *response)
+{
+	struct grpc_client_allops *allops_out = NULL;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	grpc_cltmgr_get_client_allops(request->ipaddr().c_str(), &allops_out,
+				      &success, errmsg, sizeof(errmsg));
+
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(allops_out->time.tv_sec);
+	time->set_tv_nsec(allops_out->time.tv_nsec);
+
+	response->set_clnt_v3(allops_out->clnt_v3);
+	for (uint32_t i = 0; i < allops_out->v3_count; i++) {
+		nfsProtoUtil::ClientOpEntry *entry =
+			response->add_clnt_v3_ops_stats();
+
+		entry->set_op_name(allops_out->v3_ops[i].op_name);
+		entry->set_total(allops_out->v3_ops[i].total);
+		entry->set_errors(allops_out->v3_ops[i].errors);
+		entry->set_dups(allops_out->v3_ops[i].dups);
+	}
+
+	response->set_clnt_nlm(allops_out->clnt_nlm);
+	for (uint32_t i = 0; i < allops_out->nlm_count; i++) {
+		nfsProtoUtil::ClientOpEntry *entry =
+			response->add_clnt_nlm_ops_stats();
+
+		entry->set_op_name(allops_out->nlm_ops[i].op_name);
+		entry->set_total(allops_out->nlm_ops[i].total);
+		entry->set_errors(allops_out->nlm_ops[i].errors);
+		entry->set_dups(allops_out->nlm_ops[i].dups);
+	}
+
+	response->set_clnt_v4(allops_out->clnt_v4);
+	for (uint32_t i = 0; i < allops_out->v4_count; i++) {
+		nfsProtoUtil::ClientV4OpEntry *entry =
+			response->add_clnt_v4_ops_stats();
+
+		entry->set_op_name(allops_out->v4_ops[i].op_name);
+		entry->set_total(allops_out->v4_ops[i].total);
+		entry->set_errors(allops_out->v4_ops[i].errors);
+	}
+
+	response->set_clnt_cmp(allops_out->clnt_cmp);
+	if (allops_out->clnt_cmp) {
+		nfsProtoUtil::CompoundOpStats *cmp =
+			response->mutable_clnt_cmp_ops_stats();
+
+		cmp->set_total(allops_out->cmp.total);
+		cmp->set_errors(allops_out->cmp.errors);
+		cmp->set_ops_in_cmp(allops_out->cmp.ops_in_cmp);
+	}
+
+	grpc_cltmgr_free_client_allops(allops_out);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Get per-client 9p read/write counters
+ */
+grpc::Status
+ClientStatsService::Get9pIO(grpc::ServerContext *context,
+			    const nfsProtoUtil::ClientIpRequest *request,
+			    cltmgrService::ClientIoStatsResponse *response)
+{
+	return handle_client_iostats(request, response, grpc_cltmgr_get_9p_io);
+}
+
+/**
+ * @brief Get per-client 9p transport counters
+ */
+grpc::Status
+ClientStatsService::Get9pTrans(grpc::ServerContext *context,
+			       const nfsProtoUtil::ClientIpRequest *request,
+			       cltmgrService::ClientTransportResponse *response)
+{
+	struct grpc_transport_stats trans_out;
+	struct timespec time_out;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	grpc_cltmgr_get_9p_trans(request->ipaddr().c_str(), &trans_out,
+				 &time_out, &success, errmsg, sizeof(errmsg));
+
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(time_out.tv_sec);
+	time->set_tv_nsec(time_out.tv_nsec);
+
+	nfsProtoUtil::TransportStats *trans = response->mutable_transport();
+
+	trans->set_rx_bytes(trans_out.rx_bytes);
+	trans->set_rx_pkt(trans_out.rx_pkt);
+	trans->set_rx_err(trans_out.rx_err);
+	trans->set_tx_bytes(trans_out.tx_bytes);
+	trans->set_tx_pkt(trans_out.tx_pkt);
+	trans->set_tx_err(trans_out.tx_err);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Get per-client 9p operation counters
+ */
+grpc::Status
+ClientStatsService::Get9pOpStats(grpc::ServerContext *context,
+				 const nfsProtoUtil::Client9pOpRequest *request,
+				 cltmgrService::ClientOpStatsResponse *response)
+{
+	struct grpc_op_stats op_out;
+	struct timespec time_out;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	grpc_cltmgr_get_9p_opstats(request->ipaddr().c_str(),
+				   request->op_name().c_str(), &op_out,
+				   &time_out, &success, errmsg, sizeof(errmsg));
+
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(time_out.tv_sec);
+	time->set_tv_nsec(time_out.tv_nsec);
+
+	nfsProtoUtil::OpStats *op = response->mutable_op_stats();
+
+	op->set_total_ops(op_out.total_ops);
+	op->set_errors(op_out.errors);
+
+	return grpc::Status::OK;
+}
+
 /* Shutdown Ganesha */
 grpc::Status nfsAdminService::ShutdownGanesha(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
