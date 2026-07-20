@@ -235,11 +235,13 @@ struct auth_stats {
 	{ .name = "read", .type = "(tttttt)", .direction = "out" }, \
 		{ .name = "write", .type = "(tttttt)", .direction = "out" }
 
+#define CEIOSTATS_TYPE   "(ttdt)(ttdt)(ttd)"   /* read, write, other */
 #define CEIOSTATS_REPLY                                                    \
 	{ .name = "read", .type = "(ttdt)", .direction = "out" },          \
 		{ .name = "write", .type = "(ttdt)", .direction = "out" }, \
 		{ .name = "other", .type = "(ttd)", .direction = "out" }
 
+#define CELOSTATS_TYPE   "(ttt)"               /* layout */
 #define CELOSTATS_REPLY \
 	{ .name = "layout", .type = "(ttt)", .direction = "out" }
 
@@ -264,18 +266,78 @@ struct auth_stats {
 		CEIOSTATS_REPLY, CELOSTATS_REPLY
 #endif
 
+/* Type signature for array of client I/O stats (for GetAllClientIOops) */
 #ifdef _USE_NFS3
+#define CE_STATS_TYPE                            \
+	"b" CEIOSTATS_TYPE                       /* clnt_v3  */ \
+	"b" CEIOSTATS_TYPE                       /* clnt_v40 */ \
+	"b" CEIOSTATS_TYPE CELOSTATS_TYPE        /* clnt_v41 */ \
+	"b" CEIOSTATS_TYPE CELOSTATS_TYPE        /* clnt_v42 */
+#else
+#define CE_STATS_TYPE                            \
+	CEIOSTATS_TYPE                           /* unconditional */ \
+	"b" CEIOSTATS_TYPE                       /* clnt_v40 */ \
+	"b" CEIOSTATS_TYPE CELOSTATS_TYPE        /* clnt_v41 */ \
+	"b" CEIOSTATS_TYPE CELOSTATS_TYPE        /* clnt_v42 */
+#endif
+
+/* Array reply macro for all clients stats - wraps CE_STATS_REPLY in
+ * array format */
+#define CE_STATS_ARRAY_REPLY                          \
+	{ .name = "clients",                          \
+	  .type = "a(s(tt)" CE_STATS_TYPE ")",        \
+	  .direction = "out" }
+
+/* Type signature for array of client all_ops stats (for GetAllClientAllops) */
+#ifdef _USE_NFS3
+#ifdef _USE_NLM
+#define CE_ALL_OPS_TYPE                          \
+	"b" CLNT_V3NLM_OPS_TYPE                  /* clnt_v3  */ \
+	"b" CLNT_V3NLM_OPS_TYPE                  /* clnt_nlm */ \
+	"b" CLNT_V4_OPS_TYPE                     /* clnt_v4  */ \
+	"b" CLNT_CMP_OPS_TYPE                    /* clnt_cmp */
+#else
+#define CE_ALL_OPS_TYPE                          \
+	"b" CLNT_V3NLM_OPS_TYPE                  /* clnt_v3  */ \
+	"b" CLNT_V4_OPS_TYPE                     /* clnt_v4  */ \
+	"b" CLNT_CMP_OPS_TYPE                    /* clnt_cmp */
+#endif
+#else
+#ifdef _USE_NLM
+#define CE_ALL_OPS_TYPE                          \
+	"b" CLNT_V3NLM_OPS_TYPE                  /* clnt_nlm */ \
+	"b" CLNT_V4_OPS_TYPE                     /* clnt_v4  */ \
+	"b" CLNT_CMP_OPS_TYPE                    /* clnt_cmp */
+#else
+#define CE_ALL_OPS_TYPE                          \
+	"b" CLNT_V4_OPS_TYPE                     /* clnt_v4  */ \
+	"b" CLNT_CMP_OPS_TYPE                    /* clnt_cmp */
+#endif
+#endif
+
+/* Array reply macro for all clients all_ops stats */
+#define CE_ALL_OPS_ARRAY_REPLY                        \
+	{ .name = "clients",                          \
+	  .type = "a(s(tt)" CE_ALL_OPS_TYPE ")",      \
+	  .direction = "out" }
+
+#ifdef _USE_NFS3
+#define CLNT_V3NLM_OPS_TYPE "a(sttt)"
 #define CLNT_V3NLM_OPS_REPLY              \
 	{ .name = "clnt_v3nlm_ops_stats", \
-	  .type = "a(sttt)",              \
+	  .type = CLNT_V3NLM_OPS_TYPE,    \
 	  .direction = "out" }
 #endif
 
+#define CLNT_V4_OPS_TYPE "a(stt)"
 #define CLNT_V4_OPS_REPLY \
-	{ .name = "clnt_v4_ops_stats", .type = "a(stt)", .direction = "out" }
+	{ .name = "clnt_v4_ops_stats", .type = CLNT_V4_OPS_TYPE, \
+	  .direction = "out" }
 
+#define CLNT_CMP_OPS_TYPE "ttt"
 #define CLNT_CMP_OPS_REPLY \
-	{ .name = "clnt_cmp_ops_stats", .type = "ttt", .direction = "out" }
+	{ .name = "clnt_cmp_ops_stats", .type = CLNT_CMP_OPS_TYPE, \
+	  .direction = "out" }
 
 #define TRANSPORT_REPLY                                                    \
 	{ .name = "rx_bytes", .type = "(t)", .direction = "out" },         \
@@ -396,6 +458,12 @@ void server_dbus_client_io_ops(DBusMessageIter *iter,
 			       struct gsh_client *client);
 void server_dbus_client_all_ops(DBusMessageIter *iter,
 				struct gsh_client *client);
+
+/* Array-safe version that always writes complete structure */
+void server_dbus_client_io_ops_for_array(DBusMessageIter *iter,
+					 struct gsh_client *client);
+void server_dbus_client_all_ops_for_array(DBusMessageIter *iter,
+					  struct gsh_client *client);
 void server_dbus_export_details(DBusMessageIter *iter,
 				struct gsh_export *g_export);
 #ifdef _USE_NFS3

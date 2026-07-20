@@ -22,9 +22,35 @@ from __future__ import print_function
 import sys
 import time
 import json
+import logging
 
 # Create a system bus object.
 import dbus
+
+# ============================================================================
+# Module-level Constants for NFS Protocol Parsing
+# ============================================================================
+
+# Protocol names for I/O operations
+NFS_IO_PROTO_NAMES = ['nfsv3', 'nfsv40', 'nfsv41', 'nfsv42']
+
+# Operation names for I/O statistics
+NFS_IO_OP_NAMES = ['read', 'write', 'other', 'layout']
+
+# Stats count for different protocol versions (I/O operations)
+NFS_IO_STATS_COUNT_V3_V40 = 3   # NFSv3 and NFSv4.0: read, write, other
+NFS_IO_STATS_COUNT_V41_V42 = 4  # NFSv4.1 and NFSv4.2: read, write, other, layout
+
+# Protocol names for all operations
+NFS_ALLOPS_PROTO_NAMES = ['nfsv3', 'nlmv4', 'nfsv4', 'nfsv4_compounds']
+
+# Headers for all operations statistics
+NFS_ALLOPS_HEADERS = [
+    ['total', 'errors', 'dups'],              # NFSv3
+    ['total', 'errors', 'dups'],              # NLMv4
+    ['total', 'errors'],                      # NFSv4
+    ['total', 'errors', 'op_in_compounds']    # NFSv4 Compounds
+]
 
 def dbus_to_std(v):
     ctor = None
@@ -267,10 +293,18 @@ class RetrieveClientStats():
         stats_op = self.clientmgrobj.get_dbus_method("GetClientIOops",
                           self.dbus_clientstats_name)
         return ClientIOops(stats_op(ip))
+    def all_clients_io_ops_stats(self):
+        stats_op = self.clientmgrobj.get_dbus_method("GetAllClientIOops",
+                          self.dbus_clientstats_name)
+        return AllClientsIOops(stats_op())
     def client_all_ops_stats(self, ip):
         stats_op = self.clientmgrobj.get_dbus_method("GetClientAllops",
                           self.dbus_clientstats_name)
         return ClientAllops(stats_op(ip))
+    def all_clients_all_ops_stats(self):
+        stats_op = self.clientmgrobj.get_dbus_method("GetAllClientAllops",
+                          self.dbus_clientstats_name)
+        return AllClientsAllops(stats_op())
 
 
 class ClientStats(Report):
@@ -392,8 +426,43 @@ class ClientIOops(Report):
 
         self.stats = stats
         self.status = stats[1]
-        if stats[1] == "OK":
-            self.timestamp = (stats[2][0], stats[2][1])
+        if stats[1] == "OK" and len(stats) > 2:
+            # Check if stats[2] is a timestamp tuple (struct with 2 elements)
+            try:
+                # Verify it's not a boolean and has the right structure
+                if (not isinstance(stats[2], (bool, dbus.Boolean)) and
+                    hasattr(stats[2], '__len__') and len(stats[2]) == 2):
+                    self.timestamp = (int(stats[2][0]), int(stats[2][1]))
+                else:
+                    # No valid timestamp, use current time
+                    import time
+                    self.timestamp = (int(time.time()), 0)
+                    logging.debug("ClientIOops: Invalid timestamp at stats[2], using current time. stats[2]=%s type=%s",
+                                stats[2], type(stats[2]))
+            except (TypeError, IndexError, ValueError) as e:
+                import time
+                self.timestamp = (int(time.time()), 0)
+                logging.debug("ClientIOops: Exception getting timestamp: %s", e)
+        else:
+            import time
+            self.timestamp = (int(time.time()), 0)
+
+    def report(self):
+        """Override report() to handle the custom format with status/error/timestamp"""
+        header = {
+            'status': {},
+        }
+
+        if self.status != "OK":
+            header['status']['success'] = False
+            header['status']['error'] = self.status
+            return header
+
+        header['status']['success'] = True
+        header['status']['time'] = timestr(self.timestamp)
+
+        self.fill_report(header)
+        return header
 
     def fill_report(self, report):
         proto_table = [
@@ -418,7 +487,8 @@ class ClientIOops(Report):
             ]
 
             result = {}
-            for i in range(len(stats)):
+            # Only iterate over the actual number of fields in stats
+            for i in range(min(len(stats), len(counters))):
                 result[counters[i]] = dbus_to_std(stats[i])
 
             return result
@@ -453,7 +523,37 @@ class ClientIOops(Report):
             output += "\nClient last active at: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs"
             j = 0
             while j<4:
-                if self.stats[cnt]:
+                # Convert dbus.Boolean to Python bool for proper evaluation
+                proto_available = bool(self.stats[cnt]) if cnt < len(self.stats) else False
+                if proto_available:
+                    # Double-check: verify ALL expected stat structs exist and are valid
+                    # For NFSv3/NFSv4.0: need 3 stats (read, write, other)
+                    # For NFSv4.1/NFSv4.2: need 4 stats (read, write, other, layout)
+                    expected_stats = 3 if j < 2 else 4
+                    all_stats_valid = True
+                    proto_names = ['NFSv3', 'NFSv4.0', 'NFSv4.1', 'NFSv4.2']
+                    for check_i in range(expected_stats):
+                        stat_idx = cnt + 1 + check_i
+                        if stat_idx >= len(self.stats):
+                            logging.debug("%s validation: stat_idx %d >= len(stats) %d",
+                                        proto_names[j], stat_idx, len(self.stats))
+                            all_stats_valid = False
+                            break
+                        if isinstance(self.stats[stat_idx], (bool, dbus.Boolean)):
+                            logging.debug("%s validation: stats[%d] is Boolean: %s",
+                                        proto_names[j], stat_idx, self.stats[stat_idx])
+                            all_stats_valid = False
+                            break
+
+                    if not all_stats_valid:
+                        logging.debug("%s: Not all stats valid, treating as unavailable (cnt=%d, expected=%d)",
+                                    proto_names[j], cnt, expected_stats)
+                        # Not all expected stats are valid, treat protocol as unavailable
+                        proto_available = False
+                    else:
+                        logging.debug("%s: All %d stats valid at cnt=%d", proto_names[j], expected_stats, cnt)
+
+                if proto_available:
                     i = 0
                     if j==0:
                         output += "\n\t\tNFSv3:"
@@ -493,75 +593,352 @@ class ClientIOops(Report):
                         output += "\n\tNo NFSv4.1 activity"
                     if j==3:
                         output += "\n\tNo NFSv4.2 activity"
-                    cnt += 1
+                    # Check if stats structs are present after unavailable protocol
+                    # GetAllClientIOops: stats always present (check if next element is a struct)
+                    # GetClientIOops: stats not present (check if next element is a boolean)
+                    if (cnt+1) < len(self.stats) and not isinstance(self.stats[cnt+1], (bool, dbus.Boolean)):
+                        # Stats are present even though protocol unavailable (GetAllClientIOops case)
+                        if j<2:
+                            cnt += 4  # Skip: 1 boolean + 3 stats
+                        else:
+                            cnt += 5  # Skip: 1 boolean + 4 stats
+                    else:
+                        # Stats not present (GetClientIOops case)
+                        cnt += 1  # Skip: just the boolean
                 j += 1
             return output
 
-class ClientAllops(Report):
+class AllClientsIOops(Report):
+    """Report class for I/O operations statistics of all clients"""
+
     def __init__(self, stats):
         super().__init__(stats)
+        self.stats = stats
+        self.clients = {}
+        self.client_count = 0
+        self.status = stats[0] if stats else False
+        self.error_msg = None
+
+        # Check if stats are enabled
+        if not self.status or (len(stats) > 1 and stats[1] != "OK"):
+            self.error_msg = stats[1] if len(stats) > 1 else "Unknown error"
+            return
+
+        # Parse array of client stats
+        # stats format: [status, error_msg, timestamp, [(client_ip, timestamp, nfsv3_available, ...), ...]]
+        if len(stats) > 3 and stats[3]:
+            for client_data in stats[3]:
+                try:
+                    if not client_data or len(client_data) < 2:
+                        continue
+
+                    client_ip = str(client_data[0])
+                    # Reconstruct format expected by ClientIOops
+                    # ClientIOops expects: [status, error_msg, timestamp, nfsv3_available, ...]
+                    # We have: [client_ip, timestamp, nfsv3_available, ...]
+                    # Insert status and error_msg before the rest of the data, keeping DBus types
+                    client_stats = [dbus.Boolean(True), dbus.String("OK")] + list(client_data[1:])
+                    self.clients[client_ip] = ClientIOops(client_stats)
+                    self.client_count += 1
+                except (IndexError, TypeError, ValueError) as e:
+                    logging.warning("Failed to parse client I/O ops data: %s", e)
+                    continue
+
+    def fill_report(self, report):
+        """Generate JSON report for all clients' I/O operations.
+
+        Note: GetAllClientIOops returns stats structures even when protocol is unavailable,
+        unlike GetClientIOops which only includes stats when available.
+        """
+        if not self.status:
+            report['error'] = self.error_msg
+            return
+
+        report['total_clients'] = self.client_count
+        report['clients'] = {}
+
+        if len(self.stats) > 3 and self.stats[3]:
+            for client_data in self.stats[3]:
+                try:
+                    client_ip = str(client_data[0])
+                    timestamp = (int(client_data[1][0]), int(client_data[1][1]))
+
+                    client_report = {
+                        'status': {
+                            'success': True,
+                            'time': timestr(timestamp)
+                        }
+                    }
+
+                    idx = 2  # Start after client_ip and timestamp
+
+                    for proto_idx, proto_name in enumerate(NFS_IO_PROTO_NAMES):
+                        proto_available = bool(client_data[idx])
+                        idx += 1
+
+                        if proto_available:
+                            stats_count = NFS_IO_STATS_COUNT_V3_V40 if proto_idx < 2 else NFS_IO_STATS_COUNT_V41_V42
+
+                            # Only include protocol in output if it has non-zero stats
+                            has_real_stats = any(
+                                any(int(client_data[idx + i][j]) != 0 for j in range(len(client_data[idx + i])))
+                                for i in range(stats_count)
+                            )
+
+                            if has_real_stats:
+                                client_report[proto_name] = {}
+                                for i in range(stats_count):
+                                    stat_struct = client_data[idx + i]
+                                    op_name = NFS_IO_OP_NAMES[i]
+                                    client_report[proto_name][op_name] = {
+                                        'total': int(stat_struct[0]),
+                                        'errors': int(stat_struct[1]),
+                                    }
+                                    if len(stat_struct) > 2:
+                                        client_report[proto_name][op_name]['transferred'] = int(stat_struct[2])
+
+                        # In GetAllClientIOops, stats are always present (even if zeros)
+                        stats_to_skip = NFS_IO_STATS_COUNT_V3_V40 if proto_idx < 2 else NFS_IO_STATS_COUNT_V41_V42
+                        idx += stats_to_skip
+
+                    report['clients'][client_ip] = client_report
+                except (IndexError, TypeError, ValueError) as e:
+                    logging.warning("Failed to format client for JSON: %s", e)
+                    continue
+
+    def __str__(self):
+        """Generate text output for all clients' I/O operations."""
+        if not self.status:
+            return f"\nGANESHA RESPONSE STATUS: {self.error_msg}"
+
+        if not self.clients:
+            return "\nNo clients connected"
+
+        output = f"\nTotal clients: {self.client_count}\n"
+        for idx, ip in enumerate(sorted(self.clients.keys()), 1):
+            client_stats = self.clients[ip]
+            output += "\n" + "="*70
+            output += f"\nClient {idx}/{self.client_count}: {ip}"
+            output += "\n" + "="*70
+            try:
+                output += str(client_stats)
+            except Exception as e:
+                logging.warning("Failed to format client %s stats: %s", ip, str(e))
+                output += f"\n  Error formatting stats: {str(e)}"
+            output += "\n"
+        return output
+
+class AllClientsAllops(Report):
+    """Report class for all operations statistics of all clients"""
+
+    def __init__(self, stats):
+        super().__init__(stats)
+        self.stats = stats
+        self.clients = {}
+        self.client_count = 0
+        self.status = stats[0] if stats else False
+        self.error_msg = None
+
+        # Check if stats are enabled
+        if not self.status or (len(stats) > 1 and stats[1] != "OK"):
+            self.error_msg = stats[1] if len(stats) > 1 else "Unknown error"
+            return
+
+        # Parse array of client stats
+        # stats format: [status, error_msg, timestamp, [(client_ip, timestamp, ...), ...]]
+        if len(stats) > 3 and stats[3]:
+            for client_data in stats[3]:
+                try:
+                    if not client_data or len(client_data) < 2:
+                        continue
+
+                    client_ip = str(client_data[0])
+                    # Reconstruct format expected by ClientAllops
+                    # ClientAllops expects: [status, error_msg, timestamp, nfsv3_available, ...]
+                    # We have: [client_ip, timestamp, nfsv3_available, ...]
+                    # Insert status and error_msg before the rest of the data, keeping DBus types
+                    client_stats = [dbus.Boolean(True), dbus.String("OK")] + list(client_data[1:])
+                    self.clients[client_ip] = ClientAllops(client_stats)
+                    self.client_count += 1
+                except (IndexError, TypeError, ValueError) as e:
+                    logging.warning("Failed to parse client all ops data: %s", e)
+                    continue
+
+    def fill_report(self, report):
+        if not self.status:
+            report['error'] = self.error_msg
+            return
+
+        report['total_clients'] = self.client_count
+        report['clients'] = {}
+        for ip in sorted(self.clients.keys()):
+            client_stats = self.clients[ip]
+            client_report = client_stats.report()
+            # Remove the outer status wrapper since we know it's OK
+            if 'status' in client_report:
+                del client_report['status']
+            report['clients'][ip] = client_report
+
+    def __str__(self):
+        if not self.status:
+            return f"\nGANESHA RESPONSE STATUS: {self.error_msg}"
+
+        if not self.clients:
+            return "\nNo clients connected"
+
+        output = f"\nTotal clients: {self.client_count}\n"
+        for idx, ip in enumerate(sorted(self.clients.keys()), 1):
+            client_stats = self.clients[ip]
+            output += "\n" + "="*70
+            output += f"\nClient {idx}/{self.client_count}: {ip}"
+            output += "\n" + "="*70
+            output += str(client_stats)
+            output += "\n"
+        return output
+
+class ClientAllops(Report):
+    """Report class for all NFS operations of a single client.
+
+    Handles two different data formats:
+    - GetClientAllops: Single client query with flat struct format
+    - GetAllClientAllops: All clients query with array of structs format
+    """
+
+    STATS_START_INDEX = 3  # Start after status, error_msg, timestamp
+
+    def __init__(self, stats):
+        super().__init__(stats)
+        import time
 
         self.stats = stats
         self.status = stats[1]
-        if stats[1] == "OK":
-            self.timestamp = (stats[2][0], stats[2][1])
+
+        # Extract timestamp from stats[2] if valid, otherwise use current time
+        if stats[1] == "OK" and len(stats) > 2:
+            try:
+                if (not isinstance(stats[2], (bool, dbus.Boolean)) and
+                    hasattr(stats[2], '__len__') and len(stats[2]) == 2):
+                    self.timestamp = (int(stats[2][0]), int(stats[2][1]))
+                else:
+                    self.timestamp = (int(time.time()), 0)
+            except (TypeError, IndexError, ValueError):
+                self.timestamp = (int(time.time()), 0)
+        else:
+            self.timestamp = (int(time.time()), 0)
+
+    @staticmethod
+    def _parse_flat_ops_stats(stats, header, span):
+        """Parse flat struct format from GetClientAllops.
+
+        Format: [op_name, val1, val2, ..., op_name, val1, val2, ...]
+        """
+        result = {}
+        op_count = int(len(stats) / span)
+        for op_idx in range(op_count):
+            name = dbus_to_std(stats[op_idx * span])
+            counters = {}
+            for i in range(len(header)):
+                counter_idx = op_idx * span + i + 1
+                counters[header[i]] = dbus_to_std(stats[counter_idx])
+            result[name] = counters
+        return result
+
+    @staticmethod
+    def _parse_array_ops_stats(stats, header):
+        """Parse array of structs format from GetAllClientAllops.
+
+        Format: [struct(op_name, val1, val2, ...), struct(...), ...]
+        """
+        result = {}
+        for op_struct in stats:
+            name = dbus_to_std(op_struct[0])
+            counters = {}
+            for i in range(len(header)):
+                counters[header[i]] = dbus_to_std(op_struct[i+1])
+            result[name] = counters
+        return result
+
+    def report(self):
+        """Override report() to handle the custom format with status/error/timestamp"""
+        header = {
+            'status': {},
+        }
+
+        if self.status != "OK":
+            header['status']['success'] = False
+            header['status']['error'] = self.status
+            return header
+
+        header['status']['success'] = True
+        header['status']['time'] = timestr(self.timestamp)
+
+        self.fill_report(header)
+        return header
 
     def fill_report(self, report):
-        proto_table = iter([
-            'nfsv3',
-            'nlmv4',
-            'nfsv4',
-            'nfsv4_compounds'
-        ])
-        headers = iter([
-            ['total', 'errors', 'dups'],
-            ['total', 'errors', 'dups'],
-            ['total', 'errors'],
-            ['total', 'errors', 'op_in_compounds']
-        ])
+        """Generate JSON report for client's all operations.
 
-        def named_ops_stats(stats, header, span):
-            result = {}
-            op_count = int(len(stats) / span)
-            for op_idx in range(op_count):
-                name = dbus_to_std(stats[op_idx * span + 0])
-                counters = {}
+        Handles both GetClientAllops and GetAllClientAllops data formats.
+        """
+        cnt = self.STATS_START_INDEX
+        for proto_idx, proto in enumerate(NFS_ALLOPS_PROTO_NAMES):
+            header = NFS_ALLOPS_HEADERS[proto_idx]
 
-                for i in range(counter_count):
-                    counter_idx = op_idx * span + i + 1
-                    counters[header[i]] = dbus_to_std(
-                        stats[counter_idx]
-                    )
+            if cnt >= len(self.stats):
+                break
 
-                result[name] = counters
+            stats_available = bool(self.stats[cnt])
+            cnt += 1
 
-            return result
-
-        stats = iter(self.stats[3:])
-        for stats_available in stats:
-            assert isinstance(stats_available, dbus.Boolean)
-
-            proto = next(proto_table)
-            header = next(headers)
             if stats_available:
-                proto_stats = next(stats)
-                result = {}
-                counter_count = len(header)
-                if isinstance(proto_stats[0], dbus.String):
-                    # the number of op is the number of stats field
-                    # for the protocol divided by the number of counter per op
-                    # plus the name of the op itself (the span).
-                    span = counter_count + 1
-                    result = named_ops_stats(
-                        proto_stats,
-                        header,
-                        span
-                    )
-                else:
-                    for counter_idx, counter in enumerate(proto_stats):
-                        result[header[counter_idx]] = dbus_to_std(counter)
+                if cnt >= len(self.stats):
+                    break
 
-                report[proto] = result
+                proto_stats = self.stats[cnt]
+                result = {}
+
+                # NFSv4 compounds have unique format (not an array of operations)
+                if proto == 'nfsv4_compounds':
+                    if isinstance(proto_stats, (dbus.Struct, tuple)):
+                        # GetClientAllops: struct with 3 summary values
+                        for i in range(len(header)):
+                            result[header[i]] = dbus_to_std(proto_stats[i])
+                        cnt += 1
+                    else:
+                        # GetAllClientAllops: 3 separate uint64 values
+                        result[header[0]] = dbus_to_std(proto_stats)
+                        result[header[1]] = dbus_to_std(self.stats[cnt+1]) if (cnt+1) < len(self.stats) else 0
+                        result[header[2]] = dbus_to_std(self.stats[cnt+2]) if (cnt+2) < len(self.stats) else 0
+                        cnt += 3
+                # Other protocols (NFSv3, NLMv4, NFSv4) have operation arrays
+                elif isinstance(proto_stats, (dbus.Array, list)):
+                    if len(proto_stats) > 0 and isinstance(proto_stats[0], (dbus.Struct, tuple)):
+                        # GetAllClientAllops: array of operation structs
+                        result = self._parse_array_ops_stats(proto_stats, header)
+                    cnt += 1
+                elif isinstance(proto_stats, (dbus.Struct, tuple)) and len(proto_stats) > 0:
+                    if isinstance(proto_stats[0], dbus.String):
+                        # GetClientAllops: flat struct with alternating name/values
+                        span = len(header) + 1
+                        result = self._parse_flat_ops_stats(proto_stats, header, span)
+                    cnt += 1
+                else:
+                    cnt += 1
+
+                if result:
+                    report[proto] = result
+            else:
+                # Protocol not available - skip stats if present
+                if cnt < len(self.stats):
+                    next_elem = self.stats[cnt]
+                    if proto == 'nfsv4_compounds':
+                        # GetAllClientAllops has 3 uint64 zeros, GetClientAllops has nothing
+                        if not isinstance(next_elem, (bool, dbus.Boolean)):
+                            cnt += 3
+                    else:
+                        # GetAllClientAllops has empty array, GetClientAllops has nothing
+                        if isinstance(next_elem, (dbus.Array, list)):
+                            cnt += 1
 
     def __str__(self):
         output = ""
@@ -570,60 +947,156 @@ class ClientAllops(Report):
             return ("GANESHA RESPONSE STATUS: " + self.status)
         else:
             output += "\nClient last active at: " + time.ctime(self.timestamp[0]) + str(self.timestamp[1]) + " nsecs"
-            if self.stats[cnt]:
+            # Convert dbus.Boolean to Python bool for proper evaluation
+            if bool(self.stats[cnt]) if cnt < len(self.stats) else False:
                 output += "\n\t\tNFSv3 Operations"
                 output += "\nOp Name    \t\t total \t errors     dups"
-                tot_len = len(self.stats[cnt+1])
-                i=0
-                while (i+4) <= tot_len:
-                    output += "\n" + (self.stats[cnt+1][i+0]).ljust(21)
-                    output += " %s" % (str(self.stats[cnt+1][i+1]).rjust(9))
-                    output += " %s" % (str(self.stats[cnt+1][i+2]).rjust(9))
-                    output += " %s" % (str(self.stats[cnt+1][i+3]).rjust(9))
-                    i += 4
+                # Check if stats[cnt+1] is a list/array, not a boolean
+                if (cnt+1) < len(self.stats) and not isinstance(self.stats[cnt+1], (bool, dbus.Boolean)):
+                    stats_data = self.stats[cnt+1]
+                    # Check if it's an array of structs (GetAllClientAllops) or a single struct (GetClientAllops)
+                    if isinstance(stats_data, (dbus.Array, list)) and len(stats_data) > 0 and isinstance(stats_data[0], (dbus.Struct, tuple)):
+                        # GetAllClientAllops format - array of structs
+                        for op_struct in stats_data:
+                            if len(op_struct) >= 4:
+                                output += "\n" + str(op_struct[0]).ljust(21)
+                                output += " %s" % (str(op_struct[1]).rjust(9))
+                                output += " %s" % (str(op_struct[2]).rjust(9))
+                                output += " %s" % (str(op_struct[3]).rjust(9))
+                    else:
+                        # GetClientAllops format - single struct with flat data
+                        tot_len = len(stats_data)
+                        i=0
+                        while (i+4) <= tot_len:
+                            output += "\n" + str(stats_data[i+0]).ljust(21)
+                            output += " %s" % (str(stats_data[i+1]).rjust(9))
+                            output += " %s" % (str(stats_data[i+2]).rjust(9))
+                            output += " %s" % (str(stats_data[i+3]).rjust(9))
+                            i += 4
                 cnt += 2
             else:
                 output += "\n\tNo NFSv3 activity"
-                cnt += 1
-            if self.stats[cnt]:
+                # Check if we need to skip stats array for GetAllClientAllops
+                if (cnt+1) < len(self.stats) and isinstance(self.stats[cnt+1], (dbus.Array, list)):
+                    # Empty array present (GetAllClientAllops)
+                    cnt += 2  # Skip boolean + array
+                else:
+                    # No array present (GetClientAllops)
+                    cnt += 1
+            if bool(self.stats[cnt]) if cnt < len(self.stats) else False:
                 output += "\n\t\tNLMv4 Operations"
                 output += "\nOp Name    \t\t total \t errors     dups"
-                tot_len = len(self.stats[cnt+1])
-                i=0
-                while (i+4) <= tot_len:
-                    output += "\n" + (self.stats[cnt+1][i+0]).ljust(21)
-                    output += " %s" % (str(self.stats[cnt+1][i+1]).rjust(9))
-                    output += " %s" % (str(self.stats[cnt+1][i+2]).rjust(9))
-                    output += " %s" % (str(self.stats[cnt+1][i+3]).rjust(9))
-                    i += 4
+                # Check if stats[cnt+1] is a list/array, not a boolean
+                if (cnt+1) < len(self.stats) and not isinstance(self.stats[cnt+1], (bool, dbus.Boolean)):
+                    stats_data = self.stats[cnt+1]
+                    # Check if it's an array of structs (GetAllClientAllops) or a single struct (GetClientAllops)
+                    if isinstance(stats_data, (dbus.Array, list)) and len(stats_data) > 0 and isinstance(stats_data[0], (dbus.Struct, tuple)):
+                        # GetAllClientAllops format - array of structs
+                        for op_struct in stats_data:
+                            if len(op_struct) >= 4:
+                                output += "\n" + str(op_struct[0]).ljust(21)
+                                output += " %s" % (str(op_struct[1]).rjust(9))
+                                output += " %s" % (str(op_struct[2]).rjust(9))
+                                output += " %s" % (str(op_struct[3]).rjust(9))
+                    else:
+                        # GetClientAllops format - single struct with flat data
+                        tot_len = len(stats_data)
+                        i=0
+                        while (i+4) <= tot_len:
+                            output += "\n" + str(stats_data[i+0]).ljust(21)
+                            output += " %s" % (str(stats_data[i+1]).rjust(9))
+                            output += " %s" % (str(stats_data[i+2]).rjust(9))
+                            output += " %s" % (str(stats_data[i+3]).rjust(9))
+                            i += 4
                 cnt += 2
             else:
                 output += "\n\tNo NLMv4 activity"
-                cnt += 1
-            if self.stats[cnt]:
+                # Check if we need to skip stats array for GetAllClientAllops
+                if (cnt+1) < len(self.stats) and isinstance(self.stats[cnt+1], (dbus.Array, list)):
+                    # Empty array present (GetAllClientAllops)
+                    cnt += 2  # Skip boolean + array
+                else:
+                    # No array present (GetClientAllops)
+                    cnt += 1
+            if bool(self.stats[cnt]) if cnt < len(self.stats) else False:
                 output += "\n\t\tNFSv4 Operations"
                 output += "\nOp Name    \t\t total \t errors"
-                tot_len = len(self.stats[cnt+1])
-                i=0
-                while (i+3) <= tot_len:
-                    output += "\n" + (self.stats[cnt+1][i+0]).ljust(21)
-                    output += " %s" % (str(self.stats[cnt+1][i+1]).rjust(9))
-                    output += " %s" % (str(self.stats[cnt+1][i+2]).rjust(9))
-                    i += 3
+                # Check if stats[cnt+1] is a list/array, not a boolean
+                if (cnt+1) < len(self.stats) and not isinstance(self.stats[cnt+1], (bool, dbus.Boolean)):
+                    stats_data = self.stats[cnt+1]
+                    # Check if it's an array of structs (GetAllClientAllops) or a single struct (GetClientAllops)
+                    if isinstance(stats_data, (dbus.Array, list)) and len(stats_data) > 0 and isinstance(stats_data[0], (dbus.Struct, tuple)):
+                        # GetAllClientAllops format - array of structs
+                        for op_struct in stats_data:
+                            if len(op_struct) >= 3:
+                                output += "\n" + str(op_struct[0]).ljust(21)
+                                output += " %s" % (str(op_struct[1]).rjust(9))
+                                output += " %s" % (str(op_struct[2]).rjust(9))
+                    else:
+                        # GetClientAllops format - single struct with flat data
+                        tot_len = len(stats_data)
+                        i=0
+                        while (i+3) <= tot_len:
+                            output += "\n" + str(stats_data[i+0]).ljust(21)
+                            output += " %s" % (str(stats_data[i+1]).rjust(9))
+                            output += " %s" % (str(stats_data[i+2]).rjust(9))
+                            i += 3
                 cnt += 2
             else:
                 output += "\n\tNo NFSv4 activity"
-                cnt += 1
-            if self.stats[cnt]:
+                # Check if we need to skip stats array for GetAllClientAllops
+                if (cnt+1) < len(self.stats) and isinstance(self.stats[cnt+1], (dbus.Array, list)):
+                    # Empty array present (GetAllClientAllops)
+                    cnt += 2  # Skip boolean + array
+                else:
+                    # No array present (GetClientAllops)
+                    cnt += 1
+            if bool(self.stats[cnt]) if cnt < len(self.stats) else False:
                 output += "\n\t\tNFSv4 Compound Operations"
-                output += "\n      total \t errors \t Ops in compound\n"
-                output += " %s" % (str(self.stats[cnt+1][0]).rjust(9))
-                output += " %s" % (str(self.stats[cnt+1][1]).rjust(9))
-                output += " %s" % (str(self.stats[cnt+1][2]).rjust(9))
-                cnt += 2
+                output += "\n      total \t errors \t Ops in compound"
+                # For GetAllClientAllops: compounds are 3 separate uint64 values
+                # For GetClientAllops: compounds are in a struct
+                if (cnt+1) < len(self.stats):
+                    next_elem = self.stats[cnt+1]
+                    if isinstance(next_elem, (dbus.Struct, tuple)):
+                        # GetClientAllops format - stats in a struct
+                        output += "\n %s" % (str(dbus_to_std(next_elem[0])).rjust(9))
+                        output += " %s" % (str(dbus_to_std(next_elem[1])).rjust(9))
+                        output += " %s" % (str(dbus_to_std(next_elem[2])).rjust(9))
+                        cnt += 2  # Skip boolean + struct
+                    elif isinstance(next_elem, (dbus.Array, list)):
+                        # This shouldn't happen for compounds, but handle it gracefully
+                        # This means we hit an array from a previous protocol that wasn't properly skipped
+                        output += "\n      (Error: unexpected array in compound stats)"
+                        cnt += 1
+                    else:
+                        # GetAllClientAllops format - 3 separate uint64 values
+                        # Make sure we have enough elements
+                        if (cnt+3) < len(self.stats):
+                            output += "\n %s" % (str(int(self.stats[cnt+1])).rjust(9))
+                            output += " %s" % (str(int(self.stats[cnt+2])).rjust(9))
+                            output += " %s" % (str(int(self.stats[cnt+3])).rjust(9))
+                            cnt += 4  # Skip boolean + 3 uint64 values
+                        else:
+                            output += "\n      (Error: insufficient data for compound stats)"
+                            cnt += 1
+                else:
+                    cnt += 1
             else:
                 output += "\n\tNo NFSv4 compound ops"
-                cnt += 1
+                # Check if we need to skip stats for GetAllClientAllops
+                # For GetAllClientAllops when compounds unavailable, there are 3 uint64 zeros after the boolean
+                if (cnt+1) < len(self.stats) and not isinstance(self.stats[cnt+1], (bool, dbus.Boolean)):
+                    # Check if it's an array (shouldn't be for compounds when unavailable)
+                    if isinstance(self.stats[cnt+1], (dbus.Array, list)):
+                        # This is wrong - compounds don't have arrays
+                        cnt += 1
+                    else:
+                        # Stats present even though unavailable (GetAllClientAllops)
+                        cnt += 4  # Skip boolean + 3 uint64 values
+                else:
+                    # No stats present (GetClientAllops)
+                    cnt += 1
             return output
 
 class Export(ProtocolsStats):

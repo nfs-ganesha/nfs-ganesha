@@ -656,6 +656,127 @@ static struct gsh_dbus_method cltmgr_client_io_ops = {
 };
 
 /**
+ * @brief State structure for iterating clients and appending to DBus
+ */
+struct all_clients_state {
+	DBusMessageIter client_iter;
+	int count;
+};
+
+/**
+ * @brief Callback to append client I/O ops to DBus array
+ *
+ * @param cl_node[in] Client node
+ * @param state[in] Iterator state containing DBus iterator
+ * @return true to continue iteration
+ */
+static bool client_io_ops_to_dbus(struct gsh_client *cl_node, void *state)
+{
+	struct all_clients_state *iter_state =
+		(struct all_clients_state *)state;
+	char *ipaddr = alloca(SOCK_NAME_MAX);
+	const char *ip_str;
+	DBusMessageIter struct_iter;
+
+	if (!sprint_sockip(&cl_node->cl_addrbuf, ipaddr, SOCK_NAME_MAX))
+		(void)strlcpy(ipaddr, "<unknown>", SOCK_NAME_MAX);
+
+	ip_str = ipaddr;
+	dbus_message_iter_open_container(&iter_state->client_iter,
+					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &ip_str);
+
+	/* Use array-safe version that always writes complete structure */
+	server_dbus_client_io_ops_for_array(&struct_iter, cl_node);
+
+	dbus_message_iter_close_container(&iter_state->client_iter,
+					  &struct_iter);
+	return true;
+}
+
+/**
+ * @brief DBUS method to get IO ops statistics for all clients
+ *
+ * Returns an array of structures, each containing:
+ * - Client IP address (string)
+ * - Timestamp (struct of 2 uint64)
+ * - NFSv3/v4.0/v4.1/v4.2 I/O statistics
+ *
+ * @param args[in] DBus arguments (none expected)
+ * @param reply[out] DBus reply message
+ * @param error[out] DBus error
+ * @return true on success
+ */
+static bool gsh_all_clients_io_ops(DBusMessageIter *args, DBusMessage *reply,
+				   DBusError *error)
+{
+	DBusMessageIter iter;
+	struct all_clients_state iter_state;
+	struct timespec timestamp;
+	char *errormsg = "OK";
+	bool success = true;
+
+	dbus_message_iter_init_append(reply, &iter);
+
+	if (!nfs_param.core_param.enable_CLNTALLSTATS) {
+		errormsg = "Stat counting for all ops for clients is disabled";
+		success = false;
+		gsh_dbus_status_reply(&iter, success, errormsg);
+		return true;
+	}
+
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	now(&timestamp);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
+
+	/* Open array container - type signature uses CE_STATS_TYPE macro */
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+					 "(s(tt)" CE_STATS_TYPE ")",
+					 &iter_state.client_iter);
+
+	(void)foreach_gsh_client(client_io_ops_to_dbus, (void *)&iter_state);
+
+	dbus_message_iter_close_container(&iter, &iter_state.client_iter);
+
+	return true;
+}
+
+static struct gsh_dbus_method cltmgr_all_clients_io_ops = {
+	.name = "GetAllClientIOops",
+	.method = gsh_all_clients_io_ops,
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, CE_STATS_ARRAY_REPLY,
+		  END_ARG_LIST }
+};
+
+/**
+ * @brief Callback to append client all ops to DBus array
+ *
+ * @param cl_node[in] Client node
+ * @param state[in] Iterator state containing DBus iterator
+ * @return true to continue iteration
+ */
+static bool client_all_ops_to_dbus(struct gsh_client *cl_node, void *state)
+{
+	struct all_clients_state *iter_state =
+		(struct all_clients_state *)state;
+	char *ipaddr = alloca(SOCK_NAME_MAX);
+	const char *ip_str;
+	DBusMessageIter struct_iter;
+
+	if (!sprint_sockip(&cl_node->cl_addrbuf, ipaddr, SOCK_NAME_MAX))
+		(void)strlcpy(ipaddr, "<unknown>", SOCK_NAME_MAX);
+
+	ip_str = ipaddr;
+	dbus_message_iter_open_container(&iter_state->client_iter,
+					 DBUS_TYPE_STRUCT, NULL, &struct_iter);
+	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_STRING, &ip_str);
+	server_dbus_client_all_ops_for_array(&struct_iter, cl_node);
+	dbus_message_iter_close_container(&iter_state->client_iter,
+					  &struct_iter);
+	return true;
+}
+
+/**
  * DBUS method to get all ops statistics for a client
  */
 static bool gsh_client_all_ops(DBusMessageIter *args, DBusMessage *reply,
@@ -687,6 +808,53 @@ static bool gsh_client_all_ops(DBusMessageIter *args, DBusMessage *reply,
 	return true;
 }
 
+/**
+ * @brief DBUS method to get all ops statistics for all clients
+ *
+ * Returns an array of structures, each containing:
+ * - Client IP address (string)
+ * - Timestamp (struct of 2 uint64)
+ * - NFSv3/NLM/NFSv4/Compound operation statistics
+ *
+ * @param args[in] DBus arguments (none expected)
+ * @param reply[out] DBus reply message
+ * @param error[out] DBus error
+ * @return true on success
+ */
+static bool gsh_all_clients_all_ops(DBusMessageIter *args, DBusMessage *reply,
+				    DBusError *error)
+{
+	DBusMessageIter iter;
+	struct all_clients_state iter_state;
+	struct timespec timestamp;
+	char *errormsg = "OK";
+	bool success = true;
+
+	dbus_message_iter_init_append(reply, &iter);
+
+	if (!nfs_param.core_param.enable_CLNTALLSTATS) {
+		errormsg = "Stat counting for all ops for clients is disabled";
+		success = false;
+		gsh_dbus_status_reply(&iter, success, errormsg);
+		return true;
+	}
+
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	now(&timestamp);
+	gsh_dbus_append_timestamp(&iter, &timestamp);
+
+	/* Open array container - type signature uses CE_ALL_OPS_TYPE macro */
+	dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+					 "(s(tt)" CE_ALL_OPS_TYPE ")",
+					 &iter_state.client_iter);
+
+	(void)foreach_gsh_client(client_all_ops_to_dbus, (void *)&iter_state);
+
+	dbus_message_iter_close_container(&iter, &iter_state.client_iter);
+
+	return true;
+}
+
 static struct gsh_dbus_method cltmgr_client_all_ops = {
 	.name = "GetClientAllops",
 	.method = gsh_client_all_ops,
@@ -705,6 +873,13 @@ static struct gsh_dbus_method cltmgr_client_all_ops = {
 		  CLNT_V4_OPS_REPLY,
 		  { .name = "clnt_cmp", .type = "b", .direction = "out" },
 		  CLNT_CMP_OPS_REPLY,
+		  END_ARG_LIST }
+};
+
+static struct gsh_dbus_method cltmgr_all_clients_all_ops = {
+	.name = "GetAllClientAllops",
+	.method = gsh_all_clients_all_ops,
+	.args = { STATUS_REPLY, TIMESTAMP_REPLY, CE_ALL_OPS_ARRAY_REPLY,
 		  END_ARG_LIST }
 };
 
@@ -1167,7 +1342,9 @@ static struct gsh_dbus_method *cltmgr_stats_methods[] = {
 	&cltmgr_show_v42_layouts,
 	&cltmgr_show_delegations,
 	&cltmgr_client_io_ops,
+	&cltmgr_all_clients_io_ops,
 	&cltmgr_client_all_ops,
+	&cltmgr_all_clients_all_ops,
 #ifdef _USE_9P
 	&cltmgr_show_9p_io,
 	&cltmgr_show_9p_trans,

@@ -47,8 +47,8 @@ To display stat counters use:
               inode | iov3 [export id] | iov4 [export id] | iov41 [export id] | iov42 [export id] |
               iomon [export id] | export | total [export id] | fast | pnfs [export id] |
               fsal <fsal name> | v3_full | v4_full | auth |
-              client_io_ops <ip address> | export_details <export id> |
-              client_all_ops <ip address>]
+              client_io_ops <ip address | all> | export_details <export id> |
+              client_all_ops <ip address | all>]
 
 To display stat counters in json format use:
   {progname} json <command>
@@ -96,10 +96,15 @@ commands = (
 if command not in commands:
     print("\nError: Option '%s' is not correct." % command)
     print_usage_exit(1)
-# requires an IP address
-elif command in ('deleg', 'client_io_ops', 'client_all_ops'):
+# requires an IP address or 'all'
+elif command == 'deleg':
     if not len(opts) == 1:
         print("\nError: Option '%s' must be followed by an ip address." % command)
+        print_usage_exit(1)
+    command_arg = opts[0]
+elif command in ('client_io_ops', 'client_all_ops'):
+    if not len(opts) == 1:
+        print("\nError: Option '%s' must be followed by an ip address or 'all'." % command)
         print_usage_exit(1)
     command_arg = opts[0]
 # requires an export id
@@ -158,9 +163,15 @@ try:
     elif command == "deleg":
         result = cl_interface.deleg_stats(command_arg)
     elif command == "client_io_ops":
-        result = cl_interface.client_io_ops_stats(command_arg)
+        if command_arg == 'all':
+            result = cl_interface.all_clients_io_ops_stats()
+        else:
+            result = cl_interface.client_io_ops_stats(command_arg)
     elif command == "client_all_ops":
-        result = cl_interface.client_all_ops_stats(command_arg)
+        if command_arg == 'all':
+            result = cl_interface.all_clients_all_ops_stats()
+        else:
+            result = cl_interface.client_all_ops_stats(command_arg)
     elif command == "iov3":
         result = exp_interface.v3io_stats(command_arg)
     elif command == "iov4":
