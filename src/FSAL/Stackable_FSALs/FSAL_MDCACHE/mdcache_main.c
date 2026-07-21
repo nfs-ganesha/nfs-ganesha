@@ -196,9 +196,10 @@ mdcache_fsal_create_export(struct fsal_module *sub_fsal, void *parse_node,
 	status = sub_fsal->m_ops.create_export(sub_fsal, parse_node, err_type,
 					       &myself->up_ops);
 	if (FSAL_IS_ERROR(status)) {
-		LogMajor(COMPONENT_FSAL,
-			 "Failed to call create_export on underlying FSAL %s",
-			 sub_fsal->name);
+		LogMajor(
+			COMPONENT_FSAL,
+			"Failed to call create_export on underlying FSAL %s, Error: %s",
+			sub_fsal->name, fsal_err_txt(status));
 		gsh_free(myself->name, MEM_COMP_EXPORT);
 		gsh_free(myself, MEM_COMP_EXPORT);
 		return status;

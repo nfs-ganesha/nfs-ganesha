@@ -190,9 +190,9 @@ static fsal_status_t find_cephfs_root(struct ceph_export *export, Inode **pi,
 	    strcmp(export->cmount_path, CTX_FULLPATH(op_ctx)) == 0) {
 		rc = ceph_ll_lookup_root(export->cmount, pi);
 		if (rc) {
-			LogWarn(COMPONENT_FSAL,
-				"Root lookup failed for %s : %s",
-				CTX_FULLPATH(op_ctx), strerror(-rc));
+			LogCrit(COMPONENT_FSAL,
+				"Root lookup failed for %s: (%d) %s",
+				CTX_FULLPATH(op_ctx), -rc, strerror(-rc));
 		}
 		*stxr = false;
 		goto out;
@@ -234,8 +234,8 @@ static fsal_status_t find_cephfs_root(struct ceph_export *export, Inode **pi,
 			       &root_creds);
 
 	if (rc) {
-		LogWarn(COMPONENT_FSAL, "ceph_ll_walk failed for %s : %s",
-			walk_path, strerror(-rc));
+		LogCrit(COMPONENT_FSAL, "ceph_ll_walk failed for %s: (%d) %s",
+			walk_path, -rc, strerror(-rc));
 	}
 	*stxr = true;
 
@@ -382,9 +382,10 @@ void enable_delegations(struct ceph_mount *cm, struct gsh_export *export)
 		if (ceph_status != 0) {
 			cm->cm_disallow_delegations = true;
 
-			LogWarn(COMPONENT_FSAL,
-				"Unable to set delegation timeout for %s. Disabling delegation support: %s",
-				CTX_FULLPATH(op_ctx), strerror(-ceph_status));
+			LogCrit(COMPONENT_FSAL,
+				"Unable to set delegation timeout for %s. Disabling delegation support: (%d) %s",
+				CTX_FULLPATH(op_ctx), -ceph_status,
+				strerror(-ceph_status));
 		} else {
 			cm->cm_allow_delegations = true;
 
@@ -434,7 +435,8 @@ void create_unique_id(struct ceph_mount *cm, char *nodeid, char **uniq_id)
 	size_t len;
 
 	if (CephFSM.use_old_uuid) {
-		LogEvent(COMPONENT_FSAL, "Old logic of uuid for ceph");
+		LogEvent(COMPONENT_FSAL,
+			 "Old logic of uuid for ceph nodeid: %s", nodeid);
 		len = strlen(RECLAIM_UUID_PREFIX) + strlen(nodeid) + 1 + 4 + 1;
 		*uniq_id = gsh_malloc(len, MEM_COMP_RECOVERY);
 		(void)snprintf(*uniq_id, len, RECLAIM_UUID_PREFIX "%s-%4.4hx",
@@ -443,7 +445,12 @@ void create_unique_id(struct ceph_mount *cm, char *nodeid, char **uniq_id)
 		char buff[8192]; /* large buffer to accommodate lengthy path */
 		uint64_t hashkey;
 
-		LogEvent(COMPONENT_FSAL, "New logic of uuid for ceph");
+		LogEvent(
+			COMPONENT_FSAL,
+			"New logic of uuid for ceph nodeid: %s cm_user_id: %s cm_fs_name: %s cm_mount_path: %s",
+			nodeid, cm->cm_user_id, cm->cm_fs_name,
+			cm->cm_mount_path);
+
 		/* create string containing nodeid, userid, fs_name and mount
 		 * path for hashing purpose*/
 		(void)snprintf(buff, 8192, "%s%s%s%s", nodeid, cm->cm_user_id,
@@ -476,26 +483,37 @@ static int reclaim_reset(struct ceph_mount *cm)
 	 * combination.
 	 */
 	ceph_status = nfs_recovery_get_nodeid(&nodeid);
+
 	if (ceph_status != 0) {
-		LogEvent(COMPONENT_FSAL, "couldn't get nodeid: %s",
-			 strerror(errno));
+		LogCrit(COMPONENT_FSAL, "couldn't get nodeid: (%d) %s",
+			-ceph_status, strerror(-ceph_status));
 		return ceph_status;
 	}
+
 	create_unique_id(cm, nodeid, &uuid);
+
 	LogDebug(COMPONENT_FSAL, "Issuing reclaim reset for %s", uuid);
+
 	ceph_status = ceph_start_reclaim(cm->cmount, uuid, CEPH_RECLAIM_RESET);
+
 	if (ceph_status) {
 		/* Error ENOENT indicates that most likely this is first run
 		 * of this Ganesha instance, so can be ignored. Any other
 		 * failure indicates problem with this ceph client, better
 		 * throw the error and exit */
-		LogEvent(COMPONENT_FSAL, "start_reclaim failed: (%d) %s",
-			 ceph_status, strerror(-ceph_status));
 		if ((-ceph_status) != ENOENT) {
+			LogCrit(COMPONENT_FSAL,
+				"start_reclaim failed for nodeid %s uuid %s: (%d) %s",
+				nodeid, uuid, -ceph_status,
+				strerror(-ceph_status));
 			gsh_free(nodeid, MEM_COMP_RECOVERY);
 			gsh_free(uuid, MEM_COMP_RECOVERY);
 			return ceph_status;
 		}
+
+		LogInfo(COMPONENT_FSAL,
+			"start_reclaim did not find nodeid %s uuid %s, ignoring",
+			nodeid, uuid);
 	}
 	ceph_finish_reclaim(cm->cmount);
 	ceph_set_uuid(cm->cmount, uuid);
@@ -533,9 +551,9 @@ fsal_status_t node_takeover_reclaim(struct fsal_module *module_in, char *nodeid)
 			 * now, but may need to revisit in future. Any other
 			 * failure indicates problem with reclaim activity,
 			 * better throw the error and exit */
-			LogEvent(COMPONENT_FSAL,
-				 "Ceph client reclaim failed (Node %s): %s",
-				 nodeid, strerror(-ceph_status));
+			LogCrit(COMPONENT_FSAL,
+				"Ceph client reclaim failed (Node %s): (%d) %s",
+				nodeid, -ceph_status, strerror(-ceph_status));
 			if ((-ceph_status) != ENOENT)
 				break;
 		}
@@ -786,6 +804,8 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	struct ceph_mount *cm;
 	/* stx is filled in */
 	bool stxr = false;
+	char *message, *additional = NULL;
+	char str_val[1024];
 
 	fsal_export_init(&export->export);
 	export_ops_init(&export->export.exp_ops);
@@ -797,7 +817,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		if (rc != 0) {
 			gsh_free(export, MEM_COMP_EXPORT);
 			LogWarn(COMPONENT_FSAL,
-				"Unable to load config for export : %s",
+				"Unable to load FSAL config for EXPORT: %s",
 				CTX_FULLPATH(op_ctx));
 			return fsalstat(ERR_FSAL_INVAL, 0);
 		}
@@ -874,31 +894,24 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	ceph_status = ceph_create(&cm->cmount, cm->cm_user_id);
 
 	if (ceph_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to create Ceph handle for %s : %s",
-			CTX_FULLPATH(op_ctx), strerror(-ceph_status));
-		goto error;
+		message = "Create Ceph handle";
+		goto ceph_error;
 	}
 
 	ceph_status = ceph_conf_read_file(cm->cmount, CephFSM.conf_path);
+
 	if (ceph_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to read Ceph configuration for %s : %s",
-			CTX_FULLPATH(op_ctx), strerror(-ceph_status));
-		goto error;
+		message = "Read Ceph configuration";
+		goto ceph_error;
 	}
 
 	if (cm->cm_secret_key) {
 		ceph_status =
 			ceph_conf_set(cm->cmount, "key", cm->cm_secret_key);
+
 		if (ceph_status) {
-			status.major = ERR_FSAL_INVAL;
-			LogCrit(COMPONENT_FSAL,
-				"Unable to set Ceph secret key for %s: %s",
-				CTX_FULLPATH(op_ctx), strerror(-ceph_status));
-			goto error;
+			message = "Set Ceph secret key";
+			goto ceph_error;
 		}
 	}
 
@@ -910,47 +923,37 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	ceph_status = ceph_conf_set(cm->cmount, "client_mountpoint", "/");
 
 	if (ceph_status) {
-		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set Ceph client_mountpoint: %s",
-			strerror(-ceph_status));
-		goto error;
+		message = "Set Ceph client mountpoint";
+		goto ceph_error;
 	}
 
 	ceph_status = ceph_conf_set(cm->cmount, "client_acl_type", "posix_acl");
 
 	if (ceph_status < 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to set Ceph client_acl_type: %s",
-			strerror(-ceph_status));
-		goto error;
+		message = "Set Ceph Client ACL type";
+		goto ceph_error;
 	}
 
 	ceph_status = ceph_conf_set(cm->cmount, "client_oc",
 				    my_module->client_oc ? "true" : "false");
 
 	if (ceph_status) {
-		status.major = ERR_FSAL_INVAL;
-		LogCrit(COMPONENT_FSAL, "Unable to set Ceph client_oc: %d",
-			ceph_status);
-		goto error;
+		message = "Set Ceph client_oc";
+		goto ceph_error;
 	}
 
 	if (my_module->client_oc) {
 		/* Set other client_oc related config options.
 		 * ceph_conf_set accepts strings, so convert the values. */
-		char str_val[1024];
 
 		snprintf(str_val, 1024, "%" PRIu64, my_module->client_oc_size);
 		ceph_status =
 			ceph_conf_set(cm->cmount, "client_oc_size", str_val);
+
 		if (ceph_status) {
-			status.major = ERR_FSAL_INVAL;
-			LogCrit(COMPONENT_FSAL,
-				"Unable to set Ceph client_oc_size: %d",
-				ceph_status);
-			goto error;
+			message = "Set Ceph client_oc_size";
+			additional = str_val;
+			goto ceph_error;
 		}
 
 		snprintf(str_val, 1024, "%" PRIu64,
@@ -958,21 +961,17 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		ceph_status = ceph_conf_set(cm->cmount, "client_oc_max_dirty",
 					    str_val);
 		if (ceph_status) {
-			status.major = ERR_FSAL_INVAL;
-			LogCrit(COMPONENT_FSAL,
-				"Unable to set Ceph client_oc_max_dirty: %d",
-				ceph_status);
-			goto error;
+			message = "Set Ceph client_oc_max_dirty";
+			additional = str_val;
+			goto ceph_error;
 		}
 	}
 
 	ceph_status = ceph_init(cm->cmount);
 
 	if (ceph_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Unable to init Ceph handle : %s",
-			strerror(-ceph_status));
-		goto error;
+		message = "Ceph Init Handle";
+		goto ceph_error;
 	}
 
 	register_callbacks(cm);
@@ -980,42 +979,33 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	ceph_status = select_filesystem(cm);
 
 	if (ceph_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to select/use file system for %s : %s",
-			CTX_FULLPATH(op_ctx), strerror(-ceph_status));
-		goto error;
+		message = "Ceph select/use filesystem";
+		goto ceph_error;
 	}
 
 	ceph_status = reclaim_reset(cm);
 
 	if (ceph_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to do reclaim_reset for %s : %s",
-			CTX_FULLPATH(op_ctx), strerror(-ceph_status));
-		goto error;
+		message = "reclaim reset";
+		goto ceph_error;
 	}
 
 	ceph_status = ceph_mount(cm->cmount, cm->cm_mount_path);
 
 	if (ceph_status != 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL,
-			"Unable to mount Ceph cluster for %s : %s",
-			CTX_FULLPATH(op_ctx), strerror(-ceph_status));
-		goto error;
+		message = "Ceph mount";
+		additional = cm->cm_mount_path;
+		goto ceph_error;
 	}
 
 #ifdef USE_FSAL_CEPH_GET_FS_CID
 	/* Fetch fscid for use in filehandles */
-	cm->cm_fscid = ceph_get_fs_cid(cm->cmount);
+	ceph_status = cm->cm_fscid = ceph_get_fs_cid(cm->cmount);
 
-	if (cm->cm_fscid < 0) {
-		status.major = ERR_FSAL_SERVERFAULT;
-		LogCrit(COMPONENT_FSAL, "Error getting fscid for %s.",
-			cm->cm_fs_name);
-		goto error;
+	if (ceph_status < 0) {
+		message = "Ceph get fs cid";
+		additional = cm->cm_fs_name;
+		goto ceph_error;
 	}
 #endif /* USE_FSAL_CEPH_GET_FS_CID */
 
@@ -1035,21 +1025,19 @@ has_cmount:
 	status = find_cephfs_root(export, &i, &stx, &stxr);
 
 	if (FSAL_IS_ERROR(status)) {
-		LogCrit(COMPONENT_FSAL, "Error finding root for %s.",
-			CTX_FULLPATH(op_ctx));
+		LogCrit(COMPONENT_FSAL, "Error finding root for %s, Error: %s",
+			CTX_FULLPATH(op_ctx), fsal_err_txt(status));
 		goto error;
 	}
 
 	if (!stxr) {
-		rc = fsal_ceph_ll_getattr(export->cmount, i, &stx,
-					  CEPH_STATX_HANDLE_MASK,
-					  &op_ctx->creds);
+		ceph_status = fsal_ceph_ll_getattr(export->cmount, i, &stx,
+						   CEPH_STATX_HANDLE_MASK,
+						   &op_ctx->creds);
 
-		if (rc < 0) {
-			LogCrit(COMPONENT_FSAL, "Ceph getattr failed %s : %s",
-				CTX_FULLPATH(op_ctx), strerror(-rc));
-			status = ceph2fsal_error(rc);
-			goto error;
+		if (ceph_status < 0) {
+			message = "Ceph getattr";
+			goto ceph_error;
 		}
 	}
 
@@ -1078,6 +1066,15 @@ has_cmount:
 	PTHREAD_RWLOCK_unlock(&cmount_lock);
 
 	return status;
+
+ceph_error:
+
+	LogCrit(COMPONENT_FSAL, "%s %s%s failed for %s with (%d) %s", message,
+		additional != NULL ? "for " : "",
+		additional != NULL ? additional : "", CTX_FULLPATH(op_ctx),
+		-ceph_status, strerror(-ceph_status));
+
+	status = ceph2fsal_error(ceph_status);
 
 error:
 
