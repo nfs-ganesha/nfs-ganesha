@@ -886,6 +886,9 @@ static void copy_do_work(struct copy_job *job, struct copy_work_result *result)
 		if (is_async)
 			copy_async_update_progress(bytes_copied, cos);
 
+		if (nfs_param.nfsv4_param.short_copy)
+			break;
+
 		if (chunk_copied < chunk) {
 			LogDebug(COMPONENT_NFS_V4,
 				 "COPY %s short chunk #%" PRIu64

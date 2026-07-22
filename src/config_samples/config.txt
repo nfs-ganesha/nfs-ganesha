@@ -340,6 +340,8 @@ NFSV4 {}
 
 	Copy_Offload(bool, default true)
 
+	Short_Copy(bool, default false)
+
 	Copy_Offload_Chunk_Size(uint64, range 1048576 to UINT64_MAX,
 				default 67108864)
 

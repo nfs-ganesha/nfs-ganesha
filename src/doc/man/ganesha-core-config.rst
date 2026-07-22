@@ -662,6 +662,12 @@ Blocking_Locks(bool, default true)
 Copy_Offload(bool, default true)
     Flag decides to allows server copy offload operation or not.
 
+Short_Copy(bool, default false)
+    Flag decides server follow short copy operation or not.
+    Enabling this flag, make COPY completes back to the client with max
+    Copy_Offload_Chunk_Size, so that client will send COPY with further offset.
+    This will provide client fairness in some cases.
+
 Copy_Offload_Chunk_Size(uint64, range 1048576 to UINT64_MAX, default 67108864)
     Chunk Size by which worker copies the data.
 

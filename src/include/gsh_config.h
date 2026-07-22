@@ -751,6 +751,8 @@ typedef struct nfs_version4_parameter {
 	bool allow_blocking_locks;
 	/** Whether to enable NFSv4.2 server-side copy offload */
 	bool allow_copy_offload;
+	/** Short copy support for copy_offload*/
+	bool short_copy;
 	/**
 	 * Minimum byte count at which an COPY offload copying is done.
 	 * Default: 16 MiB for sync. 16*4  MiB for async.

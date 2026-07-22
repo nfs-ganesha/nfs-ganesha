@@ -802,6 +802,7 @@ static struct config_item version4_params[] = {
 		       allow_blocking_locks),
 	CONF_ITEM_BOOL("Copy_Offload", true, nfs_version4_parameter,
 		       allow_copy_offload),
+	CONF_ITEM_BOOL("Short_Copy", false, nfs_version4_parameter, short_copy),
 	CONF_ITEM_UI64("Copy_Offload_Chunk_Size", 1ULL * 1024 * 1024,
 		       UINT64_MAX, 64ULL * 1024 * 1024, nfs_version4_parameter,
 		       copy_offload_chunk_size),
