@@ -1146,10 +1146,12 @@ static bool name2id(const struct gsh_buffdesc *name, uint32_t *id, bool group,
 	at = memchr(namebuff, '@', name->len);
 
 	if (at == NULL) {
-		if (pwentname2id(namebuff, id, group, &gid, &got_gid, NULL))
+		/* we dont have at, we may have a numeric id*/
+		if (atless2id(namebuff, name->len, id, anon))
 			looked_up = true;
-		else if (atless2id(namebuff, name->len, id, anon))
-			looked_up = true;
+		else if (nfs_param.nfsv4_param.use_getpwnam)
+			looked_up = pwentname2id(namebuff, id, group, &gid,
+						 &got_gid, at);
 		else
 			return false;
 	} else if (nfs_param.nfsv4_param.use_getpwnam) {
