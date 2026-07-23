@@ -399,7 +399,7 @@ if(USE_GTEST)
 endif(USE_GTEST)
 
 # Enable NFS Over RDMA Support
-option(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
+goption(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 
 # Enable 9P Support
 option(USE_9P "enable 9P support" ON)
@@ -532,6 +532,7 @@ option(USE_OPENSSL "Use OpenSSL as TLS backend" OFF)
 option(USE_GNUTLS "Use GNUTLS as TLS backend" OFF)
 
 
+gopt_test(USE_NFS_RDMA)
 if(USE_NFS_RDMA OR USE_9P_RDMA)
   check_library_exists(rdmacm rdma_create_qp "" RDMACM_FOUND)
   check_library_exists(ibverbs ibv_alloc_pd "" IBVERBS_FOUND)
@@ -540,9 +541,13 @@ if(USE_NFS_RDMA OR USE_9P_RDMA)
     include_directories(${RDMA_INCLUDE_DIR})
     set(SYSTEM_LIBRARIES ${SYSTEM_LIBRARIES} ${RDMA_LIBRARY})
   else(RDMACM_FOUND AND IBVERBS_FOUND)
-    set(USE_NFS_RDMA OFF)
-    set(USE_9P_RDMA OFF)
-    message(WARNING "Could not find RDMA dependencies(RDMACM=${RDMACM_FOUND} IBVERBS=${IBVERBS_FOUND}), disabling RDMA Support")
+    if(USE_NFS_RDMA_REQUIRED)
+      message(FATAL_ERROR "Could not find RDMA dependencies (RDMACM=${RDMACM_FOUND} IBVERBS=${IBVERBS_FOUND}) but USE_NFS_RDMA was requested on the command line")
+    else(USE_NFS_RDMA_REQUIRED)
+      set(USE_NFS_RDMA OFF)
+      set(USE_9P_RDMA OFF)
+      message(WARNING "Could not find RDMA dependencies(RDMACM=${RDMACM_FOUND} IBVERBS=${IBVERBS_FOUND}), disabling RDMA Support")
+    endif(USE_NFS_RDMA_REQUIRED)
   endif(RDMACM_FOUND AND IBVERBS_FOUND)
 endif(USE_NFS_RDMA OR USE_9P_RDMA)
 
@@ -1330,8 +1335,10 @@ if (USE_SYSTEM_NTIRPC)
     set(NTIRPC_LIBRARY ${NTIRPC_LIBRARY} ${NTIRPC_MONITORING})
   endif (USE_MONITORING)
 else (USE_SYSTEM_NTIRPC)
-  # Set options for submodule
-  set(USE_RPC_RDMA ${USE_NFS_RDMA} CACHE BOOL "Use RDMA")
+  # Set options for submodule — USE_RPC_RDMA is a plain option() in libntirpc,
+  # so propagate the already-resolved USE_NFS_RDMA value as BOOL FORCE so that
+  # libntirpc's option() declaration does not reset it to its own default.
+  set(USE_RPC_RDMA ${USE_NFS_RDMA} CACHE BOOL "Synced from USE_NFS_RDMA" FORCE)
   set(TIRPC_EPOLL ${TIRPC_EPOLL} CACHE BOOL "Use EPOLL")
   set(USE_GSS ${USE_GSS} CACHE BOOL "Use GSS")
   set(USE_MONITORING ${USE_MONITORING} CACHE BOOL "Use Monitoring")
@@ -1588,7 +1595,7 @@ message(STATUS "USE_9P = ${USE_9P}")
 message(STATUS "_USE_9P = ${_USE_9P}")
 message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
-message(STATUS "USE_RPC_RDMA = ${USE_RPC_RDMA}")
+message(STATUS "USE_RPC_RDMA (libntirpc) = ${USE_RPC_RDMA}")
 message(STATUS "USE_NFS3 = ${USE_NFS3}")
 message(STATUS "USE_NLM = ${USE_NLM}")
 message(STATUS "INTERNAL_STATD = ${INTERNAL_STATD}")
