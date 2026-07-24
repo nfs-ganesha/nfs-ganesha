@@ -307,7 +307,8 @@ void *GPFSFSAL_UP_Thread(void *Arg);
 size_t fs_da_addr_size(struct fsal_module *fsal_hdl);
 
 nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
-		       const layouttype4 type,
+		       const layouttype4 type, const bitmap4 *notify_types,
+		       bitmap4 *notification,
 		       const struct pnfs_deviceid *deviceid);
 
 void fsal_gpfs_extract_stats(struct fsal_module *fsal_hdl, void *iter);

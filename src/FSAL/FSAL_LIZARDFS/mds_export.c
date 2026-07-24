@@ -276,6 +276,8 @@ static int lzfs_int_fill_unused_ds_list(
 static nfsstat4 lzfs_fsal_getdeviceinfo(struct fsal_module *fsal_hdl,
 					XDR *da_addr_body,
 					const layouttype4 type,
+					const bitmap4 *notify_types,
+					bitmap4 *notification,
 					const struct pnfs_deviceid *deviceid)
 {
 	struct fsal_export *export_hdl;

@@ -83,6 +83,7 @@ extern struct fsal_staticfsinfo_t global_fs_info;
 
 nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
 			     const layouttype4 type,
+			     const bitmap4 *notify_types, bitmap4 *notification,
 			     const struct pnfs_deviceid *deviceid);
 
 size_t kvsfs_fs_da_addr_size(struct fsal_module *fsal_hdl);

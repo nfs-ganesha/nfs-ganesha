@@ -156,10 +156,14 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 
 	da_beginning = xdr_getpos(&da_addr_body);
 
-	nfs_status =
-		fsal->m_ops.getdeviceinfo(fsal, &da_addr_body,
-					  arg_GETDEVICEINFO4->gdia_layout_type,
-					  deviceid);
+	/* Zero the notification bitmap before the call so the FSAL can
+	 * selectively set the bits it will actually deliver. */
+	memset(&resok->gdir_notification, 0, sizeof(resok->gdir_notification));
+
+	nfs_status = fsal->m_ops.getdeviceinfo(
+		fsal, &da_addr_body, arg_GETDEVICEINFO4->gdia_layout_type,
+		&arg_GETDEVICEINFO4->gdia_notify_types,
+		&resok->gdir_notification, deviceid);
 
 	da_length = xdr_getpos(&da_addr_body) - da_beginning;
 
@@ -174,8 +178,6 @@ enum nfs_req_result nfs4_op_getdeviceinfo(struct nfs_argop4 *op,
 
 	if (nfs_status != NFS4_OK)
 		goto out;
-
-	memset(&resok->gdir_notification, 0, sizeof(resok->gdir_notification));
 
 	resok->gdir_device_addr.da_addr_body.da_addr_body_len = da_length;
 	resok->gdir_device_addr.da_addr_body.da_addr_body_val = da_buffer;

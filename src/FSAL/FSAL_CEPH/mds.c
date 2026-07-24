@@ -87,6 +87,9 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
  * @param[in]  export_pub   Public export handle
  * @param[out] da_addr_body Stream we write the result to
  * @param[in]  type         Type of layout that gave the device
+ * @param[in]  notify_types Notification types requested by the client
+ * @param[out] notification Bitmap of events to populate in the
+ *                          reply
  * @param[in]  deviceid     The device to look up
  *
  * @return Valid error codes in RFC 5661, p. 365.
@@ -94,6 +97,8 @@ static bool initiate_recall(vinodeno_t vi, bool write, void *opaque)
 
 static nfsstat4 getdeviceinfo(struct fsal_export *export_pub, XDR *da_addr_body,
 			      const layouttype4 type,
+			      const bitmap4 *notify_types,
+			      bitmap4 *notification,
 			      const struct pnfs_deviceid *deviceid)
 {
 	/* Full 'private' export */

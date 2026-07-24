@@ -130,6 +130,8 @@ size_t kvsfs_fs_da_addr_size(struct fsal_module *fsal_hdl)
 /**
  * @param[out] da_addr_body Stream we write the result to
  * @param[in]  type         Type of layout that gave the device
+ * @param[in]  notify_types Notification types requested by the client
+ * @param[out] notification Bitmap of notify types to populate in the reply
  * @param[in]  deviceid     The device to look up
  *
  * @return Valid error codes in RFC 5661, p. 365.
@@ -137,6 +139,7 @@ size_t kvsfs_fs_da_addr_size(struct fsal_module *fsal_hdl)
 
 nfsstat4 kvsfs_getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
 			     const layouttype4 type,
+			     const bitmap4 *notify_types, bitmap4 *notification,
 			     const struct pnfs_deviceid *deviceid)
 {
 	/* The number of DSs  */

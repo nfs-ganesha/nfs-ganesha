@@ -392,12 +392,16 @@ static void releaseResources(sau_chunk_info_t *chunkInfo,
  *                            layout type-specific information corresponding to
  *                            the deviceid.
  * @param[in]  type           The type of layout that specified the device
+ * @param[in]  notify_types   Notification types requested by the client
+ * @param[out] notification   Bitmap of notify types to populate in the reply
  * @param[in]  deviceid       The device to look up
  *
  * @returns: Valid error codes in RFC 5661, p. 365.
  */
 static nfsstat4 getdeviceinfo(struct fsal_module *module, XDR *xdrStream,
 			      const layouttype4 type,
+			      const bitmap4 *notify_types,
+			      bitmap4 *notification,
 			      const struct pnfs_deviceid *deviceid)
 {
 	struct fsal_export *exportHandle = NULL;

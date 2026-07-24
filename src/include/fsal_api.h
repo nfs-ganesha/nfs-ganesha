@@ -757,20 +757,25 @@ struct fsal_ops {
  * @brief Get information about a pNFS device
  *
  * When this function is called, the FSAL should write device
- * information to the @c da_addr_body stream.
+ * information to the @c da_addr_body stream.  The FSAL may also
+ * populate @p notification with the subset of @p notify_types it
+ * will actually deliver.
  *
  * @param[in]  fsal_hdl     FSAL module
  * @param[out] da_addr_body An XDR stream to which the FSAL is to
  *                          write the layout type-specific information
  *                          corresponding to the deviceid.
- * @param[in]  type         The type of layout that specified the
- *                          device
+ * @param[in]  type         The type of layout that specified the device
+ * @param[in]  notify_types Notification types requested by the client
+ * @param[out] notification Bitmap of notify types to populate in the reply
  * @param[in]  deviceid     The device to look up
  *
  * @return Valid error codes in RFC 5661, p. 365.
  */
 	nfsstat4 (*getdeviceinfo)(struct fsal_module *fsal_hdl,
 				  XDR *da_addr_body, const layouttype4 type,
+				  const bitmap4 *notify_types,
+				  bitmap4 *notification,
 				  const struct pnfs_deviceid *deviceid);
 
 	/**
@@ -3289,8 +3294,8 @@ static inline void export_root_object_get(struct fsal_obj_handle *obj_hdl)
  */
 static inline void export_root_object_put(struct fsal_obj_handle *obj_hdl)
 {
-	int32_t __attribute__((unused))
-	ref = atomic_dec_int32_t(&obj_hdl->exp_refcnt);
+	int32_t __attribute__((unused)) ref =
+		atomic_dec_int32_t(&obj_hdl->exp_refcnt);
 
 	assert(ref >= 0);
 }

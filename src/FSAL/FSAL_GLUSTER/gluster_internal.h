@@ -425,7 +425,8 @@ void dsh_ops_init(struct fsal_dsh_ops *ops);
 void pnfs_ds_ops_init(struct fsal_pnfs_ds_ops *ops);
 
 nfsstat4 getdeviceinfo(struct fsal_module *fsal_hdl, XDR *da_addr_body,
-		       const layouttype4 type,
+		       const layouttype4 type, const bitmap4 *notify_types,
+		       bitmap4 *notification,
 		       const struct pnfs_deviceid *deviceid);
 
 /* UP thread routines */
