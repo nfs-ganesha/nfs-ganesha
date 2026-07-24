@@ -45,7 +45,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${GANESHA_TOP_CMAKE_DIR}/cmake/modul
 
 project(nfs-ganesha C CXX)
 # Project versioning
-set(GANESHA_MAJOR_VERSION 12)
+set(GANESHA_MAJOR_VERSION 13)
 # Minor version is blank for development.  On release, it becomes ".0".  On a
 # stable maintenance branch, this becomes ".N" where N is monotonically
 # increasing starting at 1.3 Remember to include the "." !!
