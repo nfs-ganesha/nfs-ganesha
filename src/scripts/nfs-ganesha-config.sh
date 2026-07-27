@@ -17,7 +17,11 @@ fi
 if [ -r ${CONFIGFILE} ]; then
 	. ${CONFIGFILE}
 	[ -x "${EPOCH_EXEC%% *}" ] &&  EPOCHVALUE=`${EPOCH_EXEC}`
-	[ -x "${NODEID_EXEC%% *}" ] &&  NODEID=`${NODEID_EXEC}`
+        if [ -x "${NODEID_EXEC%% *}" ]; then
+                NODEID=`${NODEID_EXEC}`
+        elif [ "$(basename "${EPOCH_EXEC%% *}")" = "gpfs-epoch" ]; then
+                NODEID=$(( EPOCHVALUE >> 16 ))
+        fi
 
 	NOFILE_CONF=/lib/systemd/system/nfs-ganesha.service.d/10-nofile.conf
 	if [ -n "$NOFILE" ]; then
