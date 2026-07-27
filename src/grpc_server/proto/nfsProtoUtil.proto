@@ -181,3 +181,27 @@ message Client9pOpRequest
 	string ipaddr = 1;
 	string op_name = 2;
 }
+
+// Protocol activity flag; mirrors D-Bus PROTOCOLS_CONTAINER (sb) entry.
+message ProtocolActivity
+{
+	string name = 1; // e.g. "NFSv3", "NFSv40", "9P"
+	bool active = 2;
+}
+
+// State counter; mirrors D-Bus STATE_STATS_REPLY (ststst) pairs.
+message StateStatEntry
+{
+	string state_type = 1; // "Open", "Lock", "Delegation"
+	uint64 count = 2;
+}
+
+// One client entry; mirrors D-Bus CLIENT_CONTAINER.
+message ClientInfo
+{
+	string ipaddr = 1;
+	repeated ProtocolActivity protocols = 2;
+	uint64 total_ops = 3;
+	repeated StateStatEntry state_stats = 4;
+	Timestamp last_update = 5;
+}

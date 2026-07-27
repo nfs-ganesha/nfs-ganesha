@@ -4088,4 +4088,109 @@ bool grpc_parse_9p_opname(const char *opname, uint8_t *opcode_out)
 }
 #endif
 
+/**
+ * @brief Fill per-client protocol-activity flags for ShowClients
+ *
+ * Mirrors server_stats_summary() without D-Bus iterator types, so it
+ * can be called from both client_mgr.c (pure C) and C++ handlers.
+ *
+ * @param st           [IN]  client statistics container
+ * @param protos       [OUT] array of at least GRPC_MAX_PROTOCOLS entries
+ * @param proto_count  [OUT] number of protocol slots filled
+ * @param total_ops_out[OUT] sum of all operation counts across protocols
+ */
+void server_grpc_fill_stats_summary(struct gsh_stats *st,
+				    struct grpc_protocol_activity *protos,
+				    uint32_t *proto_count,
+				    uint64_t *total_ops_out)
+{
+	uint32_t n = 0;
+	uint64_t tot_ops = 0;
+	bool active;
+
+#ifdef _USE_NFS3
+	active = (st->nfsv3 != NULL && (st->nfsv3->cmds.total != 0 ||
+					st->nfsv3->read.cmd.total != 0 ||
+					st->nfsv3->write.cmd.total != 0));
+	snprintf(protos[n].name, sizeof(protos[n].name), "NFSv3");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->nfsv3->cmds.total + st->nfsv3->read.cmd.total +
+			   st->nfsv3->write.cmd.total;
+	n++;
+
+	active = (st->mnt != NULL &&
+		  (st->mnt->v1_ops.total != 0 || st->mnt->v3_ops.total != 0));
+	snprintf(protos[n].name, sizeof(protos[n].name), "MNT");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->mnt->v1_ops.total + st->mnt->v3_ops.total;
+	n++;
+#endif
+#ifdef _USE_NLM
+	active = (st->nlm4 != NULL && st->nlm4->ops.total != 0);
+	snprintf(protos[n].name, sizeof(protos[n].name), "NLMv4");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->nlm4->ops.total;
+	n++;
+#endif
+#ifdef _USE_RQUOTA
+	active = (st->rquota != NULL && (st->rquota->ops.total != 0 ||
+					 st->rquota->ext_ops.total != 0));
+	snprintf(protos[n].name, sizeof(protos[n].name), "RQUOTA");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->rquota->ops.total + st->rquota->ext_ops.total;
+	n++;
+#endif
+	active = (st->nfsv40 != NULL && (st->nfsv40->compounds.total != 0 ||
+					 st->nfsv40->read.cmd.total != 0 ||
+					 st->nfsv40->write.cmd.total != 0));
+	snprintf(protos[n].name, sizeof(protos[n].name), "NFSv40");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->nfsv40->compounds.total +
+			   st->nfsv40->read.cmd.total +
+			   st->nfsv40->write.cmd.total;
+	n++;
+
+	active = (st->nfsv41 != NULL && (st->nfsv41->compounds.total != 0 ||
+					 st->nfsv41->read.cmd.total != 0 ||
+					 st->nfsv41->write.cmd.total != 0));
+	snprintf(protos[n].name, sizeof(protos[n].name), "NFSv41");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->nfsv41->compounds.total +
+			   st->nfsv41->read.cmd.total +
+			   st->nfsv41->write.cmd.total;
+	n++;
+
+	active = (st->nfsv42 != NULL && (st->nfsv42->compounds.total != 0 ||
+					 st->nfsv42->read.cmd.total != 0 ||
+					 st->nfsv42->write.cmd.total != 0));
+	snprintf(protos[n].name, sizeof(protos[n].name), "NFSv42");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->nfsv42->compounds.total +
+			   st->nfsv42->read.cmd.total +
+			   st->nfsv42->write.cmd.total;
+	n++;
+
+#ifdef _USE_9P
+	active = (st->_9p != NULL &&
+		  (st->_9p->cmds.total != 0 || st->_9p->read.cmd.total != 0 ||
+		   st->_9p->write.cmd.total != 0));
+	snprintf(protos[n].name, sizeof(protos[n].name), "9P");
+	protos[n].active = active;
+	if (active)
+		tot_ops += st->_9p->cmds.total + st->_9p->read.cmd.total +
+			   st->_9p->write.cmd.total;
+	n++;
+#endif
+
+	*proto_count = n;
+	*total_ops_out = tot_ops;
+}
+
 /** @} */

@@ -166,3 +166,49 @@ message ClientOpStatsResponse
 	nfsProtoUtil.Timestamp time = 2;
 	nfsProtoUtil.OpStats op_stats = 3;
 }
+
+/*
+ * Client manager control APIs.
+ * Mirrors D-Bus interface org.ganesha.nfsd.clientmgr defined in
+ * support/client_mgr.c. Each RPC name matches the D-Bus method name so
+ * callers can migrate without changing semantics.
+ */
+service ClientMgr
+{
+	// cltmgr_add_client → D-Bus AddClient
+	// Creates a client entry for the given IP; no-op if already present.
+	rpc AddClient(nfsProtoUtil.ClientIpRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	// cltmgr_remove_client → D-Bus RemoveClient
+	// Removes the client entry; fails if busy or not found.
+	rpc RemoveClient(nfsProtoUtil.ClientIpRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	// cltmgr_show_clients → D-Bus ShowClients
+	// Returns a snapshot of all known clients with protocol and state
+	// counters.
+	rpc ShowClients(nfsProtoUtil.EmptyRequest)
+		returns (ShowClientsResponse);
+
+	// cltmgr_disconnect_nfsv41_client → D-Bus DisconnectNfsv41Client
+	// Destroys all NFSv4.1 connections for the given client IP; returns
+	// the count of destroyed connections.
+	rpc DisconnectNfsv41Client(nfsProtoUtil.ClientIpRequest)
+		returns (DisconnectClientResponse);
+}
+
+// Response for ShowClients; mirrors D-Bus TIMESTAMP_REPLY + CLIENTS_REPLY.
+message ShowClientsResponse
+{
+	nfsProtoUtil.Timestamp time = 1;
+	repeated nfsProtoUtil.ClientInfo clients = 2;
+}
+
+// Response for DisconnectNfsv41Client; mirrors D-Bus STATUS_REPLY +
+// TOTAL_DESTROYED_CONNECTIONS_REPLY.
+message DisconnectClientResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	int32 connections_destroyed = 2;
+}

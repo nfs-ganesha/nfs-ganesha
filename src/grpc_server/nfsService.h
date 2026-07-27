@@ -140,6 +140,35 @@ class ClientStatsService final : public cltmgrService::ClientStats::Service {
 		     cltmgrService::ClientOpStatsResponse *response) override;
 };
 
+/**
+ * @brief gRPC service class for org.ganesha.nfsd.clientmgr
+ *
+ * Provides client management operations: AddClient, RemoveClient,
+ * ShowClients, and DisconnectNfsv41Client. Mirrors the D-Bus interface
+ * on /org/ganesha/nfsd/ClientMgr.
+ */
+class ClientMgrService final : public cltmgrService::ClientMgr::Service {
+    public:
+	grpc::Status AddClient(grpc::ServerContext *context,
+			       const nfsProtoUtil::ClientIpRequest *request,
+			       nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status
+	RemoveClient(grpc::ServerContext *context,
+		     const nfsProtoUtil::ClientIpRequest *request,
+		     nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status
+	ShowClients(grpc::ServerContext *context,
+		    const nfsProtoUtil::EmptyRequest *request,
+		    cltmgrService::ShowClientsResponse *response) override;
+
+	grpc::Status DisconnectNfsv41Client(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ClientIpRequest *request,
+		cltmgrService::DisconnectClientResponse *response) override;
+};
+
 class nfsAdminService final : public nfsService::nfsAdmin::Service {
     public:
 	grpc::Status

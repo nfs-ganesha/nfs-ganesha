@@ -1899,6 +1899,224 @@ bool grpc_cltmgr_get_9p_opstats(const char *ipaddr, const char *opname,
 }
 #endif
 
+/**
+ * @brief gRPC entry point for cltmgr_add_client / D-Bus AddClient
+ *
+ * Creates an entry in the client manager for the given IP address.
+ * If the entry already exists the call succeeds silently (D-Bus parity).
+ */
+bool grpc_cltmgr_add_client(const char *ipaddr, bool *success, char *errmsg,
+			    size_t errmsg_len)
+{
+	sockaddr_t sockaddr;
+	struct gsh_client *client;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+		*success = false;
+		errormsg = "can't decode client address";
+		goto out;
+	}
+
+	/* lookup_only=false creates the entry if missing */
+	client = get_gsh_client(&sockaddr, false);
+	if (client != NULL) {
+		put_gsh_client(client);
+	} else {
+		*success = false;
+		errormsg = "No memory to insert client";
+	}
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_remove_client / D-Bus RemoveClient
+ *
+ * Removes the client entry for the given IP address. Fails if the
+ * client is not found or is currently in use (busy).
+ */
+bool grpc_cltmgr_remove_client(const char *ipaddr, bool *success, char *errmsg,
+			       size_t errmsg_len)
+{
+	sockaddr_t sockaddr;
+	const char *errormsg = "OK";
+
+	*success = false;
+
+	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+		errormsg = "can't decode client address";
+		goto out;
+	}
+
+	switch (remove_gsh_client(&sockaddr)) {
+	case 0:
+		errormsg = "OK";
+		*success = true;
+		break;
+	case ENOENT:
+		errormsg = "Client with that address not found";
+		break;
+	case EBUSY:
+		errormsg = "Client with that address is in use (busy)";
+		break;
+	default:
+		errormsg = "Unexpected error";
+		break;
+	}
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
+/* Two-pass AVL walk helpers for ShowClients */
+
+struct grpc_show_count_state {
+	uint32_t count;
+};
+
+static bool grpc_show_count_cb(struct gsh_client *cl, void *state)
+{
+	struct grpc_show_count_state *st =
+		(struct grpc_show_count_state *)state;
+
+	(void)cl;
+	st->count++;
+	return true;
+}
+
+struct grpc_show_fill_state {
+	struct grpc_client_info *clients;
+	uint32_t index;
+};
+
+static bool grpc_show_fill_cb(struct gsh_client *cl_node, void *state)
+{
+	struct grpc_show_fill_state *st = (struct grpc_show_fill_state *)state;
+	struct grpc_client_info *info = &st->clients[st->index++];
+	struct server_stats *cl;
+
+	cl = container_of(cl_node, struct server_stats, client);
+
+	if (!sprint_sockip(&cl_node->cl_addrbuf, info->ipaddr,
+			   sizeof(info->ipaddr)))
+		(void)strlcpy(info->ipaddr, "<unknown>", sizeof(info->ipaddr));
+
+	server_grpc_fill_stats_summary(&cl->st, info->protocols,
+				       &info->protocol_count, &info->total_ops);
+
+	info->state_count = 3;
+	snprintf(info->state_stats[0].state_type,
+		 sizeof(info->state_stats[0].state_type), "Open");
+	info->state_stats[0].count = cl_node->state_stats[STATE_TYPE_SHARE];
+
+	snprintf(info->state_stats[1].state_type,
+		 sizeof(info->state_stats[1].state_type), "Lock");
+	info->state_stats[1].count = cl_node->state_stats[STATE_TYPE_LOCK];
+
+	snprintf(info->state_stats[2].state_type,
+		 sizeof(info->state_stats[2].state_type), "Delegation");
+	info->state_stats[2].count = cl_node->state_stats[STATE_TYPE_DELEG];
+
+	info->last_update = cl_node->last_update;
+	return true;
+}
+
+/**
+ * @brief Release a grpc_show_clients snapshot allocated by
+ *        grpc_cltmgr_show_clients().
+ */
+void grpc_cltmgr_free_show_clients(struct grpc_show_clients *show)
+{
+	if (show == NULL)
+		return;
+	gsh_free(show->clients);
+	gsh_free(show);
+}
+
+/**
+ * @brief gRPC entry point for cltmgr_show_clients / D-Bus ShowClients
+ *
+ * Takes a two-pass snapshot of all known clients (count then fill) under
+ * the AVL read lock to avoid TOCTOU races. The returned struct must be
+ * freed via grpc_cltmgr_free_show_clients().
+ */
+bool grpc_cltmgr_show_clients(struct grpc_show_clients **out, bool *success,
+			      char *errmsg, size_t errmsg_len)
+{
+	struct grpc_show_count_state count_st = { .count = 0 };
+	struct grpc_show_fill_state fill_st;
+	struct grpc_show_clients *show;
+
+	*out = NULL;
+	*success = true;
+
+	show = gsh_calloc(1, sizeof(*show));
+	now(&show->time);
+
+	(void)foreach_gsh_client(grpc_show_count_cb, &count_st);
+	show->client_count = count_st.count;
+
+	if (show->client_count > 0) {
+		show->clients = gsh_calloc(show->client_count,
+					   sizeof(struct grpc_client_info));
+		fill_st.clients = show->clients;
+		fill_st.index = 0;
+		(void)foreach_gsh_client(grpc_show_fill_cb, &fill_st);
+	}
+
+	*out = show;
+	snprintf(errmsg, errmsg_len, "OK");
+	return true;
+}
+
+/**
+ * @brief gRPC entry point for DisconnectNfsv41Client
+ *
+ * Parses the client IP once (the D-Bus path calls arg_ipaddr then
+ * lookup_client which re-parses), then calls
+ * destroy_all_client_connections() and returns the count.
+ */
+bool grpc_cltmgr_disconnect_nfsv41_client(const char *ipaddr,
+					  int32_t *connections_destroyed,
+					  bool *success, char *errmsg,
+					  size_t errmsg_len)
+{
+	sockaddr_t sockaddr;
+	struct gsh_client *client = NULL;
+	const char *errormsg = "OK";
+
+	*success = true;
+	*connections_destroyed = 0;
+
+	if (ip_str_to_sockaddr((char *)ipaddr, &sockaddr) != 0) {
+		*success = false;
+		errormsg = "can't decode client address";
+		goto out;
+	}
+
+	client = get_gsh_client(&sockaddr, true);
+	if (client == NULL) {
+		*success = false;
+		errormsg = "Client IP address not found";
+		goto out;
+	}
+
+	LogInfo(COMPONENT_NFS_V4,
+		"Found gsh-client for input ip-address. Now disconnecting it");
+	*connections_destroyed = destroy_all_client_connections(client);
+	put_gsh_client(client);
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+
 /* Cleanup on shutdown */
 void client_mgr_cleanup(void)
 {

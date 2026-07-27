@@ -66,6 +66,7 @@ class GrpcServer {
 	GetSessionIdService getClientSessionIds;
 	StartNfsGraceService startNfsGrace;
 	ClientStatsService clientStatsService;
+	ClientMgrService clientMgrService;
 	nfsAdminService nfsAdmin;
 	ExportStatsService exportStatsService;
 	ShowIdMapperService ShowIdMapper;

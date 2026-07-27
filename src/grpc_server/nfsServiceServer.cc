@@ -613,6 +613,123 @@ ClientStatsService::Get9pOpStats(grpc::ServerContext *context,
 	return grpc::Status::OK;
 }
 
+/**
+ * @brief Add a client entry for the given IP address
+ */
+grpc::Status
+ClientMgrService::AddClient(grpc::ServerContext *context,
+			    const nfsProtoUtil::ClientIpRequest *request,
+			    nfsProtoUtil::StatusResponse *response)
+{
+	bool success = false;
+	char errmsg[256];
+
+	grpc_cltmgr_add_client(request->ipaddr().c_str(), &success, errmsg,
+			       sizeof(errmsg));
+	response->set_success(success);
+	response->set_error_msg(errmsg);
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Remove the client entry for the given IP address
+ */
+grpc::Status
+ClientMgrService::RemoveClient(grpc::ServerContext *context,
+			       const nfsProtoUtil::ClientIpRequest *request,
+			       nfsProtoUtil::StatusResponse *response)
+{
+	bool success = false;
+	char errmsg[256];
+
+	grpc_cltmgr_remove_client(request->ipaddr().c_str(), &success, errmsg,
+				  sizeof(errmsg));
+	response->set_success(success);
+	response->set_error_msg(errmsg);
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Return a snapshot of all known clients with protocol and state
+ *        counters
+ */
+grpc::Status ClientMgrService::ShowClients(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	cltmgrService::ShowClientsResponse *response)
+{
+	struct grpc_show_clients *show = NULL;
+	bool success = false;
+	char errmsg[256];
+
+	(void)request;
+	grpc_cltmgr_show_clients(&show, &success, errmsg, sizeof(errmsg));
+	if (!success || show == NULL)
+		return grpc::Status::OK;
+
+	nfsProtoUtil::Timestamp *time = response->mutable_time();
+
+	time->set_tv_sec(show->time.tv_sec);
+	time->set_tv_nsec(show->time.tv_nsec);
+
+	for (uint32_t i = 0; i < show->client_count; i++) {
+		const struct grpc_client_info *src = &show->clients[i];
+		nfsProtoUtil::ClientInfo *dst = response->add_clients();
+
+		dst->set_ipaddr(src->ipaddr);
+		dst->set_total_ops(src->total_ops);
+
+		for (uint32_t p = 0; p < src->protocol_count; p++) {
+			nfsProtoUtil::ProtocolActivity *pa =
+				dst->add_protocols();
+
+			pa->set_name(src->protocols[p].name);
+			pa->set_active(src->protocols[p].active);
+		}
+
+		for (uint32_t s = 0; s < src->state_count; s++) {
+			nfsProtoUtil::StateStatEntry *ss =
+				dst->add_state_stats();
+
+			ss->set_state_type(src->state_stats[s].state_type);
+			ss->set_count(src->state_stats[s].count);
+		}
+
+		nfsProtoUtil::Timestamp *lu = dst->mutable_last_update();
+
+		lu->set_tv_sec(src->last_update.tv_sec);
+		lu->set_tv_nsec(src->last_update.tv_nsec);
+	}
+
+	grpc_cltmgr_free_show_clients(show);
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Destroy all NFSv4.1/4.2 connections for the given client IP.
+ *
+ * Named DisconnectNfsv41Client for D-Bus parity
+ * (org.ganesha.nfsd.clientmgr.DisconnectNfsv41Client).
+ * Implementation covers all minor versions != 0 (v4.1 and v4.2).
+ */
+grpc::Status ClientMgrService::DisconnectNfsv41Client(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ClientIpRequest *request,
+	cltmgrService::DisconnectClientResponse *response)
+{
+	int32_t destroyed = 0;
+	bool success = false;
+	char errmsg[256];
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	grpc_cltmgr_disconnect_nfsv41_client(request->ipaddr().c_str(),
+					     &destroyed, &success, errmsg,
+					     sizeof(errmsg));
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+	response->set_connections_destroyed(destroyed);
+	return grpc::Status::OK;
+}
+
 /* Shutdown Ganesha */
 grpc::Status nfsAdminService::ShutdownGanesha(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,

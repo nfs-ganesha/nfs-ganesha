@@ -212,6 +212,45 @@ struct grpc_op_stats {
 	uint64_t errors;
 };
 
+/* Max protocol flags emitted by server_grpc_fill_stats_summary(). */
+#define GRPC_MAX_PROTOCOLS 8
+
+/* Always 3: Open, Lock, Delegation. */
+#define GRPC_MAX_STATE_STATS 3
+
+/* Mirrors nfsProtoUtil.ProtocolActivity. */
+struct grpc_protocol_activity {
+	char name[16];
+	bool active;
+};
+
+/* Mirrors nfsProtoUtil.StateStatEntry. */
+struct grpc_state_stat_entry {
+	char state_type[16]; /* "Open", "Lock", "Delegation" */
+	uint64_t count;
+};
+
+/* Mirrors nfsProtoUtil.ClientInfo / D-Bus CLIENT_CONTAINER. */
+struct grpc_client_info {
+	char ipaddr[128]; /* SOCK_NAME_MAX */
+	uint32_t protocol_count;
+	struct grpc_protocol_activity protocols[GRPC_MAX_PROTOCOLS];
+	uint64_t total_ops;
+	uint32_t state_count;
+	struct grpc_state_stat_entry state_stats[GRPC_MAX_STATE_STATS];
+	struct timespec last_update;
+};
+
+/*
+ * Heap-allocated snapshot returned by grpc_cltmgr_show_clients().
+ * Free with grpc_cltmgr_free_show_clients() after reading.
+ */
+struct grpc_show_clients {
+	struct timespec time;
+	uint32_t client_count;
+	struct grpc_client_info *clients; /* heap; free via helper */
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -390,6 +429,31 @@ bool grpc_cltmgr_get_9p_opstats(const char *ipaddr, const char *opname,
 				struct grpc_op_stats *op_out,
 				struct timespec *time_out, bool *success,
 				char *errmsg, size_t errmsg_len);
+
+/*
+ * Extract per-client protocol-activity flags and total op count.
+ * Mirrors server_stats_summary() for gRPC, without D-Bus types.
+ */
+void server_grpc_fill_stats_summary(struct gsh_stats *st,
+				    struct grpc_protocol_activity *protos,
+				    uint32_t *proto_count,
+				    uint64_t *total_ops_out);
+
+bool grpc_cltmgr_add_client(const char *ipaddr, bool *success, char *errmsg,
+			    size_t errmsg_len);
+
+bool grpc_cltmgr_remove_client(const char *ipaddr, bool *success, char *errmsg,
+			       size_t errmsg_len);
+
+bool grpc_cltmgr_show_clients(struct grpc_show_clients **out, bool *success,
+			      char *errmsg, size_t errmsg_len);
+
+void grpc_cltmgr_free_show_clients(struct grpc_show_clients *show);
+
+bool grpc_cltmgr_disconnect_nfsv41_client(const char *ipaddr,
+					  int32_t *connections_destroyed,
+					  bool *success, char *errmsg,
+					  size_t errmsg_len);
 
 #ifdef __cplusplus
 }
