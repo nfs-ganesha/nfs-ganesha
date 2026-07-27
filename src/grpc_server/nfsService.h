@@ -270,6 +270,80 @@ class ExportStatsService final : public exportService::ExportStats::Service {
 	GetNFSIO(grpc::ServerContext *context,
 		 const nfsProtoUtil::EmptyRequest *request,
 		 exportService::GetNFSIOResponse *response) override;
+
+	grpc::Status GetNFSv41Layouts(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		exportService::ExportLayoutsResponse *response) override;
+
+	grpc::Status GetNFSv42Layouts(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		exportService::ExportLayoutsResponse *response) override;
+
+	grpc::Status
+	Get9pIO(grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		exportService::ExportIoStatsResponse *response) override;
+
+	grpc::Status
+	Get9pOpStats(grpc::ServerContext *context,
+		     const nfsProtoUtil::Export9pOpRequest *request,
+		     exportService::ExportOpStatsResponse *response) override;
+
+	grpc::Status
+	GetFastOPS(grpc::ServerContext *context,
+		   const nfsProtoUtil::EmptyRequest *request,
+		   exportService::GetFastOPSResponse *response) override;
+
+	grpc::Status GetFULLV3Stats(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::EmptyRequest *request,
+		exportService::GetFULLV3StatsResponse *response) override;
+
+	grpc::Status GetFULLV4Stats(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::EmptyRequest *request,
+		exportService::GetFULLV4StatsResponse *response) override;
+
+	grpc::Status
+	ResetStats(grpc::ServerContext *context,
+		   const nfsProtoUtil::EmptyRequest *request,
+		   exportService::ResetStatsResponse *response) override;
+
+	grpc::Status
+	EnableStats(grpc::ServerContext *context,
+		    const exportService::EnableStatsRequest *request,
+		    exportService::EnableStatsResponse *response) override;
+
+	grpc::Status
+	DisableStats(grpc::ServerContext *context,
+		     const exportService::DisableStatsRequest *request,
+		     exportService::DisableStatsResponse *response) override;
+
+	grpc::Status
+	StatusStats(grpc::ServerContext *context,
+		    const nfsProtoUtil::EmptyRequest *request,
+		    exportService::StatusStatsResponse *response) override;
+	grpc::Status
+	GetAuthStats(grpc::ServerContext *context,
+		     const nfsProtoUtil::EmptyRequest *request,
+		     exportService::GetAuthStatsResponse *response) override;
+
+	grpc::Status
+	ShowMDCache(grpc::ServerContext *context,
+		    const nfsProtoUtil::EmptyRequest *request,
+		    exportService::ShowMDCacheResponse *response) override;
+
+	grpc::Status
+	ShowFDUsage(grpc::ServerContext *context,
+		    const nfsProtoUtil::EmptyRequest *request,
+		    exportService::ShowFDUsageResponse *response) override;
+
+	grpc::Status GetExportDetails(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		exportService::GetExportDetailsResponse *response) override;
 };
 
 class ShowIdMapperService final

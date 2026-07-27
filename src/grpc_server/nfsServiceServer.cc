@@ -968,6 +968,118 @@ ExportStatsService::GetNFSMonIO(grpc::ServerContext *context,
 				     grpc_export_get_nfsmon_io);
 }
 
+typedef bool (*grpc_export_get_layouts_fn)(uint32_t, struct grpc_layouts *,
+					   struct timespec *, bool *, char *,
+					   size_t);
+/**
+ * @brief Common handler for export layout statistics RPCs.
+ */
+static grpc::Status
+handle_export_layouts(const nfsProtoUtil::ExportIdRequest *request,
+		      exportService::ExportLayoutsResponse *response,
+		      grpc_export_get_layouts_fn get_layouts)
+{
+	struct grpc_layouts layouts{};
+	struct timespec ts{};
+	bool success = false;
+	char errmsg[256];
+
+	get_layouts(request->export_id(), &layouts, &ts, &success, errmsg,
+		    sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	fill_layout_stats_proto(&layouts.getdevinfo,
+				response->mutable_getdevinfo());
+	fill_layout_stats_proto(&layouts.layout_get,
+				response->mutable_layout_get());
+	fill_layout_stats_proto(&layouts.layout_commit,
+				response->mutable_layout_commit());
+	fill_layout_stats_proto(&layouts.layout_return,
+				response->mutable_layout_return());
+	fill_layout_stats_proto(&layouts.layout_recall,
+				response->mutable_layout_recall());
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Return NFSv4.1 layout statistics for an export.
+ */
+grpc::Status ExportStatsService::GetNFSv41Layouts(
+	grpc::ServerContext *, const nfsProtoUtil::ExportIdRequest *request,
+	exportService::ExportLayoutsResponse *response)
+{
+	return handle_export_layouts(request, response,
+				     grpc_export_get_v41_layout_stats);
+}
+
+/**
+ * @brief Return NFSv4.2 layout statistics for an export.
+ */
+grpc::Status ExportStatsService::GetNFSv42Layouts(
+	grpc::ServerContext *, const nfsProtoUtil::ExportIdRequest *request,
+	exportService::ExportLayoutsResponse *response)
+{
+	return handle_export_layouts(request, response,
+				     grpc_export_get_v42_layout_stats);
+}
+
+/**
+ * @brief Return  9P I/O statistics for an export.
+ */
+grpc::Status
+ExportStatsService::Get9pIO(grpc::ServerContext *context,
+			    const nfsProtoUtil::ExportIdRequest *request,
+			    exportService::ExportIoStatsResponse *response)
+{
+	return handle_export_iostats(request, response, grpc_export_get_9p_io);
+}
+
+/**
+ * @brief Return 9P protocol operation statistics for a specific export.
+ */
+grpc::Status
+ExportStatsService::Get9pOpStats(grpc::ServerContext *context,
+				 const nfsProtoUtil::Export9pOpRequest *request,
+				 exportService::ExportOpStatsResponse *response)
+{
+	struct grpc_op_stats op_out{};
+	struct timespec time_out{};
+	bool success = false;
+	char errmsg[256];
+
+	grpc_export_get_9p_opstats(request->export_id(),
+				   request->op_name().c_str(), &op_out,
+				   &time_out, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(time_out.tv_sec);
+	time->set_tv_nsec(time_out.tv_nsec);
+
+	auto *op = response->mutable_op_stats();
+	op->set_total_ops(op_out.total_ops);
+	op->set_errors(op_out.errors);
+
+	return grpc::Status::OK;
+}
+
 /**
  * @brief Retrieves the total NFS operation statistics from the server.
  */
@@ -1314,5 +1426,421 @@ grpc::Status ExportService::ShowExports(
 	}
 	PTHREAD_RWLOCK_unlock(lock);
 	response->set_success(true);
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief gRPC API to report global per-operation statistics for
+ * all supported protocols.
+ * Returns operation names and their invocation counts.
+ */
+grpc::Status ExportStatsService::GetFastOPS(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::GetFastOPSResponse *response)
+{
+	grpc_fast_ops stats{};
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_get_fast_ops(&stats, &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	for (uint32_t i = 0; i < stats.num_protocols; i++) {
+		auto *proto = response->add_protocols();
+		proto->set_protocol(stats.protocols[i].protocol);
+
+		for (uint32_t j = 0; j < stats.protocols[i].num_ops; j++) {
+			auto *op = proto->add_operations();
+			op->set_operation(stats.protocols[i].ops[j].op_name);
+			op->set_count(stats.protocols[i].ops[j].count);
+		}
+	}
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief gRPC API to get NFSv3 Detailed stats
+ */
+grpc::Status ExportStatsService::GetFULLV3Stats(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::GetFULLV3StatsResponse *response)
+{
+	grpc_full_stats stats{};
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_get_v3_full_stats(&stats, &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	for (uint32_t i = 0; i < stats.num_ops; i++) {
+		auto *op = response->add_stats();
+
+		op->set_operation(stats.ops[i].op_name);
+		op->set_total(stats.ops[i].total);
+		op->set_errors(stats.ops[i].errors);
+		op->set_duplicates(stats.ops[i].dups);
+		op->set_avg_latency(stats.ops[i].avg_latency);
+		op->set_min_latency(stats.ops[i].min_latency);
+		op->set_max_latency(stats.ops[i].max_latency);
+	}
+
+	response->set_message(stats.message);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief gRPC API to get NFSv4 Detailed stats
+ */
+grpc::Status ExportStatsService::GetFULLV4Stats(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::GetFULLV4StatsResponse *response)
+{
+	grpc_full_stats stats{};
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_get_v4_full_stats(&stats, &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	for (uint32_t i = 0; i < stats.num_ops; i++) {
+		auto *op = response->add_stats();
+
+		op->set_operation(stats.ops[i].op_name);
+		op->set_total(stats.ops[i].total);
+		op->set_errors(stats.ops[i].errors);
+		op->set_avg_latency(stats.ops[i].avg_latency);
+		op->set_min_latency(stats.ops[i].min_latency);
+		op->set_max_latency(stats.ops[i].max_latency);
+	}
+
+	response->set_message(stats.message);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Reset all server statistics.
+ */
+grpc::Status ExportStatsService::ResetStats(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::ResetStatsResponse *response)
+{
+	struct timespec ts = {};
+	bool success = false;
+	char errmsg[128];
+
+	grpc_reset_stats(&ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief gRPC API to enable statistics counting
+ */
+grpc::Status ExportStatsService::EnableStats(
+	grpc::ServerContext *context,
+	const exportService::EnableStatsRequest *request,
+	exportService::EnableStatsResponse *response)
+{
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_enable_stats(static_cast<grpc_statistics_type>(
+				  request->stat_type()),
+			  &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief gRPC API to disable statistics counting
+ */
+grpc::Status ExportStatsService::DisableStats(
+	grpc::ServerContext *context,
+	const exportService::DisableStatsRequest *request,
+	exportService::DisableStatsResponse *response)
+{
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_disable_stats(static_cast<grpc_statistics_type>(
+				   request->stat_type()),
+			   &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	return grpc::Status::OK;
+}
+
+static void FillStatsStatus(const grpc_stats_status &src,
+			    exportService::StatsStatus *dst)
+{
+	dst->set_enabled(src.enabled);
+
+	auto *time = dst->mutable_time();
+	time->set_tv_sec(src.timestamp.tv_sec);
+	time->set_tv_nsec(src.timestamp.tv_nsec);
+}
+
+/**
+ * gRPC API to know current status of stats counting
+ */
+grpc::Status ExportStatsService::StatusStats(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::StatusStatsResponse *response)
+{
+	grpc_all_stats_status stats{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_status_stats(&stats, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	FillStatsStatus(stats.nfs, response->mutable_nfs());
+	FillStatsStatus(stats.fsal, response->mutable_fsal());
+
+#ifdef _USE_NFS3
+	FillStatsStatus(stats.v3_full, response->mutable_v3_full());
+#endif
+
+	FillStatsStatus(stats.v4_full, response->mutable_v4_full());
+
+	FillStatsStatus(stats.auth, response->mutable_auth());
+
+	FillStatsStatus(stats.client_all_ops,
+			response->mutable_client_all_ops());
+
+	return grpc::Status::OK;
+}
+
+static void FillAuthStats(const grpc_auth_stats &src,
+			  exportService::AuthStats *dst)
+{
+	dst->set_total(src.total);
+	dst->set_avg_latency(src.avg_latency);
+	dst->set_max_latency(src.max_latency);
+	dst->set_min_latency(src.min_latency);
+}
+
+/**
+ * gRPC API to collect Auth stats for group cache and winbind
+ */
+grpc::Status ExportStatsService::GetAuthStats(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::GetAuthStatsResponse *response)
+{
+	grpc_all_auth_stats stats{};
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_get_auth_stats(&stats, &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	FillAuthStats(stats.group_cache, response->mutable_group_cache());
+
+	FillAuthStats(stats.winbind, response->mutable_winbind());
+
+	FillAuthStats(stats.dns, response->mutable_dns());
+
+	return grpc::Status::OK;
+}
+
+/**
+ * gRPC API to show cache.
+ */
+grpc::Status ExportStatsService::ShowMDCache(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::ShowMDCacheResponse *response)
+{
+	grpc_mdcache_stats cache{};
+	grpc_lru_utilization lru{};
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_show_mdcache_stats(&cache, &lru, &ts, &success, errmsg,
+				sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	auto *cache_pb = response->mutable_cache();
+	cache_pb->set_cache_requests(cache.cache_requests);
+	cache_pb->set_cache_hits(cache.cache_hits);
+	cache_pb->set_cache_misses(cache.cache_misses);
+	cache_pb->set_cache_conflicts(cache.cache_conflicts);
+	cache_pb->set_cache_adds(cache.cache_adds);
+	cache_pb->set_cache_mapping(cache.cache_mapping);
+
+	auto *lru_pb = response->mutable_lru();
+	lru_pb->set_entries_used(lru.entries_used);
+	lru_pb->set_chunks_used(lru.chunks_used);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * Returns a summary of current file descriptor usage and configured
+ * FD watermarks.
+ */
+grpc::Status ExportStatsService::ShowFDUsage(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	exportService::ShowFDUsageResponse *response)
+{
+	grpc_fd_usage_summary summary{};
+	struct timespec ts{};
+	bool success{};
+	char errmsg[128];
+
+	grpc_show_fd_usage(&summary, &ts, &success, errmsg, sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(ts.tv_sec);
+	time->set_tv_nsec(ts.tv_nsec);
+
+	auto *pb = response->mutable_summary();
+
+	pb->set_fd_limit(summary.fd_limit);
+	pb->set_fd_lowat(summary.fd_lowat);
+	pb->set_fd_hiwat(summary.fd_hiwat);
+	pb->set_fd_hard_limit(summary.fd_hard_limit);
+
+	pb->set_fd_state(static_cast<exportService::FdState>(summary.fd_state));
+
+	pb->set_global_fds(summary.global_fds);
+	pb->set_state_fds(summary.state_fds);
+	pb->set_v4_open_states(summary.v4_open_states);
+
+	/* LRU utilization */
+	pb->set_open_fds(summary.open_fds);
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief gRPC API to retrieve detailed statistics for
+ * the specified export.
+ */
+grpc::Status ExportStatsService::GetExportDetails(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ExportIdRequest *request,
+	exportService::GetExportDetailsResponse *response)
+{
+	struct grpc_client_io_ops stats{};
+	bool success = false;
+	char errmsg[256];
+
+	grpc_get_export_details(request->export_id(), &stats, &success, errmsg,
+				sizeof(errmsg));
+
+	auto *status = response->mutable_status();
+	status->set_success(success);
+	status->set_error_msg(errmsg);
+
+	if (!success)
+		return grpc::Status::OK;
+
+	auto *time = response->mutable_time();
+	time->set_tv_sec(stats.time.tv_sec);
+	time->set_tv_nsec(stats.time.tv_nsec);
+
+#ifdef _USE_NFS3
+	fill_version_ce_stats_proto(&stats.v3, response->mutable_nfsv3());
+#endif
+
+	fill_version_ce_stats_proto(&stats.v40, response->mutable_nfsv40());
+
+	fill_version_ce_stats_proto(&stats.v41, response->mutable_nfsv41());
+
+	fill_version_ce_stats_proto(&stats.v42, response->mutable_nfsv42());
+
 	return grpc::Status::OK;
 }

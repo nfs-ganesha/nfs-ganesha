@@ -3269,6 +3269,70 @@ bool grpc_export_get_v42_io(uint16_t export_id, struct grpc_iostats *read_out,
 		"Export does not have any NFSv4.2 activity");
 }
 
+#ifdef _USE_9P
+/**
+ * @brief Retrieve per-export 9P I/O statistics.
+ */
+bool grpc_export_get_9p_io(uint16_t export_id, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len)
+{
+	return grpc_export_get_version_io(
+		export_id, read_out, write_out, time_out, success, errmsg,
+		errmsg_len, server_grpc_fill_9p_iostats,
+		"Export does not have any NFSv4.2 activity");
+}
+
+/**
+ * @brief Retrieve per-export 9P operation statistics.
+ */
+bool grpc_export_get_9p_opstats(uint32_t export_id, const char *opname,
+				struct grpc_op_stats *op_out,
+				struct timespec *time_out, bool *success,
+				char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *export = NULL;
+	struct export_stats *export_st = NULL;
+	uint8_t opcode;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	export = get_gsh_export(export_id);
+	if (export == NULL) {
+		*success = false;
+		errormsg = "No export available";
+		goto out;
+	}
+
+	export_st = container_of(export, struct export_stats, export);
+
+	if (export_st->st._9p == NULL) {
+		*success = false;
+		errormsg = "Export does not have any 9p activity";
+		goto out_put;
+	}
+
+	if (!grpc_parse_9p_opname(opname, &opcode)) {
+		*success = false;
+		errormsg = "arg not a known 9P operation";
+		goto out_put;
+	}
+
+	server_grpc_fill_9p_opstats(&export_st->st, opcode, op_out);
+
+	*time_out = export->last_update;
+
+out_put:
+	put_gsh_export(export);
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
+	return true;
+}
+#endif
+
 /**
  * @brief Retrieves NFSMon I/O statistics for the specified export.
  */
@@ -3412,6 +3476,487 @@ bool grpc_get_all_export_iostats(struct grpc_export_io_list *list,
 
 	snprintf(errmsg, errmsg_len, "OK");
 
+	return true;
+}
+
+/**
+ * @brief Retrieve NFSv4.1 layout statistics for an export.
+ */
+bool grpc_export_get_v41_layout_stats(uint32_t export_id,
+				      struct grpc_layouts *layouts,
+				      struct timespec *time_out, bool *success,
+				      char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *export;
+	struct export_stats *export_st;
+
+	*success = true;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		strlcpy(errmsg, "NFS stat counting disabled", errmsg_len);
+		return true;
+	}
+
+	export = get_gsh_export(export_id);
+
+	if (export == NULL) {
+		*success = false;
+		strlcpy(errmsg, "Export does not exist", errmsg_len);
+		return true;
+	}
+
+	export_st = container_of(export, struct export_stats, export);
+
+	if (!server_grpc_fill_v41_layouts(&export_st->st, layouts)) {
+		*success = false;
+		strlcpy(errmsg, "Export does not have any NFSv4.1 activity",
+			errmsg_len);
+		put_gsh_export(export);
+		return true;
+	}
+
+	*time_out = nfs_stats_time;
+
+	put_gsh_export(export);
+
+	return true;
+}
+
+/**
+ * @brief Retrieve NFSv4.2 layout statistics for an export.
+ */
+bool grpc_export_get_v42_layout_stats(uint32_t export_id,
+				      struct grpc_layouts *layouts,
+				      struct timespec *time_out, bool *success,
+				      char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *export;
+	struct export_stats *export_st;
+
+	*success = true;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		strlcpy(errmsg, "NFS stat counting disabled", errmsg_len);
+		return true;
+	}
+
+	export = get_gsh_export(export_id);
+
+	if (export == NULL) {
+		*success = false;
+		strlcpy(errmsg, "Export does not exist", errmsg_len);
+		return true;
+	}
+
+	export_st = container_of(export, struct export_stats, export);
+
+	if (!server_grpc_fill_v42_layouts(&export_st->st, layouts)) {
+		*success = false;
+		strlcpy(errmsg, "Export does not have any NFSv4.2 activity",
+			errmsg_len);
+		put_gsh_export(export);
+		return true;
+	}
+
+	*time_out = nfs_stats_time;
+
+	put_gsh_export(export);
+
+	return true;
+}
+
+/**
+ * @brief Reset all server statistics.
+ *
+ * Resets FSAL, server, and authentication statistics, updates the
+ * statistics start timestamp, and returns the completion timestamp
+ * along with the operation status.
+ */
+bool grpc_reset_stats(struct timespec *time_out, bool *success, char *errmsg,
+		      size_t errmsg_len)
+{
+	*success = true;
+
+	reset_fsal_stats();
+	reset_server_stats();
+	reset_auth_stats();
+
+	nfs_init_stats_time();
+
+	now(time_out);
+
+	snprintf(errmsg, errmsg_len, "OK");
+
+	return true;
+}
+
+/**
+ * @brief Enable server statistics collection.
+ *
+ * Enables the requested statistics category and updates its
+ * corresponding start timestamp.
+ *
+ * @param stat_type     Statistics category to enable.
+ * @param time_out      Completion timestamp.
+ * @param success       Operation status.
+ * @param errmsg        Error message buffer.
+ * @param errmsg_len    Size of errmsg.
+ *
+ * @return true on successful execution.
+ */
+bool grpc_enable_stats(enum grpc_statistics_type stat_type,
+		       struct timespec *time_out, bool *success, char *errmsg,
+		       size_t errmsg_len)
+{
+	*success = true;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	switch (stat_type) {
+	case STATISTICS_TYPE_ALL:
+
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			nfs_param.core_param.enable_NFSSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFS server statistics counting");
+			now(&nfs_stats_time);
+		}
+
+		if (!nfs_param.core_param.enable_FSALSTATS) {
+			nfs_param.core_param.enable_FSALSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling FSAL statistics counting");
+			now(&fsal_stats_time);
+		}
+
+#ifdef _USE_NFS3
+		if (!nfs_param.core_param.enable_FULLV3STATS) {
+			nfs_param.core_param.enable_FULLV3STATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFSv3 Detailed statistics counting");
+			now(&v3_full_stats_time);
+		}
+#endif
+
+		if (!nfs_param.core_param.enable_FULLV4STATS) {
+			nfs_param.core_param.enable_FULLV4STATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFSv4 Detailed statistics counting");
+			now(&v4_full_stats_time);
+		}
+
+		if (!nfs_param.core_param.enable_AUTHSTATS) {
+			nfs_param.core_param.enable_AUTHSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling auth statistics counting");
+			now(&auth_stats_time);
+		}
+
+		if (!nfs_param.core_param.enable_CLNTALLSTATS) {
+			nfs_param.core_param.enable_CLNTALLSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling client all ops statistics counting");
+			now(&clnt_allops_stats_time);
+		}
+
+		break;
+
+	case STATISTICS_TYPE_NFS:
+
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			nfs_param.core_param.enable_NFSSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFS server statistics counting");
+			now(&nfs_stats_time);
+		}
+
+		break;
+
+	case STATISTICS_TYPE_FSAL:
+
+		if (!nfs_param.core_param.enable_FSALSTATS) {
+			nfs_param.core_param.enable_FSALSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling FSAL statistics counting");
+			now(&fsal_stats_time);
+		}
+
+		break;
+
+#ifdef _USE_NFS3
+	case STATISTICS_TYPE_V3_FULL:
+
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			*success = false;
+			strlcpy(errmsg, "First enable NFS stats counting",
+				errmsg_len);
+			return true;
+		}
+
+		if (!nfs_param.core_param.enable_FULLV3STATS) {
+			nfs_param.core_param.enable_FULLV3STATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFSv3 Detailed statistics counting");
+			now(&v3_full_stats_time);
+		}
+
+		break;
+#endif
+
+	case STATISTICS_TYPE_V4_FULL:
+
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			*success = false;
+			strlcpy(errmsg, "First enable NFS stats counting",
+				errmsg_len);
+			return true;
+		}
+
+		if (!nfs_param.core_param.enable_FULLV4STATS) {
+			nfs_param.core_param.enable_FULLV4STATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling NFSv4 Detailed statistics counting");
+			now(&v4_full_stats_time);
+		}
+
+		break;
+
+	case STATISTICS_TYPE_AUTH:
+
+		if (!nfs_param.core_param.enable_AUTHSTATS) {
+			nfs_param.core_param.enable_AUTHSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling auth statistics counting");
+			now(&auth_stats_time);
+		}
+
+		break;
+
+	case STATISTICS_TYPE_CLIENT_ALL_OPS:
+
+		if (!nfs_param.core_param.enable_NFSSTATS) {
+			*success = false;
+			strlcpy(errmsg, "First enable NFS stats counting",
+				errmsg_len);
+			return true;
+		}
+
+		if (!nfs_param.core_param.enable_CLNTALLSTATS) {
+			nfs_param.core_param.enable_CLNTALLSTATS = true;
+			LogEvent(COMPONENT_CONFIG,
+				 "Enabling client all ops statistics counting");
+			now(&clnt_allops_stats_time);
+		}
+
+		break;
+
+	default:
+
+		*success = false;
+		strlcpy(errmsg, "Invalid statistics type", errmsg_len);
+		return true;
+	}
+
+	now(time_out);
+
+	return true;
+}
+
+/**
+ * @brief Disable statistics collection.
+ *
+ * Disables the requested statistics category, resets the associated
+ * statistics counters, and returns the completion timestamp.
+ *
+ * @param stat_type     Statistics type to disable.
+ * @param time_out      Completion timestamp.
+ * @param success       Operation status.
+ * @param errmsg        Error message buffer.
+ * @param errmsg_len    Size of errmsg.
+ *
+ * @return true on successful execution.
+ */
+bool grpc_disable_stats(uint32_t stat_type, struct timespec *time_out,
+			bool *success, char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	switch (stat_type) {
+	case STATISTICS_TYPE_ALL:
+
+		nfs_param.core_param.enable_NFSSTATS = false;
+		nfs_param.core_param.enable_FSALSTATS = false;
+#ifdef _USE_NFS3
+		nfs_param.core_param.enable_FULLV3STATS = false;
+#endif
+		nfs_param.core_param.enable_FULLV4STATS = false;
+		nfs_param.core_param.enable_AUTHSTATS = false;
+		nfs_param.core_param.enable_CLNTALLSTATS = false;
+
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling NFS server statistics counting");
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling FSAL statistics counting");
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling auth statistics counting");
+
+		reset_fsal_stats();
+		reset_server_stats();
+		reset_auth_stats();
+		break;
+
+	case STATISTICS_TYPE_NFS:
+
+		nfs_param.core_param.enable_NFSSTATS = false;
+#ifdef _USE_NFS3
+		nfs_param.core_param.enable_FULLV3STATS = false;
+#endif
+		nfs_param.core_param.enable_FULLV4STATS = false;
+		nfs_param.core_param.enable_CLNTALLSTATS = false;
+
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling NFS server statistics counting");
+
+		reset_server_stats();
+		break;
+
+	case STATISTICS_TYPE_FSAL:
+
+		nfs_param.core_param.enable_FSALSTATS = false;
+
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling FSAL statistics counting");
+
+		reset_fsal_stats();
+		break;
+
+#ifdef _USE_NFS3
+	case STATISTICS_TYPE_V3_FULL:
+
+		nfs_param.core_param.enable_FULLV3STATS = false;
+
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling NFSv3 detailed statistics counting");
+
+		reset_v3_full_stats();
+		break;
+#endif
+
+	case STATISTICS_TYPE_V4_FULL:
+
+		nfs_param.core_param.enable_FULLV4STATS = false;
+
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling NFSv4 detailed statistics counting");
+
+		reset_v4_full_stats();
+		break;
+
+	case STATISTICS_TYPE_AUTH:
+
+		nfs_param.core_param.enable_AUTHSTATS = false;
+
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling auth statistics counting");
+
+		reset_auth_stats();
+		break;
+
+	case STATISTICS_TYPE_CLIENT_ALL_OPS:
+
+		nfs_param.core_param.enable_CLNTALLSTATS = false;
+
+		LogEvent(COMPONENT_CONFIG,
+			 "Disabling client all ops statistics counting");
+
+		reset_clnt_allops_stats();
+		break;
+
+	default:
+		snprintf(errmsg, errmsg_len, "Unknown statistics type");
+		return true;
+	}
+
+	*success = true;
+
+	now(time_out);
+
+	return true;
+}
+
+/**
+ * @brief Return the current statistics collection status.
+ *
+ * Retrieves the enable/disable state and corresponding start
+ * timestamp for all supported statistics categories.
+ *
+ * @param status_out    Output statistics status.
+ * @param success       Operation status.
+ * @param errmsg        Error message buffer.
+ * @param errmsg_len    Size of errmsg.
+ *
+ * @return true on successful execution.
+ */
+bool grpc_status_stats(struct grpc_all_stats_status *status_out, bool *success,
+		       char *errmsg, size_t errmsg_len)
+{
+	*success = true;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	status_out->nfs.enabled = nfs_param.core_param.enable_NFSSTATS;
+	status_out->nfs.timestamp = nfs_stats_time;
+
+	status_out->fsal.enabled = nfs_param.core_param.enable_FSALSTATS;
+	status_out->fsal.timestamp = fsal_stats_time;
+
+#ifdef _USE_NFS3
+	status_out->v3_full.enabled = nfs_param.core_param.enable_FULLV3STATS;
+	status_out->v3_full.timestamp = v3_full_stats_time;
+#endif
+
+	status_out->v4_full.enabled = nfs_param.core_param.enable_FULLV4STATS;
+	status_out->v4_full.timestamp = v4_full_stats_time;
+
+	status_out->auth.enabled = nfs_param.core_param.enable_AUTHSTATS;
+	status_out->auth.timestamp = auth_stats_time;
+
+	status_out->client_all_ops.enabled =
+		nfs_param.core_param.enable_CLNTALLSTATS;
+	status_out->client_all_ops.timestamp = clnt_allops_stats_time;
+
+	return true;
+}
+
+/**
+ * @brief Retrieve detailed per-protocol statistics for an export.
+ */
+bool grpc_get_export_details(uint32_t export_id, struct grpc_client_io_ops *out,
+			     bool *success, char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *export;
+	struct export_stats *exp_st;
+	const char *errormsg = "OK";
+
+	*success = true;
+
+	export = get_gsh_export(export_id);
+	if (export == NULL) {
+		*success = false;
+		errormsg = "Export ID not found";
+		goto out;
+	}
+
+	exp_st = container_of(export, struct export_stats, export);
+
+	server_grpc_fill_ce_stats(&exp_st->st, &export->last_update, out);
+	put_gsh_export(export);
+
+out:
+	snprintf(errmsg, errmsg_len, "%s", errormsg);
 	return true;
 }
 /** @} */

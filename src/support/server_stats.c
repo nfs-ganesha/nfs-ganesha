@@ -3829,13 +3829,12 @@ static void grpc_fill_v42_ce_stats(struct gsh_stats *st,
 }
 
 /**
- * @brief Extract multi-protocol client I/O op stats for gRPC
+ * @brief Extract multi-protocol client/export  I/O op stats for gRPC
  */
-bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
-				    struct timespec *client_time,
-				    struct grpc_client_io_ops *out)
+bool server_grpc_fill_ce_stats(struct gsh_stats *st, struct timespec *time,
+			       struct grpc_client_io_ops *out)
 {
-	out->time = *client_time;
+	out->time = *time;
 
 #ifdef _USE_NFS3
 	grpc_fill_version_ce_stats(st, &out->v3, grpc_has_v3_stats,
@@ -3848,6 +3847,16 @@ bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
 	grpc_fill_version_ce_stats(st, &out->v42, grpc_has_v42_stats,
 				   grpc_fill_v42_ce_stats);
 	return true;
+}
+
+/**
+ * @brief Extract multi-protocol client I/O op stats for gRPC
+ */
+bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
+				    struct timespec *client_time,
+				    struct grpc_client_io_ops *out)
+{
+	return server_grpc_fill_ce_stats(st, client_time, out);
 }
 
 /**
@@ -4193,4 +4202,212 @@ void server_grpc_fill_stats_summary(struct gsh_stats *st,
 	*total_ops_out = tot_ops;
 }
 
+ /*
+ * @brief Collect global fast operation statistics for all supported protocols.
+ */
+bool grpc_get_fast_ops(struct grpc_fast_ops *fast_ops,
+		       struct timespec *time_out, bool *success, char *errmsg,
+		       size_t errmsg_len)
+{
+	uint32_t p = 0;
+
+	*success = true;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	if (!nfs_param.core_param.enable_NFSSTATS) {
+		*success = false;
+		strlcpy(errmsg, "NFS stat counting disabled", errmsg_len);
+		return true;
+	}
+
+	*time_out = nfs_stats_time;
+
+#ifdef _USE_NFS3
+	struct grpc_protocol_fast_ops *proto = &fast_ops->protocols[p++];
+
+	strlcpy(proto->protocol, "NFSv3", sizeof(proto->protocol));
+
+	for (int i = 0; i < NFS_V3_NB_COMMAND; i++) {
+		if (global_st.v3.op[i] == 0)
+			continue;
+
+		struct grpc_fast_op *op = &proto->ops[proto->num_ops++];
+
+		strlcpy(op->op_name, nfsproc3_to_str(i), sizeof(op->op_name));
+		op->count = global_st.v3.op[i];
+	}
+#endif
+
+	{
+		struct grpc_protocol_fast_ops *proto =
+			&fast_ops->protocols[p++];
+		strlcpy(proto->protocol, "NFSv4", sizeof(proto->protocol));
+
+		for (int i = 0; i < NFS4_OP_LAST_ONE; i++) {
+			if (global_st.v4.op[i] == 0)
+				continue;
+
+			struct grpc_fast_op *op = &proto->ops[proto->num_ops++];
+
+			strlcpy(op->op_name, nfsop4_to_str(i),
+				sizeof(op->op_name));
+
+			op->count = global_st.v4.op[i];
+		}
+	}
+
+#ifdef _USE_NLM
+	{
+		struct grpc_protocol_fast_ops *proto =
+			&fast_ops->protocols[p++];
+
+		strlcpy(proto->protocol, "NLM", sizeof(proto->protocol));
+
+		for (int i = 0; i < NLM_V4_NB_OPERATION; i++) {
+			if (global_st.lm.op[i] == 0)
+				continue;
+
+			struct grpc_fast_op *op = &proto->ops[proto->num_ops++];
+
+			strlcpy(op->op_name, optnlm[i].name,
+				sizeof(op->op_name));
+
+			op->count = global_st.lm.op[i];
+		}
+	}
+#endif
+
+#ifdef _USE_NFS3
+	{
+		struct grpc_protocol_fast_ops *proto =
+			&fast_ops->protocols[p++];
+
+		strlcpy(proto->protocol, "MNT", sizeof(proto->protocol));
+
+		for (int i = 0; i < MNT_V3_NB_COMMAND; i++) {
+			if (global_st.mn.op[i] == 0)
+				continue;
+
+			struct grpc_fast_op *op = &proto->ops[proto->num_ops++];
+
+			strlcpy(op->op_name, optmnt[i].name,
+				sizeof(op->op_name));
+
+			op->count = global_st.mn.op[i];
+		}
+	}
+#endif
+
+#ifdef _USE_RQUOTA
+	{
+		struct grpc_protocol_fast_ops *proto =
+			&fast_ops->protocols[p++];
+
+		strlcpy(proto->protocol, "RQUOTA", sizeof(proto->protocol));
+
+		for (int i = 0; i < RQUOTA_NB_COMMAND; i++) {
+			if (global_st.qt.op[i] == 0)
+				continue;
+
+			struct grpc_fast_op *op = &proto->ops[proto->num_ops++];
+
+			strlcpy(op->op_name, optqta[i].name,
+				sizeof(op->op_name));
+
+			op->count = global_st.qt.op[i];
+		}
+	}
+#endif
+
+	fast_ops->num_protocols = p;
+	return true;
+}
+
+/**
+ * Populate detailed NFS operation statistics into a gRPC-friendly format.
+ */
+static void fill_grpc_full_stats(struct grpc_full_stats *stats_out, int num_ops,
+				 const char *(*op_to_str)(int),
+				 struct proto_op *stats, bool has_dups)
+{
+	uint64_t op_counter = 0;
+	int op;
+
+	stats_out->num_ops = 0;
+
+	for (op = 1; op < num_ops; op++) {
+		if (!stats[op].total)
+			continue;
+
+		struct grpc_full_op_stats *entry =
+			&stats_out->ops[stats_out->num_ops++];
+
+		strlcpy(entry->op_name, op_to_str(op), sizeof(entry->op_name));
+
+		entry->total = stats[op].total;
+		entry->errors = stats[op].errors;
+
+		entry->dups = has_dups ? stats[op].dups : 0;
+
+		entry->avg_latency = (double)stats[op].latency.latency /
+				     stats[op].total * 0.000001;
+
+		entry->min_latency = (double)stats[op].latency.min * 0.000001;
+
+		entry->max_latency = (double)stats[op].latency.max * 0.000001;
+
+		op_counter += stats[op].total;
+	}
+
+	strlcpy(stats_out->message, op_counter ? "OK" : "None",
+		sizeof(stats_out->message));
+}
+
+/**
+ * @brief Retrieve detailed NFSv3 operation statistics.
+ */
+bool grpc_get_v3_full_stats(struct grpc_full_stats *stats_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	if (!nfs_param.core_param.enable_FULLV3STATS) {
+		strlcpy(errmsg, "v3_full stats disabled", errmsg_len);
+		return true;
+	}
+
+	fill_grpc_full_stats(stats_out, NFS_V3_NB_COMMAND, nfsproc3_to_str,
+			     v3_full_stats, true);
+
+	*time_out = v3_full_stats_time;
+	*success = true;
+
+	return true;
+}
+
+/**
+ * @brief Retrieve detailed NFSv4 operation statistics.
+ */
+bool grpc_get_v4_full_stats(struct grpc_full_stats *stats_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len)
+{
+	*success = false;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	if (!nfs_param.core_param.enable_FULLV4STATS) {
+		strlcpy(errmsg, "v4_full stats disabled", errmsg_len);
+		return true;
+	}
+
+	fill_grpc_full_stats(stats_out, NFS_V42_NB_OPERATION, nfsop4_to_str,
+			     v4_full_stats, false);
+
+	*time_out = v4_full_stats_time;
+	*success = true;
+
+	return true;
+}
 /** @} */

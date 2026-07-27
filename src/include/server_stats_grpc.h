@@ -24,16 +24,17 @@
  */
 
 /*
- * gRPC-safe declarations for client statistics.
+ * gRPC-safe declarations for client and export statistics.
  *
- * This header is the C/C++ boundary for cltmgr stats RPCs. C++ gRPC
- * handlers must include this file instead of server_stats_private.h,
+ * This header is the C/C++ boundary for cltmgr and exportmgr stats RPCs.
+ * C++ gRPC handlers must include this file instead of server_stats_private.h,
  * which is not C++-safe (uses the C++ keyword "export" as a field name
  * and pulls in D-Bus types).
  *
  * Implementation lives in:
  *   - support/server_stats.c  (stats field extraction)
  *   - support/client_mgr.c    (client lookup and orchestration)
+ *   - support/export_mgr.c    (export lookup and orchestration)
  */
 
 #ifndef SERVER_STATS_GRPC_H
@@ -251,6 +252,105 @@ struct grpc_show_clients {
 	struct grpc_client_info *clients; /* heap; free via helper */
 };
 
+#define MAX_FAST_OPS 512
+
+struct grpc_fast_op {
+	char op_name[64];
+	uint64_t count;
+};
+
+struct grpc_protocol_fast_ops {
+	char protocol[16];
+	uint32_t num_ops;
+	struct grpc_fast_op ops[MAX_FAST_OPS];
+};
+
+struct grpc_fast_ops {
+	uint32_t num_protocols;
+	struct grpc_protocol_fast_ops protocols[5];
+};
+
+struct grpc_full_op_stats {
+	char op_name[32];
+	uint64_t total;
+	uint64_t errors;
+	uint64_t dups; /* Used only by NFSv3 */
+	double avg_latency;
+	double min_latency;
+	double max_latency;
+};
+
+struct grpc_full_stats {
+	uint32_t num_ops;
+	struct grpc_full_op_stats ops[NFS_V42_NB_OPERATION];
+	char message[32];
+};
+
+struct grpc_stats_status {
+	bool enabled;
+	struct timespec timestamp;
+};
+
+struct grpc_all_stats_status {
+	struct grpc_stats_status nfs;
+	struct grpc_stats_status fsal;
+#ifdef _USE_NFS3
+	struct grpc_stats_status v3_full;
+#endif
+	struct grpc_stats_status v4_full;
+	struct grpc_stats_status auth;
+	struct grpc_stats_status client_all_ops;
+};
+
+enum grpc_statistics_type {
+	STATISTICS_TYPE_ALL = 0,
+	STATISTICS_TYPE_NFS = 1,
+	STATISTICS_TYPE_FSAL = 2,
+	STATISTICS_TYPE_V3_FULL = 3,
+	STATISTICS_TYPE_V4_FULL = 4,
+	STATISTICS_TYPE_AUTH = 5,
+	STATISTICS_TYPE_CLIENT_ALL_OPS = 6,
+};
+
+struct grpc_auth_stats {
+	uint64_t total;
+	double avg_latency;
+	double max_latency;
+	double min_latency;
+};
+
+struct grpc_all_auth_stats {
+	struct grpc_auth_stats group_cache;
+	struct grpc_auth_stats winbind;
+	struct grpc_auth_stats dns;
+};
+
+struct grpc_mdcache_stats {
+	uint64_t cache_requests;
+	uint64_t cache_hits;
+	uint64_t cache_misses;
+	uint64_t cache_conflicts;
+	uint64_t cache_adds;
+	uint64_t cache_mapping;
+};
+
+struct grpc_lru_utilization {
+	uint64_t entries_used;
+	uint64_t chunks_used;
+};
+
+struct grpc_fd_usage_summary {
+	uint32_t fd_limit;
+	uint32_t fd_lowat;
+	uint32_t fd_hiwat;
+	uint32_t fd_hard_limit;
+	uint32_t fd_state;
+	uint32_t global_fds;
+	uint32_t state_fds;
+	uint64_t v4_open_states;
+	uint64_t open_fds;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -308,6 +408,9 @@ bool server_grpc_fill_9p_opstats(struct gsh_stats *st, uint8_t opcode,
 bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
 				    struct timespec *client_time,
 				    struct grpc_client_io_ops *out);
+
+bool server_grpc_fill_ce_stats(struct gsh_stats *st, struct timespec *time,
+			       struct grpc_client_io_ops *out);
 
 struct grpc_client_allops *server_grpc_fill_client_allops(
 	struct gsh_stats *st, struct gsh_clnt_allops_stats *c_all,
@@ -390,6 +493,7 @@ bool grpc_get_global_total_ops(struct grpc_global_total_ops *ops,
 bool grpc_get_all_export_iostats(struct grpc_export_io_list *list,
 				 struct timespec *time_out, bool *success,
 				 char *errmsg, size_t errmsg_len);
+
 bool grpc_cltmgr_get_v41_layouts(const char *ipaddr,
 				 struct grpc_layouts *layouts_out,
 				 struct timespec *time_out, bool *success,
@@ -455,6 +559,71 @@ bool grpc_cltmgr_disconnect_nfsv41_client(const char *ipaddr,
 					  bool *success, char *errmsg,
 					  size_t errmsg_len);
 
+bool grpc_export_get_v41_layout_stats(uint32_t export_id,
+				      struct grpc_layouts *layouts,
+				      struct timespec *time_out, bool *success,
+				      char *errmsg, size_t errmsg_len);
+
+bool grpc_export_get_v42_layout_stats(uint32_t export_id,
+				      struct grpc_layouts *layouts,
+				      struct timespec *time_out, bool *success,
+				      char *errmsg, size_t errmsg_len);
+
+bool grpc_export_get_9p_io(uint16_t export_id, struct grpc_iostats *read,
+			   struct grpc_iostats *write,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len);
+
+bool grpc_export_get_9p_opstats(uint32_t export_id, const char *opname,
+				struct grpc_op_stats *op_out,
+				struct timespec *time_out, bool *success,
+				char *errmsg, size_t errmsg_len);
+
+bool grpc_export_get_v3_io(uint16_t exportid, struct grpc_iostats *read_out,
+			   struct grpc_iostats *write_out,
+			   struct timespec *time_out, bool *success,
+			   char *errmsg, size_t errmsg_len);
+
+bool grpc_get_fast_ops(struct grpc_fast_ops *fast_ops,
+		       struct timespec *time_out, bool *success, char *errmsg,
+		       size_t errmsg_len);
+
+bool grpc_get_v3_full_stats(struct grpc_full_stats *stats_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len);
+
+bool grpc_get_v4_full_stats(struct grpc_full_stats *stats_out,
+			    struct timespec *time_out, bool *success,
+			    char *errmsg, size_t errmsg_len);
+
+bool grpc_reset_stats(struct timespec *time_out, bool *success, char *errmsg,
+		      size_t errmsg_len);
+
+bool grpc_enable_stats(enum grpc_statistics_type stat_type,
+		       struct timespec *time_out, bool *success, char *errmsg,
+		       size_t errmsg_len);
+
+bool grpc_disable_stats(uint32_t stat_type, struct timespec *time_out,
+			bool *success, char *errmsg, size_t errmsg_len);
+
+bool grpc_status_stats(struct grpc_all_stats_status *status_out, bool *success,
+		       char *errmsg, size_t errmsg_len);
+
+bool grpc_get_auth_stats(struct grpc_all_auth_stats *stats_out,
+			 struct timespec *time_out, bool *success, char *errmsg,
+			 size_t errmsg_len);
+
+bool grpc_show_mdcache_stats(struct grpc_mdcache_stats *cache_out,
+			     struct grpc_lru_utilization *lru_out,
+			     struct timespec *time_out, bool *success,
+			     char *errmsg, size_t errmsg_len);
+
+bool grpc_get_export_details(uint32_t export_id, struct grpc_client_io_ops *out,
+			     bool *success, char *errmsg, size_t errmsg_len);
+
+bool grpc_show_fd_usage(struct grpc_fd_usage_summary *summary_out,
+			struct timespec *time_out, bool *success, char *errmsg,
+			size_t errmsg_len);
 #ifdef __cplusplus
 }
 #endif

@@ -63,6 +63,7 @@
 #include "idmapper.h"
 #include "uid2grp.h"
 #include "server_stats_private.h"
+#include "server_stats_grpc.h"
 #include "idmapper_monitoring.h"
 #include "pwnam_wrappers.h"
 
@@ -1662,4 +1663,51 @@ struct gsh_dbus_method auth_statistics = {
 #endif
 #endif
 
+static void fill_auth_stats(struct auth_stats *src, pthread_rwlock_t *lock,
+			    struct grpc_auth_stats *dst)
+{
+	PTHREAD_RWLOCK_rdlock(lock);
+
+	dst->total = src->total;
+
+	if (src->total > 0) {
+		dst->avg_latency = (double)src->latency / src->total * 0.000001;
+		dst->max_latency = (double)src->max * 0.000001;
+		dst->min_latency = (double)src->min * 0.000001;
+	} else {
+		dst->avg_latency = 0.0;
+		dst->max_latency = 0.0;
+		dst->min_latency = 0.0;
+	}
+
+	PTHREAD_RWLOCK_unlock(lock);
+}
+
+/**
+ * GRPC method to collect Auth stats for group cache and winbind
+ */
+bool grpc_get_auth_stats(struct grpc_all_auth_stats *stats_out,
+			 struct timespec *time_out, bool *success, char *errmsg,
+			 size_t errmsg_len)
+{
+	*success = false;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	if (!nfs_param.core_param.enable_AUTHSTATS) {
+		strlcpy(errmsg, "auth related stats disabled", errmsg_len);
+		return true;
+	}
+
+	fill_auth_stats(&gc_auth_stats, &gc_auth_lock, &stats_out->group_cache);
+
+	fill_auth_stats(&winbind_auth_stats, &winbind_auth_lock,
+			&stats_out->winbind);
+
+	fill_auth_stats(&dns_auth_stats, &dns_auth_lock, &stats_out->dns);
+
+	*time_out = auth_stats_time;
+	*success = true;
+
+	return true;
+}
 /** @} */

@@ -205,3 +205,9 @@ message ClientInfo
 	repeated StateStatEntry state_stats = 4;
 	Timestamp last_update = 5;
 }
+// Input for Get9pOpStats; mirrors D-Bus EXPORT_ID_ARG + _9P_OP_ARG.
+message Export9pOpRequest
+{
+	uint32 export_id = 1;
+	string op_name = 2;
+}

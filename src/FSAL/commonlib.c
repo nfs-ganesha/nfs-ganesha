@@ -74,6 +74,9 @@
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #endif
+#ifdef USE_GRPC
+#include "server_stats_grpc.h"
+#endif
 
 /* RW lock for fsal_registration_list and 'registered' state */
 static pthread_rwlock_t fsal_registration_lock = PTHREAD_RWLOCK_INITIALIZER;
@@ -3915,4 +3918,40 @@ void fd_usage_summarize_dbus(DBusMessageIter *iter)
 }
 #endif /* USE_DBUS */
 
+#ifdef USE_GRPC
+/**
+ * @brief Retrieve the current file descriptor usage summary.
+ */
+bool grpc_show_fd_usage(struct grpc_fd_usage_summary *summary_out,
+			struct timespec *time_out, bool *success, char *errmsg,
+			size_t errmsg_len)
+{
+	*success = true;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	now(time_out);
+
+	summary_out->fd_limit =
+		atomic_fetch_uint32_t(&fd_lru_state.fds_system_imposed);
+
+	summary_out->fd_lowat = atomic_fetch_uint32_t(&fd_lru_state.fds_lowat);
+
+	summary_out->fd_hiwat = atomic_fetch_uint32_t(&fd_lru_state.fds_hiwat);
+
+	summary_out->fd_hard_limit =
+		atomic_fetch_uint32_t(&fd_lru_state.fds_hard_limit);
+
+	summary_out->fd_state = atomic_fetch_uint32_t(&fd_lru_state.fd_state);
+
+	summary_out->global_fds = atomic_fetch_int32_t(&fsal_fd_global_counter);
+
+	summary_out->state_fds = atomic_fetch_int32_t(&fsal_fd_state_counter);
+
+	summary_out->v4_open_states = get_total_count_of_open_states();
+
+	summary_out->open_fds = atomic_fetch_int32_t(&fsal_fd_global_counter);
+
+	return true;
+}
+#endif /* USE_GRPC */
 /** @} */

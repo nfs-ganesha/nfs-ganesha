@@ -89,6 +89,207 @@ message GetNFSIOResponse
 	repeated ExportIOEntry entries = 3;
 }
 
+message ExportLayoutsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.LayoutStats getdevinfo = 3;
+	nfsProtoUtil.LayoutStats layout_get = 4;
+	nfsProtoUtil.LayoutStats layout_commit = 5;
+	nfsProtoUtil.LayoutStats layout_return = 6;
+	nfsProtoUtil.LayoutStats layout_recall = 7;
+}
+
+message ExportOpStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	nfsProtoUtil.OpStats op_stats = 3;
+}
+
+message FastOperation
+{
+	string operation = 1;
+	uint64 count = 2;
+}
+
+message ProtocolFastOps
+{
+	string protocol = 1;
+	repeated FastOperation operations = 2;
+}
+
+message GetFastOPSResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	repeated ProtocolFastOps protocols = 3;
+}
+
+message FullOperationStats
+{
+	string operation = 1;
+	uint64 total = 2;
+	uint64 errors = 3;
+	// Only used for NFSv3. Will be 0 for NFSv4.
+	uint64 duplicates = 4;
+	double avg_latency = 5;
+	double min_latency = 6;
+	double max_latency = 7;
+}
+
+message GetFULLV3StatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	repeated FullOperationStats stats = 3;
+	string message = 4;
+}
+
+message GetFULLV4StatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	repeated FullOperationStats stats = 3;
+	string message = 4;
+}
+
+message ResetStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+}
+
+enum StatisticsType {
+	STATISTICS_TYPE_ALL = 0;
+	STATISTICS_TYPE_NFS = 1;
+	STATISTICS_TYPE_FSAL = 2;
+	STATISTICS_TYPE_V3_FULL = 3;
+	STATISTICS_TYPE_V4_FULL = 4;
+	STATISTICS_TYPE_AUTH = 5;
+	STATISTICS_TYPE_CLIENT_ALL_OPS = 6;
+}
+
+message EnableStatsRequest
+{
+	StatisticsType stat_type = 1;
+}
+
+message EnableStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+}
+
+message DisableStatsRequest
+{
+	StatisticsType stat_type = 1;
+}
+
+message DisableStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+}
+
+message StatsStatus
+{
+	bool enabled = 1;
+	nfsProtoUtil.Timestamp time = 2;
+}
+
+message StatusStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	StatsStatus nfs = 2;
+	StatsStatus fsal = 3;
+	StatsStatus v3_full = 4;
+	StatsStatus v4_full = 5;
+	StatsStatus auth = 6;
+	StatsStatus client_all_ops = 7;
+}
+
+message AuthStats
+{
+	uint64 total = 1;
+	double avg_latency = 2;
+	double max_latency = 3;
+	double min_latency = 4;
+}
+
+message GetAuthStatsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	AuthStats group_cache = 3;
+	AuthStats winbind = 4;
+	AuthStats dns = 5;
+}
+
+enum FdState {
+	FD_LOW = 0;
+	FD_MIDDLE = 1;
+	FD_HIGH = 2;
+	FD_LIMIT = 3;
+}
+
+message MDCacheStats
+{
+	uint64 cache_requests = 1;
+	uint64 cache_hits = 2;
+	uint64 cache_misses = 3;
+	uint64 cache_conflicts = 4;
+	uint64 cache_adds = 5;
+	uint64 cache_mapping = 6;
+}
+
+message LruUtilization
+{
+	uint64 entries_used = 1;
+	uint64 chunks_used = 2;
+}
+
+message ShowMDCacheResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	MDCacheStats cache = 3;
+	LruUtilization lru = 4;
+}
+
+message FDUsageSummary
+{
+	uint32 fd_limit = 1;
+	uint32 fd_lowat = 2;
+	uint32 fd_hiwat = 3;
+	uint32 fd_hard_limit = 4;
+	FdState fd_state = 5;
+	uint32 global_fds = 6;
+	uint32 state_fds = 7;
+	uint64 v4_open_states = 8;
+
+	// LRU utilization
+	uint64 open_fds = 9;
+}
+
+message ShowFDUsageResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+	FDUsageSummary summary = 3;
+}
+
+message GetExportDetailsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	nfsProtoUtil.Timestamp time = 2;
+
+	nfsProtoUtil.VersionCeStats nfsv3 = 3;
+	nfsProtoUtil.VersionCeStats nfsv40 = 4;
+	nfsProtoUtil.VersionCeStats nfsv41 = 5;
+	nfsProtoUtil.VersionCeStats nfsv42 = 6;
+}
+
 // Per-Export NFS version I/O statistics
 service ExportStats
 {
@@ -107,6 +308,32 @@ service ExportStats
 	rpc GetGlobalOPS(nfsProtoUtil.EmptyRequest)
 		returns (GetGlobalOPSResponse);
 	rpc GetNFSIO(nfsProtoUtil.EmptyRequest) returns (GetNFSIOResponse);
+	rpc GetNFSv41Layouts(nfsProtoUtil.ExportIdRequest)
+		returns (ExportLayoutsResponse);
+	rpc GetNFSv42Layouts(nfsProtoUtil.ExportIdRequest)
+		returns (ExportLayoutsResponse);
+	rpc Get9pIO(nfsProtoUtil.ExportIdRequest)
+		returns (ExportIoStatsResponse);
+	rpc Get9pOpStats(nfsProtoUtil.Export9pOpRequest)
+		returns (ExportOpStatsResponse);
+	rpc GetFastOPS(nfsProtoUtil.EmptyRequest) returns (GetFastOPSResponse);
+	rpc GetFULLV3Stats(nfsProtoUtil.EmptyRequest)
+		returns (GetFULLV3StatsResponse);
+	rpc GetFULLV4Stats(nfsProtoUtil.EmptyRequest)
+		returns (GetFULLV4StatsResponse);
+	rpc ResetStats(nfsProtoUtil.EmptyRequest) returns (ResetStatsResponse);
+	rpc EnableStats(EnableStatsRequest) returns (EnableStatsResponse);
+	rpc DisableStats(DisableStatsRequest) returns (DisableStatsResponse);
+	rpc StatusStats(nfsProtoUtil.EmptyRequest)
+		returns (StatusStatsResponse);
+	rpc GetAuthStats(nfsProtoUtil.EmptyRequest)
+		returns (GetAuthStatsResponse);
+	rpc ShowMDCache(nfsProtoUtil.EmptyRequest)
+		returns (ShowMDCacheResponse);
+	rpc ShowFDUsage(nfsProtoUtil.EmptyRequest)
+		returns (ShowFDUsageResponse);
+	rpc GetExportDetails(nfsProtoUtil.ExportIdRequest)
+		returns (GetExportDetailsResponse);
 }
 
 message ExportClientEntry

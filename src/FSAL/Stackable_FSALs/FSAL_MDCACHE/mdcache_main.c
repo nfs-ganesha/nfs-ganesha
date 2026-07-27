@@ -48,6 +48,7 @@
 #include "FSAL/fsal_commonlib.h"
 #include "mdcache_hash.h"
 #include "mdcache_lru.h"
+#include "server_stats_grpc.h"
 
 pool_t *mdcache_entry_pool;
 
@@ -476,4 +477,33 @@ void mdcache_utilization(DBusMessageIter *iter)
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 #endif /* USE_DBUS */
+
+#ifdef USE_GRPC
+/**
+ * @brief Retrieve MDCACHE statistics.
+ */
+bool grpc_show_mdcache_stats(struct grpc_mdcache_stats *cache_out,
+			     struct grpc_lru_utilization *lru_out,
+			     struct timespec *time_out, bool *success,
+			     char *errmsg, size_t errmsg_len)
+{
+	*success = true;
+	strlcpy(errmsg, "OK", errmsg_len);
+
+	now(time_out);
+
+	/* MDCACHE statistics */
+	cache_out->cache_requests = cache_st.inode_req;
+	cache_out->cache_hits = cache_st.inode_hit;
+	cache_out->cache_misses = cache_st.inode_miss;
+	cache_out->cache_conflicts = cache_st.inode_conf;
+	cache_out->cache_adds = cache_st.inode_added;
+	cache_out->cache_mapping = cache_st.inode_mapping;
+
+	lru_out->entries_used = atomic_fetch_uint64_t(&lru_state.entries_used);
+	lru_out->chunks_used = atomic_fetch_uint64_t(&lru_state.chunks_used);
+
+	return true;
+}
+#endif /* USE_GRPC */
 /** @} */
