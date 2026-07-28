@@ -224,7 +224,7 @@ NFS_CORE_PARAM {}
 	mount_path_pseudo(bool, default false)
 
 	Enable_UDP(list, valid values [False, True, Mount, NLM, RQuota],
-		   default True)
+		   default Mount,RQuota)
 
 	Dbus_Name_Prefix(string, default NULL)
 

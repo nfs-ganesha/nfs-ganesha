@@ -225,12 +225,10 @@ Dbus_Name_Prefix
     single host. The prefix should be different for every ganesha instance. If
     this is set, the dbus name will be <prefix>.org.ganesha.nfsd
 
-Enable_UDP(list, valid values [False, True, Mount, NLM, RQuota], default True)
-    Whether to create UDP listeners for Mount, NFS, NLM, RQUOTA, and register
-    them with portmapper. Set to false, e.g., to run as non-root. Set to Mount
-    to enable only Mount UDP listener. Set to RQuota to enable only
-    RQUOTA UDP listener. Multiple values can be combined, e.g., Mount, RQuota
-    to enable only Mount and RQUOTA UDP listeners.
+Enable_UDP(list, valid values [False, True, Mount, NLM, RQuota], default Mount,RQuota)
+    Enable UDP listeners and portmapper registration. True enables all services.
+    False disables all UDP listeners. Otherwise, enable only the specified service(s).
+    Multiple values may be combined, e.g., Mount, RQuota.
 
 Max_Uid_To_Group_Reqs(uint32, range 0 to INT32_MAX, default 0)
     Maximum number of concurrent uid2grp requests that can be made by ganesha.
