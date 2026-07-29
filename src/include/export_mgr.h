@@ -340,11 +340,12 @@ struct gsh_export *get_gsh_export_by_tag(char *tag);
 bool mount_gsh_export(struct gsh_export *exp);
 void unmount_gsh_export(struct gsh_export *exp);
 void remove_gsh_export(uint16_t export_id);
-bool foreach_gsh_export(bool (*cb)(struct gsh_export *exp, void *state),
-			bool wrlock, void *state);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+bool foreach_gsh_export(bool (*cb)(struct gsh_export *exp, void *state),
+			bool wrlock, void *state);
 struct gsh_export *lookup_export_by_id(uint16_t export_id, char **errormsg);
 pthread_rwlock_t *get_export_id_lock(void);
 struct glist_head *get_exportlist_head(void);
@@ -451,5 +452,13 @@ struct export_extension_sw {
 void add_export_extension(struct export_extension *);
 void remove_export_extension(struct export_extension *);
 int load_export_extensions(config_file_t, struct config_error_type *);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void synchronize_exports(uint64_t generation);
+#ifdef __cplusplus
+}
+#endif
 #endif /* !EXPORT_MGR_H */
 /** @} */

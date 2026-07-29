@@ -4044,3 +4044,12 @@ void add_to_export_callbacks(struct gsh_export *export,
 	callback->sw = sw;
 	glist_add_tail(&export->exp_root_callbacks, &callback->link);
 }
+
+
+void synchronize_exports(uint64_t generation)
+{
+	prune_pseudofs_subtree(NULL, generation, false);
+	prune_defunct_exports(generation);
+	create_pseudofs();
+}
+

@@ -361,12 +361,30 @@ message DisplayExportResponse
 	string export_permissions = 7;
 }
 
+// Request for both Add & Update of an export
+message ExportRequest
+{
+	string file_path = 1; // Path to config file with EXPORT {...}
+	string export_expression = 2; // Expression to select parts of config
+}
+
+// Response for Add, Update and Removal of an export
+message ExportResponse
+{
+	bool success = 1;
+	string message = 2; // Success message or error details
+}
+
 service ExportService
 {
 	rpc DisplayExport(nfsProtoUtil.ExportIdRequest)
 		returns (DisplayExportResponse);
 	rpc ShowExports(nfsProtoUtil.EmptyRequest)
 		returns (ShowExportsResponse);
+	rpc AddExport(ExportRequest) returns (ExportResponse);
+	rpc RemoveExport(nfsProtoUtil.ExportIdRequest)
+		returns (ExportResponse);
+	rpc UpdateExport(ExportRequest) returns (ExportResponse);
 }
 
 message ExportInfo
