@@ -87,6 +87,14 @@ void remove_nlm_share(state_t *state)
 
 	PTHREAD_MUTEX_unlock(&owner->so_mutex);
 
+	state->state_owner = NULL;
+
+	/* Release the reference this state has held on its owner since
+	 * adding ssc_share_list (see matching inc_state_owner_ref() in
+	 * state_nlm_share()).
+	 */
+	dec_state_owner_ref(owner);
+
 	/* Release the state_t reference for active share. If extended FSAL
 	 * operations are supported, this will close the file when the last
 	 * reference is released.
@@ -297,6 +305,9 @@ state_status_t state_nlm_share(struct fsal_obj_handle *obj, int share_access,
 	inc_nsm_client_ref(client->slc_nsm_client);
 
 	PTHREAD_MUTEX_lock(&client->slc_nsm_client->ssc_mutex);
+
+	/* Get a reference to the owner */
+	inc_state_owner_ref(owner);
 
 	glist_add_tail(&client->slc_nsm_client->ssc_share_list,
 		       &nlm_share->share_perclient);
