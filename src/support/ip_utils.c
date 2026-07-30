@@ -78,24 +78,20 @@
  */
 uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 {
-	unsigned long addr_hash = 0;
-	unsigned long port_hash = 0;
+	uint64_t addr_hash = 0;
+	uint64_t port_hash = 0;
 
 	switch (addr->ss_family) {
 	case AF_INET: {
-		/* IPv4 addresses are hashed as if they are IPv4-mapped IPv6
-		 * addresses to ensure consistent hashing. An IPv4-mapped IPv6
-		 * address is ::ffff:a.b.c.d,
-		 * |------------------------------------------------------------|
-		 * | 80 bits = 10 bytes | 16 bits = 2 bytes | 32 bits = 4 bytes |
-		 * |------------------------------------------------------------|
-		 * |          0         |        ffff       |      a.b.c.d      |
-		 * |------------------------------------------------------------|
-		 * which results in a hash of: 0 ^ 0 ^ 0xffff ^ ipv4_addr.
+		/* Hash IPv4 in host order so it matches IPv4-mapped IPv6
+		 * (::ffff:a.b.c.d). With ntohl on each IPv6 word, the mapped
+		 * form's third word is 0xffff in host order on all endianness,
+		 * so:0xffff ^ ntohl(ipv4) == ntohl(va[0]) ^ ... ^ ntohl(va[3])
 		 */
 		struct sockaddr_in *paddr = (struct sockaddr_in *)addr;
-		addr_hash = 0xffff ^ paddr->sin_addr.s_addr;
-		port_hash = paddr->sin_port << 16;
+
+		addr_hash = 0xffff ^ ntohl(paddr->sin_addr.s_addr);
+		port_hash = (uint64_t)ntohs(paddr->sin_port) << 16;
 		break;
 	}
 	case AF_INET6: {
@@ -103,8 +99,9 @@ uint64_t hash_sockaddr(sockaddr_t *addr, bool ignore_port)
 		uint32_t *va;
 
 		va = (uint32_t *)&paddr->sin6_addr;
-		addr_hash = va[0] ^ va[1] ^ va[2] ^ va[3];
-		port_hash = paddr->sin6_port << 16;
+		addr_hash = ntohl(va[0]) ^ ntohl(va[1]) ^ ntohl(va[2]) ^
+			    ntohl(va[3]);
+		port_hash = (uint64_t)ntohs(paddr->sin6_port) << 16;
 		break;
 	}
 #ifdef RPC_VSOCK

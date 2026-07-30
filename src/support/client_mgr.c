@@ -242,7 +242,7 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 	struct gsh_client v;
 	int removed = 0;
 	void **cache_slot;
-	uint64_t hash = hash_sockaddr(client_ipaddr, true);
+	uint64_t hash;
 
 	/* Copy the search address into the key */
 	memcpy(&v.cl_addrbuf, client_ipaddr, sizeof(v.cl_addrbuf));
@@ -255,6 +255,10 @@ int remove_gsh_client(sockaddr_t *client_ipaddr)
 			removed = EBUSY;
 			goto out;
 		}
+		/* Invalidate using the stored address's hash so AF_INET and
+		 * IPv4-mapped AF_INET6 forms clear the same cache slot.
+		 */
+		hash = hash_sockaddr(&cl->cl_addrbuf, true);
 		cache_slot = (void **)&(client_by_ip.cache[eip_cache_offsetof(
 			&client_by_ip, hash)]);
 		cnode = (struct avltree_node *)atomic_fetch_voidptr(cache_slot);
