@@ -1892,6 +1892,12 @@ else(ENABLE_QOS)
   set(BCOND_QOS "%bcond_with")
 endif(ENABLE_QOS)
 
+if (ENABLE_CLUSTER_QOS)
+  set(BCOND_CLUSTER_QOS "%bcond_without")
+else(ENABLE_CLUSTER_QOS)
+  set(BCOND_CLUSTER_QOS "%bcond_with")
+endif(ENABLE_CLUSTER_QOS)
+
 if (USE_PRIO_INHERIT)
   set(BCOND_PRIO_INHERIT "%bcond_without")
 else(USE_PRIO_INHERIT)
