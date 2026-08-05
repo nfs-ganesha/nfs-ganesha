@@ -109,14 +109,6 @@ static struct config_item mdcache_params[] = {
 	CONFIG_EOL
 };
 
-static void *mdcache_param_init(void *link_mem, void *self_struct)
-{
-	if (self_struct == NULL)
-		return &mdcache_param;
-	else
-		return NULL;
-}
-
 static int mdcache_param_commit(void *node, void *link_mem, void *self_struct,
 				struct config_error_type *err_type)
 {
@@ -143,7 +135,7 @@ struct config_block mdcache_param_blk = {
 	.blk_desc.name = "MDCACHE",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
-	.blk_desc.u.blk.init = mdcache_param_init,
+	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = mdcache_params,
 	.blk_desc.u.blk.commit = mdcache_param_commit,
 	.mem_comp = MEM_COMP_CONFIG
@@ -152,8 +144,8 @@ struct config_block mdcache_param_blk = {
 int mdcache_set_param_from_conf(config_file_t parse_tree,
 				struct config_error_type *err_type)
 {
-	(void)load_config_from_parse(parse_tree, &mdcache_param_blk, NULL, true,
-				     err_type);
+	(void)load_config_from_parse(parse_tree, &mdcache_param_blk,
+				     &mdcache_param, true, err_type);
 	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_INIT,
 			"Error while parsing MDCACHE specific configuration");

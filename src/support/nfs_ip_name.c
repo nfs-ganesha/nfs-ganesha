@@ -405,6 +405,10 @@ static struct config_item ip_name_params[] = {
 	CONFIG_EOL
 };
 
+/* Note that although this is trivial, ip_name_cache is private to this file
+ * so this function allows nfs_init.c to do the configuration without needing
+ * to know ip_name_cache.
+ */
 static void *ip_name_init(void *link_mem, void *self_struct)
 {
 	if (self_struct == NULL)

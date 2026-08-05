@@ -62,20 +62,12 @@ static struct config_item rados_kv_params[] = {
 	CONFIG_EOL
 };
 
-static void *rados_kv_param_init(void *link_mem, void *self_struct)
-{
-	if (self_struct == NULL)
-		return &rados_kv_param;
-	else
-		return NULL;
-}
-
 struct config_block rados_kv_param_blk = {
 	.dbus_interface_name = "org.ganesha.nfsd.config.rados_kv",
 	.blk_desc.name = "RADOS_KV",
 	.blk_desc.type = CONFIG_BLOCK,
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
-	.blk_desc.u.blk.init = rados_kv_param_init,
+	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = rados_kv_params,
 	.blk_desc.u.blk.commit = noop_conf_commit,
 	.mem_comp = MEM_COMP_CONFIG
@@ -230,8 +222,8 @@ static void rados_kv_append_val_rdfh(char *val, char *rdfh, int rdfh_len)
 int rados_load_config_from_parse(config_file_t parse_tree,
 				 struct config_error_type *err_type)
 {
-	(void)load_config_from_parse(parse_tree, &rados_kv_param_blk, NULL,
-				     true, err_type);
+	(void)load_config_from_parse(parse_tree, &rados_kv_param_blk,
+				     &rados_kv_param, true, err_type);
 	if (!config_error_is_harmless(err_type)) {
 		LogCrit(COMPONENT_RECOVERY,
 			"Error while parsing RadosKV specific configuration");
