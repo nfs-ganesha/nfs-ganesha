@@ -925,8 +925,10 @@ handle_export_iostats(const nfsProtoUtil::ExportIdRequest *request,
 		      exportService::ExportIoStatsResponse *response,
 		      grpc_export_get_io_fn get_io)
 {
-	struct grpc_iostats read_out{}, write_out{};
-	struct timespec time_out{};
+	struct grpc_iostats read_out {
+	}, write_out{};
+	struct timespec time_out {
+	};
 	bool success = false;
 	char errmsg[256];
 
@@ -1005,8 +1007,10 @@ handle_export_layouts(const nfsProtoUtil::ExportIdRequest *request,
 		      exportService::ExportLayoutsResponse *response,
 		      grpc_export_get_layouts_fn get_layouts)
 {
-	struct grpc_layouts layouts{};
-	struct timespec ts{};
+	struct grpc_layouts layouts {
+	};
+	struct timespec ts {
+	};
 	bool success = false;
 	char errmsg[256];
 
@@ -1080,8 +1084,10 @@ ExportStatsService::Get9pOpStats(grpc::ServerContext *context,
 				 const nfsProtoUtil::Export9pOpRequest *request,
 				 exportService::ExportOpStatsResponse *response)
 {
-	struct grpc_op_stats op_out{};
-	struct timespec time_out{};
+	struct grpc_op_stats op_out {
+	};
+	struct timespec time_out {
+	};
 	bool success = false;
 	char errmsg[256];
 
@@ -1208,7 +1214,8 @@ grpc::Status ExportStatsService::GetNFSIO(
 	exportService::GetNFSIOResponse *response)
 {
 	grpc_export_io_list list{};
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success = false;
 	char errmsg[128];
 
@@ -1593,7 +1600,8 @@ grpc::Status ExportStatsService::GetFastOPS(
 	exportService::GetFastOPSResponse *response)
 {
 	grpc_fast_ops stats{};
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1632,7 +1640,8 @@ grpc::Status ExportStatsService::GetFULLV3Stats(
 	exportService::GetFULLV3StatsResponse *response)
 {
 	grpc_full_stats stats{};
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1674,7 +1683,8 @@ grpc::Status ExportStatsService::GetFULLV4Stats(
 	exportService::GetFULLV4StatsResponse *response)
 {
 	grpc_full_stats stats{};
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1739,7 +1749,8 @@ grpc::Status ExportStatsService::EnableStats(
 	const exportService::EnableStatsRequest *request,
 	exportService::EnableStatsResponse *response)
 {
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1769,7 +1780,8 @@ grpc::Status ExportStatsService::DisableStats(
 	const exportService::DisableStatsRequest *request,
 	exportService::DisableStatsResponse *response)
 {
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1852,7 +1864,8 @@ grpc::Status ExportStatsService::GetAuthStats(
 	exportService::GetAuthStatsResponse *response)
 {
 	grpc_all_auth_stats stats{};
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1887,7 +1900,8 @@ grpc::Status ExportStatsService::ShowMDCache(
 {
 	grpc_mdcache_stats cache{};
 	grpc_lru_utilization lru{};
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1926,7 +1940,8 @@ grpc::Status ExportStatsService::ShowFDUsage(
 	exportService::ShowFDUsageResponse *response)
 {
 	grpc_fd_usage_summary summary{};
-	struct timespec ts{};
+	struct timespec ts {
+	};
 	bool success{};
 	char errmsg[128];
 
@@ -1968,7 +1983,8 @@ grpc::Status ExportStatsService::GetExportDetails(
 	const nfsProtoUtil::ExportIdRequest *request,
 	exportService::GetExportDetailsResponse *response)
 {
-	struct grpc_client_io_ops stats{};
+	struct grpc_client_io_ops stats {
+	};
 	bool success = false;
 	char errmsg[256];
 

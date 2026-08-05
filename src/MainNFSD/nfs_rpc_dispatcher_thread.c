@@ -601,9 +601,8 @@ static enum xprt_stat nfs_rpc_dispatch_RDMA(SVCXPRT *xprt)
 #ifdef ENABLE_CLUSTER_QOS
 static enum xprt_stat nfs_rpc_dispatch_CQOS(SVCXPRT *xprt)
 {
-	LogFullDebug(COMPONENT_DISPATCH,
-		     "CQOS TCP request on SVCXPRT %p fd %d", xprt,
-		     xprt->xp_fd);
+	LogFullDebug(COMPONENT_DISPATCH, "CQOS TCP request on SVCXPRT %p fd %d",
+		     xprt, xprt->xp_fd);
 	xprt->xp_dispatch.process_cb = nfs_rpc_valid_CQOS;
 	return nfs_rpc_tcp_user_data(xprt);
 }
@@ -1524,7 +1523,6 @@ static bool __Register_program(protos prot, int vers)
 	}
 #endif /* _NO_TCP_REGISTER */
 
-
 #ifdef _USE_NFS_RDMA
 rdma_reg:
 	/* Register RDMA protocol with rpcbind */
@@ -1843,12 +1841,11 @@ void nfs_Init_svc(void)
 	if (cqos_initialized)
 		__Register_program(P_CQOS, CQOS_VERS);
 #endif
-	 LogDebug(COMPONENT_DISPATCH, "Done registering services");
+	LogDebug(COMPONENT_DISPATCH, "Done registering services");
 #else
 
 	LogDebug(COMPONENT_DISPATCH, "Skip registering services");
 #endif /* RPCBIND */
-
 }
 
 /**

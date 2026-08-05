@@ -752,12 +752,10 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	 * in the cluster.
 	 */
 	if (qos_block_config.enable_qos &&
-	    qos_block_config.enable_cluster_qos &&
-	    !glist_empty(&cqos_hosts)) {
+	    qos_block_config.enable_cluster_qos && !glist_empty(&cqos_hosts)) {
 		cluster_qos_init();
 	}
 #endif
-
 
 	/* Worker parameters: ip/name hash table and expiration
 	 * for each entry

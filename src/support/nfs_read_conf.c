@@ -278,7 +278,7 @@ void populate_cqos_hosts(void)
 		return;
 
 	glist_for_each(glist, &nfs_param.core_param.cluster_members) {
-	      client = glist_entry(glist, struct base_client_entry, cle_list);
+		client = glist_entry(glist, struct base_client_entry, cle_list);
 
 		cli = gsh_calloc(1, sizeof(struct cqos_ceph_nodes),
 				 MEM_COMP_QOS);
@@ -349,8 +349,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, port[P_RQUOTA]),
 #endif
 #ifdef ENABLE_CLUSTER_QOS
-	CONF_ITEM_UI16("Cqos_Port", 0, UINT16_MAX, CQOS_PORT,
-		       nfs_core_param, port[P_CQOS]),
+	CONF_ITEM_UI16("Cqos_Port", 0, UINT16_MAX, CQOS_PORT, nfs_core_param,
+		       port[P_CQOS]),
 #endif
 #ifdef _USE_NFS_RDMA
 	CONF_ITEM_UI16("NFS_RDMA_Port", 0, UINT16_MAX, NFS_RDMA_PORT,
@@ -378,8 +378,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, program[P_RQUOTA]),
 #endif
 #ifdef ENABLE_CLUSTER_QOS
-	CONF_ITEM_UI32("Cqos_Program", 1, INT32_MAX, CQOSPROG,
-		       nfs_core_param, program[P_CQOS]),
+	CONF_ITEM_UI32("Cqos_Program", 1, INT32_MAX, CQOSPROG, nfs_core_param,
+		       program[P_CQOS]),
 #endif
 #ifdef USE_NFSACL3
 	CONF_ITEM_UI32("NFSACL_Program", 1, INT32_MAX, NFSACLPROG,
@@ -570,7 +570,7 @@ static struct config_item qos_global_params[] = {
 
 #if ENABLE_CLUSTER_QOS
 	CONF_ITEM_BOOL("enable_cluster_qos", true, qos_block_config,
-			enable_cluster_qos),
+		       enable_cluster_qos),
 	CONF_ITEM_UI32("cqos_msg_interval", CQOS_MIN_MSGTIME, CQOS_MAX_MSGTIME,
 		       CQOS_DEF_MSGTIME, qos_block_config, cqos_msg_interval),
 #endif

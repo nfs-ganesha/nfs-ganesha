@@ -374,9 +374,9 @@ class ExportService final : public exportService::ExportService::Service {
 		    const nfsProtoUtil::EmptyRequest *request,
 		    exportService::ShowExportsResponse *response) override;
 	grpc::Status
-		AddExport(grpc::ServerContext *context,
-			const exportService::ExportRequest *request,
-			exportService::ExportResponse *response) override;
+	AddExport(grpc::ServerContext *context,
+		  const exportService::ExportRequest *request,
+		  exportService::ExportResponse *response) override;
 
 	grpc::Status
 	RemoveExport(grpc::ServerContext *context,
