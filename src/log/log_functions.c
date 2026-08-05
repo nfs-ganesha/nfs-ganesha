@@ -2620,6 +2620,12 @@ static int export_id_list_adder(const char *token, enum term_type type_hint,
 	if (rc == 0)
 		conditional_logging_configured = true;
 
+	/* In case of duplicate entry, ignore it */
+	if (rc > 0 && err_type->exists) {
+		rc = 0;
+		err_type->exists = false;
+	}
+
 out:
 	return rc;
 }
@@ -2643,6 +2649,12 @@ static int client_ip_list_adder(const char *token, enum term_type type_hint,
 
 	if (rc == 0)
 		conditional_logging_configured = true;
+
+	/* In case of duplicate entry, ignore it */
+	if (rc > 0 && err_type->exists) {
+		rc = 0;
+		err_type->exists = false;
+	}
 
 	return rc;
 }
