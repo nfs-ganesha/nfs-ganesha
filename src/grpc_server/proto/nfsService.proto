@@ -81,7 +81,6 @@ message GetSessionIdsResponse
 	repeated string session_ids = 1;
 }
 
-// Fake/force a CB_RECALL for a client id (CBSIM fake_recall)
 service FakeRecall
 {
 	rpc FakeRecall(FakeRecallRequest) returns (nfsProtoUtil.StatusResponse);
@@ -90,6 +89,26 @@ service FakeRecall
 message FakeRecallRequest
 {
 	uint64 client_id = 1;
+}
+
+// Runtime Cluster_Members update for integrated NSM peer fan-out
+service ClusterMembers
+{
+	rpc SetClusterMembers(SetClusterMembersRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc ShowClusterMembers(nfsProtoUtil.EmptyRequest)
+		returns (ShowClusterMembersResponse);
+}
+
+message SetClusterMembersRequest
+{
+	repeated string ipaddrs = 1;
+}
+
+message ShowClusterMembersResponse
+{
+	repeated string ipaddrs = 1;
+	nfsProtoUtil.StatusResponse status = 2;
 }
 
 /* NFS Admin Services */

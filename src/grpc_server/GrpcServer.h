@@ -68,6 +68,7 @@ class GrpcServer {
 	StartNfsGraceService startNfsGrace;
 	ClientStatsService clientStatsService;
 	ClientMgrService clientMgrService;
+	ClusterMembersService clusterMembersService;
 	nfsAdminService nfsAdmin;
 	ExportStatsService exportStatsService;
 	ExportService exportService;

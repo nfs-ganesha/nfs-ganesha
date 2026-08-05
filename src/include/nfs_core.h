@@ -173,6 +173,7 @@ void nfs_rpc_dispatch_stop(void);
 uint32_t nfs_get_evchannel_id(enum evchan);
 
 /* Config parsing routines */
+void FreeCoreClient(struct base_client_entry *client);
 extern config_file_t nfs_config_struct;
 extern struct config_block nfs_core;
 extern struct config_block nfs_core_update;

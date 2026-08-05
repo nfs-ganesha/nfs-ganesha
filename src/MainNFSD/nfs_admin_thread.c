@@ -68,6 +68,11 @@
 #ifdef USE_GRPC
 #include "GrpcServerInit.h"
 #endif
+#ifdef USE_DBUS
+#ifdef _INTERNAL_STATD
+#include "cluster_members.h"
+#endif
+#endif
 
 /**
  * @brief Mutex protecting shutdown flag.
@@ -804,6 +809,137 @@ static struct gsh_dbus_method method_reread_config = {
 	.args = { STATUS_REPLY, END_ARG_LIST }
 };
 
+#ifdef _INTERNAL_STATD
+#define CLUSTER_MEMBERS_ARG \
+	{ .name = "ipaddrs", .type = "as", .direction = "in" }
+
+#define CLUSTER_MEMBERS_REPLY \
+	{ .name = "ipaddrs", .type = "as", .direction = "out" }
+
+/**
+ * @brief Replace Cluster_Members at runtime (integrated NSM peer list)
+ */
+static bool admin_dbus_set_cluster_members(DBusMessageIter *args,
+					   DBusMessage *reply, DBusError *error)
+{
+	char *errormsg = "OK";
+	bool success = true;
+	DBusMessageIter iter;
+	DBusMessageIter array_iter;
+	char **ips = NULL;
+	size_t count = 0;
+	size_t capacity = 0;
+
+	dbus_message_iter_init_append(reply, &iter);
+
+	if (args == NULL ||
+	    dbus_message_iter_get_arg_type(args) != DBUS_TYPE_ARRAY) {
+		success = false;
+		errormsg = "SetClusterMembers expects an array of IP strings";
+		goto out;
+	}
+
+	dbus_message_iter_recurse(args, &array_iter);
+
+	while (dbus_message_iter_get_arg_type(&array_iter) ==
+	       DBUS_TYPE_STRING) {
+		char *ip = NULL;
+
+		dbus_message_iter_get_basic(&array_iter, &ip);
+
+		if (count == capacity) {
+			capacity = capacity == 0 ? 8 : capacity * 2;
+			ips = gsh_realloc(ips, capacity * sizeof(*ips),
+					  MEM_COMP_MANAGE);
+		}
+		ips[count++] = ip;
+		dbus_message_iter_next(&array_iter);
+	}
+
+	success = set_cluster_members(ips, count, &errormsg);
+
+out:
+	gsh_free(ips, MEM_COMP_MANAGE);
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	/* Always return true so STATUS_REPLY is delivered (see AddClient). */
+	return true;
+}
+
+static struct gsh_dbus_method method_set_cluster_members = {
+	.name = "SetClusterMembers",
+	.method = admin_dbus_set_cluster_members,
+	.args = { CLUSTER_MEMBERS_ARG, STATUS_REPLY, END_ARG_LIST }
+};
+
+/**
+ * @brief Show current Cluster_Members peer list
+ */
+static bool admin_dbus_show_cluster_members(DBusMessageIter *args,
+					    DBusMessage *reply,
+					    DBusError *error)
+{
+	char *errormsg = "OK";
+	bool success = true;
+	DBusMessageIter iter;
+	DBusMessageIter array_iter;
+	char **ips = NULL;
+	size_t count = 0;
+	size_t i;
+
+	dbus_message_iter_init_append(reply, &iter);
+
+	if (args != NULL) {
+		success = false;
+		errormsg = "ShowClusterMembers takes no arguments";
+		/* Keep reply layout: as (ipaddrs) + STATUS_REPLY */
+		if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY,
+						      "s", &array_iter) ||
+		    !dbus_message_iter_close_container(&iter, &array_iter)) {
+			errormsg = "Failed to build ShowClusterMembers reply";
+		}
+		gsh_dbus_status_reply(&iter, success, errormsg);
+		return true;
+	}
+
+	success = show_cluster_members(&ips, &count, &errormsg);
+
+	if (!dbus_message_iter_open_container(&iter, DBUS_TYPE_ARRAY, "s",
+					      &array_iter)) {
+		success = false;
+		errormsg = "Failed to build ShowClusterMembers reply";
+		goto out;
+	}
+
+	if (success) {
+		for (i = 0; i < count; i++) {
+			const char *ip = ips[i];
+
+			if (!dbus_message_iter_append_basic(
+				    &array_iter, DBUS_TYPE_STRING, &ip)) {
+				success = false;
+				errormsg =
+					"Failed to append Cluster_Members addr";
+				break;
+			}
+		}
+	}
+
+	dbus_message_iter_close_container(&iter, &array_iter);
+
+out:
+	free_cluster_members_list(ips, count);
+	gsh_dbus_status_reply(&iter, success, errormsg);
+	/* Always return true so STATUS_REPLY is delivered (see AddClient). */
+	return true;
+}
+
+static struct gsh_dbus_method method_show_cluster_members = {
+	.name = "ShowClusterMembers",
+	.method = admin_dbus_show_cluster_members,
+	.args = { CLUSTER_MEMBERS_REPLY, STATUS_REPLY, END_ARG_LIST }
+};
+#endif /* _INTERNAL_STATD */
+
 static struct gsh_dbus_method *admin_methods[] = {
 	&method_shutdown,
 	&method_grace_period,
@@ -820,6 +956,10 @@ static struct gsh_dbus_method *admin_methods[] = {
 	&method_trim_call,
 	&method_trim_status,
 	&method_reread_config,
+#ifdef _INTERNAL_STATD
+	&method_set_cluster_members,
+	&method_show_cluster_members,
+#endif
 	&method_get_drc_info,
 	NULL
 };

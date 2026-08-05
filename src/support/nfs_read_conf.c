@@ -57,6 +57,7 @@
 #include "pwnam_wrappers.h"
 #include "nfs_qos.h"
 #include "nfs_cluster_qos.h"
+#include "cluster_members.h"
 
 /**
  * @brief Core configuration parameters
@@ -221,50 +222,6 @@ static int cluster_members_adder(const char *token, enum term_type type_hint,
 	rc = add_client(COMPONENT_CONFIG, &host->cle_list, token, type_hint,
 			MEM_COMP_CONFIG, cnode, err_type, NULL, NULL, NULL);
 	return rc;
-}
-
-void remove_self_cluster_members(void)
-{
-	struct ifaddrs *ifap, *ifa;
-
-	if (glist_empty(&nfs_param.core_param.cluster_members))
-		return;
-
-	if (getifaddrs(&ifap) != 0) {
-		int err = errno;
-
-		LogFatal(COMPONENT_CONFIG, "getoifaddrs failed %s",
-			 strerror(err));
-	}
-
-	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		sockaddr_t *sa = (sockaddr_t *)ifa->ifa_addr;
-		struct base_client_entry *bce;
-
-		if (sa->ss_family != AF_INET && sa->ss_family != AF_INET6)
-			continue;
-
-		bce = client_match(COMPONENT_CONFIG,
-				   " for Cluster_Members list", sa,
-				   &nfs_param.core_param.cluster_members, NULL);
-
-		if (bce != NULL) {
-			char ip[SOCK_NAME_MAX];
-			struct display_buffer dspbuf = { sizeof(ip), ip, ip };
-
-			display_sockip(&dspbuf, sa);
-
-			LogInfo(COMPONENT_CONFIG,
-				"Moving %s from Cluster_Members list to Cluster Self list",
-				ip);
-
-			glist_del(&bce->cle_list);
-			glist_add_tail(&nfs_param.core_param.cluster_self,
-				       &bce->cle_list);
-		}
-	}
-
-	freeifaddrs(ifap);
 }
 
 #ifdef ENABLE_CLUSTER_QOS

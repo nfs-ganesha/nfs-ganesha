@@ -92,6 +92,7 @@ SET(support_STAT_SRCS
    nfs_creds.c
    nfs_filehandle_mgmt.c
    nfs_read_conf.c
+   cluster_members.c
    nfs_convert.c
    nfs_ip_name.c
    ds.c

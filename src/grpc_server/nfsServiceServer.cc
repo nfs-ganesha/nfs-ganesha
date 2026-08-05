@@ -19,6 +19,7 @@
  */
 
 #include <string>
+#include <vector>
 #include "nfsService.h"
 #include "server_stats_grpc.h"
 #include "idmapper.h"
@@ -27,6 +28,7 @@
 #include "mdcache.h"
 #include "export_mgr.h"
 #include "nfs_exports.h"
+#include "cluster_members.h"
 
 #ifdef LINUX
 #include <mcheck.h> /* For mtrace/muntrace */
@@ -753,6 +755,57 @@ grpc::Status ClientMgrService::DisconnectNfsv41Client(
 	status->set_success(success);
 	status->set_error_msg(errmsg);
 	response->set_connections_destroyed(destroyed);
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Replace Cluster_Members peer list used for internal NSM fan-out
+ */
+grpc::Status ClusterMembersService::SetClusterMembers(
+	grpc::ServerContext *context,
+	const nfsService::SetClusterMembersRequest *request,
+	nfsProtoUtil::StatusResponse *response)
+{
+	bool success = false;
+	char errmsg[256];
+	const int n = request->ipaddrs_size();
+	std::vector<char *> ips;
+
+	ips.reserve(n);
+	for (int i = 0; i < n; i++)
+		ips.push_back(const_cast<char *>(request->ipaddrs(i).c_str()));
+
+	grpc_set_cluster_members(n > 0 ? ips.data() : NULL, (size_t)n, &success,
+				 errmsg, sizeof(errmsg));
+	response->set_success(success);
+	response->set_error_msg(errmsg);
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Show current Cluster_Members peer list
+ */
+grpc::Status ClusterMembersService::ShowClusterMembers(
+	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
+	nfsService::ShowClusterMembersResponse *response)
+{
+	bool success = false;
+	char errmsg[256];
+	char **ips = NULL;
+	size_t count = 0;
+	nfsProtoUtil::StatusResponse *status = response->mutable_status();
+
+	grpc_show_cluster_members(&ips, &count, &success, errmsg,
+				  sizeof(errmsg));
+
+	if (success) {
+		for (size_t i = 0; i < count; i++)
+			response->add_ipaddrs(ips[i]);
+	}
+
+	free_cluster_members_list(ips, count);
+	status->set_success(success);
+	status->set_error_msg(errmsg);
 	return grpc::Status::OK;
 }
 
