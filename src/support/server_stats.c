@@ -4231,7 +4231,7 @@ void server_grpc_fill_stats_summary(struct gsh_stats *st,
 	*total_ops_out = tot_ops;
 }
 
- /*
+/*
  * @brief Collect global fast operation statistics for all supported protocols.
  */
 bool grpc_get_fast_ops(struct grpc_fast_ops *fast_ops,
@@ -4392,6 +4392,7 @@ static void fill_grpc_full_stats(struct grpc_full_stats *stats_out, int num_ops,
 		sizeof(stats_out->message));
 }
 
+#ifdef _USE_NFS3
 /**
  * @brief Retrieve detailed NFSv3 operation statistics.
  */
@@ -4415,6 +4416,7 @@ bool grpc_get_v3_full_stats(struct grpc_full_stats *stats_out,
 
 	return true;
 }
+#endif /* _USE_NFS3 */
 
 /**
  * @brief Retrieve detailed NFSv4 operation statistics.
