@@ -39,6 +39,8 @@
 #include "cltmgrService.grpc.pb.h"
 #include "exportService.pb.h"
 #include "exportService.grpc.pb.h"
+#include "cacheMgrService.pb.h"
+#include "cacheMgrService.grpc.pb.h"
 #include "nfsServiceUtil.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -346,15 +348,6 @@ class ExportStatsService final : public exportService::ExportStats::Service {
 		exportService::GetExportDetailsResponse *response) override;
 };
 
-class ShowIdMapperService final
-	: public nfsService::ShowIdMapperService::Service {
-    public:
-	grpc::Status
-	ShowIdMapper(grpc::ServerContext *context,
-		     const nfsProtoUtil::EmptyRequest *request,
-		     nfsService::ShowIdMapperResponse *response) override;
-};
-
 class ExportService final : public exportService::ExportService::Service {
     public:
 	grpc::Status
@@ -380,5 +373,38 @@ class ExportService final : public exportService::ExportService::Service {
 	UpdateExport(grpc::ServerContext *context,
 		     const exportService::ExportRequest *request,
 		     exportService::ExportResponse *response) override;
+};
+
+class CacheMgrService final : public cacheMgr::CacheMgrService::Service {
+    public:
+	grpc::Status ShowIdMapperUsers(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::EmptyRequest *request,
+		cacheMgr::ShowIdMapperUsersResponse *response) override;
+
+	grpc::Status ShowIdMapperGroups(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::EmptyRequest *request,
+		cacheMgr::ShowIdMapperGroupsResponse *response) override;
+
+	grpc::Status ShowNegativeUsers(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::EmptyRequest *request,
+		cacheMgr::ShowNegativeUsersResponse *response) override;
+
+	grpc::Status ShowNegativeGroups(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::EmptyRequest *request,
+		cacheMgr::ShowNegativeGroupsResponse *response) override;
+
+	grpc::Status
+	ShowNegativeUIDs(grpc::ServerContext *context,
+			 const nfsProtoUtil::EmptyRequest *request,
+			 cacheMgr::ShowNegativeUIDsResponse *response) override;
+
+	grpc::Status
+	ShowUid2Grp(grpc::ServerContext *context,
+		    const nfsProtoUtil::EmptyRequest *request,
+		    cacheMgr::ShowUid2GrpResponse *response) override;
 };
 #endif //NFSSERVICE_H

@@ -62,18 +62,74 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-struct cache_user {
-	struct gsh_buffdesc uname; /*< Username */
-	uid_t uid; /*< Corresponding UID */
-	gid_t gid; /*< Corresponding GID */
-	bool gid_set; /*< if the GID has been set */
-	struct avltree_node uname_node; /*< Node in the name tree */
-	struct avltree_node uid_node; /*< Node in the UID tree */
-	bool in_uidtree; /* true iff this is in uid_tree */
-	time_t epoch;
-
-	TAILQ_ENTRY(cache_user) queue_entry; /* Node in user-fifo-queue */
+/**
+ * @brief gRPC helper data structures and APIs for Cache Manager services.
+ *
+ * These structures provide an intermediate representation of cache entries
+ * returned by the IDMapper, negative cache, and uid2grp cache. The cache
+ * modules populate these structures, which are then used by the gRPC server
+ * layer to construct the corresponding protobuf responses.
+ *
+ * The helper functions traverse the respective caches and populate the
+ * supplied lists for:
+ *   - IDMapper user cache
+ *   - IDMapper group cache
+ *   - Negative user/group/UID caches
+ *   - uid2grp cache
+ */
+struct grpc_idmapper_user {
+	char name[256];
+	uint32_t uid;
+	bool gid_set;
+	uint32_t gid;
 };
+
+struct grpc_idmapper_user_list {
+	struct grpc_idmapper_user *entries;
+	uint32_t count;
+};
+
+struct grpc_idmapper_group {
+	char name[256];
+	uint32_t gid;
+};
+
+struct grpc_idmapper_group_list {
+	struct grpc_idmapper_group *entries;
+	uint32_t count;
+};
+
+struct grpc_negative_cache_entry {
+	char name[256];
+	uint64_t epoch;
+};
+
+struct grpc_negative_cache_list {
+	struct grpc_negative_cache_entry *entries;
+	uint32_t count;
+};
+
+struct grpc_uid2grp_entry {
+	char name[256];
+	uint32_t uid;
+};
+
+struct grpc_uid2grp_list {
+	struct grpc_uid2grp_entry *entries;
+	uint32_t count;
+};
+
+void grpc_fill_idmapper_users(struct grpc_idmapper_user_list *list);
+
+void grpc_fill_idmapper_groups(struct grpc_idmapper_group_list *list);
+
+void grpc_fill_negative_users(struct grpc_negative_cache_list *list);
+
+void grpc_fill_negative_groups(struct grpc_negative_cache_list *list);
+
+void grpc_fill_negative_uids(struct grpc_negative_cache_list *list);
+
+void grpc_fill_uid2grp(struct grpc_uid2grp_list *list);
 
 extern pthread_rwlock_t idmapper_user_lock;
 extern pthread_rwlock_t idmapper_group_lock;

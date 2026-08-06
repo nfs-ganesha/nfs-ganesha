@@ -766,4 +766,87 @@ struct gsh_dbus_method cachemgr_show_idmapper_negative_uids = {
 };
 #endif
 
+/**
+ * @brief Helper functions to populate gRPC responses for the IDMapper
+ * negative user, group, and UID caches.
+ */
+static void grpc_fill_negative_cache(negative_cache_entity_type_t entity_type,
+				     struct grpc_negative_cache_list *list)
+{
+	struct avltree *cache_tree = NULL;
+	pthread_rwlock_t *entity_lock = NULL;
+	struct avltree_node *node;
+	uint32_t index = 0;
+
+	if (list == NULL || list->entries == NULL)
+		return;
+
+	switch (entity_type) {
+	case USERNAME:
+		cache_tree = &uname_tree;
+		entity_lock = &idmapper_negative_cache_user_lock;
+		break;
+
+	case GROUP:
+		cache_tree = &gname_tree;
+		entity_lock = &idmapper_negative_cache_group_lock;
+		break;
+
+	case UID:
+		cache_tree = &uid_tree;
+		entity_lock = &idmapper_negative_cache_uid_lock;
+		break;
+
+	default:
+		return;
+	}
+
+	PTHREAD_RWLOCK_rdlock(entity_lock);
+
+	for (node = avltree_first(cache_tree); node != NULL && index < 1024;
+	     node = avltree_next(node)) {
+		negative_cache_entity_t *entry;
+
+		entry = avltree_container_of(node, negative_cache_entity_t,
+					     name_node);
+
+		if (entity_type == UID) {
+			snprintf(list->entries[index].name,
+				 sizeof(list->entries[index].name), "%u",
+				 entry->uid);
+		} else {
+			size_t len = MIN(entry->name.len,
+					 sizeof(list->entries[index].name) - 1);
+
+			memcpy(list->entries[index].name, entry->name.addr,
+			       len);
+
+			list->entries[index].name[len] = '\0';
+		}
+
+		list->entries[index].epoch = entry->epoch;
+
+		index++;
+	}
+
+	PTHREAD_RWLOCK_unlock(entity_lock);
+
+	list->count = index;
+}
+
+void grpc_fill_negative_users(struct grpc_negative_cache_list *list)
+{
+	grpc_fill_negative_cache(USERNAME, list);
+}
+
+void grpc_fill_negative_groups(struct grpc_negative_cache_list *list)
+{
+	grpc_fill_negative_cache(GROUP, list);
+}
+
+void grpc_fill_negative_uids(struct grpc_negative_cache_list *list)
+{
+	grpc_fill_negative_cache(UID, list);
+}
+
 /** @} */

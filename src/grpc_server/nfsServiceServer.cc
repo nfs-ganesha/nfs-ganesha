@@ -45,8 +45,6 @@
 #include "config_parsing.h"
 #include "nfs_proto_functions.h"
 
-static struct avltree uname_tree;
-
 grpc::Status GetClientIdService::GetClientIds(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
 	nfsService::GetClientIdsResponse *response)
@@ -1216,51 +1214,154 @@ grpc::Status ExportStatsService::GetNFSIO(
 	return grpc::Status::OK;
 }
 
-grpc::Status ShowIdMapperService::ShowIdMapper(
-	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
-	nfsService::ShowIdMapperResponse *response)
+/**
+ * @brief Populate gRPC IDMapper user cache entries.
+ */
+grpc::Status CacheMgrService::ShowIdMapperUsers(
+	grpc::ServerContext *, const nfsProtoUtil::EmptyRequest *,
+	cacheMgr::ShowIdMapperUsersResponse *response)
 {
-	try {
-		struct avltree_node *node;
-		char namebuff[256 + 1];
-		struct timespec timestamp;
+	struct timespec ts;
+	struct grpc_idmapper_user users[1024];
+	struct grpc_idmapper_user_list list;
 
-		// Get current time
-		now(&timestamp);
-		response->set_timestamp_sec(
-			static_cast<uint64_t>(timestamp.tv_sec));
-		response->set_timestamp_nsec(
-			static_cast<uint64_t>(timestamp.tv_nsec));
+	now(&ts);
 
-		PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
+	response->set_timestamp_sec(ts.tv_sec);
+	response->set_timestamp_nsec(ts.tv_nsec);
 
-		// Traverse idmapper cache
-		for (node = avltree_first(&uname_tree); node != nullptr;
-		     node = avltree_next(node)) {
-			const struct cache_user *user =
-				avltree_container_of(node, struct cache_user,
-						     uname_node);
+	list.entries = users;
+	list.count = 0;
 
-			size_t len = user->uname.len > 255 ? 255
-							   : user->uname.len;
-			memcpy(namebuff, user->uname.addr, len);
-			namebuff[len] = '\0'; // null terminate
+	grpc_fill_idmapper_users(&list);
 
-			// Add new entry in protobuf repeated field
-			auto *entry = response->add_entries();
-			entry->set_name(namebuff);
-			entry->set_uid(user->uid);
-			entry->set_gid_set(user->gid_set);
-			entry->set_gid(user->gid_set ? user->gid : 0);
-		}
+	for (uint32_t i = 0; i < list.count; i++) {
+		auto *entry = response->add_entries();
 
-		PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
-
-		return grpc::Status::OK;
-	} catch (const std::exception &ex) {
-		return grpc::Status(grpc::StatusCode::INTERNAL,
-				    "Internal error occurred");
+		entry->set_name(list.entries[i].name);
+		entry->set_uid(list.entries[i].uid);
+		entry->set_gid_set(list.entries[i].gid_set);
+		entry->set_gid(list.entries[i].gid);
 	}
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Populate gRPC IDMapper group cache entries.
+ */
+grpc::Status CacheMgrService::ShowIdMapperGroups(
+	grpc::ServerContext *, const nfsProtoUtil::EmptyRequest *,
+	cacheMgr::ShowIdMapperGroupsResponse *response)
+{
+	struct timespec ts;
+	struct grpc_idmapper_group groups[1024];
+	struct grpc_idmapper_group_list list;
+
+	now(&ts);
+
+	response->set_timestamp_sec(ts.tv_sec);
+	response->set_timestamp_nsec(ts.tv_nsec);
+
+	list.entries = groups;
+	list.count = 0;
+
+	grpc_fill_idmapper_groups(&list);
+
+	for (uint32_t i = 0; i < list.count; i++) {
+		auto *entry = response->add_entries();
+
+		entry->set_name(list.entries[i].name);
+		entry->set_gid(list.entries[i].gid);
+	}
+
+	return grpc::Status::OK;
+}
+
+typedef void (*grpc_negative_fill_fn)(struct grpc_negative_cache_list *list);
+
+template <typename ResponseType>
+static grpc::Status FillNegativeCache(grpc_negative_fill_fn fill_fn,
+				      ResponseType *response)
+{
+	struct timespec ts;
+	struct grpc_negative_cache_entry entries[1024];
+	struct grpc_negative_cache_list list;
+
+	now(&ts);
+
+	response->set_timestamp_sec(ts.tv_sec);
+	response->set_timestamp_nsec(ts.tv_nsec);
+
+	list.entries = entries;
+	list.count = 0;
+
+	fill_fn(&list);
+
+	for (uint32_t i = 0; i < list.count; i++) {
+		auto *entry = response->add_entries();
+
+		entry->set_name(list.entries[i].name);
+		entry->set_epoch(list.entries[i].epoch);
+	}
+
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Populate gRPC responses for the IDMapper negative
+ * user, group, and UID caches.
+ */
+grpc::Status CacheMgrService::ShowNegativeUsers(
+	grpc::ServerContext *, const nfsProtoUtil::EmptyRequest *,
+	cacheMgr::ShowNegativeUsersResponse *response)
+{
+	return FillNegativeCache(grpc_fill_negative_users, response);
+}
+
+grpc::Status CacheMgrService::ShowNegativeGroups(
+	grpc::ServerContext *, const nfsProtoUtil::EmptyRequest *,
+	cacheMgr::ShowNegativeGroupsResponse *response)
+{
+	return FillNegativeCache(grpc_fill_negative_groups, response);
+}
+
+grpc::Status CacheMgrService::ShowNegativeUIDs(
+	grpc::ServerContext *, const nfsProtoUtil::EmptyRequest *,
+	cacheMgr::ShowNegativeUIDsResponse *response)
+{
+	return FillNegativeCache(grpc_fill_negative_uids, response);
+}
+
+/**
+ * @brief Return the gRPC response for uid2grp cache entries.
+ */
+grpc::Status CacheMgrService::ShowUid2Grp(
+	grpc::ServerContext *, const nfsProtoUtil::EmptyRequest *,
+	cacheMgr::ShowUid2GrpResponse *response)
+{
+	struct timespec ts;
+	struct grpc_uid2grp_entry entries[1024];
+	struct grpc_uid2grp_list list;
+
+	now(&ts);
+
+	response->set_timestamp_sec(ts.tv_sec);
+	response->set_timestamp_nsec(ts.tv_nsec);
+
+	list.entries = entries;
+	list.count = 0;
+
+	grpc_fill_uid2grp(&list);
+
+	for (uint32_t i = 0; i < list.count; i++) {
+		auto *entry = response->add_entries();
+
+		entry->set_name(list.entries[i].name);
+		entry->set_uid(list.entries[i].uid);
+	}
+
+	return grpc::Status::OK;
 }
 
 grpc::Status

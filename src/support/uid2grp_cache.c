@@ -48,6 +48,7 @@
 #include "nfs_core.h"
 #include <misc/queue.h>
 #include "idmapper_monitoring.h"
+#include "idmapper.h"
 #ifdef USE_DBUS
 #include "gsh_dbus.h"
 #endif
@@ -595,5 +596,42 @@ struct gsh_dbus_method cachemgr_show_uid2grp = {
 		  END_ARG_LIST }
 };
 #endif
+
+/**
+ * @brief Helper function to populate the uid2grp cache entries.
+ */
+void grpc_fill_uid2grp(struct grpc_uid2grp_list *list)
+{
+	struct avltree_node *node;
+	uint32_t index = 0;
+
+	if (list == NULL || list->entries == NULL)
+		return;
+
+	PTHREAD_RWLOCK_rdlock(&uid2grp_user_lock);
+
+	for (node = avltree_first(&uname_tree); node != NULL && index < 1024;
+	     node = avltree_next(node)) {
+		struct cache_info *info;
+
+		info = avltree_container_of(node, struct cache_info,
+					    uname_node);
+
+		size_t len = MIN(info->uname.len,
+				 sizeof(list->entries[index].name) - 1);
+
+		memcpy(list->entries[index].name, info->uname.addr, len);
+
+		list->entries[index].name[len] = '\0';
+
+		list->entries[index].uid = info->uid;
+
+		index++;
+	}
+
+	PTHREAD_RWLOCK_unlock(&uid2grp_user_lock);
+
+	list->count = index;
+}
 
 /** @} */

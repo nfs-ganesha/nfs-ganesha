@@ -52,6 +52,22 @@
 #include "server_stats_private.h"
 #include "idmapper_monitoring.h"
 
+/**
+ * @brief User entry in the IDMapper cache
+ */
+struct cache_user {
+	struct gsh_buffdesc uname; /*< Username */
+	uid_t uid; /*< Corresponding UID */
+	gid_t gid; /*< Corresponding GID */
+	bool gid_set; /*< if the GID has been set */
+	struct avltree_node uname_node; /*< Node in the name tree */
+	struct avltree_node uid_node; /*< Node in the UID tree */
+	bool in_uidtree; /* true iff this is in uid_tree */
+	time_t epoch;
+
+	TAILQ_ENTRY(cache_user) queue_entry; /* Node in user-fifo-queue */
+};
+
 #define user_expired(user)            \
 	(time(NULL) - (user)->epoch > \
 	 nfs_param.directory_services_param.idmapped_user_time_validity)
@@ -973,4 +989,82 @@ struct gsh_dbus_method cachemgr_show_idmapper_groups = {
 };
 #endif
 
+/**
+ * @brief Helper function to populate gRPC IDMapper user cache entries.
+ */
+void grpc_fill_idmapper_users(struct grpc_idmapper_user_list *list)
+{
+	struct avltree_node *node;
+	uint32_t index = 0;
+
+	if (list == NULL || list->entries == NULL)
+		return;
+
+	PTHREAD_RWLOCK_rdlock(&idmapper_user_lock);
+
+	for (node = avltree_first(&uname_tree); node != NULL && index < 1024;
+	     node = avltree_next(node)) {
+		struct cache_user *user;
+
+		user = avltree_container_of(node, struct cache_user,
+					    uname_node);
+
+		size_t len = MIN(user->uname.len,
+				 sizeof(list->entries[index].name) - 1);
+
+		memcpy(list->entries[index].name, user->uname.addr, len);
+
+		list->entries[index].name[len] = '\0';
+
+		list->entries[index].uid = user->uid;
+		list->entries[index].gid_set = user->gid_set;
+
+		if (user->gid_set)
+			list->entries[index].gid = user->gid;
+		else
+			list->entries[index].gid = 0;
+
+		index++;
+	}
+
+	PTHREAD_RWLOCK_unlock(&idmapper_user_lock);
+
+	list->count = index;
+}
+
+/**
+ * @brief Helper function to populate gRPC IDMapper group cache entries.
+ */
+void grpc_fill_idmapper_groups(struct grpc_idmapper_group_list *list)
+{
+	struct avltree_node *node;
+	uint32_t index = 0;
+
+	if (list == NULL || list->entries == NULL)
+		return;
+
+	PTHREAD_RWLOCK_rdlock(&idmapper_group_lock);
+
+	for (node = avltree_first(&gname_tree); node != NULL && index < 1024;
+	     node = avltree_next(node)) {
+		struct cache_group *group;
+
+		group = avltree_container_of(node, struct cache_group,
+					     gname_node);
+
+		size_t len = MIN(group->gname.len,
+				 sizeof(list->entries[index].name) - 1);
+
+		memcpy(list->entries[index].name, group->gname.addr, len);
+
+		list->entries[index].name[len] = '\0';
+		list->entries[index].gid = group->gid;
+
+		index++;
+	}
+
+	PTHREAD_RWLOCK_unlock(&idmapper_group_lock);
+
+	list->count = index;
+}
 /** @} */
