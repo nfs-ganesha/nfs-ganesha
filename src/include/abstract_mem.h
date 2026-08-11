@@ -48,6 +48,9 @@
 #include "mem_components.h"
 #include "log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Memory Statistics API's */
 extern void gsh_mem_stats_update_alloc(void *p, mem_components_t comp,
@@ -56,10 +59,6 @@ extern void gsh_mem_stats_update_alloc(void *p, mem_components_t comp,
 extern void gsh_mem_stats_update_free(void *p, mem_components_t comp,
 				      const char *file, int line,
 				      const char *function);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifndef UNUSED
 #define UNUSED_ATTR __attribute__((unused))

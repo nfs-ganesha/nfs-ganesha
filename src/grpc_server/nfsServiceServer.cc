@@ -2020,7 +2020,7 @@ ExportService::AddExport(grpc::ServerContext *context,
 				status = false;
 			}
 		}
-		gsh_free(lp);
+		gsh_free(lp, MEM_COMP_CONFIG);
 	}
 	// Report results
 	if (status) {
@@ -2041,7 +2041,7 @@ out_unlock:
 	if (conf_errs.fp)
 		fclose(conf_errs.fp);
 	if (conf_errs.buf)
-		gsh_free(conf_errs.buf);
+		gsh_free(conf_errs.buf, MEM_COMP_CONFIG);
 	config_Free(config_struct);
 
 	EXPORT_ADMIN_UNLOCK();
@@ -2213,7 +2213,7 @@ ExportService::UpdateExport(grpc::ServerContext *context,
 			else if (!err_type.exists)
 				status = false;
 		}
-		gsh_free(lp);
+		gsh_free(lp, MEM_COMP_CONFIG);
 	}
 
 	if (status) {
@@ -2261,9 +2261,9 @@ out:
 	if (conf_errs.fp != NULL)
 		fclose(conf_errs.fp);
 	if (conf_errs.buf != NULL)
-		gsh_free(conf_errs.buf);
+		gsh_free(conf_errs.buf, MEM_COMP_CONFIG);
 	if (err_detail != NULL)
-		gsh_free(err_detail);
+		gsh_free(err_detail, MEM_COMP_CONFIG);
 	config_Free(config_struct);
 	EXPORT_ADMIN_UNLOCK();
 	return grpc::Status::OK;
