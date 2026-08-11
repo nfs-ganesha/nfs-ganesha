@@ -1,0 +1,8 @@
+/var/log/ganesha.log {
+    weekly
+    rotate 52
+    copytruncate
+    dateext
+    compress
+    missingok
+}
