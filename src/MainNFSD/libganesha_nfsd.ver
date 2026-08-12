@@ -139,6 +139,9 @@
   gsh_dbus_register_path;
   gsh_dbus_broadcast;
   gsh_dbus_status_reply;
+  gsh_reflist_alloc;
+  gsh_reflist_put;
+  gsh_reflist_release;
   gsh_refstr_alloc;
   gsh_refstr_put;
   gsh_refstr_release;

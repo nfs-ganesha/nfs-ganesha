@@ -32,6 +32,7 @@ set(string_utils_STAT_SRCS
    strlcpy.c
    strnlen.c
    refstr.c
+   reflist.c
 )
 
 add_library(string_utils OBJECT ${string_utils_STAT_SRCS})
