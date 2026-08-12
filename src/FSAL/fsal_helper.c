@@ -2095,11 +2095,12 @@ not_nfs:
 		 */
 		return NULL;
 	} else {
-		/* No special buffer requirements, allocate requested size.
-		 * Don't return buffer_size, that is only necessary for RDMA,
-		 * in fact it seems to cause problems if set.
-		 */
-		return gsh_malloc(size, MEM_COMP_IO_BUFFER);
+		/* Use page-aligned buffers for IO */
+		size_t align = (size_t)sysconf(_SC_PAGESIZE);
+
+		if (align < 4096)
+			align = 4096;
+		return gsh_malloc_aligned(align, size, MEM_COMP_IO_BUFFER);
 	}
 }
 
