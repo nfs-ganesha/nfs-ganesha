@@ -66,6 +66,7 @@ struct gsh_refstr *gsh_refstr_alloc(size_t len, mem_components_t comp);
  * Allocate a new gsh_refstr with a gr_val buffer to contain the duplicate.
  *
  * @param[in]	str	The string to be duplicated in the new gsh_refstr
+ * @param[in]	comp	Memory component used for allocation.
  */
 static inline struct gsh_refstr *gsh_refstr_dup(const char *str,
 						mem_components_t comp)
