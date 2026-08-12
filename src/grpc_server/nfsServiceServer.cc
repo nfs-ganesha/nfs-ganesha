@@ -44,6 +44,7 @@
 #include "client_mgr.h"
 #include "config_parsing.h"
 #include "nfs_proto_functions.h"
+#include "nfs_cbsim_grpc.h"
 
 grpc::Status GetClientIdService::GetClientIds(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
@@ -154,6 +155,29 @@ grpc::Status GetSessionIdService::GetSessionIds(
 		}
 		PTHREAD_RWLOCK_unlock(&(ht->partitions[i].ht_lock));
 	}
+	return grpc::Status::OK;
+}
+
+/**
+ * @brief Fake/force a CB_RECALL for the given client id
+ *
+ * gRPC equivalent of org.ganesha.nfsd.cbsim.fake_recall. Callback
+ * internals live in C (nfs_cbsim_grpc.c) so this TU stays free of
+ * nfs_rpc_callback.h / C linkage issues.
+ */
+grpc::Status
+FakeRecallService::FakeRecall(grpc::ServerContext *context,
+			      const nfsService::FakeRecallRequest *request,
+			      nfsProtoUtil::StatusResponse *response)
+{
+	bool success = false;
+	char errmsg[256];
+
+	(void)context;
+	grpc_cbsim_fake_recall(request->client_id(), &success, errmsg,
+			       sizeof(errmsg));
+	response->set_success(success);
+	response->set_error_msg(errmsg);
 	return grpc::Status::OK;
 }
 
@@ -2138,7 +2162,8 @@ static bool update_export_generation_cb(struct gsh_export *exp, void *arg)
 
 static void update_all_export_generations(uint64_t generation)
 {
-	foreach_gsh_export(update_export_generation_cb, true, &generation);
+	foreach_gsh_export(update_export_generation_cb, true, &generation)
+		;
 }
 
 grpc::Status

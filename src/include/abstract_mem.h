@@ -162,15 +162,15 @@ static inline void *gsh_malloc_aligned__(size_t a, size_t n, const char *file,
 	return p;
 }
 
-#define gsh_malloc_aligned(a, n, comp)                                      \
-	({                                                                   \
-		void *p_;                                                   \
-		if (posix_memalign(&p_, a, n) != 0) {                       \
-			abort();                                            \
-		}                                                           \
-		gsh_mem_stats_update_alloc(p_, comp, __FILE__, __LINE__,    \
-					  __func__);                        \
-		p_;                                                         \
+#define gsh_malloc_aligned(a, n, comp)                                   \
+	({                                                               \
+		void *p_;                                                \
+		if (posix_memalign(&p_, a, n) != 0) {                    \
+			abort();                                         \
+		}                                                        \
+		gsh_mem_stats_update_alloc(p_, comp, __FILE__, __LINE__, \
+					   __func__);                    \
+		p_;                                                      \
 	})
 
 /**
@@ -201,15 +201,15 @@ static inline void *gsh_calloc__(size_t n, size_t s, const char *file, int line,
 	return p;
 }
 
-#define gsh_calloc(n, s, comp)                                              \
-	({                                                                   \
-		void *p_ = calloc(n, s);                                    \
-		if (p_ == NULL) {                                           \
-			abort();                                            \
-		}                                                           \
-		gsh_mem_stats_update_alloc(p_, comp, __FILE__, __LINE__,    \
-					  __func__);                        \
-		p_;                                                         \
+#define gsh_calloc(n, s, comp)                                           \
+	({                                                               \
+		void *p_ = calloc(n, s);                                 \
+		if (p_ == NULL) {                                        \
+			abort();                                         \
+		}                                                        \
+		gsh_mem_stats_update_alloc(p_, comp, __FILE__, __LINE__, \
+					   __func__);                    \
+		p_;                                                      \
 	})
 
 /**
@@ -247,8 +247,7 @@ static inline void *gsh_realloc__(void *p, size_t n, const char *file, int line,
 	return p2;
 }
 
-static inline void *gsh_realloc_comp__(void *p, size_t n,
-				       mem_components_t comp,
+static inline void *gsh_realloc_comp__(void *p, size_t n, mem_components_t comp,
 				       const char *file, int line,
 				       const char *function)
 {
@@ -285,8 +284,7 @@ static inline char *gsh_strdup__(const char *s, mem_components_t comp,
 	return p_;
 }
 
-#define gsh_strdup(s, comp) \
-	gsh_strdup__(s, comp, __FILE__, __LINE__, __func__)
+#define gsh_strdup(s, comp) gsh_strdup__(s, comp, __FILE__, __LINE__, __func__)
 
 #if defined(__GLIBC__) && defined(_GNU_SOURCE)
 #define gsh_strdupa(src) strdupa(src)
@@ -299,9 +297,9 @@ static inline char *gsh_strdup__(const char *s, mem_components_t comp,
 	})
 #endif
 
-static inline void *gsh_memdup__(const void *s, size_t l,
-				 mem_components_t comp, const char *file,
-				 int line, const char *function)
+static inline void *gsh_memdup__(const void *s, size_t l, mem_components_t comp,
+				 const char *file, int line,
+				 const char *function)
 {
 	void *p_ = gsh_malloc_comp__(l, comp, file, line, function);
 
@@ -327,17 +325,15 @@ static inline void *gsh_memdup__(const void *s, size_t l,
  * @param[in] p    Block of memory to free.
  * @param[in] comp Memory component p was allocated under.
  */
-static inline void gsh_free__(void *p, mem_components_t comp,
-			      const char *file, int line,
-			      const char *function)
+static inline void gsh_free__(void *p, mem_components_t comp, const char *file,
+			      int line, const char *function)
 {
 	gsh_mem_stats_update_free(p, comp, file, line, function);
 
 	free(p);
 }
 
-#define gsh_free(p, comp) \
-	gsh_free__(p, comp, __FILE__, __LINE__, __func__)
+#define gsh_free(p, comp) gsh_free__(p, comp, __FILE__, __LINE__, __func__)
 
 /**
  * @brief Free a block of memory with size

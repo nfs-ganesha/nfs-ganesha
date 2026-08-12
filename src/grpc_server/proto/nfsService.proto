@@ -81,6 +81,17 @@ message GetSessionIdsResponse
 	repeated string session_ids = 1;
 }
 
+// Fake/force a CB_RECALL for a client id (CBSIM fake_recall)
+service FakeRecall
+{
+	rpc FakeRecall(FakeRecallRequest) returns (nfsProtoUtil.StatusResponse);
+}
+
+message FakeRecallRequest
+{
+	uint64 client_id = 1;
+}
+
 /* NFS Admin Services */
 service nfsAdmin
 {

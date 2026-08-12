@@ -116,6 +116,24 @@ void GetClientSessionIds(const std::string &server_address, const char *ca_crt,
 	grpc::Status status = stub->GetSessionIds(&context, request, &response);
 }
 
+void FakeRecall(const std::string &server_address, uint64_t client_id)
+{
+	std::shared_ptr<grpc::Channel> channel;
+
+	channel = getCreds(server_address);
+
+	std::unique_ptr<nfsService::FakeRecall::Stub> stub =
+		nfsService::FakeRecall::NewStub(channel);
+
+	nfsService::FakeRecallRequest request;
+	nfsProtoUtil::StatusResponse response;
+	grpc::ClientContext context;
+
+	request.set_client_id(client_id);
+
+	grpc::Status status = stub->FakeRecall(&context, request, &response);
+}
+
 void StartGraceWithEvent(const std::string &server_address)
 {
 	// Creating a channel to communicate with the server

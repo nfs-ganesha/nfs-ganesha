@@ -79,6 +79,20 @@ class GetSessionIdService final : public nfsService::GetSessionId::Service {
 		      nfsService::GetSessionIdsResponse *response) override;
 };
 
+/**
+ * @brief gRPC equivalent of org.ganesha.nfsd.cbsim.fake_recall
+ *
+ * Forces a demonstration CB_RECALL on the callback channel for the
+ * given NFSv4 client id.
+ */
+class FakeRecallService final : public nfsService::FakeRecall::Service {
+    public:
+	grpc::Status
+	FakeRecall(grpc::ServerContext *context,
+		   const nfsService::FakeRecallRequest *request,
+		   nfsProtoUtil::StatusResponse *response) override;
+};
+
 class ClientStatsService final : public cltmgrService::ClientStats::Service {
     public:
 	grpc::Status
@@ -360,9 +374,9 @@ class ExportService final : public exportService::ExportService::Service {
 		    const nfsProtoUtil::EmptyRequest *request,
 		    exportService::ShowExportsResponse *response) override;
 	grpc::Status
-	AddExport(grpc::ServerContext *context,
-		const exportService::ExportRequest *request,
-		exportService::ExportResponse *response) override;
+		AddExport(grpc::ServerContext *context,
+			const exportService::ExportRequest *request,
+			exportService::ExportResponse *response) override;
 
 	grpc::Status
 	RemoveExport(grpc::ServerContext *context,

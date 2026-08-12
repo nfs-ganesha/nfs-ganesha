@@ -82,12 +82,14 @@ void free_rpc_call(rpc_call_t *call);
 
 static inline nfs_cb_argop4 *alloc_cb_argop(uint32_t cnt)
 {
-	return gsh_calloc(cnt, sizeof(nfs_cb_argop4), MEM_COMP_PROTOCOL);
+	return (nfs_cb_argop4 *)gsh_calloc(cnt, sizeof(nfs_cb_argop4),
+					   MEM_COMP_PROTOCOL);
 }
 
 static inline nfs_cb_resop4 *alloc_cb_resop(uint32_t cnt)
 {
-	return gsh_calloc(cnt, sizeof(nfs_cb_resop4), MEM_COMP_PROTOCOL);
+	return (nfs_cb_resop4 *)gsh_calloc(cnt, sizeof(nfs_cb_resop4),
+					   MEM_COMP_PROTOCOL);
 }
 
 static inline void free_cb_argop(nfs_cb_argop4 *ptr)

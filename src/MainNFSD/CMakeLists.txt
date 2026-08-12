@@ -66,6 +66,12 @@ if(USE_NFS_RDMA)
   add_definitions(-D_USE_NFS_RDMA)
 endif(USE_NFS_RDMA)
 
+if(USE_GRPC)
+  SET(MainServices_STAT_SRCS
+    ${MainServices_STAT_SRCS}
+    nfs_cbsim_grpc.c)
+endif(USE_GRPC)
+
 if(USE_CB_SIMULATOR)
   SET(MainServices_STAT_SRCS
     ${MainServices_STAT_SRCS}

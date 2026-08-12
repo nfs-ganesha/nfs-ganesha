@@ -121,6 +121,8 @@ void GrpcServer::gRPCServerStart(uint16_t port, std::string server_crt,
 
 		builder.RegisterService(&getClientSessionIds);
 
+		builder.RegisterService(&fakeRecallService);
+
 		builder.RegisterService(&startNfsGrace);
 
 		builder.RegisterService(&clientStatsService);
