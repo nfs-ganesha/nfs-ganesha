@@ -387,13 +387,25 @@ service ExportService
 	rpc UpdateExport(ExportRequest) returns (ExportResponse);
 }
 
+message Timestamp {
+	uint64 tv_sec = 1;
+	uint64 tv_nsec = 2;
+}
+
+message ProtocolActivity {
+	string name = 1;
+	bool active = 2;
+}
+
 message ExportInfo
 {
 	uint32 export_id = 1;
 	string full_path = 2;
 	string pseudo_path = 3;
 	string fs_tag = 4;
-	// Add other fields here as needed
+	repeated ProtocolActivity protocols = 5;
+	uint64 total_ops = 6;
+	Timestamp last_update = 7;
 }
 message ShowExportsResponse
 {

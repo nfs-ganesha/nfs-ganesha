@@ -296,7 +296,7 @@ class ExportStatsService final : public exportService::ExportStats::Service {
 		grpc::ServerContext *context,
 		const nfsProtoUtil::ExportIdRequest *request,
 		exportService::ExportLayoutsResponse *response) override;
-
+#ifdef _USE_9P
 	grpc::Status
 	Get9pIO(grpc::ServerContext *context,
 		const nfsProtoUtil::ExportIdRequest *request,
@@ -306,7 +306,7 @@ class ExportStatsService final : public exportService::ExportStats::Service {
 	Get9pOpStats(grpc::ServerContext *context,
 		     const nfsProtoUtil::Export9pOpRequest *request,
 		     exportService::ExportOpStatsResponse *response) override;
-
+#endif
 	grpc::Status
 	GetFastOPS(grpc::ServerContext *context,
 		   const nfsProtoUtil::EmptyRequest *request,

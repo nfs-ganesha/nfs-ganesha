@@ -46,6 +46,8 @@
 #include "nfs_proto_functions.h"
 #include "nfs_cbsim_grpc.h"
 
+#define MAX_PROTOCOLS 8
+
 grpc::Status GetClientIdService::GetClientIds(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
 	nfsService::GetClientIdsResponse *response)
@@ -1058,6 +1060,7 @@ grpc::Status ExportStatsService::GetNFSv42Layouts(
 				     grpc_export_get_v42_layout_stats);
 }
 
+#ifdef _USE_9P
 /**
  * @brief Return  9P I/O statistics for an export.
  */
@@ -1103,6 +1106,7 @@ ExportStatsService::Get9pOpStats(grpc::ServerContext *context,
 
 	return grpc::Status::OK;
 }
+#endif
 
 /**
  * @brief Retrieves the total NFS operation statistics from the server.
@@ -1513,9 +1517,8 @@ ExportService::DisplayExport(grpc::ServerContext *context,
 }
 
 /*
- * TODO: Extend ShowExports to include the server_stats_summary information
- * returned by the DBus interface. This will be implemented together with
- * the remaining export statistics gRPC APIs.
+ * Populate per-export protocol activity summary and total operation
+ * count, mirroring the information returned by the DBus ShowExports API.
  */
 grpc::Status ExportService::ShowExports(
 	grpc::ServerContext *context, const nfsProtoUtil::EmptyRequest *request,
@@ -1550,7 +1553,31 @@ grpc::Status ExportService::ShowExports(
 			out->set_fs_tag(export_obj->FS_tag);
 
 		tmp_put_exp_paths(&tmp);
+
+		/*
+                 * Fill protocol summary
+                 */
+		struct grpc_protocol_activity protocols[MAX_PROTOCOLS];
+		uint32_t protocol_count = 0;
+		uint64_t total_ops = 0;
+
+		if (server_grpc_fill_export_stats_summary(export_obj, protocols,
+							  &protocol_count,
+							  &total_ops)) {
+			out->set_total_ops(total_ops);
+
+			for (uint32_t i = 0; i < protocol_count; i++) {
+				auto *pa = out->add_protocols();
+				pa->set_name(protocols[i].name);
+				pa->set_active(protocols[i].active);
+			}
+
+			auto *ts = out->mutable_last_update();
+			ts->set_tv_sec(export_obj->last_update.tv_sec);
+			ts->set_tv_nsec(export_obj->last_update.tv_nsec);
+		}
 	}
+
 	PTHREAD_RWLOCK_unlock(lock);
 	response->set_success(true);
 	return grpc::Status::OK;

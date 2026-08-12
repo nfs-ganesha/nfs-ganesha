@@ -544,6 +544,13 @@ void server_grpc_fill_stats_summary(struct gsh_stats *st,
 				    uint32_t *proto_count,
 				    uint64_t *total_ops_out);
 
+/*
+ * Extract per-client protocol-activity flags and total op count.
+ */
+bool server_grpc_fill_export_stats_summary(struct gsh_export *export_obj,
+					struct grpc_protocol_activity *protos,
+					uint32_t *proto_count, uint64_t *total_ops_out);
+
 bool grpc_cltmgr_add_client(const char *ipaddr, bool *success, char *errmsg,
 			    size_t errmsg_len);
 

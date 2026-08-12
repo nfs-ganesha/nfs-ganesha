@@ -4231,6 +4231,30 @@ void server_grpc_fill_stats_summary(struct gsh_stats *st,
 	*total_ops_out = tot_ops;
 }
 
+/**
+ * @brief Fill per-export protocol-activity flags for ShowExports
+ */
+bool server_grpc_fill_export_stats_summary(
+        struct gsh_export *export_obj,
+        struct grpc_protocol_activity *protos,
+        uint32_t *proto_count,
+        uint64_t *total_ops_out)
+{
+        struct export_stats *exp;
+
+        if (export_obj == NULL)
+                return false;
+
+        exp = container_of(export_obj, struct export_stats, export);
+
+        server_grpc_fill_stats_summary(&exp->st,
+                                       protos,
+                                       proto_count,
+                                       total_ops_out);
+
+        return true;
+}
+
 /*
  * @brief Collect global fast operation statistics for all supported protocols.
  */
