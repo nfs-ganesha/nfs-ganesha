@@ -4622,12 +4622,12 @@ void gsh_mem_stats_update_free(void *p, mem_components_t comp, const char *file,
 		atomic_sub_int64_t(&mc->current_active_bytes, (int64_t)size);
 
 	if (current_bytes < 0) {
-		LogWarn(COMPONENT_MEM_ALLOC,
-			"mem_comp underflow on %s: freed %zu bytes, current_active_bytes is now %"
-			PRId64
-			" - possible alloc/free mem_comp mismatch at %s:%d(%s)",
-			gsh_mem_stats_get_mem_comp_str(comp), size,
-			current_bytes, file, line, function);
+		LogWarnLimited(COMPONENT_MEM_ALLOC,
+			       "mem_comp underflow on %s: freed %zu bytes, current_active_bytes is now %"
+			       PRId64
+			       " - possible alloc/free mem_comp mismatch at %s:%d(%s)",
+			       gsh_mem_stats_get_mem_comp_str(comp), size,
+			       current_bytes, file, line, function);
 	}
 
 	if (isFullDebug(COMPONENT_MEM_ALLOC)) {

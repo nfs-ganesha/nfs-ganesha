@@ -4092,12 +4092,34 @@ static inline bool xdr_utf8string_decode(XDR *xdrs, utf8string *objp,
 	return ret;
 }
 
+/**
+ * @brief Free a utf8string allocated by copy_into_utf8string()
+ *
+ * Always releases under MEM_COMP_PROTOCOL, matching copy_into_utf8string(),
+ * so every caller is symmetric by construction instead of hand-picking a
+ * (possibly wrong) component at each free site.
+ *
+ * @param[in,out] str  The utf8string to release; val/len are reset to
+ *                      NULL/0 afterward.
+ */
+
+static inline void free_utf8string(utf8string *str)
+{
+	gsh_free(str->utf8string_val, MEM_COMP_PROTOCOL);
+	str->utf8string_val = NULL;
+	str->utf8string_len = 0;
+}
+
 static inline bool inline_xdr_utf8string(XDR *xdrs, utf8string *objp,
 					 u_int maxsize)
 {
-	if (xdrs->x_op == XDR_DECODE) {
+	switch (xdrs->x_op) {
+	case XDR_DECODE:
 		return xdr_utf8string_decode(xdrs, objp, maxsize);
-	} else {
+	case XDR_FREE:
+		free_utf8string(objp);
+		return true;
+	default:
 		return inline_xdr_bytes(xdrs, &objp->utf8string_val,
 					&objp->utf8string_len, maxsize);
 	}
@@ -10045,24 +10067,6 @@ static inline void copy_into_utf8string(utf8string *dest, const char *src,
 	dest->utf8string_len = len;
 	memcpy(dest->utf8string_val, src, len);
 	dest->utf8string_val[len] = '\0';
-}
-
-/**
- * @brief Free a utf8string allocated by copy_into_utf8string()
- *
- * Always releases under MEM_COMP_PROTOCOL, matching copy_into_utf8string(),
- * so every caller is symmetric by construction instead of hand-picking a
- * (possibly wrong) component at each free site.
- *
- * @param[in,out] str  The utf8string to release; val/len are reset to
- *                      NULL/0 afterward.
- */
-
-static inline void free_utf8string(utf8string *str)
-{
-	gsh_free(str->utf8string_val, MEM_COMP_PROTOCOL);
-	str->utf8string_val = NULL;
-	str->utf8string_len = 0;
 }
 
 #ifdef __cplusplus

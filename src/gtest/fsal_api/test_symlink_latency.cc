@@ -130,7 +130,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE)
 	fsal_status_t status;
 	struct fsal_obj_handle *symlink;
 	struct fsal_obj_handle *lookup;
-	struct gsh_buffdesc link_content;
+	utf8string link_content;
 	int ret = -1;
 
 	status = root_entry->obj_ops->symlink(root_entry, TEST_ROOT_LINK,
@@ -148,7 +148,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE)
 			     link_content.utf8string_len);
 	EXPECT_EQ(ret, 0);
 
-	gsh_free(link_content.utf8string_val, MEM_COMP_PROTOCOL);
+	free_utf8string(&link_content);
 
 	symlink->obj_ops->put_ref(symlink);
 	lookup->obj_ops->put_ref(lookup);
@@ -164,7 +164,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE_BYPASS)
 	struct fsal_obj_handle *sub_hdl;
 	struct fsal_obj_handle *symlink;
 	struct fsal_obj_handle *lookup;
-	struct gsh_buffdesc link_content;
+	utf8string link_content;
 	int ret = -1;
 
 	sub_hdl = mdcdb_get_sub_handle(root_entry);
@@ -188,7 +188,7 @@ TEST_F(SymlinkEmptyLatencyTest, SIMPLE_BYPASS)
 			     link_content.utf8string_len);
 	EXPECT_EQ(ret, 0);
 
-	gsh_free(link_content.utf8string_val, MEM_COMP_GTEST);
+	free_utf8string(&link_content);
 
 	symlink->obj_ops->put_ref(symlink);
 	lookup->obj_ops->put_ref(lookup);

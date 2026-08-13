@@ -317,7 +317,8 @@ static char *proxyv3_rpcBuf_resize(struct rpc_buf *rpc_buf, size_t len)
 		 * we're unlikely to get N^2 style re-allocs.
 		 */
 
-		rpc_buf->buf = gsh_realloc(rpc_buf->buf, len, MEM_COMP_FSAL);
+		rpc_buf->buf = gsh_realloc(rpc_buf->buf, len,
+					   MEM_COMP_PROTOCOL);
 		rpc_buf->capacity = len;
 	}
 

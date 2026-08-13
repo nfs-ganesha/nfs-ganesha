@@ -199,6 +199,31 @@ process loads that `.so`.
 - **Read-only observation** — these scripts do not modify Ganesha's memory or
   behaviour.
 
+### `mem_comp_audit.bt` — BPF map memory
+
+The script keeps per-pointer state in kernel BPF hash maps (`@comp`, `@afile`,
+`@aline`, `@afunc`, `@valid`). Each map is declared with `hash(16384)` — that
+is the **maximum number of keys**, not memory allocated up front. Entries are
+**deleted when a tracked pointer is freed**, so map size stays near the number
+of **live** allocations (hundreds to a few thousand on a busy server), not the
+total alloc/free event count.
+
+Rough steady-state kernel memory for the five per-pointer maps is on the order
+of **hundreds of KB to a few MB** under load, not tens of MB.
+
+If you still see `Map full` on an extremely busy node, raise the limit:
+
+```bash
+sudo bpftrace --config max_map_keys=65536 mem_comp_audit.bt "$LIB" 30
+```
+
+### Troubleshooting: `Map full`
+
+If bpftrace prints `Map full; can't update element` during a long run, tracking
+stops and later frees may look like `WARN` with no tracked alloc. Use the
+current script (delete-on-free), shorten the run, or pass `max_map_keys` as
+above.
+
 ## Adding a new script
 
 1. Add `your_script.bt` under this directory.

@@ -453,7 +453,7 @@ static void *qos_block_init(void *link_mem, void *self_struct)
 
 	if (self_struct == NULL) {
 		qos_block = gsh_calloc(1, sizeof(struct qos_block_config),
-				       MEM_COMP_EXPORT);
+				       MEM_COMP_QOS);
 		LogFullDebug(COMPONENT_CONFIG, "Allocating args: %p: %p",
 			     link_mem, qos_block);
 	} else {
@@ -498,7 +498,7 @@ static int qos_block_commit(void *node, void *link_mem, void *self_struct,
 			     qos_block, qos_block->enable_qos,
 			     gsh_export->export_id, gsh_export->cfg_fullpath);
 		if (qos_block) {
-			gsh_free(qos_block, MEM_COMP_EXPORT);
+			gsh_free(qos_block, MEM_COMP_QOS);
 			gsh_export->qos_block = NULL;
 		}
 	}

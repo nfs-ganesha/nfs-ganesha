@@ -819,12 +819,12 @@ fsal_status_t glusterfs_create_export(struct fsal_module *fsal_hdl,
 	glfsexport->export.up_ops = up_ops;
 
 out:
-	gsh_free(params.glvolname, MEM_COMP_CONFIG);
-	gsh_free(params.glhostname, MEM_COMP_CONFIG);
-	gsh_free(params.glfs_log, MEM_COMP_CONFIG);
+	gsh_free(params.glvolname, MEM_COMP_EXPORT);
+	gsh_free(params.glhostname, MEM_COMP_EXPORT);
+	gsh_free(params.glfs_log, MEM_COMP_EXPORT);
 
 	if (status.major != ERR_FSAL_NO_ERROR) {
-		gsh_free(params.glvolpath, MEM_COMP_CONFIG);
+		gsh_free(params.glvolpath, MEM_COMP_EXPORT);
 
 		if (fsal_attached)
 			fsal_detach_export(fsal_hdl,

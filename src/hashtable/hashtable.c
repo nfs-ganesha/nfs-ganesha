@@ -364,7 +364,7 @@ struct hash_table *hashtable_init(struct hash_param *hparam)
 		/* Allocate a cache if requested */
 		if (hparam->flags & HT_FLAG_CACHE)
 			partition->cache = gsh_calloc(1, cache_page_size(ht),
-						      MEM_COMP_MDCACHE);
+						      MEM_COMP_HASHTABLE);
 
 		completed++;
 	}

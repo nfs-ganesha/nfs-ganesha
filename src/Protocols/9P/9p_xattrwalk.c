@@ -213,7 +213,7 @@ int _9p_xattrwalk(struct _9p_request_data *req9p, u32 *plenout, char *preply)
 			pxattrfid->xattr = gsh_realloc(
 				pxattrfid->xattr,
 				sizeof(*pxattrfid->xattr) + attrsize,
-				MEM_COMP_FSAL);
+				MEM_COMP_PROTOCOL);
 
 			fsal_status =
 				pxattrfid->pentry->obj_ops

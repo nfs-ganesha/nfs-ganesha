@@ -45,7 +45,8 @@ namespace gtest {
     virtual void SetUp() {
       gtest::GaneshaFSALBaseTest::SetUp();
 
-      data = (compound_data_t *) gsh_calloc(1, sizeof(*data), MEM_COMP_GTEST);
+      data = (compound_data_t *) gsh_calloc(1, sizeof(*data),
+					    MEM_COMP_PROTOCOL);
 
       memset(&arg, 0, sizeof(nfs_arg_t));
       memset(&resp, 0, sizeof(struct nfs_resop4));

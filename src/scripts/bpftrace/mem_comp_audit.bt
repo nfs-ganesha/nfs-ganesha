@@ -100,12 +100,23 @@
  *   "Positional parameter $2 is empty" warning
  *     Pass both arguments always (use 30 for the default heartbeat interval).
  *
+ *   "Map full; can't update element"
+ *     Per-pointer map keys are deleted on free; if this still appears on a
+ *     very busy node, shorten the run or:
+ *     bpftrace --config max_map_keys=65536 mem_comp_audit.bt ...
+ *
  * ============================================================================
  * BEGIN-RUNTIME
  * ============================================================================
  */
 
 #define LOOP_CAP 127
+
+let @comp   = hash(16384);
+let @afile  = hash(16384);
+let @aline  = hash(16384);
+let @afunc  = hash(16384);
+let @valid  = hash(16384);
 
 BEGIN
 {
@@ -220,9 +231,15 @@ uprobe:$1:gsh_mem_stats_update_free
 			}
 		}
 		@outstanding[$acomp] = @outstanding[$acomp] - 1;
+
+		/* bpftrace warns if delete() return is not used */
+		$d = delete(@comp[$p]);
+		$d = delete(@afile[$p]);
+		$d = delete(@aline[$p]);
+		$d = delete(@afunc[$p]);
+		$d = delete(@valid[$p]);
 	}
 
-	@valid[$p] = 0;
 	@nfree = @nfree + 1;
 }
 
