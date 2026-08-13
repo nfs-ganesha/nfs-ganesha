@@ -461,6 +461,7 @@ int load_export_extensions(config_file_t, struct config_error_type *);
 extern "C" {
 #endif
 void synchronize_exports(uint64_t generation);
+void update_all_export_generations(uint64_t generation);
 #ifdef __cplusplus
 }
 #endif

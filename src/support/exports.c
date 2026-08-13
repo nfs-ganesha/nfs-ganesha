@@ -4072,6 +4072,26 @@ void add_to_export_callbacks(struct gsh_export *export,
 	glist_add_tail(&export->exp_root_callbacks, &callback->link);
 }
 
+/**
+ * @brief Synchronize exports after update or remove operations.
+ *
+ * Updates the configuration generation for all existing exports and
+ * synchronizes the PseudoFS by removing obsolete entries and remounting
+ * the remaining exports as needed.
+ */
+static bool update_export_generation_cb(struct gsh_export *export, void *arg)
+{
+	uint64_t generation = *(uint64_t *)arg;
+
+	export->config_gen = generation;
+	return true;
+}
+
+void update_all_export_generations(uint64_t generation)
+{
+	(void)foreach_gsh_export(update_export_generation_cb, true,
+				 &generation);
+}
 
 void synchronize_exports(uint64_t generation)
 {
@@ -4079,4 +4099,3 @@ void synchronize_exports(uint64_t generation)
 	prune_defunct_exports(generation);
 	create_pseudofs();
 }
-

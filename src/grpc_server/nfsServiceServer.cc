@@ -2149,23 +2149,6 @@ ExportService::RemoveExport(grpc::ServerContext *context,
 	return grpc::Status::OK;
 }
 
-static bool update_export_generation_cb(struct gsh_export *exp, void *arg)
-{
-	uint64_t generation = *(uint64_t *)arg;
-
-	/* Skip exports already marked for removal */
-	if (exp->config_gen != 0)
-		exp->config_gen = generation;
-
-	return true;
-}
-
-static void update_all_export_generations(uint64_t generation)
-{
-	foreach_gsh_export(update_export_generation_cb, true, &generation)
-		;
-}
-
 grpc::Status
 ExportService::UpdateExport(grpc::ServerContext *context,
 			    const exportService::ExportRequest *request,

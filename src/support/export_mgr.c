@@ -1703,6 +1703,19 @@ static bool gsh_export_update_export(DBusMessageIter *args, DBusMessage *reply,
 		}
 		gsh_free(lp, MEM_COMP_CONFIG);
 	}
+
+	if (status && exp_cnt > 0) {
+		uint64_t generation = get_config_generation(config_struct);
+
+		/* Mark all existing exports as updated to the current
+		 * configuration generation so synchronization preserves
+		 * them and only removes exports that were explicitly
+		 * marked for removal.
+		 */
+		update_all_export_generations(generation);
+		synchronize_exports(generation);
+	}
+
 	(void)report_config_errors(&err_type, &conf_errs, config_errs_to_dbus);
 	if (conf_errs.fp != NULL)
 		fclose(conf_errs.fp);
