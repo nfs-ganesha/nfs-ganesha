@@ -154,7 +154,13 @@ Url:		https://github.com/nfs-ganesha/nfs-ganesha/wiki
 
 Source:		%{sourcename}.tar.gz
 
+%if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:	cmake3
+%global cmake_cmd cmake3
+%else
+BuildRequires:	cmake >= 3.0
+%global cmake_cmd cmake
+%endif
 BuildRequires:	bison
 BuildRequires:	flex
 BuildRequires:	pkgconfig
@@ -594,7 +600,7 @@ Development headers and auxiliary files for developing with %{name}.
 %setup -q -n %{sourcename}
 
 %build
-cmake3 .	-DCMAKE_BUILD_TYPE=Debug			\
+%{cmake_cmd} .	-DCMAKE_BUILD_TYPE=Debug			\
 	-DBUILD_CONFIG=rpmbuild				\
 	-DWITH_PYTHON3=%{python3_version}		\
 	-DUSE_FSAL_NULL=%{use_fsal_null}		\
