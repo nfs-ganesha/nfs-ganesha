@@ -1124,6 +1124,8 @@ static void ceph_register_nfs_service(void)
 		LogDebug(
 			COMPONENT_FSAL,
 			"Unable to load register_service_to_ceph to register nfs service");
+		/* Release the unused dlopen handle on dlsym failure. */
+		(void)dlclose(dl);
 		return;
 	}
 
