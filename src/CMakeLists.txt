@@ -1524,8 +1524,10 @@ endif(USE_LTTNG)
 add_subdirectory(scripts)
 add_subdirectory(doc)
 
-add_subdirectory(libkmip)
-set_property(TARGET kmip PROPERTY POSITION_INDEPENDENT_CODE ON)
+if(USE_FSAL_CEPH_FSCRYPT)
+  add_subdirectory(libkmip)
+  set_property(TARGET kmip PROPERTY POSITION_INDEPENDENT_CODE ON)
+endif(USE_FSAL_CEPH_FSCRYPT)
 # display configuration vars
 
 message(STATUS)
@@ -1969,6 +1971,12 @@ if(INTERNAL_STATD)
 else(INTERNAL_STATD)
   set(BCOND_STATD "%bcond_with")
 endif(INTERNAL_STATD)
+
+if(USE_FSAL_CEPH_FSCRYPT)
+  set(BCOND_CEPH_FSCRYPT "%bcond_without")
+else(USE_FSAL_CEPH_FSCRYPT)
+  set(BCOND_CEPH_FSCRYPT "%bcond_with")
+endif(USE_FSAL_CEPH_FSCRYPT)
 
 # deal with legacy python for el9
 # ... and deal with legacy rpmbuild for legacy python for fc34.

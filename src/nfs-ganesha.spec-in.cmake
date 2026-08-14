@@ -137,6 +137,8 @@ Requires: openSUSE-release
 
 @BCOND_RPC_RDMA@ rpc_rdma
 
+@BCOND_CEPH_FSCRYPT@ ceph_fscrypt
+
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
 Name:		nfs-ganesha
@@ -782,7 +784,9 @@ exit 0
 %files
 %{_bindir}/ganesha.nfsd
 %{_libdir}/libganesha_nfsd.so*
-%{_libdir}/ganesha/libkmip_fscrypt*
+%if %{with ceph_fscrypt}
+%{lib64dir}/ganesha/libkmip_fscrypt*
+%endif
 %config %{_sysconfdir}/dbus-1/system.d/org.ganesha.nfsd.conf
 %config(noreplace) %{_sysconfdir}/sysconfig/ganesha
 %config(noreplace) %{_sysconfdir}/logrotate.d/ganesha

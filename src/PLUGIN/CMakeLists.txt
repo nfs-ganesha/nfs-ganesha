@@ -20,6 +20,6 @@
 #
 #-------------------------------------------------------------------------------
 
-# if(something?)
+if(USE_FSAL_CEPH_FSCRYPT)
   add_subdirectory(kmip)
-# endif(something?)
+endif(USE_FSAL_CEPH_FSCRYPT)
