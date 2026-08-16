@@ -189,9 +189,14 @@ static void nfs4_complete_read_plus(struct nfs_resop4 *resp,
 	READ4res *const res_READ4 = &resp->nfs_resop4_u.opread;
 	READ_PLUS4res *const res_RPLUS = &resp->nfs_resop4_u.opread_plus;
 	contents *contentp = &res_RPLUS->rpr_resok4.rpr_contents;
+	READ4resok *read_resok = &res_READ4->READ4res_u.resok4;
+	bool_t eof = res_READ4->READ4res_u.resok4.eof;
+	struct iovec iov0 = read_resok->iov0;
+	io_data data = read_resok->data;
+	bool use_iov0 = data.iov == &read_resok->iov0;
 
 	/* Fixup the eof status from the res_READ4 that res_RPLUS overlays. */
-	res_RPLUS->rpr_resok4.rpr_eof = res_READ4->READ4res_u.resok4.eof;
+	res_RPLUS->rpr_resok4.rpr_eof = eof;
 
 	/* Now fill in the rest of res_RPLUS */
 	contentp->what = info->io_content.what;
@@ -204,10 +209,11 @@ static void nfs4_complete_read_plus(struct nfs_resop4 *resp,
 
 	if (info->io_content.what == NFS4_CONTENT_DATA) {
 		contentp->data.d_offset = info->io_content.data.d_offset;
-		contentp->data.d_data.data_len =
-			info->io_content.data.d_data.data_len;
-		contentp->data.d_data.data_val =
-			info->io_content.data.d_data.data_val;
+		contentp->data.d_data = data;
+		if (use_iov0) {
+			contentp->data.iov0 = iov0;
+			contentp->data.d_data.iov = &contentp->data.iov0;
+		}
 	}
 }
 
@@ -610,6 +616,11 @@ static enum nfs_req_result op_dsread(struct nfs_argop4 *op,
  *
  */
 
+static void read_plus_io_data_release(void *release_data)
+{
+	gsh_free(release_data, MEM_COMP_IO_BUFFER);
+}
+
 static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 					  compound_data_t *data,
 					  struct nfs_resop4 *resp,
@@ -633,7 +644,10 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 		contentp->what = NFS4_CONTENT_DATA;
 		contentp->data.d_offset = arg_READ4->offset;
 		contentp->data.d_data.data_len = 0;
-		contentp->data.d_data.data_val = NULL;
+		contentp->data.d_data.iovcnt = 1;
+		contentp->data.d_data.iov = &contentp->data.iov0;
+		contentp->data.iov0.iov_len = 0;
+		contentp->data.iov0.iov_base = NULL;
 		res_RPLUS->rpr_status = NFS4_OK;
 		server_stats_io_done(0, 0, true, false);
 		return NFS_REQ_OK;
@@ -660,6 +674,7 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 	res_RPLUS->rpr_resok4.rpr_eof = eof;
 
 	if (info->io_content.what == NFS4_CONTENT_HOLE) {
+		gsh_free(buffer, MEM_COMP_IO_BUFFER);
 		contentp->hole.di_offset = info->io_content.hole.di_offset;
 		contentp->hole.di_length = info->io_content.hole.di_length;
 		server_stats_io_done(arg_READ4->count,
@@ -670,8 +685,13 @@ static enum nfs_req_result op_dsread_plus(struct nfs_argop4 *op,
 		contentp->data.d_offset = info->io_content.data.d_offset;
 		contentp->data.d_data.data_len =
 			info->io_content.data.d_data.data_len;
-		contentp->data.d_data.data_val =
-			info->io_content.data.d_data.data_val;
+		contentp->data.d_data.iovcnt = 1;
+		contentp->data.d_data.iov = &contentp->data.iov0;
+		contentp->data.iov0.iov_len =
+			info->io_content.data.d_data.data_len;
+		contentp->data.iov0.iov_base = buffer;
+		contentp->data.d_data.release = read_plus_io_data_release;
+		contentp->data.d_data.release_data = buffer;
 		server_stats_io_done(arg_READ4->count,
 				     info->io_content.data.d_data.data_len,
 				     true, false);
@@ -1207,17 +1227,7 @@ enum nfs_req_result nfs4_op_read_plus(struct nfs_argop4 *op,
 
 void nfs4_op_read_plus_Free(nfs_resop4 *res)
 {
-	READ_PLUS4res *resp = &res->nfs_resop4_u.opread_plus;
-	contents *conp = &resp->rpr_resok4.rpr_contents;
-
-	if (resp->rpr_status == NFS4_OK && conp->what == NFS4_CONTENT_DATA) {
-		if (!op_ctx->is_rdma_buff_used) {
-			if (conp->data.d_data.data_val != NULL)
-				gsh_free(conp->data.d_data.data_val,
-					 MEM_COMP_IO_BUFFER);
-		}
-		conp->data.d_data.data_val = NULL;
-	}
+	/* Data buffers are released by xdr_io_data. */
 }
 
 /**

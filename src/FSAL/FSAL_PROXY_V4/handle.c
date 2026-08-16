@@ -2610,8 +2610,9 @@ static void proxyv4_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 			read_arg->offset + read_arg->io_amount;
 		read_arg->info->io_content.data.d_data.data_len =
 			read_arg->io_amount;
-		read_arg->info->io_content.data.d_data.data_val =
-			read_arg->iov[0].iov_base;
+		read_arg->info->io_content.data.d_data.iovcnt =
+			read_arg->iov_count;
+		read_arg->info->io_content.data.d_data.iov = read_arg->iov;
 	}
 
 	done_cb(obj_hdl, fsalstat(0, 0), read_arg, caller_arg);

@@ -2129,6 +2129,130 @@ not_nfs:
  * @return Nothing; results are in callback
  */
 
+struct read_plus_fallback {
+	fsal_async_cb done_cb;
+	void *caller_arg;
+	struct io_info *info;
+	bool bypass;
+};
+
+static void read_plus_data_cb(struct fsal_obj_handle *obj_hdl,
+			      fsal_status_t status, void *io_arg,
+			      void *caller_arg)
+{
+	struct read_plus_fallback *fallback = caller_arg;
+	struct fsal_io_arg *read_arg = io_arg;
+	fsal_async_cb done_cb = fallback->done_cb;
+	void *done_arg = fallback->caller_arg;
+
+	read_arg->info = fallback->info;
+
+	if (!FSAL_IS_ERROR(status)) {
+		data4 *data = &read_arg->info->io_content.data;
+
+		read_arg->info->io_content.what = NFS4_CONTENT_DATA;
+		data->d_offset = read_arg->offset;
+		data->d_data.data_len = read_arg->io_amount;
+		data->d_data.iovcnt = read_arg->iov_count;
+		data->d_data.iov = read_arg->iov;
+	}
+
+	gsh_free(fallback, MEM_COMP_FSAL);
+	done_cb(obj_hdl, status, read_arg, done_arg);
+}
+
+static void read_plus_fallback_cb(struct fsal_obj_handle *obj_hdl,
+				  fsal_status_t status, void *io_arg,
+				  void *caller_arg)
+{
+	struct read_plus_fallback *fallback = caller_arg;
+	struct fsal_io_arg *read_arg = io_arg;
+	struct io_info seek_info = { 0 };
+	uint64_t extent_end;
+
+	if (status.major != ERR_FSAL_NOTSUPP) {
+		fsal_async_cb done_cb = fallback->done_cb;
+		void *done_arg = fallback->caller_arg;
+
+		gsh_free(fallback, MEM_COMP_FSAL);
+		done_cb(obj_hdl, status, read_arg, done_arg);
+		return;
+	}
+
+	seek_info.io_content.what = NFS4_CONTENT_DATA;
+	seek_info.io_content.hole.di_offset = read_arg->offset;
+	status = obj_hdl->obj_ops->seek2(obj_hdl, read_arg->state, &seek_info);
+
+	/* The next data extent starts after the requested offset, so the
+	 * requested offset is in a hole.  Return at most the requested length.
+	 */
+	if (!FSAL_IS_ERROR(status) &&
+	    seek_info.io_content.hole.di_offset > read_arg->offset) {
+		extent_end = seek_info.io_content.hole.di_offset;
+		if (read_arg->iov[0].iov_len <= UINT64_MAX - read_arg->offset &&
+		    extent_end > read_arg->offset + read_arg->iov[0].iov_len)
+			extent_end =
+				read_arg->offset + read_arg->iov[0].iov_len;
+
+		read_arg->io_amount = extent_end - read_arg->offset;
+		read_arg->end_of_file = false;
+		read_arg->info->io_content.what = NFS4_CONTENT_HOLE;
+		read_arg->info->io_content.hole.di_offset = read_arg->offset;
+		read_arg->info->io_content.hole.di_length = read_arg->io_amount;
+
+		/* A hole result does not own the allocated data buffer. */
+		if (read_arg->iov_release != NULL) {
+			read_arg->iov_release(read_arg->release_data);
+			read_arg->iov_release = NULL;
+			read_arg->release_data = NULL;
+			read_arg->iov[0].iov_base = NULL;
+		}
+
+		fsal_async_cb done_cb = fallback->done_cb;
+		void *done_arg = fallback->caller_arg;
+
+		status = fsalstat(ERR_FSAL_NO_ERROR, 0);
+		gsh_free(fallback, MEM_COMP_FSAL);
+		done_cb(obj_hdl, status, read_arg, done_arg);
+		return;
+	}
+
+	if (!FSAL_IS_ERROR(status)) {
+		/* The offset is data.  Limit the read to the next hole so the
+		 * client can issue another READ_PLUS for that extent.
+		 */
+		seek_info.io_content.what = NFS4_CONTENT_HOLE;
+		seek_info.io_content.hole.di_offset = read_arg->offset;
+		status = obj_hdl->obj_ops->seek2(obj_hdl, read_arg->state,
+						 &seek_info);
+		if (!FSAL_IS_ERROR(status)) {
+			extent_end = seek_info.io_content.hole.di_offset;
+			if (extent_end > read_arg->offset &&
+			    extent_end - read_arg->offset <
+				    read_arg->iov[0].iov_len)
+				read_arg->iov[0].iov_len =
+					extent_end - read_arg->offset;
+		}
+	}
+
+	if (FSAL_IS_ERROR(status) && status.major != ERR_FSAL_NXIO) {
+		fsal_async_cb done_cb = fallback->done_cb;
+		void *done_arg = fallback->caller_arg;
+
+		gsh_free(fallback, MEM_COMP_FSAL);
+		done_cb(obj_hdl, status, read_arg, done_arg);
+		return;
+	}
+
+	/* SEEK_DATA returns NXIO when there is no later data extent.  Reading
+	 * that range and returning it as data is valid, though RFC 7862
+	 * recommends returning an all-zero range as a hole.
+	 */
+	read_arg->info = NULL;
+	obj_hdl->obj_ops->read2(obj_hdl, fallback->bypass, read_plus_data_cb,
+				read_arg, fallback);
+}
+
 void fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 		fsal_async_cb done_cb, struct fsal_io_arg *read_arg,
 		void *caller_arg)
@@ -2163,6 +2287,18 @@ void fsal_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	}
 
 call_read2:
+	if (read_arg->info != NULL) {
+		struct read_plus_fallback *fallback =
+			gsh_malloc(sizeof(*fallback), MEM_COMP_FSAL);
+
+		fallback->done_cb = done_cb;
+		fallback->caller_arg = caller_arg;
+		fallback->info = read_arg->info;
+		fallback->bypass = bypass;
+		return obj_hdl->obj_ops->read2(obj_hdl, bypass,
+					       read_plus_fallback_cb, read_arg,
+					       fallback);
+	}
 
 	return obj_hdl->obj_ops->read2(obj_hdl, bypass, done_cb, read_arg,
 				       caller_arg);

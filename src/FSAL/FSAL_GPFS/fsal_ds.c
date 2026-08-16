@@ -225,7 +225,10 @@ static nfsstat4 ds_read_plus(struct fsal_ds_handle *const ds_pub,
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + amount_read;
 		info->io_content.data.d_data.data_len = amount_read;
-		info->io_content.data.d_data.data_val = buffer;
+		info->io_content.data.d_data.iovcnt = 1;
+		info->io_content.data.d_data.iov = &info->io_content.data.iov0;
+		info->io_content.data.iov0.iov_len = amount_read;
+		info->io_content.data.iov0.iov_base = buffer;
 		if (amount_read == 0 || amount_read < requested_length)
 			*end_of_file = true;
 	}

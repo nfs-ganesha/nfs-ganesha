@@ -2652,10 +2652,8 @@ typedef enum data_content4 data_content4;
 
 typedef struct {
 	offset4 d_offset;
-	struct {
-		u_int data_len;
-		char *data_val;
-	} d_data;
+	struct iovec iov0;
+	io_data d_data;
 } data4;
 
 typedef struct {
@@ -8002,11 +8000,7 @@ static inline bool xdr_READ_PLUS4resok(XDR *xdrs, read_plus_res4 *objp)
 	if (objp->rpr_contents.what == NFS4_CONTENT_DATA) {
 		if (!xdr_offset4(xdrs, &objp->rpr_contents.data.d_offset))
 			return false;
-		if (!inline_xdr_bytes(
-			    xdrs,
-			    (char **)&objp->rpr_contents.data.d_data.data_val,
-			    &objp->rpr_contents.data.d_data.data_len,
-			    XDR_BYTES_MAXLEN_IO))
+		if (!xdr_io_data(xdrs, &objp->rpr_contents.data.d_data))
 			return false;
 		return true;
 	}

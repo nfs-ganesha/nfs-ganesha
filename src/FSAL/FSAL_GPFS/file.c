@@ -715,7 +715,10 @@ fsal_status_t gpfs_read_plus_fd(int my_fd, uint64_t offset, size_t buffer_size,
 		info->io_content.what = NFS4_CONTENT_DATA;
 		info->io_content.data.d_offset = offset + nb_read;
 		info->io_content.data.d_data.data_len = nb_read;
-		info->io_content.data.d_data.data_val = buffer;
+		info->io_content.data.d_data.iovcnt = 1;
+		info->io_content.data.d_data.iov = &info->io_content.data.iov0;
+		info->io_content.data.iov0.iov_len = nb_read;
+		info->io_content.data.iov0.iov_base = buffer;
 		*read_amount = nb_read;
 	}
 

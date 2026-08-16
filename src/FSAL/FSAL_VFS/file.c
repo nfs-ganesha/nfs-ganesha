@@ -1251,7 +1251,10 @@ void vfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 
 	if (read_arg->info != NULL) {
-		/* Currently we don't support READ_PLUS */
+		/*
+		 * We don't do anything special for READ_PLUS, so return ENOTSUP
+		 * and let fsal_read2 provide fallback READ_PLUS support.
+		 */
 		status = posix2fsal_status(ENOTSUP);
 		goto exit;
 	}
@@ -1292,22 +1295,6 @@ void vfs_read2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	read_arg->io_amount = nb_read;
 
 	read_arg->end_of_file = (nb_read == 0);
-
-#if 0
-	/** @todo
-	 *
-	 * Is this all we really need to do to support READ_PLUS? Will anyone
-	 * ever get upset that we don't return holes, even for blocks of all
-	 * zeroes?
-	 *
-	 */
-	if (info != NULL) {
-		info->io_content.what = NFS4_CONTENT_DATA;
-		info->io_content.data.d_offset = offset + nb_read;
-		info->io_content.data.d_data.data_len = nb_read;
-		info->io_content.data.d_data.data_val = buffer;
-	}
-#endif
 
 out:
 
@@ -1535,7 +1522,9 @@ fsal_status_t vfs_seek2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 		if (errno == ENXIO) {
 			info->io_eof = TRUE;
 		} else {
-			status = posix2fsal_status(errno);
+			/* Map unsupported extent seeking to NFS4ERR_NOTSUPP. */
+			status = posix2fsal_status(errno == EINVAL ? ENOTSUP
+								   : errno);
 		}
 		goto out;
 	} else {
