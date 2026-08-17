@@ -710,11 +710,6 @@ static fsal_status_t fsal_check_access_no_acl(
 	if (denied != NULL)
 		*denied = 0;
 
-	if (!access_type) {
-		LogFullDebug(COMPONENT_NFS_V4_ACL, "Nothing was requested");
-		return fsalstat(ERR_FSAL_NO_ERROR, 0);
-	}
-
 	uid = p_object_attributes->owner;
 	gid = p_object_attributes->group;
 	mode = p_object_attributes->mode;
@@ -822,9 +817,23 @@ fsal_status_t fsal_test_access(struct fsal_obj_handle *obj_hdl,
 {
 	struct fsal_attrlist attrs;
 	fsal_status_t status;
-	attrmask_t needed_attr_for_access_check = ATTRS_CREDS | ATTR_MODE;
-	bool is_acl_needed = IS_FSAL_ACE4_REQ(access_type) ||
-			     IS_FSAL_ACE4_MASK_VALID(access_type);
+	attrmask_t needed_attr_for_access_check;
+	bool is_acl_needed;
+
+	if (allowed != NULL)
+		*allowed = 0;
+
+	if (denied != NULL)
+		*denied = 0;
+
+	if (!access_type) {
+		LogFullDebug(COMPONENT_FSAL, "Nothing was requested");
+		return fsalstat(ERR_FSAL_NO_ERROR, 0);
+	}
+
+	needed_attr_for_access_check = ATTRS_CREDS | ATTR_MODE;
+	is_acl_needed = IS_FSAL_ACE4_REQ(access_type) ||
+			IS_FSAL_ACE4_MASK_VALID(access_type);
 
 	if (is_acl_needed) {
 		needed_attr_for_access_check |= ATTR_ACL;
