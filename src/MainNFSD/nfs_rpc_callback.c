@@ -705,7 +705,8 @@ void nfs_rpc_destroy_chan_no_lock(rpc_call_channel_t *chan)
 }
 
 static void rpc_cb_null_cc_free(struct clnt_req *cc, size_t size,
-			const char *file, int line, const char *function)
+				const char *file, int line,
+				const char *function)
 {
 	gsh_free(cc, MEM_COMP_PROTOCOL);
 }
@@ -1022,7 +1023,7 @@ void free_rpc_call(rpc_call_t *call)
  * @param[in] cc The call context to free
  */
 static void nfs_rpc_call_free(struct clnt_req *cc, size_t unused,
-			const char *file, int line, const char *function)
+			      const char *file, int line, const char *function)
 {
 	rpc_call_t *call = container_of(cc, struct _rpc_call, call_req);
 
@@ -1350,7 +1351,24 @@ restart:
 			continue;
 		}
 
-		assert(session == scur);
+		/*
+		 * The session pointer from the hash table must match the
+		 * pointer we found in the session list.  If it does not,
+		 * the session table is corrupt — release the slot and ref,
+		 * log an error, and return ENOTCONN rather than asserting
+		 * (which would abort the server).  This is checked here
+		 * under cid_mutex so the test and the subsequent use of
+		 * the pointer are atomic with respect to session removal.
+		 */
+		if (unlikely(session != scur)) {
+			LogCrit(COMPONENT_NFS_CB,
+				"Session pointer mismatch for clientid %p: list ptr %p != hash ptr %p",
+				clientid, scur, session);
+			release_cb_slot(scur, slot, false);
+			dec_session_ref(session);
+			PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
+			return ENOTCONN;
+		}
 
 		/* Drop mutex since we have a session ref */
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
