@@ -2479,9 +2479,7 @@ next_name1:
 		name += XATTR_USER_PREFIX_LEN;
 		len -= XATTR_USER_PREFIX_LEN;
 
-		names[i].utf8string_val =
-			gsh_memdup(name, len, MEM_COMP_PROTOCOL);
-		names[i].utf8string_len = len;
+		copy_into_utf8string(&names[i], name, (int)len);
 		++i;
 next_name2:
 		name += (len + 1);
@@ -2501,7 +2499,7 @@ out:
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
 out_error:
 	for (i = 0; i < count; ++i)
-		gsh_free(names[i].utf8string_val, MEM_COMP_PROTOCOL);
+		free_utf8string(&names[i]);
 	gsh_free(names, MEM_COMP_PROTOCOL);
 	return status;
 }

@@ -487,6 +487,8 @@ typedef struct nfs_core_param {
 	bool enable_AUTHSTATS;
 	/** Whether to collect client all ops stats. Defaults to false. */
 	bool enable_CLNTALLSTATS;
+	/** Whether memory statistics capture is disabled. Defaults to false. */
+	bool mem_stats_disable;
 	/** Whether tcp sockets should use SO_KEEPALIVE */
 	bool enable_tcp_keepalive;
 	/** Maximum number of TCP probes before dropping the connection */

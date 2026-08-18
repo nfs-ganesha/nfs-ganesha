@@ -2010,11 +2010,42 @@ class RetrieveMemoryStats():
         self.memmgrobj = self.bus.get_object(self.dbus_service_name,
                                              self.mem_interface)
 
-    # get memory stats
+    # get memory stats (includes capture active/inactive status)
     def get_mem_stats(self):
         stats_state = self.memmgrobj.get_dbus_method("GetMemoryStats",
                                                      self.dbus_memstats_name)
-        return DumpMemStats(stats_state())
+        status_state = self.memmgrobj.get_dbus_method("GetMemoryStatsStatus",
+                                                      self.dbus_memstats_name)
+        status_result = status_state()
+        if status_result[0]:
+            capture_status = str(status_result[1])
+        else:
+            capture_status = "unknown"
+        return DumpMemStats(stats_state(), capture_status)
+
+    def get_mem_stats_status(self):
+        stats_state = self.memmgrobj.get_dbus_method("GetMemoryStatsStatus",
+                                                     self.dbus_memstats_name)
+        return MemStatsCaptureStatus(stats_state())
+
+class MemStatsCaptureStatus(Report):
+    def __init__(self, stats):
+        super().__init__(stats)
+        self.success = stats[0]
+        self.status = stats[1]
+
+    def report(self):
+        out = {'status': {'success': bool(self.success)}}
+        if not self.success:
+            out['status']['error'] = str(self.status)
+        else:
+            out['capture_status'] = str(self.status)
+        return out
+
+    def __str__(self):
+        if not self.success:
+            return "GANESHA RESPONSE STATUS: " + str(self.status)
+        return "Memory statistics capture: " + str(self.status)
 
 class DumpMemStats(Report):
     # Sent over D-Bus as uint64 but can be negative (see
@@ -2024,36 +2055,79 @@ class DumpMemStats(Report):
     _SIGNED_FIELDS = {
         "Current_Active_Bytes", "Peak_Active_Bytes",
     }
+    _STAT_KEYS = (
+        "Lifetime_Alloc_Calls", "Lifetime_Free_Calls",
+        "Lifetime_Alloc_Bytes", "Lifetime_Freed_Bytes",
+        "Current_Active_Bytes", "Peak_Active_Bytes",
+    )
 
     @staticmethod
     def _to_signed64(v):
         v = int(v)
         return v - (1 << 64) if v >= (1 << 63) else v
 
-    def __init__(self, stats):
+    def __init__(self, stats, capture_status=None):
         super().__init__(stats)
 
         self.success = stats[0]
         self.status = stats[1]
+        self.capture_status = capture_status
+
+    @staticmethod
+    def _iter_comp_stats(stats):
+        if stats is None:
+            return
+        for item in stats:
+            try:
+                if len(item) != 2:
+                    continue
+                yield str(item[0]), item[1]
+            except TypeError:
+                continue
+
+    def report(self):
+        report = {'status': {}}
+        if self.status != "OK":
+            report['status']['success'] = False
+            report['status']['error'] = str(self.status)
+            return report
+
+        report['status']['success'] = True
+        if self.capture_status is not None:
+            report['capture_status'] = self.capture_status
+        self.fill_report(report)
+        return report
 
     def fill_report(self, report):
         def op_stats(stat_list):
             # a(st): (name, uint64) per field from the server
             out = {}
             for pair in stat_list:
-                if (isinstance(pair, (list, tuple)) and len(pair) == 2):
-                    k, v = pair
-                    v = dbus_to_std(v)
-                    if str(k) in self._SIGNED_FIELDS:
-                        v = self._to_signed64(v)
-                    out[str(k)] = v
+                try:
+                    if len(pair) != 2:
+                        continue
+                    k, v = pair[0], pair[1]
+                except TypeError:
+                    continue
+                v = dbus_to_std(v)
+                if str(k) in self._SIGNED_FIELDS:
+                    v = self._to_signed64(v)
+                out[str(k)] = v
             return out
 
-        stats = self.result[3]
-        for item in stats:
-            if isinstance(item, (list, tuple)) and len(item) == 2:
-                comp_name, stat_tuples = item
-                report[str(comp_name)] = op_stats(stat_tuples)
+        stats = self.result[2]
+        components = {}
+        total = {k: 0 for k in self._STAT_KEYS}
+
+        for comp_name, stat_tuples in self._iter_comp_stats(stats):
+            comp_data = op_stats(stat_tuples)
+            components[comp_name] = comp_data
+            for k in self._STAT_KEYS:
+                if k in comp_data:
+                    total[k] += comp_data[k]
+
+        report['components'] = components
+        report['TOTAL'] = total
 
     def __str__(self):
         output = ""
@@ -2062,14 +2136,18 @@ class DumpMemStats(Report):
         else:
             stats = self.result[2]
 
+            if self.capture_status is not None:
+                output += (
+                    "Memory statistics capture: "
+                    + str(self.capture_status) + "\n\n"
+                )
+
             # self.stats is expected to be the array (a(sa(st)))
             # So it's a list of tuples: (component_name, [(stat_name, value), ...])
             #stats_dict = {name: dict(stat_list) for name, stat_list in self.stats}
             stats_dict = {
                 name: dict(stat_list)
-                for item in stats
-                if isinstance(item, (list, tuple)) and len(item) == 2
-                for name, stat_list in [item]
+                for name, stat_list in self._iter_comp_stats(stats)
             }
 
             total_l_alloc = total_l_free = 0
@@ -2084,13 +2162,10 @@ class DumpMemStats(Report):
 
             _mem_labels = []
             _seen = set()
-            for item in stats:
-                if isinstance(item, (list, tuple)) and len(item) == 2:
-                    name, _ = item
-                    n = str(name)
-                    if n not in _seen:
-                        _seen.add(n)
-                        _mem_labels.append(n)
+            for name in stats_dict:
+                if name not in _seen:
+                    _seen.add(name)
+                    _mem_labels.append(name)
             w_comp = 10
             wn = 11
             w_byte = 14

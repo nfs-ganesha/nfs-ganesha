@@ -1143,7 +1143,7 @@ void xdr_READ4res_uio_release(struct xdr_uio *uio, u_int flags)
 		if (!(op_ctx && op_ctx->is_rdma_buff_used)) {
 			for (ix = 0; ix < uio->uio_count; ix++)
 				gsh_free(uio->uio_vio[ix].vio_base,
-					 MEM_COMP_PROTOCOL);
+					 MEM_COMP_IO_BUFFER);
 		}
 		gsh_free(uio, MEM_COMP_PROTOCOL);
 	}

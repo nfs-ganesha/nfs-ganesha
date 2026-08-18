@@ -1284,9 +1284,9 @@ void nfs4_pathname4_alloc(pathname4 *pathname4, char *path)
 			if (strlen(token) > 0) {
 				LogDebug(COMPONENT_NFS_V4, "token %d is %s", i,
 					 token);
-				utf8string_dup(&pathname4->pathname4_val[i],
-					       token, strlen(token),
-					       MEM_COMP_PROTOCOL);
+				copy_into_utf8string(
+					&pathname4->pathname4_val[i], token,
+					strlen(token));
 				i++;
 			}
 		}
@@ -1318,9 +1318,7 @@ void nfs4_pathname4_free(pathname4 *pathname4)
 			LogFullDebug(COMPONENT_NFS_V4,
 				     "freeing component %d: %s", i + 1,
 				     pathname4->pathname4_val[i].utf8string_val);
-			gsh_free(pathname4->pathname4_val[i].utf8string_val,
-				 MEM_COMP_PROTOCOL);
-			pathname4->pathname4_val[i].utf8string_val = NULL;
+			free_utf8string(&pathname4->pathname4_val[i]);
 		}
 	}
 	gsh_free(pathname4->pathname4_val, MEM_COMP_PROTOCOL);

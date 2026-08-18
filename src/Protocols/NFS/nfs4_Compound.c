@@ -662,8 +662,8 @@ nfs_opnum4 LastOpcode[] = { NFS4_OP_RELEASE_LOCKOWNER, NFS4_OP_RECLAIM_COMPLETE,
 
 static inline void copy_tag(utf8str_cs *dest, utf8str_cs *src)
 {
-	utf8string_dup(dest, src->utf8string_val, src->utf8string_len,
-		       MEM_COMP_PROTOCOL);
+	copy_into_utf8string(dest, src->utf8string_val,
+			     (int)src->utf8string_len);
 }
 
 enum nfs_req_result complete_op(compound_data_t *data, nfsstat4 *status,
@@ -1497,8 +1497,7 @@ void release_nfs4_res_compound(struct COMPOUND4res_extended *res_compound4_ex)
 	gsh_free(res_compound4->resarray.resarray_val, MEM_COMP_PROTOCOL);
 	res_compound4->resarray.resarray_val = NULL;
 
-	gsh_free(res_compound4->tag.utf8string_val, MEM_COMP_PROTOCOL);
-	res_compound4->tag.utf8string_val = NULL;
+	free_utf8string(&res_compound4->tag);
 
 	gsh_free(res_compound4_ex, MEM_COMP_PROTOCOL);
 }

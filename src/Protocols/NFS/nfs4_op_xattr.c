@@ -342,8 +342,7 @@ enum nfs_req_result nfs4_op_listxattr(struct nfs_argop4 *op,
 	res_LISTXATTR4->status = check_resp_room(data, resp_size);
 	if (res_LISTXATTR4->status != NFS4_OK) {
 		for (i = 0; i < list.xl4_count; i++)
-			gsh_free(list.xl4_entries[i].utf8string_val,
-				 MEM_COMP_PROTOCOL);
+			free_utf8string(&list.xl4_entries[i]);
 		gsh_free(list.xl4_entries, MEM_COMP_PROTOCOL);
 		return NFS_REQ_ERROR;
 	}
@@ -371,8 +370,7 @@ void nfs4_op_listxattr_Free(nfs_resop4 *resp)
 
 	if (res_LISTXATTR4->status == NFS4_OK) {
 		for (i = 0; i < names->xl4_count; i++)
-			gsh_free(names->xl4_entries[i].utf8string_val,
-				 MEM_COMP_PROTOCOL);
+			free_utf8string(&names->xl4_entries[i]);
 		gsh_free(names->xl4_entries, MEM_COMP_PROTOCOL);
 	}
 }

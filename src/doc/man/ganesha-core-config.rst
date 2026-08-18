@@ -158,6 +158,14 @@ Enable_CLNT_AllOps_Stats(bool, default false)
     by NFS clients. Enable_CLNT_AllOps_Stats can be enabled or disabled
     dynamically via ganesha_stats.
 
+Mem_Stats_Disable(bool, default false)
+    Whether to collect per-component memory allocation statistics. When true,
+    capture is disabled and ``ganesha_stats mem_stats show`` reports zero for
+    every counter. Use ``ganesha_stats mem_stats status`` to see whether
+    capture is active or inactive. Unlike most stat toggles in this section,
+    this option is read at daemon startup only; changing it requires a restart
+    (it is not applied on SIGHUP config reload).
+
 Short_File_Handle(bool, default false)
     Whether to use short NFS file handle to accommodate VMware NFS client.
     Enable this if you have a VMware NFSv3 client. VMware NFSv3 client has a max

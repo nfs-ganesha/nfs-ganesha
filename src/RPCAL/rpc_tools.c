@@ -145,9 +145,9 @@ static void xdr_io_data_uio_release(struct xdr_uio *uio, u_int flags)
 		}
 	}
 
-	gsh_free(uio, MEM_COMP_IO_BUFFER);
+	gsh_free(uio, MEM_COMP_PROTOCOL);
 	if (io_data)
-		gsh_free(io_data, MEM_COMP_IO_BUFFER);
+		gsh_free(io_data, MEM_COMP_PROTOCOL);
 }
 
 static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
@@ -176,13 +176,13 @@ static inline bool xdr_io_data_encode(XDR *xdrs, io_data *objp)
 	uio = gsh_calloc(1,
 			 sizeof(struct xdr_uio) +
 				 count * sizeof(struct xdr_vio) + extra,
-			 MEM_COMP_IO_BUFFER);
+			 MEM_COMP_PROTOCOL);
 	uio->uio_release = xdr_io_data_uio_release;
 	uio->uio_count = count;
 	if (objp->release && objp->release_data) {
 		/* Create a copy of io_data, since send path could be async */
 		io_data *objp_copy =
-			gsh_calloc(1, sizeof(io_data), MEM_COMP_IO_BUFFER);
+			gsh_calloc(1, sizeof(io_data), MEM_COMP_PROTOCOL);
 
 		objp_copy->release = objp->release;
 		objp_copy->release_data = objp->release_data;

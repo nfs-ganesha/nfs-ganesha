@@ -279,21 +279,6 @@ typedef utf8str_cs component4;
 
 typedef utf8str_cs linktext4;
 
-static inline utf8string *utf8string_dup(utf8string *d, const char *s, size_t l,
-					 mem_components_t comp)
-{
-	if (s == NULL || l == 0) {
-		d->utf8string_val = 0;
-		d->utf8string_len = 0;
-		return d;
-	}
-
-	d->utf8string_val = (char *)gsh_malloc(l + 1, comp);
-	d->utf8string_len = l;
-	memcpy(d->utf8string_val, s, l + 1);
-	return d;
-}
-
 typedef struct {
 	u_int pathname4_len;
 	component4 *pathname4_val;

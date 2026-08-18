@@ -600,6 +600,8 @@ static struct config_item core_params[] = {
 		       enable_AUTHSTATS),
 	CONF_ITEM_BOOL("Enable_CLNT_AllOps_Stats", false, nfs_core_param,
 		       enable_CLNTALLSTATS),
+	CONF_ITEM_BOOL("Mem_Stats_Disable", false, nfs_core_param,
+		       mem_stats_disable),
 	CONF_ITEM_BOOL("Short_File_Handle", false, nfs_core_param,
 		       short_file_handle),
 	CONF_ITEM_I64("Manage_Gids_Expiration", 0, 7 * 24 * 60 * 60, 30 * 60,

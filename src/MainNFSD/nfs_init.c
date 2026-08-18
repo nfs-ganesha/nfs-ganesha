@@ -1145,7 +1145,10 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 #endif
 #endif
 
-	LogEvent(COMPONENT_INIT, "Counting Memory counters enabled by default");
+	if (nfs_param.core_param.mem_stats_disable)
+		LogEvent(COMPONENT_INIT, "Memory statistics capture disabled");
+	else
+		LogEvent(COMPONENT_INIT, "Memory statistics capture enabled");
 
 #ifdef USE_GRPC
 	if (nfs_param.grpc_param.grpc_enable) {
@@ -1471,7 +1474,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	/* Regular exit */
 	LogEvent(COMPONENT_MAIN, "NFS EXIT: regular exit");
 
-	/* Always capture Memory Stats in case of shutdown */
+	/* Log shutdown memory statistics when capture is active */
 	gsh_log_mem_stats();
 
 #ifdef USE_TLS

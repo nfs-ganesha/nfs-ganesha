@@ -231,7 +231,7 @@ static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
 		int loclen = fsloc->server[0].utf8string_len +
 			     strlen(fsloc->rootpath) + 2;
 
-		char *location = gsh_calloc(1, loclen, MEM_COMP_FSAL);
+		char *location = gsh_calloc(1, loclen, MEM_COMP_PROTOCOL);
 
 		(void)snprintf(location, loclen, "%.*s:%s",
 			       fsloc->server[0].utf8string_len,
@@ -244,7 +244,7 @@ static fsal_status_t populate_fs_locations(struct vfs_fsal_obj_handle *hdl,
 			 "fsid.major = %" PRIu64 ", fsid.minor = %" PRIu64,
 			 hdl->obj_handle.fsid.major,
 			 hdl->obj_handle.fsid.minor);
-		gsh_free(location, MEM_COMP_FSAL);
+		gsh_free(location, MEM_COMP_PROTOCOL);
 	}
 
 out:

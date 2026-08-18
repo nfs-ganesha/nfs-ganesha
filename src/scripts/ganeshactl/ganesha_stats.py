@@ -27,6 +27,7 @@
 #       To get detailed help
 #
 from __future__ import print_function
+import json
 import sys
 import Ganesha.glib_dbus_stats
 import dbus
@@ -48,7 +49,7 @@ To display stat counters use:
               iomon [export id] | export | total [export id] | fast | pnfs [export id] |
               fsal <fsal name> | v3_full | v4_full | auth |
               client_io_ops <ip address | all> | export_details <export id> |
-              client_all_ops <ip address | all>]
+              client_all_ops <ip address | all> | mem_stats <show | status>]
 
 To display stat counters in json format use:
   {progname} json <command>
@@ -59,9 +60,6 @@ To reset stat counters use:
 To enable/disable stat counters use:
   {progname} [enable | disable] [all | nfs | fsal | v3_full |
                                  v4_full | auth | client_all_ops]
-
-To show memory stat counters use:
-  {progname} mem_stats show
 
 """
     )
@@ -146,11 +144,11 @@ elif command in ('enable', 'disable'):
         print_usage_exit(1)
 elif command in ('mem_stats'):
     if not len(opts) == 1:
-        print("\nError: Option '%s' must be followed by show." % command)
+        print("\nError: Option '%s' must be followed by show or status." % command)
         print_usage_exit(1)
     command_arg = opts[0]
-    if command_arg not in ('show',):
-        print("\nError: Option '%s' must be followed by show" % command)
+    if command_arg not in ('show', 'status'):
+        print("\nError: Option '%s' must be followed by show or status" % command)
         print_usage_exit(1)
 elif command == "help":
     print_usage_exit(0)
@@ -219,6 +217,10 @@ try:
     elif command == "mem_stats":
         if command_arg == "show":
             result = mem_interface.get_mem_stats()
-    print(result.json()) if output_json else print(result)
+        else:
+            result = mem_interface.get_mem_stats_status()
+    print(json.dumps(result.report(), indent=2)) if (
+        output_json and command == "mem_stats" and command_arg == "show"
+    ) else print(result.json()) if output_json else print(result)
 except dbus.exceptions.DBusException:
     sys.exit("Error: Can't talk to ganesha service on d-bus. Looks like Ganesha is down")

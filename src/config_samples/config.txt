@@ -273,6 +273,8 @@ NFS_CORE_PARAM {}
 
 	Client_Activity_Timeout_Sec(uint32, range 60 to 3600, default 900)
 
+	Mem_Stats_Disable(bool, default false)
+
 NFS_IP_NAME {}
 --------------
 
@@ -902,10 +904,6 @@ LOG {}
 		Conditional logging block.
 
 		If this option is NOT set, MATCH_ANY is used.
-
-	Mem_Stats_Enabled(bool, default false)
-		If this is set to true, counting of memory statistics will
-		get enable
 
 LOG { COMPONENTS {} }
 ---------------------

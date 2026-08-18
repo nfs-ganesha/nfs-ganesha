@@ -47,7 +47,8 @@ extern const char *mem_stat_names[];
 /*
  * @brief Ganesha per-component memory statistics
  *
- * Always counted; there is no runtime enable/disable for capture.
+ * Lifetime counters for each mem_components_t bucket. Capture can be
+ * disabled at startup via NFS_CORE_PARAM { Mem_Stats_Disable = true; }.
  */
 struct gsh_mem_stats {
 	/* Lifetime: monotonic for the process; never cleared by reset. */

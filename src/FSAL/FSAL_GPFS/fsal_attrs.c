@@ -99,9 +99,8 @@ fsal_status_t GPFSFSAL_fs_loc(struct fsal_export *export,
 
 	attrs->fs_locations = nfs4_fs_locations_new(root, path, 1);
 	attrs->fs_locations->nservers = 1;
-	attrs->fs_locations->server[0].utf8string_len = strlen(server);
-	attrs->fs_locations->server[0].utf8string_val =
-		gsh_memdup(server, strlen(server), MEM_COMP_FSAL);
+	copy_into_utf8string(&attrs->fs_locations->server[0], server,
+			     strlen(server));
 
 	LogDebug(COMPONENT_FSAL,
 		 "gpfs_ganesha: FS_LOCATIONS root=%s path=%s server=%s", root,

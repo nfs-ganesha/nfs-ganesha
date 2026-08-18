@@ -109,7 +109,7 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl, int fd,
 	 */
 
 	xattr_content =
-		gsh_calloc(XATTR_BUFFERSIZE, sizeof(char), MEM_COMP_FSAL);
+		gsh_calloc(XATTR_BUFFERSIZE, sizeof(char), MEM_COMP_PROTOCOL);
 
 	st = vfs_getextattr_value(hdl, local_fd, "user.fs_location",
 				  xattr_content, XATTR_BUFFERSIZE, &attrsize);
@@ -127,16 +127,16 @@ fsal_status_t vfs_get_fs_locations(struct vfs_fsal_obj_handle *hdl, int fd,
 				nfs4_fs_locations_new(spath, path, 1);
 
 			attrs_out->fs_locations->nservers = 1;
-			utf8string_dup(&attrs_out->fs_locations->server[0],
-				       server, path - server - 1,
-				       MEM_COMP_FSAL);
+			copy_into_utf8string(
+				&attrs_out->fs_locations->server[0], server,
+				path - server - 1);
 
 			FSAL_SET_MASK(attrs_out->valid_mask,
 				      ATTR4_FS_LOCATIONS);
 		}
 	}
 
-	gsh_free(xattr_content, MEM_COMP_FSAL);
+	gsh_free(xattr_content, MEM_COMP_PROTOCOL);
 
 out:
 	// Close the local_fd only if no fd was passed into the function and we

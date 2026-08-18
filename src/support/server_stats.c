@@ -4672,6 +4672,16 @@ const char *mem_stat_names[] = {
 	"Current_Active_Bytes", "Peak_Active_Bytes",
 };
 
+static inline bool is_mem_stats_disabled(void)
+{
+	return nfs_param.core_param.mem_stats_disable;
+}
+
+static char *mem_stats_status_message(void)
+{
+	return is_mem_stats_disabled() ? "inactive" : "active";
+}
+
 void gsh_mem_stats_update_alloc(void *p, mem_components_t comp,
 				const char *file, int line,
 				const char *function)
@@ -4682,6 +4692,9 @@ void gsh_mem_stats_update_alloc(void *p, mem_components_t comp,
 	int64_t current_bytes, peak_bytes;
 
 	if (!p)
+		return;
+
+	if (is_mem_stats_disabled())
 		return;
 
 	mc = &gshMC[comp];
@@ -4728,6 +4741,9 @@ void gsh_mem_stats_update_free(void *p, mem_components_t comp, const char *file,
 	if (!p)
 		return;
 
+	if (is_mem_stats_disabled())
+		return;
+
 	mc = &gshMC[comp];
 
 	/* Fetch the actual free size */
@@ -4771,6 +4787,9 @@ int64_t gsh_mem_stats_get_stat_by_index_and_comp(uint32_t index,
 	int64_t value = 0;
 	struct gsh_mem_stats *mc;
 
+	if (is_mem_stats_disabled())
+		goto out;
+
 	if (index >= MAX_MEMORY_STATS_FIELD_COUNT)
 		goto out;
 	if (comp >= MEM_COMP_MAX)
@@ -4811,6 +4830,9 @@ void gsh_log_mem_stats(void)
 	uint32_t comp;
 	const char *cname;
 	struct gsh_mem_stats *mc;
+
+	if (is_mem_stats_disabled())
+		return;
 
 	for (comp = MEM_COMP_UNSET + 1; comp < MEM_COMP_MAX; comp++) {
 		cname = gsh_mem_stats_get_mem_comp_str((mem_components_t)comp);
@@ -4920,6 +4942,20 @@ static bool get_memory_statistics(DBusMessageIter *args, DBusMessage *reply,
 	return success;
 }
 
+static bool get_memory_stats_status(DBusMessageIter *args, DBusMessage *reply,
+				    DBusError *error)
+{
+	bool success = true;
+	char *errormsg = mem_stats_status_message();
+	DBusMessageIter iter;
+
+	dbus_message_iter_init_append(reply, &iter);
+
+	gsh_dbus_status_reply(&iter, success, errormsg);
+
+	return success;
+}
+
 #define TOTAL_MEM_STATS_REPLY \
 	{ .name = "mem_stats", .type = "(a(sa(st)))", .direction = "out" }
 
@@ -4929,8 +4965,14 @@ static struct gsh_dbus_method get_mem_statistics = {
 	.args = { STATUS_REPLY, TOTAL_MEM_STATS_REPLY, END_ARG_LIST }
 };
 
+static struct gsh_dbus_method get_mem_stats_status = {
+	.name = "GetMemoryStatsStatus",
+	.method = get_memory_stats_status,
+	.args = { STATUS_REPLY, END_ARG_LIST }
+};
+
 static struct gsh_dbus_method *mem_stats_methods[] = {
-	&get_mem_statistics, NULL
+	&get_mem_statistics, &get_mem_stats_status, NULL
 };
 
 static struct gsh_dbus_interface mem_stats_table = {
