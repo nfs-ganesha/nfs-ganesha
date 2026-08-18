@@ -1386,10 +1386,20 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 		global_st.qt.op[proto_op]++;
 #endif
 
+	/* Update client activity timestamp before FASTSTATS early return
+	 * to ensure activity-based connection tracking works regardless
+	 * of FASTSTATS setting */
+	if (client != NULL) {
+		now(&current_time);
+		timespec_update(&client->last_update, &current_time);
+	}
+
 	if (nfs_param.core_param.enable_FASTSTATS)
 		return;
 
-	now(&current_time);
+	/* current_time already set above if client != NULL */
+	if (client == NULL)
+		now(&current_time);
 	time_diff = timespec_diff(&op_ctx->start_time, &current_time);
 
 #ifdef _USE_NFS3
@@ -1407,7 +1417,6 @@ void server_stats_nfs_done(nfs_request_t *reqdata, int rc, bool dup)
 					      &client->client_lock, program_op,
 					      proto_op, NFS_V3,
 					      rc == NFS_REQ_OK, dup);
-		timespec_update(&client->last_update, &current_time);
 	}
 	if (!dup && op_ctx->ctx_export != NULL) {
 		struct export_stats *exp_st;
@@ -1439,10 +1448,20 @@ void server_stats_nfsv4_op_done(int proto_op, struct timespec *start_time,
 	if (op_ctx->nfs_vers == NFS_V4)
 		global_st.v4.op[proto_op]++;
 
+	/* Update client activity timestamp before FASTSTATS early return
+	 * to ensure activity-based connection tracking works regardless
+	 * of FASTSTATS setting */
+	if (client != NULL) {
+		now(&current_time);
+		timespec_update(&client->last_update, &current_time);
+	}
+
 	if (nfs_param.core_param.enable_FASTSTATS)
 		return;
 
-	now(&current_time);
+	/* current_time already set above if client != NULL */
+	if (client == NULL)
+		now(&current_time);
 	time_diff = timespec_diff(start_time, &current_time);
 
 	nfs_metrics__nfs4_op_completed(proto_op, status, time_diff);
@@ -1463,7 +1482,6 @@ void server_stats_nfsv4_op_done(int proto_op, struct timespec *start_time,
 					      NFS_program[P_NFS], proto_op,
 					      NFS_V4, status == NFS_REQ_OK,
 					      false);
-		timespec_update(&client->last_update, &current_time);
 	}
 
 	if (op_ctx->nfs_minorvers == 0)

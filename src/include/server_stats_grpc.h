@@ -235,6 +235,7 @@ struct grpc_state_stat_entry {
 /* Mirrors nfsProtoUtil.ClientInfo / D-Bus CLIENT_CONTAINER. */
 struct grpc_client_info {
 	char ipaddr[128]; /* SOCK_NAME_MAX */
+	bool is_connected; /* true if client has active connections */
 	uint32_t protocol_count;
 	struct grpc_protocol_activity protocols[GRPC_MAX_PROTOCOLS];
 	uint64_t total_ops;
@@ -547,9 +548,9 @@ void server_grpc_fill_stats_summary(struct gsh_stats *st,
 /*
  * Extract per-client protocol-activity flags and total op count.
  */
-bool server_grpc_fill_export_stats_summary(struct gsh_export *export_obj,
-					struct grpc_protocol_activity *protos,
-					uint32_t *proto_count, uint64_t *total_ops_out);
+bool server_grpc_fill_export_stats_summary(
+	struct gsh_export *export_obj, struct grpc_protocol_activity *protos,
+	uint32_t *proto_count, uint64_t *total_ops_out);
 
 bool grpc_cltmgr_add_client(const char *ipaddr, bool *success, char *errmsg,
 			    size_t errmsg_len);

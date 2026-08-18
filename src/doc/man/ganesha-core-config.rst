@@ -283,6 +283,13 @@ Connection_Manager_Timeout_sec(uint32, range 0 to UINT32_MAX, default 2*60)
     Timeout for waiting until client is fully disconnected from other Ganesha
     servers.
 
+Client_Activity_Timeout_Sec(uint32, range 60 to 3600, default 900)
+    Timeout (in seconds) for considering a client as connected based on recent
+    activity. Clients are considered connected if they have had any NFS
+    operation within this timeout period when refcount is zero (no active
+    operations or NFSv4 state). This helps distinguish active NFSv3 clients
+    from truly disconnected ones.
+
 Unique_Server_Id(uint32, range 0 to UINT32_MAX, default 0)
    Unique value to the ganesha node, to diffrintiate it for the rest of the
    node. will be used as prefix for the Client id, to make sure it is

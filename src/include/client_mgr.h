@@ -53,6 +53,10 @@ struct gsh_client {
 	struct avltree_node node_k;
 	pthread_rwlock_t client_lock;
 	int64_t refcnt;
+	/** Last operation timestamp (CLOCK_REALTIME).
+	 * Updated atomically on every NFS operation.
+	 * Used for: 1) stats display timestamp, 2) activity-based connection
+	 * detection when refcount is zero. */
 	struct timespec last_update;
 	char hostaddr_str[SOCK_NAME_MAX];
 	sockaddr_t cl_addrbuf;

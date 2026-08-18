@@ -704,6 +704,7 @@ grpc::Status ClientMgrService::ShowClients(
 		nfsProtoUtil::ClientInfo *dst = response->add_clients();
 
 		dst->set_ipaddr(src->ipaddr);
+		dst->set_is_connected(src->is_connected);
 		dst->set_total_ops(src->total_ops);
 
 		for (uint32_t p = 0; p < src->protocol_count; p++) {

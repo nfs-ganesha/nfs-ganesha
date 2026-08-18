@@ -605,6 +605,13 @@ typedef struct nfs_core_param {
 	 * For more info, see:
 	 * https://git.kernel.org/torvalds/p/8d19f1c8e1937baf74e1962aae9f90fa3aeab463 */
 	bool allow_set_io_flusher_fail;
+	/** Timeout (in seconds) for considering a client as connected based on
+	 * recent activity. Clients are considered connected if they have had
+	 * any NFS operation within this timeout period. This applies when
+	 * refcount is zero (no active operations or NFSv4 state).
+	 * Defaults to 900 seconds (15 minutes) and is settable with
+	 * Client_Activity_Timeout_Sec. */
+	uint32_t client_activity_timeout_sec;
 #ifdef _USE_NLM
 	bool unmonitor_on_shutdown;
 #endif

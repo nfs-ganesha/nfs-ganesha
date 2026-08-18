@@ -271,6 +271,8 @@ NFS_CORE_PARAM {}
 
 	Internal_statd(bool, default false)
 
+	Client_Activity_Timeout_Sec(uint32, range 60 to 3600, default 900)
+
 NFS_IP_NAME {}
 --------------
 

@@ -204,6 +204,7 @@ message ClientInfo
 	uint64 total_ops = 3;
 	repeated StateStatEntry state_stats = 4;
 	Timestamp last_update = 5;
+	bool is_connected = 6; // true if client has active connections
 }
 // Input for Get9pOpStats; mirrors D-Bus EXPORT_ID_ARG + _9P_OP_ARG.
 message Export9pOpRequest

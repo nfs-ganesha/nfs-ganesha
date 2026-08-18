@@ -653,6 +653,8 @@ static struct config_item core_params[] = {
 		       nfs_core_param, connection_manager_timeout_sec),
 	CONF_ITEM_BOOL("Allow_Set_Io_Flusher_Fail", false, nfs_core_param,
 		       allow_set_io_flusher_fail),
+	CONF_ITEM_UI32("Client_Activity_Timeout_Sec", 60, 3600, 900,
+		       nfs_core_param, client_activity_timeout_sec),
 	CONFIG_EOL
 };
 

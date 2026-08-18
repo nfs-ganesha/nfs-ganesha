@@ -216,7 +216,7 @@ struct auth_stats {
 #define STATE_STATS_REPLY "(ststst)"
 
 #define CLIENT_CONTAINER \
-	"(" TYPE_STRING PROTOCOLS_CONTAINER "t" STATE_STATS_REPLY "(tt))"
+	"(" TYPE_STRING "b" PROTOCOLS_CONTAINER "t" STATE_STATS_REPLY "(tt))"
 
 #define EXPORTS_REPLY \
 	{ .name = "exports", .type = "a" EXPORT_CONTAINER, .direction = "out" }
