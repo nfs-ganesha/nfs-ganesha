@@ -48,6 +48,10 @@
 #include "nfs_proto_functions.h"
 #include "nfs_cbsim_grpc.h"
 
+#ifdef ENABLE_QOS
+#include "nfs_qos_grpc.h"
+#endif
+
 #define MAX_PROTOCOLS 8
 
 grpc::Status GetClientIdService::GetClientIds(
@@ -2372,4 +2376,251 @@ out:
 	config_Free(config_struct);
 	EXPORT_ADMIN_UNLOCK();
 	return grpc::Status::OK;
+}
+
+/**
+ * @brief Fill a protobuf status reply used by QoS gRPC methods
+ *
+ * @param status [OUT] protobuf status message
+ * @param success [IN] true if the QoS operation succeeded
+ * @param errmsg [IN] error/status string to copy into the reply
+ */
+static void qos_fill_status(nfsProtoUtil::StatusResponse *status, bool success,
+			    const char *errmsg)
+{
+	status->set_success(success);
+	status->set_error_msg(errmsg ? errmsg : "");
+}
+
+#ifndef ENABLE_QOS
+/**
+ * @brief Return a failure status when QoS was not compiled in
+ *
+ * @param status [OUT] protobuf status message
+ * @return grpc::Status::OK so the RPC still completes
+ */
+static grpc::Status qos_not_compiled(nfsProtoUtil::StatusResponse *status)
+{
+	qos_fill_status(status, false, "QoS support not compiled in");
+	return grpc::Status::OK;
+}
+#endif
+
+/**
+ * @brief Get export-level bandwidth limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.GetExportBandwidth.
+ */
+grpc::Status QosMgrService::GetExportBandwidth(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ExportIdRequest *request,
+	qosService::GetExportBandwidthResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	struct grpc_qos_bw_limits limits;
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_get_export_bandwidth((uint16_t)request->export_id(), &limits,
+				      &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response->mutable_status(), success, errmsg);
+	if (success) {
+		qosService::BwLimits *bw = response->mutable_bandwidth();
+
+		bw->set_enabled(limits.enabled);
+		bw->set_read_bw(limits.read_bw);
+		bw->set_write_bw(limits.write_bw);
+	}
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response->mutable_status());
+#endif
+}
+
+/**
+ * @brief Set export-level bandwidth limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.SetExportBandwidth.
+ */
+grpc::Status QosMgrService::SetExportBandwidth(
+	grpc::ServerContext *context,
+	const qosService::SetExportBandwidthRequest *request,
+	nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_set_export_bandwidth((uint16_t)request->export_id(),
+				      request->read_bw(), request->write_bw(),
+				      &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
+}
+
+/**
+ * @brief Get export-level token limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.GetExportTokens.
+ */
+grpc::Status
+QosMgrService::GetExportTokens(grpc::ServerContext *context,
+			       const nfsProtoUtil::ExportIdRequest *request,
+			       qosService::GetExportTokensResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	struct grpc_qos_token_limits tokens;
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_get_export_tokens((uint16_t)request->export_id(), &tokens,
+				   &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response->mutable_status(), success, errmsg);
+	if (success) {
+		qosService::TokenLimits *t = response->mutable_tokens();
+
+		t->set_max_tokens(tokens.max_tokens);
+		t->set_token_renewal(tokens.token_renewal);
+	}
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response->mutable_status());
+#endif
+}
+
+/**
+ * @brief Set export-level token limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.SetExportTokens.
+ */
+grpc::Status QosMgrService::SetExportTokens(
+	grpc::ServerContext *context,
+	const qosService::SetExportTokensRequest *request,
+	nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_set_export_tokens((uint16_t)request->export_id(),
+				   request->max_tokens(),
+				   request->token_renewal(), &success, errmsg,
+				   sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
+}
+
+/**
+ * @brief Get export-level IOPS limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.GetExportIOPS.
+ */
+grpc::Status
+QosMgrService::GetExportIOPS(grpc::ServerContext *context,
+			     const nfsProtoUtil::ExportIdRequest *request,
+			     qosService::GetExportIopsResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	struct grpc_qos_iops_limits iops;
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_get_export_iops((uint16_t)request->export_id(), &iops,
+				 &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response->mutable_status(), success, errmsg);
+	if (success) {
+		qosService::IopsLimits *io = response->mutable_iops();
+
+		io->set_enabled(iops.enabled);
+		io->set_read_iops(iops.read_iops);
+		io->set_write_iops(iops.write_iops);
+	}
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response->mutable_status());
+#endif
+}
+
+/**
+ * @brief Set export-level IOPS limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.SetExportIOPS.
+ */
+grpc::Status
+QosMgrService::SetExportIOPS(grpc::ServerContext *context,
+			     const qosService::SetExportIopsRequest *request,
+			     nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_set_export_iops((uint16_t)request->export_id(),
+				 request->read_iops(), request->write_iops(),
+				 &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
+}
+
+/**
+ * @brief Enable bandwidth control for an export
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.EnableExportQosBwControl.
+ */
+grpc::Status QosMgrService::EnableExportQosBwControl(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ExportIdRequest *request,
+	nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_enable_export_bw_control((uint16_t)request->export_id(),
+					  &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
+}
+
+/**
+ * @brief Disable bandwidth control for an export
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.DisableExportQosBwControl.
+ */
+grpc::Status QosMgrService::DisableExportQosBwControl(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ExportIdRequest *request,
+	nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_disable_export_bw_control((uint16_t)request->export_id(),
+					   &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
 }

@@ -139,6 +139,8 @@ void GrpcServer::gRPCServerStart(uint16_t port, std::string server_crt,
 
 		builder.RegisterService(&cachemgr);
 
+		builder.RegisterService(&qosMgrService);
+
 		/* Reflection Service to enable grpc CLI */
 		grpc::reflection::InitProtoReflectionServerBuilderPlugin();
 

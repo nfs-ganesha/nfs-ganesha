@@ -1,0 +1,131 @@
+/* SPDX-License-Identifier: LGPL-3.0-or-later
+ *
+ * Copyright (C) 2026, IBM
+ * Contributor : Suhas Athani <sathani@redhat.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ *
+ * -------------
+ */
+
+syntax = "proto3";
+
+import "nfsProtoUtil.proto";
+
+package qosService;
+
+/*
+ * QoS manager exposed over gRPC.
+ *
+ * Mirrors the D-Bus interface org.ganesha.nfsd.qos on /org/ganesha/nfsd/QosMgr
+ * defined in support/nfs_qosmgr.c. RPC names match existing D-Bus method
+ * names so callers can migrate from D-Bus to gRPC without changing semantics.
+ *
+ * Which methods apply depends on qos_type (Per_Export, Per_Client, or
+ * Per_Export_Per_Client). Unsupported methods return status.success=false.
+ */
+
+// Bandwidth / IOPS / token limit pair used by get/set RPCs.
+message BwLimits
+{
+	bool enabled = 1;
+	uint64 read_bw = 2;
+	uint64 write_bw = 3;
+}
+
+message IopsLimits
+{
+	bool enabled = 1;
+	uint64 read_iops = 2;
+	uint64 write_iops = 3;
+}
+
+message TokenLimits
+{
+	uint64 max_tokens = 1;
+	uint64 token_renewal = 2;
+}
+
+message SetExportBandwidthRequest
+{
+	uint32 export_id = 1;
+	uint64 read_bw = 2;
+	uint64 write_bw = 3;
+}
+
+message SetExportIopsRequest
+{
+	uint32 export_id = 1;
+	uint64 read_iops = 2;
+	uint64 write_iops = 3;
+}
+
+message SetExportTokensRequest
+{
+	uint32 export_id = 1;
+	uint64 max_tokens = 2;
+	uint64 token_renewal = 3;
+}
+
+message GetExportBandwidthResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	BwLimits bandwidth = 2;
+}
+
+message GetExportIopsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	IopsLimits iops = 2;
+}
+
+message GetExportTokensResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	TokenLimits tokens = 2;
+}
+
+message SetExportDefaultClientBandwidthRequest
+{
+	uint32 export_id = 1;
+	uint64 read_bw = 2;
+	uint64 write_bw = 3;
+}
+
+// org.ganesha.nfsd.qos — runtime QoS administration
+service QosMgr
+{
+	/* ---- Per_Export / shared export methods ---- */
+	rpc GetExportBandwidth(nfsProtoUtil.ExportIdRequest)
+		returns (GetExportBandwidthResponse);
+	rpc SetExportBandwidth(SetExportBandwidthRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	rpc GetExportTokens(nfsProtoUtil.ExportIdRequest)
+		returns (GetExportTokensResponse);
+	rpc SetExportTokens(SetExportTokensRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	rpc GetExportIOPS(nfsProtoUtil.ExportIdRequest)
+		returns (GetExportIopsResponse);
+	rpc SetExportIOPS(SetExportIopsRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	/* Per_Export enable/disable bandwidth control */
+	rpc EnableExportQosBwControl(nfsProtoUtil.ExportIdRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc DisableExportQosBwControl(nfsProtoUtil.ExportIdRequest)
+		returns (nfsProtoUtil.StatusResponse);
+}

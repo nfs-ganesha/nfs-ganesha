@@ -33,6 +33,14 @@
 #include "nfs_core.h"
 #include "nfs_qos.h"
 #include "nfs_qosmgr.h"
+#ifdef USE_GRPC
+#include <string.h>
+#include "nfs_qos_grpc.h"
+#include "export_mgr.h"
+#include "client_mgr.h"
+#include "ip_utils.h"
+#include "abstract_mem.h"
+#endif
 /*  QoS Method Arguments */
 #define CLIENT_IP_ARG { "client_ip", "s", "in" }
 #define EXPORT_ID_ARG { "id", "q", "in" }
@@ -1828,3 +1836,368 @@ void dbus_qosmgr_init(void)
 		gsh_dbus_register_path("QosMgr", dbus_qos_interface);
 	}
 }
+
+#ifdef USE_GRPC
+/**
+ * @brief Fill success and error-message fields for a QoS gRPC helper.
+ *
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message buffer.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @param [in] ok true if the QoS operation succeeded.
+ * @param [in] msg Status string to copy into errmsg.
+ */
+static void grpc_qos_set_status(bool *success, char *errmsg, size_t errmsg_len,
+				bool ok, const char *msg)
+{
+	*success = ok;
+	snprintf(errmsg, errmsg_len, "%s", msg);
+}
+
+/**
+ * @brief Get export-level bandwidth limits for gRPC QoS requests.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] out Populated bandwidth values and enable flag.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_get_export_bandwidth(uint16_t export_id,
+				   struct grpc_qos_bw_limits *out,
+				   bool *success, char *errmsg,
+				   size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	memset(out, 0, sizeof(*out));
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+		out->enabled = qos_class->bw_enabled;
+		out->read_bw = qos_class->rbucket.max_bw_allowed;
+		out->write_bw = qos_class->wbucket.max_bw_allowed;
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	} else {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+	}
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+/**
+ * @brief Set export-level bandwidth limits from gRPC.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [in] read_bw Max read bandwidth.
+ * @param [in] write_bw Max write bandwidth.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_export_bandwidth(uint16_t export_id, uint64_t read_bw,
+				   uint64_t write_bw, bool *success,
+				   char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+		qos_class->rbucket.max_bw_allowed = read_bw;
+		qos_class->wbucket.max_bw_allowed = write_bw;
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	} else {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+	}
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+/**
+ * @brief Get export-level token limits for gRPC QoS requests.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] out Populated token limits.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_get_export_tokens(uint16_t export_id,
+				struct grpc_qos_token_limits *out,
+				bool *success, char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	memset(out, 0, sizeof(*out));
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+		out->max_tokens = qos_class->rbucket.max_available_tokens;
+		out->token_renewal = qos_class->rbucket.tokens_renew_time;
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	} else {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+	}
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+/**
+ * @brief Set export-level token limits from gRPC.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [in] max_tokens Max token budget.
+ * @param [in] token_renewal Token renewal period.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_export_tokens(uint16_t export_id, uint64_t max_tokens,
+				uint64_t token_renewal, bool *success,
+				char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+		qos_class->rbucket.max_available_tokens = max_tokens;
+		qos_class->wbucket.max_available_tokens = max_tokens;
+		qos_class->rbucket.tokens_renew_time = token_renewal;
+		qos_class->wbucket.tokens_renew_time = token_renewal;
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	} else {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+	}
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+/**
+ * @brief Get export-level IOPS limits for gRPC QoS requests.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] out Populated IOPS values and enable flag.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_get_export_iops(uint16_t export_id,
+			      struct grpc_qos_iops_limits *out, bool *success,
+			      char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	memset(out, 0, sizeof(*out));
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+		out->enabled = qos_class->iops_enabled;
+		out->read_iops = qos_class->rbucket.max_iops_allowed;
+		out->write_iops = qos_class->wbucket.max_iops_allowed;
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	} else {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+	}
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+/**
+ * @brief Set export-level IOPS limits from gRPC.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [in] read_iops Max read IOPS.
+ * @param [in] write_iops Max write IOPS.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_export_iops(uint16_t export_id, uint64_t read_iops,
+			      uint64_t write_iops, bool *success, char *errmsg,
+			      size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+		qos_class->rbucket.max_iops_allowed = read_iops;
+		qos_class->wbucket.max_iops_allowed = write_iops;
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	} else {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+	}
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+/**
+ * @brief Enable export-level bandwidth control for gRPC QoS requests.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_enable_export_bw_control(uint16_t export_id, bool *success,
+				       char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+
+	if (!(g_qos_config->enable_qos && g_qos_config->enable_bw_control &&
+	      qos_class)) {
+		PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+		put_gsh_export(gsh_export);
+		return true;
+	}
+
+	/*
+	 * Drop g_qos_config_lock before qos_perexport_insert().
+	 *
+	 * qos_perexport_insert() takes the same lock internally.
+	 * g_qos_config_lock is a non-recursive mutex (PTHREAD_MUTEX_init
+	 * with default attributes). Holding it here and taking it again
+	 * inside qos_perexport_insert() deadlocks the calling thread
+	 * (D-Bus or gRPC EnableExportQosBwControl hangs with no reply).
+	 */
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+
+	qos_perexport_insert(gsh_export, NULL);
+	grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+/**
+ * @brief Disable export-level bandwidth control for gRPC QoS requests.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_disable_export_bw_control(uint16_t export_id, bool *success,
+					char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	qos_class = gsh_export->qos_class;
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+		qos_drain_bw_ios(qos_class);
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+		grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+	} else {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+	}
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+	return true;
+}
+
+#endif /* USE_GRPC */

@@ -41,6 +41,8 @@
 #include "exportService.grpc.pb.h"
 #include "cacheMgrService.pb.h"
 #include "cacheMgrService.grpc.pb.h"
+#include "qosService.pb.h"
+#include "qosService.grpc.pb.h"
 #include "nfsServiceUtil.h"
 #include "nfs_core.h"
 #include "sal_functions.h"
@@ -89,8 +91,8 @@ class FakeRecallService final : public nfsService::FakeRecall::Service {
     public:
 	grpc::Status
 	FakeRecall(grpc::ServerContext *context,
-		   const nfsService::FakeRecallRequest *request,
-		   nfsProtoUtil::StatusResponse *response) override;
+		const nfsService::FakeRecallRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
 };
 
 /**
@@ -393,6 +395,7 @@ class ExportService final : public exportService::ExportService::Service {
 		    exportService::ShowExportsResponse *response) override;
 
 	grpc::Status
+
 	AddExport(grpc::ServerContext *context,
 		  const exportService::ExportRequest *request,
 		  exportService::ExportResponse *response) override;
@@ -440,4 +443,54 @@ class CacheMgrService final : public cacheMgr::CacheMgrService::Service {
 		    const nfsProtoUtil::EmptyRequest *request,
 		    cacheMgr::ShowUid2GrpResponse *response) override;
 };
+
+/**
+ * @brief gRPC service for org.ganesha.nfsd.qos (QosMgr)
+ *
+ * Mirrors D-Bus methods on /org/ganesha/nfsd/QosMgr. Available methods
+ * depend on qos_type; unsupported calls return status.success=false.
+ */
+class QosMgrService final : public qosService::QosMgr::Service {
+    public:
+	grpc::Status GetExportBandwidth(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		qosService::GetExportBandwidthResponse *response) override;
+
+	grpc::Status
+	SetExportBandwidth(grpc::ServerContext *context,
+			   const qosService::SetExportBandwidthRequest *request,
+			   nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status
+	GetExportTokens(grpc::ServerContext *context,
+			const nfsProtoUtil::ExportIdRequest *request,
+			qosService::GetExportTokensResponse *response) override;
+
+	grpc::Status
+	SetExportTokens(grpc::ServerContext *context,
+			const qosService::SetExportTokensRequest *request,
+			nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status
+	GetExportIOPS(grpc::ServerContext *context,
+		      const nfsProtoUtil::ExportIdRequest *request,
+		      qosService::GetExportIopsResponse *response) override;
+
+	grpc::Status
+	SetExportIOPS(grpc::ServerContext *context,
+		      const qosService::SetExportIopsRequest *request,
+		      nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status EnableExportQosBwControl(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status DisableExportQosBwControl(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
+};
+
 #endif //NFSSERVICE_H
