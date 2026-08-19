@@ -2105,15 +2105,25 @@ fsal_status_t close_fsal_fd(struct fsal_obj_handle *obj_hdl,
 	 * first caller removes the entry, the second finds it already gone.
 	 * in Case of fd already in closed state, Skipping removal leaves a
 	 * dangling fd_lru pointer causing release() freeing this entry.
+	 *
+	 * For state and temp FDs, we just need to decrement the counters.
+	 *
+	 * NOTE: If we see FSAL_FD_OLD_STYLE here, it indicates a use-after-free
+	 * condition. The assertion in remove_fd_lru() will catch this.
 	 */
 	if (is_globalfd) {
-		/* Check makes sure that alreday removed entry
+		/* Global FDs need LRU list management */
+		/* Check makes sure that already removed entry
 		 * is not getting removed causing ref count issue */
 		if (!glist_null(&fsal_fd->fd_lru))
 			remove_fd_lru(fsal_fd);
 		else
 			LogFullDebug(COMPONENT_FSAL,
 				     "fsal_fd %p (release path race)", fsal_fd);
+	} else {
+		/* State and Temp FDs just need counter decrement
+		 * (they are not on the LRU list) */
+		remove_fd_lru(fsal_fd);
 	}
 
 	fsal_complete_fd_work(fsal_fd);
