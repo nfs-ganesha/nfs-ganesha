@@ -1617,7 +1617,17 @@ void qos_perexport_insert(struct gsh_export *gsh_export,
 	PTHREAD_MUTEX_lock(&gsh_export->qos_class->lock);
 	setNode_pe(gsh_export->qos_class, gsh_export, lqos_block);
 #ifdef USE_MONITORING
-	if (qos_block->qos_type == QOS_PER_EXPORT_ENABLED) {
+	/*
+	 * Use lqos_block, not qos_block.
+	 *
+	 * Callers such as EnableExportQosBwControl pass qos_block = NULL
+	 * to mean "apply the global QOS_DEFAULT_CONFIG". This function
+	 * already resolves that to lqos_block = g_qos_config (see above).
+	 * The rest of the insert path uses lqos_block. Dereferencing
+	 * qos_block here SIGSEGV'd when monitoring was enabled:
+	 * qos_block->qos_type with qos_block == NULL.
+	 */
+	if (lqos_block->qos_type == QOS_PER_EXPORT_ENABLED) {
 		register_qos_metrics(gsh_export->qos_class);
 	}
 #endif
