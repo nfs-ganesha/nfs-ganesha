@@ -229,6 +229,7 @@ struct gsh_export *alloc_export(void)
 	glist_init(&export->exp_nlm_share_list);
 	glist_init(&export->mounted_exports_list);
 	glist_init(&export->clients);
+	glist_init(&export->server_addrs);
 	glist_init(&export->exp_root_callbacks);
 
 	/* Take an initial refcount */
@@ -3465,7 +3466,8 @@ bool grpc_get_all_export_iostats(struct grpc_export_io_list *list,
 
 	*time_out = nfs_stats_time;
 
-	foreach_gsh_export(grpc_collect_export_io, false, list);
+	foreach_gsh_export(grpc_collect_export_io, false, list)
+		;
 
 	snprintf(errmsg, errmsg_len, "OK");
 

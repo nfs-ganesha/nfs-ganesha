@@ -587,6 +587,12 @@ EXPORT {}
 		  For more information, see the documentation file
 		  "ganesha-fscrypt-config.rst".
 
+	Server_Addrs(comma-separated IP list, no default)
+
+		* An optional list of server IP addresses that restrict which
+		  local network interface an incoming request must have arrived
+		  on in order to be granted access to this export.
+
 
 EXPORT { CLIENT  {} }
 ---------------------

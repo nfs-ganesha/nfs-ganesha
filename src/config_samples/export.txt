@@ -138,6 +138,12 @@ EXPORT_DEFAULTS
 #                              if export contents are changing outside of NFS
 #                              or if FSAL is not recomending to cache dentries
 #
+# Server_Addrs (optional)  This option allows to set the IP address(es), which
+#                          can be used to restrict which local network interface
+#                          an incoming request must have arrived on in order
+#                          to be granted access to this export. Each entry may
+#                          be a plain IPv4 or IPv6 address
+#
 # CLIENT (optional)	See the CLIENT block below
 #
 # FSAL (required)	See the FSAL block below

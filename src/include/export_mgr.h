@@ -160,6 +160,9 @@ struct gsh_export {
 	uint64_t config_gen;
 	/** CFG Allowed clients - update protected by lock */
 	struct glist_head clients;
+	/** CFG Server addresses - requests must arrive on one of these IPs.
+	 *  An empty list means "any server address". Protected by exp_lock. */
+	struct glist_head server_addrs;
 	/** Entry for the junction of this export.  Protected by lock */
 	struct fsal_obj_handle *exp_junction_obj;
 	/** The export this export sits on. Protected by lock */

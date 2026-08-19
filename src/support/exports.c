@@ -400,6 +400,43 @@ void FreeExportClient(struct base_client_entry *client)
 }
 
 /**
+ * @brief CONFIG_PROC handler for Server_Addrs parameter.
+ *
+ * Called once per token in the comma-separated Server_Addrs list.
+ * @param token     [IN]  IP address or CIDR string
+ * @param type_hint [IN]  parser type hint
+ * @param item      [IN]  config item definition
+ * @param param_addr [IN] pointer to the gsh_export->server_addrs list head
+ * @param cnode     [IN]  config node
+ * @param err_type  [OUT] error accumulator
+ * @return 0 on success, 1 on error
+ */
+static int server_addr_adder(const char *token, enum term_type type_hint,
+			     struct config_item *item, void *param_addr,
+			     void *cnode, struct config_error_type *err_type)
+{
+	struct base_client_entry *server_addr;
+	int rc;
+
+	if (type_hint != TERM_V4ADDR && type_hint != TERM_V6ADDR) {
+		/* Currently only allow individual addresses */
+		config_proc_error(cnode, err_type,
+				  "Expected a IPv4 or IPv6 address, got (%s)",
+				  token);
+		err_type->invalid = true;
+		return 1;
+	}
+
+	server_addr =
+		container_of(param_addr, struct base_client_entry, cle_list);
+	LogMidDebug(COMPONENT_EXPORT, "Server_Addrs: adding \"%s\"", token);
+	rc = add_client(COMPONENT_EXPORT, &server_addr->cle_list, token,
+			type_hint, MEM_COMP_EXPORT, cnode, err_type, NULL, NULL,
+			NULL);
+	return rc;
+}
+
+/**
  * @brief Commit and FSAL sub-block init/commit helpers
  */
 
@@ -1209,6 +1246,9 @@ static inline void copy_gsh_export(struct gsh_export *dest,
 		     src->clients.prev);
 
 	glist_swap_lists(&dest->clients, &src->clients);
+
+	/* Swap the server_addrs list: old list will be freed with src. */
+	glist_swap_lists(&dest->server_addrs, &src->server_addrs);
 
 	PTHREAD_RWLOCK_unlock(&dest->exp_lock);
 }
@@ -2610,7 +2650,9 @@ static struct config_item fsal_params[] = {
 				      options, options_set),                   \
 		CONF_ITEM_BOOLBIT_SET("Security_Label", false,                 \
 				      EXPORT_OPTION_SECLABEL_SET, _struct_,    \
-				      options, options_set)
+				      options, options_set),                   \
+		CONF_ITEM_PROC_MULT("Server_Addrs", noop_conf_init,            \
+				    server_addr_adder, _struct_, server_addrs)
 
 /**
  * @brief Table of EXPORT block parameters
@@ -3321,6 +3363,7 @@ void free_export_resources(struct gsh_export *export, bool config)
 	LogDebug(COMPONENT_EXPORT, "release_export complete");
 
 	FreeClientList(&export->clients, FreeExportClient);
+	FreeClientList(&export->server_addrs, FreeExportClient);
 	if (export->fsal_export != NULL) {
 		struct fsal_module *fsal = export->fsal_export->fsal;
 
@@ -3919,6 +3962,35 @@ static bool client_entry_match_op_ha_proxy_protocol(
 }
 
 /**
+ * @brief Check if the local (server-side) address matches Server_Addrs.
+ *
+ * Called while holding op_ctx->ctx_export->exp_lock in read mode.
+ *
+ * @return true  if Server_Addrs is empty (no restriction) or the local
+ *                  address matches at least one entry.
+ *         false if Server_Addrs is non-empty and none matches.
+ */
+static bool export_check_server_addr(void)
+{
+	struct gsh_export *exp = op_ctx->ctx_export;
+	struct glist_head *head = &exp->server_addrs;
+	sockaddr_t *local_addr;
+
+	/* No restriction configured - always allow. */
+	if (glist_empty(head))
+		return true;
+
+	/* No transport context - can't determine local address; allow. */
+	if (op_ctx->nfs_reqdata == NULL)
+		return true;
+
+	local_addr =
+		(sockaddr_t *)svc_getrpclocal(op_ctx->nfs_reqdata->svc.rq_xprt);
+	return client_match(COMPONENT_EXPORT, " for Export Fencing", local_addr,
+			    head, NULL);
+}
+
+/**
  * @brief Checks if a machine is authorized to access an export entry
  *
  * Permissions in the op context get updated based on export and client.
@@ -3957,6 +4029,24 @@ void export_check_access(void)
 			       op_ctx_export_path(op_ctx));
 	} else {
 		exp_str[0] = '\0';
+	}
+
+	/* Enforce Server_Addrs: if the request did not arrive on one of the
+	 * configured server IP addresses, treat this client as having no
+	 * access to the export (leave permissions at the all-zero state set
+	 * above and jump past all the client/export/default merging).
+	 */
+	if (!export_check_server_addr()) {
+		char addr_str[SOCK_NAME_MAX];
+		sockaddr_t *local_addr = (sockaddr_t *)svc_getrpclocal(
+			op_ctx->nfs_reqdata->svc.rq_xprt);
+
+		sprint_sockip(local_addr, addr_str, sizeof(addr_str));
+		LogEventLimited(
+			COMPONENT_EXPORT,
+			"Export %s: server address %s not in Server_Addrs, denying access",
+			op_ctx_export_path(op_ctx), addr_str);
+		goto check_done;
 	}
 
 	if (glist_empty(&op_ctx->ctx_export->clients)) {
@@ -4094,6 +4184,8 @@ no_export:
 		(void)StrExportOptions(&dspbuf, &op_ctx->export_perms);
 		LogMidDebug(COMPONENT_EXPORT, "Final options   (%s)", perms);
 	}
+
+check_done:
 
 	PTHREAD_RWLOCK_unlock(&export_opt_lock);
 
