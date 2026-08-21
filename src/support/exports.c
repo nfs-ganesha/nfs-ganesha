@@ -1134,6 +1134,8 @@ static inline void update_atomic_fields(struct gsh_export *export,
 	atomic_store_uint64_t(&export->MaxOffsetRead, src->MaxOffsetRead);
 	atomic_store_uint32_t(&export->options, src->options);
 	atomic_store_uint32_t(&export->options_set, src->options_set);
+	atomic_store_uint32_t(&export->access_check_policies,
+			      src->access_check_policies);
 }
 
 static inline void copy_gsh_export(struct gsh_export *dest,
@@ -2374,8 +2376,8 @@ void *export_client_allocator(mem_components_t mem_comp)
 {
 	struct exportlist_client_entry *expcli;
 
-	expcli = gsh_calloc(1, sizeof(struct exportlist_client_entry),
-			    mem_comp);
+	expcli =
+		gsh_calloc(1, sizeof(struct exportlist_client_entry), mem_comp);
 
 	return &expcli->client_entry;
 }
@@ -3077,13 +3079,16 @@ bool log_an_export(struct gsh_export *exp, void *state)
 			exp->export_id, exp->cfg_pseudopath, exp->cfg_fullpath,
 			exp->FS_tag, perms,
 			readable_access_check_policy(
-				exp->access_check_policies,
+				atomic_fetch_uint32_t(
+					&exp->access_check_policies),
 				READ_ACCESS_CHECK_POLICY_SHIFT),
 			readable_access_check_policy(
-				exp->access_check_policies,
+				atomic_fetch_uint32_t(
+					&exp->access_check_policies),
 				LOOKUP_ACCESS_CHECK_POLICY_SHIFT),
 			readable_access_check_policy(
-				exp->access_check_policies,
+				atomic_fetch_uint32_t(
+					&exp->access_check_policies),
 				READDIR_ACCESS_CHECK_POLICY_SHIFT));
 	}
 
