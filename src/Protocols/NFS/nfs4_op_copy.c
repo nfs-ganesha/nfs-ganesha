@@ -506,8 +506,8 @@ static struct copy_offload_state *create_copy_offload_state(
 	 * copy_offload_state_free() frees it on final refcount drop.
 	 */
 	cos->cos_dst_fh.nfs_fh4_len = data->currentFH.nfs_fh4_len;
-	cos->cos_dst_fh.nfs_fh4_val = gsh_malloc(data->currentFH.nfs_fh4_len,
-						 MEM_COMP_XCOPY);
+	cos->cos_dst_fh.nfs_fh4_val =
+		gsh_malloc(data->currentFH.nfs_fh4_len, MEM_COMP_XCOPY);
 	memcpy(cos->cos_dst_fh.nfs_fh4_val, data->currentFH.nfs_fh4_val,
 	       data->currentFH.nfs_fh4_len);
 
@@ -1345,9 +1345,8 @@ static enum nfs_req_result nfs4_copy_complete(struct copy_job *job,
 
 	rc = nfsstat4_to_nfs_req_result(res->cr_status);
 
-	GSH_AUTO_TRACEPOINT(nfs4, op_copy_end, TRACE_INFO,
+	GSH_AUTO_TRACEPOINT(nfs4, op_copy_complete, TRACE_INFO,
 			    "COPY status={} bytes={}", res->cr_status,
-			    res->cr_status,
 			    res->cr_status == NFS4_OK
 				    ? (uint64_t)res->COPY4res_u.cr_resok4
 					      .cr_response.wr_count
@@ -1593,7 +1592,6 @@ out:
 
 	GSH_AUTO_TRACEPOINT(nfs4, op_copy_end, TRACE_INFO,
 			    "COPY status={} bytes={}", res->cr_status,
-			    res->cr_status,
 			    res->cr_status == NFS4_OK
 				    ? (uint64_t)res->COPY4res_u.cr_resok4
 					      .cr_response.wr_count
