@@ -73,7 +73,7 @@
 /* Memory Usage Statistics */
 struct gsh_mem_stats gshMC[MEM_COMP_MAX];
 
-#ifdef USE_DBUS
+/* Not DBus-specific: grpc_get_fast_ops() reads these tables too. */
 
 struct op_name {
 	char *name;
@@ -125,7 +125,6 @@ static const struct op_name optnlm[] = {
 };
 #endif
 
-#endif
 
 /* Classify protocol ops for stats purposes
  */
@@ -733,7 +732,9 @@ static void record_clnt_ops(struct op_count *op, bool success, bool dup)
 		(void)atomic_inc_uint64_t(&op->dups);
 }
 
-#ifdef USE_DBUS
+/* Not DBus-specific: reached from the gRPC stats API via
+ * reset_server_stats().
+ */
 /**
  *  @brief reset the counts for protocol operation
  *  Use atomic ops to avoid locks.
@@ -923,7 +924,6 @@ static void reset__9P_stats(struct _9p_stats *_9p)
 	}
 }
 #endif
-#endif /* USE_DBUS */
 
 /**
  * @brief record V4.1 layout op stats
@@ -2705,6 +2705,9 @@ void server_dbus_v42_iostats(struct nfsv41_stats *v42p, DBusMessageIter *iter)
 	server_dbus_iostats(&v42p->write, iter);
 }
 
+#endif /* USE_DBUS */
+
+/* Not DBus-specific: the gRPC stats API calls these too. */
 void server_nfsmon_export_iostats(struct export_stats *export_st,
 				  struct xfer_op *opread,
 				  struct xfer_op *opwrite)
@@ -2789,6 +2792,8 @@ void server_ret_nfsmon_iostats(struct xfer_op *op_read,
 	(void)atomic_sub_uint64_t(&op_write->transferred,
 				  op_prewrite->transferred);
 }
+
+#ifdef USE_DBUS
 
 void server_dbus_nfsmon_iostats(struct export_stats *export_st,
 				DBusMessageIter *iter)
@@ -2898,6 +2903,9 @@ void server_dbus_all_iostats(struct export_stats *export_statistics,
 	}
 }
 
+#endif /* USE_DBUS */
+
+/* Not DBus-specific: the gRPC stats API calls these too. */
 void reset_gsh_stats(struct gsh_stats *st)
 {
 #ifdef _USE_NFS3
@@ -2995,6 +3003,7 @@ void reset_global_stats(void)
 #endif
 }
 
+#ifdef USE_DBUS
 void server_dbus_total_ops(struct export_stats *export_st,
 			   DBusMessageIter *iter)
 {
@@ -3013,6 +3022,7 @@ void global_dbus_total_ops(DBusMessageIter *iter)
 	gsh_dbus_append_timestamp(iter, &nfs_stats_time);
 	global_dbus_total(iter);
 }
+#endif /* USE_DBUS */
 
 void reset_server_stats(void)
 {
@@ -3024,6 +3034,8 @@ void reset_server_stats(void)
 #endif
 	reset_v4_full_stats();
 }
+
+#ifdef USE_DBUS
 
 #ifdef _USE_9P
 void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)

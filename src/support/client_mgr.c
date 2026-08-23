@@ -615,6 +615,9 @@ static struct gsh_dbus_method cltmgr_disconnect_nfsv41_client = {
 
 /* Reset Client specific stats counters
  */
+#endif /* USE_DBUS */
+
+/* Not DBus-specific: the gRPC stats API calls this too. */
 void reset_client_stats(void)
 {
 	struct avltree_node *client_node;
@@ -634,8 +637,13 @@ void reset_client_stats(void)
 	PTHREAD_RWLOCK_unlock(&client_by_ip.cip_lock);
 }
 
+#ifdef USE_DBUS
+
 /* Reset Client specific stats counters for allops
  */
+#endif /* USE_DBUS */
+
+/* Not DBus-specific: the gRPC stats API calls these too. */
 void reset_clnt_allops_stats(void)
 {
 	struct avltree_node *client_node;
@@ -652,6 +660,8 @@ void reset_clnt_allops_stats(void)
 	}
 	PTHREAD_RWLOCK_unlock(&client_by_ip.cip_lock);
 }
+
+#ifdef USE_DBUS
 
 static struct gsh_dbus_method *cltmgr_client_methods[] = {
 	&cltmgr_add_client, &cltmgr_remove_client, &cltmgr_show_clients,

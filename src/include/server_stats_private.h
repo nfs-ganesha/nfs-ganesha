@@ -450,12 +450,6 @@ struct auth_stats {
 	  .type = "sususususssusust", \
 	  .direction = "out" }
 
-extern struct timespec auth_stats_time;
-#ifdef _USE_NFS3
-extern struct timespec v3_full_stats_time;
-#endif
-extern struct timespec v4_full_stats_time;
-
 void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st);
 void server_dbus_client_io_ops(DBusMessageIter *iter,
 			       struct gsh_client *client);
@@ -492,17 +486,6 @@ void mdcache_utilization(DBusMessageIter *iter);
 void server_dbus_v3_full_stats(DBusMessageIter *iter);
 #endif
 void server_dbus_v4_full_stats(DBusMessageIter *iter);
-void reset_server_stats(void);
-void reset_export_stats(void);
-void reset_client_stats(void);
-void reset_gsh_stats(struct gsh_stats *st);
-void reset_gsh_allops_stats(struct gsh_clnt_allops_stats *st);
-#ifdef _USE_NFS3
-void reset_v3_full_stats(void);
-#endif
-void reset_v4_full_stats(void);
-void reset_auth_stats(void);
-void reset_clnt_allops_stats(void);
 void fd_usage_summarize_dbus(DBusMessageIter *iter);
 
 #ifdef _USE_9P
@@ -517,6 +500,27 @@ void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
 extern struct glist_head fsal_list;
 
 #endif /* USE_DBUS */
+
+/* Not DBus-specific: the gRPC stats API calls these too, so they are
+ * declared outside the USE_DBUS block above.
+ */
+extern struct timespec auth_stats_time;
+#ifdef _USE_NFS3
+extern struct timespec v3_full_stats_time;
+#endif
+extern struct timespec v4_full_stats_time;
+
+void reset_server_stats(void);
+void reset_export_stats(void);
+void reset_client_stats(void);
+void reset_gsh_stats(struct gsh_stats *st);
+void reset_gsh_allops_stats(struct gsh_clnt_allops_stats *st);
+#ifdef _USE_NFS3
+void reset_v3_full_stats(void);
+#endif
+void reset_v4_full_stats(void);
+void reset_auth_stats(void);
+void reset_clnt_allops_stats(void);
 
 void server_stats_free(struct gsh_stats *statsp);
 void server_stats_allops_free(struct gsh_clnt_allops_stats *statsp);
