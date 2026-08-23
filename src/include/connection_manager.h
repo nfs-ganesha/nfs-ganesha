@@ -90,6 +90,10 @@
 #define CONNECTION_MANAGER_H
 
 #include "common_utils.h"
+#include "gsh_list.h"
+#include "gsh_rpc.h"
+#include "log_common.h"
+#include "rpc/svc.h"
 
 #define CONNECTION_MANAGER__DRAIN_MAX_EXPECTED_ITERATIONS 15
 

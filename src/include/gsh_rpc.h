@@ -35,6 +35,7 @@
 #include "config.h"
 #include "ip_utils.h"
 
+#include <stdint.h>
 #include <stdbool.h>
 
 /* Ganesha project has abstract_atomic.h file and tirpc also has a

@@ -40,9 +40,9 @@
 #ifndef IDMAPPER_MONITORING_H
 #define IDMAPPER_MONITORING_H
 
+#include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
-#include "common_utils.h"
 
 typedef enum idmapping_utility {
 	IDMAPPING_PWUTILS = 0,

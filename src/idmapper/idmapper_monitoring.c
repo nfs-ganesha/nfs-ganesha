@@ -33,9 +33,13 @@
  * @brief ID mapping monitoring functions
  */
 
+#include <stdint.h>
 #include <stddef.h>
 #include "idmapper_monitoring.h"
 #include "monitoring.h"
+#include "log_common.h"
+#include "common_utils.h"
+#include "gsh_types.h"
 
 /* ID Mapping metrics */
 static histogram_metric_handle_t idmapping_user_groups_total;
