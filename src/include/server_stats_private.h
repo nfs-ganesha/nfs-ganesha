@@ -238,15 +238,15 @@ struct auth_stats {
 	{ .name = "read", .type = "(tttttt)", .direction = "out" }, \
 		{ .name = "write", .type = "(tttttt)", .direction = "out" }
 
-#define CEIOSTATS_TYPE   "(ttdt)(ttdt)(ttd)"   /* read, write, other */
+#define CEIOSTATS_TYPE   "(ttt)(ttt)(tt)"   /* read, write, other */
 #define CEIOSTATS_REPLY                                                    \
-	{ .name = "read", .type = "(ttdt)", .direction = "out" },          \
-		{ .name = "write", .type = "(ttdt)", .direction = "out" }, \
-		{ .name = "other", .type = "(ttd)", .direction = "out" }
+	{ .name = "read", .type = "(ttt)", .direction = "out" },          \
+		{ .name = "write", .type = "(ttt)", .direction = "out" }, \
+		{ .name = "other", .type = "(tt)", .direction = "out" }
 
-#define CELOSTATS_TYPE   "(ttt)"               /* layout */
+#define CELOSTATS_TYPE   "(tt)"               /* layout */
 #define CELOSTATS_REPLY \
-	{ .name = "layout", .type = "(ttt)", .direction = "out" }
+	{ .name = "layout", .type = "(tt)", .direction = "out" }
 
 #ifdef _USE_NFS3
 #define CE_STATS_REPLY                                                   \

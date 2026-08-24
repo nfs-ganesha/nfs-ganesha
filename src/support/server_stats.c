@@ -1873,11 +1873,14 @@ void server_dbus_cexop_stats(struct xfer_op *iop, DBusMessageIter *iter,
 				       &iop->cmd.total);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				       &iop->cmd.errors);
-	/* Always write latency field - calculate if for_export, else 0.0 */
-	if (for_export && iop->cmd.total)
-		res = (double)(iop->cmd.latency.latency * 0.000001) /
-		      (iop->cmd.total);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
+	/* Only write latency field for exports */
+	if (for_export) {
+		if (iop->cmd.total)
+			res = (double)(iop->cmd.latency.latency * 0.000001) /
+			      (iop->cmd.total);
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+	}
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				       &iop->transferred);
 	dbus_message_iter_close_container(iter, &struct_iter);
@@ -1908,10 +1911,14 @@ void server_dbus_ceop_stats(struct proto_op *op, DBusMessageIter *iter,
 				       &op->total);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
 				       &op->errors);
-	/* Always write latency field - calculate if for_export, else 0.0 */
-	if (for_export && op->total)
-		res = (double)(op->latency.latency * 0.000001) / op->total;
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE, &res);
+	/* Only write latency field for exports */
+	if (for_export) {
+		if (op->total)
+			res = (double)(op->latency.latency * 0.000001) /
+			      op->total;
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_DOUBLE,
+					       &res);
+	}
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
@@ -1944,8 +1951,10 @@ void server_dbus_celo_stats(struct nfsv41_stats *sp, DBusMessageIter *iter,
 					 &struct_iter);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64, &total);
 	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64, &errors);
-	/* Always write delays field - type signature is (ttt) */
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64, &delays);
+	/* Only write delays field for exports */
+	if (for_export)
+		dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
+					       &delays);
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
 
