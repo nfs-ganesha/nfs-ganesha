@@ -149,7 +149,12 @@ fsal_aclsupp_t fsal_acl_support(struct fsal_staticfsinfo_t *info)
 
 attrmask_t fsal_supported_attrs(struct fsal_staticfsinfo_t *info)
 {
-	return info->supported_attrs;
+	attrmask_t supported_attrs = info->supported_attrs;
+
+	if (!info->xattr_support)
+		supported_attrs &= ~ATTR4_XATTR;
+
+	return supported_attrs;
 }
 
 uint32_t fsal_maxread(struct fsal_staticfsinfo_t *info)
