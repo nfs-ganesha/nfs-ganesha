@@ -726,13 +726,6 @@ static bool gsh_all_clients_io_ops(DBusMessageIter *args, DBusMessage *reply,
 
 	dbus_message_iter_init_append(reply, &iter);
 
-	if (!nfs_param.core_param.enable_CLNTALLSTATS) {
-		errormsg = "Stat counting for all ops for clients is disabled";
-		success = false;
-		gsh_dbus_status_reply(&iter, success, errormsg);
-		return true;
-	}
-
 	gsh_dbus_status_reply(&iter, success, errormsg);
 	now(&timestamp);
 	gsh_dbus_append_timestamp(&iter, &timestamp);
@@ -2449,9 +2442,8 @@ int add_client(enum log_components component, struct glist_head *client_list,
 					    memcmp(&infoaddr, &in_addr_last,
 						   sizeof(struct in_addr)) == 0)
 						continue;
-					cli->cidr =
-						cidr_from_inaddr(&infoaddr,
-								 mem_comp);
+					cli->cidr = cidr_from_inaddr(&infoaddr,
+								     mem_comp);
 					cli->type = NETWORK_CLIENT;
 					ap_last = ap;
 					in_addr_last = infoaddr;
@@ -2471,9 +2463,8 @@ int add_client(enum log_components component, struct glist_head *client_list,
 						    sizeof(struct in6_addr)))
 						continue;
 					/* IPv6 address */
-					cli->cidr =
-						cidr_from_in6addr(&infoaddr,
-								  mem_comp);
+					cli->cidr = cidr_from_in6addr(&infoaddr,
+								      mem_comp);
 					cli->type = NETWORK_CLIENT;
 					ap_last = ap;
 					in6_addr_last = infoaddr;
