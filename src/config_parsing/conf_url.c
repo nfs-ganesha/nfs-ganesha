@@ -34,7 +34,7 @@
 
 #if defined(LINUX) && !defined(SANITIZE_ADDRESS)
 #define MY_RTLD_FLAGS (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND)
-#elif defined(FREEBSD) || defined(SANITIZE_ADDRESS)
+#else
 #define MY_RTLD_FLAGS (RTLD_NOW | RTLD_LOCAL)
 #endif
 
