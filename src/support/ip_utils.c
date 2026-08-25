@@ -501,7 +501,7 @@ bool is_inaddrany(sockaddr_t *addr)
 		(ip6addr->sin6_addr.s6_addr[11] == 0xFF) &&
 		(*(in_addr_t *)&ip6addr->sin6_addr.s6_addr[12] ==
 		 INADDR_ANY)) ||
-	       IN6_IS_ADDR_UNSPECIFIED(ip6addr->sin6_addr.s6_addr);
+	       IN6_IS_ADDR_UNSPECIFIED(&ip6addr->sin6_addr);
 }
 
 /**
