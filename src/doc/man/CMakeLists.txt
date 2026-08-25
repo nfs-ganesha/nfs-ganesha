@@ -26,7 +26,8 @@ set(man_srcs
     ganesha-log-config.rst
     ganesha-cache-config.rst
     ganesha-export-config.rst
-    ganesha-core-config.rst)
+    ganesha-core-config.rst
+    ganesha-fscrypt-config.rst)
 
 if(USE_9P)
    list(APPEND man_srcs
@@ -86,6 +87,16 @@ endif()
 if(USE_FSAL_GPFS)
    list(APPEND man_srcs
         ganesha-gpfs-config.rst)
+endif()
+
+if(USE_FSAL_KVSFS)
+   list(APPEND man_srcs
+        ganesha-kvsfs-config.rst)
+endif()
+
+if(USE_ADMIN_TOOLS)
+   list(APPEND man_srcs
+        ganesha-top.rst)
 endif()
 
 if(USE_RADOS_RECOV)
