@@ -59,7 +59,12 @@
  * taken AFTER the export->exp_lock to avoid ABBA deadlock.
  *
  */
-pthread_rwlock_t export_opt_lock;
+/*
+ * Statically initialised: nfsd (MainNFSD/nfs_main.c) never calls
+ * PTHREAD_RWLOCK_init() on this lock, only nfs_lib.c does, yet
+ * export_defaults_commit() write-locks it while reading exports.
+ */
+pthread_rwlock_t export_opt_lock = PTHREAD_RWLOCK_INITIALIZER;
 
 /* Note: Access_Type defaults to None on purpose     */
 /*       And no PROTO is included - that is filled   */
