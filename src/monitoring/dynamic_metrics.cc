@@ -30,7 +30,9 @@
 #include <shared_mutex>
 
 #include "dynamic_metrics.h"
+#ifdef HAVE_PROCPS
 #include <sys/sysinfo.h>
+#endif
 #ifdef USE_MONITORING
 
 #include "prometheus/counter.h"
