@@ -1336,41 +1336,75 @@ bool xdr_entry3_x(XDR *xdrs, entry3 *objp)
 	return (true);
 }
 
-bool xdr_entry3(XDR *xdrs, struct entry3 *objp)
+/*
+ * Handle a *list* of entry3, i.e. the "entries" member of dirlist3.
+ *
+ * objpp points at the caller's head pointer, not at an entry. This function
+ * owns the whole chain including the per-element "value follows" boolean, so
+ * on the wire it consumes exactly what RFC 1813 specifies:
+ *
+ *	[bool=TRUE][entry][bool=TRUE][entry] ... [bool=FALSE]
+ *
+ * It must NOT be wrapped in xdr_pointer(). xdr_pointer() reads a boolean of
+ * its own before invoking the object procedure, so the pairing consumes the
+ * discriminator twice and this loop reads the high 32 bits of the first
+ * entry's fileid3 as its "more elements" flag. Neither outcome is benign: a
+ * zero high word ends the loop at once, leaving the zeroed node xdr_pointer()
+ * already allocated as an entry with a NULL name, and eof is then read from
+ * the fileid's low word; a non-zero high word desyncs the stream so the
+ * following filename3 length is read from the wrong offset.
+ */
+static bool xdr_entry3_list(XDR *xdrs, struct entry3 **objpp)
 {
-	/*
-	 * more_elements is pre-computed in case the direction is
-	 * XDR_ENCODE or XDR_FREE.  more_elements is overwritten by
-	 * xdr_bool when the direction is XDR_DECODE.
-	 */
-	int freeing;
-	struct entry3 **ent = &objp;
-	struct entry3 **next = NULL; /* pacify gcc */
-	bool_t more_elements = false; /* yes, bool_t */
+	struct entry3 **ent = objpp;
+	bool_t more_elements; /* yes, bool_t */
 
 	assert(xdrs != NULL);
-	assert(objp != NULL);
+	assert(objpp != NULL);
 
-	freeing = (xdrs->x_op == XDR_FREE);
+	if (xdrs->x_op == XDR_FREE) {
+		/*
+		 * Each successor must be saved *by value* before its
+		 * predecessor is released. Saving &(*ent)->nextentry and
+		 * dereferencing it afterwards reads freed memory.
+		 */
+		struct entry3 *cur = *objpp;
+
+		*objpp = NULL;
+
+		while (cur != NULL) {
+			struct entry3 *next = cur->nextentry;
+			struct entry3 *victim = cur;
+
+			victim->nextentry = NULL;
+			if (!xdr_reference(xdrs, (void **)&victim,
+					   (u_int)sizeof(struct entry3),
+					   (xdrproc_t)xdr_entry3_x))
+				return (false);
+			cur = next;
+		}
+		return (true);
+	}
 
 	for (;;) {
 		more_elements = (bool_t)(*ent != NULL);
 		if (!xdr_bool(xdrs, &more_elements))
 			return (false);
-		if (!more_elements)
+		if (!more_elements) {
+			/*
+			 * Match xdr_pointer(): a FALSE discriminator must
+			 * clear the caller's pointer, or decoding an empty
+			 * or shorter list into a reused destination leaves
+			 * the previous entries in place.
+			 */
+			*ent = NULL;
 			return (true); /* we are done */
-		/*
-		 * the unfortunate side effect of non-recursion is that in
-		 * the case of freeing we must remember the next object
-		 * before we free the current object ...
-		 */
-		if (freeing)
-			next = &((*ent)->nextentry);
+		}
 		if (!xdr_reference(xdrs, (void **)ent,
 				   (u_int)sizeof(struct entry3),
 				   (xdrproc_t)xdr_entry3_x))
 			return (false);
-		ent = (freeing) ? next : &((*ent)->nextentry);
+		ent = &((*ent)->nextentry);
 	}
 }
 
@@ -1425,8 +1459,11 @@ bool xdr_dirlist3(XDR *xdrs, dirlist3 *objp)
 	if (objp->uio != NULL)
 		return xdr_dirlist3_encode(xdrs, objp);
 
-	if (!xdr_pointer(xdrs, (void **)&objp->entries, sizeof(entry3),
-			 (xdrproc_t)xdr_entry3))
+	/*
+	 * xdr_entry3_list() consumes the leading boolean itself; see the
+	 * comment there for why xdr_pointer() must not be used.
+	 */
+	if (!xdr_entry3_list(xdrs, &objp->entries))
 		return (false);
 	if (!xdr_bool(xdrs, &objp->eof))
 		return (false);
@@ -1503,41 +1540,60 @@ bool xdr_entryplus3_x(XDR *xdrs, entryplus3 *objp)
 	return (true);
 }
 
-bool xdr_entryplus3(XDR *xdrs, struct entryplus3 *objp)
+/*
+ * The entryplus3 counterpart of xdr_entry3_list(). Same contract, same reason
+ * it must not be wrapped in xdr_pointer().
+ */
+static bool xdr_entryplus3_list(XDR *xdrs, struct entryplus3 **objpp)
 {
-	/*
-	 * more_elements is pre-computed in case the direction is
-	 * XDR_ENCODE or XDR_FREE.  more_elements is overwritten by
-	 * xdr_bool when the direction is XDR_DECODE.
-	 */
-	int freeing;
-	struct entryplus3 **ent = &objp;
-	struct entryplus3 **next = NULL; /* pacify gcc */
-	bool_t more_elements = false; /* yes, bool_t */
+	struct entryplus3 **ent = objpp;
+	bool_t more_elements; /* yes, bool_t */
 
 	assert(xdrs != NULL);
-	assert(objp != NULL);
+	assert(objpp != NULL);
 
-	freeing = (xdrs->x_op == XDR_FREE);
+	if (xdrs->x_op == XDR_FREE) {
+		/*
+		 * Save the successor by value before freeing its
+		 * predecessor; see xdr_entry3_list().
+		 */
+		struct entryplus3 *cur = *objpp;
+
+		*objpp = NULL;
+
+		while (cur != NULL) {
+			struct entryplus3 *next = cur->nextentry;
+			struct entryplus3 *victim = cur;
+
+			victim->nextentry = NULL;
+			if (!xdr_reference(xdrs, (void **)&victim,
+					   (u_int)sizeof(struct entryplus3),
+					   (xdrproc_t)xdr_entryplus3_x))
+				return (false);
+			cur = next;
+		}
+		return (true);
+	}
 
 	for (;;) {
 		more_elements = (bool_t)(*ent != NULL);
 		if (!xdr_bool(xdrs, &more_elements))
 			return (false);
-		if (!more_elements)
+		if (!more_elements) {
+			/*
+			 * Match xdr_pointer(): a FALSE discriminator must
+			 * clear the caller's pointer, or decoding an empty
+			 * or shorter list into a reused destination leaves
+			 * the previous entries in place.
+			 */
+			*ent = NULL;
 			return (true); /* we are done */
-		/*
-		 * the unfortunate side effect of non-recursion is that in
-		 * the case of freeing we must remember the next object
-		 * before we free the current object ...
-		 */
-		if (freeing)
-			next = &((*ent)->nextentry);
+		}
 		if (!xdr_reference(xdrs, (void **)ent,
 				   (u_int)sizeof(struct entryplus3),
 				   (xdrproc_t)xdr_entryplus3_x))
 			return (false);
-		ent = (freeing) ? next : &((*ent)->nextentry);
+		ent = &((*ent)->nextentry);
 	}
 }
 
@@ -1599,8 +1655,8 @@ bool xdr_dirlistplus3(XDR *xdrs, dirlistplus3 *objp)
 	if (objp->uio != NULL)
 		return xdr_dirlistplus3_encode(xdrs, objp);
 
-	if (!xdr_pointer(xdrs, (void **)&objp->entries, sizeof(entryplus3),
-			 (xdrproc_t)xdr_entryplus3))
+	/* See xdr_entry3_list(): the leading boolean belongs to the list. */
+	if (!xdr_entryplus3_list(xdrs, &objp->entries))
 		return (false);
 	if (!xdr_bool(xdrs, &objp->eof))
 		return (false);
