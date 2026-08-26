@@ -1204,6 +1204,8 @@ CEPH {}
 
 	nodeid(string, default "")
 
+	max_ceph_clients(uint16, range 0 to UINT16_MAX, default 0)
+
 GPFS {}
 -------
 

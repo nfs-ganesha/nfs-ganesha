@@ -67,6 +67,7 @@ struct ceph_fsal_module {
 	bool client_oc;
 	uint64_t client_oc_size;
 	uint64_t client_oc_max_dirty;
+	uint16_t max_ceph_clients;
 	bool async;
 	bool zerocopy;
 	bool use_old_uuid;
@@ -276,6 +277,8 @@ int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
 
 extern pthread_rwlock_t cmount_lock;
 extern struct avltree avl_cmount;
+
+extern uint16_t ceph_clnt_count;
 
 void ceph_mount_init(void);
 struct ceph_mount *ceph_mount_lookup(const struct avltree_node *key);

@@ -59,6 +59,11 @@
 static const char *module_name = "Ceph";
 
 /**
+ * Ceph client count
+ */
+uint16_t ceph_clnt_count;
+
+/**
  * Ceph global module object.
  */
 struct ceph_fsal_module
@@ -136,6 +141,8 @@ static struct config_item ceph_items[] = {
 	CONF_ITEM_BOOL("register_service", false, ceph_fsal_module,
 		       register_service),
 	CONF_ITEM_STR("nodeid", 1, MAXPATHLEN, NULL, ceph_fsal_module, nodeid),
+	CONF_ITEM_UI16("max_ceph_clients", 0, UINT16_MAX, 0, ceph_fsal_module,
+		       max_ceph_clients),
 	CONFIG_EOL
 };
 
@@ -852,6 +859,16 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		goto has_cmount;
 	}
 
+	/* check if we are exceeding ceph clients limit */
+	if (CephFSM.max_ceph_clients &&
+	    (ceph_clnt_count >= CephFSM.max_ceph_clients)) {
+		status.major = ERR_FSAL_SERVERFAULT;
+		LogWarn(COMPONENT_FSAL,
+			"Not exporting Export with ID: %d, Path: %s",
+			export->export.export_id, CTX_FULLPATH(op_ctx));
+		goto error2;
+	}
+
 	cm = gsh_calloc(1, sizeof(*cm), MEM_COMP_FSAL);
 
 	cm->cm_allow_delegations = false;
@@ -867,18 +884,18 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		cm->cm_fs_name = gsh_strdup(export->fs_name, MEM_COMP_FSAL);
 
 	if (export->cmount_path)
-		cm->cm_mount_path = gsh_strdup(export->cmount_path,
-					       MEM_COMP_FSAL);
+		cm->cm_mount_path =
+			gsh_strdup(export->cmount_path, MEM_COMP_FSAL);
 	else
-		cm->cm_mount_path = gsh_strdup(CTX_FULLPATH(op_ctx),
-					       MEM_COMP_FSAL);
+		cm->cm_mount_path =
+			gsh_strdup(CTX_FULLPATH(op_ctx), MEM_COMP_FSAL);
 
 	if (export->user_id)
 		cm->cm_user_id = gsh_strdup(export->user_id, MEM_COMP_FSAL);
 
 	if (export->secret_key)
-		cm->cm_secret_key = gsh_strdup(export->secret_key,
-					       MEM_COMP_FSAL);
+		cm->cm_secret_key =
+			gsh_strdup(export->secret_key, MEM_COMP_FSAL);
 
 	LogDebug(COMPONENT_FSAL, "New cmount %s for %s", cm->cm_mount_path,
 		 CTX_FULLPATH(op_ctx));
@@ -1009,6 +1026,9 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	}
 #endif /* USE_FSAL_CEPH_GET_FS_CID */
 
+	/* increment ceph client count */
+	ceph_clnt_count++;
+
 has_cmount:
 	export->cm = cm;
 	export->cmount = cm->cmount;
@@ -1101,6 +1121,7 @@ error:
 		cm = NULL;
 	}
 
+error2:
 	gsh_free(export, MEM_COMP_EXPORT);
 
 	PTHREAD_RWLOCK_unlock(&cmount_lock);

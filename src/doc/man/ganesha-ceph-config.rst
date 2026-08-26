@@ -97,6 +97,16 @@ nodeid(string, default "")
     This value must be unique per NFS node within the same Ceph cluster.
     Required only when register_service is set to true.
 
+max_ceph_clients(uint16, range 0 to UINT16_MAX, default 0)
+    Sets the maximum number of ceph clients attached to Ganesha. Default is 0.
+    "0" means there is no limit on ceph clients. This may lead to failure of
+    Ganesha in case resources are limited.
+    This option helps administrator to control the resources being used by
+    Ganesha process. Every ceph client needs certain amount of memory and number
+    of threads for its working.
+    When number of ceph clients attached to Ganesha exceeds the limit, Ganesha
+    will stop exporting new exports which need dedicated new ceph client.
+
 See also
 ==============================
 :doc:`ganesha-config <ganesha-config>`\(8)
