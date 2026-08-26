@@ -1086,9 +1086,8 @@ int nfsv4_init_params(void)
 	/* Set up the server owner string */
 	if (nfs_param.nfsv4_param.server_owner == NULL) {
 		/* If the server owner param is NULL, set it to hostname */
-		if (gsh_gethostname(cid_server_owner, sizeof(cid_server_owner),
-				    nfs_param.core_param.enable_AUTHSTATS) ==
-		    -1) {
+		if (gsh_gethostname(cid_server_owner,
+				    sizeof(cid_server_owner)) == -1) {
 			LogCrit(COMPONENT_NFS_V4, "gsh_gethostname failed");
 			return -1;
 		}

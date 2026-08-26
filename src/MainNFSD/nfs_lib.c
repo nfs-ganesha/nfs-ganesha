@@ -94,7 +94,7 @@ int nfs_libmain(const char *ganesha_conf, const char *lpath,
 		log_path = gsh_strdup(lpath, MEM_COMP_CONFIG);
 
 	/* get host name */
-	if (gethostname(localmachine, sizeof(localmachine)) != 0) {
+	if (gsh_gethostname(localmachine, sizeof(localmachine)) != 0) {
 		fprintf(stderr, "Could not get local host name, exiting...\n");
 		exit(1);
 	} else {

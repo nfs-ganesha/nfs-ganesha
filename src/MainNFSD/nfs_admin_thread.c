@@ -757,7 +757,7 @@ static bool admin_dbus_trim_status(DBusMessageIter *args, DBusMessage *reply,
 	FILE *fp;
 
 	/* log malloc_info() as a side effect! */
-	(void)gethostname(hostname, sizeof(hostname));
+	(void)gsh_gethostname(hostname, sizeof(hostname));
 	snprintf(name, sizeof(name), "/tmp/mallinfo-%s.%d.txt", hostname,
 		 getpid());
 	fp = fopen(name, "w");

@@ -890,8 +890,7 @@ int nfs_recovery_get_nodeid(char **pnodeid)
 	 * NULL pointer. Just use hostname.
 	 */
 	hostname = gsh_malloc(MAXNAMLEN + 1, MEM_COMP_RECOVERY);
-	rc = gsh_gethostname(hostname, MAXNAMLEN + 1,
-			     nfs_param.core_param.enable_AUTHSTATS);
+	rc = gsh_gethostname(hostname, MAXNAMLEN + 1);
 	if (rc != 0) {
 		LogEvent(COMPONENT_RECOVERY, "gethostname failed: %d", errno);
 		rc = -errno;

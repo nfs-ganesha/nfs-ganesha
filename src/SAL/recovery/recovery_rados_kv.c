@@ -369,12 +369,12 @@ int set_nodeid(void)
 		}
 	} else if (use_host_name) {
 		/* no nodeid set in ganesha.conf, use hostname */
-		ret = gethostname(nodeid, maxlen);
+		ret = gsh_gethostname(nodeid, maxlen);
 		if (ret) {
 			ret = errno;
 			LogCrit(COMPONENT_RECOVERY,
-				"Failed to gethostname: %s (%d)", strerror(ret),
-				ret);
+				"Failed to gsh_gethostname: %s (%d)",
+				strerror(ret), ret);
 			return -ret;
 		}
 	} else {

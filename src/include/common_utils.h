@@ -1210,24 +1210,6 @@ static inline void now_mono(struct timespec *ts)
 /* The following definitions require some of the following */
 #include "idmapper.h"
 
-/*wrapper for gethostname to capture auth stats, if required */
-static inline int gsh_gethostname(char *name, size_t len, bool stats)
-{
-	int ret;
-	struct timespec s_time, e_time;
-
-	if (stats)
-		now(&s_time);
-
-	ret = gethostname(name, len);
-
-	if (!ret && stats) {
-		now(&e_time);
-		dns_stats_update(&s_time, &e_time);
-	}
-	return ret;
-}
-
 /*wrapper for getaddrinfo to capture auth stats, if required */
 static inline int gsh_getaddrinfo(const char *node, const char *service,
 				  const struct addrinfo *hints,

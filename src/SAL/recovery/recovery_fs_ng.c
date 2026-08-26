@@ -156,11 +156,11 @@ static int fs_ng_create_recov_dir(void)
 			return -error;
 		}
 	} else {
-		err = gethostname(host, sizeof(host));
+		err = gsh_gethostname(host, sizeof(host));
 		if (err) {
 			err = errno;
 			LogCrit(COMPONENT_RECOVERY,
-				"Failed to gethostname: %s (%d)",
+				"Failed to gsh_gethostname: %s (%d)",
 				strerror(errno), errno);
 			return -err;
 		}

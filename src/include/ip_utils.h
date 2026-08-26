@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include "display.h"
 #include "mem_components.h"
 #include "log.h"
@@ -167,6 +168,18 @@ static inline bool sprint_sockip(sockaddr_t *addr, char *buf, int len)
 		return false;
 
 	return inet_ntop(addr->ss_family, socket_addr(addr), buf, len) != NULL;
+}
+
+static inline int gsh_gethostname(char *name, size_t len)
+{
+	int ret;
+
+	if (len == 0)
+		return -1;
+
+	ret = gethostname(name, len);
+	name[len - 1] = '\0';
+	return ret;
 }
 
 #ifdef __cplusplus

@@ -80,11 +80,11 @@ bool proxyv3_rpc_init(const uint num_sockets)
 	LogDebug(COMPONENT_FSAL, "Setting up connection pool with %u sockets",
 		 num_sockets);
 	/* Cache our hostname for client auth later. */
-	if (gethostname(rpcMachineName, sizeof(rpcMachineName)) != 0) {
+	if (gsh_gethostname(rpcMachineName, sizeof(rpcMachineName)) != 0) {
 		const char *kClientName = "127.0.0.1";
 
 		LogCrit(COMPONENT_FSAL,
-			"gethostname() failed. Errno %d (%s). Hardcoding a client IP instead.",
+			"gsh_gethostname() failed. Errno %d (%s). Hardcoding a client IP instead.",
 			errno, strerror(errno));
 		memcpy(rpcMachineName, kClientName,
 		       strlen(kClientName) + 1 /* For NUL */);

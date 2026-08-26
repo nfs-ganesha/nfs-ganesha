@@ -362,8 +362,7 @@ static struct gssd_k5_kt_princ *new_ple(krb5_context context,
 	char *default_realm;
 	int is_default_realm = 0;
 
-	ple = gsh_calloc(1, sizeof(struct gssd_k5_kt_princ),
-			 MEM_COMP_PROTOCOL);
+	ple = gsh_calloc(1, sizeof(struct gssd_k5_kt_princ), MEM_COMP_PROTOCOL);
 
 #ifdef HAVE_KRB5
 	ple->realm = gsh_malloc(princ->realm.length + 1, MEM_COMP_PROTOCOL);
@@ -643,7 +642,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 {
 	krb5_error_code code;
 	char **realmnames = NULL;
-	char myhostname[NI_MAXHOST], targethostname[NI_MAXHOST];
+	char myhostname[NI_MAXHOST + 1], targethostname[NI_MAXHOST];
 	char myhostad[NI_MAXHOST + 1];
 	int i, j, retval;
 	char *default_realm = NULL;
@@ -659,8 +658,7 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 		goto out;
 
 	/* Get full local hostname */
-	retval = gsh_gethostname(myhostname, sizeof(myhostname),
-				 nfs_param.core_param.enable_AUTHSTATS);
+	retval = gsh_gethostname(myhostname, sizeof(myhostname) - 1);
 	if (retval) {
 		k5err = gssd_k5_err_msg(context, retval);
 		LogWarn(COMPONENT_NFS_CB, "%s while getting local hostname",
@@ -670,11 +668,11 @@ static int find_keytab_entry(krb5_context context, krb5_keytab kt,
 	}
 
 	/* Compute the active directory machine name HOST$ */
-	strcpy(myhostad, myhostname);
-	for (i = 0; myhostad[i] != 0; ++i)
-		myhostad[i] = toupper(myhostad[i]);
+	strlcpy(myhostad, myhostname, sizeof(myhostad));
+	for (i = 0; myhostad[i] != '\0'; ++i)
+		myhostad[i] = toupper((unsigned char)myhostad[i]);
 	myhostad[i] = '$';
-	myhostad[i + 1] = 0;
+	myhostad[i + 1] = '\0';
 
 	retval = get_full_hostname(myhostname, myhostname, sizeof(myhostname));
 	if (retval)

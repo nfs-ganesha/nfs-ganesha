@@ -1296,7 +1296,8 @@ int proxyv4_init_rpc(struct proxyv4_export *proxyv4_exp)
 		rpc->rpc_xid = getpid() ^ time(NULL);
 	PTHREAD_MUTEX_unlock(&rpc->listlock);
 
-	if (gethostname(rpc->proxyv4_hostname, sizeof(rpc->proxyv4_hostname))) {
+	if (gsh_gethostname(rpc->proxyv4_hostname,
+			    sizeof(rpc->proxyv4_hostname))) {
 		if (strlcpy(rpc->proxyv4_hostname, "NFS-GANESHA/Proxy",
 			    sizeof(rpc->proxyv4_hostname)) >=
 		    sizeof(rpc->proxyv4_hostname)) {

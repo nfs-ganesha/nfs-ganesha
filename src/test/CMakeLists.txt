@@ -59,3 +59,11 @@ SET(test_recovery_tag_SRCS
 
 add_executable(test_recovery_tag EXCLUDE_FROM_ALL ${test_recovery_tag_SRCS})
 target_link_libraries(test_recovery_tag ganesha_nfsd ${CMAKE_THREAD_LIBS_INIT})
+
+SET(test_gsh_gethostname_SRCS
+   test_gsh_gethostname.c
+)
+
+add_executable(test_gsh_gethostname EXCLUDE_FROM_ALL ${test_gsh_gethostname_SRCS})
+target_link_libraries(test_gsh_gethostname ganesha_nfsd)
+

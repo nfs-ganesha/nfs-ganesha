@@ -45,11 +45,11 @@ bool proxyv3_nlm_init(void)
 		return true;
 
 	/* Cache our hostname for auth later. */
-	if (gethostname(nlmMachineName, sizeof(nlmMachineName)) != 0) {
+	if (gsh_gethostname(nlmMachineName, sizeof(nlmMachineName)) != 0) {
 		const char *kClientName = "127.0.0.1";
 
 		LogCrit(COMPONENT_FSAL,
-			"gethostname() failed. Errno %d (%s). Hardcoding a client IP instead.",
+			"gsh_gethostname() failed. Errno %d (%s). Hardcoding a client IP instead.",
 			errno, strerror(errno));
 		memcpy(nlmMachineName, kClientName,
 		       strlen(kClientName) + 1 /* For NULL */);
