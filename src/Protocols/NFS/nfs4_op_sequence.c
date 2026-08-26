@@ -140,6 +140,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	SEQUENCE4args *const arg_SEQUENCE4 = &op->nfs_argop4_u.opsequence;
 	SEQUENCE4res *const res_SEQUENCE4 = &resp->nfs_resop4_u.opsequence;
 	uint32_t slotid;
+	uint32_t request_size;
 
 	nfs41_session_t *session;
 	nfs41_session_slot_t *slot;
@@ -188,6 +189,21 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	 * during compound execution.
 	 */
 	inc_client_id_ref(data->preserved_clientid);
+
+	/* Check if request is compliant with ca_maxrequestsize */
+	request_size = xdr_getpos(data->req->rq_xdrs);
+
+	if (request_size > session->fore_channel_attrs.ca_maxrequestsize) {
+		dec_session_ref(session);
+		res_SEQUENCE4->sr_status = NFS4ERR_REQ_TOO_BIG;
+		LogDebugAlt(
+			COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+			"SEQUENCE returning status %s, request size %" PRIu32
+			" exceeds ca_maxrequestsize %" PRIu32,
+			nfsstat4_to_str(res_SEQUENCE4->sr_status), request_size,
+			session->fore_channel_attrs.ca_maxrequestsize);
+		return NFS_REQ_ERROR;
+	}
 
 	slotid = arg_SEQUENCE4->sa_slotid;
 
