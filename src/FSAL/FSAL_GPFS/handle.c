@@ -406,8 +406,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 		char link_buff[PATH_MAX];
 
 		if (myself->u.symlink.link_content != NULL) {
-			gsh_free(myself->u.symlink.link_content,
-				 MEM_COMP_FSAL);
+			gsh_free(myself->u.symlink.link_content, MEM_COMP_FSAL);
 			myself->u.symlink.link_content = NULL;
 			myself->u.symlink.link_size = 0;
 		}
@@ -419,7 +418,7 @@ static fsal_status_t readsymlink(struct fsal_obj_handle *obj_hdl,
 			return status;
 
 		myself->u.symlink.link_content =
-				gsh_strdup(link_buff, MEM_COMP_FSAL);
+			gsh_strdup(link_buff, MEM_COMP_FSAL);
 		myself->u.symlink.link_size = strlen(link_buff);
 	}
 
@@ -626,6 +625,7 @@ static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
 	int errsv;
 	struct getxattr_arg gxarg;
 	struct gpfs_fsal_obj_handle *myself;
+	fsal_status_t status = { ERR_FSAL_NO_ERROR, 0 };
 	struct gpfs_fsal_export *exp = container_of(op_ctx->fsal_export,
 						    struct gpfs_fsal_export,
 						    export);
@@ -645,14 +645,14 @@ static fsal_status_t getxattrs(struct fsal_obj_handle *obj_hdl,
 		errsv = errno;
 		LogDebug(COMPONENT_FSAL, "GETXATTRS returned rc %d errsv %d",
 			 rc, errsv);
-
 		if (errsv == ERANGE)
-			return fsalstat(ERR_FSAL_TOOSMALL, 0);
-		if (errsv == ENODATA)
-			return fsalstat(ERR_FSAL_NOENT, 0);
-		return fsalstat(posix2fsal_error(errsv), errsv);
+			status = fsalstat(ERR_FSAL_TOOSMALL, ERANGE);
+		else if (errsv == ENODATA)
+			status = fsalstat(ERR_FSAL_NOXATTR, 0);
+		else
+			status = posix2fsal_status(errsv);
+		return status;
 	}
-
 	/* Make sure utf8string is NUL terminated */
 	xa_value->utf8string_val[gxarg.value_len] = '\0';
 
@@ -680,6 +680,7 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 
 	sxarg.mountdirfd = export_fd;
 	sxarg.handle = myself->handle;
+	sxarg.type = option;
 	sxarg.name_len = xa_name->utf8string_len;
 	sxarg.name = xa_name->utf8string_val;
 	sxarg.value_len = xa_value->utf8string_len;
@@ -688,11 +689,18 @@ static fsal_status_t setxattrs(struct fsal_obj_handle *obj_hdl,
 	if (op_ctx && op_ctx->client)
 		sxarg.cli_ip = op_ctx->client->hostaddr_str;
 
+	LogDebug(COMPONENT_FSAL,
+		 "SETXATTRS type %d name_len %d value_len %d name %s value %s",
+		 option, sxarg.name_len, sxarg.value_len, sxarg.name,
+		 (char *)sxarg.value);
+
 	rc = gpfs_ganesha(OPENHANDLE_SETXATTRS, &sxarg);
 	if (rc < 0) {
 		errsv = errno;
 		LogDebug(COMPONENT_FSAL, "SETXATTRS returned rc %d errsv %d",
 			 rc, errsv);
+		if (errsv == ENODATA)
+			return fsalstat(ERR_FSAL_NOXATTR, 0);
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -725,6 +733,8 @@ static fsal_status_t removexattrs(struct fsal_obj_handle *obj_hdl,
 		errsv = errno;
 		LogDebug(COMPONENT_FSAL, "REMOVEXATTRS returned rc %d errsv %d",
 			 rc, errsv);
+		if (errsv == ENODATA)
+			return fsalstat(ERR_FSAL_NOXATTR, 0);
 		return fsalstat(posix2fsal_error(errsv), errsv);
 	}
 	return fsalstat(ERR_FSAL_NO_ERROR, 0);
@@ -749,11 +759,10 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct gpfs_fsal_obj_handle, obj_handle);
 
 	len = la_maxcount;
-#define MAXCOUNT 1024*64
+#define MAXCOUNT 1024 * 64
 	if (len > MAXCOUNT)
 		len = MAXCOUNT;
-	LogFullDebug(COMPONENT_FSAL, "in cookie %llu len %d la_maxcount %d",
-		     (unsigned long long)lxarg.cookie, len, la_maxcount);
+	LogFullDebug(COMPONENT_FSAL, "len %d la_maxcount %d", len, la_maxcount);
 	buf = gsh_malloc(len, MEM_COMP_FSAL);
 	if (buf == NULL) {
 		errsv = ERR_FSAL_NOMEM;
@@ -776,15 +785,16 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 		errsv = errno;
 		LogDebug(COMPONENT_FSAL, "LISTXATTRS returned rc %d errsv %d",
 			 rc, errsv);
-		if (errsv == ERANGE) {
+		if (errsv == ERANGE)
 			status = fsalstat(ERR_FSAL_TOOSMALL, ERANGE);
-		} else {
+		else if (errsv == ENODATA)
+			status = fsalstat(ERR_FSAL_NOXATTR, 0);
+		else
 			status = posix2fsal_status(errsv);
-		}
 		goto out;
 	}
-	LogDebug(COMPONENT_FSAL, "EOF %d  rc %d len %d",
-		lxarg.eof, rc, lxarg.name_len);
+	LogDebug(COMPONENT_FSAL, "EOF %d  rc %d len %d", lxarg.eof, rc,
+		 lxarg.name_len);
 
 	if (!lxarg.eof) {
 		errsv = ENOTSUP;
@@ -793,7 +803,7 @@ static fsal_status_t listxattrs(struct fsal_obj_handle *obj_hdl,
 		goto out;
 	}
 	status = fsal_listxattr_helper(buf, lxarg.name_len, la_maxcount,
-			la_cookie, lr_eof, lr_names);
+				       la_cookie, lr_eof, lr_names);
 
 	LogFullDebug(COMPONENT_FSAL, "out2 cookie %llu eof %d",
 		     (unsigned long long)*la_cookie, *lr_eof);
