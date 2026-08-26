@@ -184,7 +184,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 			"Cannot resolve address %s, error %s, using address as hostname",
 			ipstring, gai_strerror(rc));
 
-		if (maxsize < SOCK_NAME_MAX) {
+		if (maxsize < sizeof(ipstring)) {
 			LogMajor(
 				COMPONENT_DISPATCH,
 				"Could not return ip address because caller's buffer was too small");
@@ -192,7 +192,7 @@ int nfs_ip_name_add(sockaddr_t *ipaddr, char *hostname, size_t maxsize)
 		}
 
 		/* And copy the ipstring out to the caller's buffer. */
-		strcpy(hostname, ipstring);
+		strlcpy(hostname, ipstring, maxsize);
 	}
 
 	/* At this point, no matter what, the caller's buffer has been filled
