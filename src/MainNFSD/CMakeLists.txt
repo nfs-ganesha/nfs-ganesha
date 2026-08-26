@@ -96,8 +96,13 @@ if(ENABLE_QOS)
   SET(MainServices_STAT_SRCS
     ${MainServices_STAT_SRCS}
     nfs_qos.c
-   ../support/nfs_qosmgr.c
     )
+  if(USE_DBUS OR USE_GRPC)
+    SET(MainServices_STAT_SRCS
+      ${MainServices_STAT_SRCS}
+      ../support/nfs_qosmgr.c
+      )
+  endif(USE_DBUS OR USE_GRPC)
 endif(ENABLE_QOS)
 
 if(ENABLE_QOS AND ENABLE_CLUSTER_QOS)

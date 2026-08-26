@@ -23,9 +23,9 @@
  * ---------------------------------------
  */
 #if ENABLE_QOS
+#ifdef USE_DBUS
 #include "gsh_dbus.h"
-extern pthread_mutex_t g_qos_config_lock;
 void dbus_qosmgr_init(void);
-uint32_t get_export_client_count(struct Qos_Class *s_qos_class);
 extern struct gsh_client *lookup_client(DBusMessageIter *args, char **errormsg);
+#endif
 #endif

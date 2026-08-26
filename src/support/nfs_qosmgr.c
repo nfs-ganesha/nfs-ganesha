@@ -41,6 +41,8 @@
 #include "ip_utils.h"
 #include "abstract_mem.h"
 #endif
+
+#ifdef USE_DBUS
 /*  QoS Method Arguments */
 #define CLIENT_IP_ARG { "client_ip", "s", "in" }
 #define EXPORT_ID_ARG { "id", "q", "in" }
@@ -1836,6 +1838,7 @@ void dbus_qosmgr_init(void)
 		gsh_dbus_register_path("QosMgr", dbus_qos_interface);
 	}
 }
+#endif /* USE_DBUS */
 
 #ifdef USE_GRPC
 /**

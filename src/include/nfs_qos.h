@@ -275,6 +275,8 @@ typedef struct Qos_Class {
 #endif
 } qos_class_t;
 
+extern pthread_mutex_t g_qos_config_lock;
+uint32_t get_export_client_count(qos_class_t *qos_class);
 void qos_perexport_insert(struct gsh_export *export,
 			  struct qos_block_config *qos_block);
 void qos_free_mem(void *gsh_ptr, qos_class_type_t class_type);
