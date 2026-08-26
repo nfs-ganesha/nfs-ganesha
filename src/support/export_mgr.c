@@ -947,6 +947,31 @@ void nfs_init_stats_time(void)
 		auth_stats_time = clnt_allops_stats_time = nfs_stats_time;
 }
 
+#ifdef USE_GRPC
+
+/* GRPC export manager helpers
+ */
+struct gsh_export *lookup_export_by_id(uint16_t export_id, char **errormsg)
+{
+	struct gsh_export *export = get_gsh_export(export_id);
+
+	if (export == NULL) {
+		*errormsg = "Export id not found";
+	}
+	return export;
+}
+
+pthread_rwlock_t *get_export_id_lock(void)
+{
+	return &export_by_id.eid_lock;
+}
+
+struct glist_head *get_exportlist_head(void)
+{
+	return &exportlist;
+}
+#endif /* USE_GRPC */
+
 #ifdef USE_DBUS
 
 /* DBUS interfaces
@@ -1021,26 +1046,6 @@ static struct gsh_export *lookup_export(DBusMessageIter *args, char **errormsg)
 			*errormsg = "Export id not found";
 	}
 	return export;
-}
-
-struct gsh_export *lookup_export_by_id(uint16_t export_id, char **errormsg)
-{
-	struct gsh_export *export = get_gsh_export(export_id);
-
-	if (export == NULL) {
-		*errormsg = "Export id not found";
-	}
-	return export;
-}
-
-pthread_rwlock_t *get_export_id_lock(void)
-{
-	return &export_by_id.eid_lock;
-}
-
-struct glist_head *get_exportlist_head(void)
-{
-	return &exportlist;
 }
 
 /**
