@@ -112,7 +112,7 @@ static uint32_t fs_maximum_segments(struct fsal_export *export_pub)
  */
 static size_t fs_loc_body_size(struct fsal_export *export_pub)
 {
-	return 0x100;
+	return 0x2000;
 }
 
 /**
