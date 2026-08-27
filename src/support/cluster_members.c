@@ -36,12 +36,14 @@
 #include <netinet/in.h>
 
 #include "cluster_members.h"
+#include "nfs_cluster_qos.h"
 #include "client_mgr.h"
 #include "common_utils.h"
 #include "config_parsing.h"
 #include "gsh_config.h"
 #include "log.h"
 #include "nfs_core.h"
+#include "gsh_reflist.h"
 
 #ifdef _INTERNAL_STATD
 #include "nsm.h"
@@ -350,3 +352,52 @@ bool grpc_show_cluster_members(char ***ips_out, size_t *count_out,
 	return ok;
 }
 #endif /* USE_GRPC */
+
+#ifdef ENABLE_CLUSTER_QOS
+void populate_cqos_hosts(void)
+{
+	struct glist_head *glist;
+	struct base_client_entry *client;
+	struct cqos_ceph_nodes *cli;
+	struct gsh_reflist *hosts, *old_hosts = NULL;
+
+	if (cqos_hosts != NULL)
+		old_hosts = rcu_dereference(cqos_hosts);
+
+	/* Allocate a new gsh_reflist */
+	hosts = gsh_reflist_alloc(cqos_hosts_release, MEM_COMP_QOS);
+
+	/* Buld new list */
+	glist_for_each(glist, &nfs_param.core_param.cluster_members) {
+		client = glist_entry(glist, struct base_client_entry, cle_list);
+
+		cli = gsh_calloc(1, sizeof(struct cqos_ceph_nodes),
+				 MEM_COMP_QOS);
+		cli->cqos_fd = -1;
+		cli->cqos_clnt = NULL;
+
+		cli->cqos_node_addr = client->cidr->ip_addr;
+
+		glist_add_tail(&hosts->grl_list, &cli->cqos_node_list);
+	}
+
+	/* Swap in new list (will release old list) */
+	rcu_set_pointer(&cqos_hosts, hosts);
+
+	synchronize_rcu();
+
+	if (old_hosts)
+		gsh_reflist_put(old_hosts);
+}
+
+void cqos_hosts_release(struct glist_head *list, mem_components_t comp)
+{
+	struct cqos_ceph_nodes *cli;
+
+	/* Get the cqos_ceph_nodes from the list head */
+	cli = container_of(list, struct cqos_ceph_nodes, cqos_node_list);
+
+	/* And free it */
+	gsh_free(cli, comp);
+}
+#endif

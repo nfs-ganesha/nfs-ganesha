@@ -39,19 +39,26 @@
 #include <time.h>
 #include "nfs_core.h"
 
-#define CQOS_MIN_MSGTIME 50     /* In milli seconds */
+#define CQOS_MIN_MSGTIME 50 /* In milli seconds */
 #define CQOS_MAX_MSGTIME 500
 #define CQOS_DEF_MSGTIME 200
 
 extern struct config_block cqos_core;
-extern struct glist_head cqos_hosts;
+extern struct gsh_reflist *cqos_hosts;
 extern unsigned int cqos_initialized;
 
+/* These nodes will be managed in a gsh_reflist, guaranteeing the lifetime of
+ * this structure.
+ */
 typedef struct cqos_ceph_nodes {
-	struct glist_head node_list;
-	sockaddr_t node_addr;
-	int32_t fd;
-	CLIENT *clnt;
+	struct glist_head cqos_node_list;
+	sockaddr_t cqos_node_addr;
+	int32_t cqos_fd;
+	/* Note that clnt is refcounted, so the lifetime of the actual
+	 * CLIENT structure is preserved. This pointer is protected by the
+	 * lifetime of this node.
+	 */
+	CLIENT *cqos_clnt;
 } cqos_ceph_nodes_t;
 
 typedef enum {

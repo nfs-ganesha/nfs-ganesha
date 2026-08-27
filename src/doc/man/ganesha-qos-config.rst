@@ -60,10 +60,17 @@ typically set in the server’s main configuration file
   per time unit (usally 30 minutes, hourly, daily), which controls the rate of
   allowed data consuption over the specified time.
 
+NOTE: If enable_cluster_qos is true by explicit setting, NFS_CORE_PARAM
+      Cluster_Members must be non-empty. If enable_qos is true but 
+      enable_cluster_qos is not explicitly set, cluster qos will be enabled
+      if Cluster_Members is non-empty.
+
 QOS_DEFAULT_CONFIG {}
 -------------------------------------------------------------------------------
 
     enable_qos(bool, default false)
+
+    enable_cluster_qos(bool, default special)
 
     enable_tokens(bool, default false)
 

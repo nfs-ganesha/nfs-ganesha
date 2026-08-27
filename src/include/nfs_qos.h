@@ -182,12 +182,15 @@ typedef struct qos_bucket {
 #endif
 } qos_bucket_t;
 
+#define QOS_OPTION_ENABLE_CLUSTER_QOS 0x00001000
+
 /* This is a configuration stucture, not used while processing IO */
 typedef struct qos_block_config {
 	bool enable_qos;
 
 #if ENABLE_CLUSTER_QOS
 	bool enable_cluster_qos;
+	uint32_t qos_options_set;
 	uint32_t cqos_msg_interval;
 #endif
 

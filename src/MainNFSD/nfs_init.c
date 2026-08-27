@@ -732,7 +732,11 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	}
 
 #ifdef ENABLE_QOS
-	/* QoS global parameters */
+	/* QoS global parameters.
+	 *
+	 * NOTE: This MUST be processed AFTER Core paramaters so Cluster_Members
+	 *       has been processed already. Cluster QoS uses Cluster_Members
+	 */
 	(void)load_config_from_parse(parse_tree, &qos_core, &qos_block_config,
 				     true, err_type);
 	if (!config_error_is_harmless(err_type)) {
@@ -750,10 +754,9 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 	/*
 	 * Cluster qos should be initialized only if QoS is enabled, and
 	 * user should provide one Ip address of each available ceph node
-	 * in the cluster.
+	 * in the cluster. That was validated in config pass.
 	 */
-	if (qos_block_config.enable_qos &&
-	    qos_block_config.enable_cluster_qos && !glist_empty(&cqos_hosts)) {
+	if (qos_block_config.enable_cluster_qos) {
 		cluster_qos_init();
 	}
 #endif

@@ -27,6 +27,7 @@
 #include "cqos.h"
 #include "nfs_cluster_qos.h"
 #include "nfs_qos.h"
+#include "gsh_reflist.h"
 
 #define CQOS_MAX_RETRIES 1
 
@@ -49,7 +50,7 @@
 #define RW_IOP_CLI_BITS (RW_EXP_BITS << 9)
 
 unsigned int cqos_initialized;
-static const struct timespec msg_tout = {0, 180000000};
+static const struct timespec msg_tout = { 0, 180000000 };
 
 /*
  * This is global glist which holds all ceph nodes addresses
@@ -59,8 +60,7 @@ static const struct timespec msg_tout = {0, 180000000};
  * It also has flag to denote if this IP addr is of local system
  *
  */
-struct glist_head cqos_hosts = GLIST_HEAD_INIT(cqos_hosts);
-
+struct gsh_reflist *cqos_hosts;
 
 /**********************************************************************
  ***************** APIs FOR CLUSTER QOS RECV MSGS *********************
@@ -297,7 +297,6 @@ static void add_published_bw_iops_values(qos_class_t *class_ptr,
 
 	add_subscribed_optype_to_node(class_ptr, cluster_qos_msg);
 
-
 	if (class_ptr->bw_enabled)
 		bucket = qos_get_bw_bucket(class_ptr, QOS_READ);
 	else
@@ -420,7 +419,6 @@ static void unsubscribe_optype_from_node(qos_class_t *class_ptr,
 	PTHREAD_MUTEX_unlock(&class_ptr->lock);
 }
 
-
 /**
  * This function gets called when subscribed  message received from
  * other nodes. It checks if qos_class exists for this client
@@ -467,7 +465,7 @@ static void cluster_qos_process_pe(cluster_qos_msg *cluster_qos_msg)
 	export = get_gsh_export(cluster_qos_msg->export_id);
 	if (export == NULL) {
 		LogDebug(COMPONENT_QOS, "export details not found for id:%d",
-			cluster_qos_msg->export_id);
+			 cluster_qos_msg->export_id);
 		return;
 	}
 
@@ -530,14 +528,13 @@ void cluster_qos_process(cluster_qos_msg *cluster_qos_msg)
 		 * QoS is configured with PePc.
 		 */
 		LogDebug(COMPONENT_QOS,
-			"Cqos doesn't support PePc mode, enabled PerExport");
+			 "Cqos doesn't support PePc mode, enabled PerExport");
 		cluster_qos_process_pe(cluster_qos_msg);
 	} else {
 		LogDebug(COMPONENT_QOS, " INVALID QOS_TYPE:%d",
 			 g_qos_config->qos_type);
 	}
 }
-
 
 /**********************************************************************
  ***************** APIs FOR CLUSTER QOS SEND MSGS *********************
@@ -569,7 +566,6 @@ static bool cqos_ensure_evchan(CLIENT *clnt)
 
 	return true;
 }
-
 
 /**
  * This function creates TCP socket and connects to other node whose address
@@ -647,12 +643,11 @@ static CLIENT *cqos_create_rpc_client(int fd)
 
 	if (clnt_control(clnt, CLSET_FD_NCLOSE, NULL)) {
 		LogCrit(COMPONENT_QOS,
-				"CQOS: Unable to set fd don't close option");
+			"CQOS: Unable to set fd don't close option");
 	}
 
 	return clnt;
 }
-
 
 /**
  * This function is a callback function, will be called once
@@ -664,9 +659,14 @@ static void cqos_rpc_call_process(struct clnt_req *cc)
 	char *err;
 	cqos_ceph_nodes_t *node;
 	struct glist_head *glist;
+	struct gsh_reflist *local_cqos_hosts;
 
 	if (cc->cc_error.re_status == RPC_SUCCESS)
 		return;
+
+	local_cqos_hosts = gsh_reflist_get(cqos_hosts);
+
+	assert(local_cqos_hosts != NULL);
 
 	err = rpc_sperror(&cc->cc_error, "failed");
 	LogCrit(COMPONENT_QOS, "CQOS: Sending RPCmsg failed %s", err);
@@ -677,24 +677,27 @@ static void cqos_rpc_call_process(struct clnt_req *cc)
 	 * If underlying TCP connection is gone, we need to
 	 * connect again to remote node and try to send message.
 	 */
-	glist_for_each(glist, &cqos_hosts) {
-		node = glist_entry(glist, cqos_ceph_nodes_t, node_list);
-		if (node->clnt == cc->cc_clnt) {
+	glist_for_each(glist, &local_cqos_hosts->grl_list) {
+		node = glist_entry(glist, cqos_ceph_nodes_t, cqos_node_list);
+		if (node->cqos_clnt == cc->cc_clnt) {
 			LogCrit(COMPONENT_QOS,
 				"CQOS: Found a node with client handle");
-			CLNT_DESTROY(node->clnt);
-			close(node->fd);
-			node->clnt = NULL;
-			node->fd = cqos_create_socket(&node->node_addr);
-			if (node->fd >= 0)
-				node->clnt = cqos_create_rpc_client(node->fd);
-			if (node->clnt != NULL)
-				cc->cc_clnt = node->clnt;
+			CLNT_DESTROY(node->cqos_clnt);
+			close(node->cqos_fd);
+			node->cqos_clnt = NULL;
+			node->cqos_fd =
+				cqos_create_socket(&node->cqos_node_addr);
+			if (node->cqos_fd >= 0)
+				node->cqos_clnt =
+					cqos_create_rpc_client(node->cqos_fd);
+			if (node->cqos_clnt != NULL)
+				cc->cc_clnt = node->cqos_clnt;
 		}
 	}
 
-	if (cc->cc_refreshes-- > 0 &&
-	    clnt_req_refresh(cc) == RPC_SUCCESS) {
+	gsh_reflist_put(local_cqos_hosts);
+
+	if (cc->cc_refreshes-- > 0 && clnt_req_refresh(cc) == RPC_SUCCESS) {
 		LogCrit(COMPONENT_QOS, "CQOS: retry Sending RPC msg");
 		/*
 		 * These cluster qos messages are for sending bandwidth usage
@@ -708,7 +711,7 @@ static void cqos_rpc_call_process(struct clnt_req *cc)
 
 /* Free RPC callback request context */
 static void cqos_rpc_call_free(struct clnt_req *cc, size_t unused,
-			const char *file, int line, const char *function)
+			       const char *file, int line, const char *function)
 {
 	gsh_free(cc, MEM_COMP_QOS);
 }
@@ -735,8 +738,8 @@ static bool cqos_send_rpc_msg(CLIENT *clnt, cluster_qos_msg msg)
 	cc = gsh_malloc(sizeof(*cc), MEM_COMP_QOS);
 
 	clnt_req_fill(cc, clnt, authnone_ncreate(), 1,
-		     (xdrproc_t)xdr_cluster_qos_msg, &msg, (xdrproc_t)xdr_void,
-		     NULL);
+		      (xdrproc_t)xdr_cluster_qos_msg, &msg, (xdrproc_t)xdr_void,
+		      NULL);
 	cc->cc_free_cb = cqos_rpc_call_free;
 
 	cc->cc_error.re_status = clnt_req_setup(cc, msg_tout);
@@ -865,13 +868,19 @@ static void send_sub_unsub_msg_to_nodes(qos_class_t *class_ptr,
 {
 	cqos_ceph_nodes_t *node;
 	struct glist_head *glist;
+	struct gsh_reflist *local_cqos_hosts;
 
-	glist_for_each(glist, &cqos_hosts) {
-		node = glist_entry(glist, cqos_ceph_nodes_t, node_list);
-		cqos_process_send_msg(&node->fd, &node->clnt,
-				      node->node_addr,
-				      sub_unsub_qos_msg);
+	local_cqos_hosts = gsh_reflist_get(cqos_hosts);
+
+	assert(local_cqos_hosts != NULL);
+
+	glist_for_each(glist, &local_cqos_hosts->grl_list) {
+		node = glist_entry(glist, cqos_ceph_nodes_t, cqos_node_list);
+		cqos_process_send_msg(&node->cqos_fd, &node->cqos_clnt,
+				      node->cqos_node_addr, sub_unsub_qos_msg);
 	}
+
+	gsh_reflist_put(local_cqos_hosts);
 }
 
 /**
@@ -1000,17 +1009,23 @@ static void send_publish_message(sockaddr_t sockaddr, cluster_qos_msg cqos_msg)
 {
 	cqos_ceph_nodes_t *node;
 	struct glist_head *glist;
+	struct gsh_reflist *local_cqos_hosts;
 
-	glist_for_each(glist, &cqos_hosts) {
-		node = glist_entry(glist, cqos_ceph_nodes_t, node_list);
-		if (!sockaddr_cmp(COMPONENT_QOS, &node->node_addr, &sockaddr,
-				  true)) {
-			cqos_process_send_msg(&node->fd, &node->clnt,
-					      node->node_addr,
-					      cqos_msg);
-			return;
+	local_cqos_hosts = gsh_reflist_get(cqos_hosts);
+
+	assert(local_cqos_hosts != NULL);
+
+	glist_for_each(glist, &local_cqos_hosts->grl_list) {
+		node = glist_entry(glist, cqos_ceph_nodes_t, cqos_node_list);
+		if (!sockaddr_cmp(COMPONENT_QOS, &node->cqos_node_addr,
+				  &sockaddr, true)) {
+			cqos_process_send_msg(&node->cqos_fd, &node->cqos_clnt,
+					      node->cqos_node_addr, cqos_msg);
+			break;
 		}
 	}
+
+	gsh_reflist_put(local_cqos_hosts);
 }
 
 /**
@@ -1421,6 +1436,8 @@ static bool pc_cqos_pubsub_cb(struct gsh_client *gsh_client, void *state)
  */
 static void *cqos_pubsub_thread_func(void *arg)
 {
+	rcu_register_thread();
+
 	while (true) {
 		switch (g_qos_config->qos_type) {
 		case QOS_NOT_ENABLED:
@@ -1428,13 +1445,16 @@ static void *cqos_pubsub_thread_func(void *arg)
 				 g_qos_config->qos_type);
 			break;
 		case QOS_PER_EXPORT_ENABLED:
-			foreach_gsh_export(ps_cqos_pubsub_cb, false, NULL);
+			foreach_gsh_export(ps_cqos_pubsub_cb, false, NULL)
+				;
 			break;
 		case QOS_PER_CLIENT_ENABLED:
-			foreach_gsh_client(pc_cqos_pubsub_cb, NULL);
+			foreach_gsh_client(pc_cqos_pubsub_cb, NULL)
+				;
 			break;
 		case QOS_PEREXPORT_PERCLIENT_ENABLED:
-			foreach_gsh_export(ps_cqos_pubsub_cb, false, NULL);
+			foreach_gsh_export(ps_cqos_pubsub_cb, false, NULL)
+				;
 			break;
 		default:
 			LogDebug(COMPONENT_QOS, " Something really wrong:%d",
@@ -1448,6 +1468,9 @@ static void *cqos_pubsub_thread_func(void *arg)
 		 */
 		usleep(g_qos_config->cqos_msg_interval * CQOS_USEC_IN_MSEC);
 	}
+
+	rcu_unregister_thread();
+
 	return NULL;
 }
 
@@ -1467,8 +1490,8 @@ static void cqos_thread_init(void)
 				     cqos_pubsub_thread_func, NULL);
 		if (ret != 0) {
 			LogFatal(COMPONENT_QOS,
-				"CQOS: Thread creation failed error %d (%s)",
-				errno, strerror(errno));
+				 "CQOS: Thread creation failed error %d (%s)",
+				 errno, strerror(errno));
 		}
 
 		pthread_detach(cqos_thread);

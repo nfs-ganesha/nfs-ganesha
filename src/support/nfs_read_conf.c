@@ -221,31 +221,6 @@ static int cluster_members_adder(const char *token, enum term_type type_hint,
 	return rc;
 }
 
-#ifdef ENABLE_CLUSTER_QOS
-void populate_cqos_hosts(void)
-{
-	struct glist_head *glist;
-	struct base_client_entry *client;
-	struct cqos_ceph_nodes *cli;
-
-	if (glist_empty(&nfs_param.core_param.cluster_members))
-		return;
-
-	glist_for_each(glist, &nfs_param.core_param.cluster_members) {
-		client = glist_entry(glist, struct base_client_entry, cle_list);
-
-		cli = gsh_calloc(1, sizeof(struct cqos_ceph_nodes),
-				 MEM_COMP_QOS);
-		glist_init(&cli->node_list);
-		cli->fd = -1;
-		cli->clnt = NULL;
-
-		cli->node_addr = client->cidr->ip_addr;
-
-		glist_add_tail(&cqos_hosts, &cli->node_list);
-	}
-}
-#endif
 /**
  * @brief Initialize a core_param block
  *
@@ -281,16 +256,13 @@ static int core_commit(void *node, void *link_mem, void *self_struct,
 
 	remove_self_cluster_members();
 
-#ifdef ENABLE_CLUSTER_QOS
-	/*
-	 * Cluster QoS global structures needs to be initialized
-	 * with cluster_members details
-	 */
-	populate_cqos_hosts();
-#endif
-
 	Log_ClientList_Level(COMPONENT_CONFIG, NIV_INFO, "Cluster_Members",
 			     &nfs_param.core_param.cluster_members);
+
+	/* NOTE: qos_core_commit will call populate_cqos_hosts after core
+	 *       paramaters have been fully processed. This ordering is
+	 *       required so the Cluster_Members parameter has been processed.
+	 */
 
 	PTHREAD_RWLOCK_unlock(&nfs_core_lock);
 
@@ -381,8 +353,9 @@ static int core_update(void *node, void *link_mem, void *self_struct,
 			 * have actually been done inside ntirpc so let's just
 			 * abort.
 			 */
-			LogFatal(COMPONENT_CONFIG,
-				 "NFS_CORE_PARAM Update of RPC parameters failed.");
+			LogFatal(
+				COMPONENT_CONFIG,
+				"NFS_CORE_PARAM Update of RPC parameters failed.");
 		}
 	}
 
@@ -394,14 +367,20 @@ static int core_update(void *node, void *link_mem, void *self_struct,
 	FreeClientList(&NFS_pcp.cluster_self, FreeCoreClient);
 	remove_self_cluster_members();
 
+	Log_ClientList_Level(COMPONENT_CONFIG, NIV_INFO, "Cluster_Members",
+			     &nfs_param.core_param.cluster_members);
+
 #ifdef ENABLE_CLUSTER_QOS
 	/*
-	 * Cluster QoS global structures needs to be updated with
-	 * cluster_members details
+	 * Cluster QoS global structures needs to be updated
+	 * with cluster_members details.
+	 *
+	 * NOTE: QOS_DEFAULT_CONFIG parameters are NOT dynamically updateable
+	 *       but Cluster QoS uses Cluster_Members and DOES support dynamic
+	 *       update of cqos_hosts, so we need to handle that here.
 	 */
-	/** @todo FSF:
-	 * populate_cqos_hosts();
-	 */
+	if (qos_block_config.enable_cluster_qos)
+		populate_cqos_hosts();
 #endif
 
 out:
@@ -685,12 +664,83 @@ static struct config_item_list qos_types_supported[] = {
 	CONFIG_LIST_EOL
 };
 
+static int qos_core_commit(void *node, void *link_mem, void *self_struct,
+			   struct config_error_type *err_type)
+{
+	struct qos_block_config *qos_block_config = self_struct;
+	int rc;
+
+	LogDebug(COMPONENT_CONFIG, "QOS_DEFAULT_CONFIG commit");
+
+	PTHREAD_RWLOCK_wrlock(&nfs_core_lock);
+
+	/* Test if we have not enabled qos but enabled cluster qos */
+	if (!qos_block_config->enable_qos &&
+	    qos_block_config->enable_cluster_qos) {
+		LogCrit(COMPONENT_CONFIG,
+			"Cannot enable Cluster QOS without QOS enabled");
+		err_type->invalid = true;
+		/* Not fatal if Ganesha not started with -x option, so disable
+		 * cluster qos.
+		 */
+		qos_block_config->enable_cluster_qos = false;
+		rc = 1;
+		goto exit;
+	}
+
+	/* If we have enabled qos but not explicitly set enable_cluster_qos,
+	 * we want to change the default setting to true IF and only IF
+	 * Cluster_Members is not empty.
+	 *
+	 * If cluster qos is explicitly enabled but Cluster_Members is empty we
+	 * want to report an error.
+	 */
+	if (qos_block_config->enable_qos &&
+	    (qos_block_config->qos_options_set &
+	     QOS_OPTION_ENABLE_CLUSTER_QOS) == 0 &&
+	    (!glist_empty(&NFS_pcp.cluster_members) ||
+	     !glist_empty(&NFS_pcp.cluster_self))) {
+		/* Override default */
+		qos_block_config->enable_cluster_qos = true;
+	} else if (qos_block_config->enable_cluster_qos &&
+		   glist_empty(&NFS_pcp.cluster_members) &&
+		   glist_empty(&NFS_pcp.cluster_self)) {
+		LogCrit(COMPONENT_CONFIG,
+			"Cannot enable Cluster QOS without configuring Cluster_Members list in NFS_CORE_PAREAM");
+		err_type->invalid = true;
+		/* Not fatal if Ganesha not started with -x option, so disable
+		 * cluster qos.
+		 */
+		qos_block_config->enable_cluster_qos = false;
+		rc = 1;
+		goto exit;
+	}
+
+#ifdef ENABLE_CLUSTER_QOS
+	/*
+	 * Cluster QoS global structures needs to be initialized
+	 * with cluster_members details
+	 */
+	if (qos_block_config->enable_cluster_qos)
+		populate_cqos_hosts();
+#endif
+
+	rc = 0;
+
+exit:
+
+	PTHREAD_RWLOCK_unlock(&nfs_core_lock);
+
+	return rc;
+}
+
 static struct config_item qos_global_params[] = {
 	CONF_ITEM_BOOL("enable_qos", false, qos_block_config, enable_qos),
 
 #if ENABLE_CLUSTER_QOS
-	CONF_ITEM_BOOL("enable_cluster_qos", true, qos_block_config,
-		       enable_cluster_qos),
+	CONF_ITEM_BOOL_SET("enable_cluster_qos", false, qos_block_config,
+			   enable_cluster_qos, QOS_OPTION_ENABLE_CLUSTER_QOS,
+			   qos_options_set),
 	CONF_ITEM_UI32("cqos_msg_interval", CQOS_MIN_MSGTIME, CQOS_MAX_MSGTIME,
 		       CQOS_DEF_MSGTIME, qos_block_config, cqos_msg_interval),
 #endif
@@ -788,7 +838,7 @@ struct config_block qos_core = {
 	.blk_desc.flags = CONFIG_UNIQUE, /* too risky to have more */
 	.blk_desc.u.blk.init = noop_conf_init,
 	.blk_desc.u.blk.params = qos_global_params,
-	.blk_desc.u.blk.commit = noop_conf_commit,
+	.blk_desc.u.blk.commit = qos_core_commit,
 	.mem_comp = MEM_COMP_CONFIG
 };
 

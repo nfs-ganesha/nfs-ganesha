@@ -33,6 +33,8 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include "mem_components.h"
+#include "gsh_list.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,6 +82,12 @@ bool grpc_set_cluster_members(char **ips, size_t count, bool *success,
 			      char *errmsg, size_t errmsg_len);
 bool grpc_show_cluster_members(char ***ips_out, size_t *count_out,
 			       bool *success, char *errmsg, size_t errmsg_len);
+#endif
+
+#ifdef ENABLE_CLUSTER_QOS
+void populate_cqos_hosts(void);
+
+void cqos_hosts_release(struct glist_head *list, mem_components_t comp);
 #endif
 
 #ifdef __cplusplus
