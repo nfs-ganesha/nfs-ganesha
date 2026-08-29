@@ -10,8 +10,8 @@ For more information, consult the [project wiki](https://github.com/nfs-ganesha/
 
 Code contributions to Ganesha are managed by submission to gerrithub for review. We do not merge from github pull requests.
 
-See src/CONTRIBUTING_HOWTO.txt for details.
+See [src/CONTRIBUTING_HOWTO.txt](src/CONTRIBUTING_HOWTO.txt) for details.
 
 # BUILDING
 
-See src/COMPILING_HOWTO.txt
+See [src/COMPILING_HOWTO.txt](src/COMPILING_HOWTO.txt).
