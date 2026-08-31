@@ -1632,10 +1632,10 @@ out:
 }
 
 /**
- * @brief Shared client lookup for cltmgr stats that do not require NFSSTATS
+ * @brief Shared client lookup for cltmgr stats and QOS
  */
-static struct gsh_client *grpc_cltmgr_lookup_client_simple(
-	const char *ipaddr, bool *success, const char **errormsg)
+struct gsh_client *grpc_lookup_client(const char *ipaddr, bool *success,
+				      const char **errormsg)
 {
 	sockaddr_t sockaddr;
 	struct gsh_client *client;
@@ -1697,7 +1697,7 @@ bool grpc_cltmgr_get_delegations(const char *ipaddr,
 	struct server_stats *server_st = NULL;
 	const char *errormsg = "OK";
 
-	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	client = grpc_lookup_client(ipaddr, success, &errormsg);
 	if (*success) {
 		server_st = container_of(client, struct server_stats, client);
 		if (!server_grpc_fill_delegations(&server_st->st, deleg_out)) {
@@ -1729,7 +1729,7 @@ bool grpc_cltmgr_get_client_io_ops(const char *ipaddr,
 	struct server_stats *server_st = NULL;
 	const char *errormsg = "OK";
 
-	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	client = grpc_lookup_client(ipaddr, success, &errormsg);
 	if (*success) {
 		server_st = container_of(client, struct server_stats, client);
 		server_grpc_fill_client_io_ops(&server_st->st,
@@ -1766,7 +1766,7 @@ bool grpc_cltmgr_get_client_allops(const char *ipaddr,
 		return true;
 	}
 
-	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	client = grpc_lookup_client(ipaddr, success, &errormsg);
 	if (*success) {
 		server_st = container_of(client, struct server_stats, client);
 		*allops_out =
@@ -1798,7 +1798,7 @@ static bool grpc_cltmgr_get_9p_stats(
 
 	*success = true;
 
-	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	client = grpc_lookup_client(ipaddr, success, &errormsg);
 	if (!*success)
 		goto out;
 
@@ -1885,7 +1885,7 @@ bool grpc_cltmgr_get_9p_opstats(const char *ipaddr, const char *opname,
 
 	*success = true;
 
-	client = grpc_cltmgr_lookup_client_simple(ipaddr, success, &errormsg);
+	client = grpc_lookup_client(ipaddr, success, &errormsg);
 	if (!*success)
 		goto out;
 

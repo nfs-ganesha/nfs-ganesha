@@ -491,6 +491,59 @@ class QosMgrService final : public qosService::QosMgr::Service {
 		grpc::ServerContext *context,
 		const nfsProtoUtil::ExportIdRequest *request,
 		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status SetExportClientBandwidth(
+		grpc::ServerContext *context,
+		const qosService::SetExportClientBandwidthRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status SetExportDefaultClientBandwidth(
+		grpc::ServerContext *context,
+		const qosService::SetExportDefaultClientBandwidthRequest
+			*request,
+		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status ListExportClientsBandwidth(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		qosService::ListExportClientsBandwidthResponse *response)
+		override;
+
+	grpc::Status GetExportDefaultClientBandwidth(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		qosService::GetExportDefaultClientBandwidthResponse *response)
+		override;
+
+	grpc::Status EnableAllClientQosBwControlpepc(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status DisableExportQosBwControlpepc(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status EnableAllClientQosIopsControlpepc(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status DisableExportQosIopsControlpepc(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status ListExportClientsIOPS(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ExportIdRequest *request,
+		qosService::ListExportClientsIOPSResponse *response) override;
+
+	grpc::Status SetExportClientIOPS(
+		grpc::ServerContext *context,
+		const qosService::SetExportClientIOPSRequest *request,
+		nfsProtoUtil::StatusResponse *response) override;
 };
 
 #endif //NFSSERVICE_H

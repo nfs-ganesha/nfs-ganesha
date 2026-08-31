@@ -53,6 +53,20 @@ struct grpc_qos_token_limits {
 	uint64_t token_renewal;
 };
 
+struct grpc_qos_client_bandwidth {
+	char client_ip[INET6_ADDRSTRLEN];
+	bool enabled;
+	uint64_t read_bw;
+	uint64_t write_bw;
+};
+
+struct grpc_qos_client_iops {
+	char client_ip[INET6_ADDRSTRLEN];
+	bool enabled;
+	uint64_t read_iops;
+	uint64_t write_iops;
+};
+
 bool grpc_qos_get_export_bandwidth(uint16_t export_id,
 				   struct grpc_qos_bw_limits *out,
 				   bool *success, char *errmsg,
@@ -79,6 +93,53 @@ bool grpc_qos_enable_export_bw_control(uint16_t export_id, bool *success,
 				       char *errmsg, size_t errmsg_len);
 bool grpc_qos_disable_export_bw_control(uint16_t export_id, bool *success,
 					char *errmsg, size_t errmsg_len);
+
+bool grpc_qos_set_export_client_bandwidth(uint16_t export_id,
+					  const char *client_ip,
+					  uint64_t read_bw, uint64_t write_bw,
+					  bool *success, char *errmsg,
+					  size_t errmsg_len);
+
+bool grpc_qos_set_export_default_client_bandwidth(uint16_t export_id,
+						  uint64_t read_bw,
+						  uint64_t write_bw,
+						  bool *success, char *errmsg,
+						  size_t errmsg_len);
+
+bool grpc_qos_list_export_clients_bandwidth(
+	uint16_t export_id, struct grpc_qos_client_bandwidth **clients,
+	uint32_t *total_clients, bool *success, char *errmsg,
+	size_t errmsg_len);
+
+bool grpc_qos_get_export_default_client_bandwidth(uint16_t export_id,
+						  uint64_t *read_bw,
+						  uint64_t *write_bw,
+						  bool *success, char *errmsg,
+						  size_t errmsg_len);
+
+bool grpc_qos_enable_all_clients_bw_pepc(uint16_t export_id, bool *success,
+					 char *errmsg, size_t errmsg_len);
+
+bool grpc_qos_disable_all_clients_bw_pepc(uint16_t export_id, bool *success,
+					  char *errmsg, size_t errmsg_len);
+
+bool grpc_qos_enable_all_client_iops_control_pepc(uint16_t export_id,
+						  bool *success, char *errmsg,
+						  size_t errmsg_len);
+
+bool grpc_qos_disable_all_client_iops_control_pepc(uint16_t export_id,
+						   bool *success, char *errmsg,
+						   size_t errmsg_len);
+
+bool grpc_qos_list_export_clients_iops(uint16_t export_id,
+				       struct grpc_qos_client_iops **clients,
+				       uint32_t *total_clients, bool *success,
+				       char *errmsg, size_t errmsg_len);
+
+bool grpc_qos_set_export_client_iops(uint16_t export_id, const char *client_ip,
+				     uint64_t read_iops, uint64_t write_iops,
+				     bool *success, char *errmsg,
+				     size_t errmsg_len);
 
 #ifdef __cplusplus
 }

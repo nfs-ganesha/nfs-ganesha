@@ -104,6 +104,55 @@ message SetExportDefaultClientBandwidthRequest
 	uint64 write_bw = 3;
 }
 
+message SetExportClientBandwidthRequest
+{
+	uint32 export_id = 1;
+	string client_ip = 2;
+	uint64 read_bw = 3;
+	uint64 write_bw = 4;
+}
+
+message ExportClientBandwidth
+{
+	string client_ip = 1;
+	BwLimits bandwidth = 2;
+}
+
+message ListExportClientsBandwidthResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	uint32 total_clients = 2;
+	repeated ExportClientBandwidth clients = 3;
+}
+
+message GetExportDefaultClientBandwidthResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	uint64 read_bw = 2;
+	uint64 write_bw = 3;
+}
+
+message ExportClientIOPS
+{
+	string client_ip = 1;
+	IopsLimits iops = 2;
+}
+
+message ListExportClientsIOPSResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	uint32 total_clients = 2;
+	repeated ExportClientIOPS clients = 3;
+}
+
+message SetExportClientIOPSRequest
+{
+	uint32 export_id = 1;
+	string client_ip = 2;
+	uint64 read_iops = 3;
+	uint64 write_iops = 4;
+}
+
 // org.ganesha.nfsd.qos — runtime QoS administration
 service QosMgr
 {
@@ -127,5 +176,28 @@ service QosMgr
 	rpc EnableExportQosBwControl(nfsProtoUtil.ExportIdRequest)
 		returns (nfsProtoUtil.StatusResponse);
 	rpc DisableExportQosBwControl(nfsProtoUtil.ExportIdRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	/* Per_Export_Per_Client methods */
+	rpc SetExportClientBandwidth(SetExportClientBandwidthRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc SetExportDefaultClientBandwidth(
+		SetExportDefaultClientBandwidthRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc ListExportClientsBandwidth(nfsProtoUtil.ExportIdRequest)
+		returns (ListExportClientsBandwidthResponse);
+	rpc GetExportDefaultClientBandwidth(nfsProtoUtil.ExportIdRequest)
+		returns (GetExportDefaultClientBandwidthResponse);
+	rpc EnableAllClientQosBwControlpepc(nfsProtoUtil.ExportIdRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc DisableExportQosBwControlpepc(nfsProtoUtil.ExportIdRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc EnableAllClientQosIopsControlpepc(nfsProtoUtil.ExportIdRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc DisableExportQosIopsControlpepc(nfsProtoUtil.ExportIdRequest)
+		returns (nfsProtoUtil.StatusResponse);
+	rpc ListExportClientsIOPS(nfsProtoUtil.ExportIdRequest)
+		returns (ListExportClientsIOPSResponse);
+	rpc SetExportClientIOPS(SetExportClientIOPSRequest)
 		returns (nfsProtoUtil.StatusResponse);
 }

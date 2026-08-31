@@ -163,6 +163,9 @@ int add_ceph_nodes(enum log_components component,
 		   void *cnode, struct config_error_type *err_type);
 
 bool haproxy_match(SVCXPRT *xprt);
-
+#ifdef USE_GRPC
+struct gsh_client *grpc_lookup_client(const char *ipaddr, bool *success,
+				      const char **errormsg);
+#endif
 #endif /* !CLIENT_MGR_H */
 /** @} */

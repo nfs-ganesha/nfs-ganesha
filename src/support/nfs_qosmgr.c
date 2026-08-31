@@ -2200,4 +2200,766 @@ bool grpc_qos_disable_export_bw_control(uint16_t export_id, bool *success,
 	return true;
 }
 
+/**
+ * @brief Set bandwidth limits for a client in an export.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [in] client_ip Client IP address.
+ * @param [in] read_bw Maximum read bandwidth.
+ * @param [in] write_bw Maximum write bandwidth.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_export_client_bandwidth(uint16_t export_id,
+					  const char *client_ip,
+					  uint64_t read_bw, uint64_t write_bw,
+					  bool *success, char *errmsg,
+					  size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct gsh_client *gsh_client = NULL;
+	const char *errormsg = "OK";
+	bool lookup_success = true;
+
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class == NULL) {
+		snprintf(errmsg, errmsg_len, "check config values");
+		goto out;
+	}
+
+	gsh_client = grpc_lookup_client(client_ip, &lookup_success, &errormsg);
+
+	if (!lookup_success || gsh_client == NULL) {
+		snprintf(errmsg, errmsg_len, "%s", errormsg);
+		goto out;
+	}
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+
+	sub_qos_class =
+		pepc_get_client_from_list(&qos_class->clients, gsh_client);
+
+	if (sub_qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&sub_qos_class->lock);
+
+		sub_qos_class->bw_enabled = true;
+		sub_qos_class->rbucket.max_bw_allowed = read_bw;
+		sub_qos_class->wbucket.max_bw_allowed = write_bw;
+
+		PTHREAD_MUTEX_unlock(&sub_qos_class->lock);
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len,
+			 "Client QoS entry not found for export");
+	}
+
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+out:
+	if (gsh_client != NULL)
+		put_gsh_client(gsh_client);
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Set default client bandwidth limits for an export.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [in] read_bw Maximum default client read bandwidth.
+ * @param [in] write_bw Maximum default client write bandwidth.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_export_default_client_bandwidth(uint16_t export_id,
+						  uint64_t read_bw,
+						  uint64_t write_bw,
+						  bool *success, char *errmsg,
+						  size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class != NULL) {
+		gsh_export->qos_block->max_client_read_bw = read_bw;
+		gsh_export->qos_block->max_client_write_bw = write_bw;
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len, "check config values");
+	}
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Get bandwidth settings for clients in an export.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] clients Array containing client bandwidth settings.
+ * @param [out] total_clients Number of clients returned.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_list_export_clients_bandwidth(
+	uint16_t export_id, struct grpc_qos_client_bandwidth **clients,
+	uint32_t *total_clients, bool *success, char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct glist_head *glist;
+	uint32_t count;
+	uint32_t index = 0;
+
+	*clients = NULL;
+	*total_clients = 0;
+	*success = false;
+
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class == NULL) {
+		snprintf(errmsg, errmsg_len, "check config values");
+		goto out;
+	}
+
+	count = get_export_client_count(qos_class);
+
+	if (count == 0) {
+		*success = true;
+		goto out;
+	}
+
+	*clients = gsh_calloc(count, sizeof(**clients), MEM_COMP_QOS);
+	if (*clients == NULL) {
+		snprintf(errmsg, errmsg_len, "Failed to allocate client list");
+		goto out;
+	}
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+	glist_for_each(glist, &qos_class->clients) {
+		char ipaddr[INET6_ADDRSTRLEN];
+		struct sockaddr_in *sin;
+		struct sockaddr_in6 *sin6;
+
+		if (index >= count)
+			break;
+
+		sub_qos_class = glist_entry(glist, qos_class_t, clients);
+
+		PTHREAD_MUTEX_lock(&sub_qos_class->lock);
+
+		memset(ipaddr, 0, sizeof(ipaddr));
+
+		if (sub_qos_class->gsh_client->cl_addrbuf.ss_family ==
+		    AF_INET) {
+			sin = (struct sockaddr_in *)&sub_qos_class->gsh_client
+				      ->cl_addrbuf;
+
+			inet_ntop(AF_INET, &sin->sin_addr, ipaddr,
+				  sizeof(ipaddr));
+		} else {
+			sin6 = (struct sockaddr_in6 *)&sub_qos_class->gsh_client
+				       ->cl_addrbuf;
+
+			inet_ntop(AF_INET6, &sin6->sin6_addr, ipaddr,
+				  sizeof(ipaddr));
+		}
+
+		snprintf((*clients)[index].client_ip,
+			 sizeof((*clients)[index].client_ip), "%s", ipaddr);
+
+		(*clients)[index].enabled = sub_qos_class->bw_enabled;
+		(*clients)[index].read_bw =
+			sub_qos_class->rbucket.max_bw_allowed;
+		(*clients)[index].write_bw =
+			sub_qos_class->wbucket.max_bw_allowed;
+
+		index++;
+
+		PTHREAD_MUTEX_unlock(&sub_qos_class->lock);
+	}
+
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+	*total_clients = index;
+	*success = true;
+
+out:
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Get default client bandwidth limits for an export.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] read_bw Default client read bandwidth.
+ * @param [out] write_bw Default client write bandwidth.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_get_export_default_client_bandwidth(uint16_t export_id,
+						  uint64_t *read_bw,
+						  uint64_t *write_bw,
+						  bool *success, char *errmsg,
+						  size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+
+	*read_bw = 0;
+	*write_bw = 0;
+	*success = false;
+
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+
+		*read_bw = gsh_export->qos_block->max_client_read_bw;
+		*write_bw = gsh_export->qos_block->max_client_write_bw;
+
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len, "check config values");
+	}
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Enable bandwidth control for all clients in an export.
+ *
+ * Enables bandwidth control for the export QoS class and all
+ * client QoS classes associated with the export.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_enable_all_clients_bw_pepc(uint16_t export_id, bool *success,
+					 char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct glist_head *glist;
+
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+
+		glist_for_each(glist, &qos_class->clients) {
+			sub_qos_class =
+				glist_entry(glist, qos_class_t, clients);
+
+			PTHREAD_MUTEX_lock(&sub_qos_class->lock);
+			sub_qos_class->bw_enabled = true;
+			PTHREAD_MUTEX_unlock(&sub_qos_class->lock);
+		}
+
+		qos_class->bw_enabled = true;
+
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len, "check config values");
+	}
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Disable bandwidth control for all clients in an export.
+ *
+ * Disables bandwidth control by draining bandwidth I/O for all
+ * client QoS classes and the export QoS class.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_disable_all_clients_bw_pepc(uint16_t export_id, bool *success,
+					  char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct glist_head *glist;
+
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+
+		glist_for_each(glist, &qos_class->clients) {
+			sub_qos_class =
+				glist_entry(glist, qos_class_t, clients);
+
+			qos_drain_bw_ios(sub_qos_class);
+		}
+
+		qos_drain_bw_ios(qos_class);
+
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len, "check config values");
+	}
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Enable IOPS control for all clients of an export in a PEPC
+ * configuration.
+ *
+ * This function enables IOPS control on every client QoS class associated
+ * with the specified export and also enables IOPS control on the parent
+ * export QoS class.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_enable_all_client_iops_control_pepc(uint16_t export_id,
+						  bool *success, char *errmsg,
+						  size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct glist_head *glist;
+
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+
+		glist_for_each(glist, &qos_class->clients) {
+			sub_qos_class =
+				glist_entry(glist, qos_class_t, clients);
+
+			sub_qos_class->iops_enabled = true;
+		}
+
+		qos_class->iops_enabled = true;
+
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len, "check config values");
+	}
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Disable IOPS control for all clients of an export in a PEPC
+ * configuration.
+ *
+ * This function drains IOPS operations for every client QoS class
+ * associated with the specified export and then drains IOPS operations
+ * for the export QoS class itself.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_disable_all_client_iops_control_pepc(uint16_t export_id,
+						   bool *success, char *errmsg,
+						   size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct glist_head *glist;
+
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&qos_class->lock);
+
+		glist_for_each(glist, &qos_class->clients) {
+			sub_qos_class =
+				glist_entry(glist, qos_class_t, clients);
+
+			/* Drain IOPS operations for this client and
+			 * mark IOPS control as disabled. */
+			qos_drain_iops_ios(sub_qos_class);
+		}
+
+		/* Drain IOPS operations for the export itself and
+		 * mark IOPS control as disabled. */
+		qos_drain_iops_ios(qos_class);
+
+		PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len, "check config values");
+	}
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Get IOPS settings for clients in an export.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [out] clients Array containing client IOPS settings.
+ * @param [out] total_clients Number of clients returned.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_list_export_clients_iops(uint16_t export_id,
+				       struct grpc_qos_client_iops **clients,
+				       uint32_t *total_clients, bool *success,
+				       char *errmsg, size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct glist_head *glist;
+	uint32_t count;
+	uint32_t index = 0;
+
+	*clients = NULL;
+	*total_clients = 0;
+	*success = false;
+
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class == NULL) {
+		snprintf(errmsg, errmsg_len, "check config values");
+		goto out;
+	}
+
+	count = get_export_client_count(qos_class);
+
+	if (count == 0) {
+		*success = true;
+		goto out;
+	}
+
+	*clients = gsh_calloc(count, sizeof(**clients), MEM_COMP_QOS);
+
+	if (*clients == NULL) {
+		snprintf(errmsg, errmsg_len, "Failed to allocate client list");
+		goto out;
+	}
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+
+	glist_for_each(glist, &qos_class->clients) {
+		char ipaddr[INET6_ADDRSTRLEN];
+		struct sockaddr_in *sin;
+		struct sockaddr_in6 *sin6;
+
+		if (index >= count)
+			break;
+
+		sub_qos_class = glist_entry(glist, qos_class_t, clients);
+
+		PTHREAD_MUTEX_lock(&sub_qos_class->lock);
+
+		memset(ipaddr, 0, sizeof(ipaddr));
+
+		if (sub_qos_class->gsh_client->cl_addrbuf.ss_family ==
+		    AF_INET) {
+			sin = (struct sockaddr_in *)&sub_qos_class->gsh_client
+				      ->cl_addrbuf;
+
+			inet_ntop(AF_INET, &sin->sin_addr, ipaddr,
+				  sizeof(ipaddr));
+		} else {
+			sin6 = (struct sockaddr_in6 *)&sub_qos_class->gsh_client
+				       ->cl_addrbuf;
+
+			inet_ntop(AF_INET6, &sin6->sin6_addr, ipaddr,
+				  sizeof(ipaddr));
+		}
+
+		snprintf((*clients)[index].client_ip,
+			 sizeof((*clients)[index].client_ip), "%s", ipaddr);
+
+		(*clients)[index].enabled = sub_qos_class->iops_enabled;
+
+		(*clients)[index].read_iops =
+			sub_qos_class->rbucket.max_iops_allowed;
+
+		(*clients)[index].write_iops =
+			sub_qos_class->wbucket.max_iops_allowed;
+
+		index++;
+
+		PTHREAD_MUTEX_unlock(&sub_qos_class->lock);
+	}
+
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+	*total_clients = index;
+	*success = true;
+
+out:
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
+
+/**
+ * @brief Set IOPS limits for a client under an export in a PEPC
+ * configuration.
+ *
+ * @param [in] export_id Export identifier.
+ * @param [in] client_ip Client IP address.
+ * @param [in] read_iops Maximum read IOPS.
+ * @param [in] write_iops Maximum write IOPS.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ *
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_export_client_iops(uint16_t export_id, const char *client_ip,
+				     uint64_t read_iops, uint64_t write_iops,
+				     bool *success, char *errmsg,
+				     size_t errmsg_len)
+{
+	struct gsh_export *gsh_export;
+	qos_class_t *qos_class;
+	qos_class_t *sub_qos_class;
+	struct gsh_client *gsh_client = NULL;
+	const char *errormsg = "OK";
+	bool lookup_success = true;
+
+	*success = false;
+	snprintf(errmsg, errmsg_len, "OK");
+
+	gsh_export = get_gsh_export(export_id);
+	if (gsh_export == NULL) {
+		snprintf(errmsg, errmsg_len, "Export id not found");
+		return true;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+
+	qos_class = gsh_export->qos_class;
+
+	if (qos_class == NULL) {
+		snprintf(errmsg, errmsg_len, "check config values");
+		goto out;
+	}
+
+	gsh_client = grpc_lookup_client(client_ip, &lookup_success, &errormsg);
+
+	if (!lookup_success || gsh_client == NULL) {
+		snprintf(errmsg, errmsg_len, "%s", errormsg);
+		goto out;
+	}
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+
+	sub_qos_class =
+		pepc_get_client_from_list(&qos_class->clients, gsh_client);
+
+	if (sub_qos_class != NULL) {
+		PTHREAD_MUTEX_lock(&sub_qos_class->lock);
+
+		sub_qos_class->iops_enabled = true;
+		sub_qos_class->rbucket.max_iops_allowed = read_iops;
+		sub_qos_class->wbucket.max_iops_allowed = write_iops;
+
+		PTHREAD_MUTEX_unlock(&sub_qos_class->lock);
+
+		*success = true;
+		snprintf(errmsg, errmsg_len, "OK");
+	} else {
+		snprintf(errmsg, errmsg_len,
+			 "Client QoS entry not found for export");
+	}
+
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+
+out:
+	if (gsh_client != NULL)
+		put_gsh_client(gsh_client);
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_export(gsh_export);
+
+	return true;
+}
 #endif /* USE_GRPC */
