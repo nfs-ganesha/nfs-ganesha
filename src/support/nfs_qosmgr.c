@@ -33,11 +33,11 @@
 #include "nfs_core.h"
 #include "nfs_qos.h"
 #include "nfs_qosmgr.h"
+#include "client_mgr.h"
 #ifdef USE_GRPC
 #include <string.h>
 #include "nfs_qos_grpc.h"
 #include "export_mgr.h"
-#include "client_mgr.h"
 #include "ip_utils.h"
 #include "abstract_mem.h"
 #endif
@@ -83,7 +83,7 @@ struct showclients_state {
 		if (!dbus_message_iter_next(args) ||                \
 		    dbus_message_iter_get_arg_type(args) != type) { \
 			gsh_dbus_status_reply(&iter, false, msg);   \
-			return false;                               \
+			return true;                                \
 		}                                                   \
 	} while (0)
 
@@ -91,7 +91,7 @@ struct showclients_state {
 	do {                                                                 \
 		if (!args || dbus_message_iter_get_arg_type(args) != type) { \
 			gsh_dbus_status_reply(&iter, false, msg);            \
-			return false;                                        \
+			return true;                                         \
 		}                                                            \
 	} while (0)
 
@@ -99,7 +99,7 @@ struct showclients_state {
 	do {                                                      \
 		if (!args) {                                      \
 			gsh_dbus_status_reply(&iter, false, msg); \
-			return false;                             \
+			return true;                              \
 		}                                                 \
 	} while (0)
 
@@ -170,24 +170,27 @@ static bool check_arg(void *args, DBusMessageIter *iter, char *msg)
 static bool dbus_qos_client_bw_set(DBusMessageIter *args, DBusMessage *reply,
 				   DBusError *error)
 {
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	uint64_t read_bw, write_bw;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool ret = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_STRING, iter,
 				 "Invalid arg ClientIP");
-	gsh_client = lookup_client(args, &errormsg);
-	CHECK_ARG_OR_return(gsh_client, iter, "Client IP address not found");
 
-	CHECK_DBUS_NEXT_ARG_OR_return(args, DBUS_TYPE_UINT64, iter,
-				      "Invalid arg read_bw");
+	gsh_client = lookup_client(args, &errormsg);
+	if (!check_arg(gsh_client, &iter, "Client IP address not found"))
+		return true;
+
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
+				 "Invalid arg read_bw"))
+		goto out;
 	dbus_message_iter_get_basic(args, &read_bw);
-	CHECK_DBUS_NEXT_ARG_OR_return(args, DBUS_TYPE_UINT64, iter,
-				      "Invalid arg write_bw");
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
+				 "Invalid arg write_bw"))
+		goto out;
 	dbus_message_iter_get_basic(args, &write_bw);
 
 	PTHREAD_MUTEX_lock(&g_qos_config_lock);
@@ -197,10 +200,13 @@ static bool dbus_qos_client_bw_set(DBusMessageIter *args, DBusMessage *reply,
 		qos_class->rbucket.max_bw_allowed = read_bw;
 		qos_class->wbucket.max_bw_allowed = write_bw;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		ret = true;
+	} else {
+		gsh_dbus_status_reply(&iter, false, "check config values");
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
-	return ret;
+out:
+	put_gsh_client(gsh_client);
+	return true;
 }
 
 /**
@@ -217,25 +223,26 @@ static bool dbus_qos_client_bw_set(DBusMessageIter *args, DBusMessage *reply,
 static bool dbus_qos_client_token_set(DBusMessageIter *args, DBusMessage *reply,
 				      DBusError *error)
 {
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	uint64_t max_tokens;
 	uint64_t token_renewal;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool ret = false;
-
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_STRING, iter,
 				 "Invalid arg ClientIP");
 	gsh_client = lookup_client(args, &errormsg);
-	CHECK_ARG_OR_return(gsh_client, iter, errormsg);
+	if (!check_arg(gsh_client, &iter, errormsg))
+		return true;
 
-	CHECK_DBUS_NEXT_ARG_OR_return(args, DBUS_TYPE_UINT64, iter,
-				      "Invalid arg max_token");
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
+				 "Invalid arg max_token"))
+		goto out;
 	dbus_message_iter_get_basic(args, &max_tokens);
-	CHECK_DBUS_NEXT_ARG_OR_return(args, DBUS_TYPE_UINT64, iter,
-				      "Invalid arg token_renewal");
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
+				 "Invalid arg token_renewal"))
+		goto out;
 	dbus_message_iter_get_basic(args, &token_renewal);
 
 	PTHREAD_MUTEX_lock(&g_qos_config_lock);
@@ -247,10 +254,13 @@ static bool dbus_qos_client_token_set(DBusMessageIter *args, DBusMessage *reply,
 		qos_class->rbucket.tokens_renew_time = token_renewal;
 		qos_class->wbucket.tokens_renew_time = token_renewal;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		ret = true;
+	} else {
+		gsh_dbus_status_reply(&iter, false, "check config values");
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
-	return ret;
+out:
+	put_gsh_client(gsh_client);
+	return true;
 }
 
 /**
@@ -267,24 +277,26 @@ static bool dbus_qos_client_token_set(DBusMessageIter *args, DBusMessage *reply,
 static bool dbus_qos_client_iops_set(DBusMessageIter *args, DBusMessage *reply,
 				     DBusError *error)
 {
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	uint64_t read_iops, write_iops;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool ret = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_STRING, iter,
 				 "Invalid arg ClientIP");
 	gsh_client = lookup_client(args, &errormsg);
-	CHECK_ARG_OR_return(gsh_client, iter, errormsg);
+	if (!check_arg(gsh_client, &iter, errormsg))
+		return true;
 
-	CHECK_DBUS_NEXT_ARG_OR_return(args, DBUS_TYPE_UINT64, iter,
-				      "Invalid arg read_iops");
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
+				 "Invalid arg read_iops"))
+		goto out;
 	dbus_message_iter_get_basic(args, &read_iops);
-	CHECK_DBUS_NEXT_ARG_OR_return(args, DBUS_TYPE_UINT64, iter,
-				      "Invalid arg write_iops");
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
+				 "Invalid arg write_iops"))
+		goto out;
 	dbus_message_iter_get_basic(args, &write_iops);
 
 	PTHREAD_MUTEX_lock(&g_qos_config_lock);
@@ -294,10 +306,13 @@ static bool dbus_qos_client_iops_set(DBusMessageIter *args, DBusMessage *reply,
 		qos_class->rbucket.max_iops_allowed = read_iops;
 		qos_class->wbucket.max_iops_allowed = write_iops;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		ret = true;
+	} else {
+		gsh_dbus_status_reply(&iter, false, "check config values");
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
-	return ret;
+out:
+	put_gsh_client(gsh_client);
+	return true;
 }
 
 /**
@@ -314,11 +329,10 @@ static bool dbus_qos_client_iops_set(DBusMessageIter *args, DBusMessage *reply,
 static bool dbus_qos_client_token_get(DBusMessageIter *args, DBusMessage *reply,
 				      DBusError *error)
 {
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool ret = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_STRING, iter,
@@ -334,14 +348,22 @@ static bool dbus_qos_client_token_get(DBusMessageIter *args, DBusMessage *reply,
 		uint64_t token_renewal = qos_class->rbucket.tokens_renew_time;
 
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		dbus_message_iter_append_basic(args, DBUS_TYPE_UINT32,
+		/*
+		 * Pack outputs on @iter (reply). @args is the inbound
+		 * iterator and is read-only; appending to it makes
+		 * libdbus abort in dbus_message_iter_append_basic()
+		 * once qos_class is set (after NFSv4 I/O).
+		 */
+		dbus_message_iter_append_basic(&iter, DBUS_TYPE_UINT32,
 					       &max_tokens);
-		dbus_message_iter_append_basic(args, DBUS_TYPE_UINT64,
+		dbus_message_iter_append_basic(&iter, DBUS_TYPE_UINT64,
 					       &token_renewal);
-		ret = true;
+	} else {
+		gsh_dbus_status_reply(&iter, false, "check config values");
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
-	return ret;
+	put_gsh_client(gsh_client);
+	return true;
 }
 
 /**
@@ -358,11 +380,10 @@ static bool dbus_qos_client_token_get(DBusMessageIter *args, DBusMessage *reply,
 static bool dbus_qos_client_bw_get(DBusMessageIter *args, DBusMessage *reply,
 				   DBusError *error)
 {
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool ret = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_STRING, iter,
@@ -378,14 +399,22 @@ static bool dbus_qos_client_bw_get(DBusMessageIter *args, DBusMessage *reply,
 		uint64_t write_bw = qos_class->wbucket.max_bw_allowed;
 
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		dbus_message_iter_append_basic(args, DBUS_TYPE_UINT64,
+		/*
+		 * Pack outputs on @iter (reply). @args is the inbound
+		 * iterator and is read-only; appending to it makes
+		 * libdbus abort in dbus_message_iter_append_basic()
+		 * once qos_class is set (after NFSv4 I/O).
+		 */
+		dbus_message_iter_append_basic(&iter, DBUS_TYPE_UINT64,
 					       &read_bw);
-		dbus_message_iter_append_basic(args, DBUS_TYPE_UINT64,
+		dbus_message_iter_append_basic(&iter, DBUS_TYPE_UINT64,
 					       &write_bw);
-		ret = true;
+	} else {
+		gsh_dbus_status_reply(&iter, false, "check config values");
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
-	return ret;
+	put_gsh_client(gsh_client);
+	return true;
 }
 
 /**
@@ -402,11 +431,10 @@ static bool dbus_qos_client_bw_get(DBusMessageIter *args, DBusMessage *reply,
 static bool dbus_qos_client_iops_get(DBusMessageIter *args, DBusMessage *reply,
 				     DBusError *error)
 {
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool ret = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_STRING, iter,
@@ -422,14 +450,22 @@ static bool dbus_qos_client_iops_get(DBusMessageIter *args, DBusMessage *reply,
 		uint64_t write_iops = qos_class->wbucket.max_iops_allowed;
 
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		dbus_message_iter_append_basic(args, DBUS_TYPE_UINT64,
+		/*
+		 * Pack outputs on @iter (reply). @args is the inbound
+		 * iterator and is read-only; appending to it makes
+		 * libdbus abort in dbus_message_iter_append_basic()
+		 * once qos_class is set (after NFSv4 I/O).
+		 */
+		dbus_message_iter_append_basic(&iter, DBUS_TYPE_UINT64,
 					       &read_iops);
-		dbus_message_iter_append_basic(args, DBUS_TYPE_UINT64,
+		dbus_message_iter_append_basic(&iter, DBUS_TYPE_UINT64,
 					       &write_iops);
-		ret = true;
+	} else {
+		gsh_dbus_status_reply(&iter, false, "check config values");
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
-	return ret;
+	put_gsh_client(gsh_client);
+	return true;
 }
 
 /**
@@ -536,7 +572,6 @@ static bool dbus_qos_pepc_clients_bw_list(DBusMessageIter *args,
 	uint32_t total_clients = 0;
 	qos_class_t *sub_qos_class;
 	struct glist_head *glist;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -569,14 +604,12 @@ static bool dbus_qos_pepc_clients_bw_list(DBusMessageIter *args,
 
 		dbus_message_iter_close_container(&iter,
 						  &iter_state.client_iter);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -602,7 +635,6 @@ static bool dbus_qos_export_bw_get(DBusMessageIter *args, DBusMessage *reply,
 	const char *read_label = "READ_BW";
 	const char *write_label = "WRITE_BW";
 	const char *bw_label = "ENABLE_BW";
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -643,14 +675,12 @@ static bool dbus_qos_export_bw_get(DBusMessageIter *args, DBusMessage *reply,
 
 		dbus_message_iter_close_container(&iter, &bw_struct);
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -675,8 +705,17 @@ static bool dbus_qos_export_token_get(DBusMessageIter *args, DBusMessage *reply,
 	const char *read_token_ptr, *write_token_ptr;
 	const char *read_label = "READ_TOKENS";
 	const char *write_label = "WRITE_TOKENS";
-	bool retval = false;
 
+	/*
+	 * Initialize @iter before validating args or resolving export id.
+	 * init_append() used to run only inside if (qos_class != NULL).
+	 * CHECK_*_OR_return() macros append a status reply to @iter on
+	 * failure; without init_append() first, invalid export id left
+	 * @iter uninitialized and GetExportTokens hung.
+	 */
+	dbus_message_iter_init_append(reply, &iter);
+	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
+				 "Invalid arg exportid");
 	dbus_message_iter_get_basic(args, &export_id);
 	gsh_export = get_gsh_export(export_id);
 	CHECK_ARG_OR_return(gsh_export, iter, "Export id not found");
@@ -686,7 +725,6 @@ static bool dbus_qos_export_token_get(DBusMessageIter *args, DBusMessage *reply,
 
 	if (qos_class != NULL) {
 		PTHREAD_MUTEX_lock(&qos_class->lock);
-		dbus_message_iter_init_append(reply, &iter);
 		dbus_message_iter_open_container(&iter, DBUS_TYPE_STRUCT, NULL,
 						 &token_struct);
 
@@ -709,14 +747,12 @@ static bool dbus_qos_export_token_get(DBusMessageIter *args, DBusMessage *reply,
 		dbus_message_iter_close_container(&iter, &token_struct);
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
 
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -738,7 +774,6 @@ static bool dbus_qos_export_iops_set(DBusMessageIter *args, DBusMessage *reply,
 	struct gsh_export *gsh_export;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -747,12 +782,18 @@ static bool dbus_qos_export_iops_set(DBusMessageIter *args, DBusMessage *reply,
 	gsh_export = get_gsh_export(export_id);
 	CHECK_ARG_OR_return(gsh_export, iter, "Export id not found");
 
-	if (!check_dbus_arg(args, DBUS_TYPE_UINT64, &iter,
+	/*
+	 * Use check_dbus_next_arg(), not check_dbus_arg(), for read_iops
+	 * and write_iops. export_id is already consumed above; arg() reads
+	 * the current slot again and never advances, so SetExportIOPS
+	 * failed with a generic D-Bus error instead of a status reply.
+	 */
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
 			    "Invalid arg read_iops"))
 		goto out;
 	dbus_message_iter_get_basic(args, &read_iops);
 
-	if (!check_dbus_arg(args, DBUS_TYPE_UINT64, &iter,
+	if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
 			    "Invalid arg write_iops"))
 		goto out;
 	dbus_message_iter_get_basic(args, &write_iops);
@@ -764,15 +805,13 @@ static bool dbus_qos_export_iops_set(DBusMessageIter *args, DBusMessage *reply,
 		qos_class->rbucket.max_iops_allowed = read_iops;
 		qos_class->wbucket.max_iops_allowed = write_iops;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 out:
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -798,8 +837,17 @@ static bool dbus_qos_export_default_client_bw_get(DBusMessageIter *args,
 	const char *read_bw_ptr, *write_bw_ptr;
 	const char *read_label = "MAX_CLIENT_READ_BW";
 	const char *write_label = "MAX_CLIENT_WRITE_BW";
-	bool retval = false;
 
+	/*
+	 * Initialize @iter before validating args or resolving export id.
+	 * init_append() used to run only inside if (qos_class != NULL).
+	 * CHECK_*_OR_return() macros append a status reply to @iter on
+	 * failure; without init_append() first, invalid export id left
+	 * @iter uninitialized and GetExportDefaultClientBandwidth hung.
+	 */
+	dbus_message_iter_init_append(reply, &iter);
+	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
+				 "Invalid arg exportid");
 	dbus_message_iter_get_basic(args, &export_id);
 	gsh_export = get_gsh_export(export_id);
 	CHECK_ARG_OR_return(gsh_export, iter, "Export id not found");
@@ -830,14 +878,12 @@ static bool dbus_qos_export_default_client_bw_get(DBusMessageIter *args,
 
 		dbus_message_iter_close_container(&iter, &bw_struct);
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -859,7 +905,7 @@ static bool dbus_qos_export_bw_set(DBusMessageIter *args, DBusMessage *reply,
 	struct gsh_export *gsh_export;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
-	bool retval = false;
+
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
 				 "Invalid arg exportid");
@@ -884,17 +930,15 @@ static bool dbus_qos_export_bw_set(DBusMessageIter *args, DBusMessage *reply,
 		qos_class->rbucket.max_bw_allowed = read_bw;
 		qos_class->wbucket.max_bw_allowed = write_bw;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 
 put_export:
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 /**
  * @brief Set token settings for a export.
@@ -916,7 +960,6 @@ static bool dbus_qos_export_token_set(DBusMessageIter *args, DBusMessage *reply,
 	struct gsh_export *gsh_export;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -944,16 +987,14 @@ static bool dbus_qos_export_token_set(DBusMessageIter *args, DBusMessage *reply,
 		qos_class->rbucket.tokens_renew_time = token_renewal;
 		qos_class->wbucket.tokens_renew_time = token_renewal;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 put_export:
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -979,7 +1020,6 @@ static bool dbus_qos_export_iops_get(DBusMessageIter *args, DBusMessage *reply,
 	const char *read_label = "READ_IOPS";
 	const char *write_label = "WRITE_IOPS";
 	const char *iops_label = "ENABLE_IOPS";
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1020,14 +1060,12 @@ static bool dbus_qos_export_iops_get(DBusMessageIter *args, DBusMessage *reply,
 
 		dbus_message_iter_close_container(&iter, &iops_struct);
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1046,11 +1084,10 @@ static bool dbus_qos_pepc_clients_bw_set(DBusMessageIter *args,
 	struct gsh_export *gsh_export;
 	qos_class_t *qos_class;
 	qos_class_t *sub_qos_class;
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	uint64_t read_bw, write_bw;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1092,17 +1129,16 @@ static bool dbus_qos_pepc_clients_bw_set(DBusMessageIter *args,
 			PTHREAD_MUTEX_unlock(&sub_qos_class->lock);
 		}
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 
 out:
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	if (gsh_client != NULL)
+		put_gsh_client(gsh_client);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1125,7 +1161,6 @@ static bool dbus_qos_export_default_client_bw_set(DBusMessageIter *args,
 	qos_class_t *qos_class;
 	uint64_t read_bw, write_bw;
 	DBusMessageIter iter;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1149,16 +1184,14 @@ static bool dbus_qos_export_default_client_bw_set(DBusMessageIter *args,
 
 		gsh_export->qos_block->max_client_read_bw = read_bw;
 		gsh_export->qos_block->max_client_write_bw = write_bw;
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 
 out:
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1179,7 +1212,6 @@ static bool dbus_qos_enable_bw_control_ps(DBusMessageIter *args,
 	struct gsh_export *gsh_export;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1191,17 +1223,28 @@ static bool dbus_qos_enable_bw_control_ps(DBusMessageIter *args,
 	PTHREAD_MUTEX_lock(&g_qos_config_lock);
 	qos_class = gsh_export->qos_class;
 
-	if (g_qos_config->enable_qos && g_qos_config->enable_bw_control &&
-	    qos_class) {
-		qos_perexport_insert(gsh_export, NULL);
-		retval = true;
-	} else {
+	if (!(g_qos_config->enable_qos && g_qos_config->enable_bw_control &&
+	      qos_class)) {
+		PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
+		put_gsh_export(gsh_export);
+		return true;
 	}
+	/*
+	 * Drop g_qos_config_lock before qos_perexport_insert().
+	 *
+	 * qos_perexport_insert() takes the same lock internally.
+	 * g_qos_config_lock is a non-recursive mutex (PTHREAD_MUTEX_init
+	 * with default attributes). Holding it here and taking it again
+	 * inside qos_perexport_insert() deadlocks the calling thread
+	 * (D-Bus or gRPC EnableExportQosBwControl hangs with no reply).
+	 */
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+
+	qos_perexport_insert(gsh_export, NULL);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
+
 }
 
 static bool dbus_qos_disable_bw_control_ps(DBusMessageIter *args,
@@ -1211,7 +1254,6 @@ static bool dbus_qos_disable_bw_control_ps(DBusMessageIter *args,
 	struct gsh_export *gsh_export;
 	qos_class_t *qos_class;
 	DBusMessageIter iter;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1228,14 +1270,12 @@ static bool dbus_qos_disable_bw_control_ps(DBusMessageIter *args,
 		qos_drain_bw_ios(qos_class);
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
 
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1257,7 +1297,6 @@ static bool dbus_qos_disable_bw_control_pepc(DBusMessageIter *args,
 	DBusMessageIter iter;
 	qos_class_t *sub_qos_class;
 	struct glist_head *glist;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1278,14 +1317,12 @@ static bool dbus_qos_disable_bw_control_pepc(DBusMessageIter *args,
 		}
 		qos_drain_bw_ios(qos_class);
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1307,7 +1344,6 @@ static bool dbus_qos_enable_bw_control_pepc(DBusMessageIter *args,
 	DBusMessageIter iter;
 	qos_class_t *sub_qos_class;
 	struct glist_head *glist;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1328,14 +1364,12 @@ static bool dbus_qos_enable_bw_control_pepc(DBusMessageIter *args,
 		}
 		qos_class->bw_enabled = true;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1359,7 +1393,6 @@ static bool dbus_qos_enable_iops_control_pepc(DBusMessageIter *args,
 	DBusMessageIter iter;
 	qos_class_t *sub_qos_class;
 	struct glist_head *glist;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1380,14 +1413,12 @@ static bool dbus_qos_enable_iops_control_pepc(DBusMessageIter *args,
 		}
 		qos_class->iops_enabled = true;
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1411,7 +1442,6 @@ static bool dbus_qos_disable_iops_control_pepc(DBusMessageIter *args,
 	DBusMessageIter iter;
 	qos_class_t *sub_qos_class;
 	struct glist_head *glist;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1436,14 +1466,12 @@ static bool dbus_qos_disable_iops_control_pepc(DBusMessageIter *args,
 		 * mark as disable */
 		qos_drain_iops_ios(qos_class);
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1470,7 +1498,6 @@ static bool dbus_qos_pepc_clients_iops_list(DBusMessageIter *args,
 	uint32_t total_clients = 0;
 	qos_class_t *sub_qos_class;
 	struct glist_head *glist;
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1503,14 +1530,12 @@ static bool dbus_qos_pepc_clients_iops_list(DBusMessageIter *args,
 
 		dbus_message_iter_close_container(&iter,
 						  &iter_state.client_iter);
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /**
@@ -1529,11 +1554,10 @@ static bool dbus_qos_pepc_clients_iops_set(DBusMessageIter *args,
 	struct gsh_export *gsh_export;
 	qos_class_t *qos_class;
 	qos_class_t *sub_qos_class;
-	struct gsh_client *gsh_client;
+	struct gsh_client *gsh_client = NULL;
 	uint64_t read_iops, write_iops;
 	DBusMessageIter iter;
 	char *errormsg = "OK";
-	bool retval = false;
 
 	dbus_message_iter_init_append(reply, &iter);
 	CHECK_DBUS_ARG_OR_return(args, DBUS_TYPE_UINT16, iter,
@@ -1553,8 +1577,6 @@ static bool dbus_qos_pepc_clients_iops_set(DBusMessageIter *args,
 		gsh_client = lookup_client(args, &errormsg);
 		if (!check_arg(gsh_client, &iter, "lookup client failed"))
 			goto out;
-
-		CHECK_ARG_OR_return(gsh_client, iter, errormsg);
 
 		if (!check_dbus_next_arg(args, DBUS_TYPE_UINT64, &iter,
 					 "Invalid arg read_iops"))
@@ -1577,16 +1599,15 @@ static bool dbus_qos_pepc_clients_iops_set(DBusMessageIter *args,
 			PTHREAD_MUTEX_unlock(&sub_qos_class->lock);
 		}
 		PTHREAD_MUTEX_unlock(&qos_class->lock);
-
-		retval = true;
 	} else {
 		gsh_dbus_status_reply(&iter, false, "check config values");
-		retval = false;
 	}
 out:
 	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	if (gsh_client != NULL)
+		put_gsh_client(gsh_client);
 	put_gsh_export(gsh_export);
-	return retval;
+	return true;
 }
 
 /* Perexport-PerClient implemnentation */
