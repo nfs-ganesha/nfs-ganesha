@@ -318,6 +318,14 @@ static int core_update(void *node, void *link_mem, void *self_struct,
 		errcnt++;
 	}
 
+	if (updates->rpc.tcp_zerocopy_enabled !=
+	    NFS_pcp.rpc.tcp_zerocopy_enabled) {
+		LogWarn(COMPONENT_CONFIG,
+			"NFS_CORE_PARAM Tcp_Zerocopy_Enabled can not be updated.");
+		err_type->invalid = true;
+		errcnt++;
+	}
+
 	/* Verify Cluster_Memners doesn't change from empty to non-empty or
 	 * reverse. It is valid for the list to ONLY be a single address that is
 	 * the node's address as a way of reducing from clustered to
@@ -530,6 +538,11 @@ static struct config_item core_params[] = {
 		       rpc.gss.max_ctx),
 	CONF_ITEM_UI32("RPC_GSS_Max_GC", 1, 1024 * 1024, 200, nfs_core_param,
 		       rpc.gss.max_gc),
+	CONF_ITEM_BOOL("Tcp_Zerocopy_Enabled", NFS_TCP_ZEROCOPY_ENABLED,
+			nfs_core_param, rpc.tcp_zerocopy_enabled),
+	CONF_ITEM_UI32("Tcp_Zerocopy_Min_Bytes", 4096, 1048576 * 9,
+			NFS_TCP_ZEROCOPY_MIN_BYTES, nfs_core_param,
+		       rpc.tcp_zerocopy_min_bytes),
 	CONF_ITEM_I64("Blocked_Lock_Poller_Interval", 0, 180, 10,
 		      nfs_core_param, blocked_lock_poller_interval),
 	CONF_ITEM_LIST("NFS_Protocols", DEFAULT_PROTOCOLS, protocols,

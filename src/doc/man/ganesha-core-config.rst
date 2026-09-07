@@ -426,6 +426,20 @@ RPC_GSS_Max_Gc(uint32, range 1 to 1048576, default 200)
     Max entries to expire in one idle check
     This parameter may be updated dynamically with a SIGHUP.
 
+Tcp_Zerocopy_Enabled(bool, default true)
+    Enable or disable TCP MSG_ZEROCOPY support for Tx only (Linux only).
+    When enabled, zero-copy send is used for large buffers to avoid
+    user-to-kernel data copies. Requires Linux kernel with MSG_ZEROCOPY support.
+
+Tcp_Zerocopy_Min_Bytes(uint32, range 4096 to 1048576*9, default 32768)
+    Minimum send size threshold for TCP MSG_ZEROCOPY usage (Linux only).
+    Zero-copy is only used when the send size meets or exceeds this value.
+    Below this threshold, normal copy-based sending is used to avoid the
+    overhead of page-pinning and errqueue notification which costs more than
+    the avoided memcpy. The value is rounded up to the next page-aligned size
+    at startup if it is not already page-aligned.
+    This parameter may be updated dynamically with a SIGHUP.
+
 
 Parameters for TCP:
 --------------------------------------------------------------------------------

@@ -185,6 +185,16 @@ typedef enum protos {
 #define NFS_DEFAULT_RECV_BUFFER_SIZE 1048576
 
 /**
+ * Default TCP MSG_ZEROCOPY enabled state (Linux only)
+ */
+#define NFS_TCP_ZEROCOPY_ENABLED true
+
+/**
+ * Default send size for TCP MSG_ZEROCOPY in bytes (32 KiB)
+ */
+#define NFS_TCP_ZEROCOPY_MIN_BYTES 32768
+
+/**
  * @brief Default Monitoring Port.
  */
 #define MONITORING_PORT 9587
@@ -431,6 +441,11 @@ typedef struct nfs_core_param {
 			 */
 			uint32_t max_gc;
 		} gss;
+		/** TCP MSG_ZEROCOPY params (Linux). Defaults to enabled with
+		  min bytes of 32K. Settable by Tcp_Zerocopy_Enabled and
+		  Tcp_Zerocopy_Min_Bytes. */
+		bool tcp_zerocopy_enabled;
+		uint32_t tcp_zerocopy_min_bytes;
 	} rpc;
 	/** Polling interval for blocked lock polling thread. */
 	int64_t blocked_lock_poller_interval;
