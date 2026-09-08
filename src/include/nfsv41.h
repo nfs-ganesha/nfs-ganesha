@@ -3079,7 +3079,8 @@ struct LAYOUTERROR4args {
 	offset4 lea_offset;
 	length4 lea_length;
 	stateid4 lea_stateid;
-	device_error4 lea_errors;
+	u_int lea_errors_len;
+	device_error4 *lea_errors_val;
 };
 typedef struct LAYOUTERROR4args LAYOUTERROR4args;
 
@@ -3867,6 +3868,13 @@ extern CB_COMPOUND4res *cb_compound_1(CB_COMPOUND4args *, CLIENT *);
 extern CB_COMPOUND4res *cb_compound_1_svc(CB_COMPOUND4args *, struct svc_req *);
 
 /* the xdr functions */
+
+static inline bool xdr_nfs_opnum4(XDR *xdrs, nfs_opnum4 *objp)
+{
+	if (!inline_xdr_enum(xdrs, (enum_t *)objp))
+		return false;
+	return true;
+}
 
 static inline bool xdr_nfs_ftype4(XDR *xdrs, nfs_ftype4 *objp)
 {
@@ -8189,6 +8197,17 @@ static inline bool xdr_IO_ADVISE4res(XDR *xdrs, IO_ADVISE4res *objp)
 	return true;
 }
 
+static inline bool xdr_device_error4(XDR *xdrs, device_error4 *objp)
+{
+	if (!xdr_deviceid4(xdrs, objp->de_deviceid))
+		return false;
+	if (!xdr_nfsstat4(xdrs, &objp->de_status))
+		return false;
+	if (!xdr_nfs_opnum4(xdrs, &objp->de_opnum))
+		return false;
+	return true;
+}
+
 static inline bool xdr_LAYOUTERROR4args(XDR *xdrs, LAYOUTERROR4args *objp)
 {
 	if (!xdr_offset4(xdrs, &objp->lea_offset))
@@ -8197,11 +8216,9 @@ static inline bool xdr_LAYOUTERROR4args(XDR *xdrs, LAYOUTERROR4args *objp)
 		return false;
 	if (!xdr_stateid4(xdrs, &objp->lea_stateid))
 		return false;
-	if (!xdr_deviceid4(xdrs, objp->lea_errors.de_deviceid))
-		return false;
-	if (!xdr_nfsstat4(xdrs, &objp->lea_errors.de_status))
-		return false;
-	if (!inline_xdr_enum(xdrs, (enum_t *)&objp->lea_errors.de_opnum))
+	if (!xdr_array(xdrs, (char **)&objp->lea_errors_val,
+		       &objp->lea_errors_len, XDR_ARRAY_MAXLEN,
+		       sizeof(device_error4), (xdrproc_t)xdr_device_error4))
 		return false;
 	return true;
 }
@@ -8438,13 +8455,6 @@ static inline bool xdr_CB_OFFLOAD4res(XDR *xdrs, CB_OFFLOAD4res *objp)
 }
 
 /* new operations for NFSv4.1 */
-
-static inline bool xdr_nfs_opnum4(XDR *xdrs, nfs_opnum4 *objp)
-{
-	if (!inline_xdr_enum(xdrs, (enum_t *)objp))
-		return false;
-	return true;
-}
 
 static inline bool xdr_nfs_argop4(XDR *xdrs, nfs_argop4 *objp)
 {
@@ -9621,17 +9631,6 @@ static inline bool xdr_ff_layout4(XDR *xdrs, ff_layout4 *objp)
 		       sizeof(ff_mirror4), (xdrproc_t)xdr_ff_mirror4))
 		return false;
 	if (!xdr_ff_flags(xdrs, &objp->ffl_flags))
-		return false;
-	return true;
-}
-
-static inline bool xdr_device_error4(XDR *xdrs, device_error4 *objp)
-{
-	if (!xdr_deviceid4(xdrs, objp->de_deviceid))
-		return false;
-	if (!xdr_nfsstat4(xdrs, &objp->de_status))
-		return false;
-	if (!xdr_nfs_opnum4(xdrs, &objp->de_opnum))
 		return false;
 	return true;
 }

@@ -557,11 +557,15 @@ enum nfs_req_result nfs4_op_layouterror(struct nfs_argop4 *op,
 		&resp->nfs_resop4_u.oplayouterror;
 
 	LogEvent(COMPONENT_PNFS,
-		 "LAYOUTERROR OP %d status %d offset: %" PRIu64
-		 " length: %" PRIu64,
-		 arg_LAYOUTERROR4->lea_errors.de_opnum,
-		 arg_LAYOUTERROR4->lea_errors.de_status,
+		 "LAYOUTERROR offset: %" PRIu64 " length: %" PRIu64,
 		 arg_LAYOUTERROR4->lea_offset, arg_LAYOUTERROR4->lea_length);
+	for (u_int i = 0; i < arg_LAYOUTERROR4->lea_errors_len; i++) {
+		LogEvent(COMPONENT_PNFS, "  OP %d status %d",
+			 arg_LAYOUTERROR4->lea_errors_val[i].de_opnum,
+			 arg_LAYOUTERROR4->lea_errors_val[i].de_status);
+	}
+
+	resp->resop = NFS4_OP_LAYOUTERROR;
 
 	/** @todo: what else do we want to do with this error ???  */
 
@@ -596,6 +600,8 @@ enum nfs_req_result nfs4_op_layoutstats(struct nfs_argop4 *op,
 		 arg_LAYOUTSTATS4->lsa_read.ii_bytes,
 		 arg_LAYOUTSTATS4->lsa_write.ii_count,
 		 arg_LAYOUTSTATS4->lsa_write.ii_bytes);
+
+	resp->resop = NFS4_OP_LAYOUTSTATS;
 
 	/** @todo: what else do we want to do with the stats ???  */
 
