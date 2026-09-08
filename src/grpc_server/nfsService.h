@@ -544,6 +544,36 @@ class QosMgrService final : public qosService::QosMgr::Service {
 		grpc::ServerContext *context,
 		const qosService::SetExportClientIOPSRequest *request,
 		nfsProtoUtil::StatusResponse *response) override;
+
+		grpc::Status GetClientBandwidth(
+		grpc::ServerContext *context,
+		const nfsProtoUtil::ClientIpRequest *request,
+		qosService::GetClientBandwidthResponse *response) override;
+
+	grpc::Status
+	SetClientBandwidth(grpc::ServerContext *context,
+			   const qosService::SetClientBandwidthRequest *request,
+			   nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status
+	GetClientTokens(grpc::ServerContext *context,
+			const nfsProtoUtil::ClientIpRequest *request,
+			qosService::GetClientTokensResponse *response) override;
+
+	grpc::Status
+	SetClientTokens(grpc::ServerContext *context,
+			const qosService::SetClientTokensRequest *request,
+			nfsProtoUtil::StatusResponse *response) override;
+
+	grpc::Status
+	GetClientIOPS(grpc::ServerContext *context,
+		      const nfsProtoUtil::ClientIpRequest *request,
+		      qosService::GetClientIopsResponse *response) override;
+
+	grpc::Status
+	SetClientIOPS(grpc::ServerContext *context,
+		      const qosService::SetClientIOPSRequest *request,
+		      nfsProtoUtil::StatusResponse *response) override;
 };
 
 #endif //NFSSERVICE_H

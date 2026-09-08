@@ -153,6 +153,45 @@ message SetExportClientIOPSRequest
 	uint64 write_iops = 4;
 }
 
+message SetClientBandwidthRequest
+{
+	string client_ip = 1;
+	uint64 read_bw = 2;
+	uint64 write_bw = 3;
+}
+
+message SetClientTokensRequest
+{
+	string client_ip = 1;
+	uint64 max_tokens = 2;
+	uint64 token_renewal = 3;
+}
+
+message SetClientIOPSRequest
+{
+	string client_ip = 1;
+	uint64 read_iops = 2;
+	uint64 write_iops = 3;
+}
+
+message GetClientBandwidthResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	BwLimits bandwidth = 2;
+}
+
+message GetClientTokensResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	TokenLimits tokens = 2;
+}
+
+message GetClientIopsResponse
+{
+	nfsProtoUtil.StatusResponse status = 1;
+	IopsLimits iops = 2;
+}
+
 // org.ganesha.nfsd.qos — runtime QoS administration
 service QosMgr
 {
@@ -199,5 +238,21 @@ service QosMgr
 	rpc ListExportClientsIOPS(nfsProtoUtil.ExportIdRequest)
 		returns (ListExportClientsIOPSResponse);
 	rpc SetExportClientIOPS(SetExportClientIOPSRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	/* Per_Client methods */
+	rpc GetClientBandwidth(nfsProtoUtil.ClientIpRequest)
+		returns (GetClientBandwidthResponse);
+	rpc SetClientBandwidth(SetClientBandwidthRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	rpc GetClientTokens(nfsProtoUtil.ClientIpRequest)
+		returns (GetClientTokensResponse);
+	rpc SetClientTokens(SetClientTokensRequest)
+		returns (nfsProtoUtil.StatusResponse);
+
+	rpc GetClientIOPS(nfsProtoUtil.ClientIpRequest)
+		returns (GetClientIopsResponse);
+	rpc SetClientIOPS(SetClientIOPSRequest)
 		returns (nfsProtoUtil.StatusResponse);
 }

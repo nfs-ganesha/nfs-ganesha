@@ -2961,3 +2961,175 @@ grpc::Status QosMgrService::SetExportClientIOPS(
 	return qos_not_compiled(response);
 #endif
 }
+
+/**
+ * @brief Get Per_Client bandwidth limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.GetClientBandwidth.
+ */
+grpc::Status QosMgrService::GetClientBandwidth(
+	grpc::ServerContext *context,
+	const nfsProtoUtil::ClientIpRequest *request,
+	qosService::GetClientBandwidthResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	struct grpc_qos_bw_limits limits;
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_get_client_bandwidth(request->ipaddr().c_str(), &limits,
+				      &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response->mutable_status(), success, errmsg);
+	if (success) {
+		qosService::BwLimits *bw = response->mutable_bandwidth();
+
+		bw->set_enabled(limits.enabled);
+		bw->set_read_bw(limits.read_bw);
+		bw->set_write_bw(limits.write_bw);
+	}
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response->mutable_status());
+#endif
+}
+
+/**
+ * @brief Set Per_Client bandwidth limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.SetClientBandwidth.
+ */
+grpc::Status QosMgrService::SetClientBandwidth(
+	grpc::ServerContext *context,
+	const qosService::SetClientBandwidthRequest *request,
+	nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_set_client_bandwidth(request->client_ip().c_str(),
+				      request->read_bw(), request->write_bw(),
+				      &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
+}
+
+/**
+ * @brief Get Per_Client token limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.GetClientTokens.
+ */
+grpc::Status
+QosMgrService::GetClientTokens(grpc::ServerContext *context,
+			       const nfsProtoUtil::ClientIpRequest *request,
+			       qosService::GetClientTokensResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	struct grpc_qos_token_limits tokens;
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_get_client_tokens(request->ipaddr().c_str(), &tokens, &success,
+				   errmsg, sizeof(errmsg));
+	qos_fill_status(response->mutable_status(), success, errmsg);
+	if (success) {
+		qosService::TokenLimits *t = response->mutable_tokens();
+
+		t->set_max_tokens(tokens.max_tokens);
+		t->set_token_renewal(tokens.token_renewal);
+	}
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response->mutable_status());
+#endif
+}
+
+/**
+ * @brief Set Per_Client token limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.SetClientTokens.
+ */
+grpc::Status QosMgrService::SetClientTokens(
+	grpc::ServerContext *context,
+	const qosService::SetClientTokensRequest *request,
+	nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_set_client_tokens(request->client_ip().c_str(),
+				   request->max_tokens(),
+				   request->token_renewal(), &success, errmsg,
+				   sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
+}
+
+/**
+ * @brief Get Per_Client IOPS limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.GetClientIOPS.
+ */
+grpc::Status
+QosMgrService::GetClientIOPS(grpc::ServerContext *context,
+			     const nfsProtoUtil::ClientIpRequest *request,
+			     qosService::GetClientIopsResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	struct grpc_qos_iops_limits iops;
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_get_client_iops(request->ipaddr().c_str(), &iops, &success,
+				 errmsg, sizeof(errmsg));
+	qos_fill_status(response->mutable_status(), success, errmsg);
+	if (success) {
+		qosService::IopsLimits *io = response->mutable_iops();
+
+		io->set_enabled(iops.enabled);
+		io->set_read_iops(iops.read_iops);
+		io->set_write_iops(iops.write_iops);
+	}
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response->mutable_status());
+#endif
+}
+
+/**
+ * @brief Set Per_Client IOPS limits
+ *
+ * gRPC equivalent of org.ganesha.nfsd.qos.SetClientIOPS.
+ */
+grpc::Status
+QosMgrService::SetClientIOPS(grpc::ServerContext *context,
+			     const qosService::SetClientIOPSRequest *request,
+			     nfsProtoUtil::StatusResponse *response)
+{
+	(void)context;
+#ifdef ENABLE_QOS
+	bool success = false;
+	char errmsg[256];
+
+	grpc_qos_set_client_iops(request->client_ip().c_str(),
+				 request->read_iops(), request->write_iops(),
+				 &success, errmsg, sizeof(errmsg));
+	qos_fill_status(response, success, errmsg);
+	return grpc::Status::OK;
+#else
+	return qos_not_compiled(response);
+#endif
+}
+

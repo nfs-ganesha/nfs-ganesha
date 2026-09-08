@@ -141,6 +141,28 @@ bool grpc_qos_set_export_client_iops(uint16_t export_id, const char *client_ip,
 				     bool *success, char *errmsg,
 				     size_t errmsg_len);
 
+bool grpc_qos_get_client_bandwidth(const char *client_ip,
+				   struct grpc_qos_bw_limits *out,
+				   bool *success, char *errmsg,
+				   size_t errmsg_len);
+bool grpc_qos_set_client_bandwidth(const char *client_ip, uint64_t read_bw,
+				   uint64_t write_bw, bool *success,
+				   char *errmsg, size_t errmsg_len);
+
+bool grpc_qos_get_client_tokens(const char *client_ip,
+				struct grpc_qos_token_limits *out,
+				bool *success, char *errmsg, size_t errmsg_len);
+bool grpc_qos_set_client_tokens(const char *client_ip, uint64_t max_tokens,
+				uint64_t token_renewal, bool *success,
+				char *errmsg, size_t errmsg_len);
+
+bool grpc_qos_get_client_iops(const char *client_ip,
+			      struct grpc_qos_iops_limits *out, bool *success,
+			      char *errmsg, size_t errmsg_len);
+bool grpc_qos_set_client_iops(const char *client_ip, uint64_t read_iops,
+			      uint64_t write_iops, bool *success, char *errmsg,
+			      size_t errmsg_len);
+
 #ifdef __cplusplus
 }
 #endif

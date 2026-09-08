@@ -2986,4 +2986,249 @@ out:
 
 	return true;
 }
+
+/**
+ * @brief Look up a client QoS class for Per_Client gRPC helpers.
+ *
+ * On success, @gsh_client is referenced and g_qos_config_lock is held.
+ * The caller must unlock g_qos_config_lock and put_gsh_client().
+ *
+ * @return true if qos_class was found; false if status was already filled.
+ */
+static bool grpc_qos_get_client_class(const char *client_ip,
+				      struct gsh_client **gsh_client,
+				      qos_class_t **qos_class, bool *success,
+				      char *errmsg, size_t errmsg_len)
+{
+	const char *errormsg = "OK";
+	bool lookup_success = true;
+
+	*gsh_client = grpc_lookup_client(client_ip, &lookup_success, &errormsg);
+	if (!lookup_success || *gsh_client == NULL) {
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    errormsg);
+		if (*gsh_client != NULL) {
+			put_gsh_client(*gsh_client);
+			*gsh_client = NULL;
+		}
+		return false;
+	}
+
+	PTHREAD_MUTEX_lock(&g_qos_config_lock);
+	*qos_class = (*gsh_client)->qos_class;
+	if (*qos_class == NULL) {
+		PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+		put_gsh_client(*gsh_client);
+		*gsh_client = NULL;
+		grpc_qos_set_status(success, errmsg, errmsg_len, false,
+				    "check config values");
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * @brief Get Per_Client bandwidth limits for gRPC.
+ *
+ * @param [in] client_ip Client IP address.
+ * @param [out] out Populated bandwidth values and enable flag.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_get_client_bandwidth(const char *client_ip,
+				   struct grpc_qos_bw_limits *out,
+				   bool *success, char *errmsg,
+				   size_t errmsg_len)
+{
+	struct gsh_client *gsh_client;
+	qos_class_t *qos_class;
+
+	memset(out, 0, sizeof(*out));
+	if (!grpc_qos_get_client_class(client_ip, &gsh_client, &qos_class,
+				       success, errmsg, errmsg_len))
+		return true;
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+	out->enabled = qos_class->bw_enabled;
+	out->read_bw = qos_class->rbucket.max_bw_allowed;
+	out->write_bw = qos_class->wbucket.max_bw_allowed;
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+	grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_client(gsh_client);
+	return true;
+}
+
+/**
+ * @brief Set Per_Client bandwidth limits from gRPC.
+ *
+ * @param [in] client_ip Client IP address.
+ * @param [in] read_bw Max read bandwidth.
+ * @param [in] write_bw Max write bandwidth.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_client_bandwidth(const char *client_ip, uint64_t read_bw,
+				   uint64_t write_bw, bool *success,
+				   char *errmsg, size_t errmsg_len)
+{
+	struct gsh_client *gsh_client;
+	qos_class_t *qos_class;
+
+	if (!grpc_qos_get_client_class(client_ip, &gsh_client, &qos_class,
+				       success, errmsg, errmsg_len))
+		return true;
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+	qos_class->rbucket.max_bw_allowed = read_bw;
+	qos_class->wbucket.max_bw_allowed = write_bw;
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+	grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_client(gsh_client);
+	return true;
+}
+
+/**
+ * @brief Get Per_Client token limits for gRPC.
+ *
+ * @param [in] client_ip Client IP address.
+ * @param [out] out Populated token limits.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_get_client_tokens(const char *client_ip,
+				struct grpc_qos_token_limits *out,
+				bool *success, char *errmsg, size_t errmsg_len)
+{
+	struct gsh_client *gsh_client;
+	qos_class_t *qos_class;
+
+	memset(out, 0, sizeof(*out));
+	if (!grpc_qos_get_client_class(client_ip, &gsh_client, &qos_class,
+				       success, errmsg, errmsg_len))
+		return true;
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+	out->max_tokens = qos_class->rbucket.max_available_tokens;
+	out->token_renewal = qos_class->rbucket.tokens_renew_time;
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+	grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_client(gsh_client);
+	return true;
+}
+
+/**
+ * @brief Set Per_Client token limits from gRPC.
+ *
+ * @param [in] client_ip Client IP address.
+ * @param [in] max_tokens Max token budget.
+ * @param [in] token_renewal Token renewal period.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_client_tokens(const char *client_ip, uint64_t max_tokens,
+				uint64_t token_renewal, bool *success,
+				char *errmsg, size_t errmsg_len)
+{
+	struct gsh_client *gsh_client;
+	qos_class_t *qos_class;
+
+	if (!grpc_qos_get_client_class(client_ip, &gsh_client, &qos_class,
+				       success, errmsg, errmsg_len))
+		return true;
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+	qos_class->rbucket.max_available_tokens = max_tokens;
+	qos_class->wbucket.max_available_tokens = max_tokens;
+	qos_class->rbucket.tokens_renew_time = token_renewal;
+	qos_class->wbucket.tokens_renew_time = token_renewal;
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+	grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_client(gsh_client);
+	return true;
+}
+
+/**
+ * @brief Get Per_Client IOPS limits for gRPC.
+ *
+ * @param [in] client_ip Client IP address.
+ * @param [out] out Populated IOPS values and enable flag.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_get_client_iops(const char *client_ip,
+			      struct grpc_qos_iops_limits *out, bool *success,
+			      char *errmsg, size_t errmsg_len)
+{
+	struct gsh_client *gsh_client;
+	qos_class_t *qos_class;
+
+	memset(out, 0, sizeof(*out));
+	if (!grpc_qos_get_client_class(client_ip, &gsh_client, &qos_class,
+				       success, errmsg, errmsg_len))
+		return true;
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+	out->enabled = qos_class->iops_enabled;
+	out->read_iops = qos_class->rbucket.max_iops_allowed;
+	out->write_iops = qos_class->wbucket.max_iops_allowed;
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+	grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_client(gsh_client);
+	return true;
+}
+
+/**
+ * @brief Set Per_Client IOPS limits from gRPC.
+ *
+ * @param [in] client_ip Client IP address.
+ * @param [in] read_iops Max read IOPS.
+ * @param [in] write_iops Max write IOPS.
+ * @param [out] success Operation status.
+ * @param [out] errmsg Error/status message.
+ * @param [in] errmsg_len Size of errmsg buffer.
+ * @return true always; success/failure is reported through @success.
+ */
+bool grpc_qos_set_client_iops(const char *client_ip, uint64_t read_iops,
+			      uint64_t write_iops, bool *success, char *errmsg,
+			      size_t errmsg_len)
+{
+	struct gsh_client *gsh_client;
+	qos_class_t *qos_class;
+
+	if (!grpc_qos_get_client_class(client_ip, &gsh_client, &qos_class,
+				       success, errmsg, errmsg_len))
+		return true;
+
+	PTHREAD_MUTEX_lock(&qos_class->lock);
+	qos_class->rbucket.max_iops_allowed = read_iops;
+	qos_class->wbucket.max_iops_allowed = write_iops;
+	PTHREAD_MUTEX_unlock(&qos_class->lock);
+	grpc_qos_set_status(success, errmsg, errmsg_len, true, "OK");
+
+	PTHREAD_MUTEX_unlock(&g_qos_config_lock);
+	put_gsh_client(gsh_client);
+	return true;
+}
+
 #endif /* USE_GRPC */
