@@ -313,6 +313,7 @@
   xdr_READ4res_uio_setup;
   _get_gsh_export_ref;
   _put_gsh_export;
+  _ratelimit;
   __tracepoint_fsalmem___mem_free;
   __tracepoint_fsalmem___mem_alloc_state;
   __tracepoint_fsalmem___mem_inuse;

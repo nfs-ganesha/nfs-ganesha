@@ -151,7 +151,8 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				continue;
 			}
 
-			LogCrit(COMPONENT_FSAL_UP,
+			LogWarnLimited(
+				COMPONENT_FSAL_UP,
 				"OPENHANDLE_INODE_UPDATE failed for %d. rc %d, errno %d (%s) reason %d",
 				gpfs_fs->root_fd, rc, errsv, strerror(errsv),
 				reason);
