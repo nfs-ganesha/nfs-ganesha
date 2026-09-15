@@ -542,7 +542,7 @@ static struct config_item core_params[] = {
 		       NFS_DEFAULT_RECV_BUFFER_SIZE, nfs_core_param,
 		       rpc.max_recv_buffer_size),
 #ifdef _USE_NFS_RDMA
-	CONF_ITEM_UI32("RPC_Max_RDMA_Connections", 1, 1024, 64, nfs_core_param,
+	CONF_ITEM_UI32("RPC_Max_RDMA_Connections", 1, 4096, 64, nfs_core_param,
 		       rpc.max_rdma_connections),
 	CONF_ITEM_UI32("MaxRPCRdmaCredits", 1, 4096, 64, nfs_core_param,
 		       rpc.rdma_credits),
