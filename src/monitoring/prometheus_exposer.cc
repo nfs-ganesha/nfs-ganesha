@@ -484,13 +484,14 @@ static bool update_export(struct gsh_export *gsh_export,
 			     fsal_err_txt(fsal_status));
 		return false;
 	}
-	LogFullDebug(
-		COMPONENT_FSAL,
-		"dynamic_metrics_export_info details :"
-		" dynamic_info.total_bytes %ld dynamic_info.avail_bytes  %ld"
-		" dynamic_info.total_files %ld dynamic_info.avail_files %ld",
-		dynamic_info.total_bytes, dynamic_info.avail_bytes,
-		dynamic_info.total_files, dynamic_info.avail_files);
+	LogFullDebug(COMPONENT_FSAL,
+		     "dynamic_metrics_export_info details :"
+		     " dynamic_info.total_bytes %" PRIu64
+		     " dynamic_info.avail_bytes %" PRIu64
+		     " dynamic_info.total_files %" PRIu64
+		     " dynamic_info.avail_files %" PRIu64,
+		     dynamic_info.total_bytes, dynamic_info.avail_bytes,
+		     dynamic_info.total_files, dynamic_info.avail_files);
 	dynamic_metrics_export_info(path, dynamic_info.total_bytes,
 				    dynamic_info.avail_bytes,
 				    dynamic_info.total_files,
