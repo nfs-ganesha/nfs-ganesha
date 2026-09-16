@@ -415,7 +415,7 @@ return_ok:
 	/* Copy cid_server_owner plus terminating NUL */
 	memcpy(temp, cid_server_owner, owner_len + 1);
 
-	LogDebug(COMPONENT_CLIENTID, "EXCHNAGE_ID major_id %s", temp);
+	LogDebug(COMPONENT_CLIENTID, "EXCHANGE_ID major_id %s", temp);
 
 	if (nfs_param.nfsv4_param.virtual_server) {
 		/* Copy ipname + terminating NUL */
