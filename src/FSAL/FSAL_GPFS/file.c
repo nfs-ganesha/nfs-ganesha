@@ -86,7 +86,7 @@ fsal_status_t gpfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 
 		if (FSAL_IS_ERROR(status2)) {
 			LogFullDebug(COMPONENT_FSAL, "close failed with %s",
-				     fsal_err_txt(status));
+				     fsal_err_txt(status2));
 
 			/** @todo - what to do about error here... */
 		}
@@ -97,7 +97,9 @@ fsal_status_t gpfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 	 */
 	LogFullDebug(COMPONENT_FSAL, "fd = %d, new openflags = %x", fd,
 		     openflags);
-	if (fd == 0)
+
+	/* fds 0-2 are reserved for stdin/stdout/stderr */
+	if (fd < 3)
 		LogCrit(COMPONENT_FSAL, "fd = %d, new openflags = %x", fd,
 			openflags);
 
