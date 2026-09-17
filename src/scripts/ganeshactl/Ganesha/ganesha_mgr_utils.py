@@ -93,7 +93,7 @@ class ClientMgr():
         for client in client_array:
             '''
             return format of ShowClients
-            [<client_ip>, [["NFSv3", <data>], ["MNT", <data>], ["NLMv4", <data>],
+            [<client_ip>,<is_connected> [["NFSv3", <data>], ["MNT", <data>], ["NLMv4", <data>],
             ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
             ["NFSv42", <data>], ["9P", <data>]],
             <totalops>,
@@ -107,8 +107,8 @@ class ClientMgr():
             except ValueError as e:
                 return False, e, []
 
-            cl_ = dict(data[1])
-            lasttime = client[4]
+            cl_ = dict(data[2])
+            lasttime = client[5]
             clt = Client(ClientIP=str(client[0]),
                          HasNFSv3=cl_.get('NFSv3', 0),
                          HasMNT=cl_.get('MNT', 0),
