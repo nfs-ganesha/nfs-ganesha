@@ -587,17 +587,17 @@ errout:
 }
 
 /**
- *  @brief Unclaim filesystem
+ *  @brief Stop and join GPFS upcall thread
  *  @param fs FSAL filesystem
  */
-void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
+void gpfs_stop_upcall_thread(struct fsal_filesystem *fs)
 {
 	struct gpfs_filesystem *gpfs_fs = fs->private_data;
 	struct callback_arg callback = { 0 };
 	int reason = THREAD_STOP;
 
 	if (gpfs_fs == NULL)
-		goto out;
+		return;
 
 	/* Terminate GPFS upcall thread */
 	callback.mountdirfd = gpfs_fs->root_fd;
@@ -617,6 +617,21 @@ void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
 	gpfs_fs->stop_thread = true;
 
 	pthread_join(gpfs_fs->up_thread, NULL);
+}
+
+/**
+ *  @brief Unclaim filesystem
+ *  @param fs FSAL filesystem
+ */
+void gpfs_unclaim_filesystem(struct fsal_filesystem *fs)
+{
+	struct gpfs_filesystem *gpfs_fs = fs->private_data;
+
+	if (gpfs_fs == NULL)
+		goto out;
+
+	gpfs_stop_upcall_thread(fs);
+
 	free_gpfs_filesystem(gpfs_fs);
 	fs->private_data = NULL;
 
@@ -663,8 +678,7 @@ fsal_status_t gpfs_create_export(struct fsal_module *fsal_hdl, void *parse_node,
 	int rc;
 
 	gpfs_exp =
-		gsh_calloc(1, sizeof(struct gpfs_fsal_export),
-			   MEM_COMP_EXPORT);
+		gsh_calloc(1, sizeof(struct gpfs_fsal_export), MEM_COMP_EXPORT);
 	exp = &gpfs_exp->export;
 
 	glist_init(&gpfs_exp->filesystems);
