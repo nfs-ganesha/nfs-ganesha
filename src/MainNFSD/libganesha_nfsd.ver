@@ -296,6 +296,7 @@
   up_async_layoutrecall;
   up_async_lock_avail;
   up_async_lock_grant;
+  up_async_recall_any;
   up_async_notify_device;
   up_async_update;
   update_export;

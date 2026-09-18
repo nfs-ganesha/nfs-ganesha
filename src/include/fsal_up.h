@@ -233,6 +233,18 @@ struct fsal_up_vector {
 					struct pnfs_deviceid devid,
 					bool immediate);
 
+	/** layout recall any
+	 *
+	 * @param[in] notify_type  Change or remove
+	 * @param[in] layout_type  The layout type affected
+	 * @param[in] devid        The deviceid
+	 * @param[in] immediate    Whether the change is immediate
+	 *
+	 */
+	state_status_t (*recall_any)(layouttype4 layout_type,
+				     struct bitmap4 craa_type_mask,
+				     bool immediate, int keep);
+
 	/** Recall a delegation
 	 *
 	 * @param[in] vec	Up ops vector
@@ -316,6 +328,14 @@ fsal_status_t up_async_notify_device(
 	notify_deviceid_type4 notify_type, layouttype4 layout_type,
 	struct pnfs_deviceid *devid, bool immediate,
 	void (*cb)(void *, state_status_t), void *cb_arg);
+
+fsal_status_t up_async_recall_any(struct fridgethr *fr,
+				  const struct fsal_up_vector *vec,
+				  layouttype4 layout_type, int type_mask,
+				  bool immediate, int keep,
+				  void (*cb)(void *, state_status_t),
+				  void *cb_arg);
+
 fsal_status_t up_async_delegrecall(struct fridgethr *fr,
 				   const struct fsal_up_vector *vec,
 				   struct gsh_buffdesc *handle,

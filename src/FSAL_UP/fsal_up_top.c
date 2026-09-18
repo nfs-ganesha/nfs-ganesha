@@ -826,12 +826,34 @@ struct cb_notify {
 };
 
 /**
+ * @brief Data for CB_NOTIFY and CB_NOTIFY_DEVICEID response handler
+ */
+
+struct cb_recall_any {
+	nfs_cb_argop4 arg; /*< Arguments (so we can free them) */
+	CB_RECALLABLE_OBJ_AVAIL4res res;
+};
+
+/**
  * @brief Handle CB_NOTIFY_DEVICE response
  *
  * @param[in] call  The RPC call being completed
  */
 
 static void notifydev_completion(rpc_call_t *call)
+{
+	LogFullDebug(COMPONENT_NFS_CB, "status %d arg %p",
+		     call->cbt.v_u.v4.res.status, call->call_arg);
+	gsh_free(call->call_arg, MEM_COMP_PROTOCOL);
+}
+
+/**
+ * @brief Handle CB_RECALL_ANY response
+ *
+ * @param[in] call  The RPC call being completed
+ */
+
+static void recall_any_completion(rpc_call_t *call)
 {
 	LogFullDebug(COMPONENT_NFS_CB, "status %d arg %p",
 		     call->cbt.v_u.v4.res.status, call->call_arg);
@@ -846,6 +868,15 @@ struct devnotify_cb_data {
 	notify_deviceid_type4 notify_type;
 	layouttype4 layout_type;
 	struct pnfs_deviceid devid;
+};
+
+/**
+ * The arguments for recall_any_client_callback packed up in a struct
+ */
+
+struct recall_any_cb_data {
+	uint32_t craa_objects_to_keep;
+	struct bitmap4 craa_type_mask;
 };
 
 /**
@@ -901,6 +932,47 @@ static bool devnotify_client_callback(nfs_client_id_t *clientid,
 }
 
 /**
+ * @brief Send a single notifydev to a single client
+ *
+ * @param[in] clientid  The client record
+ * @param[in] devnotify The device notify args
+ *
+ * @return True on success, false on error.
+ */
+
+static bool recall_any_client_callback(nfs_client_id_t *clientid,
+				       void *recall_any)
+{
+	int code = 0;
+	struct cb_recall_any *arg;
+	struct recall_any_cb_data *recallany = recall_any;
+
+	if (clientid) {
+		LogFullDebug(COMPONENT_NFS_CB,
+			     "CliP %p ClientID=%" PRIx64 " ver %d", clientid,
+			     clientid->cid_clientid,
+			     clientid->cid_minorversion);
+	} else {
+		return false;
+	}
+
+	/* free in recall_any_completion */
+	arg = gsh_malloc(sizeof(struct cb_recall_any), MEM_COMP_STATE);
+
+	arg->arg.argop = NFS4_OP_CB_RECALL_ANY;
+	arg->arg.nfs_cb_argop4_u.opcbrecall_any.craa_objects_to_keep =
+		recallany->craa_objects_to_keep;
+	arg->arg.nfs_cb_argop4_u.opcbrecall_any.craa_type_mask =
+		recallany->craa_type_mask;
+
+	code = nfs_rpc_cb_single(clientid, &arg->arg, NULL,
+				 recall_any_completion, &arg->arg);
+	if (code != 0)
+		gsh_free(arg, MEM_COMP_PROTOCOL);
+
+	return true;
+}
+/**
  * @brief Remove or change a deviceid
  *
  * @param[in] dev_exportid Export responsible for the device ID
@@ -920,14 +992,42 @@ state_status_t notify_device(notify_deviceid_type4 notify_type,
 {
 	struct devnotify_cb_data *cb_data;
 
-	cb_data = gsh_malloc(sizeof(struct devnotify_cb_data),
-			     MEM_COMP_STATE);
+	cb_data = gsh_malloc(sizeof(struct devnotify_cb_data), MEM_COMP_STATE);
 
 	cb_data->notify_type = notify_type;
 	cb_data->layout_type = layout_type;
 	cb_data->devid = devid;
 
 	nfs41_foreach_client_callback(devnotify_client_callback, cb_data);
+
+	return STATE_SUCCESS;
+}
+
+/**
+ * @brief Layout recall any
+ *
+ * @param[in] dev_exportid Export responsible for the device ID
+ * @param[in] notify_type Change or remove
+ * @param[in] layout_type The layout type affected
+ * @param[in] devid       The lower quad of the device id, unique
+ *                        within this export
+ * @param[in] immediate   Whether the change is immediate (in the case
+ *                        of a change.)
+ *
+ * @return STATE_SUCCESS or errors.
+ */
+
+state_status_t recall_any(layouttype4 layout_type,
+			  struct bitmap4 craa_type_mask, bool immediate,
+			  int keep)
+{
+	struct recall_any_cb_data *cb_data;
+
+	cb_data = gsh_malloc(sizeof(struct recall_any_cb_data), MEM_COMP_STATE);
+	cb_data->craa_objects_to_keep = keep;
+	cb_data->craa_type_mask = craa_type_mask;
+
+	nfs41_foreach_client_callback(recall_any_client_callback, cb_data);
 
 	return STATE_SUCCESS;
 }
@@ -1474,8 +1574,8 @@ state_status_t delegrecall_impl_per_state(struct fsal_obj_handle *obj,
 
 	*deleg_state = DELEG_RECALL_WIP;
 
-	drc_ctx = gsh_malloc(sizeof(struct delegrecall_context),
-			     MEM_COMP_STATE);
+	drc_ctx =
+		gsh_malloc(sizeof(struct delegrecall_context), MEM_COMP_STATE);
 
 	/* Get references on the owner and the export. The
 	 * export reference we will hold while we perform the recall.
@@ -2000,8 +2100,7 @@ int cbgetattr_impl(struct fsal_obj_handle *obj, nfs_client_id_t *client,
 	}
 	*cb_state = CB_GETATTR_WIP;
 
-	cbg_ctx = gsh_malloc(sizeof(struct cbgetattr_context),
-			     MEM_COMP_STATE);
+	cbg_ctx = gsh_malloc(sizeof(struct cbgetattr_context), MEM_COMP_STATE);
 
 	obj->obj_ops->get_ref(obj);
 	cbg_ctx->obj = obj;
@@ -2105,6 +2204,7 @@ struct fsal_up_vector fsal_up_top = {
 	.update = update,
 	.layoutrecall = layoutrecall,
 	.notify_device = notify_device,
+	.recall_any = recall_any,
 	.delegrecall = delegrecall,
 	.invalidate_close = invalidate_close,
 	.try_release = try_release,

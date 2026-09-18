@@ -368,6 +368,17 @@ struct notify_device_args {
 	char data[];
 };
 
+struct layout_recall_any_args {
+	uint32_t craa_objects_to_keep;
+	struct bitmap4 craa_type_mask;
+	const struct fsal_up_vector *vec;
+	layouttype4 layout_type;
+	bool immediate;
+	void (*cb)(void *, state_status_t);
+	void *cb_arg;
+	char data[];
+};
+
 static void queue_notify_device(struct fridgethr_context *ctx)
 {
 	struct notify_device_args *args = ctx->arg;
@@ -376,6 +387,21 @@ static void queue_notify_device(struct fridgethr_context *ctx)
 	status = args->vec->up_fsal_export->up_ops->notify_device(
 		args->notify_type, args->layout_type, args->devid,
 		args->immediate);
+
+	if (args->cb)
+		args->cb(args->cb_arg, status);
+
+	gsh_free(args, MEM_COMP_STATE);
+}
+
+static void queue_recall_any(struct fridgethr_context *ctx)
+{
+	struct layout_recall_any_args *args = ctx->arg;
+	state_status_t status;
+
+	status = args->vec->up_fsal_export->up_ops->recall_any(
+		args->layout_type, args->craa_type_mask, args->immediate,
+		args->craa_objects_to_keep);
 
 	if (args->cb)
 		args->cb(args->cb_arg, status);
@@ -392,8 +418,7 @@ fsal_status_t up_async_notify_device(
 	struct notify_device_args *args = NULL;
 	int rc = 0;
 
-	args = gsh_malloc(sizeof(struct notify_device_args),
-			  MEM_COMP_STATE);
+	args = gsh_malloc(sizeof(struct notify_device_args), MEM_COMP_STATE);
 
 	args->vec = vec;
 	args->cb = cb;
@@ -404,6 +429,36 @@ fsal_status_t up_async_notify_device(
 	args->immediate = immediate;
 
 	rc = fridgethr_submit(fr, queue_notify_device, args);
+
+	if (rc != 0)
+		gsh_free(args, MEM_COMP_STATE);
+
+	return fsalstat(posix2fsal_error(rc), rc);
+}
+
+fsal_status_t up_async_recall_any(struct fridgethr *fr,
+				  const struct fsal_up_vector *vec,
+				  layouttype4 layout_type, int type_mask,
+				  bool immediate, int keep,
+				  void (*cb)(void *, state_status_t),
+				  void *cb_arg)
+{
+	struct layout_recall_any_args *args = NULL;
+	int rc = 0;
+
+	args = gsh_malloc(sizeof(struct layout_recall_any_args),
+			  MEM_COMP_STATE);
+
+	args->craa_objects_to_keep = keep;
+	args->craa_type_mask.bitmap4_len = 1;
+	args->craa_type_mask.map[0] = type_mask;
+	args->vec = vec;
+	args->layout_type = layout_type;
+	args->immediate = immediate;
+	args->cb = cb;
+	args->cb_arg = cb_arg;
+
+	rc = fridgethr_submit(fr, queue_recall_any, args);
 
 	if (rc != 0)
 		gsh_free(args, MEM_COMP_STATE);
@@ -438,8 +493,7 @@ int async_cbgetattr(struct fridgethr *fr, struct fsal_obj_handle *obj,
 	int rc = 0;
 	struct cbgetattr_args *args = NULL;
 
-	args = gsh_malloc(sizeof(struct cbgetattr_args),
-			  MEM_COMP_STATE);
+	args = gsh_malloc(sizeof(struct cbgetattr_args), MEM_COMP_STATE);
 
 	/* get a ref to prevent races when callback is called too late */
 	obj->obj_ops->get_ref(obj);

@@ -299,14 +299,11 @@ void *GPFSFSAL_UP_Thread(void *Arg)
 				 "layout recall any: flags:%x ino %" PRId64,
 				 flags, callback.buf->st_ino);
 
-			/**
-	     * @todo This functionality needs to be implemented as a
-	     * bulk FSID CB_LAYOUTRECALL.  RECALL_ANY isn't suitable
-	     * since it can't be restricted to just one FSAL.  Also
-	     * an FSID LAYOUTRECALL lets you have multiplke
-	     * filesystems exported from one FSAL and not yank layouts
-	     * on all of them when you only need to recall them for one.
-	     */
+			fsal_status = up_async_recall_any(
+				general_fridge, event_func,
+				LAYOUT4_NFSV4_1_FILES,
+				RCA4_TYPE_MASK_OTHER_LAYOUT_MAX, true, 0, NULL,
+				NULL);
 			break;
 
 		case LAYOUT_NOTIFY_DEVICEID: /* Device update Event */
