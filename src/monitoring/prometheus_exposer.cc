@@ -37,6 +37,10 @@
 
 #include <urcu-bp.h>
 
+#if __has_include(<sys/sdt.h>)
+#include <sys/sdt.h>
+#endif
+
 extern "C" {
 #include "fsal.h"
 #include "gsh_config.h"

@@ -24,6 +24,12 @@ endif()
 
 
 add_sanitizers(ganesha_monitoring)
+
+if(USE_LTTNG)
+  add_dependencies(ganesha_monitoring ntirpc_generate_lttng_trace_headers)
+  add_dependencies(ganesha_monitoring gsh_generate_lttng_trace_headers)
+endif(USE_LTTNG)
+
 set_target_properties(ganesha_monitoring PROPERTIES COMPILE_FLAGS "-fPIC")
 target_include_directories(ganesha_monitoring     PRIVATE ${PROJECT_SOURCE_DIR}/libntirpc/src/monitoring/prometheus-cpp-lite/core/include)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -Werror -Wall -Wextra")
