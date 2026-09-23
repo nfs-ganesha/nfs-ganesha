@@ -83,11 +83,31 @@ int mnt_Mnt(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		goto out;
 	}
 
-	/* If the path ends with a '/', get rid of it */
-	/** @todo: should it be a while()?? */
-	if ((strlen(arg->arg_mnt) > 1) &&
-	    (arg->arg_mnt[strlen(arg->arg_mnt) - 1] == '/'))
-		arg->arg_mnt[strlen(arg->arg_mnt) - 1] = '\0';
+	/* Collapse consecutive '/' characters in place. A malformed client
+	 * request such as "//share" or "/dir//sub" would otherwise fail the
+	 * pseudo/path prefix match and fall back to the root pseudo export,
+	 * resulting in mount failures.
+	 * This issue only occurs with NFSv3 mounts.
+	*/
+	if (arg->arg_mnt[0] == '/') {
+		/* leading '/' already in place */
+		char *r = arg->arg_mnt + 1;
+		char *w = r;
+
+		while (*r != '\0') {
+			if (*r == '/' && *(w - 1) == '/') {
+				r++;
+				continue;
+			}
+			*w++ = *r++;
+		}
+
+		/* Strip trailing '/'; keep lone "/" */
+		if (w > arg->arg_mnt + 1 && *(w - 1) == '/')
+			w--;
+
+		*w = '\0';
+	}
 
 	/*  Find the export for the dirname (using as well Path, Pseudo, or Tag)
 	 */
