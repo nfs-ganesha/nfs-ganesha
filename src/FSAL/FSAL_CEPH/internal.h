@@ -49,6 +49,7 @@
 #include "statx_compat.h"
 #include "FSAL/fsal_commonlib.h"
 #include "avltree.h"
+#include "posix_acls.h"
 
 /* Max length of a user_id string that we pass to ceph_mount */
 #define MAXUIDLEN (64)
@@ -303,6 +304,9 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 
 int ceph_get_acl(struct ceph_export *export, struct ceph_handle *objhandle,
 		 bool is_dir, struct fsal_attrlist *attrs);
+int ceph_get_posix_acl(struct ceph_export *export,
+		       struct ceph_handle *objhandle, const char *name,
+		       acl_t *p_acl);
 #endif /* CEPHFS_POSIX_ACL */
 
 extern pthread_rwlock_t cmount_lock;

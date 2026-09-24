@@ -377,12 +377,35 @@ ceph_fsal_mkdir(struct fsal_obj_handle *dir_hdl, const char *name,
 	struct Inode *i = NULL;
 	fsal_status_t status;
 
-	LogFullDebug(COMPONENT_FSAL, "mode = %o uid=%d gid=%d", attrib->mode,
-		     (int)op_ctx->creds.caller_uid,
-		     (int)op_ctx->creds.caller_gid);
-
 	unix_mode = fsal2unix_mode(attrib->mode) &
 		    ~op_ctx->fsal_export->exp_ops.fs_umask(op_ctx->fsal_export);
+
+#ifdef CEPHFS_POSIX_ACL
+	/* If the parent directory has a default POSIX ACL with named
+	 * user/group entries (indicated by the presence of a mask entry),
+	 * use mode 0777 for the mkdir syscall.  CephFS intersects the
+	 * inherited mask with the new directory's group permission bits,
+	 * so a restrictive unix_mode (e.g. 0755 from umask 022) would
+	 * clip the mask to r-x and suppress write for named users/groups
+	 * default ACL.
+	 */
+	{
+		acl_t def_acl = NULL;
+		int acl_rc;
+
+		acl_rc = ceph_get_posix_acl(export, dir, ACL_EA_DEFAULT,
+					    &def_acl);
+		if (acl_rc >= 0 && def_acl != NULL) {
+			if (find_entry(def_acl, ACL_MASK, 0) != NULL)
+				unix_mode = 0777;
+			acl_free((void *)def_acl);
+		}
+	}
+#endif /* CEPHFS_POSIX_ACL */
+
+	LogFullDebug(COMPONENT_FSAL, "mode = %o unix_mode = %o, uid=%d gid=%d",
+		     attrib->mode, unix_mode, (int)op_ctx->creds.caller_uid,
+		     (int)op_ctx->creds.caller_gid);
 
 	rc = fsal_ceph_ll_mkdir(export->cmount, dir->i, name, unix_mode, &i,
 				&stx, !!attrs_out, &op_ctx->creds);
