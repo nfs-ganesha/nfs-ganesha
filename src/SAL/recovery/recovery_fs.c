@@ -389,7 +389,12 @@ void fs_reclaim_complete(nfs_client_id_t *clientid)
 			      &clientid->cid_client_record->cr_server_addr,
 			      path, sizeof(path), false, COMPONENT_CLIENTID);
 
-	assert(dstpos > 0);
+	if (dstpos <= 0) {
+		LogCrit(COMPONENT_RECOVERY,
+			"Could not build reclaim_complete path for %s",
+			clientid->cid_recov_tag);
+		return;
+	}
 
 	if (dstpos + marker_len + 1 >= sizeof(path)) {
 		LogCrit(COMPONENT_RECOVERY,
