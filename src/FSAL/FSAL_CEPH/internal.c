@@ -306,6 +306,9 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 	char *name = NULL;
 	void *value = NULL;
 	fsal_status_t status = { 0, 0 };
+	acl_entry_t base_entry;
+	acl_permset_t base_perm;
+	struct ceph_statx stx;
 
 	if (!attrs->acl) {
 		LogWarn(COMPONENT_FSAL, "acl is empty");
@@ -327,6 +330,63 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 			"failed to convert fsal acl to posix acl");
 		status = fsalstat(ERR_FSAL_FAULT, 0);
 		goto out;
+	}
+
+	/* When nfs4_setfacl -s is used for the first time (set, not append),
+	 * the client sends only the named user/group ACEs it was given —
+	 * no OWNER@, GROUP@, or EVERYONE@ ACEs.  fsal_acl_2_posix_acl then
+	 * leaves ACL_USER_OBJ, ACL_GROUP_OBJ, and ACL_OTHER with zero
+	 * permissions because there is nothing to derive them from.
+	 */
+	base_entry = find_entry(acl, ACL_USER_OBJ, 0);
+	if (base_entry != NULL &&
+	    acl_get_permset(base_entry, &base_perm) == 0 &&
+	    acl_get_perm(base_perm, ACL_READ) == 0 &&
+	    acl_get_perm(base_perm, ACL_WRITE) == 0 &&
+	    acl_get_perm(base_perm, ACL_EXECUTE) == 0) {
+		/* fetch the attributes */
+		rc = fsal_ceph_ll_getattr(export->cmount, objhandle->i, &stx,
+					  CEPH_STATX_MODE, &op_ctx->creds);
+		if (rc == 0) {
+			mode_t mode = stx.stx_mode;
+			acl_entry_t e;
+			acl_permset_t p;
+
+			acl_clear_perms(p);
+
+			/* handle default owner permissions */
+			e = find_entry(acl, ACL_USER_OBJ, 0);
+			if (e && acl_get_permset(e, &p) == 0) {
+				if (mode & S_IRUSR)
+					acl_add_perm(p, ACL_READ);
+				if (mode & S_IWUSR)
+					acl_add_perm(p, ACL_WRITE);
+				if (mode & S_IXUSR)
+					acl_add_perm(p, ACL_EXECUTE);
+			}
+			/* handle default group permissions */
+			e = find_entry(acl, ACL_GROUP_OBJ, 0);
+			if (e && acl_get_permset(e, &p) == 0) {
+				if (mode & S_IRGRP)
+					acl_add_perm(p, ACL_READ);
+				if (mode & S_IWGRP)
+					acl_add_perm(p, ACL_WRITE);
+				if (mode & S_IXGRP)
+					acl_add_perm(p, ACL_EXECUTE);
+			}
+			/* handle default other permissions */
+			e = find_entry(acl, ACL_OTHER, 0);
+			if (e && acl_get_permset(e, &p) == 0) {
+				if (mode & S_IROTH)
+					acl_add_perm(p, ACL_READ);
+				if (mode & S_IWOTH)
+					acl_add_perm(p, ACL_WRITE);
+				if (mode & S_IXOTH)
+					acl_add_perm(p, ACL_EXECUTE);
+			}
+		} else
+			LogWarn(COMPONENT_FSAL,
+				"Attribute fetching failed, base ACL entries may remain empty");
 	}
 
 	count = acl_entries(acl);
