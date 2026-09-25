@@ -312,10 +312,6 @@ service ExportStats
 		returns (ExportLayoutsResponse);
 	rpc GetNFSv42Layouts(nfsProtoUtil.ExportIdRequest)
 		returns (ExportLayoutsResponse);
-	rpc Get9pIO(nfsProtoUtil.ExportIdRequest)
-		returns (ExportIoStatsResponse);
-	rpc Get9pOpStats(nfsProtoUtil.Export9pOpRequest)
-		returns (ExportOpStatsResponse);
 	rpc GetFastOPS(nfsProtoUtil.EmptyRequest) returns (GetFastOPSResponse);
 	rpc GetFULLV3Stats(nfsProtoUtil.EmptyRequest)
 		returns (GetFULLV3StatsResponse);

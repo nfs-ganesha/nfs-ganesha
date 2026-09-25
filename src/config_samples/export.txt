@@ -22,7 +22,7 @@
 #				content
 #			NONE allows no access at all
 #
-# Protocols (3,4)	The Protocols allowed. NFSV3, NFSV4, and 9P may be
+# Protocols (3,4)	The Protocols allowed. NFSV3, NFSV4 may be
 #			specified. 3, 4, V3, V4, NFS3, and NFS4 may also be
 #			used.
 #

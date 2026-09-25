@@ -66,7 +66,7 @@ eg.::
 1 and 0 are not acceptable.
 
 3. **List.** The option can contain a list of possible applicable values.
-Protocols = 3, 4, 9p;
+Protocols = 3, 4;
 
 4. **String.** String options such as export Path need not be enclosed in
 quotes but is recommended. If special characters are included, particularly
@@ -160,10 +160,6 @@ NFSv4 {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-core-config <ganesha-core-config>`\(8) for usage
 
-_9P {}
---------------------------------------------------------------------------------
-Refer to :doc:`ganesha-9p-config <ganesha-9p-config>`\(8) for usage
-
 LOG {}
 --------------------------------------------------------------------------------
 Refer to :doc:`ganesha-log-config <ganesha-log-config>`\(8) for usage
@@ -243,7 +239,6 @@ See also
 :doc:`ganesha-xfs-config <ganesha-xfs-config>`\(8)
 :doc:`ganesha-gpfs-config <ganesha-gpfs-config>`\(8)
 :doc:`ganesha-gluster-config <ganesha-gluster-config>`\(8)
-:doc:`ganesha-9p-config <ganesha-9p-config>`\(8)
 :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8)
 :doc:`ganesha-proxy-v3-config <ganesha-proxy-v3-config>`\(8)
 :doc:`ganesha-ceph-config <ganesha-ceph-config>`\(8)

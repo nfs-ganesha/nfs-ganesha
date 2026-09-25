@@ -49,19 +49,6 @@ SET(MainServices_STAT_SRCS
    ../support/client_mgr.c
 )
 
-if(USE_9P)
-  SET(MainServices_STAT_SRCS
-    ${MainServices_STAT_SRCS}
-    9p_dispatcher.c)
-endif(USE_9P)
-
-if(USE_9P AND USE_9P_RDMA)
-  SET(MainServices_STAT_SRCS
-    ${MainServices_STAT_SRCS}
-    9p_rdma_dispatcher.c
-    9p_rdma_callbacks.c)
-endif(USE_9P AND USE_9P_RDMA)
-
 if(USE_NFS_RDMA)
   add_definitions(-D_USE_NFS_RDMA)
 endif(USE_NFS_RDMA)
@@ -218,13 +205,6 @@ if(USE_NFSACL3)
   $<TARGET_OBJECTS:nfsacl>
   )
 endif(USE_NFSACL3)
-
-if(USE_9P)
-  set(ganesha_nfsd_OBJS
-    ${ganesha_nfsd_OBJS}
-    $<TARGET_OBJECTS:9p>
-  )
-endif(USE_9P)
 
 add_library(ganesha_nfsd SHARED
   ${ganesha_nfsd_OBJS} ${fsal_CORE_SRCS}

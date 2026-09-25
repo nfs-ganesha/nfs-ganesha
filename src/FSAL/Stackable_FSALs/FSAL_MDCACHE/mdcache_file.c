@@ -290,7 +290,7 @@ out_unref:
  * we can set the size to 0.
  *
  * At least the mode attribute must be set if createmode is FSAL_UNCHECKED,
- * FSAL_GUARDED, FSAL_EXCLUSIVE_41, or FSAL_EXCLUSIVE_9P.
+ * FSAL_GUARDED, FSAL_EXCLUSIVE_41.
  *
  * If an open by name succeeds and did not result in Ganesha creating a file,
  * the caller will need to do a subsequent permission check to confirm the

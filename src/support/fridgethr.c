@@ -430,14 +430,12 @@ restart:
  *
  * This will always point to a valid structure.  When its contents go out
  * of scope this is set to NULL but since dereferencing with this expectation,
- * a SEGV will result.  This will point to one of three structures:
+ * a SEGV will result.  This will point to one of two structures:
  *
  * 1. The op_context declared in nfs_request_t().  This is the state for any NFS
  *    op.
  *
- * 2. The op_context declared/referenced in _9p_execute for 9P operations.
- *
- * 3. A req_op_context which is used for upcalls, exports bashing, and async
+ * 2. A req_op_context which is used for upcalls, exports bashing, and async
  *    events that call functions that expect a context set up.
  */
 

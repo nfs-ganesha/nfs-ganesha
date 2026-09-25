@@ -42,9 +42,6 @@
 #include "sal_data.h"
 #include "gsh_config.h"
 
-#ifdef _USE_9P
-#include "9p.h"
-#endif
 #ifdef _ERROR_INJECTION
 #include "err_inject.h"
 #endif
@@ -138,23 +135,6 @@ extern char *nfs_pidfile_path;
 /*
  * Thread entry functions
  */
-
-#ifdef _USE_9P
-void *_9p_dispatcher_thread(void *arg);
-void _9p_tcp_process_request(struct _9p_request_data *req9p);
-int _9p_process_buffer(struct _9p_request_data *req9p, char *replydata,
-		       u32 *poutlen);
-
-int _9p_worker_init(void);
-int _9p_worker_shutdown(void);
-void DispatchWork9P(struct _9p_request_data *req);
-#endif
-
-#ifdef _USE_9P_RDMA
-void *_9p_rdma_dispatcher_thread(void *arg);
-void _9p_rdma_process_request(struct _9p_request_data *req9p);
-void _9p_rdma_cleanup_conn(msk_trans_t *trans);
-#endif
 
 /************** in nfs_rpc_dispatcher_thread.c ************/
 

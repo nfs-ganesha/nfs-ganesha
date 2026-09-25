@@ -184,7 +184,7 @@ extern struct gsh_refstr *no_export;
  *	Method code can reference through 'op_ctx' e.g.
  *
  * @code{.c}
- * if (op_ctx->req_type == 9P) { ... }
+ * if (op_ctx->req_type == NFS_REQUEST) { ... }
  * @endcode
  *
  */
@@ -413,9 +413,6 @@ enum request_type {
 	UNKNOWN_REQUEST,
 	NFS_REQUEST,
 	NFS_RELATED,
-#ifdef _USE_9P
-	_9P_REQUEST,
-#endif /* _USE_9P */
 };
 
 /**
@@ -496,7 +493,7 @@ struct req_op_context {
 					   unknown/not applicable. */
 	uint32_t nfs_vers; /*< NFS protocol version of request */
 	uint32_t nfs_minorvers; /*< NFSv4 minor version */
-	enum request_type req_type; /*< request_type NFS | 9P */
+	enum request_type req_type; /*< request_type NFS */
 	struct gsh_client *client; /*< client host info including stats */
 	struct gsh_export *ctx_export; /*< current export, this MUST only
 					    be changed by one of the functions
@@ -1583,7 +1580,7 @@ typedef enum fsal_dir_result (*fsal_readdir_cb)(const char *name,
  *
  * The way this is accomplished is the FSAL requests the caller to make an
  * additional call to read2 or write2 with the same fsal_io_arg after the
- * caller has resumed the NFS or 9P request that triggered the read2 or write2
+ * caller has resumed the NFS request that triggered the read2 or write2
  * call. The FSAL will then perform this additional operation, and make another
  * read/write done callback.
  *
@@ -2643,7 +2640,7 @@ struct fsal_obj_ops {
  * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
- * open by name or create semantics. One example would be 9P lopen.
+ * open by name or create semantics.
  *
  * @param[in] obj_hdl     File on which to operate
  * @param[in] state       state_t to use for this operation

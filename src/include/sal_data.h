@@ -53,11 +53,6 @@
 
 #include "gsh_lttng/gsh_lttng.h"
 
-#ifdef _USE_9P
-/* define u32 and related types independent of SAL and 9P */
-#include "9p_types.h"
-#endif /* _USE_9P */
-
 /**
 ** Forward declarations to avoid circular dependency conflicts
 */
@@ -348,18 +343,6 @@ struct state_lock {
 };
 
 /**
- * @brief Data for a 9p fid
- */
-
-struct state_9p_fid {
-	struct glist_head state_locklist; /*< List of locks owned by
-						   this fid
-						   This field MUST be first */
-	unsigned int share_access; /*< The 9p Access state */
-	unsigned int share_deny; /*< Will always be 0 */
-};
-
-/**
  * @brief Stats for client-file delegation heuristics
  */
 
@@ -421,7 +404,6 @@ union state_data {
 	struct state_lock lock;
 	struct state_deleg deleg;
 	struct state_layout layout;
-	struct state_9p_fid fid;
 	uint32_t io_advise;
 };
 
@@ -499,9 +481,6 @@ static inline void free_state(struct state_t *state)
 typedef void(state_owner_init_t)(state_owner_t *powner);
 
 extern hash_table_t *ht_nlm_owner;
-#ifdef _USE_9P
-extern hash_table_t *ht_9p_owner;
-#endif
 extern hash_table_t *ht_nfs4_owner;
 
 extern struct glist_head cached_open_owners;
@@ -522,7 +501,7 @@ typedef struct state_nfs4_owner_name_t {
 /**
  * @brief The type of entity responsible for a state
  *
- * For NLM and 9P, one kind of owner owns every kind of state.  For
+ * For NLM, one kind of owner owns every kind of state.  For
  * NFSv4.1 open owners and lock owners are in disjoint spaces, and all
  * non-open and non-lock states are associated with a given client.
  */
@@ -532,9 +511,6 @@ typedef enum state_owner_type_t {
 #ifdef _USE_NLM
 	STATE_LOCK_OWNER_NLM, /*< An NLM client */
 #endif /* _USE_NLM */
-#ifdef _USE_9P
-	STATE_LOCK_OWNER_9P, /*< A 9P client */
-#endif
 	STATE_OPEN_OWNER_NFSV4, /*< An NFSv4 owner of an open */
 	STATE_LOCK_OWNER_NFSV4, /*< An NFSv4 owner of a set of locks */
 	STATE_CLIENTID_OWNER_NFSV4 /*< An NFSv4 client, owns all
@@ -626,17 +602,6 @@ typedef struct state_nlm_owner_t {
 } state_nlm_owner_t;
 
 /**
- * @brief 9P lock owner
- */
-
-#ifdef _USE_9P
-typedef struct state_9p_owner_t {
-	u32 proc_id; /*< PID on the client */
-	sockaddr_t client_addr; /*< Network address of client */
-} state_9p_owner_t;
-#endif /* _USE_9P */
-
-/**
  * @brief Share and lock operations for NFSv4.0
  *
  * This structure saves the arguments to the most recent operation on
@@ -723,20 +688,9 @@ struct state_owner_t {
 	char *so_owner_val; /*< Owner name */
 	union {
 		state_nfs4_owner_t so_nfs4_owner; /*< All NFSv4 state owners */
-		state_nlm_owner_t so_nlm_owner; /*< NLM lock and share
-						   owners */
-#ifdef _USE_9P
-		state_9p_owner_t so_9p_owner; /*< 9P lock owners */
-#endif
+		state_nlm_owner_t so_nlm_owner; /*< NLM lock and share owners */
 	} so_owner;
 };
-
-/* Test if the lock owner type is 9P */
-#ifdef _USE_9P
-#define LOCK_OWNER_9P(owner) ((owner)->so_type == STATE_LOCK_OWNER_9P)
-#else
-#define LOCK_OWNER_9P(owner) (0)
-#endif
 
 extern state_owner_t unknown_owner;
 
@@ -929,7 +883,7 @@ typedef enum state_blocking_t {
  * @brief Lock protocol type
  */
 
-typedef enum lock_protocol_t { LOCK_NLM, LOCK_NFSv4, LOCK_9P } lock_protocol_t;
+typedef enum lock_protocol_t { LOCK_NLM, LOCK_NFSv4 } lock_protocol_t;
 
 /**
  * @brief Grant callback

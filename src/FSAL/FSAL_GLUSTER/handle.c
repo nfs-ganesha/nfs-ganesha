@@ -1584,7 +1584,6 @@ static fsal_status_t glusterfs_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 				     stat.st_size);
 
 			if (createmode >= FSAL_EXCLUSIVE &&
-			    createmode != FSAL_EXCLUSIVE_9P &&
 			    !check_verifier_stat(&stat, verifier, false)) {
 				/* Verifier didn't match, return EEXIST */
 				status = posix2fsal_status(EEXIST);
@@ -2534,10 +2533,9 @@ static fsal_status_t glusterfs_lock_op2(struct fsal_obj_handle *obj_hdl,
 		return fsalstat(ERR_FSAL_BAD_RANGE, 0);
 	}
 
-	if (state != NULL && (state->state_type == STATE_TYPE_NLM_LOCK ||
-			      state->state_type == STATE_TYPE_9P_FID)) {
+	if (state != NULL && state->state_type == STATE_TYPE_NLM_LOCK) {
 		/* For Gluster, we will only open for locks if the state_t is
-		 * from NLM or 9P, otherwise we will either use the global fd
+		 * from NLM, otherwise we will either use the global fd
 		 * for a LOCKT without state, or use the associated open state
 		 * for an NFSv4 LOCK or LOCKU.
 		 */
@@ -2996,8 +2994,7 @@ static fsal_status_t glusterfs_close2(struct fsal_obj_handle *obj_hdl,
 	myself = container_of(obj_hdl, struct glusterfs_handle, handle);
 
 	if (state->state_type == STATE_TYPE_SHARE ||
-	    state->state_type == STATE_TYPE_NLM_SHARE ||
-	    state->state_type == STATE_TYPE_9P_FID) {
+	    state->state_type == STATE_TYPE_NLM_SHARE) {
 		/* This is a share state, we must update the share counters */
 		update_share_counters_locked(obj_hdl, &myself->share,
 					     my_fd->fsal_fd.openflags,

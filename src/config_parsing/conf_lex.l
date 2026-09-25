@@ -384,12 +384,6 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 	return TOK_ARITH_OP;
 }
 
-<TERM>{NINEP}  { /* "9P" is here to take precedence over numbers, this is a special */
-	DEBUG_LEX("token value:%s",yytext);
-	yylval->token = save_token(yytext, false, false, stp);
-	return TOKEN;
-}
-
 <TERM>({OCTNUM}|{DECNUM}|{HEXNUM}){DOT}({OCTNUM}|{DECNUM}|{HEXNUM}) { /* an FSID */
 	DEBUG_LEX(" FSID :%s", yytext);
 	yylval->token = save_token(yytext, false, false, stp);

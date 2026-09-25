@@ -73,7 +73,7 @@ class ShowExports(QtCore.QObject):
             print("No exports")
         else:
             print("Exports:")
-            print("  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last")
+            print("  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, last")
             for export in exports:
                 print(" %d,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
                       (export.ExportID,
@@ -84,7 +84,6 @@ class ShowExports(QtCore.QObject):
                        export.HasRQUOTA,
                        export.HasNFSv40,
                        export.HasNFSv41,
-                       export.Has9P,
                        time.ctime(export.LastTime[0]), export.LastTime[1]))
         sys.exit()
 

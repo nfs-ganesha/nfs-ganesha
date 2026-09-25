@@ -1297,11 +1297,8 @@ static fsal_status_t ceph_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 			status = ceph2fsal_error(retval);
 		}
 
-		/* Now check verifier for exclusive, but not for
-		 * FSAL_EXCLUSIVE_9P.
-		 */
+		/* Now check verifier for exclusive */
 		if (!FSAL_IS_ERROR(status) && createmode >= FSAL_EXCLUSIVE &&
-		    createmode != FSAL_EXCLUSIVE_9P &&
 		    !ceph_check_verifier_stat(&stx, verifier)) {
 			/* Verifier didn't match, return EEXIST */
 			status = posix2fsal_status(EEXIST);
@@ -1724,7 +1721,7 @@ static fsal_openflags_t ceph_fsal_status2(struct fsal_obj_handle *obj_hdl,
  * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
- * open by name or create semantics. One example would be 9P lopen.
+ * open by name or create semantics.
  *
  * @param[in] obj_hdl     File on which to operate
  * @param[in] state       state_t to use for this operation
@@ -3082,8 +3079,7 @@ static fsal_status_t ceph_fsal_close2(struct fsal_obj_handle *obj_hdl,
 		&container_of(state, struct ceph_state_fd, state)->ceph_fd;
 
 	if (state->state_type == STATE_TYPE_SHARE ||
-	    state->state_type == STATE_TYPE_NLM_SHARE ||
-	    state->state_type == STATE_TYPE_9P_FID) {
+	    state->state_type == STATE_TYPE_NLM_SHARE) {
 		/* This is a share state, we must update the share counters */
 		update_share_counters_locked(obj_hdl, &myself->share,
 					     my_fd->fsal_fd.openflags,

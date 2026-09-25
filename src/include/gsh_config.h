@@ -108,10 +108,6 @@ typedef enum protos {
  * @brief Default Cluster QoS Port.
  */
 #define CQOS_PORT 18189
-/**
- * @brief Default value for _9p_param.nb_worker
- */
-#define NB_WORKER_THREAD_DEFAULT 256
 
 /**
  * @brief Default value for core_param.drc.recycle_hiwat
@@ -209,11 +205,6 @@ typedef enum protos {
  * @brief Support NFSv4
  */
 #define CORE_OPTION_NFSV4 0x00000002 /*< NFSv4 operations are supported */
-
-/**
- * @brief Support 9p
- */
-#define CORE_OPTION_9P 0x00000004 /*< 9P operations are supported */
 
 /**
  * @brief NFS AF_VSOCK
@@ -521,8 +512,7 @@ typedef struct nfs_core_param {
 	/** Delay (in mili-seconds) between stat calls when trying to resolve
 	 *  POSIX filesystems */
 	uint32_t resolve_fs_delay;
-	/** Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P
-	    mounts. */
+	/** Whether to use Pseudo (true) or Path (false) for NFS v3 mounts. */
 	bool mount_path_pseudo;
 	/** Whether to disable UDP listeners */
 	uint32_t enable_UDP;

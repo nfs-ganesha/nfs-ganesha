@@ -48,13 +48,6 @@ if(USE_NLM)
     )
 endif(USE_NLM)
 
-if(USE_9P)
-  set(sal_STAT_SRCS
-    ${sal_STAT_SRCS}
-    9p_owner.c
-    )
-endif(USE_9P)
-
 add_library(sal OBJECT ${sal_STAT_SRCS})
 add_sanitizers(sal)
 set_target_properties(sal PROPERTIES COMPILE_FLAGS "-fPIC")

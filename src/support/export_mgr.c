@@ -2840,92 +2840,6 @@ static struct gsh_dbus_method fsal_statistics = {
 		  MESSAGE_REPLY, END_ARG_LIST }
 };
 
-#ifdef _USE_9P
-/**
- * DBUS method to report 9p I/O statistics
- *
- */
-static bool get_9p_export_io(DBusMessageIter *args, DBusMessage *reply,
-			     DBusError *error)
-{
-	struct gsh_export *export = NULL;
-	struct export_stats *export_st = NULL;
-	bool success = true;
-	char *errormsg = "OK";
-	DBusMessageIter iter;
-
-	dbus_message_iter_init_append(reply, &iter);
-	export = lookup_export(args, &errormsg);
-	if (export == NULL) {
-		success = false;
-	} else {
-		export_st = container_of(export, struct export_stats, export);
-		if (export_st->st._9p == NULL) {
-			success = false;
-			errormsg = "Export does not have any 9p activity";
-		}
-	}
-	gsh_dbus_status_reply(&iter, success, errormsg);
-	if (success)
-		server_dbus_9p_iostats(export_st->st._9p, &iter);
-
-	if (export != NULL)
-		put_gsh_export(export);
-	return true;
-}
-
-static struct gsh_dbus_method export_show_9p_io = {
-	.name = "Get9pIO",
-	.method = get_9p_export_io,
-	.args = { EXPORT_ID_ARG, STATUS_REPLY, TIMESTAMP_REPLY, IOSTATS_REPLY,
-		  END_ARG_LIST }
-};
-
-/**
- * DBUS method to report 9p protocol operation statistics
- *
- */
-static bool get_9p_export_op_stats(DBusMessageIter *args, DBusMessage *reply,
-				   DBusError *error)
-{
-	struct gsh_export *export = NULL;
-	struct export_stats *export_st = NULL;
-	u8 opcode;
-	bool success = true;
-	char *errormsg = "OK";
-	DBusMessageIter iter;
-
-	dbus_message_iter_init_append(reply, &iter);
-	export = lookup_export(args, &errormsg);
-	if (export == NULL) {
-		success = false;
-	} else {
-		export_st = container_of(export, struct export_stats, export);
-		if (export_st->st._9p == NULL) {
-			success = false;
-			errormsg = "Export does not have any 9p activity";
-		}
-	}
-	dbus_message_iter_next(args);
-	if (success)
-		success = arg_9p_op(args, &opcode, &errormsg);
-	gsh_dbus_status_reply(&iter, success, errormsg);
-	if (success)
-		server_dbus_9p_opstats(export_st->st._9p, opcode, &iter);
-
-	if (export != NULL)
-		put_gsh_export(export);
-	return true;
-}
-
-static struct gsh_dbus_method export_show_9p_op_stats = {
-	.name = "Get9pOpStats",
-	.method = get_9p_export_op_stats,
-	.args = { EXPORT_ID_ARG, _9P_OP_ARG, STATUS_REPLY, TIMESTAMP_REPLY,
-		  OP_STATS_REPLY, END_ARG_LIST }
-};
-#endif
-
 static struct gsh_dbus_method export_show_total_ops = {
 	.name = "GetTotalOPS",
 	.method = get_nfsv_export_total_ops,
@@ -3021,10 +2935,6 @@ static struct gsh_dbus_method *export_stats_methods[] = {
 	&export_show_v41_layouts,
 	&export_show_v42_layouts,
 	&export_show_total_ops,
-#ifdef _USE_9P
-	&export_show_9p_io,
-	&export_show_9p_op_stats,
-#endif
 	&global_show_total_ops,
 	&global_show_fast_ops,
 	&mdcache_show,
@@ -3394,70 +3304,6 @@ bool grpc_export_get_v42_io(uint16_t export_id, struct grpc_iostats *read_out,
 		errmsg_len, server_grpc_fill_v42_iostats,
 		"Export does not have any NFSv4.2 activity");
 }
-
-#ifdef _USE_9P
-/**
- * @brief Retrieve per-export 9P I/O statistics.
- */
-bool grpc_export_get_9p_io(uint16_t export_id, struct grpc_iostats *read_out,
-			   struct grpc_iostats *write_out,
-			   struct timespec *time_out, bool *success,
-			   char *errmsg, size_t errmsg_len)
-{
-	return grpc_export_get_version_io(
-		export_id, read_out, write_out, time_out, success, errmsg,
-		errmsg_len, server_grpc_fill_9p_iostats,
-		"Export does not have any NFSv4.2 activity");
-}
-
-/**
- * @brief Retrieve per-export 9P operation statistics.
- */
-bool grpc_export_get_9p_opstats(uint32_t export_id, const char *opname,
-				struct grpc_op_stats *op_out,
-				struct timespec *time_out, bool *success,
-				char *errmsg, size_t errmsg_len)
-{
-	struct gsh_export *export = NULL;
-	struct export_stats *export_st = NULL;
-	uint8_t opcode;
-	const char *errormsg = "OK";
-
-	*success = true;
-
-	export = get_gsh_export(export_id);
-	if (export == NULL) {
-		*success = false;
-		errormsg = "No export available";
-		goto out;
-	}
-
-	export_st = container_of(export, struct export_stats, export);
-
-	if (export_st->st._9p == NULL) {
-		*success = false;
-		errormsg = "Export does not have any 9p activity";
-		goto out_put;
-	}
-
-	if (!grpc_parse_9p_opname(opname, &opcode)) {
-		*success = false;
-		errormsg = "arg not a known 9P operation";
-		goto out_put;
-	}
-
-	server_grpc_fill_9p_opstats(&export_st->st, opcode, op_out);
-
-	*time_out = export->last_update;
-
-out_put:
-	put_gsh_export(export);
-
-out:
-	snprintf(errmsg, errmsg_len, "%s", errormsg);
-	return true;
-}
-#endif
 
 /**
  * @brief Retrieves NFSMon I/O statistics for the specified export.

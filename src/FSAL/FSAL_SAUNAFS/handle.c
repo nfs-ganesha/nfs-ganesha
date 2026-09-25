@@ -588,7 +588,6 @@ static fsal_status_t openByHandle(struct fsal_obj_handle *objectHandle,
 		}
 
 		if (!FSAL_IS_ERROR(status) && createmode >= FSAL_EXCLUSIVE &&
-		    createmode != FSAL_EXCLUSIVE_9P &&
 		    !check_verifier_stat(&attributesValues.attr, verifier,
 					 false)) {
 			/* Verifier didn't match, return EEXIST */
@@ -1635,8 +1634,7 @@ static fsal_status_t close2(struct fsal_obj_handle *objectHandle,
 		     handle->key.exportId, handle->inode);
 
 	if (state->state_type == STATE_TYPE_SHARE ||
-	    state->state_type == STATE_TYPE_NLM_SHARE ||
-	    state->state_type == STATE_TYPE_9P_FID) {
+	    state->state_type == STATE_TYPE_NLM_SHARE) {
 		update_share_counters_locked(objectHandle, &handle->share,
 					     handle->fd.fsalFd.openflags,
 					     FSAL_O_CLOSED);
@@ -1918,7 +1916,7 @@ fsal_status_t lock_op2(struct fsal_obj_handle *objectHandle,
  * held.
  *
  * This MAY be used to open a file the first time if there is no need for
- * open by name or create semantics. One example would be 9P lopen.
+ * open by name or create semantics.
  *
  * @param [in] objectHandle     File on which to operate
  * @param [in] state            state_t to use for this operation

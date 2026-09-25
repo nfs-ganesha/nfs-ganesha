@@ -35,7 +35,6 @@ Client = namedtuple('Client',
                      'HasNFSv40',
                      'HasNFSv41',
                      'HasNFSv42',
-                     'Has9P',
                      'LastTime'])
 
 class ClientMgr():
@@ -95,7 +94,7 @@ class ClientMgr():
             return format of ShowClients
             [<client_ip>,<is_connected> [["NFSv3", <data>], ["MNT", <data>], ["NLMv4", <data>],
             ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
-            ["NFSv42", <data>], ["9P", <data>]],
+            ["NFSv42", <data>],
             <totalops>,
             ["Open", <data>, "Lock", <data>, "Delegation", <data>],
             [<lastime>, <nsecs>]]
@@ -117,7 +116,6 @@ class ClientMgr():
                          HasNFSv40=cl_.get('NFSv40', 0),
                          HasNFSv41=cl_.get('NFSv41', 0),
                          HasNFSv42=cl_.get('NFSv42', 0),
-                         Has9P=cl_.get('9P', 0),
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             clients.append(clt)
@@ -135,7 +133,6 @@ Export = namedtuple('Export',
                      'HasNFSv40',
                      'HasNFSv41',
                      'HasNFSv42',
-                     'Has9P',
                      'LastTime'])
 
 ExportClient = namedtuple('ExportClient',
@@ -240,7 +237,7 @@ class ExportMgr():
             export format from ShowExports
             [exp_id, path, [["NFSv3", <data>], ["MNT", <data>], ["NLMv4", <data>],
             ["RQUOTA", <data>], ["NFSv40", <data>], ["NFSv41", <data>],
-            ["NFSv42", <data>], ["9P", <data>]], <totalops>,
+            ["NFSv42", <data>], <totalops>,
             [<lastime>, <nsecs>]]
             convert index:2 to dict and use it
             '''
@@ -261,7 +258,6 @@ class ExportMgr():
                          HasNFSv40=exp_stat.get('NFSv40', 0),
                          HasNFSv41=exp_stat.get('NFSv41', 0),
                          HasNFSv42=exp_stat.get('NFSv42', 0),
-                         Has9P=exp_stat.get('9P', 0),
                          LastTime=(lasttime[0],
                                    lasttime[1]))
             exports.append(exp)

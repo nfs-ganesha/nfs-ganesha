@@ -69,8 +69,8 @@ LOG { COMPONENTS {} }
         MDCACHE_LRU, HASHTABLE, HASHTABLE_CACHE, DUPREQ,
         INIT, MAIN, IDMAPPER, NFS_READDIR, NFS_V4_LOCK,
         CONFIG, CLIENTID, SESSIONS, PNFS, RW_LOCK, NLM,
-        TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE, 9P,
-        9P_DISPATCH, FSAL_UP, DBUS, NFS_MSK, XPRT, GRPC
+        TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE,
+        FSAL_UP, DBUS, NFS_MSK, XPRT, GRPC
 
     Some synonyms are:
         FH = FILEHANDLE
@@ -87,7 +87,6 @@ LOG { COMPONENTS {} }
         NFS_STARTUP = INIT
         NFS4_LOCK = NFS_V4_LOCK
         NFS4_ACL = NFS_V4_ACL
-        9P_DISP = 9P_DISPATCH
 
     The log levels are:
         NULL, FATAL, MAJ, CRIT, WARN, EVENT,
@@ -205,8 +204,8 @@ Explanation::
                 MDCACHE_LRU, HASHTABLE, HASHTABLE_CACHE, DUPREQ,
                 INIT, MAIN, IDMAPPER, NFS_READDIR, NFS_V4_LOCK,
                 CONFIG, CLIENTID, SESSIONS, PNFS, RW_LOCK, NLM,
-                TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE, 9P,
-                9P_DISPATCH, FSAL_UP, DBUS, NFS_MSK, XPRT
+                TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE,
+                FSAL_UP, DBUS, NFS_MSK, XPRT
 
     Some synonyms are:
 
@@ -224,7 +223,6 @@ Explanation::
     NFS_STARTUP = INIT
     NFS4_LOCK = NFS_V4_LOCK
     NFS4_ACL = NFS_V4_ACL
-    9P_DISP = 9P_DISPATCH
 
     The log levels are:
                 NULL, FATAL, MAJ, CRIT, WARN, EVENT,

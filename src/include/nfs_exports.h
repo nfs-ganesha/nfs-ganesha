@@ -203,12 +203,11 @@ struct exportlist_client_entry {
 /* Protocol flags */
 #define EXPORT_OPTION_NFSV3 0x00100000 /*< NFSv3 operations are supported */
 #define EXPORT_OPTION_NFSV4 0x00200000 /*< NFSv4 operations are supported */
-#define EXPORT_OPTION_9P 0x00400000 /*< 9P operations are supported */
 #define EXPORT_OPTION_UDP 0x01000000 /*< UDP protocol is supported */
 #define EXPORT_OPTION_TCP 0x02000000 /*< TCP protocol is supported */
 #define EXPORT_OPTION_RDMA 0x04000000 /*< RDMA protocol is supported */
 #define EXPORT_OPTION_PROTOCOLS \
-	(EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4 | EXPORT_OPTION_9P)
+	(EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)
 #define EXPORT_OPTION_PROTO_DEFAULTS (EXPORT_OPTION_NFSV3 | EXPORT_OPTION_NFSV4)
 #define EXPORT_OPTION_TRANSPORTS \
 	(EXPORT_OPTION_UDP | EXPORT_OPTION_TCP | EXPORT_OPTION_RDMA)

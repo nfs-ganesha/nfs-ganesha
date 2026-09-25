@@ -18,7 +18,6 @@ LOG { COMPONENTS {} }
 LOG { FACILITY {} }
 LOG { FORMAT {} }
 LOG { CONDITIONAL {} }
-_9P {}
 MDCACHE {}
 FSAL_LIST {}
 CEPH {}
@@ -425,7 +424,7 @@ EXPORT_DEFAULTS {}
 		    default None)
 
 	Protocols(enum list,
-		  values [3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4, 9P],
+		  values [3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4],
 		  default none)
 
 	Transports(enum list, values [UDP, TCP, RDMA], default [UDP, TCP])
@@ -918,8 +917,8 @@ LOG { COMPONENTS {} }
 			    MDCACHE_LRU, HASHTABLE, HASHTABLE_CACHE, DUPREQ,
 			    INIT, MAIN, IDMAPPER, NFS_READDIR, NFS_V4_LOCK,
 			    CONFIG, CLIENTID, SESSIONS, PNFS, RW_LOCK, NLM,
-			    TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE, 9P,
-			    9P_DISPATCH, FSAL_UP, DBUS, NFS_MSK, XPRT
+			    TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE,
+			    FSAL_UP, DBUS, NFS_MSK, XPRT
 
 	Some synonyms are:
 
@@ -937,7 +936,6 @@ LOG { COMPONENTS {} }
 	NFS_STARTUP = INIT
 	NFS4_LOCK = NFS_V4_LOCK
 	NFS4_ACL = NFS_V4_ACL
-	9P_DISP = 9P_DISPATCH
 
 	The log levels are: NULL, FATAL, MAJ, CRIT, WARN, EVENT,
 			    INFO, DEBUG, MID_DEBUG, M_DBG,
@@ -1065,8 +1063,8 @@ LOG { CONDITIONAL {} }
 			    MDCACHE_LRU, HASHTABLE, HASHTABLE_CACHE, DUPREQ,
 			    INIT, MAIN, IDMAPPER, NFS_READDIR, NFS_V4_LOCK,
 			    CONFIG, CLIENTID, SESSIONS, PNFS, RW_LOCK, NLM,
-			    TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE, 9P,
-			    9P_DISPATCH, FSAL_UP, DBUS, NFS_MSK, XPRT
+			    TIRPC, NFS_CB, THREAD, NFS_V4_ACL, STATE,
+			    FSAL_UP, DBUS, NFS_MSK, XPRT
 
 	Some synonyms are:
 
@@ -1084,7 +1082,6 @@ LOG { CONDITIONAL {} }
 	NFS_STARTUP = INIT
 	NFS4_LOCK = NFS_V4_LOCK
 	NFS4_ACL = NFS_V4_ACL
-	9P_DISP = 9P_DISPATCH
 
 	The log levels are: NULL, FATAL, MAJ, CRIT, WARN, EVENT,
 			    INFO, DEBUG, MID_DEBUG, M_DBG,
@@ -1153,25 +1150,6 @@ MDCACHE {}
 	Files_Delegatable_Percent(int32, range 10 to 90, default 90)
 
 	Use_Cached_Owner_On_Owner_Override(bool, true)
-
-_9P {}
-------
-
-	Nb_Worker(uint32, range 1 to 1024*128, default 256)
-
-	_9P_TCP_Port(uint16, range 1 to UINT16_MAX, default 564)
-
-	_9P_RDMA_Port(uint16, range 1 to UINT16_MAX, default 5640)
-
-	_9P_TCP_Msize(uint32, range 1024 to UINT32_MAX, default 65536)
-
-	_9P_RDMA_Msize(uint32, range 1024 to UINT32_MAX, default 1048576)
-
-	_9P_RDMA_Backlog(uint16, range 1 to UINT16_MAX, default 10)
-
-	_9P_RDMA_Inpool_size(uint16, range 1 to UINT16_MAX, default 64)
-
-	_9P_RDMA_Outpool_Size(uint16, range 1 to UINT16_MAX, default 32)
 
 FSAL_LIST {}
 ------------

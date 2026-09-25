@@ -122,24 +122,6 @@ message CeLayoutStats
 	uint64 errors = 2;
 }
 
-// 9p / generic op counter pair; mirrors D-Bus OP_STATS_REPLY (tt).
-message OpStats
-{
-	uint64 total_ops = 1;
-	uint64 errors = 2;
-}
-
-// 9p transport counters; mirrors D-Bus TRANSPORT_REPLY.
-message TransportStats
-{
-	uint64 rx_bytes = 1;
-	uint64 rx_pkt = 2;
-	uint64 rx_err = 3;
-	uint64 tx_bytes = 4;
-	uint64 tx_pkt = 5;
-	uint64 tx_err = 6;
-}
-
 // Per-operation entry with duplicates; mirrors D-Bus a(sttt).
 message ClientOpEntry
 {
@@ -175,17 +157,10 @@ message VersionCeStats
 	CeLayoutStats layout = 5; // populated for NFSv4.1/4.2 only
 }
 
-// Input for Get9pOpStats; mirrors D-Bus IPADDR_ARG + _9P_OP_ARG.
-message Client9pOpRequest
-{
-	string ipaddr = 1;
-	string op_name = 2;
-}
-
 // Protocol activity flag; mirrors D-Bus PROTOCOLS_CONTAINER (sb) entry.
 message ProtocolActivity
 {
-	string name = 1; // e.g. "NFSv3", "NFSv40", "9P"
+	string name = 1; // e.g. "NFSv3", "NFSv40"
 	bool active = 2;
 }
 
@@ -205,10 +180,4 @@ message ClientInfo
 	repeated StateStatEntry state_stats = 4;
 	Timestamp last_update = 5;
 	bool is_connected = 6; // true if client has active connections
-}
-// Input for Get9pOpStats; mirrors D-Bus EXPORT_ID_ARG + _9P_OP_ARG.
-message Export9pOpRequest
-{
-	uint32 export_id = 1;
-	string op_name = 2;
 }

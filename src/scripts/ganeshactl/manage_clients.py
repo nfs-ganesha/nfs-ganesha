@@ -60,7 +60,7 @@ class ManageClients(QtCore.QObject):
             print("No clients")
         else:
             print("Clients:")
-            print(" IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, 9p, last")
+            print(" IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, last")
             for client in clients:
                 print(" %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s %d nsecs" %
                       (client.ClientIP,
@@ -70,7 +70,6 @@ class ManageClients(QtCore.QObject):
                        client.HasRQUOTA,
                        client.HasNFSv40,
                        client.HasNFSv41,
-                       client.Has9P,
                        time.ctime(client.LastTime[0]), client.LastTime[1]))
         sys.exit()
 

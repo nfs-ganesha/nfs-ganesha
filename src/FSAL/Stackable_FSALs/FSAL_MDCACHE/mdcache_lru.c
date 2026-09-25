@@ -550,9 +550,7 @@ static inline void mdcache_lru_clean(mdcache_entry_t *entry)
 		 * NFS v3 checks for xdev before converting from a handle to an
 		 * LRU reference. NFS v4 holds an LRU reference for the saved FH
 		 * so the last reference can only be dropped when the saved FH
-		 * is cleaned up, which will be done with the correct op_ctx. 9P
-		 * also assures that LRU references are released with the proper
-		 * op_ctx.
+		 * is cleaned up, which will be done with the correct op_ctx.
 		 *
 		 * So in all cases, we can either trust the current export, or
 		 * we can use the first_export_id to get a valid export for

@@ -631,7 +631,7 @@ fsal_openflags_t kvsfs_status2(struct fsal_obj_handle *obj_hdl,
  * thus should only be called with a share state. The state_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
- * open by name or create semantics. One example would be 9P lopen.
+ * open by name or create semantics.
  *
  * @param[in] obj_hdl     File on which to operate
  * @param[in] state       state_t to use for this operation
@@ -698,8 +698,7 @@ fsal_status_t kvsfs_close2(struct fsal_obj_handle *obj_hdl,
 	my_fd = &container_of(state, struct kvsfs_state_fd, state)->kvsfs_fd;
 
 	if (state->state_type == STATE_TYPE_SHARE ||
-	    state->state_type == STATE_TYPE_NLM_SHARE ||
-	    state->state_type == STATE_TYPE_9P_FID) {
+	    state->state_type == STATE_TYPE_NLM_SHARE) {
 		/* This is a share state, we must update the share counters */
 		update_share_counters_locked(obj_hdl, &myself->u.file.share,
 					     my_fd->fsal_fd.openflags,

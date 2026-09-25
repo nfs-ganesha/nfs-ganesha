@@ -66,9 +66,6 @@
 #include "nfs_metrics.h"
 #include "server_stats_grpc.h"
 #include "server_stats_private.h"
-#ifdef _USE_9P
-#include "9p.h"
-#endif
 
 /* Memory Usage Statistics */
 struct gsh_mem_stats gshMC[MEM_COMP_MAX];
@@ -329,16 +326,6 @@ struct transport_stats {
 	uint64_t tx_err;
 };
 
-#ifdef _USE_9P
-struct _9p_stats {
-	struct proto_op cmds; /* non-I/O ops */
-	struct xfer_op read;
-	struct xfer_op write;
-	struct transport_stats trans;
-	struct proto_op *opcodes[_9P_RWSTAT + 1];
-};
-#endif
-
 struct global_stats {
 #ifdef _USE_NFS3
 	struct nfsv3_stats nfsv3;
@@ -551,20 +538,6 @@ get_v4_all(struct gsh_clnt_allops_stats *stats, pthread_rwlock_t *lock)
 	return stats->nfsv4;
 }
 
-#ifdef _USE_9P
-static struct _9p_stats *get_9p(struct gsh_stats *stats, pthread_rwlock_t *lock)
-{
-	if (unlikely(stats->_9p == NULL)) {
-		PTHREAD_RWLOCK_wrlock(lock);
-		if (stats->_9p == NULL)
-			stats->_9p = gsh_calloc(1, sizeof(struct _9p_stats),
-						stats->comp);
-		PTHREAD_RWLOCK_unlock(lock);
-	}
-	return stats->_9p;
-}
-#endif
-
 /* Functions for recording statistics
  */
 
@@ -660,12 +633,6 @@ static void record_io_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 		} else {
 			return;
 		}
-#ifdef _USE_9P
-	} else if (op_ctx->req_type == _9P_REQUEST) {
-		struct _9p_stats *sp = get_9p(gsh_st, lock);
-
-		iop = is_write ? &sp->write : &sp->read;
-#endif
 	} else {
 		return;
 	}
@@ -903,27 +870,6 @@ static void reset_deleg_stats(struct deleg_stats *deleg)
 	(void)atomic_store_uint32_t(&deleg->failed_recalls, 0);
 	(void)atomic_store_uint32_t(&deleg->num_revokes, 0);
 }
-
-#ifdef _USE_9P
-static void reset__9P_stats(struct _9p_stats *_9p)
-{
-	u8 opc;
-
-	reset_op(&_9p->cmds);
-	reset_xfer_op(&_9p->read);
-	reset_xfer_op(&_9p->write);
-	(void)atomic_store_uint64_t(&_9p->trans.rx_bytes, 0);
-	(void)atomic_store_uint64_t(&_9p->trans.rx_pkt, 0);
-	(void)atomic_store_uint64_t(&_9p->trans.rx_err, 0);
-	(void)atomic_store_uint64_t(&_9p->trans.tx_bytes, 0);
-	(void)atomic_store_uint64_t(&_9p->trans.tx_pkt, 0);
-	(void)atomic_store_uint64_t(&_9p->trans.tx_err, 0);
-	for (opc = 0; opc <= _9P_RWSTAT; opc++) {
-		if (_9p->opcodes[opc] != NULL)
-			reset_op(_9p->opcodes[opc]);
-	}
-}
-#endif
 
 /**
  * @brief record V4.1 layout op stats
@@ -1261,87 +1207,6 @@ static void record_stats(struct gsh_stats *gsh_st, pthread_rwlock_t *lock,
 #endif
 	}
 }
-
-#ifdef _USE_9P
-/**
- * @brief Record transport stats
- *
- */
-static void record_transport_stats(struct transport_stats *t_st,
-				   uint64_t rx_bytes, uint64_t rx_pkt,
-				   uint64_t rx_err, uint64_t tx_bytes,
-				   uint64_t tx_pkt, uint64_t tx_err)
-{
-	if (rx_bytes)
-		atomic_add_uint64_t(&t_st->rx_bytes, rx_bytes);
-	if (rx_pkt)
-		atomic_add_uint64_t(&t_st->rx_pkt, rx_pkt);
-	if (rx_err)
-		atomic_add_uint64_t(&t_st->rx_err, rx_err);
-	if (tx_bytes)
-		atomic_add_uint64_t(&t_st->tx_bytes, tx_bytes);
-	if (tx_pkt)
-		atomic_add_uint64_t(&t_st->tx_pkt, tx_pkt);
-	if (tx_err)
-		atomic_add_uint64_t(&t_st->tx_err, tx_err);
-}
-/**
- * @brief record 9P tcp transport stats
- *
- * Called from 9P functions doing send/recv
- */
-void server_stats_transport_done(struct gsh_client *client, uint64_t rx_bytes,
-				 uint64_t rx_pkt, uint64_t rx_err,
-				 uint64_t tx_bytes, uint64_t tx_pkt,
-				 uint64_t tx_err)
-{
-	struct server_stats *server_st =
-		container_of(client, struct server_stats, client);
-	struct _9p_stats *sp = get_9p(&server_st->st, &client->client_lock);
-
-	if (sp != NULL)
-		record_transport_stats(&sp->trans, rx_bytes, rx_pkt, rx_err,
-				       tx_bytes, tx_pkt, tx_err);
-}
-
-/**
- * @bried record 9p operation stats
- *
- * Called from 9P interpreter at operation completion
- */
-void server_stats_9p_done(u8 opc, struct _9p_request_data *req9p)
-{
-	struct gsh_client *client;
-	struct gsh_export *export;
-	struct _9p_stats *sp;
-
-	client = req9p->pconn->client;
-	if (client) {
-		struct server_stats *server_st;
-
-		server_st = container_of(client, struct server_stats, client);
-		sp = get_9p(&server_st->st, &client->client_lock);
-		if (sp->opcodes[opc] == NULL)
-			sp->opcodes[opc] = gsh_calloc(1,
-						      sizeof(struct proto_op),
-						      server_st->st.comp);
-		record_op(sp->opcodes[opc], 0, true, false);
-	}
-
-	if (op_ctx->ctx_export) {
-		struct export_stats *exp_st;
-
-		export = op_ctx->ctx_export;
-		exp_st = container_of(export, struct export_stats, export);
-		sp = get_9p(&exp_st->st, &export->exp_lock);
-		if (sp->opcodes[opc] == NULL)
-			sp->opcodes[opc] = gsh_calloc(1,
-						      sizeof(struct proto_op),
-						      exp_st->st.comp);
-		record_op(sp->opcodes[opc], 0, true, false);
-	}
-}
-#endif
 
 #ifdef _USE_NFS3
 static void record_v3_full_stats(nfs_request_t *reqdata,
@@ -1694,7 +1559,6 @@ void dbus_message_iter_append_protocol_info(DBusMessageIter *niter,
  *	bool nfsv40;
  *	bool nfsv41;
  *	bool nfsv42;
- *	bool _9p;
  *      ...
  * }
  *
@@ -1785,47 +1649,9 @@ void server_stats_summary(DBusMessageIter *iter, struct gsh_stats *st)
 		tot_ops += st->nfsv42->compounds.total +
 			   st->nfsv42->read.cmd.total +
 			   st->nfsv42->write.cmd.total;
-#ifdef _USE_9P
-	stats_available = (st->_9p != 0 && (st->_9p->cmds.total != 0 ||
-					    st->_9p->read.cmd.total != 0 ||
-					    st->_9p->write.cmd.total != 0));
-	protocol = "9P";
-	dbus_message_iter_append_protocol_info(&st_iter, &protocol,
-					       &stats_available);
-	if (stats_available)
-		tot_ops += st->_9p->cmds.total + st->_9p->read.cmd.total +
-			   st->_9p->write.cmd.total;
-#endif
 	dbus_message_iter_close_container(iter, &st_iter);
 	dbus_message_iter_append_basic(iter, DBUS_TYPE_UINT64, &tot_ops);
 }
-
-#ifdef _USE_9P
-/** @brief Report protocol operation statistics
- *
- * struct proto_op {
- *         uint64_t total;
- *         uint64_t errors;
- *         ...
- * }
- *
- * @param op    [IN] pointer to proto op sub-structure of interest
- * @param iter  [IN] iterator in reply stream to fill
- */
-static void server_dbus_op_stats(struct proto_op *op, DBusMessageIter *iter)
-{
-	DBusMessageIter struct_iter;
-	uint64_t zero = 0;
-
-	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
-					 &struct_iter);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       op == NULL ? &zero : &op->total);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       op == NULL ? &zero : &op->errors);
-	dbus_message_iter_close_container(iter, &struct_iter);
-}
-#endif
 
 /**
  * @brief Report I/O statistics as a struct
@@ -1975,30 +1801,6 @@ void server_dbus_celo_stats(struct nfsv41_stats *sp, DBusMessageIter *iter,
 					       &delays);
 	dbus_message_iter_close_container(iter, &struct_iter);
 }
-
-#ifdef _USE_9P
-static void server_dbus_transportstats(struct transport_stats *tstats,
-				       DBusMessageIter *iter)
-{
-	DBusMessageIter struct_iter;
-
-	dbus_message_iter_open_container(iter, DBUS_TYPE_STRUCT, NULL,
-					 &struct_iter);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       &tstats->rx_bytes);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       &tstats->rx_pkt);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       &tstats->rx_err);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       &tstats->tx_bytes);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       &tstats->tx_pkt);
-	dbus_message_iter_append_basic(&struct_iter, DBUS_TYPE_UINT64,
-				       &tstats->tx_err);
-	dbus_message_iter_close_container(iter, &struct_iter);
-}
-#endif
 
 void server_dbus_client_io_ops(DBusMessageIter *iter, struct gsh_client *client)
 {
@@ -2932,10 +2734,6 @@ void reset_gsh_stats(struct gsh_stats *st)
 #endif
 	if (st->deleg)
 		reset_deleg_stats(st->deleg);
-#ifdef _USE_9P
-	if (st->_9p)
-		reset__9P_stats(st->_9p);
-#endif
 }
 
 void reset_gsh_allops_stats(struct gsh_clnt_allops_stats *st)
@@ -3036,37 +2834,6 @@ void reset_server_stats(void)
 }
 
 #ifdef USE_DBUS
-
-#ifdef _USE_9P
-void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter)
-{
-	struct timespec timestamp;
-
-	now(&timestamp);
-	gsh_dbus_append_timestamp(iter, &timestamp);
-	server_dbus_iostats(&_9pp->read, iter);
-	server_dbus_iostats(&_9pp->write, iter);
-}
-
-void server_dbus_9p_transstats(struct _9p_stats *_9pp, DBusMessageIter *iter)
-{
-	struct timespec timestamp;
-
-	now(&timestamp);
-	gsh_dbus_append_timestamp(iter, &timestamp);
-	server_dbus_transportstats(&_9pp->trans, iter);
-}
-
-void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
-			    DBusMessageIter *iter)
-{
-	struct timespec timestamp;
-
-	now(&timestamp);
-	gsh_dbus_append_timestamp(iter, &timestamp);
-	server_dbus_op_stats(_9pp->opcodes[opcode], iter);
-}
-#endif
 
 /**
  * @brief Report layout statistics as a struct
@@ -3331,19 +3098,6 @@ void server_stats_free(struct gsh_stats *statsp)
 		gsh_free(statsp->nfsv42, statsp->comp);
 		statsp->nfsv42 = NULL;
 	}
-#ifdef _USE_9P
-	if (statsp->_9p != NULL) {
-		u8 opc;
-
-		for (opc = 0; opc <= _9P_RWSTAT; opc++) {
-			if (statsp->_9p->opcodes[opc] != NULL)
-				gsh_free(statsp->_9p->opcodes[opc],
-					 statsp->comp);
-		}
-		gsh_free(statsp->_9p, statsp->comp);
-		statsp->_9p = NULL;
-	}
-#endif
 }
 
 /**
@@ -4069,102 +3823,6 @@ struct grpc_client_allops *server_grpc_fill_client_allops(
 	return out;
 }
 
-#ifdef _USE_9P
-/**
- * @brief Extract 9p read/write counters for gRPC cltmgr stats
- */
-bool server_grpc_fill_9p_iostats(struct gsh_stats *st,
-				 struct grpc_iostats *read_out,
-				 struct grpc_iostats *write_out)
-{
-	if (st->_9p == NULL)
-		return false;
-
-	grpc_iostats_from_xfer(&st->_9p->read, read_out);
-	grpc_iostats_from_xfer(&st->_9p->write, write_out);
-	return true;
-}
-
-/**
- * @brief Extract 9p transport counters for gRPC cltmgr stats
- */
-bool server_grpc_fill_9p_transport(struct gsh_stats *st,
-				   struct grpc_transport_stats *trans_out)
-{
-	if (st->_9p == NULL)
-		return false;
-
-	trans_out->rx_bytes = st->_9p->trans.rx_bytes;
-	trans_out->rx_pkt = st->_9p->trans.rx_pkt;
-	trans_out->rx_err = st->_9p->trans.rx_err;
-	trans_out->tx_bytes = st->_9p->trans.tx_bytes;
-	trans_out->tx_pkt = st->_9p->trans.tx_pkt;
-	trans_out->tx_err = st->_9p->trans.tx_err;
-	return true;
-}
-
-/**
- * @brief Extract one 9p operation counter for gRPC cltmgr stats
- */
-bool server_grpc_fill_9p_opstats(struct gsh_stats *st, uint8_t opcode,
-				 struct grpc_op_stats *op_out)
-{
-	struct proto_op *op;
-
-	if (st->_9p == NULL)
-		return false;
-
-	op = st->_9p->opcodes[opcode];
-	op_out->total_ops = op == NULL ? 0 : op->total;
-	op_out->errors = op == NULL ? 0 : op->errors;
-	return true;
-}
-
-/**
- * @brief Parse a 9p operation name into its opcode
- */
-bool grpc_parse_9p_opname(const char *opname, uint8_t *opcode_out)
-{
-	uint8_t opc;
-
-	if (opname == NULL)
-		return false;
-
-	for (opc = _9P_TSTATFS; opc <= _9P_TWSTAT; opc++) {
-		if (_9pfuncdesc[opc].funcname != NULL &&
-		    !strcmp(opname, _9pfuncdesc[opc].funcname)) {
-			*opcode_out = opc;
-			return true;
-		}
-	}
-	return false;
-}
-#else
-bool server_grpc_fill_9p_iostats(struct gsh_stats *st,
-				 struct grpc_iostats *read_out,
-				 struct grpc_iostats *write_out)
-{
-	return false;
-}
-
-bool server_grpc_fill_9p_transport(struct gsh_stats *st,
-				   struct grpc_transport_stats *trans_out)
-{
-	return false;
-}
-
-bool server_grpc_fill_9p_opstats(struct gsh_stats *st, uint8_t opcode,
-				 struct grpc_op_stats *op_out)
-{
-	return false;
-}
-
-bool grpc_parse_9p_opname(const char *opname, uint8_t *opcode_out)
-{
-	return false;
-}
-#endif
-
 /**
  * @brief Fill per-client protocol-activity flags for ShowClients
  *
@@ -4253,18 +3911,6 @@ void server_grpc_fill_stats_summary(struct gsh_stats *st,
 			   st->nfsv42->read.cmd.total +
 			   st->nfsv42->write.cmd.total;
 	n++;
-
-#ifdef _USE_9P
-	active = (st->_9p != NULL &&
-		  (st->_9p->cmds.total != 0 || st->_9p->read.cmd.total != 0 ||
-		   st->_9p->write.cmd.total != 0));
-	snprintf(protos[n].name, sizeof(protos[n].name), "9P");
-	protos[n].active = active;
-	if (active)
-		tot_ops += st->_9p->cmds.total + st->_9p->read.cmd.total +
-			   st->_9p->write.cmd.total;
-	n++;
-#endif
 
 	*proto_count = n;
 	*total_ops_out = tot_ops;

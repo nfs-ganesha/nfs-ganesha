@@ -680,10 +680,6 @@ const char *state_owner_type_to_str(state_owner_type_t type)
 	case STATE_LOCK_OWNER_NLM:
 		return "STATE_LOCK_OWNER_NLM";
 #endif /* _USE_NLM */
-#ifdef _USE_9P
-	case STATE_LOCK_OWNER_9P:
-		return "STALE_LOCK_OWNER_9P";
-#endif
 	case STATE_OPEN_OWNER_NFSV4:
 		return "STATE_OPEN_OWNER_NFSV4";
 	case STATE_LOCK_OWNER_NFSV4:
@@ -720,10 +716,6 @@ bool different_owners(state_owner_t *owner1, state_owner_t *owner2)
 	case STATE_LOCK_OWNER_NLM:
 		return compare_nlm_owner(owner1, owner2);
 #endif /* _USE_NLM */
-#ifdef _USE_9P
-	case STATE_LOCK_OWNER_9P:
-		return compare_9p_owner(owner1, owner2);
-#endif
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:
 	case STATE_CLIENTID_OWNER_NFSV4:
@@ -754,11 +746,6 @@ int display_owner(struct display_buffer *dspbuf, state_owner_t *owner)
 	case STATE_LOCK_OWNER_NLM:
 		return display_nlm_owner(dspbuf, owner);
 #endif /* _USE_NLM */
-
-#ifdef _USE_9P
-	case STATE_LOCK_OWNER_9P:
-		return display_9p_owner(dspbuf, owner);
-#endif
 
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:
@@ -835,11 +822,6 @@ void free_state_owner(state_owner_t *owner)
 		break;
 #endif /* _USE_NLM */
 
-#ifdef _USE_9P
-	case STATE_LOCK_OWNER_9P:
-		break;
-#endif
-
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:
 	case STATE_CLIENTID_OWNER_NFSV4:
@@ -880,11 +862,6 @@ hash_table_t *get_state_owner_hash_table(state_owner_t *owner)
 	case STATE_LOCK_OWNER_NLM:
 		return ht_nlm_owner;
 #endif /* _USE_NLM */
-
-#ifdef _USE_9P
-	case STATE_LOCK_OWNER_9P:
-		return ht_9p_owner;
-#endif
 
 	case STATE_OPEN_OWNER_NFSV4:
 	case STATE_LOCK_OWNER_NFSV4:

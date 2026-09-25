@@ -189,9 +189,9 @@ Disable_NLM_SHARE(bool, default false)
 Blocked_Lock_Poller_Interval(int64, range 0 to 180, default 10)
     Polling interval for blocked lock polling thread
 
-Protocols(enum list, default [3,4,9P])
+Protocols(enum list, default [3,4])
     Possible values:
-        3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4, 9P
+        3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4
     Support for NFS Over RDMA: [3 or 4 or 3,4], nfsrdma, rpcrdma
 
     The protocols that Ganesha will listen for.  This is a hard limit, as this
@@ -224,7 +224,7 @@ resolve_fs_delay(uint32_t, range 1 to 1000, default 100)
     for exports.
 
 mount_path_pseudo(bool, default false)
-    Whether to use Pseudo (true) or Path (false) for NFS v3 and 9P mounts.
+    Whether to use Pseudo (true) or Path (false) for NFS v3 mounts.
 
     This option defaults to false for backward compatibility, however, for
     new setups, it's strongly recommended to be set true since it then means

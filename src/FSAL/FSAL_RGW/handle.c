@@ -849,11 +849,8 @@ fsal_status_t rgw_fsal_open2(struct fsal_obj_handle *obj_hdl,
 			} else {
 				LogFullDebug(COMPONENT_FSAL,
 					     "New size = %" PRIx64, st.st_size);
-				/* Now check verifier for exclusive, but not for
-				 * FSAL_EXCLUSIVE_9P.
-				 */
+				/* Now check verifier for exclusive */
 				if (createmode >= FSAL_EXCLUSIVE &&
-				    createmode != FSAL_EXCLUSIVE_9P &&
 				    !obj_hdl->obj_ops->check_verifier(
 					    obj_hdl, verifier)) {
 					/* Verifier didn't match */
@@ -1180,7 +1177,7 @@ fsal_openflags_t rgw_fsal_status2(struct fsal_obj_handle *obj_hdl,
  * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
- * open by name or create semantics. One example would be 9P lopen.
+ * open by name or create semantics.
  *
  * @param[in] obj_hdl     File on which to operate
  * @param[in] state       state_t to use for this operation
@@ -1235,7 +1232,7 @@ fsal_status_t rgw_fsal_reopen2(struct fsal_obj_handle *obj_hdl,
 	/* perform a provider open iff not already open */
 	if (true) {
 		/* XXX also, how do we know the ULP tracks opens?
-		 * 9P does, V3 does not */
+		 * V3 does not */
 
 		int rc = rgw_open(export->rgw_fs, handle->rgw_fh, posix_flags,
 				  (!state) ? RGW_OPEN_FLAG_V3
@@ -1491,8 +1488,7 @@ fsal_status_t rgw_fsal_close2(struct fsal_obj_handle *obj_hdl,
 			     __func__, open_state);
 
 		if (state->state_type == STATE_TYPE_SHARE ||
-		    state->state_type == STATE_TYPE_NLM_SHARE ||
-		    state->state_type == STATE_TYPE_9P_FID) {
+		    state->state_type == STATE_TYPE_NLM_SHARE) {
 			/* This is a share state, we must update the share
 			 * counters.  This can block over an I/O operation.
 			 */

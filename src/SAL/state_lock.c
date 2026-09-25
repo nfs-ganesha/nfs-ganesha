@@ -211,8 +211,6 @@ const char *str_protocol(lock_protocol_t protocol)
 		return "LOCK_NLM  ";
 	case LOCK_NFSv4:
 		return "LOCK_NFSv4";
-	case LOCK_9P:
-		return "LOCK_9P   ";
 	}
 	return "unknown   ";
 }
@@ -2431,16 +2429,6 @@ state_status_t do_lock_op(struct fsal_obj_handle *obj, state_t *state,
 	case STATE_LOCK_OWNER_NLM:
 		nlm_client = owner->so_owner.so_nlm_owner.so_client;
 		owner_client = nlm_client->slc_nsm_client->ssc_client;
-		break;
-#endif
-
-#ifdef _USE_9P
-	case STATE_LOCK_OWNER_9P:
-		/* OOPS - 9P won't work with FSALs that need
-		 * op_ctx->client because it doesn't set it...
-		 * They will crash soon enough...
-		 */
-		LogDebug(COMPONENT_STATE, "9P doesn't set op_ctx->client...");
 		break;
 #endif
 

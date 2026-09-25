@@ -869,38 +869,3 @@ int gsh_dbus_broadcast(char *obj_name, char *int_name, char *sig_name,
 
 	return rc;
 }
-
-#ifdef _USE_9P
-
-/* parse the 9P operation in args
- */
-bool arg_9p_op(DBusMessageIter *args, u8 *opcode, char **errormsg)
-{
-	char *opname;
-	u8 opc;
-	bool success = true;
-
-	if (args == NULL) {
-		success = false;
-		*errormsg = "message is missing argument";
-	} else if (dbus_message_iter_get_arg_type(args) != DBUS_TYPE_STRING) {
-		success = false;
-		*errormsg = "arg not a string";
-	} else {
-		dbus_message_iter_get_basic(args, &opname);
-		for (opc = _9P_TSTATFS; opc <= _9P_TWSTAT; opc++) {
-			if (_9pfuncdesc[opc].funcname != NULL &&
-			    !strcmp(opname, _9pfuncdesc[opc].funcname))
-				break;
-		}
-		if (opc > _9P_TWSTAT) {
-			success = false;
-			*errormsg = "arg not a known 9P operation";
-		} else {
-			*opcode = opc;
-		}
-	}
-	return success;
-}
-
-#endif

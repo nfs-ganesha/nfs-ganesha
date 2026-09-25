@@ -39,7 +39,6 @@ class ExportTableModel(QAbstractTableModel):
                        'RQUOTA',
                        'NFSv4.0',
                        'NFSv4.1',
-                       '9P',
                        'Last Stats Update']
         self.exportmgr = exportmgr
         self.exportmgr.show_exports.connect(self.FetchExports_done)

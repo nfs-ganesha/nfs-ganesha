@@ -36,8 +36,4 @@ if(ENABLE_CLUSTER_QOS)
 endif(ENABLE_CLUSTER_QOS)
 endif(ENABLE_QOS)
 
-if(USE_9P)
-  add_subdirectory(9P)
-endif(USE_9P)
-
 ########### install files ###############

@@ -818,7 +818,6 @@ static fsal_status_t lzfs_int_open_by_handle(struct fsal_obj_handle *obj_hdl,
 		}
 
 		if (!FSAL_IS_ERROR(status) && createmode >= FSAL_EXCLUSIVE &&
-		    createmode != FSAL_EXCLUSIVE_9P &&
 		    !check_verifier_stat(&lzfs_attrs.attr, verifier, false)) {
 			/* Verifier didn't match, return EEXIST */
 			status = fsalstat(posix2fsal_error(EEXIST), EEXIST);
@@ -1454,8 +1453,7 @@ static fsal_status_t lzfs_fsal_close2(struct fsal_obj_handle *obj_hdl,
 		     lzfs_obj->unique_key.export_id, lzfs_obj->inode);
 
 	if (state->state_type == STATE_TYPE_SHARE ||
-	    state->state_type == STATE_TYPE_NLM_SHARE ||
-	    state->state_type == STATE_TYPE_9P_FID) {
+	    state->state_type == STATE_TYPE_NLM_SHARE) {
 		update_share_counters_locked(obj_hdl, &lzfs_obj->share,
 					     lzfs_obj->fd.fsal_fd.openflags,
 					     FSAL_O_CLOSED);

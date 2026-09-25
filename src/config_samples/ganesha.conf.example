@@ -17,7 +17,7 @@
 	## Configure the protocols that Ganesha will listen for.  This is a hard
 	## limit, as this list determines which sockets are opened.  This list
 	## can be restricted per export, but cannot be expanded.
-	#Protocols = 3,4,9P;
+	#Protocols = 3,4;
 #}
 
 ## These are defaults for exports.  They can be overridden per-export.

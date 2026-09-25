@@ -67,9 +67,6 @@ struct nfsv40_stats;
 struct nfsv41_stats;
 struct nfsv42_stats;
 struct deleg_stats;
-#ifdef _USE_9P
-struct _9p_stats;
-#endif
 
 #ifdef _USE_NFS3
 struct clnt_allops_v3_stats;
@@ -95,9 +92,6 @@ struct gsh_stats {
 	struct nfsv41_stats *nfsv41;
 	struct nfsv41_stats *nfsv42;
 	struct deleg_stats *deleg;
-#ifdef _USE_9P
-	struct _9p_stats *_9p;
-#endif
 };
 
 struct gsh_clnt_allops_stats {
@@ -200,15 +194,9 @@ struct auth_stats {
 #define STAT_TYPE_NFSV41 "(sb)"
 #define STAT_TYPE_NFSV42 "(sb)"
 
-#ifdef _USE_9P
-#define STAT_TYPE_9P "(sb)"
-#else
-#define STAT_TYPE_9P ""
-#endif
-
-#define PROTOCOLS_CONTAINER                                                     \
-	"(" STAT_TYPE_NFSV3 STAT_TYPE_MNT STAT_TYPE_NLM STAT_TYPE_RQUOTA        \
-		STAT_TYPE_NFSV40 STAT_TYPE_NFSV41 STAT_TYPE_NFSV42 STAT_TYPE_9P \
+#define PROTOCOLS_CONTAINER                                              \
+	"(" STAT_TYPE_NFSV3 STAT_TYPE_MNT STAT_TYPE_NLM STAT_TYPE_RQUOTA \
+		STAT_TYPE_NFSV40 STAT_TYPE_NFSV41 STAT_TYPE_NFSV42       \
 	")"
 
 #define EXPORT_CONTAINER "(" TYPE_ID TYPE_STRING PROTOCOLS_CONTAINER "t(tt))"
@@ -433,10 +421,6 @@ struct auth_stats {
 	  .type = DBUS_TYPE_ARRAY_AS_STRING NFS_ALL_IO_REPLY_ARRAY_TYPE, \
 	  .direction = "out" }
 
-#ifdef _USE_9P
-#define _9P_OP_ARG { .name = "_9p_opname", .type = "s", .direction = "in" }
-#endif
-
 #define OP_STATS_REPLY \
 	{ .name = "op_stats", .type = "(tt)", .direction = "out" }
 
@@ -487,15 +471,6 @@ void server_dbus_v3_full_stats(DBusMessageIter *iter);
 #endif
 void server_dbus_v4_full_stats(DBusMessageIter *iter);
 void fd_usage_summarize_dbus(DBusMessageIter *iter);
-
-#ifdef _USE_9P
-void server_dbus_9p_iostats(struct _9p_stats *_9pp, DBusMessageIter *iter);
-void server_dbus_9p_transstats(struct _9p_stats *_9pp, DBusMessageIter *iter);
-void server_dbus_9p_tcpstats(struct _9p_stats *_9pp, DBusMessageIter *iter);
-void server_dbus_9p_rdmastats(struct _9p_stats *_9pp, DBusMessageIter *iter);
-void server_dbus_9p_opstats(struct _9p_stats *_9pp, u8 opcode,
-			    DBusMessageIter *iter);
-#endif
 
 extern struct glist_head fsal_list;
 

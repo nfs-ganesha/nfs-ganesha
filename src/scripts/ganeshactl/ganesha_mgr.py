@@ -69,7 +69,7 @@ class ManageClients():
             print("No clients")
         else:
             print("Clients:")
-            print(" IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, nfsv42, 9p, last")
+            print(" IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, nfsv42, last")
             for client in clients:
                 print(" %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s, %s %d nsecs" %
                       (client.ClientIP,
@@ -80,7 +80,6 @@ class ManageClients():
                        client.HasNFSv40,
                        client.HasNFSv41,
                        client.HasNFSv42,
-                       client.Has9P,
                        time.ctime(client.LastTime[0]), client.LastTime[1]))
 
 class ShowExports():
@@ -151,7 +150,7 @@ class ShowExports():
             print("No exports")
         else:
             print("Exports:")
-            print("  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, nfsv42, 9p, last")
+            print("  Id, path,    nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, nfsv42, last")
             for export in exports:
                 print(" %d,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s, %s, %d nsecs" %
                       (export.ExportID,
@@ -163,7 +162,6 @@ class ShowExports():
                        export.HasNFSv40,
                        export.HasNFSv41,
                        export.HasNFSv42,
-                       export.Has9P,
                        time.ctime(export.LastTime[0]), export.LastTime[1]))
 
     def status_message(self, status, errormsg):

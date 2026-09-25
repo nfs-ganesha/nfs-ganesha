@@ -109,11 +109,10 @@ are available and what their defaults are.  After this, you can explicitly
 change parameters from the command line.  For example:
 
    $ mkdir mybuild; cd mybuild
-   $ cmake -D_USE_9P=OFF -D_HANDLE_MAPPING=ON -DALLOCATOR=tcmalloc \
+   $ cmake -D_HANDLE_MAPPING=ON -DALLOCATOR=tcmalloc \
      ~/git/nfs-ganesha/src
 
-This will disable a 9P build, use handle mapping in the PROXY fsal and
-pick the tcmalloc allocator.
+This will use handle mapping in the PROXY fsal and pick the tcmalloc allocator.
 
 There are two other variables of interest:
 
@@ -133,7 +132,7 @@ Put these together and you get the build I use for merge testing:
     ~/git/nfs-ganesha/src
 
 Look at src/cmake/build_configuration/everything.cmake to see what this turns
-on.  If you want a custom, for say just a 9P server or only some features,
+on.  If you want a custom, for say just a NFSv4 server or only some features,
 create a file on the model of everything.cmake in that directory and then
 reference it on the command line.  This eliminates the various shell scripts
 we have laying around...  I stole this from the Mysql build where they use

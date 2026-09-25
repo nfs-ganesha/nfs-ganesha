@@ -139,14 +139,6 @@ tirpc_pkg_params ntirpc_pp = {
 	gsh_realloc__,
 };
 
-#ifdef _USE_9P
-pthread_t _9p_dispatcher_thrid;
-#endif
-
-#ifdef _USE_9P_RDMA
-pthread_t _9p_rdma_dispatcher_thrid;
-#endif
-
 #ifdef _USE_NFS_RDMA
 pthread_t nfs_rdma_dispatcher_thrid;
 #endif
@@ -863,16 +855,6 @@ int nfs_set_param_from_conf(config_file_t parse_tree,
 			"Using idmapped_group_time_validity from DIRECTORY_SERVICES config section, instead of manage_gids_expiration from NFS_CORE_PARAM");
 	}
 
-#ifdef _USE_9P
-	(void)load_config_from_parse(parse_tree, &_9p_param_blk, &_9p_param,
-				     true, err_type);
-	if (!config_error_is_harmless(err_type)) {
-		LogCrit(COMPONENT_INIT,
-			"Error while parsing 9P specific configuration");
-		return -1;
-	}
-#endif
-
 #ifdef USE_GRPC
 	(void)load_config_from_parse(parse_tree, &grpc_param,
 				     &nfs_param.grpc_param, true, err_type);
@@ -977,46 +959,6 @@ static void nfs_Start_threads(void)
 			 errno, strerror(errno));
 	}
 	LogDebug(COMPONENT_THREAD, "sigmgr thread started");
-
-#ifdef _USE_9P
-	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
-		/* Start 9P worker threads */
-		rc = _9p_worker_init();
-		if (rc != 0) {
-			LogFatal(COMPONENT_THREAD,
-				 "Could not start worker threads: %d", errno);
-		}
-
-		/* Starting the 9P/TCP dispatcher thread */
-		rc = PTHREAD_create(&_9p_dispatcher_thrid, &attr_thr,
-				    _9p_dispatcher_thread, NULL);
-		if (rc != 0) {
-			LogFatal(
-				COMPONENT_THREAD,
-				"Could not create  9P/TCP dispatcher, error = %d (%s)",
-				errno, strerror(errno));
-		}
-		LogEvent(COMPONENT_THREAD,
-			 "9P/TCP dispatcher thread was started successfully");
-	}
-#endif
-
-#ifdef _USE_9P_RDMA
-	/* Starting the 9P/RDMA dispatcher thread */
-	if (nfs_param.core_param.core_options & CORE_OPTION_9P) {
-		/** @todo - this thread is never cancelled or cleaned up... */
-		rc = PTHREAD_create(&_9p_rdma_dispatcher_thrid, &attr_thr,
-				    _9p_rdma_dispatcher_thread, NULL);
-		if (rc != 0) {
-			LogFatal(
-				COMPONENT_THREAD,
-				"Could not create  9P/RDMA dispatcher, error = %d (%s)",
-				errno, strerror(errno));
-		}
-		LogEvent(COMPONENT_THREAD,
-			 "9P/RDMA dispatcher thread was started successfully");
-	}
-#endif
 
 #ifdef USE_DBUS
 	/* DBUS event thread */
@@ -1238,15 +1180,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		nlm_init();
 	}
 #endif /* _USE_NLM */
-#ifdef _USE_9P
-	/* Init the 9P lock owner cache */
-	LogDebug(COMPONENT_INIT, "Now building 9P Owner cache");
-	if (Init_9p_hash() != 0) {
-		LogFatal(COMPONENT_INIT,
-			 "Error while initializing 9P Owner cache");
-	}
-	LogInfo(COMPONENT_INIT, "9P Owner cache successfully initialized");
-#endif
 
 	LogDebug(COMPONENT_INIT, "Now building NFSv4 Session Id cache");
 	if (nfs41_Init_session_id() != 0) {
@@ -1265,14 +1198,6 @@ static void nfs_Init(const nfs_start_info_t *p_start_info)
 		}
 		LogInfo(COMPONENT_INIT, "NFSv4 specific parameter initialized");
 	}
-#ifdef _USE_9P
-	LogDebug(COMPONENT_INIT, "Now building 9P resources");
-	if (_9p_init()) {
-		LogFatal(COMPONENT_INIT,
-			 "Error while initializing 9P Resources");
-	}
-	LogInfo(COMPONENT_INIT, "9P resources successfully initialized");
-#endif /* _USE_9P */
 
 	/* Creates the pseudo fs */
 	LogDebug(COMPONENT_INIT, "Now building pseudo fs");

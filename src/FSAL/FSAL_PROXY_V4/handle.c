@@ -2232,7 +2232,6 @@ static fsal_status_t fill_openhow_OPEN4args(openflag4 *openhow, fattr4 inattrs,
 			how->createhow4_u.createattrs = inattrs;
 			break;
 		case FSAL_GUARDED:
-		case FSAL_EXCLUSIVE_9P:
 			how->mode = GUARDED4;
 			how->createhow4_u.createattrs = inattrs;
 			break;

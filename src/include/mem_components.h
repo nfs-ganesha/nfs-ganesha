@@ -47,7 +47,7 @@
 typedef enum {
 	MEM_COMP_UNSET = 0, /* Do not touch this position */
 	MEM_COMP_ACL, /* ACL / ACE data */
-	MEM_COMP_CLIENT, /* All clients in client_mgr (v3, v4, 9P) */
+	MEM_COMP_CLIENT, /* All clients in client_mgr (v3, v4) */
 	MEM_COMP_CLIENTID, /* NFSv4 clientid, sessions, connection state */
 	MEM_COMP_CONFIG, /* ganesha.conf, parser */
 	MEM_COMP_DIRENT, /* MDCACHE directory / dirent cache */
@@ -62,7 +62,7 @@ typedef enum {
 	MEM_COMP_LIBNTIRPC, /* libntirpc */
 	MEM_COMP_MANAGE, /* D-Bus handlers and gRPC management APIs */
 	MEM_COMP_MDCACHE, /* MDCACHE entry/handle cache */
-	MEM_COMP_PROTOCOL, /* NFS / NLM / 9P / NFS4 / NFS3, nfs_res_t */
+	MEM_COMP_PROTOCOL, /* NFS / NLM / NFS4 / NFS3, nfs_res_t */
 	MEM_COMP_QOS, /* QoS rate-control */
 	MEM_COMP_RECOVERY, /* NFS recovery state (clid_entry, rdel_fh) */
 	MEM_COMP_STATE, /* State and lock owners, delegations */

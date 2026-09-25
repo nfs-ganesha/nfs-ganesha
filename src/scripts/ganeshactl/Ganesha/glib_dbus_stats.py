@@ -330,7 +330,6 @@ class ClientStats(Report):
                 'mnt_stats': dbus_to_std(client.mnt_stats_avail),
                 'nlmv4_stats': dbus_to_std(client.nlmv4_stats_avail),
                 'rquota_stats': dbus_to_std(client.rquota_stats_avail),
-                '9p_stats': dbus_to_std(client._9p_stats_avail),
             }
             report['clients'].append(client_report)
 
@@ -354,8 +353,7 @@ class ProtocolsStats(object):
                                      'NFSv42': 0,
                                      'MNT': 0,
                                      'NLMv4': 0,
-                                     'RQUOTA': 0,
-                                     '9P': 0})
+                                     'RQUOTA': 0})
         self._update_protocols_stats(protocols)
 
     def _update_protocols_stats(self, protocols):
@@ -376,7 +374,6 @@ class Client(ProtocolsStats):
         self.mnt_stats_avail = self.protocols_stats['MNT']
         self.nlmv4_stats_avail = self.protocols_stats['NLMv4']
         self.rquota_stats_avail = self.protocols_stats['RQUOTA']
-        self._9p_stats_avail = self.protocols_stats['9P']
 
     def __str__(self):
         return ("\nClient Address: " + str(self.clientaddr) +
@@ -387,7 +384,7 @@ class Client(ProtocolsStats):
                 "\n\tMNT stats available: " + str(self.mnt_stats_avail) +
                 "\n\tNLMv4 stats available: " + str(self.nlmv4_stats_avail) +
                 "\n\tRQUOTA stats available: " + str(self.rquota_stats_avail) +
-                "\n\t9P stats available: " + str(self._9p_stats_avail) + "\n")
+                "\n")
 
 
 class DelegStats(Report):
@@ -1113,7 +1110,6 @@ class Export(ProtocolsStats):
         self.mnt_stats_avail = self.protocols_stats['MNT']
         self.nlmv4_stats_avail = self.protocols_stats['NLMv4']
         self.rquota_stats_avail = self.protocols_stats['RQUOTA']
-        self._9p_stats_avail = self.protocols_stats['9P']
 
     def __str__(self):
         return ("\nExport id: " + str(self.exportid) +
@@ -1125,7 +1121,7 @@ class Export(ProtocolsStats):
                 "\n\tMNT stats available: " + str(self.mnt_stats_avail) +
                 "\n\tNLMv4 stats available: " + str(self.nlmv4_stats_avail) +
                 "\n\tRQUOTA stats available: " + str(self.rquota_stats_avail) +
-                "\n\t9P stats available: " + str(self._9p_stats_avail) + "\n")
+                "\n")
 
 
 class ExportStats(Report):
@@ -1154,7 +1150,6 @@ class ExportStats(Report):
                 'mnt_stats': dbus_to_std(export.mnt_stats_avail),
                 'nlmv4_stats': dbus_to_std(export.nlmv4_stats_avail),
                 'rquota_stats': dbus_to_std(export.rquota_stats_avail),
-                '9p_stats': dbus_to_std(export._9p_stats_avail),
             }
             report['exports'].append(export_report)
 

@@ -1627,10 +1627,8 @@ static fsal_status_t mem_open2_by_handle(struct fsal_obj_handle *obj_hdl,
 	if (truncated)
 		myself->attrs.filesize = myself->attrs.spaceused = 0;
 
-	/* Now check verifier for exclusive, but not for
-	 * FSAL_EXCLUSIVE_9P.
-	 */
-	if (createmode >= FSAL_EXCLUSIVE && createmode != FSAL_EXCLUSIVE_9P &&
+	/* Now check verifier for exclusive */
+	if (createmode >= FSAL_EXCLUSIVE &&
 	    !check_verifier_attrlist(&myself->attrs, verifier, false)) {
 		/* Verifier didn't match, return EEXIST */
 		status = posix2fsal_status(EEXIST);
@@ -1872,7 +1870,7 @@ fsal_openflags_t mem_status2(struct fsal_obj_handle *obj_hdl,
  * thus should only be called with a share state. The st_lock must be held.
  *
  * This MAY be used to open a file the first time if there is no need for
- * open by name or create semantics. One example would be 9P lopen.
+ * open by name or create semantics.
  *
  * @param[in] obj_hdl     File on which to operate
  * @param[in] state       state_t to use for this operation
@@ -2327,8 +2325,7 @@ fsal_status_t mem_close2(struct fsal_obj_handle *obj_hdl, struct state_t *state)
 			    TP_STR(myself->m_name), state);
 
 	if (state->state_type == STATE_TYPE_SHARE ||
-	    state->state_type == STATE_TYPE_NLM_SHARE ||
-	    state->state_type == STATE_TYPE_9P_FID) {
+	    state->state_type == STATE_TYPE_NLM_SHARE) {
 		/* This is a share state, we must update the share counters */
 		update_share_counters_locked(obj_hdl, &myself->mh_file.share,
 					     my_fd->openflags, FSAL_O_CLOSED);

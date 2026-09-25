@@ -973,7 +973,6 @@ proxyv3_open2(struct fsal_obj_handle *obj_hdl, struct state_t *state,
 	case FSAL_NO_CREATE:
 		/* No create should have been handled via open_by_handle. */
 	case FSAL_EXCLUSIVE_41:
-	case FSAL_EXCLUSIVE_9P:
 		LogCrit(COMPONENT_FSAL,
 			"Invalid createmode (%u) for NFSv3. Must be one of UNCHECKED, GUARDED, or EXCLUSIVE",
 			createmode);

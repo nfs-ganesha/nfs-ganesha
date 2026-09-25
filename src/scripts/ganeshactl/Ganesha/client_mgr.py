@@ -32,7 +32,6 @@ Client = namedtuple('Client',
                      'HasNFSv40',
                      'HasNFSv41',
                      'HasNFSv42',
-                     'Has9P',
                      'LastTime'])
 
 class ClientMgr(QtDBus.QDBusAbstractInterface):
@@ -96,7 +95,6 @@ class ClientMgr(QtDBus.QDBusAbstractInterface):
                              HasNFSv40=cl_[5].toBool(),
                              HasNFSv41=cl_[6].toBool(),
                              HasNFSv42=cl_[7].toBool(),
-                             Has9P=cl_[8].toBool(),
                              LastTime=(lasttime[0].toPyObject(),
                                        lasttime[1].toPyObject()))
                 clients.append(clt)

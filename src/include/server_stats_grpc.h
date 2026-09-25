@@ -397,16 +397,6 @@ bool server_grpc_fill_v42_layouts(struct gsh_stats *st,
 bool server_grpc_fill_delegations(struct gsh_stats *st,
 				  struct grpc_delegation_stats *deleg_out);
 
-bool server_grpc_fill_9p_iostats(struct gsh_stats *st,
-				 struct grpc_iostats *read_out,
-				 struct grpc_iostats *write_out);
-
-bool server_grpc_fill_9p_transport(struct gsh_stats *st,
-				   struct grpc_transport_stats *trans_out);
-
-bool server_grpc_fill_9p_opstats(struct gsh_stats *st, uint8_t opcode,
-				 struct grpc_op_stats *op_out);
-
 bool server_grpc_fill_client_io_ops(struct gsh_stats *st,
 				    struct timespec *client_time,
 				    struct grpc_client_io_ops *out);
@@ -419,8 +409,6 @@ struct grpc_client_allops *server_grpc_fill_client_allops(
 	struct timespec *client_time);
 
 void grpc_cltmgr_free_client_allops(struct grpc_client_allops *allops);
-
-bool grpc_parse_9p_opname(const char *opname, uint8_t *opcode_out);
 
 /*
  * Per-version entry points called from nfsServiceServer.cc.
@@ -521,21 +509,6 @@ bool grpc_cltmgr_get_client_allops(const char *ipaddr,
 				   bool *success, char *errmsg,
 				   size_t errmsg_len);
 
-bool grpc_cltmgr_get_9p_io(const char *ipaddr, struct grpc_iostats *read_out,
-			   struct grpc_iostats *write_out,
-			   struct timespec *time_out, bool *success,
-			   char *errmsg, size_t errmsg_len);
-
-bool grpc_cltmgr_get_9p_trans(const char *ipaddr,
-			      struct grpc_transport_stats *trans_out,
-			      struct timespec *time_out, bool *success,
-			      char *errmsg, size_t errmsg_len);
-
-bool grpc_cltmgr_get_9p_opstats(const char *ipaddr, const char *opname,
-				struct grpc_op_stats *op_out,
-				struct timespec *time_out, bool *success,
-				char *errmsg, size_t errmsg_len);
-
 /*
  * Extract per-client protocol-activity flags and total op count.
  * Mirrors server_stats_summary() for gRPC, without D-Bus types.
@@ -577,21 +550,6 @@ bool grpc_export_get_v42_layout_stats(uint32_t export_id,
 				      struct grpc_layouts *layouts,
 				      struct timespec *time_out, bool *success,
 				      char *errmsg, size_t errmsg_len);
-
-bool grpc_export_get_9p_io(uint16_t export_id, struct grpc_iostats *read,
-			   struct grpc_iostats *write,
-			   struct timespec *time_out, bool *success,
-			   char *errmsg, size_t errmsg_len);
-
-bool grpc_export_get_9p_opstats(uint32_t export_id, const char *opname,
-				struct grpc_op_stats *op_out,
-				struct timespec *time_out, bool *success,
-				char *errmsg, size_t errmsg_len);
-
-bool grpc_export_get_v3_io(uint16_t exportid, struct grpc_iostats *read_out,
-			   struct grpc_iostats *write_out,
-			   struct timespec *time_out, bool *success,
-			   char *errmsg, size_t errmsg_len);
 
 bool grpc_get_fast_ops(struct grpc_fast_ops *fast_ops,
 		       struct timespec *time_out, bool *success, char *errmsg,

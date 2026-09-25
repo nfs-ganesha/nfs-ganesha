@@ -29,11 +29,6 @@ set(man_srcs
     ganesha-core-config.rst
     ganesha-fscrypt-config.rst)
 
-if(USE_9P)
-   list(APPEND man_srcs
-        ganesha-9p-config.rst)
-endif()
-
 if(USE_FSAL_CEPH)
    list(APPEND man_srcs
         ganesha-ceph-config.rst)

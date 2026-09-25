@@ -114,9 +114,6 @@ static struct config_item_list protocols[] = {
 	CONFIG_LIST_TOK("nfsrdma", CORE_OPTION_NFS_RDMA),
 	CONFIG_LIST_TOK("rpcrdma", CORE_OPTION_NFS_RDMA),
 #endif
-#ifdef _USE_9P
-	CONFIG_LIST_TOK("9p", CORE_OPTION_9P),
-#endif
 	CONFIG_LIST_EOL
 };
 
@@ -496,9 +493,6 @@ static struct config_item core_params[] = {
 	CONF_ITEM_UI32("NFSACL_Program", 1, INT32_MAX, NFSACLPROG,
 		       nfs_core_param, program[P_NFSACL]),
 #endif
-	CONF_ITEM_DEPRECATED(
-		"Nb_Worker",
-		"This parameter has been replaced with _9P { Nb_Worker}"),
 	CONF_ITEM_BOOL("Drop_IO_Errors", false, nfs_core_param, drop_io_errors),
 	CONF_ITEM_BOOL("Drop_Inval_Errors", false, nfs_core_param,
 		       drop_inval_errors),

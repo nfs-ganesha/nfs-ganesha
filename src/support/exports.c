@@ -179,11 +179,6 @@ int StrExportOptions(struct display_buffer *dspbuf,
 
 		if (b_left <= 0)
 			return b_left;
-
-		if ((p_perms->options & EXPORT_OPTION_9P) != 0)
-			b_left = display_cat(dspbuf, "9");
-		else
-			b_left = display_cat(dspbuf, "-");
 	} else
 		b_left = display_cat(dspbuf, ",    ");
 
@@ -2229,7 +2224,6 @@ static struct config_item_list nfs_protocols[] = {
 	CONFIG_LIST_TOK("V4", EXPORT_OPTION_NFSV4),
 	CONFIG_LIST_TOK("NFSV3", EXPORT_OPTION_NFSV3),
 	CONFIG_LIST_TOK("NFSV4", EXPORT_OPTION_NFSV4),
-	CONFIG_LIST_TOK("9P", EXPORT_OPTION_9P),
 	CONFIG_LIST_EOL
 };
 
@@ -3172,18 +3166,15 @@ int ReadExports(config_file_t in_config, struct config_error_type *err_type)
 
 	LogMidDebug(
 		COMPONENT_EXPORT,
-		"CORE_OPTION_NFSV3 %d CORE_OPTION_NFSV4 %d CORE_OPTION_9P %d",
+		"CORE_OPTION_NFSV3 %d CORE_OPTION_NFSV4 %d",
 		(NFS_options & CORE_OPTION_NFSV3) != 0,
-		(NFS_options & CORE_OPTION_NFSV4) != 0,
-		(NFS_options & CORE_OPTION_9P) != 0);
+		(NFS_options & CORE_OPTION_NFSV4) != 0);
 
 	/* Set Protocols in export_opt.def.options from nfs_core_param. */
 	if (NFS_options & CORE_OPTION_NFSV3)
 		export_opt.def.options |= EXPORT_OPTION_NFSV3;
 	if (NFS_options & CORE_OPTION_NFSV4)
 		export_opt.def.options |= EXPORT_OPTION_NFSV4;
-	if (NFS_options & CORE_OPTION_9P)
-		export_opt.def.options |= EXPORT_OPTION_9P;
 
 	rc = load_config_from_parse(in_config, &export_defaults_param,
 				    &export_opt_cfg, false, err_type);

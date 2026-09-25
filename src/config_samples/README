@@ -169,8 +169,7 @@ Examples are:
 
 CanSetTime = true;
 
-Protocols = 3, 4,
-	    9p;
+Protocols = 3, 4;
 
 The first case is a simple boolean parameter.  The second is a list.  Note that
 the list can span lines.

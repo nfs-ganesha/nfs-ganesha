@@ -620,7 +620,6 @@ enum fsal_create_mode {
 	FSAL_GUARDED = 2,
 	FSAL_EXCLUSIVE = 3,
 	FSAL_EXCLUSIVE_41 = 4,
-	FSAL_EXCLUSIVE_9P,
 };
 
 enum fsal_readdir_mode {

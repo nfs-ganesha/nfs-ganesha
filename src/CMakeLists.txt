@@ -78,7 +78,7 @@ set(GANESHA_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION}${GANESHA_EX
 set(GANESHA_BASE_VERSION ${GANESHA_MAJOR_VERSION}${GANESHA_MINOR_VERSION})
 
 set(VERSION_COMMENT
-  "GANESHA file server is 64 bits compliant and supports NFS v3,4.0,4.1 (pNFS) and 9P"
+  "GANESHA file server is 64 bits compliant and supports NFS v3,4.0,4.1 (pNFS)"
 )
 
 # find out which platform we are building on
@@ -402,10 +402,6 @@ endif(USE_GTEST)
 # Enable NFS Over RDMA Support
 goption(USE_NFS_RDMA "enable NFS/RDMA support" OFF)
 
-# Enable 9P Support
-option(USE_9P "enable 9P support" ON)
-option(USE_9P_RDMA "enable 9P_RDMA support" OFF)
-
 # Enable NFSv3 Support
 option(USE_NFS3 "enable NFSv3 support" ON)
 
@@ -540,7 +536,7 @@ option(USE_GNUTLS "Use GNUTLS as TLS backend" OFF)
 
 
 gopt_test(USE_NFS_RDMA)
-if(USE_NFS_RDMA OR USE_9P_RDMA)
+if(USE_NFS_RDMA)
   check_library_exists(rdmacm rdma_create_qp "" RDMACM_FOUND)
   check_library_exists(ibverbs ibv_alloc_pd "" IBVERBS_FOUND)
   if(RDMACM_FOUND AND IBVERBS_FOUND)
@@ -552,16 +548,10 @@ if(USE_NFS_RDMA OR USE_9P_RDMA)
       message(FATAL_ERROR "Could not find RDMA dependencies (RDMACM=${RDMACM_FOUND} IBVERBS=${IBVERBS_FOUND}) but USE_NFS_RDMA was requested on the command line")
     else(USE_NFS_RDMA_REQUIRED)
       set(USE_NFS_RDMA OFF)
-      set(USE_9P_RDMA OFF)
       message(WARNING "Could not find RDMA dependencies(RDMACM=${RDMACM_FOUND} IBVERBS=${IBVERBS_FOUND}), disabling RDMA Support")
     endif(USE_NFS_RDMA_REQUIRED)
   endif(RDMACM_FOUND AND IBVERBS_FOUND)
-endif(USE_NFS_RDMA OR USE_9P_RDMA)
-
-if(USE_9P_RDMA AND NOT USE_9P)
-  message(WARNING "The support of 9P/RDMA needs 9P protocol support. Enabling 9P")
-  set(USE_9P ON)
-endif(USE_9P_RDMA AND NOT USE_9P)
+endif(USE_NFS_RDMA)
 
 IF(ALLOCATOR)
   set(ALLOCATOR ${ALLOCATOR} CACHE STRING "memory allocator: jemalloc|tcmalloc|libc")
@@ -1192,8 +1182,6 @@ else() # d_off is on by default for other cases
 endif()
 
 # Fixup loose bits of autotools legacy
-set(_USE_9P ${USE_9P})
-set(_USE_9P_RDMA ${USE_9P_RDMA})
 set(_USE_NFS3 ${USE_NFS3})
 set(_USE_NLM ${USE_NLM})
 set(_INTERNAL_STATD ${INTERNAL_STATD})
@@ -1321,14 +1309,6 @@ if (USE_UNWIND)
 endif(USE_UNWIND)
 goption(USE_UNWIND_ENRICHED_BT "Enable libunwind enriched bt" OFF)
 gopt_test(USE_UNWIND_ENRICHED_BT)
-
-if(USE_9P_RDMA)
-  find_package(PkgConfig)
-  pkg_check_modules(MOOSHIKA REQUIRED libmooshika>=0.6)
-
-  include_directories(${MOOSHIKA_INCLUDE_DIRS})
-  link_directories (${MOOSHIKA_LIBRARY_DIRS})
-endif(USE_9P_RDMA)
 
 set(NTIRPC_MIN_VERSION 5.0)
 if (USE_SYSTEM_NTIRPC)
@@ -1604,9 +1584,6 @@ message(STATUS "ENFORCE_GCC = ${ENFORCE_GCC}")
 message(STATUS "USE_GTEST = ${USE_GTEST}")
 message(STATUS "USE_GSS = ${USE_GSS}")
 message(STATUS "TIRPC_EPOLL = ${TIRPC_EPOLL}")
-message(STATUS "USE_9P = ${USE_9P}")
-message(STATUS "_USE_9P = ${_USE_9P}")
-message(STATUS "_USE_9P_RDMA = ${_USE_9P_RDMA}")
 message(STATUS "USE_NFS_RDMA = ${USE_NFS_RDMA}")
 message(STATUS "USE_RPC_RDMA (libntirpc) = ${USE_RPC_RDMA}")
 message(STATUS "USE_NFS3 = ${USE_NFS3}")
@@ -1682,21 +1659,6 @@ set( DISTNAME_HAS_GIT_DATA ${DISTNAME_HAS_GIT_DATA}
   CACHE BOOL
   "Distribution package's name carries git data"
   FORCE)
-
-set(USE_9P ${USE_9P}
-  CACHE BOOL
-   "enable 9P support"
-   FORCE)
-
-set(_USE_9P ${_USE_9P}
-  CACHE BOOL
-   "enable 9P support in config"
-   FORCE)
-
-set(_USE_9P_RDMA ${_USE_9P_RDMA}
-  CACHE BOOL
-   "enable 9P_RDMA support"
-   FORCE)
 
 set(USE_NFS3 ${USE_NFS3}
   CACHE BOOL
@@ -1807,17 +1769,8 @@ else(USE_FSAL_MEM)
     set(BCOND_MEM "%bcond_with")
 endif(USE_FSAL_MEM)
 
-if(USE_9P)
-    set(BCOND_9P "%bcond_without")
-    if(USE_9P_RDMA)
-        set(BCOND_RDMA "%bcond_without")
-    else(USE_9P_RDMA)
-        set(BCOND_RDMA "%bcond_with")
-    endif(USE_9P_RDMA)
-else(USE_9P)
-    set(BCOND_9P "%bcond_with")
-    set(BCOND_RDMA "%bcond_with")
-endif(USE_9P)
+# NOTE: This seems wrong, but this patch is wrong place to fix RDMA conditionals
+set(BCOND_RDMA "%bcond_with")
 
 if(USE_LTTNG)
     set(BCOND_LTTNG "%bcond_without")

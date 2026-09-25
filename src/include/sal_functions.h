@@ -197,22 +197,6 @@ static inline void state_hdl_cleanup(struct state_hdl *state_hdl,
 	}
 }
 
-/*****************************************************************************
- *
- * 9P State functions
- *
- *****************************************************************************/
-
-#ifdef _USE_9P
-int compare_9p_owner(state_owner_t *owner1, state_owner_t *owner2);
-
-int display_9p_owner(struct display_buffer *dspbuf, state_owner_t *owner);
-
-state_owner_t *get_9p_owner(sockaddr_t *client_addr, uint32_t proc_id);
-
-int Init_9p_hash(void);
-#endif
-
 /******************************************************************************
  *
  * NLM Owner functions

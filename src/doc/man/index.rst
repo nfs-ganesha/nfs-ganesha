@@ -3,7 +3,6 @@
    :caption: Contents:
 
    ganesha-config
-   ganesha-9p-config
    ganesha-ceph-config
    ganesha-log-config
    ganesha-qos-config

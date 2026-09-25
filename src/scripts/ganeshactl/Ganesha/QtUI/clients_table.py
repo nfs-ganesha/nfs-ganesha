@@ -39,7 +39,6 @@ class ClientTableModel(QAbstractTableModel):
                        'RQUOTA',
                        'NFSv4.0',
                        'NFSv4.1',
-                       '9P',
                        'Last Stats Update']
         self.clientmgr = clientmgr
         self.clientmgr.show_clients.connect(self.FetchClients_done)

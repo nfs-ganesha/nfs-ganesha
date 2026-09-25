@@ -54,15 +54,6 @@ struct fridgethr;
 extern struct fridgethr *req_fridge;
 
 /**
- * @brief Per-worker data.  Some of this will be destroyed.
- */
-
-struct _9p_worker_data {
-	wait_q_entry_t wqe; /*< Queue for coordinating with decoder */
-	unsigned int worker_index; /*< Index for log messages */
-};
-
-/**
  * @brief A given thread in the fridge
  */
 
@@ -71,7 +62,6 @@ struct fridgethr_entry {
 	 * @brief Thread context
 	 */
 	struct fridgethr_context {
-		struct _9p_worker_data wd; /*< Work queue data */
 		pthread_mutex_t fre_mtx; /*< Mutex for fiddling this
 					   thread */
 		pthread_cond_t fre_cv; /*< Condition variable to wait for sync

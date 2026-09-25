@@ -33,6 +33,5 @@ set(USE_DBUS ON)
 # Disable FSAL's we don't use
 set(USE_FSAL_CEPH OFF)
 set(_MSPAC_SUPPORT OFF)
-set(USE_9P OFF)
 
 message(STATUS "Building gpfs_vfs_pnfs_only configuration")

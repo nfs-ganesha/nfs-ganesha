@@ -34,7 +34,7 @@ Access_Type(enum, default None)
 
 Protocols(enum list, default none)
     Possible values:
-        3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4, 9P
+        3, 4, NFS3, NFS4, V3, V4, NFSv3, NFSv4
 
 Transports(enum list, values [UDP, TCP, RDMA], default [UDP, TCP])
 
@@ -572,7 +572,7 @@ permissions are workable.
 
 Note that in order for an EXPORT to be usable with NSFv4 it MUST either have
 Protocols = 4 specified in the EXPORT block, or the EXPORT block must not have
-the Protocols option at all such that it defaults to 3,4,9P. Note though that
+the Protocols option at all such that it defaults to 3,4. Note though that
 if it is not set and EXPORT_DEFAULTS just has Protocols = 3; then even though
 the export is mounted in the Pseudo Filesystem, it will not be accessible and
 the gotcha discussed above may be in play.
@@ -646,7 +646,6 @@ SEE ALSO
 :doc:`ganesha-lustre-config <ganesha-lustre-config>`\(8)
 :doc:`ganesha-xfs-config <ganesha-xfs-config>`\(8)
 :doc:`ganesha-gpfs-config <ganesha-gpfs-config>`\(8)
-:doc:`ganesha-9p-config <ganesha-9p-config>`\(8)
 :doc:`ganesha-proxy-config <ganesha-proxy-config>`\(8)
 :doc:`ganesha-ceph-config <ganesha-ceph-config>`\(8)
 :doc:`ganesha-qos-config <ganesha-qos-config>`\(8)
