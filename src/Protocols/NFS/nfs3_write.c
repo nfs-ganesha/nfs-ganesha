@@ -304,7 +304,7 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			     " size=%zu MaxOffSet=%" PRIu64,
 			     offset, size, MaxOffsetWrite);
 
-		if ((offset + size) > MaxOffsetWrite) {
+		if (offset > MaxOffsetWrite || size > MaxOffsetWrite - offset) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tried to violate max file size %" PRIu64
 				 " for exportid #%hu",

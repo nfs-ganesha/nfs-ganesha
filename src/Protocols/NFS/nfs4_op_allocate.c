@@ -177,7 +177,7 @@ static enum nfs_req_result allocate_deallocate(compound_data_t *data,
 			     " MaxOffSet=%" PRIu64,
 			     offset, size, MaxOffsetWrite);
 
-		if ((offset + size) > MaxOffsetWrite) {
+		if (offset > MaxOffsetWrite || size > MaxOffsetWrite - offset) {
 			LogEvent(COMPONENT_NFS_V4,
 				 "A client tried to violate max file size %" PRIu64
 				 " for exportid #%hu",

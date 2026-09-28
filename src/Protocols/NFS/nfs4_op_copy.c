@@ -1177,7 +1177,8 @@ static nfsstat4 copy_validate(COPY4args *args, compound_data_t *data,
 	MaxOffsetWrite =
 		atomic_fetch_uint64_t(&op_ctx->ctx_export->MaxOffsetWrite);
 	if (MaxOffsetWrite < UINT64_MAX &&
-	    ctx->dst_off + to_copy > MaxOffsetWrite) {
+	    (ctx->dst_off > MaxOffsetWrite ||
+	     to_copy > MaxOffsetWrite - ctx->dst_off)) {
 		status = NFS4ERR_FBIG;
 		goto err_release;
 	}

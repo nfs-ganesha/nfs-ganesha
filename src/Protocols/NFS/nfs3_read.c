@@ -360,7 +360,7 @@ int nfs3_read(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 			     " count=%zd MaxOffSet=%" PRIu64,
 			     offset, size, MaxOffsetRead);
 
-		if ((offset + size) > MaxOffsetRead) {
+		if (offset > MaxOffsetRead || size > MaxOffsetRead - offset) {
 			LogEvent(COMPONENT_NFSPROTO,
 				 "A client tried to violate max file size %" PRIu64
 				 " for exportid #%hu",

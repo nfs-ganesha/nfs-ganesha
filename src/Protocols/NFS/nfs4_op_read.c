@@ -918,7 +918,7 @@ static enum nfs_req_result nfs4_read(struct nfs_argop4 *op,
 			goto out;
 		}
 		/* Clamp size if the request would run past MaxOffsetRead */
-		else if ((offset + size) > MaxOffsetRead) {
+		else if (size > MaxOffsetRead - offset) {
 			size = MaxOffsetRead - offset;
 		}
 	}
