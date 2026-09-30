@@ -865,7 +865,7 @@ static fattr_xdr_result decode_acl(XDR *xdr, struct xdr_attrs_args *args)
 		 * can try to free the stack buffer.
 		 * This fixes the free-nonheap-object build error.
 		 */
-		if (!xdr_utf8string_decode(xdr, &utf8buffer, MAXNAMLEN))
+		if (!xdr_utf8string_decode(xdr, &utf8buffer, MAXNAMLEN, false))
 			goto baderr;
 		for (i = 0; i < FSAL_ACE_SPECIAL_EVERYONE; i++) {
 			if (strcmp(buffer, whostr_2_type_map[i].string) == 0) {

@@ -4023,7 +4023,7 @@ static inline bool xdr_slotid4(XDR *xdrs, slotid4 *objp)
 }
 
 static inline bool xdr_utf8string_decode(XDR *xdrs, utf8string *objp,
-					 u_int maxsize)
+					 u_int maxsize, bool allow_empty)
 {
 	/* sp is the actual string pointer */
 	bool allocated_locally = false;
@@ -4047,15 +4047,19 @@ static inline bool xdr_utf8string_decode(XDR *xdrs, utf8string *objp,
 		return false;
 	}
 
+	if (size == 0 && !allow_empty) {
+		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty string", __func__,
+			 __LINE__);
+		return false;
+	}
+
 	/* only valid size */
 	objp->utf8string_len = (u_int)size;
 
 	/*
-	 * now deal with the actual bytes of the string
+	 * now deal with the actual bytes of the string, an allowed empty
+	 * string still gets a buffer so it is returned as "" and not NULL
 	 */
-	if (!size)
-		return true;
-
 	if (!sp) {
 		sp = (char *)gsh_malloc(size + 1, MEM_COMP_PROTOCOL);
 		allocated_locally = true;
@@ -4094,15 +4098,21 @@ static inline void free_utf8string(utf8string *str)
 }
 
 static inline bool inline_xdr_utf8string(XDR *xdrs, utf8string *objp,
-					 u_int maxsize)
+					 u_int maxsize, bool allow_empty)
 {
 	switch (xdrs->x_op) {
 	case XDR_DECODE:
-		return xdr_utf8string_decode(xdrs, objp, maxsize);
+		return xdr_utf8string_decode(xdrs, objp, maxsize, allow_empty);
 	case XDR_FREE:
 		free_utf8string(objp);
 		return true;
 	default:
+		if (objp->utf8string_len == 0 && !allow_empty) {
+			LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty string",
+				 __func__, __LINE__);
+			return false;
+		}
+
 		return inline_xdr_bytes(xdrs, &objp->utf8string_val,
 					&objp->utf8string_len, maxsize);
 	}
@@ -4110,7 +4120,13 @@ static inline bool inline_xdr_utf8string(XDR *xdrs, utf8string *objp,
 
 static inline bool xdr_utf8string(XDR *xdrs, utf8string *objp)
 {
-	return inline_xdr_utf8string(xdrs, objp, XDR_STRING_MAXLEN);
+	return inline_xdr_utf8string(xdrs, objp, XDR_STRING_MAXLEN, false);
+}
+
+/* Only for fields where the protocol allows an empty string */
+static inline bool xdr_utf8string_empty_ok(XDR *xdrs, utf8string *objp)
+{
+	return inline_xdr_utf8string(xdrs, objp, XDR_STRING_MAXLEN, true);
 }
 
 static inline bool xdr_utf8str_cis(XDR *xdrs, utf8str_cis *objp)
@@ -4134,16 +4150,17 @@ static inline bool xdr_utf8str_mixed(XDR *xdrs, utf8str_mixed *objp)
 	return true;
 }
 
+/* Empty names must reach the operation so it can return NFS4ERR_INVAL */
 static inline bool xdr_component4(XDR *xdrs, component4 *objp)
 {
-	if (!xdr_utf8str_cs(xdrs, objp))
+	if (!xdr_utf8string_empty_ok(xdrs, objp))
 		return false;
 	return true;
 }
 
 static inline bool xdr_linktext4(XDR *xdrs, linktext4 *objp)
 {
-	if (!xdr_utf8str_cs(xdrs, objp))
+	if (!xdr_utf8string_empty_ok(xdrs, objp))
 		return false;
 	return true;
 }
@@ -4283,7 +4300,8 @@ static inline bool xdr_nfsace4(XDR *xdrs, nfsace4 *objp)
 		return false;
 	if (!xdr_acemask4(xdrs, &objp->access_mask))
 		return false;
-	if (!xdr_utf8str_mixed(xdrs, &objp->who))
+	/* delegation permissions ACEs are sent with an empty who */
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->who))
 		return false;
 	return true;
 }
@@ -4335,9 +4353,10 @@ static inline bool xdr_netaddr4(XDR *xdrs, netaddr4 *objp)
 
 static inline bool xdr_nfs_impl_id4(XDR *xdrs, nfs_impl_id4 *objp)
 {
-	if (!xdr_utf8str_cis(xdrs, &objp->nii_domain))
+	/* informational only, don't reject clients that leave these empty */
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->nii_domain))
 		return false;
-	if (!xdr_utf8str_cs(xdrs, &objp->nii_name))
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->nii_name))
 		return false;
 	if (!xdr_nfstime4(xdrs, &objp->nii_date))
 		return false;
@@ -5677,8 +5696,8 @@ static inline bool xdr_GETXATTR4res(XDR *xdrs, GETXATTR4res *objp)
 		return false;
 	switch (objp->status) {
 	case NFS4_OK:
-		if (!xdr_utf8string(xdrs,
-				    &objp->GETXATTR4res_u.resok4.gxr_value))
+		if (!xdr_utf8string_empty_ok(
+			    xdrs, &objp->GETXATTR4res_u.resok4.gxr_value))
 			return false;
 		break;
 	default:
@@ -5693,7 +5712,7 @@ static inline bool xdr_SETXATTR4args(XDR *xdrs, SETXATTR4args *objp)
 		return false;
 	if (!xdr_component4(xdrs, &objp->sxa_key))
 		return false;
-	if (!xdr_utf8string(xdrs, &objp->sxa_value))
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->sxa_value))
 		return false;
 	return true;
 }
@@ -9095,7 +9114,7 @@ static inline bool xdr_nfs_resop4(XDR *xdrs, nfs_resop4 *objp)
 
 static inline bool xdr_COMPOUND4args(XDR *xdrs, COMPOUND4args *objp)
 {
-	if (!xdr_utf8str_cs(xdrs, &objp->tag))
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->tag))
 		return false;
 	if (!inline_xdr_u_int32_t(xdrs, &objp->minorversion))
 		return false;
@@ -9113,7 +9132,7 @@ static inline bool xdr_COMPOUND4res(XDR *xdrs, COMPOUND4res *objp)
 {
 	if (!xdr_nfsstat4(xdrs, &objp->status))
 		return false;
-	if (!xdr_utf8str_cs(xdrs, &objp->tag))
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->tag))
 		return false;
 	if (!xdr_array(xdrs, (char **)&objp->resarray.resarray_val,
 		       &objp->resarray.resarray_len, XDR_ARRAY_MAXLEN,
@@ -10001,7 +10020,7 @@ static inline bool xdr_nfs_cb_resop4(XDR *xdrs, nfs_cb_resop4 *objp)
 
 static inline bool xdr_CB_COMPOUND4args(XDR *xdrs, CB_COMPOUND4args *objp)
 {
-	if (!xdr_utf8str_cs(xdrs, &objp->tag))
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->tag))
 		return false;
 	if (!inline_xdr_u_int32_t(xdrs, &objp->minorversion))
 		return false;
@@ -10018,7 +10037,7 @@ static inline bool xdr_CB_COMPOUND4res(XDR *xdrs, CB_COMPOUND4res *objp)
 {
 	if (!xdr_nfsstat4(xdrs, &objp->status))
 		return false;
-	if (!xdr_utf8str_cs(xdrs, &objp->tag))
+	if (!xdr_utf8string_empty_ok(xdrs, &objp->tag))
 		return false;
 	if (!xdr_array(xdrs, (char **)&objp->resarray.resarray_val,
 		       &objp->resarray.resarray_len, XDR_ARRAY_MAXLEN,
