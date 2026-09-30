@@ -65,6 +65,9 @@ uint64_t get_handle2inode(struct gpfs_file_handle *gfh)
  *          - Another error code else.
  */
 #define GPFS_ROOT_INODE 3
+#ifdef OPENHANDLE_GET_VERSION5
+#define NOPEN
+#endif
 fsal_status_t GPFSFSAL_lookup(struct fsal_obj_handle *parent,
 			      const char *filename,
 			      struct fsal_attrlist *fsal_attr,
@@ -72,7 +75,7 @@ fsal_status_t GPFSFSAL_lookup(struct fsal_obj_handle *parent,
 			      struct fsal_filesystem **new_fs)
 {
 	fsal_status_t status;
-	int parent_fd;
+	int parent_fd = -1;
 	struct gpfs_fsal_obj_handle *parent_hdl;
 	struct gpfs_filesystem *gpfs_fs;
 	struct fsal_fsid__ fsid;
@@ -89,12 +92,19 @@ fsal_status_t GPFSFSAL_lookup(struct fsal_obj_handle *parent,
 	parent_hdl =
 		container_of(parent, struct gpfs_fsal_obj_handle, obj_handle);
 	gpfs_fs = parent->fs->private_data;
+
+#ifdef NOPEN
+	/* pass the director fh instead of fd,
+	 * GPFS will use the fh when fd is -1.
+	 * This will avoid the open & close calls */
+	memcpy(fh, parent_hdl->handle, parent_hdl->handle->handle_size);
+#else
 	status = fsal_internal_handle2fd(export_fd, parent_hdl->handle,
 					 &parent_fd, O_RDONLY);
 
 	if (FSAL_IS_ERROR(status))
 		return status;
-
+#endif
 	/* Be careful about junction crossing, symlinks, hardlinks,... */
 	switch (parent->type) {
 	case DIRECTORY:
@@ -104,22 +114,26 @@ fsal_status_t GPFSFSAL_lookup(struct fsal_obj_handle *parent,
 	case REGULAR_FILE:
 	case SYMBOLIC_LINK:
 		/* not a directory */
+#ifndef NOPEN
 		fsal_internal_close(parent_fd, NULL, 0);
+#endif
 		return fsalstat(ERR_FSAL_NOTDIR, 0);
 
 	default:
+#ifndef NOPEN
 		fsal_internal_close(parent_fd, NULL, 0);
+#endif
 		return fsalstat(ERR_FSAL_SERVERFAULT, 0);
 	}
-
 	status =
 		fsal_internal_get_handle_at(parent_fd, filename, fh, export_fd);
 
+#ifndef NOPEN
 	/* After getting file handle 'fh' we won't be using parent_fd,
 	 * hence we can close parent_fd here.
 	 */
 	fsal_internal_close(parent_fd, NULL, 0);
-
+#endif
 	if (status.major == ERR_FSAL_NOENT && strcmp(filename, "..") == 0) {
 		unsigned long long pinode;
 
