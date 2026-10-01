@@ -3964,10 +3964,29 @@ static inline bool xdr_nfs_cookie4(XDR *xdrs, nfs_cookie4 *objp)
 	return true;
 }
 
+/* Variable length opaque that must not be empty */
+static inline bool xdr_bytes_nonempty(XDR *xdrs, char **cpp, u_int *sizep,
+				      u_int maxsize)
+{
+	if (xdrs->x_op == XDR_ENCODE && *sizep == 0) {
+		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty opaque", __func__,
+			 __LINE__);
+		return false;
+	}
+	if (!inline_xdr_bytes(xdrs, cpp, sizep, maxsize))
+		return false;
+	if (xdrs->x_op == XDR_DECODE && *sizep == 0) {
+		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty opaque", __func__,
+			 __LINE__);
+		return false;
+	}
+	return true;
+}
+
 static inline bool xdr_nfs_fh4(XDR *xdrs, nfs_fh4 *objp)
 {
-	if (!inline_xdr_bytes(xdrs, (char **)&objp->nfs_fh4_val,
-			      &objp->nfs_fh4_len, NFS4_FHSIZE))
+	if (!xdr_bytes_nonempty(xdrs, (char **)&objp->nfs_fh4_val,
+				&objp->nfs_fh4_len, NFS4_FHSIZE))
 		return false;
 	return true;
 }
@@ -5225,8 +5244,8 @@ static inline bool xdr_nfs_client_id4(XDR *xdrs, nfs_client_id4 *objp)
 {
 	if (!xdr_verifier4(xdrs, objp->verifier))
 		return false;
-	if (!inline_xdr_bytes(xdrs, (char **)&objp->id.id_val,
-			      (u_int *)&objp->id.id_len, NFS4_OPAQUE_LIMIT))
+	if (!xdr_bytes_nonempty(xdrs, (char **)&objp->id.id_val,
+				(u_int *)&objp->id.id_len, NFS4_OPAQUE_LIMIT))
 		return false;
 	return true;
 }
@@ -5235,9 +5254,9 @@ static inline bool xdr_client_owner4(XDR *xdrs, client_owner4 *objp)
 {
 	if (!xdr_verifier4(xdrs, objp->co_verifier))
 		return false;
-	if (!inline_xdr_bytes(xdrs, (char **)&objp->co_ownerid.co_ownerid_val,
-			      (u_int *)&objp->co_ownerid.co_ownerid_len,
-			      NFS4_OPAQUE_LIMIT))
+	if (!xdr_bytes_nonempty(xdrs, (char **)&objp->co_ownerid.co_ownerid_val,
+				(u_int *)&objp->co_ownerid.co_ownerid_len,
+				NFS4_OPAQUE_LIMIT))
 		return false;
 	return true;
 }
@@ -5246,9 +5265,10 @@ static inline bool xdr_server_owner4(XDR *xdrs, server_owner4 *objp)
 {
 	if (!inline_xdr_u_int64_t(xdrs, &objp->so_minor_id))
 		return false;
-	if (!inline_xdr_bytes(xdrs, (char **)&objp->so_major_id.so_major_id_val,
-			      (u_int *)&objp->so_major_id.so_major_id_len,
-			      NFS4_OPAQUE_LIMIT))
+	if (!xdr_bytes_nonempty(xdrs,
+				(char **)&objp->so_major_id.so_major_id_val,
+				(u_int *)&objp->so_major_id.so_major_id_len,
+				NFS4_OPAQUE_LIMIT))
 		return false;
 	return true;
 }
@@ -5257,9 +5277,9 @@ static inline bool xdr_state_owner4(XDR *xdrs, state_owner4 *objp)
 {
 	if (!xdr_clientid4(xdrs, &objp->clientid))
 		return false;
-	if (!inline_xdr_bytes(xdrs, (char **)&objp->owner.owner_val,
-			      (u_int *)&objp->owner.owner_len,
-			      NFS4_OPAQUE_LIMIT))
+	if (!xdr_bytes_nonempty(xdrs, (char **)&objp->owner.owner_val,
+				(u_int *)&objp->owner.owner_len,
+				NFS4_OPAQUE_LIMIT))
 		return false;
 	return true;
 }
