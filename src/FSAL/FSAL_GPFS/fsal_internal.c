@@ -516,29 +516,39 @@ fsal_status_t fsal_readlink_by_handle(int dirfd,
  *
  *  @return GPFS version
  */
+int gpfs_version;
 int fsal_internal_version(void)
 {
 	int rc;
 
-	/* Try VERSION4 first, followed by VERSION3,2 */
+	/* Try VERSION4 first, followed by VERSION5,4,3 */
 	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION5, NULL);
-	if (rc != -1)
-		return 0;
+	LogDebug(COMPONENT_FSAL, "VERSION5  returned, rc %d errno %d", rc,
+		 errno);
+	if (rc != -1) {
+		gpfs_version = ganesha_v5;
+		goto out;
+	}
 
 	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION4, NULL);
-	if (rc != -1)
-		return 0;
-
+	if (rc != -1) {
+		gpfs_version = ganesha_v4;
+		goto out;
+	}
 	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION3, NULL);
-	if (rc != -1)
-		return 0;
-
+	if (rc != -1) {
+		gpfs_version = ganesha_v3;
+		goto out;
+	}
 	rc = gpfs_ganesha(OPENHANDLE_GET_VERSION2, NULL);
-	if (rc != -1)
-		return 0;
-
-	LogMajor(COMPONENT_FSAL, "OPENHANDLE_GET_VERSION failed: %d", errno);
-	return errno;
+	if (rc != -1) {
+		gpfs_version = ganesha_v2;
+		goto out;
+	}
+out:
+	LogMajor(COMPONENT_FSAL, "OPENHANDLE_GET_VERSION got gpfs_version %d",
+		 gpfs_version);
+	return gpfs_version;
 }
 
 /**

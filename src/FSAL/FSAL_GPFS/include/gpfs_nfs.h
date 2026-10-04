@@ -45,6 +45,7 @@ struct flock {};
 #endif
 
 /* GANESHA common information */
+extern int gpfs_version;
 
 #define GPFS_DEVNAMEX "/dev/ss0" /* Must be the same as GPFS_DEVNAME */
 #define kGanesha 140 /* Must be the same as Ganesha in enum kxOps */
@@ -132,6 +133,7 @@ struct trace_arg {
 #define ganesha_v2 2
 #define ganesha_v3 3
 #define ganesha_v4 4
+#define ganesha_v5 5
 
 int gpfs_ganesha(int op, void *oarg);
 
