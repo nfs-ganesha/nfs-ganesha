@@ -447,7 +447,7 @@ static fsal_status_t linkfile(struct fsal_obj_handle *obj_hdl,
 	return status;
 }
 
-#define BUF_SIZE 1024
+#define BUF_SIZE (64 * 1024)
 /**
  * read_dirents
  * read the directory and call through the callback function for
