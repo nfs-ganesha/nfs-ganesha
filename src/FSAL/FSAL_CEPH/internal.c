@@ -352,8 +352,6 @@ fsal_status_t ceph_set_acl(struct ceph_export *export,
 			acl_entry_t e;
 			acl_permset_t p;
 
-			acl_clear_perms(p);
-
 			/* handle default owner permissions */
 			e = find_entry(acl, ACL_USER_OBJ, 0);
 			if (e && acl_get_permset(e, &p) == 0) {
