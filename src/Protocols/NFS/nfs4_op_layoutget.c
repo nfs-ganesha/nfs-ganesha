@@ -590,8 +590,8 @@ enum nfs_req_result nfs4_op_layoutstats(struct nfs_argop4 *op,
 		 arg_LAYOUTSTATS4->lsa_offset, arg_LAYOUTSTATS4->lsa_length);
 
 	LogEvent(COMPONENT_PNFS,
-		 "LAYOUTSTATS read count %u bytes %" PRIu64
-		 " write count %u bytes %" PRIu64,
+		 "LAYOUTSTATS read count %" PRIu64 " bytes %" PRIu64
+		 " write count %" PRIu64 " bytes %" PRIu64,
 		 arg_LAYOUTSTATS4->lsa_read.ii_count,
 		 arg_LAYOUTSTATS4->lsa_read.ii_bytes,
 		 arg_LAYOUTSTATS4->lsa_write.ii_count,

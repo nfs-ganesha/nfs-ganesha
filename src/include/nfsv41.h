@@ -3089,7 +3089,7 @@ struct LAYOUTERROR4res {
 typedef struct LAYOUTERROR4res LAYOUTERROR4res;
 
 struct io_info4 {
-	uint32_t ii_count;
+	uint64_t ii_count;
 	uint64_t ii_bytes;
 };
 typedef struct io_info4 io_info4;
@@ -3100,6 +3100,7 @@ struct LAYOUTSTATS4args {
 	stateid4 lsa_stateid;
 	io_info4 lsa_read;
 	io_info4 lsa_write;
+	deviceid4 lsa_deviceid;
 	layoutupdate4 lsa_layoutupdate;
 };
 typedef struct LAYOUTSTATS4args LAYOUTSTATS4args;
@@ -8212,6 +8213,15 @@ static inline bool xdr_LAYOUTERROR4res(XDR *xdrs, LAYOUTERROR4res *objp)
 	return true;
 }
 
+static inline bool xdr_io_info4(XDR *xdrs, io_info4 *objp)
+{
+	if (!xdr_uint64_t(xdrs, &objp->ii_count))
+		return FALSE;
+	if (!xdr_uint64_t(xdrs, &objp->ii_bytes))
+		return FALSE;
+	return TRUE;
+}
+
 static inline bool xdr_LAYOUTSTATS4args(XDR *xdrs, LAYOUTSTATS4args *objp)
 {
 	if (!xdr_offset4(xdrs, &objp->lsa_offset))
@@ -8220,13 +8230,11 @@ static inline bool xdr_LAYOUTSTATS4args(XDR *xdrs, LAYOUTSTATS4args *objp)
 		return false;
 	if (!xdr_stateid4(xdrs, &objp->lsa_stateid))
 		return false;
-	if (!inline_xdr_u_int32_t(xdrs, &objp->lsa_read.ii_count))
+	if (!xdr_io_info4(xdrs, &objp->lsa_read))
 		return false;
-	if (!inline_xdr_u_int64_t(xdrs, &objp->lsa_read.ii_bytes))
+	if (!xdr_io_info4(xdrs, &objp->lsa_write))
 		return false;
-	if (!inline_xdr_u_int32_t(xdrs, &objp->lsa_write.ii_count))
-		return false;
-	if (!inline_xdr_u_int64_t(xdrs, &objp->lsa_write.ii_bytes))
+	if (!xdr_deviceid4(xdrs, objp->lsa_deviceid))
 		return false;
 	if (!xdr_layoutupdate4(xdrs, &objp->lsa_layoutupdate))
 		return false;
@@ -9677,15 +9685,6 @@ static inline bool xdr_ff_layoutupdate4(XDR *xdrs, ff_layoutupdate4 *objp)
 	if (!xdr_bool(xdrs, &objp->ffl_local))
 		return false;
 	return true;
-}
-
-static inline bool xdr_io_info4(XDR *xdrs, io_info4 *objp)
-{
-	if (!xdr_uint32_t(xdrs, &objp->ii_count))
-		return FALSE;
-	if (!xdr_uint64_t(xdrs, &objp->ii_bytes))
-		return FALSE;
-	return TRUE;
 }
 
 static inline bool xdr_ff_iostats4(XDR *xdrs, ff_iostats4 *objp)
