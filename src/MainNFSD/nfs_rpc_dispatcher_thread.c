@@ -1243,6 +1243,10 @@ static bool enable_udp_listener(protos prot)
 	if (prot == P_NLM &&
 	    (nfs_param.core_param.enable_UDP & UDP_LISTENER_NLM))
 		return true;
+#ifdef _INTERNAL_STATD
+	if (prot == P_STATD)
+		return true;
+#endif
 #endif
 #ifdef _USE_RQUOTA
 	if (prot == P_RQUOTA &&
