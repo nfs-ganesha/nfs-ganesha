@@ -347,7 +347,11 @@ bool nlm_unmonitor(state_nlm_client_t *host)
 		info.client_name = host->slc_nlm_caller_name;
 		info.client_address = host->slc_client_addr;
 		info.server_address = host->slc_server_addr;
-		info.nconf = host->slc_nconf;
+		/* Must match the UDP netid used by nlm_monitor() */
+		if (info.client_address.ss_family == AF_INET)
+			info.nconf = netconfig_udpv4;
+		else
+			info.nconf = netconfig_udpv6;
 
 		if (!admin_shutdown)
 			return nlm_rm_entry(&info);
