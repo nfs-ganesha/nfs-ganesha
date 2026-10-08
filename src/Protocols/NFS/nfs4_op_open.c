@@ -1393,8 +1393,13 @@ enum nfs_req_result nfs4_op_open(struct nfs_argop4 *op, compound_data_t *data,
 		arg_OPEN4->claim.claim, arg_OPEN4->openhow.opentype,
 		arg_OPEN4->share_deny, arg_OPEN4->share_access);
 
-	LogFullDebug(COMPONENT_STATE, "Delegate Type = %d",
-		     arg_OPEN4->claim.open_claim4_u.delegate_type);
+	/* open_claim4_u is a union; delegate_type is only valid for
+	 * CLAIM_PREVIOUS. For other claims it aliases another member
+	 * (e.g. the file name length for CLAIM_NULL).
+	 */
+	if (claim == CLAIM_PREVIOUS)
+		LogFullDebug(COMPONENT_STATE, "Delegate Type = %d",
+			     arg_OPEN4->claim.open_claim4_u.delegate_type);
 
 	GSH_AUTO_TRACEPOINT(
 		nfs4, op_open_start, TRACE_INFO,
