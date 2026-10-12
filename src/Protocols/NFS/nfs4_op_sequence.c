@@ -194,7 +194,6 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	request_size = xdr_getpos(data->req->rq_xdrs);
 
 	if (request_size > session->fore_channel_attrs.ca_maxrequestsize) {
-		dec_session_ref(session);
 		res_SEQUENCE4->sr_status = NFS4ERR_REQ_TOO_BIG;
 		LogDebugAlt(
 			COMPONENT_SESSIONS, COMPONENT_CLIENTID,
@@ -202,6 +201,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 			" exceeds ca_maxrequestsize %" PRIu32,
 			nfsstat4_to_str(res_SEQUENCE4->sr_status), request_size,
 			session->fore_channel_attrs.ca_maxrequestsize);
+		dec_session_ref(session);
 		return NFS_REQ_ERROR;
 	}
 
