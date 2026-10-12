@@ -183,7 +183,7 @@ DynamicMetrics::DynamicMetrics(prometheus::Registry &registry)
 			  .Register(registry))
 	, exportfilescount(prometheus::Builder<GaugeInt>()
 				   .Name("export_available_file_count")
-				   .Help("Files present in the export")
+				   .Help("Available (free) files in the export")
 				   .Register(registry))
 	, exportfreebytespercent(
 		  prometheus::Builder<GaugeDouble>()
@@ -529,23 +529,38 @@ void dynamic_metrics_export_info(const char *path, const uint64_t total_size,
 				 const uint64_t total_files,
 				 const uint64_t avail_files)
 {
-	if (total_size && total_files) {
+	if (total_size) {
 		uint32_t storage_utilization =
 			((double)avail_size / total_size) * 100;
-		uint32_t files_utilization =
-			((double)(total_files - avail_files) / total_files) *
-			100;
 
 		dynamic_metrics->exporttotalsize.Add({ { kExportpath, path } })
 			.Set(total_size);
 		dynamic_metrics->exportavailablesize
 			.Add({ { kExportpath, path } })
 			.Set(avail_size);
-		dynamic_metrics->exportfilescount.Add({ { kExportpath, path } })
-			.Set(avail_files);
 		dynamic_metrics->exportfreebytespercent
 			.Add({ { kExportpath, path } })
 			.Set(storage_utilization);
+	}
+
+	/*
+	 * Inode fields: skip when the FSAL reports "unsupported"
+	 * (f_files/f_favail == (uint64_t)-1 or 0).  CephFS commonly
+	 * returns -1 for statvfs inode counts, which would produce a
+	 * meaningless -1 gauge and 100% utilization.
+	 */
+	bool inode_stats_valid =
+		total_files > 0 &&
+		total_files != (uint64_t)-1 &&
+		avail_files != (uint64_t)-1;
+
+	if (inode_stats_valid) {
+		uint32_t files_utilization =
+			((double)(total_files - avail_files) / total_files) *
+			100;
+
+		dynamic_metrics->exportfilescount.Add({ { kExportpath, path } })
+			.Set(avail_files);
 		dynamic_metrics->exportinodeutilization
 			.Add({ { kExportpath, path } })
 			.Set(files_utilization);

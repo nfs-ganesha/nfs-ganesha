@@ -392,11 +392,10 @@ void *PrometheusExposer::server_thread(void *arg)
 			exposer->successLatencies_.Observe(elapsed_ms);
 
 #ifdef HAVE_PROCPS
-		if (nfs_param.core_param.enable_dynamic_metrics) {
+		if (nfs_param.core_param.enable_dynamic_metrics)
 			update_mem_info();
-			update_export_mem();
-		}
 #endif
+		update_export_mem();
 		gettimeofday(&current_time, nullptr);
 		elapsed_seconds =
 			(current_time.tv_sec - nfs_ServerBootTime.tv_sec);
@@ -464,7 +463,6 @@ static bool update_export(struct gsh_export *gsh_export,
 	if (path == NULL || path[0] == '\0' || strcmp(path, "/") == 0)
 		return true;
 
-	LogFullDebug(COMPONENT_FSAL, "path is %s", path);
 	if (export_fsal_obj == NULL || exp == NULL ||
 	    exp->exp_ops.get_fs_dynamic_info == NULL)
 		return true;
@@ -496,6 +494,15 @@ static bool update_export(struct gsh_export *gsh_export,
 		     " dynamic_info.avail_files %" PRIu64,
 		     dynamic_info.total_bytes, dynamic_info.avail_bytes,
 		     dynamic_info.total_files, dynamic_info.avail_files);
+	if (dynamic_info.total_files == (uint64_t)-1 ||
+	    dynamic_info.avail_files == (uint64_t)-1) {
+		LogFullDebug(COMPONENT_FSAL,
+			     "export %s: FSAL reports unsupported inode stats"
+			     " (total_files=%" PRIu64 " avail_files=%" PRIu64
+			     "); inode metrics will be omitted",
+			     path, dynamic_info.total_files,
+			     dynamic_info.avail_files);
+	}
 	dynamic_metrics_export_info(path, dynamic_info.total_bytes,
 				    dynamic_info.avail_bytes,
 				    dynamic_info.total_files,
