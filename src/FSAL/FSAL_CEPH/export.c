@@ -362,6 +362,21 @@ static fsal_status_t create_handle(struct fsal_export *export_pub,
 		return status;
 	}
 
+	/*
+	 * Inode numbers are only unique within a filesystem, and a
+	 * filesystem that is removed and created again under the same name
+	 * hands out the same inode numbers under a new fscid. Don't let a
+	 * handle from another filesystem resolve to an unrelated inode.
+	 */
+	if (hhdl->chk_fscid != export->fscid) {
+		LogDebug(COMPONENT_FSAL,
+			 "Stale handle 0x%" PRIx64 ":0x%" PRIx64
+			 " from fscid %" PRId64 ", export is on fscid %" PRId64,
+			 hhdl->chk_snap, hhdl->chk_ino, hhdl->chk_fscid,
+			 export->fscid);
+		return fsalstat(ERR_FSAL_STALE, ESTALE);
+	}
+
 	vi.ino.val = hhdl->chk_ino;
 	vi.snapid.val = hhdl->chk_snap;
 
