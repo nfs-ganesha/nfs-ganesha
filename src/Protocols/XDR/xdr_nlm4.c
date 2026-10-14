@@ -72,11 +72,12 @@ bool xdr_nlm4_testres(XDR *xdrs, nlm4_testres *objp)
 
 bool xdr_nlm4_lock(XDR *xdrs, nlm4_lock *objp)
 {
-	if (!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
+	if (!xdr_string_nonempty(xdrs, &objp->caller_name, LM_MAXSTRLEN))
 		return false;
 	if (!xdr_netobj(xdrs, &objp->fh))
 		return false;
-	if (!xdr_netobj(xdrs, &objp->oh))
+	if (!xdr_bytes_nonempty(xdrs, &objp->oh.n_bytes, &objp->oh.n_len,
+				MAX_NETOBJ_SZ))
 		return false;
 	if (!xdr_int32_t(xdrs, &objp->svid))
 		return false;
@@ -153,11 +154,12 @@ bool xdr_fsh4_access(XDR *xdrs, fsh4_access *objp)
 
 bool xdr_nlm4_share(XDR *xdrs, nlm4_share *objp)
 {
-	if (!xdr_string(xdrs, &objp->caller_name, LM_MAXSTRLEN))
+	if (!xdr_string_nonempty(xdrs, &objp->caller_name, LM_MAXSTRLEN))
 		return false;
 	if (!xdr_netobj(xdrs, &objp->fh))
 		return false;
-	if (!xdr_netobj(xdrs, &objp->oh))
+	if (!xdr_bytes_nonempty(xdrs, &objp->oh.n_bytes, &objp->oh.n_len,
+				MAX_NETOBJ_SZ))
 		return false;
 	if (!xdr_fsh4_mode(xdrs, &objp->mode))
 		return false;

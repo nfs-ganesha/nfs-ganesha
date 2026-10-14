@@ -115,6 +115,43 @@ struct nfs_request_lookahead {
 #define XDR_BYTES_MAXLEN_IO (64 * 1024 * 1024)
 #define XDR_STRING_MAXLEN (8 * 1024)
 
+/* Variable length opaque that must not be empty */
+static inline bool xdr_bytes_nonempty(XDR *xdrs, char **cpp, u_int *sizep,
+				      u_int maxsize)
+{
+	if (xdrs->x_op == XDR_ENCODE && *sizep == 0) {
+		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty opaque", __func__,
+			 __LINE__);
+		return false;
+	}
+	if (!inline_xdr_bytes(xdrs, cpp, sizep, maxsize))
+		return false;
+	if (xdrs->x_op == XDR_DECODE && *sizep == 0) {
+		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty opaque", __func__,
+			 __LINE__);
+		return false;
+	}
+	return true;
+}
+
+/* NUL terminated string that must not be empty */
+static inline bool xdr_string_nonempty(XDR *xdrs, char **cpp, u_int maxsize)
+{
+	if (xdrs->x_op == XDR_ENCODE && *cpp != NULL && **cpp == '\0') {
+		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty string", __func__,
+			 __LINE__);
+		return false;
+	}
+	if (!inline_xdr_string(xdrs, cpp, maxsize))
+		return false;
+	if (xdrs->x_op == XDR_DECODE && **cpp == '\0') {
+		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty string", __func__,
+			 __LINE__);
+		return false;
+	}
+	return true;
+}
+
 /**
  * @addtogroup config
  *

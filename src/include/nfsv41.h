@@ -3973,25 +3973,6 @@ static inline bool xdr_nfs_cookie4(XDR *xdrs, nfs_cookie4 *objp)
 	return true;
 }
 
-/* Variable length opaque that must not be empty */
-static inline bool xdr_bytes_nonempty(XDR *xdrs, char **cpp, u_int *sizep,
-				      u_int maxsize)
-{
-	if (xdrs->x_op == XDR_ENCODE && *sizep == 0) {
-		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty opaque", __func__,
-			 __LINE__);
-		return false;
-	}
-	if (!inline_xdr_bytes(xdrs, cpp, sizep, maxsize))
-		return false;
-	if (xdrs->x_op == XDR_DECODE && *sizep == 0) {
-		LogDebug(COMPONENT_TIRPC, "%s:%u ERROR empty opaque", __func__,
-			 __LINE__);
-		return false;
-	}
-	return true;
-}
-
 static inline bool xdr_nfs_fh4(XDR *xdrs, nfs_fh4 *objp)
 {
 	if (!xdr_bytes_nonempty(xdrs, (char **)&objp->nfs_fh4_val,
