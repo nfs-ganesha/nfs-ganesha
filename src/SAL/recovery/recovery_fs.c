@@ -251,6 +251,8 @@ int fs_make_path(const char *name, sockaddr_t *serv, char *path, int pathsize,
 	if (nfs_param.nfsv4_param.recovery_backend_ipbased && serv != NULL) {
 		dstpos = fs_make_ip_recov_dir_name(serv, false, pathsize, path,
 						   component1);
+		if (dstpos < 0)
+			return dstpos;
 
 		if (make) {
 			err = mkdir(path, 0700);
@@ -403,9 +405,9 @@ void fs_reclaim_complete(nfs_client_id_t *clientid)
 		return;
 	}
 
-	/* Append the reclaim complete marker */
+	/* Append the reclaim complete marker (including terminating NUL) */
 	path[dstpos] = '/';
-	memcpy(path + dstpos + 1, reclaim_complete_marker, marker_len);
+	memcpy(path + dstpos + 1, reclaim_complete_marker, marker_len + 1);
 
 	LogDebugAlt(COMPONENT_CLIENTID, COMPONENT_RECOVERY, "Create marker %s",
 		    path);
@@ -1283,6 +1285,7 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 					path,
 					delr_clid->cid_recov_tag + position,
 					rhdlstr);
+				return;
 			}
 			path[pathpos++] = '/';
 			memcpy(path + pathpos,
@@ -1300,6 +1303,12 @@ void fs_add_revoke_fh(nfs_client_id_t *delr_clid, nfs_fh4 *delr_handle)
 			} else {
 				close(fd);
 			}
+			return;
+		}
+		if (pathpos + 1 + NAME_MAX >= sizeof(path)) {
+			LogCrit(COMPONENT_RECOVERY,
+				"Could not revoke path %s/%s too long", path,
+				delr_clid->cid_recov_tag + position);
 			return;
 		}
 		path[pathpos++] = '/';
