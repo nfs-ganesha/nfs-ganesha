@@ -268,9 +268,6 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 				return NFS_REQ_REPLAY;
 			} else {
 				/* Illegal replay */
-				PTHREAD_MUTEX_unlock(&slot->slot_lock);
-
-				dec_session_ref(session);
 				res_SEQUENCE4->sr_status =
 					NFS4ERR_RETRY_UNCACHED_REP;
 				LogDebugAlt(
@@ -281,6 +278,9 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 						res_SEQUENCE4->sr_status),
 					slot->sequence,
 					arg_SEQUENCE4->sa_sequenceid);
+				PTHREAD_MUTEX_unlock(&slot->slot_lock);
+
+				dec_session_ref(session);
 				return NFS_REQ_ERROR;
 			}
 		}
