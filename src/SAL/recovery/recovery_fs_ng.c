@@ -322,17 +322,19 @@ static int fs_ng_read_recov_clids_impl(const char *parent_path, char *clid_str)
 				continue;
 			}
 			len = ptr2 - ptr - 1;
-			if (len >= 9) {
+			if (len <= 0 || len >= 9) {
 				LogEvent(COMPONENT_RECOVERY,
 					 "invalid clid format: %s", build_clid);
 				gsh_free(sub_path, MEM_COMP_RECOVERY);
 				gsh_free(build_clid, MEM_COMP_RECOVERY);
 				continue;
 			}
-			memcpy(temp, ptr + 1, len + 1);
+			memcpy(temp, ptr + 1, len);
+			temp[len] = '\0';
 			cid_len = atoi(temp);
 			len = strlen(ptr2);
-			if ((len == (cid_len + 2)) && (ptr2[len - 1] == ')')) {
+			if (cid_len > 0 && (len == (cid_len + 2)) &&
+			    (ptr2[len - 1] == ')')) {
 				new_ent = nfs4_add_clid_entry(build_clid, true);
 				LogDebugAlt(COMPONENT_CLIENTID,
 					    COMPONENT_RECOVERY,
