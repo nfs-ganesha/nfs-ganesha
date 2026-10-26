@@ -317,9 +317,11 @@ static inline void tmp_get_exp_paths(struct tmp_export_paths *tmp,
 
 	if (gr != NULL)
 		tmp->tmp_fullpath = gsh_refstr_get(gr);
-	else
+	else if (exp->cfg_fullpath != NULL)
 		tmp->tmp_fullpath =
 			gsh_refstr_dup(exp->cfg_fullpath, MEM_COMP_EXPORT);
+	else
+		tmp->tmp_fullpath = gsh_refstr_get(no_export);
 
 	gr = rcu_dereference(exp->pseudopath);
 
