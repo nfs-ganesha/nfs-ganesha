@@ -1165,8 +1165,16 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 	memset(&cm_key, 0, sizeof(cm_key));
 	user_id = key = NULL;
 
-	/* check if ceph client pool is enabled and we have userid and key */
-	if (CephFSM.clnts_per_pool > 1) {
+	/* Note - Use ceph client pool for exports with cmount path as "/". If
+	 * cmount path is different then, cephadm has already created related
+	 * userid & key. Lets use that user details for such exports and do not
+	 * use ceph client pool.
+	 */
+
+	/* confirm that cmount path is "/", and then apply ceph client pool
+	 * to get the right userid and key */
+	if (export->cmount_path && (strcmp(export->cmount_path, "/") == 0) &&
+	    (CephFSM.clnts_per_pool > 1)) {
 		int idx;
 
 		idx = export->export.export_id % CephFSM.clnts_per_pool;
@@ -1183,7 +1191,7 @@ static fsal_status_t create_export(struct fsal_module *module_in,
 		key = export->secret_key;
 		LogDebug(
 			COMPONENT_FSAL,
-			"Falling back to user_id and secret key provided in export block");
+			"Using user_id and secret key provided in export block");
 	}
 
 	cm_key.cm_fs_name = export->fs_name;
