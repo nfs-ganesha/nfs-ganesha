@@ -84,7 +84,7 @@ static inline struct gsh_refstr *gsh_refstr_dup(const char *str,
  *
  * A callback function that the refcounting code can use to free a gsh_refstr.
  *
- * @param[in]	pointer to the gr_ref field in the structure
+ * @param[in] ref	pointer to the gr_ref field in the structure
  */
 void gsh_refstr_release(struct urcu_ref *ref);
 
@@ -129,7 +129,6 @@ static inline struct gsh_refstr *gsh_refstr_get(struct gsh_refstr *gr)
 	for (;;) {
 		long new_val, old_val = cur;
 
-		old_val = cur;
 		if (old_val == 0 || old_val == LONG_MAX)
 			abort();
 
@@ -151,7 +150,7 @@ static inline struct gsh_refstr *gsh_refstr_get(struct gsh_refstr *gr)
  */
 static inline void gsh_refstr_put(struct gsh_refstr *gr)
 {
-	return urcu_ref_put(&gr->gr_ref, gsh_refstr_release);
+	urcu_ref_put(&gr->gr_ref, gsh_refstr_release);
 }
 
 #ifdef __cplusplus
