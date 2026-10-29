@@ -3394,6 +3394,15 @@ state_status_t state_cancel_blocked(state_lock_entry_t *lock_entry)
 }
 
 #ifdef _USE_NLM
+static bool nlm_owner_server_addr(state_owner_t *owner, sockaddr_t *server_addr)
+{
+	state_nlm_client_t *client = owner->so_owner.so_nlm_owner.so_client;
+
+	return server_addr == NULL ||
+	       sockaddr_cmp(COMPONENT_STATE, server_addr,
+			    &client->slc_server_addr, true) == 0;
+}
+
 /**
  * @brief Handle an SM_NOTIFY from NLM
  *
@@ -3406,7 +3415,8 @@ state_status_t state_cancel_blocked(state_lock_entry_t *lock_entry)
  * @return State status.
  */
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-				bool state_applies, int32_t nsm_state)
+				bool state_applies, int32_t nsm_state,
+				sockaddr_t *server_addr)
 {
 	state_owner_t *owner;
 	state_lock_entry_t *found_entry;
@@ -3414,6 +3424,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	struct fsal_obj_handle *obj;
 	int errcnt = 0;
 	struct glist_head newlocks;
+	struct glist_head keepshares;
 	state_t *found_share;
 	state_status_t status = 0;
 	struct req_op_context op_context;
@@ -3433,6 +3444,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	}
 
 	glist_init(&newlocks);
+	glist_init(&keepshares);
 
 	/* First remove byte range locks.
 	 * Only accept so many errors before giving up.
@@ -3455,6 +3467,14 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 
 		/* Remove from the client lock list */
 		glist_del(&found_entry->sle_client_locks);
+
+		if (!nlm_owner_server_addr(found_entry->sle_owner,
+					   server_addr)) {
+			glist_add_tail(&newlocks,
+				       &found_entry->sle_client_locks);
+			PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
+			continue;
+		}
 
 		/* If called as a result of SM_NOTIFY, we don't drop the
 		 * locks belonging to the "current" NSM state counter passed
@@ -3586,6 +3606,15 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 			break;
 		}
 
+		if (!nlm_owner_server_addr(found_share->state_owner,
+					   server_addr)) {
+			glist_move_tail(&keepshares,
+					&found_share->state_data.nlm_share
+						 .share_perclient);
+			PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
+			continue;
+		}
+
 		/* Extract the bits from the lock entry that we will need
 		 * to proceed with the operation (object, owner, and
 		 * export).
@@ -3678,6 +3707,7 @@ state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
 	 */
 	PTHREAD_MUTEX_lock(&nsmclient->ssc_mutex);
 	glist_add_list_tail(&nsmclient->ssc_lock_list, &newlocks);
+	glist_add_list_tail(&nsmclient->ssc_share_list, &keepshares);
 	PTHREAD_MUTEX_unlock(&nsmclient->ssc_mutex);
 	LogFullDebug(COMPONENT_STATE, "DONE");
 

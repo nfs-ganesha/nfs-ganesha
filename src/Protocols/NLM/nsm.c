@@ -645,7 +645,7 @@ int smmon_proc_notify(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		 */
 		LogFullDebug(COMPONENT_NLM, "Starting cleanup");
 		state_status = state_nlm_notify(nsm_client, true,
-						arg->notify_args.state);
+						arg->notify_args.state, NULL);
 
 		if (state_status != STATE_SUCCESS) {
 			/** @todo FSF: Deal with error

@@ -1486,11 +1486,11 @@ bool nfs4_check_deleg_reclaim(nfs_client_id_t *clid, nfs_fh4 *fhandle)
 /**
  * @brief Release NLM state
  */
-static void nlm_release(state_nsm_client_t *nsm_cp)
+static void nlm_release(state_nsm_client_t *nsm_cp, sockaddr_t *release_addr)
 {
 	state_status_t err;
 
-	err = state_nlm_notify(nsm_cp, false, 0);
+	err = state_nlm_notify(nsm_cp, false, 0, release_addr);
 	if (err != STATE_SUCCESS)
 		LogDebugAlt(COMPONENT_NLM, COMPONENT_RECOVERY,
 			    "state_nlm_notify failed with %d", err);
@@ -1499,7 +1499,7 @@ static void nlm_release(state_nsm_client_t *nsm_cp)
 #endif /* _USE_NLM */
 
 /**
- * @brief Release all NLM state
+ * @brief Release the NLM state taken through a server address
  */
 static void nfs_release_nlm_state(char *release_ip, sockaddr_t *release_addr)
 {
@@ -1516,7 +1516,8 @@ static void nfs_release_nlm_state(char *release_ip, sockaddr_t *release_addr)
 		return;
 
 	LogDebugAlt(COMPONENT_STATE, COMPONENT_RECOVERY,
-		    "Release all NLM locks");
+		    "Release NLM locks taken through %s",
+		    release_ip ? release_ip : "no address");
 
 	cancel_all_nlm_blocked();
 
@@ -1539,7 +1540,7 @@ restart:
 				inc_nsm_client_ref(nsm_cp);
 				PTHREAD_RWLOCK_unlock(
 					&ht->partitions[i].ht_lock);
-				nlm_release(nsm_cp);
+				nlm_release(nsm_cp, release_addr);
 				goto restart;
 			}
 			RBT_INCREMENT(pn);

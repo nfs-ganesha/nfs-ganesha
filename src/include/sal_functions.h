@@ -724,7 +724,8 @@ state_status_t state_cancel(struct fsal_obj_handle *obj, state_owner_t *owner,
 			    fsal_lock_param_t *lock);
 
 state_status_t state_nlm_notify(state_nsm_client_t *nsmclient,
-				bool state_applies, int32_t state);
+				bool state_applies, int32_t state,
+				sockaddr_t *server_addr);
 
 void state_unlock_all_locked(struct fsal_obj_handle *obj, state_t *state);
 

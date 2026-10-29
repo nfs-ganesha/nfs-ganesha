@@ -95,7 +95,8 @@ int nlm4_Sm_Notify(nfs_arg_t *args, struct svc_req *req, nfs_res_t *res)
 		 * by this SM_NOTIFY.
 		 */
 		LogFullDebug(COMPONENT_NLM, "Starting cleanup");
-		state_status = state_nlm_notify(nsm_client, true, arg->state);
+		state_status =
+			state_nlm_notify(nsm_client, true, arg->state, NULL);
 
 		if (state_status != STATE_SUCCESS) {
 			/** @todo FSF: Deal with error
