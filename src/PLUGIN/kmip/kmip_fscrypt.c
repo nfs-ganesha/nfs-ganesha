@@ -1240,6 +1240,8 @@ void *kmip_connection_reaper(void *a)
 	int saved;
 	struct my_kmip_connection *kconn;
 
+	rcu_register_thread();
+
 	for (;; usleep(delay)) {
 		delay = kmip_settings.kmip_timeout * (1000000 / 2);
 		if (BUSY(saved_kconn) || NOT_CONNECTED(saved_kconn))
@@ -1270,6 +1272,9 @@ void *kmip_connection_reaper(void *a)
 		if (kmip_shutting_down)
 			break;
 	}
+
+	rcu_unregister_thread();
+
 	return "";
 }
 

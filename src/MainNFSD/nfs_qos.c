@@ -3234,6 +3234,8 @@ static void *qos_thread_func(void *arg)
 	const char *thread_name =
 		((op_type == QOS_WRITE) ? "qos_write" : "qos_read");
 
+	rcu_register_thread();
+
 	SetNameFunction(thread_name);
 	LogDebug(COMPONENT_QOS, "Thread Started ..");
 	while (atomic_fetch_uint32_t(&qos_bits) & QOS_THREAD_RUNNABLE) {
@@ -3253,6 +3255,9 @@ static void *qos_thread_func(void *arg)
 		usleep(BW_DELAY_USEC / 2);
 		counter++;
 	}
+
+	rcu_unregister_thread();
+
 	return NULL;
 }
 

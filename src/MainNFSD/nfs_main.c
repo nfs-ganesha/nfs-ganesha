@@ -453,6 +453,8 @@ int main(int argc, char *argv[])
 	/* Only start threads once we are done forking */
 	start_crash_handler_monitor();
 
+	rcu_register_thread();
+
 	/* Make sure Linux file i/o will return with error
 	 * if file size is exceeded. */
 #ifdef linux
@@ -688,6 +690,8 @@ int main(int argc, char *argv[])
 		close(pidfile);
 
 	nfs_prereq_destroy();
+
+	rcu_unregister_thread();
 
 	return 0;
 
