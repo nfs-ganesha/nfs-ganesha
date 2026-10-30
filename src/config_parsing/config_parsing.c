@@ -1184,8 +1184,18 @@ static int do_block_load(struct config_node *blk, struct config_item *params,
 				break;
 			case CONFIG_BOOL:
 				if (convert_bool(term_node, &bool_val,
-						 err_type))
+						 err_type)) {
 					*(bool *)param_addr = bool_val;
+					if (item->flags & CONFIG_MARK_SET) {
+						void *mask_addr;
+
+						mask_addr =
+							((char *)param_struct +
+							 item->u.b.set_off);
+						*(uint32_t *)mask_addr |=
+							item->u.b.bit;
+					}
+				}
 				break;
 			case CONFIG_BOOLBIT:
 				if (convert_bool(term_node, &bool_val,

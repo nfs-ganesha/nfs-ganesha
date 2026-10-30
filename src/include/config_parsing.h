@@ -319,6 +319,8 @@ struct config_item {
 	union {
 		struct { /* CONFIG_BOOL */
 			bool def;
+			uint32_t bit;
+			size_t set_off;
 		} b;
 		struct { /* CONFIG_STRING | CONFIG_PATH */
 			int minsize;
@@ -615,6 +617,15 @@ struct config_item {
 	  .type = CONFIG_BOOL,                         \
 	  .flags = CONFIG_UNIQUE,                      \
 	  .u.b.def = _def_,                            \
+	  .off = offsetof(struct _struct_, _mem_) }
+
+#define CONF_ITEM_BOOL_SET(_name_, _def_, _struct_, _mem_, _bit_, _set_) \
+	{ .name = _name_,                                                \
+	  .type = CONFIG_BOOL,                                           \
+	  .flags = CONFIG_MARK_SET | CONFIG_UNIQUE,                      \
+	  .u.b.def = _def_,                                              \
+	  .u.b.bit = _bit_,                                              \
+	  .u.b.set_off = offsetof(struct _struct_, _set_),               \
 	  .off = offsetof(struct _struct_, _mem_) }
 
 #define CONF_ITEM_STR(_name_, _minsize_, _maxsize_, _def_, _struct_, _mem_) \
