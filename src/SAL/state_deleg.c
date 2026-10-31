@@ -521,10 +521,19 @@ bool has_revoked_delegations_for_client(nfs_client_id_t *clientid)
 	struct glist_head *glist;
 	bool found = false;
 
+	if (clientid == NULL)
+		return false;
+
 	PTHREAD_MUTEX_lock(&revoked_delegations_lock);
 	glist_for_each(glist, &revoked_delegations_list) {
-		found = true;
-		break;
+		struct revoked_delegation *entry =
+			glist_entry(glist, struct revoked_delegation, list);
+
+		if (memcmp(entry->stateid.other, &clientid->cid_clientid,
+			   sizeof(clientid->cid_clientid)) == 0) {
+			found = true;
+			break;
+		}
 	}
 	PTHREAD_MUTEX_unlock(&revoked_delegations_lock);
 
@@ -580,9 +589,21 @@ bool atomic_remove_revoked_and_clear_flags(const stateid4 *stateid,
 		}
 	}
 
-	/* Check if any revoked delegations remain */
-	if (!glist_empty(&revoked_delegations_list))
-		has_revoked = true;
+	/* Check if any revoked delegations remain for this client */
+	if (clientid != NULL) {
+		glist_for_each(glist, &revoked_delegations_list) {
+			struct revoked_delegation *revoked =
+				glist_entry(glist, struct revoked_delegation,
+					    list);
+
+			if (memcmp(revoked->stateid.other,
+				   &clientid->cid_clientid,
+				   sizeof(clientid->cid_clientid)) == 0) {
+				has_revoked = true;
+				break;
+			}
+		}
+	}
 
 	if (!has_revoked && clientid != NULL) {
 		struct glist_head *session_glist;
@@ -680,7 +701,7 @@ void remove_revoked_stateid(const stateid4 *stateid)
 		entry = glist_entry(pos, struct revoked_delegation, list);
 		if (memcmp(&entry->stateid, stateid, sizeof(stateid4)) == 0) {
 			glist_del(pos);
-			free(entry);
+			gsh_free(entry, MEM_COMP_STATE);
 			found = true;
 			LogDebug(COMPONENT_STATE,
 				 "Removed revoked delegation stateid from list");
