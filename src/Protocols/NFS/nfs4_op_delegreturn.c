@@ -100,6 +100,11 @@ enum nfs_req_result nfs4_op_delegreturn(struct nfs_argop4 *op,
 	if (res_DELEGRETURN4->status != NFS4_OK)
 		return NFS_REQ_ERROR;
 
+	if (state_found->state_type != STATE_TYPE_DELEG) {
+		res_DELEGRETURN4->status = NFS4ERR_BAD_STATEID;
+		goto out_unlock;
+	}
+
 	owner = get_state_owner_ref(state_found);
 
 	if (owner == NULL) {
