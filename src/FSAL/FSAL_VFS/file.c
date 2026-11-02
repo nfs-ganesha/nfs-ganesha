@@ -1420,10 +1420,10 @@ void vfs_write2(struct fsal_obj_handle *obj_hdl, bool bypass,
 	if (write_arg->fsal_stable) {
 		retval = fsync(my_fd->fd);
 		if (retval == -1) {
-			status2 = posix2fsal_status(errno);
+			status = posix2fsal_status(errno);
 			write_arg->fsal_stable = false;
 			LogFullDebug(COMPONENT_FSAL, "fsync returned %s",
-				     fsal_err_txt(status2));
+				     fsal_err_txt(status));
 		}
 	}
 
