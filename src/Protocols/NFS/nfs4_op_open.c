@@ -1231,6 +1231,9 @@ retry_open_file:
 			state_del_locked(*file_state);
 			*file_state = NULL;
 			*new_state = false;
+			STATELOCK_unlock(file_obj);
+			state_handle_lock_held = false;
+			goto out;
 		} else {
 			/*Do an open downgrade to the old open flags */
 			status = fsal_reopen2(file_obj, *file_state,
@@ -1651,15 +1654,15 @@ out2:
 	if (data->minorversion == 0)
 		update_lease_simple(clientid);
 
-	if (file_state != NULL)
-		dec_state_t_ref(file_state);
-
 	/* Clean up if we have an error exit */
 	if ((file_state != NULL) && new_state &&
 	    (res_OPEN4->status != NFS4_OK)) {
 		/* Need to destroy open owner and state */
 		state_del(file_state);
 	}
+
+	if (file_state != NULL)
+		dec_state_t_ref(file_state);
 
 	if (obj_change)
 		obj_change->obj_ops->put_ref(obj_change);
