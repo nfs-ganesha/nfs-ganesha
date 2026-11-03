@@ -1739,13 +1739,22 @@ static bool grpc_show_count_cb(struct gsh_client *cl, void *state)
 struct grpc_show_fill_state {
 	struct grpc_client_info *clients;
 	uint32_t index;
+	uint32_t max_count;
 };
 
 static bool grpc_show_fill_cb(struct gsh_client *cl_node, void *state)
 {
 	struct grpc_show_fill_state *st = (struct grpc_show_fill_state *)state;
-	struct grpc_client_info *info = &st->clients[st->index++];
+	struct grpc_client_info *info;
 	struct server_stats *cl;
+
+	/* Stop filling if new clients were added after the count pass,
+	 * so we never write past the allocated st->clients array.
+	 */
+	if (st->index >= st->max_count)
+		return false;
+
+	info = &st->clients[st->index++];
 
 	cl = container_of(cl_node, struct server_stats, client);
 
@@ -1791,9 +1800,12 @@ void grpc_cltmgr_free_show_clients(struct grpc_show_clients *show)
 /**
  * @brief gRPC entry point for cltmgr_show_clients / D-Bus ShowClients
  *
- * Takes a two-pass snapshot of all known clients (count then fill) under
- * the AVL read lock to avoid TOCTOU races. The returned struct must be
- * freed via grpc_cltmgr_free_show_clients().
+ * Takes a two-pass snapshot of all known clients (count then fill). Because
+ * foreach_gsh_client() acquires and releases client_by_ip.cip_lock on each
+ * pass, clients may be added or removed between passes; the second pass is
+ * bounded by the allocated capacity and updates client_count to the actual
+ * number of entries filled. The returned struct must be freed via
+ * grpc_cltmgr_free_show_clients().
  */
 bool grpc_cltmgr_show_clients(struct grpc_show_clients **out, bool *success,
 			      char *errmsg, size_t errmsg_len)
@@ -1817,7 +1829,15 @@ bool grpc_cltmgr_show_clients(struct grpc_show_clients **out, bool *success,
 					   MEM_COMP_MANAGE);
 		fill_st.clients = show->clients;
 		fill_st.index = 0;
+		/* Bound the fill pass to the count allocated in pass 1 in
+		 * case new clients connected between the two passes.
+		 */
+		fill_st.max_count = show->client_count;
 		(void)foreach_gsh_client(grpc_show_fill_cb, &fill_st);
+		/* Update client_count to the actual number of clients filled
+		 * in case clients were removed between the two passes.
+		 */
+		show->client_count = fill_st.index;
 	}
 
 	*out = show;
