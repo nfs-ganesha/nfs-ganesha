@@ -1957,15 +1957,15 @@ else(RPMBUILD_EXECUTABLE)
 endif(RPMBUILD_EXECUTABLE)
 
 if("${RPMBUILD_VERSION}" VERSION_GREATER_EQUAL "4.18")
-set(BCOND_LEGACY_PYTHON_INSTALL
-[=[%bcond legacy_python_install %[ v"%{python3_version}" < v"3.12" ]]=])
+    set(BCOND_LEGACY_PYTHON_INSTALL
+    [=[%bcond legacy_python_install %[ v"%{python3_version}" < v"3.12" ]]=])
 else()
-set(BCOND_LEGACY_PYTHON_INSTALL [=[%if %[ v"%{python3_version}" < v"3.12" ]
+    set(BCOND_LEGACY_PYTHON_INSTALL [=[%if 0%{?python3_version_nodots} < 312
 %bcond_without legacy_python_install
 %else
 %bcond_with legacy_python_install
 %endif]=]
-)
+    )
 endif()
 
 
