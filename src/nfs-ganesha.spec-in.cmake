@@ -24,6 +24,7 @@ Requires: openSUSE-release
 # % bcond_with means you add a "--with" option, default = without this feature
 # % bcond_without adds a"--without" so the feature is enabled by default
 
+%{!?name: %global name nfs-ganesha}
 @BCOND_NULLFS@ nullfs
 %global use_fsal_null %{on_off_switch nullfs}
 
@@ -144,7 +145,7 @@ Requires: openSUSE-release
 
 %define sourcename @CPACK_SOURCE_PACKAGE_FILE_NAME@
 
-Name:		nfs-ganesha
+Name:		%{name}
 Version:	@GANESHA_BASE_VERSION@
 Release:	%{dev_version}%{?dist}
 Summary:	NFS-Ganesha is a NFS Server running in user space
@@ -245,17 +246,17 @@ Requires(pre): /usr/sbin/useradd
 Requires(pre): /usr/sbin/groupadd
 
 %if ( 0%{?fedora} >= 30 || 0%{?rhel} >= 8 )
-Requires: nfs-ganesha-selinux = %{version}-%{release}
+Requires: %{name}-selinux = %{version}-%{release}
 %endif
 
 %if %{with monitoring}
-Requires:	nfs-ganesha-monitoring
+Requires:	%{name}-monitoring
 %endif
 
 # Use CMake variables
 
 %description
-nfs-ganesha : NFS-GANESHA is a NFS Server running in user space.
+%{name} : NFS-GANESHA is a NFS Server running in user space.
 It comes with various back-end modules (called FSALs) provided as
  shared objects to support different file systems and name-spaces.
 
@@ -274,7 +275,7 @@ in Prometheus format.
 Summary: The NFS-GANESHA VFS FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description vfs
 This package contains a FSAL shared object to
@@ -284,7 +285,7 @@ be used with NFS-Ganesha to support VFS based filesystems
 Summary: The NFS-GANESHA PROXY_V4 FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description proxy-v4
 This package contains a FSAL shared object to
@@ -294,7 +295,7 @@ be used with NFS-Ganesha to support PROXY_V4 based filesystems
 Summary: The NFS-GANESHA PROXY_V3 FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description proxy-v3
 This package contains a FSAL shared object to
@@ -356,7 +357,7 @@ Summary: The NFS-GANESHA library for use with LTTng
 Group: Applications/System
 BuildRequires: lttng-ust-devel >= 2.3
 BuildRequires: lttng-tools-devel >= 2.3
-Requires: nfs-ganesha = %{version}-%{release}, lttng-tools >= 2.3,  lttng-ust >= 2.3
+Requires: %{name} = %{version}-%{release}, lttng-tools >= 2.3,  lttng-ust >= 2.3
 
 %description lttng
 This package contains the libganesha_trace.so library. When preloaded
@@ -367,7 +368,7 @@ to the ganesha.nfsd server, it makes it possible to trace using LTTng.
 %package rados-grace
 Summary: The NFS-GANESHA command for managing the RADOS grace database
 Group: Applications/System
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description rados-grace
 This package contains the ganesha-rados-grace tool for interacting with the
@@ -380,7 +381,7 @@ recovery state.
 %package rados-urls
 Summary: The NFS-GANESHA library for use with RADOS URLs
 Group: Applications/System
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description rados-urls
 This package contains the libganesha_rados_urls library used for
@@ -395,7 +396,7 @@ handling RADOS URL configurations.
 %package nullfs
 Summary: The NFS-GANESHA NULLFS Stackable FSAL
 Group: Applications/System
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description nullfs
 This package contains a Stackable FSAL shared object to
@@ -407,10 +408,10 @@ be used with NFS-Ganesha. This is mostly a template for future (more sophisticat
 %package mem
 Summary: The NFS-GANESHA Memory backed testing FSAL
 Group: Applications/System
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description mem
-This package contains a FSAL shared object to be used with NFS-Ganesha.  This
+This package contains a FSAL shared object to be used with NFS-Ganesha. This
 is used for speed and latency testing.
 %endif
 
@@ -419,7 +420,7 @@ is used for speed and latency testing.
 %package gpfs
 Summary: The NFS-GANESHA GPFS FSAL
 Group: Applications/System
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 
 %description gpfs
 This package contains a FSAL shared object to
@@ -431,7 +432,7 @@ be used with NFS-Ganesha to support GPFS backend
 %package ceph
 Summary: The NFS-GANESHA CephFS FSAL
 Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	%{name} = %{version}-%{release}
 BuildRequires:	libcephfs-devel >= 10.2.0
 
 %description ceph
@@ -444,7 +445,7 @@ be used with NFS-Ganesha to support CephFS
 %package rgw
 Summary: The NFS-GANESHA Ceph RGW FSAL
 Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	%{name} = %{version}-%{release}
 BuildRequires:	librgw-devel >= 10.2.0
 
 %description rgw
@@ -457,7 +458,7 @@ be used with NFS-Ganesha to support Ceph RGW
 %package xfs
 Summary: The NFS-GANESHA XFS FSAL
 Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	%{name} = %{version}-%{release}
 BuildRequires:	libattr-devel xfsprogs-devel
 
 %description xfs
@@ -472,7 +473,7 @@ Summary: The NFS-GANESHA LUSTRE FSAL
 Group: Applications/System
 BuildRequires: libattr-devel
 BuildRequires: lustre-client
-Requires: nfs-ganesha = %{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 Requires: lustre-client
 
 %description lustre
@@ -485,7 +486,7 @@ be used with NFS-Ganesha to support LUSTRE based filesystems
 %package kvsfs
 Summary: The NFS-GANESHA KVSFS FSAL
 Group: Applications/System
-Requires:       nfs-ganesha = %{version}-%{release}
+Requires:       %{name} = %{version}-%{release}
 Requires:	libkvsns >= 1.2.0
 BuildRequires:  libkvsns-devel >= 1.2.0
 
@@ -499,7 +500,7 @@ be used with NFS-Ganesha to support KVSFS/libkvsns
 %package gluster
 Summary: The NFS-GANESHA GLUSTER FSAL
 Group: Applications/System
-Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	%{name} = %{version}-%{release}
 BuildRequires:        libgfapi-devel >= 7.0
 BuildRequires:        libattr-devel
 
@@ -513,7 +514,7 @@ be used with NFS-Ganesha to support Gluster
 %package saunafs
 Summary: The NFS-GANESHA SAUNAFS FSAL
 Group: Applications/System
-Requires:       nfs-ganesha = %{version}-%{release}
+Requires:       %{name} = %{version}-%{release}
 
 %description saunafs
 This package contains a FSAL shared object to
@@ -526,7 +527,7 @@ be used with NFS-Ganesha to support SAUNAFS
 Summary: The NFS-GANESHA SELINUX targeted policy
 Group: Applications/System
 BuildArch:	noarch
-Requires:	nfs-ganesha = %{version}-%{release}
+Requires:	%{name} = %{version}-%{release}
 BuildRequires: selinux-policy-devel
 %{?selinux_requires}
 
