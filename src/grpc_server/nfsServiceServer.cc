@@ -2050,7 +2050,6 @@ ExportService::RemoveExport(grpc::ServerContext *context,
 		response->set_success(false);
 		response->set_message(
 			"another export admin operation is in progress");
-		put_gsh_export(export_obj);
 		return grpc::Status::OK;
 	}
 
@@ -2060,16 +2059,19 @@ ExportService::RemoveExport(grpc::ServerContext *context,
 		response->set_success(false);
 		response->set_message("lookup_export failed: " +
 				      std::string(errormsg));
+		EXPORT_ADMIN_UNLOCK();
 		return grpc::Status::OK;
 	}
 
 	// Check for invalid ID 0 or pseudo root
 	if (export_obj->export_id == 0 ||
-	    strcmp(export_obj->pseudopath->gr_val, "/") == 0) {
+	    (export_obj->pseudopath != NULL &&
+	     strcmp(export_obj->pseudopath->gr_val, "/") == 0)) {
 		put_gsh_export(export_obj);
 		response->set_success(false);
 		response->set_message(
 			"Cannot remove the pseudo root export or export with id 0");
+		EXPORT_ADMIN_UNLOCK();
 		return grpc::Status::OK;
 	}
 
