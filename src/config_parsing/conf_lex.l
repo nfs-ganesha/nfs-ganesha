@@ -137,6 +137,7 @@ INCLPATH     \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_]+)*
 PATHNAME     \/([a-zA-Z0-9\-\.\_]+\/?)?
 LONGPATH     (\/?[a-zA-Z0-9\-\.\_]+(\/[a-zA-Z0-9\-\.\_]+)+)\/?
 TOKEN_CHARS  [a-zA-Z_\?][a-zA-Z0-9\._\-]*
+DIGIT_LEADING_NAME  [0-9][a-zA-Z0-9\._\-]*[a-zA-Z][a-zA-Z0-9\._\-]*
 DIR_PATH  \/?([a-zA-Z0-9\-\.\_])+(\/[a-zA-Z0-9\-\.\_\*]+)*\/?
 
 WC           [a-zA-Z0-9\._\-]
@@ -449,6 +450,12 @@ INCLUDE_URL  {URLTYPES}:\/\/[a-zA-Z0-9\-\.\_&=\/]+
 	DEBUG_LEX("pathname:%s", yytext);
 	yylval->token = save_token(yytext, false, false, stp);
 	return TOK_PATH;
+}
+
+<TERM>{DIGIT_LEADING_NAME}  {
+	DEBUG_LEX("token value:%s",yytext);
+	yylval->token = save_token(yytext, false, false, stp);
+	return TOKEN;
 }
 
 <TERM>{TOKEN_CHARS}  { /* start of a number or label/tag */
