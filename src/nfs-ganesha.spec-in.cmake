@@ -113,6 +113,9 @@ Requires: openSUSE-release
 @BCOND_TLS@ tls
 %global use_tls %{on_off_switch tls}
 
+@BCOND_PRIO_INHERIT@ prio_inherit
+%global use_prio_inherit %{on_off_switch prio_inherit}
+
 @BCOND_OPENSSL@ openssl
 %global use_openssl %{on_off_switch openssl}
 
