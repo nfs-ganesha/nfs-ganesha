@@ -221,7 +221,6 @@ static void nfs3_write_cb(struct fsal_obj_handle *obj, fsal_status_t ret,
 int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 {
 	struct fsal_obj_handle *obj;
-	pre_op_attr pre_attr = { .attributes_follow = false };
 	fsal_status_t fsal_status = { 0, 0 };
 	uint64_t offset = arg->arg_write3.offset;
 	size_t size = arg->arg_write3.count;
@@ -257,8 +256,6 @@ int nfs3_write(nfs_arg_t *arg, struct svc_req *req, nfs_res_t *res)
 		/* Status and rc have been set by nfs3_FhandleToCache */
 		return rc;
 	}
-
-	nfs_SetPreOpAttr(obj, &pre_attr);
 
 	fsal_status = obj->obj_ops->test_access(obj, FSAL_WRITE_ACCESS, NULL,
 						NULL, true);
