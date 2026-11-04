@@ -4025,11 +4025,11 @@ static bool export_check_server_addr(void)
  *
  * Permissions in the op context get updated based on export and client.
  *
- * Takes the export->exp_lock in read mode to protect the client list and
- * export permissions while performing this work.
+ * If op_ctx->export is not NULL, assumes export->exp_lock is held. It will
+ * protect the client list and export permissions while performing this work.
  */
 
-void export_check_access(void)
+void export_check_access_locked(void)
 {
 	struct base_client_entry *client = NULL;
 	struct exportlist_client_entry *expclient = NULL;
@@ -4041,15 +4041,10 @@ void export_check_access(void)
 	 */
 	memset(&op_ctx->export_perms, 0, sizeof(op_ctx->export_perms));
 
-	if (op_ctx->ctx_export != NULL) {
-		/* Take lock */
-		PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
+	PTHREAD_RWLOCK_rdlock(&export_opt_lock);
 
-		PTHREAD_RWLOCK_rdlock(&export_opt_lock);
-	} else {
+	if (op_ctx->ctx_export == NULL) {
 		/* Shortcut if no export */
-		PTHREAD_RWLOCK_rdlock(&export_opt_lock);
-
 		goto no_export;
 	}
 
@@ -4227,11 +4222,6 @@ no_export:
 check_done:
 
 	PTHREAD_RWLOCK_unlock(&export_opt_lock);
-
-	if (op_ctx->ctx_export != NULL) {
-		/* Release lock */
-		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
-	}
 }
 
 /**

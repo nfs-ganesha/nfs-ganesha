@@ -238,7 +238,31 @@ struct exportlist_client_entry {
 /* Export list related functions */
 uid_t get_anonymous_uid(void);
 gid_t get_anonymous_gid(void);
-void export_check_access(void);
+void export_check_access_locked(void);
+
+/**
+ * @brief Checks if a machine is authorized to access an export entry
+ *
+ * Permissions in the op context get updated based on export and client.
+ *
+ * Takes the export->exp_lock in read mode to protect the client list and
+ * export permissions while performing this work.
+ */
+
+static inline void export_check_access(void)
+{
+	if (op_ctx->ctx_export != NULL) {
+		/* Take lock */
+		PTHREAD_RWLOCK_rdlock(&op_ctx->ctx_export->exp_lock);
+	}
+
+	export_check_access_locked();
+
+	if (op_ctx->ctx_export != NULL) {
+		/* Release lock */
+		PTHREAD_RWLOCK_unlock(&op_ctx->ctx_export->exp_lock);
+	}
+}
 
 bool export_check_security(struct svc_req *req);
 
