@@ -319,9 +319,14 @@ static fsal_status_t fetch_attrs(struct vfs_fsal_obj_handle *myself, int my_fd,
 	case SOCKET_FILE:
 	case CHARACTER_FILE:
 	case BLOCK_FILE:
-		retval = fstatat(my_fd, myself->u.unopenable.name, &stat,
-				 AT_SYMLINK_NOFOLLOW);
-		func = "fstatat";
+		if (vfs_supports_special_file_handles()) {
+			retval = vfs_stat_by_handle(my_fd, &stat);
+			func = "vfs_stat_by_handle";
+		} else {
+			retval = fstatat(my_fd, myself->u.unopenable.name,
+					 &stat, AT_SYMLINK_NOFOLLOW);
+			func = "fstatat";
+		}
 		break;
 
 	case REGULAR_FILE:
@@ -1950,6 +1955,26 @@ fsal_status_t vfs_getattr2(struct fsal_obj_handle *obj_hdl,
 			obj_hdl->fs->fsal != NULL ? obj_hdl->fs->fsal->name
 						  : "(none)");
 		goto out;
+	}
+
+	if (vfs_unopenable_type(obj_hdl->type) &&
+	    vfs_supports_special_file_handles()) {
+		fsal_errors_t fsal_error = ERR_FSAL_NO_ERROR;
+		int fd;
+
+		/* A handle reconstructed from the wire has no parent or name.
+		 * Read metadata through the object handle, without activating
+		 * the socket or device or depending on a remembered pathname.
+		 */
+		fd = vfs_open_by_handle(obj_hdl->fs, myself->handle,
+					O_PATH | O_NOACCESS | O_NOFOLLOW,
+					&fsal_error);
+		if (fd < 0)
+			return fsalstat(fsal_error, -fd);
+
+		status = fetch_attrs(myself, fd, attrs);
+		close(fd);
+		return status;
 	}
 
 #ifdef __FreeBSD__

@@ -2011,6 +2011,16 @@ static fsal_status_t vfs_listxattrs(struct fsal_obj_handle *obj_hdl,
 	int listsize = 0;
 	char names[MAXPATHLEN];
 
+#ifdef LINUX
+	/* Only regular files and directories can have user.* xattrs on Linux.
+	 * fsal_listxattr_helper exposes only that namespace, so avoid opening
+	 * sockets, devices, or FIFOs when there are no names to enumerate.
+	 */
+	if (obj_hdl->type != REGULAR_FILE && obj_hdl->type != DIRECTORY)
+		return fsal_listxattr_helper("", 0, la_maxcount, la_cookie,
+					     lr_eof, lr_names);
+#endif
+
 	myself = container_of(obj_hdl, struct vfs_fsal_obj_handle, obj_handle);
 	fd = (obj_hdl->type == DIRECTORY)
 		     ? vfs_fsal_open(myself, O_DIRECTORY, &fsal_error)

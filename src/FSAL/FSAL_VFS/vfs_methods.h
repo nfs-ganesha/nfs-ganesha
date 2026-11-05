@@ -215,6 +215,8 @@ int vfs_name_to_handle(int atfd, struct fsal_filesystem *fs, const char *name,
 int vfs_open_by_handle(struct fsal_filesystem *fs, vfs_file_handle_t *fh,
 		       int openflags, fsal_errors_t *fsal_error);
 
+bool vfs_supports_special_file_handles(void);
+
 int vfs_encode_dummy_handle(vfs_file_handle_t *fh, struct fsal_filesystem *fs);
 
 bool vfs_is_dummy_handle(vfs_file_handle_t *fh);
@@ -260,7 +262,6 @@ fsal_status_t vfs_copy_file_range(struct fsal_obj_handle *src_hdl,
 				  uint64_t dst_off, uint64_t len,
 				  uint64_t *copied);
 #endif /* HAVE_COPY_FILE_RANGE */
-
 
 fsal_status_t vfs_reopen_func(struct fsal_obj_handle *obj_hdl,
 			      fsal_openflags_t openflags,

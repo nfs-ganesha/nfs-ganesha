@@ -248,6 +248,12 @@ int vfs_map_name_to_handle_at(int fd, struct fsal_filesystem *fs,
 	return 0;
 }
 
+bool vfs_supports_special_file_handles(void)
+{
+	/* O_PATH opens the inode without opening the socket or device. */
+	return true;
+}
+
 int vfs_open_by_handle(struct fsal_filesystem *fs, vfs_file_handle_t *fh,
 		       int openflags, fsal_errors_t *fsal_error)
 {

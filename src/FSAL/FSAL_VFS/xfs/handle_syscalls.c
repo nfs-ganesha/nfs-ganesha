@@ -126,6 +126,12 @@ static int xfs_fsal_inode2handle(int fd, ino_t ino, vfs_file_handle_t *fh)
 	return 0;
 }
 
+bool vfs_supports_special_file_handles(void)
+{
+	/* The legacy XFS open_by_handle API rejects sockets and devices. */
+	return false;
+}
+
 int vfs_open_by_handle(struct fsal_filesystem *fs, vfs_file_handle_t *fh,
 		       int openflags, fsal_errors_t *fsal_error)
 {

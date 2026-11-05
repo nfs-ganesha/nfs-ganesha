@@ -119,6 +119,11 @@ int vfs_name_to_handle(int atfd, struct fsal_filesystem *fs, const char *name,
 	return error;
 }
 
+bool vfs_supports_special_file_handles(void)
+{
+	return false;
+}
+
 int vfs_open_by_handle(struct fsal_filesystem *fs, vfs_file_handle_t *fh,
 		       int openflags, fsal_errors_t *fsal_error)
 {
