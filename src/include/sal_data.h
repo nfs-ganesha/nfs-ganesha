@@ -246,7 +246,7 @@ struct state_refer {
 	sessionid4 session; /*< The session of the creating call. */
 	sequenceid4 sequence; /*< The sequence ID of the creating
 				   call. */
-	slotid4 slot; /*< The slot ID of the creating call. */
+	slotid4 slotid; /*< The slot ID of the creating call. */
 };
 
 /******************************************************************************

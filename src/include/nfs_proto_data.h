@@ -372,7 +372,7 @@ struct compound_data {
 	nfs_client_cred_t credential; /*< Raw RPC credentials */
 	nfs_client_id_t *preserved_clientid; /*< clientid that has lease
 						   reserved, if any */
-	struct nfs41_session_slot__ *slot; /*< NFv41: pointer to the
+	struct nfs41_session_slot__ *cd_slot; /*< NFv41: pointer to the
 							session's slot */
 	nfsstat4 cached_result_status; /* <NFv41: save the
 	    slot->cached_result->status for reply request */

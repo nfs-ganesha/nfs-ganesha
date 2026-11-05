@@ -470,7 +470,7 @@ static void get_delegation(compound_data_t *data, OPEN4args *args,
 		memcpy(refer.session, data->session->session_id,
 		       sizeof(sessionid4));
 		refer.sequence = data->sequence;
-		refer.slot = data->slotid;
+		refer.slotid = data->slotid;
 	}
 
 	if (args->share_access & OPEN4_SHARE_ACCESS_WRITE) {
@@ -1199,7 +1199,7 @@ retry_open_file:
 			memcpy(refer.session, data->session->session_id,
 			       sizeof(sessionid4));
 			refer.sequence = data->sequence;
-			refer.slot = data->slotid;
+			refer.slotid = data->slotid;
 			p_refer = &refer;
 		}
 

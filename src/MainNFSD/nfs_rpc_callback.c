@@ -1151,12 +1151,12 @@ int32_t nfs_rpc_abort_call(rpc_call_t *call)
  * @param[in] session The session on whose back channel we make the call
  * @param[in] op      The operation to add
  * @param[in] refer   Referral data, NULL if none
- * @param[in] slot    Slot number to use
+ * @param[in] slotid  Slot number to use
  *
  * @return The constructed call or NULL.
  */
 static rpc_call_t *construct_v41(nfs41_session_t *session, nfs_cb_argop4 *op,
-				 struct state_refer *refer, slotid4 slot,
+				 struct state_refer *refer, slotid4 slotid,
 				 slotid4 highest_slot)
 {
 	rpc_call_t *call = alloc_rpc_call();
@@ -1172,8 +1172,8 @@ static rpc_call_t *construct_v41(nfs41_session_t *session, nfs_cb_argop4 *op,
 
 	memcpy(sequence->csa_sessionid, session->session_id,
 	       NFS4_SESSIONID_SIZE);
-	sequence->csa_sequenceid = session->bc_slots[slot].sequence;
-	sequence->csa_slotid = slot;
+	sequence->csa_sequenceid = session->bc_slots[slotid].sequence;
+	sequence->csa_slotid = slotid;
 	sequence->csa_highest_slotid = highest_slot;
 	sequence->csa_cachethis = false;
 
@@ -1194,7 +1194,7 @@ static rpc_call_t *construct_v41(nfs41_session_t *session, nfs_cb_argop4 *op,
 		list->rcl_referring_calls.rcl_referring_calls_len = 1;
 		list->rcl_referring_calls.rcl_referring_calls_val = ref_call;
 		ref_call->rc_sequenceid = refer->sequence;
-		ref_call->rc_slotid = refer->slot;
+		ref_call->rc_slotid = refer->slotid;
 	} else {
 		sequence->csa_referring_call_lists.csarcl_len = 0;
 		sequence->csa_referring_call_lists.csarcl_val = NULL;
@@ -1236,13 +1236,13 @@ static void release_v41(rpc_call_t *call)
  * @param[in,out] session      Session on which to operate
  * @param[in]     wait         Whether to wait on the condition variable if
  *                             no slot can be found
- * @param[out]    slot         Slot to use
+ * @param[out]    slotid       Slot to use
  * @param[out]    highest_slot Highest slot in use
  *
  * @retval false if a slot was not found.
  * @retval true if a slot was found.
  */
-static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slot,
+static bool find_cb_slot(nfs41_session_t *session, bool wait, slotid4 *slotid,
 			 slotid4 *highest_slot)
 {
 	slotid4 cur = 0;
@@ -1255,7 +1255,7 @@ retry:
 	     ++cur) {
 		if (!(session->bc_slots[cur].in_use) && (!found)) {
 			found = true;
-			*slot = cur;
+			*slotid = cur;
 			*highest_slot = cur;
 		}
 
@@ -1280,9 +1280,9 @@ retry:
 	}
 
 	if (found) {
-		session->bc_slots[*slot].in_use = true;
-		++session->bc_slots[*slot].sequence;
-		assert(*slot < session->back_channel_attrs.ca_maxrequests);
+		session->bc_slots[*slotid].in_use = true;
+		++session->bc_slots[*slotid].sequence;
+		assert(*slotid < session->back_channel_attrs.ca_maxrequests);
 	}
 
 	PTHREAD_MUTEX_unlock(&session->cb_mutex);
@@ -1293,16 +1293,16 @@ retry:
  * @brief Release a reserved callback slot and wake waiters
  *
  * @param[in,out] session The session holding slot to release
- * @param[in]     slot    Slot to release
+ * @param[in]     slotid  Slot to release
  * @param[in]     bool    Whether the operation was ever sent
  */
 
-static void release_cb_slot(nfs41_session_t *session, slotid4 slot, bool sent)
+static void release_cb_slot(nfs41_session_t *session, slotid4 slotid, bool sent)
 {
 	PTHREAD_MUTEX_lock(&session->cb_mutex);
-	session->bc_slots[slot].in_use = false;
+	session->bc_slots[slotid].in_use = false;
 	if (!sent)
-		--session->bc_slots[slot].sequence;
+		--session->bc_slots[slotid].sequence;
 	PTHREAD_COND_broadcast(&session->cb_cond);
 	PTHREAD_MUTEX_unlock(&session->cb_mutex);
 }
@@ -1326,7 +1326,7 @@ restart:
 	PTHREAD_MUTEX_lock(&clientid->cid_mutex);
 	glist_for_each(glist, &clientid->cid_cb.v41.cb_session_list) {
 		nfs41_session_t *scur, *session;
-		slotid4 slot = 0;
+		slotid4 slotid = 0;
 		slotid4 highest_slot = 0;
 		rpc_call_t *call = NULL;
 
@@ -1348,7 +1348,7 @@ restart:
 		 * session, which is odd, but necessary, as we can't hold
 		 * the cid_mutex when we go to put the session reference.
 		 */
-		if (!(find_cb_slot(scur, wait, &slot, &highest_slot))) {
+		if (!(find_cb_slot(scur, wait, &slotid, &highest_slot))) {
 			LogDebug(COMPONENT_NFS_CB, "can't get slot");
 			continue;
 		}
@@ -1361,7 +1361,7 @@ restart:
 		 * safe way to get a reference.
 		 */
 		if (!nfs41_Session_Get_Pointer(scur->session_id, &session)) {
-			release_cb_slot(scur, slot, false);
+			release_cb_slot(scur, slotid, false);
 			continue;
 		}
 
@@ -1378,7 +1378,7 @@ restart:
 			LogCrit(COMPONENT_NFS_CB,
 				"Session pointer mismatch for clientid %p: list ptr %p != hash ptr %p",
 				clientid, scur, session);
-			release_cb_slot(scur, slot, false);
+			release_cb_slot(scur, slotid, false);
 			dec_session_ref(session);
 			PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 			return ENOTCONN;
@@ -1387,7 +1387,7 @@ restart:
 		/* Drop mutex since we have a session ref */
 		PTHREAD_MUTEX_unlock(&clientid->cid_mutex);
 
-		call = construct_v41(session, op, refer, slot, highest_slot);
+		call = construct_v41(session, op, refer, slotid, highest_slot);
 
 		call->call_hook = completion;
 		call->call_arg = completion_arg;
@@ -1405,7 +1405,7 @@ restart:
 		release_v41(call);
 		free_rpc_call(call);
 
-		release_cb_slot(session, slot, false);
+		release_cb_slot(session, slotid, false);
 		dec_session_ref(session);
 		goto restart;
 	}

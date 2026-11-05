@@ -226,7 +226,7 @@ enum nfs_req_result nfs4_op_lock(struct nfs_argop4 *op, compound_data_t *data,
 		memcpy(refer.session, data->session->session_id,
 		       sizeof(sessionid4));
 		refer.sequence = data->sequence;
-		refer.slot = data->slotid;
+		refer.slotid = data->slotid;
 	}
 
 	res_LOCK4->status = nfs4_sanity_check_FH(data, REGULAR_FILE, false);

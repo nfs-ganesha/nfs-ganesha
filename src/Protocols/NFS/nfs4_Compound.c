@@ -925,13 +925,13 @@ void set_slot_last_req(compound_data_t *data)
 {
 	struct timespec curr_time;
 
-	data->slot->last_req.opcode_num =
-		get_nfs4_opcodes(data, data->slot->last_req.opcodes,
+	data->cd_slot->last_req.opcode_num =
+		get_nfs4_opcodes(data, data->cd_slot->last_req.opcodes,
 				 NFS4_MAX_OPERATIONS);
-	data->slot->last_req.xid = data->req->rq_msg.rm_xid;
-	data->slot->last_req.seq_id = data->sequence;
+	data->cd_slot->last_req.xid = data->req->rq_msg.rm_xid;
+	data->cd_slot->last_req.seq_id = data->sequence;
 	now(&curr_time);
-	data->slot->last_req.finish_time_ms =
+	data->cd_slot->last_req.finish_time_ms =
 		curr_time.tv_sec * 1000 + curr_time.tv_nsec / 1000000;
 }
 
@@ -959,21 +959,22 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 		LogFullDebug(
 			COMPONENT_SESSIONS,
 			"Save result in session replay cache %p sizeof nfs_res_t=%d",
-			data->slot->cached_result, (int)sizeof(nfs_res_t));
+			data->cd_slot->cached_result, (int)sizeof(nfs_res_t));
 
 		/* Save the result pointer in the slot cache (the correct slot
 		 * is pointed to by data->cached_result).
 		 */
-		data->slot->cached_result = data->res->res_compound4_extended;
+		data->cd_slot->cached_result =
+			data->res->res_compound4_extended;
 
 		/* record the latest request. */
 		set_slot_last_req(data);
 
 		/* Take a reference to indicate that this reply is cached. */
-		atomic_inc_int32_t(&data->slot->cached_result->res_refcnt);
+		atomic_inc_int32_t(&data->cd_slot->cached_result->res_refcnt);
 	} else if (data->minorversion > 0 && result != NFS_REQ_REPLAY &&
 		   data->argarray[0].argop == NFS4_OP_SEQUENCE &&
-		   data->slot != NULL) {
+		   data->cd_slot != NULL) {
 		/* We need to cache an "uncached" response. The length is
 		 * 1 if only one op processed, otherwise 2. */
 		struct COMPOUND4res *c_res;
@@ -982,20 +983,20 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 		struct nfs_resop4 *res0;
 
 		/* If the slot happened to be in use, release it. */
-		release_slot(data->slot);
+		release_slot(data->cd_slot);
 
 		/* Allocate (and zero) a new COMPOUND4res_extended */
-		data->slot->cached_result =
-			gsh_calloc(1, sizeof(*data->slot->cached_result),
+		data->cd_slot->cached_result =
+			gsh_calloc(1, sizeof(*data->cd_slot->cached_result),
 				   MEM_COMP_PROTOCOL);
 
 		/* record the latest request. */
 		set_slot_last_req(data);
 
 		/* Take initial reference to response. */
-		data->slot->cached_result->res_refcnt = 1;
+		data->cd_slot->cached_result->res_refcnt = 1;
 
-		c_res = &data->slot->cached_result->res_compound4;
+		c_res = &data->cd_slot->cached_result->res_compound4;
 
 		c_res->resarray.resarray_len = resarray_len;
 		c_res->resarray.resarray_val =
