@@ -3087,14 +3087,16 @@ static void queue_deleg_transition_handler(struct fridgethr_context *ctx)
 
 	struct gsh_export *export = ctx->arg;
 	state_t *state;
-	struct glist_head *glist, *glistn;
-	sockaddr_t ip_address;
+	struct glist_head *glist;
 	struct req_op_context op_context;
-	char *src = NULL;
 	nfs_client_id_t *clientid = NULL;
 	struct state_deleg *deleg = NULL;
 	bool write_delegated = false;
 	bool read_delegated = false;
+	struct gsh_client *gc = NULL;
+
+	if (export == NULL)
+		return;
 
 	/* Initializing the op_context with export and fsal_export */
 	init_op_context_simple(&op_context, export, export->fsal_export);
@@ -3105,11 +3107,16 @@ static void queue_deleg_transition_handler(struct fridgethr_context *ctx)
 	 * delegations need to be recalled. Recall a delegation if the
 	 * delegation option was disabled in the config
 	 */
-	glist_for_each_safe(glist, glistn, &export->exp_state_list) {
+	PTHREAD_RWLOCK_rdlock(&export->exp_lock);
+
+	glist_for_each(glist, &export->exp_state_list) {
 		struct fsal_obj_handle *obj = NULL;
 		state_owner_t *owner = NULL;
 
 		state = glist_entry(glist, state_t, state_export_list);
+
+		if (state->state_type != STATE_TYPE_DELEG)
+			continue;
 
 		if (!get_state_obj_export_owner_refs(state, &obj, NULL,
 						     &owner)) {
@@ -3124,30 +3131,13 @@ static void queue_deleg_transition_handler(struct fridgethr_context *ctx)
 		/* Check only the delegation states */
 		if (state->state_type == STATE_TYPE_DELEG) {
 			clientid = owner->so_owner.so_nfs4_owner.so_clientrec;
-			src = clientid->gsh_client->hostaddr_str;
-
-			ip_str_to_sockaddr(COMPONENT_FSAL, src, &ip_address);
-
-			if (isMidDebug(COMPONENT_FSAL)) {
-				char scratch[SOCK_NAME_MAX];
-				struct display_buffer dspbuf = {
-					sizeof(scratch), scratch, scratch
-				};
-				display_sockip(&dspbuf, &ip_address);
-			}
-
-			/* Set the export and client IP address for the state
-			 * so that export_check_access() can evaluate the
-			 * effective options.
-			 */
-
-			op_ctx->ctx_export = export;
-			op_ctx->caller_addr = &ip_address;
+			gc = clientid->gsh_client;
+			op_ctx->caller_addr = &gc->cl_addrbuf;
 
 			/* Check the effective option derived from
 			 * EXPORT_DEFAULT, EXPORT, CLIENT block
 			 */
-			export_check_access();
+			export_check_access_locked();
 
 			deleg = &state->state_data.deleg;
 
@@ -3189,6 +3179,10 @@ static void queue_deleg_transition_handler(struct fridgethr_context *ctx)
 		/* Release the owner */
 		dec_state_owner_ref(owner);
 	}
+
+	PTHREAD_RWLOCK_unlock(&export->exp_lock);
+
+	release_op_context();
 }
 
 int async_deleg_transition_handler(struct fridgethr *fr,
@@ -3196,11 +3190,20 @@ int async_deleg_transition_handler(struct fridgethr *fr,
 {
 	int rc = 0;
 
+	/* Take export reference here which will be released
+	 * by release_op_context() by the worker thread.
+	 */
+	get_gsh_export_ref(probe_exp);
+
 	rc = fridgethr_submit(fr, queue_deleg_transition_handler, probe_exp);
 
-	if (rc != 0)
+	if (rc != 0) {
+		/* Release the export reference */
+		put_gsh_export(probe_exp);
+
 		LogFullDebug(COMPONENT_FSAL, "fridgethr submit returned rc %d",
 			     rc);
+	}
 
 	return rc;
 }
