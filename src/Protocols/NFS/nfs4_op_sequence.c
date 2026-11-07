@@ -227,21 +227,55 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	/* Serialize use of this slot. */
 	PTHREAD_MUTEX_lock(&sess_slot->slot_lock);
 
+	if (sess_slot->in_use) {
+		/* Somehow we have a race, cases:
+		 *
+		 * First, note that because of mutex, racing SEQUENCE ops on the
+		 * same slot will be serialized, one will "win" and set in_use
+		 * thus forcing all the others down this path. If in_use was
+		 * cleared before this thread wakes up, then the slot cache
+		 * has been updated, and the below logic will all work.
+		 *
+		 * sa_sequenceid < sess_slot->sequence:
+		 *    Really we should not see a replay request once the client
+		 *    has started a new request. So this should be invalid.
+		 *
+		 * sa_sequenceid == sess_slot->sequence:
+		 *    This is a possibly legit replay request, but we haven't
+		 *    finished processing the original request. Per RFC 8881
+		 *    Section 2.6.10.2 (last paragraph) we should send
+		 *    NFS4ERR_DELAY.
+		 *
+		 * Anything else:
+		 *    Absolutely invalid.
+		 */
+		if (sess_slot->sequence != arg_SEQUENCE4->sa_sequenceid)
+			res_SEQUENCE4->sr_status = NFS4ERR_SEQ_MISORDERED;
+		else
+			res_SEQUENCE4->sr_status = NFS4ERR_DELAY;
+
+		LogDebugAlt(
+			COMPONENT_SESSIONS, COMPONENT_CLIENTID,
+			"SEQUENCE in use, returning status %s with slot seqid=%"
+			PRIu32 " op seqid=%" PRIu32,
+			nfsstat4_to_str(res_SEQUENCE4->sr_status),
+			sess_slot->sequence, arg_SEQUENCE4->sa_sequenceid);
+
+		PTHREAD_MUTEX_unlock(&sess_slot->slot_lock);
+
+		dec_session_ref(session);
+		return NFS_REQ_ERROR;
+	}
+
 	if (sess_slot->sequence + 1 != arg_SEQUENCE4->sa_sequenceid) {
 		/* This sequence is NOT the next sequence */
 		if (sess_slot->sequence == arg_SEQUENCE4->sa_sequenceid) {
 			check_replay_request(data, sess_slot,
 					     arg_SEQUENCE4->sa_sequenceid,
 					     slotid);
-			/* But it is the previous sequence */
+			/* But it is the previous sequence - this is a replay */
 			if (sess_slot->cached_result != NULL) {
 				int32_t refcnt;
-
-				/* And has a cached response.
-				 * Replay operation through the DRC
-				 * Take a reference to the slot cached response.
-				 */
-				data->cd_slot = sess_slot;
 
 				/* Free the reply allocated originally */
 				release_nfs4_res_compound(
@@ -254,12 +288,7 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 				 * is already taken by SEQUENCE.
 				 */
 				data->res->res_compound4_extended =
-					data->cd_slot->cached_result;
-
-				data->cached_result_status =
-					((COMPOUND4res *)
-						 data->cd_slot->cached_result)
-						->status;
+					sess_slot->cached_result;
 
 				LogFullDebugAlt(
 					COMPONENT_SESSIONS, COMPONENT_CLIENTID,
@@ -272,16 +301,20 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 
 				dec_session_ref(session);
 				return NFS_REQ_REPLAY;
-			} else {
-				/* Illegal replay */
+			} else if (arg_SEQUENCE4->sa_sequenceid != 0) {
+				/* Uncached replay - this should actually never
+				 * happen because we always create an "uncached"
+				 * response if sa_cachethis was false.
+				 * If sa_sequenceid was 0, this was an
+				 * improper sa_sequenceid of 0 on an unused
+				 * slot, which is a misordered error not some
+				 * weird uncached error.
+				 */
 				res_SEQUENCE4->sr_status =
 					NFS4ERR_RETRY_UNCACHED_REP;
-				LogDebugAlt(
-					COMPONENT_SESSIONS, COMPONENT_CLIENTID,
-					"SEQUENCE returning status %s with slot seqid=%" PRIu32
-					" op seqid=%" PRIu32,
-					nfsstat4_to_str(
-						res_SEQUENCE4->sr_status),
+				LogCrit(COMPONENT_SESSIONS,
+					"SEQUENCE returning unexpected NFS4ERR_RETRY_UNCACHED_REP with slot seqid=%"
+					PRIu32 " op seqid=%" PRIu32,
 					sess_slot->sequence,
 					arg_SEQUENCE4->sa_sequenceid);
 				PTHREAD_MUTEX_unlock(&sess_slot->slot_lock);
@@ -311,7 +344,10 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	/* Update the sequence id within the slot */
 	sess_slot->sequence += 1;
 
-	/* If the slot cache was in use, free it. */
+	/* If the slot cache was in use, free it. We will either fill it with a
+	 * cached response if sa_cachethis is true, otherwise we will build a
+	 * special uncached response.
+	 */
 	release_slot(sess_slot);
 
 	/* Set up the response */
@@ -381,12 +417,20 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	LogFullDebugAlt(COMPONENT_SESSIONS, COMPONENT_CLIENTID,
 			"%s session slot %" PRIu32 "=%p for DRC",
 			arg_SEQUENCE4->sa_cachethis ? "Use" : "Don't use",
-			slotid, data->cd_slot);
+			slotid, sess_slot);
 
 	/* If we were successful, stash the clientid in the request
 	 * context.
 	 */
 	op_ctx->clientid = &data->session->clientid;
+
+	/* Protect the slot so we can release the slot_lock, even if we fail
+	 * the response room check, we will still want to cache that result.
+	 * so we want to do this now.
+	 */
+	sess_slot->in_use = true;
+
+	PTHREAD_MUTEX_unlock(&sess_slot->slot_lock);
 
 	/* Now check the response size (we check here because we couldn't check
 	 * in nfs4_Compound because the session wasn't established yet).
@@ -394,19 +438,12 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 	res_SEQUENCE4->sr_status = check_resp_room(data, data->op_resp_size);
 
 	if (res_SEQUENCE4->sr_status != NFS4_OK) {
-		/* Indicate the failed response size. */
-		data->op_resp_size = sizeof(nfsstat4);
-
-		/* Don't let complete_nfs4_compound() cache the reply in the
-		 * slot: after we drop the slot lock and the session reference,
-		 * the slot can be freed with its session.
+		/* Indicate the failed response size. Note that we will cache
+		 * this response if sa_cachethis is true. If sa_cachethis
+		 * is not true, we will "cache" an "uncached" response. Don't
+		 * drop the session reference, we need it to cache the response.
 		 */
-		data->sa_cachethis = false;
-		data->slot = NULL;
-		PTHREAD_MUTEX_unlock(&sess_slot->slot_lock);
-
-		dec_session_ref(session);
-		data->session = NULL;
+		data->op_resp_size = sizeof(nfsstat4);
 		return NFS_REQ_ERROR;
 	}
 

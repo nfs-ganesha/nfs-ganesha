@@ -681,7 +681,7 @@ enum nfs_req_result complete_op(compound_data_t *data, nfsstat4 *status,
 		 * return from the compound.
 		 */
 
-		*status = data->cached_result_status;
+		*status = res_compound4->status;
 
 		LogFullDebug(COMPONENT_SESSIONS,
 			     "Use session replay cache result %s",
@@ -925,6 +925,10 @@ void set_slot_last_req(compound_data_t *data)
 {
 	struct timespec curr_time;
 
+	/* NOTE: This is only called by code paths that have cd_slot->in_use
+	 *       true, which means no other thread can access these fields.
+	 */
+
 	data->cd_slot->last_req.opcode_num =
 		get_nfs4_opcodes(data, data->cd_slot->last_req.opcodes,
 				 NFS4_MAX_OPERATIONS);
@@ -945,16 +949,27 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 	server_stats_compound_done(data->argarray_len, status);
 
 	/* Complete the reply, in particular, tell where you stopped if
-	 * unsuccessful COMPOUD
+	 * unsuccessful COMPOUD. Already set for replay since we re-use
+	 * the COMPOUND4res.
 	 */
-	res_compound4->status = status;
+	if (result != NFS_REQ_REPLAY)
+		res_compound4->status = status;
 
 	/* Manage session's DRC: keep NFS4.1 replay for later use, but don't
-	 * save a replayed result again.
+	 * save a replayed result again. Note that neither of these branches
+	 * can be taken by a replay. Because of this, cd_slot->in_use MUST
+	 * be true. Which guarantees this is the only thread that can access
+	 * the slot cache (a conflicting SEQUENCE op is going to bounce out
+	 * without looking at the slot cache).
 	 */
 	if (data->sa_cachethis) {
-		/* Pointer has been set by nfs4_op_sequence and points to slot
-		 * to cache result in.
+		/* Only NFSv4.1+ sets sa_cachethis.
+		 * Pointer has been set by nfs4_op_sequence and points to slot
+		 * to cache result in. This can't be a replay since that path
+		 * leaves data->sa_cachethis false. It also can't be a
+		 * SEQUENCE operation with an invalid sequence number.
+		 * Note that also assures this is a COMPOUND that starts with a
+		 * SEQUENCE op.
 		 */
 		LogFullDebug(
 			COMPONENT_SESSIONS,
@@ -972,18 +987,22 @@ void complete_nfs4_compound(compound_data_t *data, int status,
 
 		/* Take a reference to indicate that this reply is cached. */
 		atomic_inc_int32_t(&data->cd_slot->cached_result->res_refcnt);
-	} else if (data->minorversion > 0 && result != NFS_REQ_REPLAY &&
-		   data->argarray[0].argop == NFS4_OP_SEQUENCE &&
-		   data->cd_slot != NULL) {
+	} else if (data->cd_slot != NULL) {
 		/* We need to cache an "uncached" response. The length is
-		 * 1 if only one op processed, otherwise 2. */
+		 * 1 if only one op processed, otherwise 2.
+		 * NOTE that the ONLY way we can get here is if we had a
+		 * SEQUENCE op (which guarantees 4.1+) that got sufficiently
+		 * far as to either continue, or halt because of response size,
+		 * it explicitly can not be a replay.
+		 * The if condition above was simplified because that is the
+		 * ONLY path where cd_slot is set to non-NULL.
+		 */
 		struct COMPOUND4res *c_res;
 		u_int resarray_len =
 			res_compound4->resarray.resarray_len == 1 ? 1 : 2;
 		struct nfs_resop4 *res0;
 
-		/* If the slot happened to be in use, release it. */
-		release_slot(data->cd_slot);
+		/* Slot was already released by SEQUENCE. */
 
 		/* Allocate (and zero) a new COMPOUND4res_extended */
 		data->cd_slot->cached_result =
@@ -1548,6 +1567,11 @@ void compound_data_Free(compound_data_t *data)
 
 			/* Release the slot if in use */
 			slot = &data->session->fc_slots[data->slotid];
+
+			PTHREAD_MUTEX_lock(&slot->slot_lock);
+
+			slot->in_use = false;
+
 			PTHREAD_MUTEX_unlock(&slot->slot_lock);
 		}
 

@@ -155,6 +155,7 @@ typedef struct nfs41_session_slot__ {
 							   cached RPC result in
 							   a session's slot */
 	struct nfs41_cached_req last_req; /*< Last request of the slot */
+	bool in_use;
 } nfs41_session_slot_t;
 
 /**
