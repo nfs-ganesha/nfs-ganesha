@@ -199,7 +199,7 @@ static fsal_status_t lookup_path(struct fsal_export *export_pub,
 	PTHREAD_RWLOCK_unlock(&cmount_lock);
 
 	/* special case the root */
-	if (realpath[1] == '\0' || realpath[0] == '\0') {
+	if (realpath[0] == '\0' || realpath[1] == '\0') {
 		assert(export->root);
 		*pub_handle = &export->root->handle;
 		return status;

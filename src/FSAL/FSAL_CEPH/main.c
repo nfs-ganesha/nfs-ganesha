@@ -623,8 +623,15 @@ static int ceph_export_commit(void *node, void *link_mem, void *self_struct,
 		return 1;
 	}
 
+	/* The export path must be the cmount path itself
+	 * or a sub-directory of it. Checking the character
+	 * following the prefix is required so that
+	 * "/exportfoo" is not accepted for a cmount_path
+	 * of "/export".
+	 */
 	if (lmp > 1 &&
-	    strncmp(export->cmount_path, CTX_FULLPATH(op_ctx), lmp) != 0) {
+	    (strncmp(export->cmount_path, CTX_FULLPATH(op_ctx), lmp) != 0 ||
+	     (lpath > lmp && CTX_FULLPATH(op_ctx)[lmp] != '/'))) {
 		/* path is not a sub-directory of mount_path - error */
 		LogWarn(COMPONENT_FSAL,
 			"Export path is not sub-directory of cmount path, cmount_path : %s, export : %s",
