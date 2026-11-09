@@ -2072,15 +2072,6 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 		int i = 0;
 		uint32_t split_count = mdcache_param.dir.avl_chunk_split / 2;
 
-		split = mdcache_get_chunk(parent_dir, chunk, 0);
-		split->next_ck = chunk->next_ck;
-
-		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
-				"Split next_ck=%" PRIx64, split->next_ck);
-
-		/* Make sure this chunk is in the MRU of L1 */
-		lru_bump_chunk(split);
-
 		/* Scan the list to find what will be the first dirent in the
 		 * new split chunk.
 		 */
@@ -2093,7 +2084,26 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 			}
 		}
 
-		assert(here != NULL);
+		if (here == NULL) {
+			/* num_entries must equal the length of the dirent list.
+			 * If it has drifted above it, resync and skip the split
+			 * instead of dereferencing a NULL dirent.
+			 */
+			LogCrit(COMPONENT_MDCACHE,
+				"Chunk %p of directory %p counts %d entries but holds %d; not splitting",
+				chunk, parent_dir, chunk->num_entries, i);
+			chunk->num_entries = i;
+			goto split_done;
+		}
+
+		split = mdcache_get_chunk(parent_dir, chunk, 0);
+		split->next_ck = chunk->next_ck;
+
+		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
+				"Split next_ck=%" PRIx64, split->next_ck);
+
+		/* Make sure this chunk is in the MRU of L1 */
+		lru_bump_chunk(split);
 
 		LogFullDebugAlt(COMPONENT_NFS_READDIR, COMPONENT_MDCACHE,
 				"Splitting chunk %p for directory %p at %s",
@@ -2128,6 +2138,7 @@ void place_new_dirent(mdcache_entry_t *parent_dir,
 				"Chunk next_ck=%" PRIx64, chunk->next_ck);
 	}
 
+split_done:
 	new_dir_entry->flags |= DIR_ENTRY_SORTED;
 	invalidate_chunks = false;
 

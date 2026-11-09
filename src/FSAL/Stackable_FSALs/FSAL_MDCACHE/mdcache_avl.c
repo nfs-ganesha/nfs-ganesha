@@ -161,7 +161,8 @@ void avl_dirent_set_deleted(mdcache_entry_t *entry, mdcache_dir_entry_t *v)
  */
 void unchunk_dirent(mdcache_entry_t *parent, mdcache_dir_entry_t *dirent)
 {
-	mdcache_entry_t *chunk_parent = dirent->chunk->parent;
+	struct dir_chunk *chunk = dirent->chunk;
+	mdcache_entry_t *chunk_parent = chunk->parent;
 
 	if (chunk_parent != parent) {
 		LogCrit(COMPONENT_MDCACHE,
@@ -185,6 +186,14 @@ void unchunk_dirent(mdcache_entry_t *parent, mdcache_dir_entry_t *dirent)
 
 	/* Remove from chunk */
 	glist_del(&dirent->chunk_list);
+
+	/* Keep num_entries equal to the length of chunk->dirents. */
+	if (chunk->num_entries > 0)
+		chunk->num_entries--;
+	else
+		LogCrit(COMPONENT_MDCACHE,
+			"Chunk %p already empty while removing %s", chunk,
+			dirent->name);
 
 	/* Remove from FSAL cookie AVL tree */
 	avltree_remove(&dirent->node_ck, &parent->fsobj.fsdir.avl.ck);
