@@ -71,7 +71,7 @@ class ManageClients():
             print("Clients:")
             print(" IP addr,  nfsv3, mnt, nlm4, rquota,nfsv40, nfsv41, nfsv42, last")
             for client in clients:
-                print(" %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s, %s %d nsecs" %
+                print(" %s,  %s,  %s,  %s,  %s,  %s,  %s,  %s, %s %d nsecs" %
                       (client.ClientIP,
                        client.HasNFSv3,
                        client.HasMNT,
