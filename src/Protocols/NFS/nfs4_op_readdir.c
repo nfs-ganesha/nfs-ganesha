@@ -636,6 +636,15 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 	if (res_READDIR4->status != NFS4_OK)
 		goto out;
 
+	/* Encoding the reply hands the entries buffer to the transport, which
+	 * frees it once the reply is sent. So the slot reply cache can't keep
+	 * READDIR entries: a replay would send freed memory.
+	 */
+	if (data->sa_cachethis) {
+		res_READDIR4->status = NFS4ERR_REP_TOO_BIG_TO_CACHE;
+		goto out;
+	}
+
 	dir_obj = data->current_obj;
 
 	/* get the characteristic value for readdir operation */
@@ -848,7 +857,7 @@ enum nfs_req_result nfs4_op_readdir(struct nfs_argop4 *op,
 
 		/* Get an xdr_uio and fill it in */
 		uio = gsh_calloc(
-			1, sizeof(struct xdr_uio) + sizeof(struct xdr_uio),
+			1, sizeof(struct xdr_uio) + sizeof(struct xdr_vio),
 			MEM_COMP_PROTOCOL);
 		uio->uio_release = xdr_dirlist4_uio_release;
 		uio->uio_count = 1;
