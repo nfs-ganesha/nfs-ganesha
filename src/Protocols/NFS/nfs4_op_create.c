@@ -187,6 +187,11 @@ enum nfs_req_result nfs4_op_create(struct nfs_argop4 *op, compound_data_t *data,
 			res_CREATE4->status = convrc;
 			goto out;
 		}
+
+		/* If owner or owner_group are set, and the credential was
+		 * squashed, then we must squash the set owner and owner_group.
+		 */
+		squash_setattr(&sattr);
 	}
 
 	/* Create either a symbolic link or a directory */
