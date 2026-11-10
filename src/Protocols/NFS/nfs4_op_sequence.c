@@ -394,6 +394,13 @@ enum nfs_req_result nfs4_op_sequence(struct nfs_argop4 *op,
 		/* Indicate the failed response size. */
 		data->op_resp_size = sizeof(nfsstat4);
 
+		/* Don't let complete_nfs4_compound() cache the reply in the
+		 * slot: after we drop the slot lock and the session reference,
+		 * the slot can be freed with its session.
+		 */
+		data->sa_cachethis = false;
+		data->slot = NULL;
+
 		PTHREAD_MUTEX_unlock(&slot->slot_lock);
 
 		dec_session_ref(session);
