@@ -1098,6 +1098,15 @@ enum nfs_req_result nfs4_op_read(struct nfs_argop4 *op, compound_data_t *data,
 	/* Say we are managing NFS4_OP_READ */
 	resp->resop = NFS4_OP_READ;
 
+	/* Encoding the reply hands the read buffer to the transport, which
+	 * frees it once the reply is sent. So the slot reply cache can't keep
+	 * READ data: a replay would send freed memory and free it again.
+	 */
+	if (data->sa_cachethis) {
+		res_READ4->status = NFS4ERR_REP_TOO_BIG_TO_CACHE;
+		return NFS_REQ_ERROR;
+	}
+
 	if ((data->minorversion > 0) && nfs4_Is_Fh_DSHandle(&data->currentFH)) {
 		/* DS handle, call op_dsread */
 		return op_dsread(op, data, resp);
@@ -1187,6 +1196,15 @@ enum nfs_req_result nfs4_op_read_plus(struct nfs_argop4 *op,
 
 	/* Say we are managing NFS4_OP_READ_PLUS */
 	resp->resop = NFS4_OP_READ_PLUS;
+
+	/* Like READ data, READ_PLUS data can't be kept in the slot reply cache
+	 * (see nfs4_op_read()).
+	 */
+	if (data->sa_cachethis) {
+		resp->nfs_resop4_u.opread_plus.rpr_status =
+			NFS4ERR_REP_TOO_BIG_TO_CACHE;
+		return NFS_REQ_ERROR;
+	}
 
 	if ((data->minorversion > 0) && nfs4_Is_Fh_DSHandle(&data->currentFH)) {
 		/* DS handle, call op_dsread */
