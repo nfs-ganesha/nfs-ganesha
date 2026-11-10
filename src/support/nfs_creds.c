@@ -246,18 +246,18 @@ static void set_extended_groups(void)
 	/****************************************************************/
 	/* Check if we have manage_gids.				*/
 	/****************************************************************/
-	/* Fetch the group data only if required */
-	if (op_ctx->caller_gdata != NULL) {
-		op_ctx->creds.caller_glen = op_ctx->caller_gdata->nbgroups;
-		op_ctx->creds.caller_garray = op_ctx->caller_gdata->groups;
-		return;
-	}
-
 	/* Use the original_creds group list */
 	if ((op_ctx->cred_flags & MANAGED_GIDS) == 0) {
 		op_ctx->creds.caller_glen = op_ctx->original_creds.caller_glen;
 		op_ctx->creds.caller_garray =
 			op_ctx->original_creds.caller_garray;
+		return;
+	}
+
+	/* Fetch the group data only if required */
+	if (op_ctx->caller_gdata != NULL) {
+		op_ctx->creds.caller_glen = op_ctx->caller_gdata->nbgroups;
+		op_ctx->creds.caller_garray = op_ctx->caller_gdata->groups;
 		return;
 	}
 
@@ -475,9 +475,31 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 #endif
 
 	/* Make sure we clear out all the cred_flags except CREDS_LOADED and
-	 * CREDS_ANON.
+	 * CREDS_ANON, and release any squashed garray copies from a previous
+	 * export evaluation in the same COMPOUND.
 	 */
 	op_ctx->cred_flags &= CREDS_LOADED | CREDS_ANON;
+	if (op_ctx->managed_garray_copy != NULL) {
+		if (op_ctx->creds.caller_garray ==
+		    op_ctx->managed_garray_copy) {
+			op_ctx->creds.caller_garray =
+				op_ctx->original_creds.caller_garray;
+			op_ctx->creds.caller_glen =
+				op_ctx->original_creds.caller_glen;
+		}
+		gsh_free(op_ctx->managed_garray_copy, MEM_COMP_CLIENTID);
+		op_ctx->managed_garray_copy = NULL;
+	}
+	if (op_ctx->caller_garray_copy != NULL) {
+		if (op_ctx->creds.caller_garray == op_ctx->caller_garray_copy) {
+			op_ctx->creds.caller_garray =
+				op_ctx->original_creds.caller_garray;
+			op_ctx->creds.caller_glen =
+				op_ctx->original_creds.caller_glen;
+		}
+		gsh_free(op_ctx->caller_garray_copy, MEM_COMP_CLIENTID);
+		op_ctx->caller_garray_copy = NULL;
+	}
 
 	switch (req->rq_msg.cb_cred.oa_flavor) {
 	case AUTH_NONE:
@@ -514,6 +536,9 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 
 #ifdef _HAVE_GSSAPI
 	case RPCSEC_GSS:
+		if ((op_ctx->cred_flags & CREDS_ANON) == 0)
+			op_ctx->cred_flags |= MANAGED_GIDS;
+
 		/* Get the gss data to process them */
 		gd = SVCAUTH_PRIVATE(req->rq_auth);
 
@@ -561,6 +586,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 			 * the uid/gid to anonymous when a name->uid
 			 * mapping can't be found.
 			 */
+			op_ctx->cred_flags &= ~MANAGED_GIDS;
 			op_ctx->cred_flags |= CREDS_ANON | CREDS_LOADED;
 			auth_label = "RPCSEC_GSS (no mapping)";
 			break;
@@ -578,7 +604,7 @@ nfsstat4 nfs_req_creds(struct svc_req *req)
 #endif
 						IDMAPPING_STATUS_SUCCESS);
 
-		op_ctx->cred_flags |= CREDS_LOADED | MANAGED_GIDS;
+		op_ctx->cred_flags |= CREDS_LOADED;
 		auth_label = "RPCSEC_GSS";
 		/* Fetch extended groups */
 		rpcsec_gss_fetch_managed_groups(principal);
