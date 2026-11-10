@@ -695,6 +695,7 @@ typedef enum enum_fsal_fsinfo_options {
 	fso_xattr_support,
 	fso_allocate_own_read_buffer,
 	fso_preserve_unlinked,
+	fso_recall_deleg_on_write,
 } fsal_fsinfo_options_t;
 
 /* The largest maxread and maxwrite value */
@@ -762,6 +763,9 @@ typedef struct fsal_staticfsinfo_t {
 				       set this to -1. Else set it to some
 				       positive value. Defaults to -1. */
 	bool preserve_unlinked; /*< FSAL preserves unlinked files */
+	bool recall_deleg_on_write; /*< FSAL requires recall of deleg on
+				     * same-client write. If true,
+				     * same-client write still recalls. */
 	enum fsal_readdir_mode readdir_mode; /*< Supported readdir modes */
 } fsal_staticfsinfo_t;
 

@@ -115,6 +115,8 @@ bool fsal_supports(struct fsal_staticfsinfo_t *info,
 		return !!info->allocate_own_read_buffer;
 	case fso_preserve_unlinked:
 		return !!info->preserve_unlinked;
+	case fso_recall_deleg_on_write:
+		return !!info->recall_deleg_on_write;
 	default:
 		return false; /* whatever I don't know about,
 				 * you can't do

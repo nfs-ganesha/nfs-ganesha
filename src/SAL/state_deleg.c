@@ -1000,7 +1000,11 @@ bool state_deleg_conflict_impl(struct fsal_obj_handle *obj, bool write)
 			    state_client->cid_clientid == *current_clientid)
 				same_client = true;
 
-			if (same_client)
+			if (same_client &&
+			    !(op_ctx && op_ctx->fsal_export &&
+			      op_ctx->fsal_export->exp_ops.fs_supports(
+				      op_ctx->fsal_export,
+				      fso_recall_deleg_on_write)))
 				same_client_has_deleg = true;
 			else if (state->state_data.deleg.sd_type ==
 					 OPEN_DELEGATE_WRITE ||
