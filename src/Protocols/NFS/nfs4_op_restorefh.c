@@ -37,6 +37,7 @@
 #include "fsal.h"
 #include "nfs_core.h"
 #include "nfs_exports.h"
+#include "nfs_creds.h"
 #include "nfs_proto_functions.h"
 #include "nfs_proto_tools.h"
 #include "nfs_file_handle.h"
@@ -132,10 +133,13 @@ enum nfs_req_result nfs4_op_restorefh(struct nfs_argop4 *op,
 		pnfs_ds_get_ref(op_ctx->ctx_pnfs_ds);
 	}
 
-	/* No need to call nfs4_SetCompoundExport or nfs4_MakeCred
-	 * because we are restoring saved information, and the
-	 * credential checking may be skipped.
+	/* Re-evaluate request credentials and squashing for the restored
+	 * export permissions, as prior operations in the COMPOUND may have
+	 * switched to a different export.
 	 */
+	res_RESTOREFH->status = nfs_req_creds(data->req);
+	if (res_RESTOREFH->status != NFS4_OK)
+		return NFS_REQ_ERROR;
 
 	/* Update the current entry */
 	set_current_entry(data, data->saved_obj);
