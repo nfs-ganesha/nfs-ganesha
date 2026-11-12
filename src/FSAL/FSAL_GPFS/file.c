@@ -1374,9 +1374,7 @@ fsal_status_t gpfs_lease_op2(struct fsal_obj_handle *obj_hdl,
 	case FSAL_DELEG_WR:
 		glock_args.flock.l_type = F_WRLCK;
 		openflags = FSAL_O_WRITE;
-		LogDebug(COMPONENT_FSAL,
-			 "ERROR: The requested deleg type write not supported.");
-		return fsalstat(ERR_FSAL_NOTSUPP, 0);
+		break;
 	case FSAL_DELEG_NONE:
 		glock_args.flock.l_type = F_UNLCK;
 		openflags = FSAL_O_ANY;
