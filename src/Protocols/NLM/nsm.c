@@ -988,9 +988,11 @@ error:
 /*******************************************************************************
  * @brief Ganesha restart send SM_NOTIFY
  *
- * @param[in]  arg    Ignored
- * @param[in]  req    Ignored
- * @param[out] res    Ignored
+ * Drive one recovered entry through the PORTMAP lookup of the client's
+ * status monitor and then the SM_NOTIFY call. Called again from the RPC
+ * callback until the notification has been sent.
+ *
+ * @param[in] info The recovered NLM client or forwarded notify entry
  */
 
 void send_sm_notify(struct local_nlm_info *info)
@@ -1015,6 +1017,17 @@ void send_sm_notify(struct local_nlm_info *info)
 		/* Very first time processing this local_nlm_info. */
 		LogFullDebug(COMPONENT_NLM, "Init info %p", info);
 		req_call_init(info);
+
+		/* Keep a private copy of nodename now, while the notify
+		 * thread still holds it. SM_NOTIFY is only built after the
+		 * async PORTMAP reply; by then nsm_notify_thread() may have
+		 * freed nodename (it does when no external statd was ever
+		 * connected, i.e. with Internal_statd), which left my_name
+		 * NULL and failed XDR encoding ("missing string pointer").
+		 */
+		if (info->recovery_type == NLM_CLIENT_ENTRY &&
+		    my_id->my_name == NULL && nodename != NULL)
+			my_id->my_name = gsh_strdup(nodename, info->mem_comp);
 	}
 
 	if (info->info_port == 0 || info->info_port == PMAPPORT) {
@@ -1089,7 +1102,8 @@ void send_sm_notify(struct local_nlm_info *info)
 		info->xres = (xdrproc_t)xdr_void;
 
 		if (info->recovery_type == NLM_CLIENT_ENTRY) {
-			/* The call outlives nodename. Keep a private copy;
+			/* Normally copied at init above; copy here only if
+			 * nodename was not set yet then.
 			 * local_nlm_info_free() releases my_id->my_name.
 			 */
 			if (my_id->my_name == NULL && nodename != NULL)
