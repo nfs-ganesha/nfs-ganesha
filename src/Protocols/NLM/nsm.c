@@ -1110,7 +1110,13 @@ void send_sm_notify(struct local_nlm_info *info)
 				my_id->my_name =
 					gsh_strdup(nodename, info->mem_comp);
 			info->args.notify_args.my_name = my_id->my_name;
-			info->args.notify_args.state = recov_nsm_state;
+			/* SM_NOTIFY carries our new state number.
+			 * recov_nsm_state is the state read back from the
+			 * recovery database (before this restart); a client
+			 * that already knows it (e.g. 0 on the first restart)
+			 * treats the notify as stale and does not reclaim.
+			 */
+			info->args.notify_args.state = cur_nsm_state;
 		} else if (info->recovery_type == NSM_FORWARD_NOTIFY) {
 			/* Now send SM_NOTIFY */
 			info->args.notify_args.my_name = info->client_name;
