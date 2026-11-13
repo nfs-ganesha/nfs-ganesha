@@ -530,18 +530,18 @@ void req_call_init(struct local_nlm_info *info);
 void fill_forward_sm_notify(nfs_arg_t *arg, struct svc_req *req,
 			    sockaddr_t *peer)
 {
-	struct local_nlm_info *info = gsh_calloc(1, sizeof(*info),
-						 MEM_COMP_PROTOCOL);
+	struct local_nlm_info *info =
+		gsh_calloc(1, sizeof(*info), MEM_COMP_PROTOCOL);
 	sockaddr_t *local = svc_getrpclocal(req->rq_xprt);
 	struct display_buffer dspbuf;
 
 	info->mem_comp = MEM_COMP_PROTOCOL;
-	info->client_name = gsh_strdup(arg->notify_args.my_name,
-				       info->mem_comp);
+	info->client_name =
+		gsh_strdup(arg->notify_args.my_name, info->mem_comp);
 	info->nsm_state = arg->notify_args.state;
 	info->client_address = *peer;
-	info->client_address_str = gsh_calloc(SOCK_NAME_MAX, sizeof(char),
-					      info->mem_comp);
+	info->client_address_str =
+		gsh_calloc(SOCK_NAME_MAX, sizeof(char), info->mem_comp);
 	info->recovery_type = NSM_FORWARD_NOTIFY;
 	/* If NSM_Port was configured, it is expected to be the same for all
 	 * cluster members. Otherwise, the default is 0 which is the right
@@ -559,8 +559,8 @@ void fill_forward_sm_notify(nfs_arg_t *arg, struct svc_req *req,
 	display_sockip(&dspbuf, &info->client_address);
 
 	info->server_address = *local;
-	info->server_address_str = gsh_calloc(SOCK_NAME_MAX, sizeof(char),
-					      info->mem_comp);
+	info->server_address_str =
+		gsh_calloc(SOCK_NAME_MAX, sizeof(char), info->mem_comp);
 
 	dspbuf.b_size = SOCK_NAME_MAX;
 	dspbuf.b_current = info->server_address_str;
