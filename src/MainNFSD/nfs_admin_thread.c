@@ -728,7 +728,7 @@ static bool admin_dbus_trim_call(DBusMessageIter *args, DBusMessage *reply,
 
 	dbus_message_iter_init_append(reply, &iter);
 	LogEvent(COMPONENT_MEMLEAKS, "Calling malloc_trim");
-	malloc_trim(0);
+	gsh_malloc_trim();
 	gsh_dbus_status_reply(&iter, success, errormsg);
 
 	return success;

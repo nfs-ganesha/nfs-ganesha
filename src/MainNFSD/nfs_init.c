@@ -1309,12 +1309,19 @@ static void lower_my_caps(void)
 }
 #endif
 
-#if defined(M_TRIM_THRESHOLD)
+/* tcmalloc is excluded on purpose: M_TRIM_THRESHOLD comes from glibc's
+ * <malloc.h> and is therefore defined even in a tcmalloc build.  An
+ * unconditional ReleaseFreeMemory() every 30 minutes can stall the
+ * allocation path for seconds on a large-RSS server, so tcmalloc is
+ * reclaimed only through the RSS-thresholded reaper path instead
+ * (Enable_malloc_trim).
+ */
+#if defined(M_TRIM_THRESHOLD) && !defined(USE_TCMALLOC)
 #define THIRTY_MIN 1800000000000UL
 static void do_malloc_trim(void *param)
 {
 	LogDebug(COMPONENT_MAIN,
-		 malloc_trim(0)
+		 gsh_malloc_trim()
 			 ? "malloc_trim() released some memory"
 			 : "malloc_trim() was not able to release memory");
 	(void)delayed_submit(do_malloc_trim, 0, THIRTY_MIN);
@@ -1363,7 +1370,7 @@ void nfs_start(nfs_start_info_t *p_start_info)
 	nfs_Init(p_start_info);
 	nfs_Start_threads(); /* Spawns service threads */
 
-#if defined(M_TRIM_THRESHOLD)
+#if defined(M_TRIM_THRESHOLD) && !defined(USE_TCMALLOC)
 	(void)delayed_submit(do_malloc_trim, 0, THIRTY_MIN);
 #endif
 

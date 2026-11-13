@@ -966,6 +966,35 @@ elseif(${ALLOCATOR} STREQUAL "tcmalloc")
   find_package(TcMalloc)
   if(TCMALLOC_FOUND)
     set(SYSTEM_LIBRARIES ${TCMALLOC_LIBRARIES} ${SYSTEM_LIBRARIES})
+    # USE_TCMALLOC identifies the allocator; HAVE_TCMALLOC_RELEASE says
+    # the release interface is usable.  The latter implies the former,
+    # but a tcmalloc without the interface must still not arm the
+    # malloc_trim timer, since that call is a no-op there.
+    add_definitions(-DUSE_TCMALLOC=1)
+    include_directories(${TCMALLOC_INCLUDE_DIRS})
+    # malloc_trim() is a glibc interface and does nothing for tcmalloc;
+    # Ganesha needs MallocExtension_ReleaseFreeMemory() to actually return
+    # free memory to the OS.  Probe for it so that a tcmalloc build
+    # without the interface (e.g. the abseil based tcmalloc) still links
+    # and simply keeps the previous no-op behaviour.
+    #
+    # Probe the gperftools header, not the google/ one: the latter is a
+    # deprecated shim in current gperftools releases and its #warning
+    # breaks the build under -Werror=cpp.
+    include(CheckSymbolExists)
+    set(CMAKE_REQUIRED_INCLUDES ${TCMALLOC_INCLUDE_DIRS})
+    set(CMAKE_REQUIRED_LIBRARIES ${TCMALLOC_LIBRARIES})
+    check_symbol_exists(MallocExtension_ReleaseFreeMemory
+                        "gperftools/malloc_extension_c.h"
+                        HAVE_TCMALLOC_RELEASE)
+    unset(CMAKE_REQUIRED_INCLUDES)
+    unset(CMAKE_REQUIRED_LIBRARIES)
+    if(HAVE_TCMALLOC_RELEASE)
+      add_definitions(-DHAVE_TCMALLOC_RELEASE=1)
+    else(HAVE_TCMALLOC_RELEASE)
+      message(WARNING
+        "tcmalloc release interface not found, malloc trim will be a no-op")
+    endif(HAVE_TCMALLOC_RELEASE)
   else(TCMALLOC_FOUND)
     message(WARNING "tcmalloc not found, falling back to libc")
     set(ALLOCATOR "libc")

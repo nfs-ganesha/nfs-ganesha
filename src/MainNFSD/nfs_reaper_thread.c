@@ -36,6 +36,7 @@
 #endif
 
 #include "log.h"
+#include "abstract_mem.h"
 #include "nfs4.h"
 #include "sal_functions.h"
 #include "nfs_proto_functions.h"
@@ -269,7 +270,7 @@ static void reap_malloc_frag(void)
 		 "calling malloc_trim, current rss: %zu MB, threshold: %zu MB",
 		 rss, trim_threshold);
 
-	malloc_trim(0);
+	gsh_malloc_trim();
 	rss = get_current_rss();
 	/* Set trim threshold to one and one half times of the current RSS */
 	trim_threshold = MAX(rss + rss / 2, min_threshold);
