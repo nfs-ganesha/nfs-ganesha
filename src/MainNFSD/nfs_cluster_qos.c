@@ -476,6 +476,8 @@ static void cluster_qos_process_pe(cluster_qos_msg *cluster_qos_msg)
 	} else if (cluster_qos_msg->cqos_cmd == CQOS_UNSUBSCRIBE) {
 		cqos_recv_unsubscribe_pe(export, cluster_qos_msg);
 	}
+
+	put_gsh_export(export);
 }
 
 /**
@@ -503,6 +505,8 @@ static void cluster_qos_process_pc(cluster_qos_msg *cluster_qos_msg)
 	} else if (cluster_qos_msg->cqos_cmd == CQOS_UNSUBSCRIBE) {
 		cqos_recv_unsubscribe_pc(client, cluster_qos_msg);
 	}
+
+	put_gsh_client(client);
 }
 
 /**
