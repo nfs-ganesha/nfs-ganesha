@@ -3752,6 +3752,13 @@ object_file_type_t nfs4_object_type(struct fsal_obj_handle *obj)
 	struct fsal_attrlist attrs;
 	object_file_type_t type = obj->type;
 
+	/* Without named attributes obj->type is the real type, so skip the
+	 * getattrs, which may go all the way to the backend.
+	 */
+	if (!op_ctx->fsal_export->exp_ops.fs_supports(op_ctx->fsal_export,
+						      fso_named_attr))
+		return type;
+
 	fsal_prepare_attrs(&attrs, ATTR_TYPE);
 
 	if (FSAL_IS_SUCCESS(obj->obj_ops->getattrs(obj, &attrs)) &&
