@@ -529,6 +529,9 @@ void dynamic_metrics_export_info(const char *path, const uint64_t total_size,
 				 const uint64_t total_files,
 				 const uint64_t avail_files)
 {
+	if (!dynamic_metrics)
+		return;
+
 	if (total_size) {
 		uint32_t storage_utilization =
 			((double)avail_size / total_size) * 100;

@@ -395,7 +395,8 @@ void *PrometheusExposer::server_thread(void *arg)
 		if (nfs_param.core_param.enable_dynamic_metrics)
 			update_mem_info();
 #endif
-		update_export_mem();
+		if (nfs_param.core_param.enable_dynamic_metrics)
+			update_export_mem();
 		gettimeofday(&current_time, nullptr);
 		elapsed_seconds =
 			(current_time.tv_sec - nfs_ServerBootTime.tv_sec);
