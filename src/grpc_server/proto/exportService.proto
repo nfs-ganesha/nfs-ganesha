@@ -100,13 +100,6 @@ message ExportLayoutsResponse
 	nfsProtoUtil.LayoutStats layout_recall = 7;
 }
 
-message ExportOpStatsResponse
-{
-	nfsProtoUtil.StatusResponse status = 1;
-	nfsProtoUtil.Timestamp time = 2;
-	nfsProtoUtil.OpStats op_stats = 3;
-}
-
 message FastOperation
 {
 	string operation = 1;
