@@ -339,6 +339,21 @@ fsal_status_t update_export(struct fsal_module *fsal_hdl, void *parse_node,
 			    struct fsal_module *updated_super);
 
 /**
+ * @brief Alignment to use for I/O buffers.
+ *
+ * @return Alignment in bytes, a power of two, at least 4096.
+ */
+static inline size_t io_buffer_alignment(void)
+{
+	long page_size = sysconf(_SC_PAGESIZE);
+
+	if (page_size < 4096)
+		return 4096;
+
+	return (size_t)page_size;
+}
+
+/**
  * @brief Get copy chunk size against default and export read/write limits.
  *
  * @param[in] max_read  Export MaxRead limit (0 = unconstrained).

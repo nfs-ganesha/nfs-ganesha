@@ -2237,11 +2237,8 @@ not_nfs:
 		return NULL;
 	} else {
 		/* Use page-aligned buffers for IO */
-		size_t align = (size_t)sysconf(_SC_PAGESIZE);
-
-		if (align < 4096)
-			align = 4096;
-		return gsh_malloc_aligned(align, size, MEM_COMP_IO_BUFFER);
+		return gsh_malloc_aligned(io_buffer_alignment(), size,
+					  MEM_COMP_IO_BUFFER);
 	}
 }
 
@@ -2741,7 +2738,8 @@ fsal_status_t fsal_buffered_copy_fsal(struct fsal_obj_handle *src_obj,
 	};
 
 	max_chunk = (size_t)MIN(count, max_chunk);
-	buffer = gsh_malloc(max_chunk, MEM_COMP_XCOPY);
+	buffer = gsh_malloc_aligned(io_buffer_alignment(), max_chunk,
+				    MEM_COMP_XCOPY);
 
 	while (remaining > 0) {
 		size_t request = (size_t)MIN(remaining, max_chunk);

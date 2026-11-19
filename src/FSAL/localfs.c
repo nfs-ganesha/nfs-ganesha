@@ -2041,7 +2041,8 @@ fsal_status_t fsal_buffered_copy_fd(int src_fd, int dst_fd, uint64_t src_offset,
 		 " dst_off=%" PRIu64 " count=%" PRIu64 " chunk=%" PRIu64,
 		 src_fd, dst_fd, src_offset, dst_offset, count, max_chunk);
 
-	buffer = gsh_malloc(max_chunk, MEM_COMP_XCOPY);
+	buffer = gsh_malloc_aligned(io_buffer_alignment(), max_chunk,
+				    MEM_COMP_XCOPY);
 
 	while (bytes_copied < count) {
 		size_t request = (size_t)MIN(count - bytes_copied, max_chunk);
