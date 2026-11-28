@@ -77,6 +77,8 @@ static void handle_release(struct fsal_obj_handle *obj_hdl)
 		}
 	}
 
+	fsal_obj_handle_fini(&objhandle->handle, true);
+
 	if (my_fd->creds.caller_garray) {
 		gsh_free(my_fd->creds.caller_garray, MEM_COMP_FSAL);
 		my_fd->creds.caller_garray = NULL;
